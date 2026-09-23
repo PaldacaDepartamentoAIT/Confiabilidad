@@ -1,0 +1,116 @@
+# AGENTS.md — Confiabilidad
+
+## Proyecto
+Herramienta (web y de escritorio) para la gestión de activos en instalaciones
+industriales, basada en la filosofía de Confiabilidad Operacional.
+
+Stack: Django REST Framework + Channels (WebSocket) + Celery/Redis en el backend;
+React + JavaScript (Vite) en el frontend web; Tauri (Rust) como cliente de escritorio
+que envuelve la app web. Todo dockerizado; secretos de producción cifrados con SOPS + age.
+
+## Estructura
+- `backend/`  — Django + DRF + Channels + Celery.
+- `frontend/` — única app React (Vite). Toda la UI vive aquí.
+- `desktop/`  — Tauri (Rust); carga el dev server / build de `frontend/`, no duplica React.
+- `docker/`   — docker-compose y entrypoints.
+- `secrets/`  — variables de entorno cifradas con SOPS/age.
+- `specs/`    — artefactos SDD (ver Rutas).
+
+## Comandos
+Entorno reproducible con Docker (fuente de verdad):
+- Levantar todo: `docker compose -f docker/docker-compose.yml up`
+- Backend (dentro del contenedor o venv): `python manage.py runserver` (HTTP) / servidor ASGI para WebSocket
+- Celery worker: `celery -A config worker -l info`
+- Celery beat: `celery -A config beat -l info`
+- Frontend web: `pnpm --filter frontend dev`
+- Desktop (Tauri): `pnpm --filter desktop tauri dev`
+
+Tests:
+- Backend: `pytest`
+- Frontend: `pnpm --filter frontend test`  (Vitest)
+
+Lint / formato:
+- Backend: `ruff check .` y `black .`
+- Frontend/Desktop JS: `pnpm lint` (ESLint) y `pnpm format` (Prettier)
+- Rust: `cargo fmt` y `cargo clippy`
+
+Secretos (SOPS + age):
+- Editar: `sops secrets/prod.enc.yaml`
+- Nunca se commitea `.env` en claro; solo archivos `*.enc.*` cifrados.
+
+## Estilo y convenciones
+- Código en inglés, según la convención de cada lenguaje:
+  - Python: PEP 8, snake_case, tipado donde aporte.
+  - JS/React: camelCase, componentes en PascalCase, ESLint + Prettier.
+  - Rust: convención estándar (snake_case), rustfmt + clippy.
+- Comentarios en español, solo si son imprescindibles para entender el proceso
+  o si el usuario los pide. Nada de comentarios obvios.
+- Estructura y código limpios: cada carpeta (backend / frontend / desktop) es
+  independiente y no invade a las demás.
+
+## Ramas (branches)
+- Formato: `tipo/descripcion-corta` — todo en minúsculas, sin espacios, palabras
+  separadas con guiones medios (por ejemplo, `feat/websocket-alertas`).
+- Prefijos permitidos:
+  - `feat/` — nueva funcionalidad
+  - `fix/` — corrección de bug
+  - `refactor/` — cambios internos sin alterar comportamiento
+  - `docs/` — documentación
+  - `test/` — tests
+  - `chore/` — mantenimiento (dependencias, config, CI)
+  - `hotfix/` — corrección urgente en producción
+
+## Commits
+- Formato: `tipo: breve descripción del cambio` — en minúsculas y directo al grano,
+  sin punto final (por ejemplo, `feat: añade canal websocket de alertas`).
+- Tipos permitidos (alineados con los prefijos de rama):
+  - `feat` — nueva funcionalidad
+  - `fix` — corrección de bug
+  - `refactor` — cambios internos sin alterar comportamiento
+  - `docs` — documentación
+  - `test` — tests
+  - `chore` — mantenimiento (dependencias, config, CI)
+  - `hotfix` — corrección urgente en producción
+  - `style` — formato/estilo sin cambios de lógica (lint, espacios)
+  - `perf` — mejoras de rendimiento
+
+## Reglas
+- Lee `specs/constitution.md` y la spec activa antes de tocar código.
+- No te acredites como agente/IA en ninguna parte: ni en mensajes de commit
+  (sin `Co-Authored-By` ni firmas), ni en descripciones de PR, ni en comentarios
+  o partes visibles del código.
+- Secretos: producción usa SOPS + age. Jamás commitear credenciales ni `.env` en
+  claro; solo archivos cifrados `*.enc.*`. No descifrar secretos fuera de despliegue.
+- No añadir dependencias nuevas ni servicios sin preguntar.
+- Respetar los límites de carpetas: no compartir código entre backend y frontend
+  salvo por la API (DRF/WebSocket).
+
+## Al terminar cualquier tarea
+- Ejecutar los tests del área tocada (`pytest` y/o `pnpm --filter frontend test`).
+- Pasar lint/formato (`ruff`/`black`, `eslint`/`prettier`, `cargo fmt`/`clippy`).
+- Verificar que el entorno Docker sigue levantando sin errores.
+
+### Rutas
+- `specs/constitution.md`: principios del proyecto
+- `specs/<feature>/spec.md`: requisitos de la feature
+- `specs/<feature>/plan.md`: diseño técnico
+- `specs/<feature>/tasks.md`: tareas de implementación
+
+`<feature>` es un nombre en kebab-case (por ejemplo, `login-con-google`).
+
+### Identificadores
+- `P-01` principios · `RF-001` requisitos funcionales · `S-01` supuestos · `C-01` hallazgos · `M-01` módulos · `D-01` decisiones · `T-001` tareas
+- Los `RF` nunca se renumeran. Los eliminados se marcan `OBSOLETO`, no se borran.
+
+### Estados
+Cada artefacto tiene una línea `Estado:` al principio. Solo pasa a aprobado cuando el usuario lo aprueba de forma explícita.
+- constitution.md: `borrador | aprobada`
+- spec.md: `borrador | aprobada`
+- plan.md: `borrador | aprobado`
+- tasks.md: `borrador | aprobado`
+
+### Configuración
+- `sdd.max_principios`: 10
+- `sdd.max_preguntas_spec`: 8
+- `sdd.max_archivos_tarea`: 3
+- `sdd.comando_tests`: pytest (backend) · `pnpm --filter frontend test` (frontend)
