@@ -16,6 +16,7 @@ dist-ssr/
 *.local
 coverage/
 .vite/
+.pnpm-store/
 
 # Python
 __pycache__/
@@ -29,6 +30,8 @@ venv/
 htmlcov/
 .coverage
 .coverage.*
+# Celery beat (se genera en runtime)
+backend/celerybeat-schedule
 
 # Rust / Tauri
 target/
