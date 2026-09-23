@@ -94,6 +94,9 @@ Secretos:
   o una llamada documentada (httpie/curl). Las tareas Celery y los canales
   WebSocket deben poder dispararse desde CLI para su verificación.
 - No añadir dependencias nuevas ni servicios sin preguntar.
+- Cualquier acción que requiera intervención humana (credenciales, claves, binarios,
+  instalaciones locales, decisiones de infraestructura) se anota como checklist en
+  `HUMAN_TODO.md` en vez de dejarla solo en la conversación.
 - Respetar los límites de carpetas: no compartir código entre backend y frontend
   salvo por la API (DRF/WebSocket).
 
@@ -104,6 +107,7 @@ Secretos:
 - Verificar que el entorno Docker sigue levantando sin errores.
 
 ### Rutas
+- `HUMAN_TODO.md`: acciones pendientes que requieren intervención humana
 - `specs/constitution.md`: principios del proyecto
 - `specs/<feature>/spec.md`: requisitos de la feature
 - `specs/<feature>/plan.md`: diseño técnico
