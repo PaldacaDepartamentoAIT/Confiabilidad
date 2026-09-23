@@ -8,8 +8,9 @@ django_asgi_app = get_asgi_application()
 
 from channels.auth import AuthMiddlewareStack  # noqa: E402
 from channels.routing import ProtocolTypeRouter, URLRouter  # noqa: E402
+from django.urls import URLPattern  # noqa: E402
 
-websocket_urlpatterns: list = []
+websocket_urlpatterns: list[URLPattern] = []
 
 application = ProtocolTypeRouter(
     {

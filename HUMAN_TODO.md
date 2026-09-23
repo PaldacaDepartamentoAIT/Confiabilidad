@@ -27,6 +27,12 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
   pnpm install                                   # crea pnpm-lock.yaml
   cd backend && pip install -r requirements-dev.txt
   ```
+  **Importante para el CI:** commitea `pnpm-lock.yaml`. El workflow usa
+  `pnpm install --frozen-lockfile` y fallará hasta que exista el lockfile.
+
+- [ ] **Branch protection en GitHub.** Para que el CI **bloquee** merges con checks en rojo:
+  Settings → Branches → Add rule sobre `main` → "Require status checks to pass"
+  y marca los jobs `Backend`, `Frontend`, `Desktop`, `Secretos`.
 
 - [ ] **`.env` local del backend.** Copia la plantilla y ajusta valores de dev:
   ```bash

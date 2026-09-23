@@ -14,6 +14,8 @@ export default defineConfig({
     setupFiles: "./src/setupTests.ts",
     coverage: {
       provider: "v8",
+      include: ["src/**/*.{ts,tsx}"],
+      exclude: ["src/main.tsx", "src/setupTests.ts", "src/vite-env.d.ts"],
       thresholds: {
         lines: 80,
       },
