@@ -17,19 +17,6 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
   sops secrets/prod.enc.yaml
   ```
 
-- [ ] **Iconos de Tauri.** Faltan los binarios en `desktop/src-tauri/icons/`. Genéralos una vez:
-  ```bash
-  pnpm --filter desktop tauri icon ruta/a/tu-icono.png
-  ```
-
-- [ ] **Lockfiles.** Instala dependencias una vez para fijar versiones reproducibles:
-  ```bash
-  pnpm install                                   # crea pnpm-lock.yaml
-  cd backend && pip install -r requirements-dev.txt
-  ```
-  **Importante para el CI:** commitea `pnpm-lock.yaml`. El workflow usa
-  `pnpm install --frozen-lockfile` y fallará hasta que exista el lockfile.
-
 - [ ] **Branch protection en GitHub.** Para que el CI **bloquee** merges con checks en rojo:
   Settings → Branches → Add rule sobre `main` → "Require status checks to pass"
   y marca los jobs `Backend`, `Frontend`, `Desktop`, `Secretos`.
@@ -45,3 +32,12 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
 ## Hecho
 
 <!-- Mueve aquí las tareas completadas, con fecha. -->
+
+- [x] **Lockfiles** (2026-09-23). `pnpm-lock.yaml` generado y commiteado (`0753a35`);
+  `pnpm install --frozen-lockfile` pasa igual que en el CI. `requirements-dev.txt`
+  presente (el backend instala en CI; no hay lockfile de Python que versionar).
+
+- [x] **Iconos de Tauri** (2026-09-23). Generados con `tauri icon` a partir de un
+  **placeholder temporal** (círculo azul con "C"); desbloquea el job Desktop del CI.
+  **Pendiente de diseño real:** reemplazar por el logo definitivo y regenerar con
+  `pnpm --filter desktop tauri icon ruta/a/logo.png`.
