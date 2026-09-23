@@ -5,7 +5,7 @@ Herramienta (web y de escritorio) para la gestión de activos en instalaciones
 industriales, basada en la filosofía de Confiabilidad Operacional.
 
 Stack: Django REST Framework + Channels (WebSocket) + Celery/Redis en el backend;
-React + JavaScript (Vite) en el frontend web; Tauri (Rust) como cliente de escritorio
+React + TypeScript (Vite) en el frontend web; Tauri (Rust) como cliente de escritorio
 que envuelve la app web. Todo dockerizado; secretos de producción cifrados con SOPS + age.
 
 ## Estructura
@@ -29,9 +29,13 @@ Tests:
 - Backend: `pytest`
 - Frontend: `pnpm --filter frontend test`  (Vitest)
 
+Tipos:
+- Backend: `mypy backend/`  (modo estricto)
+- Frontend/Desktop: `pnpm --filter frontend typecheck`  (`tsc --noEmit`, modo strict)
+
 Lint / formato:
 - Backend: `ruff check .` y `black .`
-- Frontend/Desktop JS: `pnpm lint` (ESLint) y `pnpm format` (Prettier)
+- Frontend/Desktop TS: `pnpm lint` (ESLint) y `pnpm format` (Prettier)
 - Rust: `cargo fmt` y `cargo clippy`
 
 Secretos (SOPS + age):
@@ -40,8 +44,8 @@ Secretos (SOPS + age):
 
 ## Estilo y convenciones
 - Código en inglés, según la convención de cada lenguaje:
-  - Python: PEP 8, snake_case, tipado donde aporte.
-  - JS/React: camelCase, componentes en PascalCase, ESLint + Prettier.
+  - Python: PEP 8, snake_case, tipado estático (mypy estricto).
+  - TS/React: camelCase, componentes en PascalCase, TypeScript en modo strict, ESLint + Prettier.
   - Rust: convención estándar (snake_case), rustfmt + clippy.
 - Comentarios en español, solo si son imprescindibles para entender el proceso
   o si el usuario los pide. Nada de comentarios obvios.
@@ -91,6 +95,7 @@ Secretos (SOPS + age):
 
 ## Al terminar cualquier tarea
 - Ejecutar los tests del área tocada (`pytest` y/o `pnpm --filter frontend test`).
+- Pasar tipos (`mypy backend/`, `pnpm --filter frontend typecheck`).
 - Pasar lint/formato (`ruff`/`black`, `eslint`/`prettier`, `cargo fmt`/`clippy`).
 - Verificar que el entorno Docker sigue levantando sin errores.
 
