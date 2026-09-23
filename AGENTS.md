@@ -38,9 +38,11 @@ Lint / formato:
 - Frontend/Desktop TS: `pnpm lint` (ESLint) y `pnpm format` (Prettier)
 - Rust: `cargo fmt` y `cargo clippy`
 
-Secretos (SOPS + age):
-- Editar: `sops secrets/prod.enc.yaml`
-- Nunca se commitea `.env` en claro; solo archivos `*.enc.*` cifrados.
+Secretos:
+- Desarrollo: `.env` local (gitignoreado) con valores de dev; `.env.example` versionado
+  como plantilla (claves sin valores reales). Docker Compose lo carga con `env_file:`.
+- Producción: secretos reales cifrados con SOPS + age. Editar: `sops secrets/prod.enc.yaml`.
+- `.env` nunca se commitea; en el repo solo van archivos `*.enc.*` cifrados y `.env.example`.
 
 ## Estilo y convenciones
 - Código en inglés, según la convención de cada lenguaje:
@@ -83,8 +85,10 @@ Secretos (SOPS + age):
 - No te acredites como agente/IA en ninguna parte: ni en mensajes de commit
   (sin `Co-Authored-By` ni firmas), ni en descripciones de PR, ni en comentarios
   o partes visibles del código.
-- Secretos: producción usa SOPS + age. Jamás commitear credenciales ni `.env` en
-  claro; solo archivos cifrados `*.enc.*`. No descifrar secretos fuera de despliegue.
+- Secretos: en desarrollo se usa `.env` local (gitignoreado) con valores de dev;
+  en producción los secretos reales van cifrados con SOPS + age. Jamás commitear
+  credenciales ni `.env`; solo archivos cifrados `*.enc.*` y el `.env.example`.
+  No descifrar secretos de producción fuera del despliegue.
 - Todo cambio de backend debe poder ejercitarse y reproducirse sin frontend:
   vía `pytest`, un management command (`manage.py …`), la API navegable de DRF
   o una llamada documentada (httpie/curl). Las tareas Celery y los canales
