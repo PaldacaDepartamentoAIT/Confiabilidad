@@ -81,6 +81,10 @@ Secretos (SOPS + age):
   o partes visibles del código.
 - Secretos: producción usa SOPS + age. Jamás commitear credenciales ni `.env` en
   claro; solo archivos cifrados `*.enc.*`. No descifrar secretos fuera de despliegue.
+- Todo cambio de backend debe poder ejercitarse y reproducirse sin frontend:
+  vía `pytest`, un management command (`manage.py …`), la API navegable de DRF
+  o una llamada documentada (httpie/curl). Las tareas Celery y los canales
+  WebSocket deben poder dispararse desde CLI para su verificación.
 - No añadir dependencias nuevas ni servicios sin preguntar.
 - Respetar los límites de carpetas: no compartir código entre backend y frontend
   salvo por la API (DRF/WebSocket).
