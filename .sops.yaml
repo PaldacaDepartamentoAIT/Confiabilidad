@@ -1,0 +1,5 @@
+# Reglas de cifrado de SOPS. Reemplaza el destinatario age por tu clave pública real
+# (genérala con `age-keygen -o age-key.txt` y copia aquí la línea `age1...`).
+creation_rules:
+  - path_regex: secrets/.*\.enc\.(ya?ml|json|env)$
+    age: "age1replace_me_with_your_real_public_key000000000000000000000000"

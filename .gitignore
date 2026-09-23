@@ -1,0 +1,41 @@
+# Secretos (nunca se commitean valores en claro)
+.env
+*.env
+!.env.example
+!*.enc.*
+# Claves privadas de age
+*.agekey
+*.age.key
+keys.txt
+age-key.txt
+
+# Node
+node_modules/
+dist/
+dist-ssr/
+*.local
+coverage/
+.vite/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+.coverage.*
+
+# Rust / Tauri
+target/
+desktop/src-tauri/gen/
+
+# Sistema operativo / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

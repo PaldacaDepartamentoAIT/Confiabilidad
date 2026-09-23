@@ -1,0 +1,60 @@
+name: confiabilidad
+
+x-backend: &backend
+  build:
+    context: ../backend
+  env_file:
+    - path: ../backend/.env
+      required: false
+  environment:
+    DJANGO_DEBUG: "1"
+    DATABASE_URL: postgres://confiabilidad:confiabilidad@db:5432/confiabilidad
+    REDIS_URL: redis://redis:6379/0
+  volumes:
+    - ../backend:/app
+  depends_on:
+    - db
+    - redis
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: confiabilidad
+      POSTGRES_USER: confiabilidad
+      POSTGRES_PASSWORD: confiabilidad
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  backend:
+    <<: *backend
+    command: python manage.py runserver 0.0.0.0:8000
+    ports:
+      - "8000:8000"
+
+  worker:
+    <<: *backend
+    command: celery -A config worker -l info
+
+  beat:
+    <<: *backend
+    command: celery -A config beat -l info
+
+  frontend:
+    image: node:20-slim
+    working_dir: /workspace
+    command: sh -c "corepack enable && pnpm install && pnpm --filter frontend dev --host"
+    volumes:
+      - ../:/workspace
+    ports:
+      - "5173:5173"
+
+volumes:
+  pgdata:
