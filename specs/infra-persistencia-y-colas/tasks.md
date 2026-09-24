@@ -41,7 +41,7 @@ Estado: aprobado
   los tres comandos son pequeños y cohesivos (una única superficie de verificación CLI) y
   comparten un solo test.
 
-- [ ] T-007 Registro de la tarea periódica de demo (solo desarrollo)
+- [x] T-007 Registro de la tarea periódica de demo (solo desarrollo)
   RF: RF-005 | Depende de: T-005, T-006 | Archivos: 3
   Hecho cuando: `cd backend && pytest apps/core/tests/test_beat_register.py -q` pasa —
   `demo_beat_register` crea (idempotente) un `IntervalSchedule` + `PeriodicTask` que apunta a
