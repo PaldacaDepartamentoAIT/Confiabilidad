@@ -16,7 +16,7 @@ plugins = ["mypy_django_plugin.main"]
 
 [[tool.mypy.overrides]]
 # Librerías de terceros sin type stubs: no bloqueamos por imports no tipados.
-module = ["environ.*", "celery.*", "channels.*", "channels_redis.*"]
+module = ["environ.*", "celery.*", "channels.*", "channels_redis.*", "django_celery_beat.*"]
 ignore_missing_imports = true
 
 [tool.django-stubs]

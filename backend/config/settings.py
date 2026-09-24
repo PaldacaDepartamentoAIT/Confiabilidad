@@ -21,6 +21,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "channels",
+    "django_celery_beat",
+    "apps.core",
 ]
 
 MIDDLEWARE = [
