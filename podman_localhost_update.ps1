@@ -14,7 +14,8 @@ $currentIp = $ipMatch.Groups[1].Value
 Write-Host "IP actual detectada de Podman: $currentIp" -ForegroundColor Green
 
 # 2. Puertos que deseas mapear (puedes agregar o quitar según necesites)
-$ports = @(5173, 8000)
+#    5173 frontend (Vite) · 8000 backend (Django) · 5432 Postgres · 6379 Redis
+$ports = @(5173, 8000, 5432, 6379)
 
 foreach ($port in $ports) {
     # Limpiar regla anterior si existe para evitar duplicados
@@ -23,7 +24,7 @@ foreach ($port in $ports) {
     # Crear la nueva regla de reenvío
     netsh interface portproxy add v4tov4 listenport=$port listenaddress=127.0.0.1 connectport=$port connectaddress=$currentIp
     
-    Write-Host "Puente configurado: localhost:$port -> $currentIp:$port" -ForegroundColor Cyan
+    Write-Host "Puente configurado: localhost:$port -> ${currentIp}:$port" -ForegroundColor Cyan
 }
 
 Write-Host "`¡Red configurada con éxito! Ya puedes usar localhost." -ForegroundColor Green
