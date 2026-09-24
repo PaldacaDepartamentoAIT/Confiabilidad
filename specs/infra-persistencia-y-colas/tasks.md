@@ -16,7 +16,7 @@ Estado: aprobado
   Excepción: incluye los `__init__.py` de andamiaje de `migrations/` y `tests/` (creados una
   sola vez); el trabajo real son `models.py`, la migración `0001_initial.py` y su test.
 
-- [ ] T-003 Caché de datos en Redis (`/1`)
+- [x] T-003 Caché de datos en Redis (`/1`)
   RF: RF-002 | Depende de: T-001 | Archivos: 3
   Hecho cuando: `cd backend && pytest apps/core/tests/test_cache.py -q` pasa (un `cache.set`
   seguido de `cache.get` devuelve el valor sobre el alias `default`).

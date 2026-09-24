@@ -1,4 +1,5 @@
 from pathlib import Path
+from urllib.parse import urlsplit, urlunsplit
 
 import environ
 
@@ -64,6 +65,21 @@ DATABASES = {
 }
 
 REDIS_URL = env("REDIS_URL", default="redis://localhost:6379/0")
+
+
+def _redis_url_with_db(url: str, db: int) -> str:
+    # Aísla usos de Redis en índices lógicos distintos (S-03).
+    return urlunsplit(urlsplit(url)._replace(path=f"/{db}"))
+
+
+CACHE_URL = env("CACHE_URL", default=_redis_url_with_db(REDIS_URL, 1))
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": CACHE_URL,
+    },
+}
 
 CHANNEL_LAYERS = {
     "default": {
