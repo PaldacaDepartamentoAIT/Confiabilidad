@@ -33,7 +33,7 @@ Estado: aprobado
   `record_ping.delay()` procesada por un worker real (fixture `celery_worker` + broker Redis)
   crea un `DemoRecord` con `source="task"`.
 
-- [ ] T-006 Management commands de verificación (`demo_seed`, `demo_cache`, `demo_task`)
+- [x] T-006 Management commands de verificación (`demo_seed`, `demo_cache`, `demo_task`)
   RF: RF-006 | Depende de: T-002, T-003, T-005 | Archivos: 6
   Hecho cuando: `cd backend && pytest apps/core/tests/test_commands.py -q` pasa y
   `python manage.py demo_seed`, `demo_cache` y `demo_task` se ejecutan sin error.
