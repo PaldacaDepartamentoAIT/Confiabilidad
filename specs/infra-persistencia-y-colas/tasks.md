@@ -9,7 +9,7 @@ Estado: aprobado
   + `apps.py` + `settings.INSTALLED_APPS`) junto con la dependencia (`requirements.txt`) y su
   override de mypy (`pyproject.toml`) no puede partirse sin dejar la app a medio registrar.
 
-- [ ] T-002 Modelo `DemoRecord` y migración inicial
+- [x] T-002 Modelo `DemoRecord` y migración inicial
   RF: RF-001 | Depende de: T-001 | Archivos: 5
   Hecho cuando: `cd backend && pytest apps/core/tests/test_models.py -q` pasa (crea y lee un
   `DemoRecord` en PostgreSQL).
