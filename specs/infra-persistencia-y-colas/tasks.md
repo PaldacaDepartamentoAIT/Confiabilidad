@@ -47,7 +47,7 @@ Estado: aprobado
   `demo_beat_register` crea (idempotente) un `IntervalSchedule` + `PeriodicTask` que apunta a
   `record_ping`; repetir el comando no duplica registros.
 
-- [ ] T-008 Beat con `DatabaseScheduler` e ignorar artefactos del scheduler de archivo
+- [x] T-008 Beat con `DatabaseScheduler` e ignorar artefactos del scheduler de archivo
   RF: RF-005 | Depende de: T-007 | Archivos: 2
   Hecho cuando: `docker compose -f docker/docker-compose.yml config` es válido y el servicio
   `beat` usa `--scheduler django_celery_beat.schedulers:DatabaseScheduler`; y
