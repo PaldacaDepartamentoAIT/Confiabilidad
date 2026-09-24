@@ -27,7 +27,7 @@ Estado: aprobado
   guarda y se recupera; el engine es de caché y el alias es `sessions`, distinto de la caché
   de datos).
 
-- [ ] T-005 Tarea Celery `record_ping` verificada con worker real
+- [x] T-005 Tarea Celery `record_ping` verificada con worker real
   RF: RF-004 | Depende de: T-002 | Archivos: 3
   Hecho cuando: `cd backend && pytest apps/core/tests/test_task_worker.py -q` pasa —
   `record_ping.delay()` procesada por un worker real (fixture `celery_worker` + broker Redis)
