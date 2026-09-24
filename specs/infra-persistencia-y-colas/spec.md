@@ -78,3 +78,7 @@ se comprueba por estado en BD.
   RF-003 y RF-005 ajustados; S-03 y S-04 ajustados; S-05 añadido; CA-3 y CA-4 ajustados.
   Decisiones: tarea periódica de demo solo en desarrollo; sesiones aisladas de la caché de
   datos; verificación de la cola con worker real; Redis como servicio requerido sin fail-open.
+- **2026-09-24 — Validación** — CUMPLIDA. Los 6 RF (RF-001…RF-006) y los criterios CA-1…CA-5
+  verificados con evidencia (suite 13/13, cobertura 100%, mypy/ruff/black limpios), en un
+  subagente con contexto limpio. Dos mejoras opcionales (no defectos) anotadas como T-009 y
+  T-010: test conductual de aislamiento de sesiones (RF-003) e higiene de la fixture eager (RF-004).

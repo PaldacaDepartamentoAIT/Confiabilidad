@@ -53,5 +53,17 @@ Estado: aprobado
   `beat` usa `--scheduler django_celery_beat.schedulers:DatabaseScheduler`; y
   `git check-ignore backend/celerybeat-schedule` responde (artefacto ignorado).
 
+- [ ] T-009 Test conductual de aislamiento de sesiones frente a `cache clear`
+  RF: RF-003 | Depende de: T-004 | Archivos: 1
+  Origen: validación (mejora opcional, no defecto)
+  Hecho cuando: un test guarda una sesión, ejecuta `caches["default"].clear()` y confirma que la
+  sesión sigue legible; la suite completa sigue en verde.
+
+- [ ] T-010 Aísla la mutación global de la fixture `eager_celery`
+  RF: RF-006 | Depende de: T-006 | Archivos: 1
+  Origen: validación (mejora opcional, higiene de test)
+  Hecho cuando: `eager_celery` deja de mutar de forma persistente la config global del app de
+  Celery (p. ej. vía `monkeypatch` o restauración garantizada) y `test_commands.py` sigue en verde.
+
 ## RF sin tarea
 Ninguno.
