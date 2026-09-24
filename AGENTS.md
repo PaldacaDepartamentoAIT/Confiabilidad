@@ -79,6 +79,8 @@ Secretos:
   - `hotfix` — corrección urgente en producción
   - `style` — formato/estilo sin cambios de lógica (lint, espacios)
   - `perf` — mejoras de rendimiento
+- Cada commit debe ser atómico: un único objetivo por commit. No mezcles cambios
+  sin relación entre sí; sepáralos en commits distintos.
 
 ## Reglas
 - Lee `specs/constitution.md` y la spec activa antes de tocar código.
