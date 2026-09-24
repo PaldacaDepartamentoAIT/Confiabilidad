@@ -17,18 +17,6 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
   sops secrets/prod.enc.yaml
   ```
 
-- [ ] **Branch protection en GitHub.** Para que el CI **bloquee** merges con checks en rojo:
-  Settings → Branches → Add rule sobre `main` → "Require status checks to pass"
-  y marca los jobs `Backend`, `Frontend`, `Desktop`, `Secretos`.
-
-- [ ] **`.env` local del backend.** Copia la plantilla y ajusta valores de dev:
-  ```bash
-  cp backend/.env.example backend/.env
-  ```
-
-- [ ] **Prerrequisitos locales** (si aún no los tienes): Docker + Compose, Node ≥ 20,
-  pnpm ≥ 9, Python 3.12, Rust estable + dependencias de sistema de Tauri.
-
 ## Hecho
 
 <!-- Mueve aquí las tareas completadas, con fecha. -->
@@ -41,3 +29,13 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
   **placeholder temporal** (círculo azul con "C"); desbloquea el job Desktop del CI.
   **Pendiente de diseño real:** reemplazar por el logo definitivo y regenerar con
   `pnpm --filter desktop tauri icon ruta/a/logo.png`.
+
+- [x] **Branch protection en GitHub** (2026-09-23). Regla sobre `main` con los checks
+  `Backend`, `Frontend`, `Desktop`, `Secretos` como obligatorios.
+
+- [x] **`.env` local del backend** (2026-09-23). Creado a partir de `.env.example`;
+  gitignoreado (no se versiona).
+
+- [x] **Prerrequisitos locales** (2026-09-24). Verificado todo en local: Podman 6.0.2
+  (runtime de contenedores), Node 24, pnpm 9.12, Python 3.12.10 (`py -3.12`), Rust
+  (rustup 1.29.1 / rustc 1.98.1) + Build Tools de C++.
