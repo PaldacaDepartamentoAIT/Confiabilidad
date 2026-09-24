@@ -21,7 +21,7 @@ Estado: aprobado
   Hecho cuando: `cd backend && pytest apps/core/tests/test_cache.py -q` pasa (un `cache.set`
   seguido de `cache.get` devuelve el valor sobre el alias `default`).
 
-- [ ] T-004 Sesiones en Redis aislado (`/2`)
+- [x] T-004 Sesiones en Redis aislado (`/2`)
   RF: RF-003 | Depende de: T-003 | Archivos: 3
   Hecho cuando: `cd backend && pytest apps/core/tests/test_sessions.py -q` pasa (una sesión se
   guarda y se recupera; el engine es de caché y el alias es `sessions`, distinto de la caché

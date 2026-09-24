@@ -73,13 +73,21 @@ def _redis_url_with_db(url: str, db: int) -> str:
 
 
 CACHE_URL = env("CACHE_URL", default=_redis_url_with_db(REDIS_URL, 1))
+SESSION_CACHE_URL = env("SESSION_CACHE_URL", default=_redis_url_with_db(REDIS_URL, 2))
 
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
         "LOCATION": CACHE_URL,
     },
+    "sessions": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": SESSION_CACHE_URL,
+    },
 }
+
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_CACHE_ALIAS = "sessions"
 
 CHANNEL_LAYERS = {
     "default": {
