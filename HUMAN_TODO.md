@@ -6,6 +6,16 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
 
 ## Pendiente
 
+- [ ] **Integrar la feature `infra-persistencia-y-colas`.** Implementada y validada (CUMPLIDA)
+  en la rama `feat/infra-persistencia-y-colas`. Súbela y abre el PR a `main` (la branch
+  protection exige PR; el CI correrá Backend/Frontend/Desktop/Secretos):
+  ```bash
+  git push -u origin feat/infra-persistencia-y-colas
+  gh pr create --base main --fill    # requiere `gh auth login` hecho; si no, abre el PR desde la web
+  ```
+  Quedan como **opcionales** las tareas T-009 y T-010 en
+  `specs/infra-persistencia-y-colas/tasks.md` (mejoras de tests, no bloqueantes).
+
 - [ ] **Clave age para SOPS.** Genera tu par de claves y pon la pública en `.sops.yaml`.
   ```bash
   age-keygen -o age-key.txt          # guarda age-key.txt FUERA del repo
