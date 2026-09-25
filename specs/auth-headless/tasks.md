@@ -18,7 +18,7 @@ Estado: aprobado
   `settings.py` (apps, `SITE_ID`, backends, middleware) + urls; indivisible para dejar la
   integración funcional.
 
-- [ ] T-003 Login del cliente navegador (cookie), CSRF y credenciales inválidas
+- [x] T-003 Login del cliente navegador (cookie), CSRF y credenciales inválidas
   RF: RF-002, RF-004, RF-005, RF-006 | Depende de: T-002 | Archivos: 3
   Hecho cuando: `cd backend && pytest apps/accounts/tests/test_login_browser.py -q` pasa: el login
   por email con CSRF establece la cookie de sesión y `GET .../auth/session` devuelve el usuario;
