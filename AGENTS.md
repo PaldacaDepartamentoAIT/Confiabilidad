@@ -107,6 +107,11 @@ Secretos:
 - Cada concepto que le genere dudas al usuario durante una feature se documenta en una sección
   **"Marco teórico"** de su `resumen.md`, explicado de forma accesible (qué es y por qué importa),
   para que quede como referencia reutilizable.
+- Aprobar una idea o decisión **no** aprueba su **redacción**. Antes de aplicar cualquier cambio
+  de texto o código (spec, plan, tareas, resumen, documentación o código), preséntalo al usuario y
+  ofrécele dos opciones: **Aceptar** o **Rechazar**. Si lo rechaza, permítele introducir una
+  corrección y vuelve a presentar la versión corregida. **No continúes con el flujo de trabajo
+  hasta que el usuario apruebe explícitamente.**
 
 ## Al terminar cualquier tarea
 - Ejecutar los tests del área tocada (`pytest` y/o `pnpm --filter frontend test`).
