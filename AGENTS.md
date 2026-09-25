@@ -104,6 +104,9 @@ Secretos:
 - Al terminar una feature, crea `specs/<feature>/resumen.md` con **qué se hizo** y **cómo un
   usuario corriente puede probarlo** (pasos concretos, ejecutables). Cuando algo de esa feature
   cambie, actualiza su resumen para que siempre refleje el estado real.
+- Cada concepto que le genere dudas al usuario durante una feature se documenta en una sección
+  **"Marco teórico"** de su `resumen.md`, explicado de forma accesible (qué es y por qué importa),
+  para que quede como referencia reutilizable.
 
 ## Al terminar cualquier tarea
 - Ejecutar los tests del área tocada (`pytest` y/o `pnpm --filter frontend test`).
@@ -117,7 +120,7 @@ Secretos:
 - `specs/<feature>/spec.md`: requisitos de la feature
 - `specs/<feature>/plan.md`: diseño técnico
 - `specs/<feature>/tasks.md`: tareas de implementación
-- `specs/<feature>/resumen.md`: resumen de qué se hizo y cómo probarlo (se crea al terminar la feature; se actualiza con cada cambio)
+- `specs/<feature>/resumen.md`: resumen de qué se hizo, cómo probarlo y **marco teórico** de los conceptos que generaron dudas (se crea al terminar la feature; se actualiza con cada cambio)
 
 `<feature>` es un nombre en kebab-case (por ejemplo, `login-con-google`).
 
