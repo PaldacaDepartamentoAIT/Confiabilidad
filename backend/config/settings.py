@@ -1,4 +1,5 @@
 from pathlib import Path
+from urllib.parse import urlsplit, urlunsplit
 
 import environ
 
@@ -21,6 +22,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "channels",
+    "django_celery_beat",
+    "apps.core",
 ]
 
 MIDDLEWARE = [
@@ -62,6 +65,29 @@ DATABASES = {
 }
 
 REDIS_URL = env("REDIS_URL", default="redis://localhost:6379/0")
+
+
+def _redis_url_with_db(url: str, db: int) -> str:
+    # Aísla usos de Redis en índices lógicos distintos (S-03).
+    return urlunsplit(urlsplit(url)._replace(path=f"/{db}"))
+
+
+CACHE_URL = env("CACHE_URL", default=_redis_url_with_db(REDIS_URL, 1))
+SESSION_CACHE_URL = env("SESSION_CACHE_URL", default=_redis_url_with_db(REDIS_URL, 2))
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": CACHE_URL,
+    },
+    "sessions": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": SESSION_CACHE_URL,
+    },
+}
+
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_CACHE_ALIAS = "sessions"
 
 CHANNEL_LAYERS = {
     "default": {

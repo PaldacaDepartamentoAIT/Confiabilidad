@@ -31,7 +31,8 @@ htmlcov/
 .coverage
 .coverage.*
 # Celery beat (se genera en runtime)
-backend/celerybeat-schedule
+backend/celerybeat-schedule*
+backend/celerybeat.pid
 
 # Rust / Tauri
 target/

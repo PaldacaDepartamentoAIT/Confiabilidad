@@ -45,7 +45,7 @@ services:
 
   beat:
     <<: *backend
-    command: celery -A config beat -l info
+    command: celery -A config beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
 
   frontend:
     image: node:20-slim

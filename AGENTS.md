@@ -101,6 +101,9 @@ Secretos:
   `HUMAN_TODO.md` en vez de dejarla solo en la conversación.
 - Respetar los límites de carpetas: no compartir código entre backend y frontend
   salvo por la API (DRF/WebSocket).
+- Al terminar una feature, crea `specs/<feature>/resumen.md` con **qué se hizo** y **cómo un
+  usuario corriente puede probarlo** (pasos concretos, ejecutables). Cuando algo de esa feature
+  cambie, actualiza su resumen para que siempre refleje el estado real.
 
 ## Al terminar cualquier tarea
 - Ejecutar los tests del área tocada (`pytest` y/o `pnpm --filter frontend test`).
@@ -114,6 +117,7 @@ Secretos:
 - `specs/<feature>/spec.md`: requisitos de la feature
 - `specs/<feature>/plan.md`: diseño técnico
 - `specs/<feature>/tasks.md`: tareas de implementación
+- `specs/<feature>/resumen.md`: resumen de qué se hizo y cómo probarlo (se crea al terminar la feature; se actualiza con cada cambio)
 
 `<feature>` es un nombre en kebab-case (por ejemplo, `login-con-google`).
 
