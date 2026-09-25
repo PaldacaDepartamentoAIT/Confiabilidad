@@ -24,7 +24,7 @@ Estado: aprobado
   por email con CSRF establece la cookie de sesión y `GET .../auth/session` devuelve el usuario;
   el login sin CSRF y con credenciales inválidas se rechazan.
 
-- [ ] T-004 Login del cliente de aplicación (token)
+- [x] T-004 Login del cliente de aplicación (token)
   RF: RF-003, RF-004 | Depende de: T-003 | Archivos: 1
   Hecho cuando: `cd backend && pytest apps/accounts/tests/test_login_app.py -q` pasa: el login del
   cliente app devuelve un token de sesión y, con `X-Session-Token`, `GET .../auth/session` devuelve
