@@ -36,7 +36,7 @@ Estado: aprobado
   `Origin` de Tauri permitido recibe las cabeceras CORS con credenciales; un origen no permitido no
   las recibe.
 
-- [ ] T-006 Endurecimiento de cookies y HTTPS en producción
+- [x] T-006 Endurecimiento de cookies y HTTPS en producción
   RF: RF-008, RF-009 | Depende de: T-002 | Archivos: 2
   Hecho cuando: `cd backend && pytest apps/accounts/tests/test_security_settings.py -q` pasa: bajo
   settings de producción, las cookies de sesión/CSRF son `Secure` (sesión además `HttpOnly`), y

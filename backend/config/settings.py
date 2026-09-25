@@ -142,6 +142,26 @@ CORS_ALLOWED_ORIGINS = env.list(
 )
 CORS_ALLOW_CREDENTIALS = True
 
+
+def security_settings(*, production: bool) -> dict[str, object]:
+    # Endurecimiento solo en producción (HTTPS tras proxy de confianza); en dev se relaja.
+    settings_map: dict[str, object] = {
+        "SECURE_PROXY_SSL_HEADER": ("HTTP_X_FORWARDED_PROTO", "https"),
+    }
+    if production:
+        settings_map.update(
+            {
+                "SESSION_COOKIE_SECURE": True,
+                "CSRF_COOKIE_SECURE": True,
+                "SESSION_COOKIE_HTTPONLY": True,
+                "SECURE_SSL_REDIRECT": True,
+            }
+        )
+    return settings_map
+
+
+globals().update(security_settings(production=not DEBUG))
+
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 USE_I18N = True
