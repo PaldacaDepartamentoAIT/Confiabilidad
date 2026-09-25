@@ -9,7 +9,7 @@ Estado: aprobado
   app (`apps/accounts/` + `apps.py`), la migración y el registro en `settings.INSTALLED_APPS` a la
   vez; incluye los `__init__.py` de `accounts/`, `migrations/` y `tests/`.
 
-- [ ] T-002 Integración de allauth headless y CORS (dependencias + registro + urls)
+- [x] T-002 Integración de allauth headless y CORS (dependencias + registro + urls)
   RF: RF-002 | Depende de: T-001 | Archivos: 4
   Hecho cuando: `cd backend && python manage.py check` no da errores con `allauth`,
   `allauth.account`, `allauth.headless`, `corsheaders` y `django.contrib.sites` instalados y
