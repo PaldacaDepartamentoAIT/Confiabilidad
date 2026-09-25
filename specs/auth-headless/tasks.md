@@ -30,7 +30,7 @@ Estado: aprobado
   cliente app devuelve un token de sesión y, con `X-Session-Token`, `GET .../auth/session` devuelve
   el usuario.
 
-- [ ] T-005 CORS para los orígenes de Tauri
+- [x] T-005 CORS para los orígenes de Tauri
   RF: RF-007 | Depende de: T-002 | Archivos: 3
   Hecho cuando: `cd backend && pytest apps/accounts/tests/test_cors.py -q` pasa: una petición con un
   `Origin` de Tauri permitido recibe las cabeceras CORS con credenciales; un origen no permitido no

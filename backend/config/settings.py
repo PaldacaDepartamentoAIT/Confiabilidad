@@ -131,6 +131,17 @@ ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_RATE_LIMITS: dict[str, object] = {}
 HEADLESS_ONLY = True
 
+# CORS: solo el cliente de escritorio Tauri (la web es mismo origen). Orígenes por entorno.
+CORS_ALLOWED_ORIGINS = env.list(
+    "CORS_ALLOWED_ORIGINS",
+    default=[
+        "tauri://localhost",
+        "https://tauri.localhost",
+        "http://localhost:1420",
+    ],
+)
+CORS_ALLOW_CREDENTIALS = True
+
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 USE_I18N = True
