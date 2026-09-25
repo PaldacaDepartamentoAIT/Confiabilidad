@@ -42,7 +42,7 @@ Estado: aprobado
   settings de producción, las cookies de sesión/CSRF son `Secure` (sesión además `HttpOnly`), y
   están activos `SECURE_SSL_REDIRECT` y `SECURE_PROXY_SSL_HEADER`.
 
-- [ ] T-007 Middleware de IP real tras proxy
+- [x] T-007 Middleware de IP real tras proxy
   RF: RF-010 | Depende de: — | Archivos: 3
   Hecho cuando: `cd backend && pytest apps/core/tests/test_real_ip.py -q` pasa: el middleware fija
   `REMOTE_ADDR` a la última entrada de `X-Forwarded-For` (un proxy de confianza).
