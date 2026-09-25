@@ -1,7 +1,7 @@
 # Tareas: auth-headless
 Estado: aprobado
 
-- [ ] T-001 Modelo `User` custom y `AUTH_USER_MODEL`
+- [x] T-001 Modelo `User` custom y `AUTH_USER_MODEL`
   RF: RF-001 | Depende de: — | Archivos: 8
   Hecho cuando: `cd backend && pytest apps/accounts/tests/test_user_model.py -q` pasa
   (`create_user`/`create_superuser`, email normalizado a minúsculas y único).
