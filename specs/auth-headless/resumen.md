@@ -45,6 +45,28 @@ del que se conectó; todo lo de la izquierda pudo falsificarlo el cliente. → L
 **última entrada** de `X-Forwarded-For`. Si se añaden más saltos de confianza (p. ej. un CDN), la
 posición se cuenta desde la derecha, por eso el número de proxies conviene dejarlo **configurable**.
 
+### Configuración gateada por variables de entorno (env-var gating)
+**Qué es.** "Gatear por variable de entorno" es hacer que un comportamiento se active o desactive
+según el valor de una variable de entorno, en vez de dejarlo fijo en el código. La app lee la
+variable al arrancar y decide.
+
+**Por qué se usa aquí.** El endurecimiento de seguridad (redirigir todo a HTTPS, cookies solo por
+HTTPS) tiene sentido en producción, pero **rompe los tests**: el cliente de test hace peticiones
+HTTP y `SECURE_SSL_REDIRECT` las respondería con una redirección **301** en vez de procesarlas.
+Hacía falta que el mismo código se comportara distinto según el entorno.
+
+**Cómo se hizo.** La app lee `DJANGO_SECURE_HARDENING` (por defecto `not DEBUG`): activo en
+producción, inactivo en desarrollo. El **CI** lo fija a `0` para correr los tests sin ese
+endurecimiento. Así la app queda **agnóstica al runner** (no "sabe" si corre bajo pytest): solo
+lee una variable, y cada entorno decide su comportamiento con su propia configuración, sin tocar
+código.
+
+**Ventaja sobre la alternativa.** Detectar el runner desde el código (p. ej. "¿estoy bajo
+pytest?") **acopla** la app a su herramienta de test (un *code smell*). Gatear por variable de
+entorno mantiene la separación: el código expone una palanca, el entorno la acciona. Es el
+principio de **config por entorno** (Twelve-Factor App): el mismo binario/imagen se comporta
+distinto según su configuración, no según ramas de código específicas del entorno.
+
 ## Qué se hizo
 Se integró **django-allauth en modo headless** con sus **dos clientes**:
 - **Navegador (web):** inicia sesión con email y contraseña; mantiene la sesión por **cookie** y
