@@ -42,6 +42,7 @@ jobs:
     env:
       DJANGO_SECRET_KEY: ci-insecure-key
       DJANGO_DEBUG: "0"
+      DJANGO_SECURE_HARDENING: "0"
       DATABASE_URL: postgres://confiabilidad:confiabilidad@localhost:5432/confiabilidad
       REDIS_URL: redis://localhost:6379/0
     steps:

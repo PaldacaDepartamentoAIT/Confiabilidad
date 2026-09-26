@@ -20,20 +20,29 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sites",
     "rest_framework",
     "channels",
+    "corsheaders",
+    "allauth",
+    "allauth.account",
+    "allauth.headless",
     "django_celery_beat",
     "apps.core",
+    "apps.accounts",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "apps.core.middleware.RealClientIPMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -105,6 +114,59 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
+
+AUTH_USER_MODEL = "accounts.User"
+
+SITE_ID = 1
+
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
+]
+
+# django-allauth (headless): cuenta local por email, sin verificación ni rate limiting (prueba).
+ACCOUNT_LOGIN_METHODS = {"email"}
+ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
+ACCOUNT_EMAIL_VERIFICATION = "none"
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+ACCOUNT_RATE_LIMITS: dict[str, object] = {}
+HEADLESS_ONLY = True
+
+# CORS: solo el cliente de escritorio Tauri (la web es mismo origen). Orígenes por entorno.
+CORS_ALLOWED_ORIGINS = env.list(
+    "CORS_ALLOWED_ORIGINS",
+    default=[
+        "tauri://localhost",
+        "https://tauri.localhost",
+        "http://localhost:1420",
+    ],
+)
+CORS_ALLOW_CREDENTIALS = True
+
+
+def security_settings(*, production: bool) -> dict[str, object]:
+    # Endurecimiento solo en producción (HTTPS tras proxy de confianza); en dev se relaja.
+    settings_map: dict[str, object] = {
+        "SECURE_PROXY_SSL_HEADER": ("HTTP_X_FORWARDED_PROTO", "https"),
+    }
+    if production:
+        settings_map.update(
+            {
+                "SESSION_COOKIE_SECURE": True,
+                "CSRF_COOKIE_SECURE": True,
+                "SESSION_COOKIE_HTTPONLY": True,
+                "SECURE_SSL_REDIRECT": True,
+            }
+        )
+    return settings_map
+
+
+# El endurecimiento se desactiva en el entorno de test (el CI fija DJANGO_SECURE_HARDENING=0),
+# porque el cliente de test hace HTTP y SECURE_SSL_REDIRECT devolvería 301. La lógica de
+# producción se verifica en test_security_settings.py.
+globals().update(
+    security_settings(production=env.bool("DJANGO_SECURE_HARDENING", default=not DEBUG))
+)
 
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
