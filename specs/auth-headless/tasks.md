@@ -47,7 +47,7 @@ Estado: aprobado
   Hecho cuando: `cd backend && pytest apps/core/tests/test_real_ip.py -q` pasa: el middleware fija
   `REMOTE_ADDR` a la última entrada de `X-Forwarded-For` (un proxy de confianza).
 
-- [ ] T-008 Comando `seed_test_user` (verificación por CLI)
+- [x] T-008 Comando `seed_test_user` (verificación por CLI)
   RF: RF-001 | Depende de: T-001 | Archivos: 4
   Hecho cuando: `cd backend && pytest apps/accounts/tests/test_seed_command.py -q` pasa: el comando
   crea (idempotente) el usuario de prueba por email.
