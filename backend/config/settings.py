@@ -161,7 +161,12 @@ def security_settings(*, production: bool) -> dict[str, object]:
     return settings_map
 
 
-globals().update(security_settings(production=not DEBUG))
+# El endurecimiento se desactiva en el entorno de test (el CI fija DJANGO_SECURE_HARDENING=0),
+# porque el cliente de test hace HTTP y SECURE_SSL_REDIRECT devolvería 301. La lógica de
+# producción se verifica en test_security_settings.py.
+globals().update(
+    security_settings(production=env.bool("DJANGO_SECURE_HARDENING", default=not DEBUG))
+)
 
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"

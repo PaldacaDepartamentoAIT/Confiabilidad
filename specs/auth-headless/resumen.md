@@ -58,8 +58,10 @@ Incluye:
 - **Cuenta local por email** (sin signup ni verificación de email, es de prueba); consulta de la
   sesión actual y rechazo de credenciales inválidas.
 - **CORS** con credenciales para los orígenes de Tauri (multiplataforma, configurables por entorno).
-- **Endurecimiento solo en producción**: cookies `Secure`/`HttpOnly` y redirección a HTTPS;
-  reconocimiento del HTTPS reenviado por el proxy.
+- **Endurecimiento en producción**: cookies `Secure`/`HttpOnly`, redirección a HTTPS y
+  reconocimiento del HTTPS reenviado por el proxy. Se activa según `DJANGO_SECURE_HARDENING`
+  (por defecto `not DEBUG`); en tests/CI se desactiva (`DJANGO_SECURE_HARDENING=0`) para que el
+  cliente de test HTTP no reciba redirecciones 301.
 - **IP real tras proxy**: middleware que toma la última entrada de `X-Forwarded-For`.
 - Comando **`seed_test_user`** para crear el usuario de prueba por CLI.
 - Rate limiting **desactivado** en esta prueba (se reactivará en la auth definitiva).
