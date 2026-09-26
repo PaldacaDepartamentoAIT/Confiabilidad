@@ -1,7 +1,5 @@
 # Resumen — auth-headless
-Estado: en progreso · Última actualización: 2026-09-25
-
-> Las secciones "Qué se hizo" y "Cómo probarlo" se completan al terminar la feature.
+Estado: validada (CUMPLIDA) · Última actualización: 2026-09-25
 
 ## Marco teórico
 Conceptos que surgieron durante esta feature, explicados de forma accesible para dejar
@@ -48,7 +46,61 @@ del que se conectó; todo lo de la izquierda pudo falsificarlo el cliente. → L
 posición se cuenta desde la derecha, por eso el número de proxies conviene dejarlo **configurable**.
 
 ## Qué se hizo
-_(pendiente — se completa al terminar la feature)_
+Se integró **django-allauth en modo headless** con sus **dos clientes**:
+- **Navegador (web):** inicia sesión con email y contraseña; mantiene la sesión por **cookie** y
+  exige **CSRF** en el login.
+- **App (escritorio/Tauri):** inicia sesión y recibe un **token de sesión** que envía en la
+  cabecera **`X-Session-Token`**.
+
+Incluye:
+- **Modelo `User` custom** mínimo (email como identificador, único, normalizado a minúsculas) —
+  placeholder que la feature de "modelos completos" extenderá.
+- **Cuenta local por email** (sin signup ni verificación de email, es de prueba); consulta de la
+  sesión actual y rechazo de credenciales inválidas.
+- **CORS** con credenciales para los orígenes de Tauri (multiplataforma, configurables por entorno).
+- **Endurecimiento solo en producción**: cookies `Secure`/`HttpOnly` y redirección a HTTPS;
+  reconocimiento del HTTPS reenviado por el proxy.
+- **IP real tras proxy**: middleware que toma la última entrada de `X-Forwarded-For`.
+- Comando **`seed_test_user`** para crear el usuario de prueba por CLI.
+- Rate limiting **desactivado** en esta prueba (se reactivará en la auth definitiva).
+
+Calidad: 27 tests en verde, cobertura 99 %, `ruff`/`black`/`mypy` limpios. Validación
+independiente **CUMPLIDA** (ver `spec.md` → Historial).
 
 ## Cómo probarlo (usuario)
-_(pendiente — se completa al terminar la feature)_
+Requisitos: **Podman**. Terminal en la raíz del repo, rama `feat/auth-headless`.
+
+**Prueba automática (rápida):** usa el contenedor de test de la red de Podman.
+```powershell
+podman exec conf-test pytest apps/accounts/tests/ -v --no-cov
+```
+
+**Prueba en vivo por HTTP.** Resetea la BD de dev (por el cambio de `AUTH_USER_MODEL`) y levanta
+el stack:
+```powershell
+podman compose -f docker/docker-compose.yml down -v
+podman compose -f docker/docker-compose.yml build backend
+podman compose -f docker/docker-compose.yml up -d db redis backend
+podman compose -f docker/docker-compose.yml exec backend python manage.py migrate
+podman compose -f docker/docker-compose.yml exec backend python manage.py seed_test_user
+```
+
+Cliente **app (token)**:
+```powershell
+# Login → devuelve meta.session_token
+podman compose -f docker/docker-compose.yml exec backend http POST localhost:8000/_allauth/app/v1/auth/login email=test@example.com password=test-password-123
+# Sesión autenticada con el token
+podman compose -f docker/docker-compose.yml exec backend http GET localhost:8000/_allauth/app/v1/auth/session X-Session-Token:<TOKEN>
+```
+
+Cliente **navegador (cookie + CSRF)**:
+```powershell
+# 1) 401 + entrega la cookie csrftoken (es normal, aún no hay login)
+podman compose -f docker/docker-compose.yml exec backend http --session=web GET localhost:8000/_allauth/browser/v1/auth/session
+# 2) Login enviando el csrftoken como cabecera
+podman compose -f docker/docker-compose.yml exec backend http --session=web POST localhost:8000/_allauth/browser/v1/auth/login email=test@example.com password=test-password-123 X-CSRFToken:<CSRFTOKEN>
+# 3) 200 autenticado (por cookie de sesión)
+podman compose -f docker/docker-compose.yml exec backend http --session=web GET localhost:8000/_allauth/browser/v1/auth/session
+```
+
+Credenciales del usuario de prueba: `test@example.com` / `test-password-123`.
