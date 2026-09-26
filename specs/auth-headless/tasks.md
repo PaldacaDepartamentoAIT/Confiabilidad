@@ -54,5 +54,23 @@ Estado: aprobado
   Excepción: incluye los `__init__.py` de `management/` y `management/commands/` (andamiaje, una
   sola vez) además del comando y su test.
 
+- [ ] T-009 Test de credenciales inválidas por el cliente de token
+  RF: RF-005 | Depende de: T-004 | Archivos: 1
+  Origen: validación (mejora opcional, no defecto)
+  Hecho cuando: un test del cliente app (token) con contraseña incorrecta se rechaza sin emitir
+  token; la suite completa sigue en verde.
+
+- [ ] T-010 Test de unicidad case-insensitive del email con dos casings
+  RF: RF-001 | Depende de: T-001 | Archivos: 1
+  Origen: validación (mejora opcional)
+  Hecho cuando: crear el mismo email con distinto casing (p. ej. `Dup@x.com` y `dup@x.com`) vía
+  `create_user` se rechaza como duplicado; la suite sigue en verde.
+
+- [ ] T-011 Alinear plan.md con la ubicación real de los tests
+  RF: — | Depende de: — | Archivos: 1
+  Origen: validación (desviación menor plan↔código)
+  Hecho cuando: `plan.md` refleja que el caso de credenciales inválidas vive en
+  `test_login_browser.py` (no en un `test_invalid_credentials.py` separado).
+
 ## RF sin tarea
 Ninguno.

@@ -96,3 +96,6 @@ ni la dirección del proxy.
 - 2026-09-25 — Creación (feature nueva) — RF: RF-001…RF-010 — Estado: clarificado
 - 2026-09-25 — Clarificación — RF: RF-001, RF-006, RF-007, RF-010 ajustados; S-06…S-09 añadidos;
   rate limiting fuera de alcance — Estado: clarificado
+- 2026-09-25 — Validación: CUMPLIDA — RF: RF-001…RF-010 (todos verificados con evidencia:
+  suite 27/27, cobertura 99%, estáticos limpios) — validado por subagente con contexto limpio;
+  3 observaciones no bloqueantes → T-009, T-010, T-011
