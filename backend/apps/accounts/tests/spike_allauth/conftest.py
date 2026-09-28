@@ -1,11 +1,15 @@
+import importlib
 import re
 import uuid
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 from typing import Any
 
 import pytest
+from django.conf import settings as django_settings
 from django.core import mail
 from django.test import Client
+from django.urls import clear_url_caches
 
 SPIKE_PASSWORD = "Spike-Passw0rd!"
 CODE_PATTERN = re.compile(r"^[A-Z0-9]{4}-[A-Z0-9]{4}$", re.MULTILINE)
@@ -63,6 +67,24 @@ def spike_settings(settings: Any) -> Any:
     settings.ACCOUNT_EMAIL_VERIFICATION = "mandatory"
     settings.ACCOUNT_EMAIL_VERIFICATION_BY_CODE_ENABLED = True
     return settings
+
+
+def _rebuild_headless_urls() -> None:
+    # allauth registra las rutas de login por código al importar su módulo de URLs, y el urlconf
+    # raíz guarda en caché las rutas incluidas; tras cambiar el setting hay que recargar ambos.
+    importlib.reload(importlib.import_module("allauth.headless.urls"))
+    importlib.reload(importlib.import_module(django_settings.ROOT_URLCONF))
+    clear_url_caches()
+
+
+@pytest.fixture
+def login_by_code_settings(spike_settings: Any) -> Iterator[Any]:
+    spike_settings.ACCOUNT_LOGIN_BY_CODE_ENABLED = True
+    spike_settings.HEADLESS_FRONTEND_URLS = {"account_signup": "https://app.example.com/signup"}
+    _rebuild_headless_urls()
+    yield spike_settings
+    spike_settings.ACCOUNT_LOGIN_BY_CODE_ENABLED = False
+    _rebuild_headless_urls()
 
 
 @pytest.fixture(params=["browser", "app"])

@@ -14,7 +14,7 @@ Todas las rutas son relativas a `backend/apps/accounts/tests/spike_allauth/` sal
   Incluye comprobar que la base de datos de tests está disponible en el entorno; si no, se anota
   en `HUMAN_TODO.md`.
 
-- [ ] T-002 Código para un correo desconocido (browser + app)
+- [x] T-002 Código para un correo desconocido (browser + app)
   RF: RF-002 | Depende de: T-001 | Archivos: 3
   Archivos: `urls.py` (urlconf reconstruido tras el override), `conftest.py` (recarga del urlconf),
   `test_q1_user_existence.py`.
