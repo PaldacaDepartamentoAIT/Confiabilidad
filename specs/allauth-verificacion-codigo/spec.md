@@ -1,5 +1,5 @@
 # Spec: allauth-verificacion-codigo
-Estado: borrador
+Estado: aprobada
 Tipo: spike (entregable: decisión D-01)
 
 ## Objetivo (por qué)
