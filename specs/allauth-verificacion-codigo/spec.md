@@ -27,30 +27,44 @@ deberá determinar, para cada cliente, si existe una fila de usuario antes de va
 dejar esa observación como un caso reproducible.
 
 ### RF-002 Código para un correo desconocido
-Cuando se solicite un código de acceso para un correo sin usuario, el spike deberá determinar,
-para cada cliente, si allauth emite un código y si validarlo permite crear el usuario en ese
-momento, y dejarlo como un caso reproducible.
+Cuando se solicite un código de acceso para un correo sin usuario, con la protección contra la
+enumeración de cuentas activa (misma respuesta exista o no el usuario), el spike deberá
+determinar, para cada cliente, si allauth emite un código real (que llega al buzón de salida) y
+si validarlo permite crear el usuario en ese momento, y dejarlo como un caso reproducible. Una
+respuesta de "enviado" sin código en el buzón cuenta como que no emite código.
 
 ### RF-003 Reutilización del código en la misma sesión
 Cuando un código ya se haya validado correctamente, el spike deberá determinar, para cada cliente,
-si una segunda validación del mismo código en la misma sesión se acepta.
+si se acepta una segunda validación del mismo código en la misma sesión.
 
 ### RF-004 Validación desde otra sesión
 Cuando el código se presente desde una sesión distinta de la que lo solicitó, tanto antes como
 después de una primera validación, el spike deberá determinar, para cada cliente, si se acepta.
+RF-004 es el único requisito que responde al caso "desde otra sesión" de Q2.
 
 ### RF-005 Entrada tardía en allauth
-Cuando un usuario con el correo verificado se haya creado fuera del flujo de registro de allauth,
-el spike deberá comprobar que ese usuario inicia sesión desde ambos clientes (cookie y token) y
-que la consulta de sesión lo devuelve.
+Mientras la verificación obligatoria del correo esté activa, cuando un usuario con el correo
+marcado como verificado se haya creado fuera del flujo de registro de allauth, el spike deberá
+comprobar que ese usuario inicia sesión desde ambos clientes (cookie y token) y que la consulta de
+sesión lo devuelve.
 
 ### RF-006 Decisión escrita
 El spike deberá dejar por escrito la respuesta a Q1 y a Q2 (sí o no, por cliente, con la
 evidencia que la respalda) y la decisión D-01 sobre qué parte del registro queda dentro de allauth.
+Si una pregunta funciona en un cliente y no en el otro, se buscará una alternativa rápida (dentro
+del criterio común) que funcione en ambos. Si no la hay, la respuesta será "no", indicando en qué
+cliente funcionó y en cuál no.
 
 ### RF-007 Respuesta sin forzar la librería
 Si una pregunta no puede resolverse afirmativamente con settings o con el adapter, entonces el
 spike deberá responderla "no" con la evidencia reunida, sin recurrir a partes internas de allauth.
+Cada "no" irá acompañado de la lista de settings y métodos del adapter probados, y el código del
+spike solo importará de allauth su adapter y sus settings (nunca vistas, formularios ni módulos
+internos), lo cual se comprueba en la revisión.
+
+### RF-008 Reenvío del código
+Cuando se solicite de nuevo el código para una verificación pendiente, el spike deberá
+determinar, para cada cliente, si el código anterior deja de aceptarse y si se emite uno nuevo.
 
 ## Supuestos
 - S-01 El código se consumirá al completar el registro (al fijar la contraseña), no al validarlo.
@@ -67,6 +81,14 @@ spike deberá responderla "no" con la evidencia reunida, sin recurrir a partes i
   observado, de modo que se detecte si un cambio de versión lo altera.
 - S-06 La configuración de verificación que necesitan los experimentos no altera el
   comportamiento vigente de `auth-headless`, que tiene la verificación desactivada.
+- S-07 Los tests de caracterización no son funcionalidad, así que no siguen la secuencia de P-04
+  (test que falla → implementación). Cualquier código de producción sí la sigue.
+- S-08 El código de configuración o adapter que necesite el spike vive en los tests. Solo pasa a
+  producción si D-01 lo adopta, con su propio ciclo TDD y con la suite de `auth-headless` en
+  verde.
+- S-09 En el registro definitivo, pedir el código de nuevo invalida el anterior y envía uno nuevo
+  por correo. Los enlaces enviados siguen funcionando hasta que caducan, porque pertenecen al
+  registro pendiente propio (S-04), no a allauth.
 
 ## Fuera de alcance
 - Implementar el registro definitivo (registro pendiente, public id, pantallas).
@@ -77,7 +99,8 @@ spike deberá responderla "no" con la evidencia reunida, sin recurrir a partes i
 - Proveedores sociales.
 
 ## Criterios de finalización
-- CF-1 Q1 y Q2 tienen respuesta escrita por cliente, con evidencia (RF-001…RF-004, RF-007).
+- CF-1 Q1 y Q2 tienen respuesta escrita por cliente, con evidencia (RF-001…RF-004, RF-007,
+  RF-008).
 - CF-2 RF-005 verificado en ambos clientes.
 - CF-3 La decisión D-01 está escrita en `resumen.md`.
 - CF-4 La suite `pytest` está en verde con cobertura ≥ 80 %, `mypy`/`ruff`/`black` están limpios y
@@ -85,3 +108,5 @@ spike deberá responderla "no" con la evidencia reunida, sin recurrir a partes i
 
 ## Historial de cambios
 - 2026-09-28 — Creación (spike nuevo) — RF: RF-001…RF-007 — Estado: pendiente de clarificar
+- 2026-09-28 — Clarificación (C-01…C-08) — RF: RF-002…RF-007 ajustados; RF-008 añadido;
+  S-07…S-09 añadidos — Estado: clarificado
