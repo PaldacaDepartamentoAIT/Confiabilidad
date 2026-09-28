@@ -41,7 +41,7 @@ Todas las rutas son relativas a `backend/apps/accounts/tests/spike_allauth/` sal
   Hecho cuando: el caso de RF-008 pasa afirmando si el código anterior se rechaza tras el reenvío
   y si llega uno nuevo; suite verde.
 
-- [ ] T-006 Entrada tardía desde un registro pendiente (browser + app)
+- [x] T-006 Entrada tardía desde un registro pendiente (browser + app)
   RF: RF-005 | Depende de: T-001 | Archivos: 1
   Archivos: `test_late_entry.py`.
   Hecho cuando: `pytest .../test_late_entry.py -q` pasa: el registro pendiente simulado, al fijar
