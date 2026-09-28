@@ -1,5 +1,5 @@
 # Spec: allauth-verificacion-codigo
-Estado: borrador
+Estado: aprobada
 Tipo: spike (entregable: decisión D-01)
 
 ## Objetivo (por qué)
@@ -15,8 +15,8 @@ Antes de diseñarlo hay que saber si django-allauth soporta dos condiciones de e
 La respuesta decide qué parte del registro va dentro de allauth y qué parte fuera (D-01).
 Hipótesis de partida: el registro va fuera de allauth; el inicio de sesión y las sesiones, dentro.
 Diseño previsto para el registro definitivo (S-10): los datos de quien se registra se guardan en
-un registro pendiente propio, y solo al confirmar el código se crea la fila en la tabla de
-usuarios.
+un registro pendiente propio, y solo al fijar la contraseña, tras confirmar el código, se crea la
+fila en la tabla de usuarios.
 
 ## Requisitos funcionales
 Criterio común: "allauth lo permite" significa que se consigue con settings documentados o
@@ -46,12 +46,12 @@ después de una primera validación, el spike deberá determinar, para cada clie
 RF-004 es el único requisito que responde al caso "desde otra sesión" de Q2.
 
 ### RF-005 Entrada tardía en allauth
-Mientras la verificación obligatoria del correo esté activa, cuando los datos de un registro
-pendiente guardado fuera de allauth se confirmen y se conviertan en un usuario con el correo
-marcado como verificado, el spike deberá comprobar que:
-- antes de la confirmación no existe ninguna fila de usuario para ese correo;
-- después, ese usuario inicia sesión desde ambos clientes (cookie y token) y la consulta de
-  sesión lo devuelve.
+Mientras la verificación obligatoria del correo esté activa, cuando se fije la contraseña de un
+registro pendiente guardado fuera de allauth, con su código ya confirmado, y sus datos se
+conviertan a través de allauth en un usuario con el correo marcado como verificado, el spike
+deberá comprobar que ese usuario inicia sesión desde ambos clientes (cookie y token) y que la
+consulta de sesión lo devuelve. "A través de allauth" significa usar su adapter o los gestores de
+sus modelos públicos (RF-007), sin escribir directamente en sus tablas.
 
 ### RF-006 Decisión escrita
 El spike deberá dejar por escrito la respuesta a Q1 y a Q2 (sí o no, por cliente, con la
@@ -96,8 +96,8 @@ determinar, para cada cliente, si el código anterior deja de aceptarse y si se 
   por correo. Los enlaces enviados siguen funcionando hasta que caducan, porque pertenecen al
   registro pendiente propio (S-04), no a allauth.
 - S-10 El registro definitivo usará un registro pendiente propio, fuera de allauth: guarda los
-  datos hasta confirmar el código y, al confirmar, crea el usuario y marca su correo como
-  verificado. En el spike ese registro pendiente solo se simula dentro de los tests (S-08); su
+  datos y el hecho de que el código se confirmó, y al fijar la contraseña crea el usuario a
+  través de allauth con su correo marcado como verificado. En el spike ese registro pendiente solo se simula dentro de los tests (S-08); su
   implementación real es otra feature.
 
 ## Fuera de alcance
@@ -121,4 +121,6 @@ determinar, para cada cliente, si el código anterior deja de aceptarse y si se 
 - 2026-09-28 — Clarificación (C-01…C-08) — RF: RF-002…RF-007 ajustados; RF-008 añadido;
   S-07…S-09 añadidos — Estado: clarificado
 - 2026-09-28 — Cambio: diseño previsto del registro pendiente; entrada tardía desde un registro
-  pendiente; modelos públicos permitidos — RF: RF-005, RF-007 — Estado: pendiente de clarificar
+  pendiente; modelos públicos permitidos — RF: RF-005, RF-007 — Estado: clarificado
+- 2026-09-28 — Clarificación (C-09…C-11): el usuario se crea al fijar la contraseña; la
+  conversión pasa por allauth — RF: RF-005 ajustado; S-10 ajustado — Estado: clarificado
