@@ -61,7 +61,7 @@ Todas las rutas son relativas a `backend/apps/accounts/tests/spike_allauth/` sal
   del código, afirmando lo observado; si no hay ninguno, queda escrito en `test_q2_code_reuse.py`
   qué se revisó; suite verde.
 
-- [ ] T-009 Informe y decisión D-01
+- [x] T-009 Informe y decisión D-01
   RF: RF-006, RF-007 | Depende de: T-001…T-008 | Archivos: 1
   Archivos: `specs/allauth-verificacion-codigo/resumen.md`.
   Hecho cuando: `resumen.md` contiene la tabla Q1/Q2 por cliente con el test que la respalda, la
