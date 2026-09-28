@@ -5,7 +5,7 @@ Todas las rutas son relativas a `backend/apps/accounts/tests/spike_allauth/` sal
 "Suite verde" = `cd backend && pytest -q` (incluida `auth-headless`) + `mypy .` + `ruff check .` +
 `black --check .` sin errores.
 
-- [ ] T-001 Andamiaje del spike y existencia del usuario en el signup (browser + app)
+- [x] T-001 Andamiaje del spike y existencia del usuario en el signup (browser + app)
   RF: RF-001 | Depende de: — | Archivos: 3
   Archivos: `__init__.py`, `conftest.py` (settings de verificación por test, cliente
   parametrizado browser/app, extracción del código del buzón), `test_q1_user_existence.py`.
