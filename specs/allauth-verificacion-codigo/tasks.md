@@ -27,7 +27,7 @@ Todas las rutas son relativas a `backend/apps/accounts/tests/spike_allauth/` sal
   Hecho cuando: `pytest .../test_q2_code_reuse.py -q` pasa afirmando si se acepta una segunda
   validación del mismo código en la misma sesión; suite verde.
 
-- [ ] T-004 Validación desde otra sesión (browser + app)
+- [x] T-004 Validación desde otra sesión (browser + app)
   RF: RF-004 | Depende de: T-003 | Archivos: 1
   Archivos: `test_q2_code_reuse.py`.
   Hecho cuando: los casos de RF-004 pasan afirmando si el código se acepta desde otra sesión,
