@@ -21,7 +21,7 @@ Todas las rutas son relativas a `backend/apps/accounts/tests/spike_allauth/` sal
   Hecho cuando: el caso de RF-002 pasa afirmando si llega un código real al buzón y si validarlo
   crea el usuario, con la protección antienumeración activa; suite verde.
 
-- [ ] T-003 Segunda validación en la misma sesión (browser + app)
+- [x] T-003 Segunda validación en la misma sesión (browser + app)
   RF: RF-003 | Depende de: T-001 | Archivos: 1
   Archivos: `test_q2_code_reuse.py`.
   Hecho cuando: `pytest .../test_q2_code_reuse.py -q` pasa afirmando si se acepta una segunda
