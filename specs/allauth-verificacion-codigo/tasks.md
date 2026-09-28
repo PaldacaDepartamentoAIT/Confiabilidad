@@ -48,7 +48,7 @@ Todas las rutas son relativas a `backend/apps/accounts/tests/spike_allauth/` sal
   la contraseña, se convierte en usuario a través de allauth (D-09) y ese usuario inicia sesión y
   aparece en la consulta de sesión en ambos clientes; suite verde.
 
-- [ ] T-007 Variantes "config + adapter" para Q1
+- [x] T-007 Variantes "config + adapter" para Q1
   RF: RF-007, RF-001 | Depende de: T-002 | Archivos: 2
   Archivos: `adapters.py`, `test_q1_user_existence.py`.
   Hecho cuando: los casos de las variantes de Q1 (`save_user` sin persistir,
