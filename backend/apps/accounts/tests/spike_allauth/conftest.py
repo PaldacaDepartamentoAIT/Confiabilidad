@@ -66,6 +66,9 @@ def latest_code(email: str) -> str:
 def spike_settings(settings: Any) -> Any:
     settings.ACCOUNT_EMAIL_VERIFICATION = "mandatory"
     settings.ACCOUNT_EMAIL_VERIFICATION_BY_CODE_ENABLED = True
+    # Todas las peticiones de test vienen de 127.0.0.1, así que el límite de allauth de 20
+    # registros por minuto e IP se agota con la propia suite; no es objeto del spike.
+    settings.ACCOUNT_RATE_LIMITS = {"signup": None}
     return settings
 
 

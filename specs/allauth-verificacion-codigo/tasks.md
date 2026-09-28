@@ -33,8 +33,10 @@ Todas las rutas son relativas a `backend/apps/accounts/tests/spike_allauth/` sal
   Hecho cuando: los casos de RF-004 pasan afirmando si el código se acepta desde otra sesión,
   antes y después de una primera validación; suite verde.
 
-- [ ] T-005 Reenvío del código (browser + app)
+- [x] T-005 Reenvío del código (browser + app)
   RF: RF-008 | Depende de: T-003 | Archivos: 1
+  Excepción: se tocó también `conftest.py` para desactivar el límite de signups por IP de allauth,
+  que la propia suite agota (hallazgo de esta tarea).
   Archivos: `test_q2_code_reuse.py`.
   Hecho cuando: el caso de RF-008 pasa afirmando si el código anterior se rechaza tras el reenvío
   y si llega uno nuevo; suite verde.

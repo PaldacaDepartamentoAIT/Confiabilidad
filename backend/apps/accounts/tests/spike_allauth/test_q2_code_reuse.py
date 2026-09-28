@@ -2,6 +2,7 @@ from typing import Any
 
 import pytest
 from allauth.account.models import EmailAddress
+from django.core import mail
 
 from apps.accounts.tests.spike_allauth.conftest import (
     SPIKE_PASSWORD,
@@ -54,3 +55,41 @@ def test_code_from_another_session_is_rejected_after_validation(
 
     assert original_status == 200
     assert other_status == 409
+
+
+@pytest.mark.django_db
+def test_immediate_resend_is_rate_limited_and_keeps_old_code(
+    spike_settings: Any, headless_client: HeadlessClient, unique_email: str
+) -> None:
+    spike_settings.ACCOUNT_EMAIL_VERIFICATION_SUPPORTS_RESEND = True
+    headless_client.post("/auth/signup", {"email": unique_email, "password": SPIKE_PASSWORD})
+    old_code = latest_code(unique_email)
+
+    resend_status, _ = headless_client.post("/auth/email/verify/resend", {})
+    sent = [m for m in mail.outbox if unique_email in m.to]
+    old_status, _ = headless_client.post("/auth/email/verify", {"key": old_code})
+
+    assert resend_status == 429
+    assert len(sent) == 1
+    assert old_status == 200
+
+
+@pytest.mark.django_db
+def test_resend_invalidates_old_code_and_issues_new_one(
+    spike_settings: Any, headless_client: HeadlessClient, unique_email: str
+) -> None:
+    spike_settings.ACCOUNT_EMAIL_VERIFICATION_SUPPORTS_RESEND = True
+    spike_settings.ACCOUNT_RATE_LIMITS = {"signup": None, "confirm_email": None}
+    headless_client.post("/auth/signup", {"email": unique_email, "password": SPIKE_PASSWORD})
+    old_code = latest_code(unique_email)
+
+    resend_status, _ = headless_client.post("/auth/email/verify/resend", {})
+    new_code = latest_code(unique_email)
+    old_status, old_body = headless_client.post("/auth/email/verify", {"key": old_code})
+    new_status, _ = headless_client.post("/auth/email/verify", {"key": new_code})
+
+    assert resend_status == 200
+    assert new_code != old_code
+    assert old_status == 400
+    assert old_body["errors"][0]["code"] == "incorrect_code"
+    assert new_status == 200
