@@ -12,3 +12,11 @@ class DeferredSaveAdapter(DefaultAccountAdapter):  # type: ignore[misc]
 class TrustedEmailAdapter(DefaultAccountAdapter):  # type: ignore[misc]
     def is_email_verified(self, request: HttpRequest, email: str) -> bool:
         return True
+
+
+FIXED_VERIFICATION_CODE = "SPIK-E000"
+
+
+class FixedCodeAdapter(DefaultAccountAdapter):  # type: ignore[misc]
+    def generate_email_verification_code(self) -> str:
+        return FIXED_VERIFICATION_CODE

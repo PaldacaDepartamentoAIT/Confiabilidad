@@ -54,7 +54,7 @@ Todas las rutas son relativas a `backend/apps/accounts/tests/spike_allauth/` sal
   Hecho cuando: los casos de las variantes de Q1 (`save_user` sin persistir,
   `stash_verified_email` / `is_email_verified`) pasan afirmando lo observado; suite verde.
 
-- [ ] T-008 Variantes "config + adapter" para Q2
+- [x] T-008 Variantes "config + adapter" para Q2
   RF: RF-007, RF-003, RF-004 | Depende de: T-004, T-007 | Archivos: 2
   Archivos: `adapters.py`, `test_q2_code_reuse.py`.
   Hecho cuando: se prueban los métodos públicos del adapter candidatos a controlar la invalidación
