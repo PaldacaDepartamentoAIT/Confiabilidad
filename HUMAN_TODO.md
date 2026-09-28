@@ -6,6 +6,11 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
 
 ## Pendiente
 
+- [ ] **Dar acceso de escritura a GitHub a las sesiones web.** El push desde la sesión remota
+  falla con 403. Reconecta GitHub en https://claude.ai/connect-github y, si falta, instala la
+  app de Claude en la organización `PaldacaDepartamentoAIT` (lo hace un owner). Después, sube la
+  rama `spike/allauth-verificacion-codigo`.
+
 - [ ] **Integrar la feature `infra-persistencia-y-colas`.** Implementada y validada (CUMPLIDA)
   en la rama `feat/infra-persistencia-y-colas`. Súbela y abre el PR a `main` (la branch
   protection exige PR; el CI correrá Backend/Frontend/Desktop/Secretos):
