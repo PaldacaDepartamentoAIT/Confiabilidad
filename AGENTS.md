@@ -65,6 +65,10 @@ Secretos:
   - `test/` — tests
   - `chore/` — mantenimiento (dependencias, config, CI)
   - `hotfix/` — corrección urgente en producción
+  - `spike/` — investigación técnica acotada que responde una pregunta; el entregable es
+    una decisión escrita, no una funcionalidad
+  - `poc/` — prototipo mínimo que demuestra que un enfoque ya elegido funciona de extremo
+    a extremo
 
 ## Commits
 - Formato: `tipo: breve descripción del cambio` — en minúsculas y directo al grano,
@@ -79,8 +83,13 @@ Secretos:
   - `hotfix` — corrección urgente en producción
   - `style` — formato/estilo sin cambios de lógica (lint, espacios)
   - `perf` — mejoras de rendimiento
+  - `spike` — investigación técnica acotada (ver prefijo `spike/`)
+  - `poc` — prototipo mínimo de un enfoque ya elegido (ver prefijo `poc/`)
 - Cada commit debe ser atómico: un único objetivo por commit. No mezcles cambios
   sin relación entre sí; sepáralos en commits distintos.
+- Al trabajar desde la versión web (sesión remota), cada commit se sube al remoto justo
+  después de hacerlo (`git push -u origin <rama>`): el entorno es efímero y lo que no se
+  sube se pierde al cerrarse la sesión. Si el push falla, se anota en `HUMAN_TODO.md`.
 
 ## Reglas
 - Lee `specs/constitution.md` y la spec activa antes de tocar código.
