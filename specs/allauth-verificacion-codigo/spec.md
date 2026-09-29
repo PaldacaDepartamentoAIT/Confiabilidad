@@ -130,3 +130,6 @@ determinar, para cada cliente, si el código anterior deja de aceptarse y si se 
 - 2026-09-29 — Cambio (origen: validación NO CUMPLIDA): excepción para incluir o recargar
   `allauth.headless.urls`; la revisión de imports incluye los hechos por texto — RF: RF-007 —
   Estado: impacto analizado
+- 2026-09-29 — Validación: CUMPLIDA — RF: RF-001…RF-008 (verificados con evidencia: suite 53/53,
+  cobertura 99,17 %, estáticos limpios) — validado por subagente con contexto limpio tras una
+  primera validación NO CUMPLIDA (RF-007), corregida con T-010…T-013
