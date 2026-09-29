@@ -4,7 +4,7 @@ Estado: aprobado
 Rutas relativas a `backend/apps/accounts/` salvo que se indique. "Suite verde" =
 `cd backend && pytest -q` + `mypy .` + `ruff check .` + `black --check .` sin errores.
 
-- [ ] T-001 Validadores de nombre, fecha de nacimiento y país
+- [x] T-001 Validadores de nombre, fecha de nacimiento y país
   RF: RF-003, RF-004, RF-005 | Depende de: — | Archivos: 3
   Archivos: `backend/requirements.txt` (`pycountry`), `validators.py`, `tests/test_validators.py`.
   Hecho cuando: `pytest apps/accounts/tests/test_validators.py -q` pasa: nombre (vacío, >150, doble

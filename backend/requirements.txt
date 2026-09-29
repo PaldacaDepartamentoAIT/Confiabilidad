@@ -10,3 +10,4 @@ django-environ>=0.11
 django-celery-beat>=2.6
 django-allauth>=65
 django-cors-headers>=4.4
+pycountry>=24
