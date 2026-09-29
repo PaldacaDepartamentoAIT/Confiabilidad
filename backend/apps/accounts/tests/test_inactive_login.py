@@ -3,7 +3,12 @@ from datetime import date
 from typing import Any
 
 import pytest
-from django.test import Client
+from allauth.account.adapter import get_adapter
+from allauth.account.models import EmailAddress
+from django.contrib.messages.middleware import MessageMiddleware
+from django.contrib.sessions.middleware import SessionMiddleware
+from django.http import HttpRequest
+from django.test import Client, RequestFactory
 
 from apps.accounts.tests.factories import DEFAULT_PASSWORD, make_user
 
@@ -94,3 +99,38 @@ def test_deactivation_keeps_data_and_blocks_login_until_reactivated(
     status, body = _login(client, kind, unique_email)
     assert status == 200
     assert _has_session(client, kind, body)
+
+
+def _request_with_session() -> HttpRequest:
+    # confirm_email necesita una petición con sesión y mensajes (C-14 del spike).
+    request = RequestFactory().post("/")
+    SessionMiddleware(lambda r: None).process_request(request)  # type: ignore[arg-type]
+    MessageMiddleware(lambda r: None).process_request(request)  # type: ignore[arg-type]
+    return request
+
+
+@pytest.mark.django_db
+def test_unverified_email_does_not_deactivate_account(unique_email: str) -> None:
+    user = make_user(email=unique_email)
+
+    email_address = EmailAddress.objects.add_email(_request_with_session(), user, unique_email)
+
+    user.refresh_from_db()
+    assert not email_address.verified
+    assert user.is_active
+
+
+@pytest.mark.django_db
+def test_verifying_email_does_not_reactivate_account(kind: str, unique_email: str) -> None:
+    user = make_user(email=unique_email, is_active=False)
+    request = _request_with_session()
+    email_address = EmailAddress.objects.add_email(request, user, unique_email)
+
+    get_adapter(request).confirm_email(request, email_address)
+
+    email_address.refresh_from_db()
+    user.refresh_from_db()
+    assert email_address.verified
+    assert not user.is_active
+    status, _ = _login(Client(enforce_csrf_checks=True), kind, unique_email)
+    assert status == 401

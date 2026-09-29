@@ -139,7 +139,7 @@ Rutas relativas a `backend/apps/accounts/` salvo que se indique. "Suite verde" =
   lo guarda con `save()` y comprueba `("Ana López", "MX")` tras `refresh_from_db()`; ambos
   mutantes hacen fallar la suite; la suite completa sigue en verde.
 
-- [ ] T-017 Corrección: test de que la verificación del correo no altera el estado de la cuenta
+- [x] T-017 Corrección: test de que la verificación del correo no altera el estado de la cuenta
   Tipo: corrección | Origen: validación de RF-007
   RF: RF-007 | Depende de: — | Archivos: 1
   Archivos: `tests/test_inactive_login.py` o `tests/test_user_model.py`.
