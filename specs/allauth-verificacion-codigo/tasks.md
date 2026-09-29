@@ -15,9 +15,9 @@ Todas las rutas son relativas a `backend/apps/accounts/tests/spike_allauth/` sal
   en `HUMAN_TODO.md`.
 
 - [x] T-002 Código para un correo desconocido (browser + app)
-  RF: RF-002 | Depende de: T-001 | Archivos: 3
-  Archivos: `urls.py` (urlconf reconstruido tras el override), `conftest.py` (recarga del urlconf),
-  `test_q1_user_existence.py`.
+  RF: RF-002 | Depende de: T-001 | Archivos: 2
+  Archivos: `conftest.py` (recarga de `allauth.headless.urls` y del urlconf raíz; no hay
+  `urls.py` propio, ver M-02), `test_q1_user_existence.py`.
   Hecho cuando: el caso de RF-002 pasa afirmando si llega un código real al buzón y si validarlo
   crea el usuario, con la protección antienumeración activa; suite verde.
 
@@ -97,7 +97,7 @@ Todas las rutas son relativas a `backend/apps/accounts/tests/spike_allauth/` sal
   Hecho cuando: `HUMAN_TODO.md` tiene una entrada con el problema, las dos opciones y el
   siguiente paso.
 
-- [ ] T-013 Corrección: revisión de imports ampliada y texto de T-002
+- [x] T-013 Corrección: revisión de imports ampliada y texto de T-002
   Tipo: corrección | Origen: validación de RF-007 (impacto del cambio 2026-09-29)
   RF: RF-007 | Depende de: T-011 | Archivos: 1
   Archivos: `specs/allauth-verificacion-codigo/tasks.md`.
