@@ -70,5 +70,43 @@ Todas las rutas son relativas a `backend/apps/accounts/tests/spike_allauth/` sal
   backend/apps/accounts/tests/spike_allauth/` solo muestra `allauth.account.adapter`,
   `allauth.account.models` o settings.
 
+- [ ] T-010 Corrección: settings probados para cada "no" en resumen.md
+  Tipo: corrección | Origen: validación de RF-007
+  RF: RF-007 | Depende de: — | Archivos: 1
+  Archivos: `specs/allauth-verificacion-codigo/resumen.md`.
+  Causa: el resumen solo enumera los métodos del adapter probados, no los settings.
+  Hecho cuando: cada "no" de Q1 y Q2 en `resumen.md` lleva la lista de settings y de métodos del
+  adapter probados o descartados, con el motivo; la nota de la excepción de URLs cita RF-007 en
+  lugar de "excepción aceptada".
+
+- [ ] T-011 Corrección: protección antienumeración explícita en la fixture
+  Tipo: corrección | Origen: validación (observación sobre M-01)
+  RF: RF-002 | Depende de: — | Archivos: 1
+  Archivos: `conftest.py`.
+  Causa: M-01 dice que la fixture activa `ACCOUNT_PREVENT_ENUMERATION`, pero depende del valor por
+  defecto de allauth.
+  Hecho cuando: `spike_settings` fija `ACCOUNT_PREVENT_ENUMERATION = True`; con el valor a `False`
+  (mutación) algún test de RF-002 falla; suite verde.
+
+- [ ] T-012 Corrección: anotar el hallazgo C-15 en HUMAN_TODO.md
+  Tipo: corrección | Origen: validación (observación 5)
+  RF: — (hallazgo C-15, afecta a auth-headless) | Depende de: — | Archivos: 1
+  Archivos: `HUMAN_TODO.md`.
+  Causa: `ACCOUNT_RATE_LIMITS = {}` no desactiva los límites de allauth, contra S-09 de
+  `auth-headless`; requiere una decisión humana y no está anotado.
+  Hecho cuando: `HUMAN_TODO.md` tiene una entrada con el problema, las dos opciones y el
+  siguiente paso.
+
+- [ ] T-013 Corrección: revisión de imports ampliada y texto de T-002
+  Tipo: corrección | Origen: validación de RF-007 (impacto del cambio 2026-09-29)
+  RF: RF-007 | Depende de: T-011 | Archivos: 1
+  Archivos: `specs/allauth-verificacion-codigo/tasks.md`.
+  Causa: el grep de T-009 no detecta los imports por texto, y la línea `Archivos:` de T-002 cita
+  un `urls.py` que no existe.
+  Hecho cuando: `grep -rnE 'from allauth|import allauth|import_module\("allauth'
+  backend/apps/accounts/tests/spike_allauth/` solo muestra `allauth.account.adapter`,
+  `allauth.account.models` y `allauth.headless.urls`; la línea `Archivos:` de T-002 refleja
+  `conftest.py` (recarga de URLs) y T-002 sigue marcada.
+
 ## RF sin tarea
 Ninguno.
