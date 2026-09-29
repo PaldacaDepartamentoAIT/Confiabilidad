@@ -88,5 +88,46 @@ Rutas relativas a `backend/apps/accounts/` salvo que se indique. "Suite verde" =
   Hecho cuando: el resumen contiene qué se hizo, cómo probarlo (incluidos `migrate` y
   `createsuperuser`) y el marco teórico de los conceptos que generaron dudas.
 
+- [ ] T-012 Corrección: tests de normalización del correo al modificar y conservación de puntos y +etiqueta
+  Tipo: corrección | Origen: validación de RF-001
+  RF: RF-001 | Depende de: — | Archivos: 1
+  Archivos: `tests/test_user_model.py`.
+  Causa: ningún test modifica el correo de un usuario existente ni usa puntos o `+etiqueta`; los
+  mutantes "normalizar solo al crear" y "quitar la +etiqueta" sobreviven.
+  Hecho cuando: un test crea `" Ana.B+Tag@X.com "` y comprueba `"ana.b+tag@x.com"`; otro modifica
+  el correo de un usuario existente por `save()` y comprueba que se guarda normalizado; ambos
+  mutantes hacen fallar la suite; la suite completa sigue en verde.
+
+- [ ] T-013 Corrección: test de obligatoriedad de nombre, fecha y país en el guardado directo del modelo
+  Tipo: corrección | Origen: validación de RF-006
+  RF: RF-006 | Depende de: — | Archivos: 1
+  Archivos: `tests/test_user_model.py`.
+  Causa: la obligatoriedad solo se prueba por `create_user` y `createsuperuser`; `models.py:117-118`
+  sin cubrir; los mutantes "rellenar en silencio" y "omitir `super().clean_fields()`" sobreviven.
+  Hecho cuando: un test parametrizado comprueba que `User(email=..., <sin un campo>).save()` lanza
+  `ValidationError` con ese campo en `error_dict` y no crea la cuenta; las líneas 117-118 quedan
+  cubiertas; la suite completa sigue en verde.
+
+- [ ] T-014 Corrección: test de que desactivar una cuenta activa conserva sus datos
+  Tipo: corrección | Origen: validación de RF-007
+  RF: RF-007 | Depende de: — | Archivos: 1
+  Archivos: `tests/test_inactive_login.py`.
+  Causa: ningún test pasa una cuenta de activa a inactiva; el mutante "anonimizar al desactivar"
+  sobrevive.
+  Hecho cuando: un test crea una cuenta activa, la desactiva por `save()`, comprueba que correo,
+  nombre, fecha y país no cambian y que no puede iniciar sesión, y después la reactiva e inicia
+  sesión con las mismas credenciales (browser y app); la suite completa sigue en verde.
+
+- [ ] T-015 Corrección: tests del contenido completo del historial y del autor en una petición real
+  Tipo: corrección | Origen: validación de RF-009
+  RF: RF-009 | Depende de: — | Archivos: 1-2
+  Archivos: `tests/test_user_history.py` y, si hace falta, un módulo de URLs de test.
+  Causa: el test de campos comprueba un subconjunto y el test de autor invoca el middleware a mano;
+  los mutantes "excluir más campos del historial" y "quitar `HistoryRequestMiddleware`" sobreviven.
+  Hecho cuando: el historial contiene exactamente los campos concretos de `User` salvo `password` y
+  `last_login`; una versión `~` contiene los datos modificados y `history_date`; un cambio hecho en
+  una petición real (con `Client` y el `MIDDLEWARE` de settings) registra `history_user`; ambos
+  mutantes hacen fallar la suite; la suite completa sigue en verde.
+
 ## RF sin tarea
 Ninguno.
