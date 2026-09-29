@@ -26,7 +26,7 @@ Rutas relativas a `backend/apps/accounts/` salvo que se indique. "Suite verde" =
   Hecho cuando: los 26 tests del spike pasan sin cambiar ninguna aserción de caracterización;
   suite verde.
 
-- [ ] T-004 Campos obligatorios name, birthdate y country con relleno
+- [x] T-004 Campos obligatorios name, birthdate y country con relleno
   RF: RF-006, RF-011 (relleno) | Depende de: T-001, T-002, T-003 | Archivos: 5
   Archivos: `models.py` (campos, `REQUIRED_FIELDS`), `migrations/0002_…` (`AddField` con relleno),
   `tests/factories.py` (valores por defecto), `management/commands/seed_test_user.py`,
