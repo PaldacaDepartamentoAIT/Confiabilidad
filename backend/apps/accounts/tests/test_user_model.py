@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import UTC, date, datetime
 from io import StringIO
 
 import pytest
@@ -342,3 +342,19 @@ def test_modified_name_and_country_are_normalized_on_save() -> None:
     user.refresh_from_db()
 
     assert (user.name, user.country) == ("Ana López", "MX")
+
+
+@pytest.mark.django_db
+def test_date_joined_is_set_on_creation_and_kept_on_change() -> None:
+    before = timezone.now()
+    user = make_user()
+    assert before <= user.date_joined <= timezone.now()
+
+    joined = datetime(2020, 1, 1, tzinfo=UTC)
+    User.objects.filter(pk=user.pk).update(date_joined=joined)
+    user.refresh_from_db()
+    user.name = "Ana López"
+    user.save()
+    user.refresh_from_db()
+
+    assert user.date_joined == joined

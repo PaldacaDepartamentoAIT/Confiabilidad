@@ -149,7 +149,7 @@ Rutas relativas a `backend/apps/accounts/` salvo que se indique. "Suite verde" =
   que se le verifica el correo sigue inactiva y no puede iniciar sesión; los mutantes que acoplan
   ambos estados hacen fallar la suite; la suite completa sigue en verde.
 
-- [ ] T-018 Corrección: test de que la fecha de alta se asigna al crear y no cambia al modificar
+- [x] T-018 Corrección: test de que la fecha de alta se asigna al crear y no cambia al modificar
   Tipo: corrección | Origen: validación de RF-008
   RF: RF-008 | Depende de: — | Archivos: 1
   Archivos: `tests/test_user_model.py`.
