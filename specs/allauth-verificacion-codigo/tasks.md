@@ -70,7 +70,7 @@ Todas las rutas son relativas a `backend/apps/accounts/tests/spike_allauth/` sal
   backend/apps/accounts/tests/spike_allauth/` solo muestra `allauth.account.adapter`,
   `allauth.account.models` o settings.
 
-- [ ] T-010 Corrección: settings probados para cada "no" en resumen.md
+- [x] T-010 Corrección: settings probados para cada "no" en resumen.md
   Tipo: corrección | Origen: validación de RF-007
   RF: RF-007 | Depende de: — | Archivos: 1
   Archivos: `specs/allauth-verificacion-codigo/resumen.md`.

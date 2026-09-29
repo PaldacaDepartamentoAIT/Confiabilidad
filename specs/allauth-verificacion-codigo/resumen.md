@@ -32,9 +32,27 @@ Tipo: spike · Versiones probadas: django-allauth 65.19.4 y 65.19.5
 | Q2 | `generate_email_verification_code` fijo | Mismo comportamiento que el código aleatorio: lo que manda es el estado en la sesión. |
 | Q2 | Resto de métodos públicos del adapter | Ninguno decide dónde se guarda el estado pendiente ni cuándo se consume (revisado en 65.19.4). |
 
-Excepción aceptada a RF-007: los tests recargan `allauth.headless.urls` para activar las rutas de
-login por código. Es el mismo punto de integración que usa `config/urls.py`, y se trata como
-configuración, no como parte interna.
+### Settings probados o descartados (RF-007)
+| Setting | Pregunta | Probado / revisado | Efecto sobre la respuesta |
+|---|---|---|---|
+| `ACCOUNT_EMAIL_VERIFICATION = "mandatory"` | Q1, Q2 | Probado (todos los tests) | Activa la verificación; el signup sigue creando el usuario antes (RF-001). |
+| `ACCOUNT_EMAIL_VERIFICATION_BY_CODE_ENABLED = True` | Q1, Q2 | Probado (todos los tests) | Verificación por código; el estado pendiente vive en la sesión. |
+| `ACCOUNT_LOGIN_BY_CODE_ENABLED = True` | Q1 | Probado (RF-002) | Permite pedir código sin cuenta, pero no emite código ni crea usuario. |
+| `ACCOUNT_PREVENT_ENUMERATION` (por defecto `True`) | Q1 | Probado implícitamente (RF-002); explícito en T-011 | Misma respuesta exista o no el correo; no cambia Q1. |
+| `HEADLESS_FRONTEND_URLS['account_signup']` | Q1 | Probado (RF-002) | Obligatorio para el correo "Unknown Account" (C-13); no cambia Q1. |
+| `ACCOUNT_EMAIL_VERIFICATION_SUPPORTS_RESEND = True` | Q2 | Probado (RF-008) | El reenvío invalida el código anterior; no lo hace reutilizable. |
+| `ACCOUNT_RATE_LIMITS` (`signup`, `confirm_email`) | Q2 | Probado (RF-008) | Solo regula la frecuencia de reenvío; no cambia el consumo ni la sesión. |
+| `ACCOUNT_ADAPTER` | Q1, Q2 | Probado (variantes de arriba) | Ver la tabla de variantes. |
+| `ACCOUNT_EMAIL_VERIFICATION_BY_CODE_TIMEOUT` | Q2 | Revisado en código, no probado | Solo fija la caducidad del código; no evita el consumo ni el vínculo con la sesión. |
+| `ACCOUNT_EMAIL_VERIFICATION_BY_CODE_MAX_ATTEMPTS` | Q2 | Revisado en código, no probado | Solo cuenta intentos fallidos. |
+| `ACCOUNT_EMAIL_VERIFICATION_MAX_CHANGE_COUNT` | Q2 | Revisado en código, no probado | Cambia de correo durante la verificación; no afecta al consumo. |
+| `ACCOUNT_EMAIL_UNKNOWN_ACCOUNTS` | Q1 | Revisado en código, no probado | Decide si se envía el correo "Unknown Account"; en ningún caso emite código. |
+| `ACCOUNT_SIGNUP_FORM_CLASS` | Q1 | Revisado en código, descartado | Su `signup()` se ejecuta con el usuario ya guardado; además, RF-007 excluye los formularios. |
+| `ACCOUNT_EMAIL_VERIFICATION = "optional"` | Q1 | Revisado en código, no probado | El signup crea el usuario igual; solo relaja el login. |
+
+Excepción prevista en RF-007 (cambio del 2026-09-29): los tests recargan `allauth.headless.urls`
+para activar las rutas de login por código. Es el mismo punto de integración que usa
+`config/urls.py`.
 
 ## Hallazgos
 - C-12 El código de verificación está ligado a la sesión; por eso "cerré la ventana y vuelvo desde
