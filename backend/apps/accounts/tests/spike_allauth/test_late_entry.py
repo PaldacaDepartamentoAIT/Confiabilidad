@@ -10,6 +10,8 @@ from django.http import HttpRequest
 from django.test import RequestFactory
 
 from apps.accounts.models import User
+from apps.accounts.tests.factories import make_user
+from apps.accounts.tests.spike_allauth.adapters import SPIKE_PROFILE
 from apps.accounts.tests.spike_allauth.conftest import (
     SPIKE_PASSWORD,
     HeadlessClient,
@@ -66,7 +68,7 @@ def test_user_converted_through_allauth_can_log_in(
 def test_user_without_verified_email_cannot_log_in(
     spike_settings: Any, headless_client: HeadlessClient, unique_email: str
 ) -> None:
-    User.objects.create_user(email=unique_email, password=SPIKE_PASSWORD)
+    make_user(email=unique_email, password=SPIKE_PASSWORD)
 
     login_status, body = headless_client.post(
         "/auth/login", {"email": unique_email, "password": SPIKE_PASSWORD}
@@ -74,3 +76,9 @@ def test_user_without_verified_email_cannot_log_in(
 
     assert login_status == 401
     assert pending_flows(body) == ["verify_email"]
+
+
+def test_default_spike_adapter_fills_profile(spike_settings: Any) -> None:
+    user = get_adapter(_request()).new_user(_request())
+
+    assert {name: getattr(user, name) for name in SPIKE_PROFILE} == SPIKE_PROFILE

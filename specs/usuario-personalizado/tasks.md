@@ -18,7 +18,7 @@ Rutas relativas a `backend/apps/accounts/` salvo que se indique. "Suite verde" =
   Hecho cuando: ningún test de `apps/accounts/tests/` fuera del spike llama a `create_user` salvo
   los que prueban el propio manager; `make_user` es el único punto de creación; suite verde.
 
-- [ ] T-003 Adapter de test del spike que completa el perfil en el signup
+- [x] T-003 Adapter de test del spike que completa el perfil en el signup
   RF: — (S-08, CF-4) | Depende de: T-002 | Archivos: 3
   Archivos: `tests/spike_allauth/adapters.py` (`ProfileFillingAdapter` y variantes que heredan de
   él), `tests/spike_allauth/conftest.py` (lo activa por defecto), `tests/spike_allauth/test_late_entry.py`
