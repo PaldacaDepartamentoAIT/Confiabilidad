@@ -1,6 +1,7 @@
 # Resumen — allauth-verificacion-codigo
-Estado: terminado (pendiente de validar) · Última actualización: 2026-09-28
-Tipo: spike · Versiones probadas: django-allauth 65.19.4 y 65.19.5
+Estado: validado (CUMPLIDA) · Última actualización: 2026-09-29
+Tipo: spike · Versión probada: django-allauth 65.19.4 (los 26 tests también pasaron en una
+ejecución puntual con 65.19.5, no reproducida en la validación)
 
 ## Respuesta corta
 - **Q1 — ¿allauth tolera que el usuario no exista hasta verificar el correo?** **No.**
@@ -14,7 +15,7 @@ Tipo: spike · Versiones probadas: django-allauth 65.19.4 y 65.19.5
 | RF | Pregunta | Observado | Test |
 |---|---|---|---|
 | RF-001 | Q1 | El signup crea la fila de usuario antes de validar el código (`401`, `verify_email` pendiente). | `test_signup_creates_user_before_code_is_verified` |
-| RF-002 | Q1 | Para un correo desconocido, la respuesta es idéntica a la de uno conocido, pero solo llega un correo "Unknown Account" sin código y no se crea usuario. | `test_code_request_for_unknown_email_sends_no_code` |
+| RF-002 | Q1 | Para un correo desconocido responde `401` con `login_by_code` pendiente (igual que para uno conocido: observado en sondeo, sin test), pero solo llega un correo "Unknown Account" sin código y no se crea usuario. | `test_code_request_for_unknown_email_sends_no_code` |
 | RF-002 | Q1 | Confirmar un código en ese flujo: `400 incorrect_code`, sin usuario. | `test_confirming_code_for_unknown_email_creates_no_user` |
 | RF-003 | Q2 | Segunda validación en la misma sesión: `409` (tras la primera ya hay sesión iniciada y no queda verificación pendiente). | `test_second_validation_in_same_session_is_rejected` |
 | RF-004 | Q2 | Desde otra sesión, antes de validar: `409` y el correo sigue sin verificar; la sesión original sí puede validar después. | `test_code_from_another_session_is_rejected_before_validation` |
@@ -28,7 +29,7 @@ Tipo: spike · Versiones probadas: django-allauth 65.19.4 y 65.19.5
 | Pregunta | Variante | Resultado |
 |---|---|---|
 | Q1 | `save_user(commit=False)`: no guardar el usuario en el signup | El signup revienta (`ValueError … unsaved related object 'user'`; en producción, un 500). |
-| Q1 | `is_email_verified → True`: dar el correo por verificado | Crea el usuario verificado y con sesión, sin enviar código: lo contrario de lo buscado. |
+| Q1 | `is_email_verified → True`: dar el correo por verificado (`stash_verified_email` solo guarda el correo en sesión para que este método lo lea; se prueba el efecto final) | Crea el usuario verificado y con sesión, sin enviar código: lo contrario de lo buscado. |
 | Q2 | `generate_email_verification_code` fijo | Mismo comportamiento que el código aleatorio: lo que manda es el estado en la sesión. |
 | Q2 | Resto de métodos públicos del adapter | Ninguno decide dónde se guarda el estado pendiente ni cuándo se consume (revisado en 65.19.4). |
 
@@ -38,7 +39,7 @@ Tipo: spike · Versiones probadas: django-allauth 65.19.4 y 65.19.5
 | `ACCOUNT_EMAIL_VERIFICATION = "mandatory"` | Q1, Q2 | Probado (todos los tests) | Activa la verificación; el signup sigue creando el usuario antes (RF-001). |
 | `ACCOUNT_EMAIL_VERIFICATION_BY_CODE_ENABLED = True` | Q1, Q2 | Probado (todos los tests) | Verificación por código; el estado pendiente vive en la sesión. |
 | `ACCOUNT_LOGIN_BY_CODE_ENABLED = True` | Q1 | Probado (RF-002) | Permite pedir código sin cuenta, pero no emite código ni crea usuario. |
-| `ACCOUNT_PREVENT_ENUMERATION` (por defecto `True`) | Q1 | Probado implícitamente (RF-002); explícito en T-011 | Misma respuesta exista o no el correo; no cambia Q1. |
+| `ACCOUNT_PREVENT_ENUMERATION = True` | Q1 | Probado (RF-002, fijado de forma explícita; con `False` los 4 casos fallan con `400 unknown_email`) | Misma respuesta exista o no el correo; no cambia Q1. |
 | `HEADLESS_FRONTEND_URLS['account_signup']` | Q1 | Probado (RF-002) | Obligatorio para el correo "Unknown Account" (C-13); no cambia Q1. |
 | `ACCOUNT_EMAIL_VERIFICATION_SUPPORTS_RESEND = True` | Q2 | Probado (RF-008) | El reenvío invalida el código anterior; no lo hace reutilizable. |
 | `ACCOUNT_RATE_LIMITS` (`signup`, `confirm_email`) | Q2 | Probado (RF-008) | Solo regula la frecuencia de reenvío; no cambia el consumo ni la sesión. |
@@ -85,7 +86,8 @@ para activar las rutas de login por código. Es el mismo punto de integración q
 
 ## Cómo probarlo
 1. Levanta la base de datos y Redis: `docker compose -f docker/docker-compose.yml up -d db redis`
-2. Ejecuta los tests del spike (con el entorno del backend):
+2. Ejecuta los tests del spike con las variables del backend (`DATABASE_URL`, `REDIS_URL`,
+   `DJANGO_SECRET_KEY`, como en tu `.env` o en el CI):
    `cd backend && pytest apps/accounts/tests/spike_allauth -v -o addopts=`
 3. Deberías ver 26 tests en verde (13 casos × browser/app).
 4. Si repites la suite completa más de 5 veces en 5 minutos, pueden fallar los tests de login de
