@@ -129,7 +129,7 @@ Rutas relativas a `backend/apps/accounts/` salvo que se indique. "Suite verde" =
   una petición real (con `Client` y el `MIDDLEWARE` de settings) registra `history_user`; ambos
   mutantes hacen fallar la suite; la suite completa sigue en verde.
 
-- [ ] T-016 Corrección: tests de normalización del nombre y del país al modificar un usuario
+- [x] T-016 Corrección: tests de normalización del nombre y del país al modificar un usuario
   Tipo: corrección | Origen: validación de RF-003 y RF-005
   RF: RF-003, RF-005 | Depende de: — | Archivos: 1
   Archivos: `tests/test_user_model.py`.

@@ -331,3 +331,14 @@ def test_direct_save_requires_profile_fields(missing: str) -> None:
         User(email="ana@x.com", **profile).save()
     assert missing in excinfo.value.error_dict
     assert not User.objects.exists()
+
+
+@pytest.mark.django_db
+def test_modified_name_and_country_are_normalized_on_save() -> None:
+    user = make_user()
+    user.name = " Ana López "
+    user.country = " mx "
+    user.save()
+    user.refresh_from_db()
+
+    assert (user.name, user.country) == ("Ana López", "MX")
