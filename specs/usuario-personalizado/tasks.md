@@ -45,7 +45,7 @@ Rutas relativas a `backend/apps/accounts/` salvo que se indique. "Suite verde" =
   `bulk_create` sin normalizar (`IntegrityError`); " Ana@X.com " se guarda como "ana@x.com";
   también choca contra una cuenta inactiva; suite verde. (CF-2)
 
-- [ ] T-006 Migración sobre datos existentes
+- [x] T-006 Migración sobre datos existentes
   RF: RF-011 | Depende de: T-005 | Archivos: 1
   Archivos: `tests/test_migrations.py`.
   Hecho cuando: con `MigrationExecutor`, migrar a `0001`, crear cuentas, migrar a la última y
