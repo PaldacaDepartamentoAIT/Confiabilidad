@@ -51,6 +51,8 @@ Secretos:
   - Rust: convención estándar (snake_case), rustfmt + clippy.
 - Comentarios en español, solo si son imprescindibles para entender el proceso
   o si el usuario los pide. Nada de comentarios obvios.
+- Los mensajes de error y los textos que el código devuelve (por ejemplo, en `ValidationError`
+  o en excepciones) se escriben en inglés, marcados para traducción con `gettext_lazy`.
 - Estructura y código limpios: cada carpeta (backend / frontend / desktop) es
   independiente y no invade a las demás.
 
