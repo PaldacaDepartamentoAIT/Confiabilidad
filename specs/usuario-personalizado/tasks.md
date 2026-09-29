@@ -98,7 +98,7 @@ Rutas relativas a `backend/apps/accounts/` salvo que se indique. "Suite verde" =
   el correo de un usuario existente por `save()` y comprueba que se guarda normalizado; ambos
   mutantes hacen fallar la suite; la suite completa sigue en verde.
 
-- [ ] T-013 Corrección: test de obligatoriedad de nombre, fecha y país en el guardado directo del modelo
+- [x] T-013 Corrección: test de obligatoriedad de nombre, fecha y país en el guardado directo del modelo
   Tipo: corrección | Origen: validación de RF-006
   RF: RF-006 | Depende de: — | Archivos: 1
   Archivos: `tests/test_user_model.py`.

@@ -320,3 +320,14 @@ def test_modified_email_is_normalized_on_save() -> None:
     user.refresh_from_db()
 
     assert user.email == "ana.new+tag@x.com"
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("missing", ["name", "birthdate", "country"])
+def test_direct_save_requires_profile_fields(missing: str) -> None:
+    profile = {key: value for key, value in DEFAULT_PROFILE.items() if key != missing}
+
+    with pytest.raises(ValidationError) as excinfo:
+        User(email="ana@x.com", **profile).save()
+    assert missing in excinfo.value.error_dict
+    assert not User.objects.exists()
