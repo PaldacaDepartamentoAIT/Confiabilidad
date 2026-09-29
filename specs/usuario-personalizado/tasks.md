@@ -108,7 +108,7 @@ Rutas relativas a `backend/apps/accounts/` salvo que se indique. "Suite verde" =
   `ValidationError` con ese campo en `error_dict` y no crea la cuenta; las líneas 117-118 quedan
   cubiertas; la suite completa sigue en verde.
 
-- [ ] T-014 Corrección: test de que desactivar una cuenta activa conserva sus datos
+- [x] T-014 Corrección: test de que desactivar una cuenta activa conserva sus datos
   Tipo: corrección | Origen: validación de RF-007
   RF: RF-007 | Depende de: — | Archivos: 1
   Archivos: `tests/test_inactive_login.py`.

@@ -1,4 +1,5 @@
 import uuid
+from datetime import date
 from typing import Any
 
 import pytest
@@ -61,5 +62,35 @@ def test_reactivated_account_can_log_in(kind: str, unique_email: str) -> None:
 
     status, body = _login(client, kind, unique_email)
 
+    assert status == 200
+    assert _has_session(client, kind, body)
+
+
+@pytest.mark.django_db
+def test_deactivation_keeps_data_and_blocks_login_until_reactivated(
+    kind: str, unique_email: str
+) -> None:
+    user = make_user(
+        email=unique_email, name="Ana García", birthdate=date(1990, 5, 10), country="MX"
+    )
+    user.is_active = False
+    user.save()
+    user.refresh_from_db()
+
+    assert not user.is_active
+    assert (user.email, user.name, user.birthdate, user.country) == (
+        unique_email,
+        "Ana García",
+        date(1990, 5, 10),
+        "MX",
+    )
+    assert user.check_password(DEFAULT_PASSWORD)
+    status, _ = _login(Client(enforce_csrf_checks=True), kind, unique_email)
+    assert status == 401
+
+    user.is_active = True
+    user.save()
+    client = Client(enforce_csrf_checks=True)
+    status, body = _login(client, kind, unique_email)
     assert status == 200
     assert _has_session(client, kind, body)
