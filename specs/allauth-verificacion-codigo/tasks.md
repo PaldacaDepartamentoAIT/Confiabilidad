@@ -88,7 +88,7 @@ Todas las rutas son relativas a `backend/apps/accounts/tests/spike_allauth/` sal
   Hecho cuando: `spike_settings` fija `ACCOUNT_PREVENT_ENUMERATION = True`; con el valor a `False`
   (mutación) algún test de RF-002 falla; suite verde.
 
-- [ ] T-012 Corrección: anotar el hallazgo C-15 en HUMAN_TODO.md
+- [x] T-012 Corrección: anotar el hallazgo C-15 en HUMAN_TODO.md
   Tipo: corrección | Origen: validación (observación 5)
   RF: — (hallazgo C-15, afecta a auth-headless) | Depende de: — | Archivos: 1
   Archivos: `HUMAN_TODO.md`.
