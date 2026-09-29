@@ -10,6 +10,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.functions import Lower
 from django.utils.translation import gettext_lazy as _
+from simple_history.models import HistoricalRecords
 
 from apps.accounts.validators import (
     NAME_MAX_LENGTH,
@@ -43,6 +44,9 @@ class UserManager(BaseUserManager["User"]):
         return self.create_user(email, password, **extra)
 
 
+HISTORY_EXCLUDED_FIELDS = frozenset({"password", "last_login"})
+
+
 class ActiveUserManager(models.Manager["User"]):
     def get_queryset(self) -> models.QuerySet["User"]:
         return super().get_queryset().filter(is_active=True)
@@ -59,6 +63,9 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     objects = UserManager()
     active = ActiveUserManager()
+    history = HistoricalRecords(excluded_fields=sorted(HISTORY_EXCLUDED_FIELDS))
+    # simple-history omite el registro si este atributo existe en la instancia.
+    skip_history_when_saving: bool
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS: ClassVar[list[str]] = ["name", "birthdate", "country"]
@@ -89,7 +96,18 @@ class User(AbstractBaseUser, PermissionsMixin):
                 if field.name not in update_fields
             }
         self.full_clean(exclude=exclude, validate_unique=False, validate_constraints=False)
-        super().save(*args, **kwargs)
+        skip_history = (
+            update_fields is not None
+            and set(update_fields) <= HISTORY_EXCLUDED_FIELDS
+            and not hasattr(self, "skip_history_when_saving")
+        )
+        if skip_history:
+            self.skip_history_when_saving = True
+        try:
+            super().save(*args, **kwargs)
+        finally:
+            if skip_history:
+                del self.skip_history_when_saving
 
     def clean_fields(self, exclude: Collection[str] | None = None) -> None:
         excluded = set(exclude or ())

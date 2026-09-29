@@ -74,7 +74,7 @@ Rutas relativas a `backend/apps/accounts/` salvo que se indique. "Suite verde" =
   (`INSTALLED_APPS` y `HistoryRequestMiddleware`), `backend/pyproject.toml` (excepción de mypy).
   Hecho cuando: `python manage.py check` no da errores con la app instalada; suite verde.
 
-- [ ] T-010 Historial de User
+- [x] T-010 Historial de User
   RF: RF-009, RF-010 | Depende de: T-008, T-009 | Archivos: 3
   Archivos: `models.py` (`HistoricalRecords` sin `password` ni `last_login`; sin versión si solo
   cambia `last_login`), `migrations/0004_…`, `tests/test_user_history.py`.
