@@ -1,5 +1,5 @@
 # Spec: allauth-verificacion-codigo
-Estado: aprobada
+Estado: borrador
 Tipo: spike (entregable: decisión D-01)
 
 ## Objetivo (por qué)
@@ -65,8 +65,11 @@ Si una pregunta no puede resolverse afirmativamente con settings o con el adapte
 spike deberá responderla "no" con la evidencia reunida, sin recurrir a partes internas de allauth.
 Cada "no" irá acompañado de la lista de settings y métodos del adapter probados, y el código del
 spike solo importará de allauth su adapter, sus settings y sus modelos públicos
-(`allauth.account.models`), nunca vistas, formularios ni módulos internos, lo cual se comprueba
-en la revisión.
+(`allauth.account.models`), nunca vistas, formularios ni módulos internos. Como excepción, podrá
+incluir o recargar el módulo de URLs de allauth headless (`allauth.headless.urls`), que es el
+punto de integración documentado que ya usa `config/urls.py`, para que existan las rutas que
+dependen de settings (RF-002). Todo ello se comprueba en la revisión, contando también los
+imports hechos por texto (por ejemplo, con `importlib`).
 
 ### RF-008 Reenvío del código
 Cuando se solicite de nuevo el código para una verificación pendiente, el spike deberá
@@ -124,3 +127,6 @@ determinar, para cada cliente, si el código anterior deja de aceptarse y si se 
   pendiente; modelos públicos permitidos — RF: RF-005, RF-007 — Estado: clarificado
 - 2026-09-28 — Clarificación (C-09…C-11): el usuario se crea al fijar la contraseña; la
   conversión pasa por allauth — RF: RF-005 ajustado; S-10 ajustado — Estado: clarificado
+- 2026-09-29 — Cambio (origen: validación NO CUMPLIDA): excepción para incluir o recargar
+  `allauth.headless.urls`; la revisión de imports incluye los hechos por texto — RF: RF-007 —
+  Estado: pendiente de clarificar
