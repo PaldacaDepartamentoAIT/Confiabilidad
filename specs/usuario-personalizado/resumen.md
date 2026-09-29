@@ -53,15 +53,16 @@ Requisitos: Docker y la rama `feat/usuario-personalizado`.
 3. Crea un superusuario sin preguntas; ahora exige los tres datos nuevos:
    `docker compose -f docker/docker-compose.yml run --rm -e DJANGO_SUPERUSER_PASSWORD=Prueba-123 backend python manage.py createsuperuser --noinput --email Admin@Example.com --name "Ana García" --birthdate 1990-05-10 --country es`
    Se guarda como `admin@example.com` y país `ES`. Si repites con `--email ADMIN@example.com`,
-   falla por correo duplicado; con `--country XX` o `--birthdate 2020-01-01`, falla con el
-   motivo en inglés.
+   falla con una traza de `IntegrityError` ("already exists"): es el choque de correo, ver
+   "Límites conocidos". Con `--country XX` o `--birthdate 2020-01-01`, falla con el motivo en
+   inglés.
 4. Consulta el historial desde la consola de Django:
    `docker compose -f docker/docker-compose.yml run --rm backend python manage.py shell -c "from apps.accounts.models import User; print(list(User.history.values_list('email', 'history_type', 'history_user')))"`
    Verás `('admin@example.com', '+', None)`: alta hecha por consola, sin autor.
-5. Ejecuta los tests:
-   `docker compose -f docker/docker-compose.yml run --rm backend pytest apps/accounts -q`
-   Deberías ver todos en verde, incluidos `test_user_model.py`, `test_user_history.py`,
-   `test_inactive_login.py` y `test_migrations.py`.
+5. Ejecuta la suite completa (el mínimo de cobertura del 80 % se mide sobre todo el proyecto,
+   así que ejecutar solo `apps/accounts` falla aunque pasen todos los tests):
+   `docker compose -f docker/docker-compose.yml run --rm backend pytest -q`
+   Deberías ver `124 passed` y una cobertura superior al 80 %.
 
 ## Marco teórico
 ### Borrado lógico (soft delete)
