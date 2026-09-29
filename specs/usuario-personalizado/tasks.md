@@ -12,7 +12,7 @@ Rutas relativas a `backend/apps/accounts/` salvo que se indique. "Suite verde" =
   exacto de 18 años + 5 días, 29-feb → 5-mar en año no bisiesto, fecha futura); país (`es` → `ES`,
   `XX`, `XK`, `ZZ` nuevo rechazado, `ZZ` conservado aceptado); suite verde.
 
-- [ ] T-002 Creación centralizada de usuarios en los tests de auth-headless
+- [x] T-002 Creación centralizada de usuarios en los tests de auth-headless
   RF: — (S-08, CF-4) | Depende de: — | Archivos: 3
   Archivos: `tests/factories.py` (`make_user`), `tests/conftest.py`, `tests/test_user_model.py`.
   Hecho cuando: ningún test de `apps/accounts/tests/` fuera del spike llama a `create_user` salvo
