@@ -129,5 +129,34 @@ Rutas relativas a `backend/apps/accounts/` salvo que se indique. "Suite verde" =
   una petición real (con `Client` y el `MIDDLEWARE` de settings) registra `history_user`; ambos
   mutantes hacen fallar la suite; la suite completa sigue en verde.
 
+- [ ] T-016 Corrección: tests de normalización del nombre y del país al modificar un usuario
+  Tipo: corrección | Origen: validación de RF-003 y RF-005
+  RF: RF-003, RF-005 | Depende de: — | Archivos: 1
+  Archivos: `tests/test_user_model.py`.
+  Causa: la normalización de nombre y país solo se prueba al crear; los mutantes "recortar el
+  nombre solo al crear" y "mayúsculas del país solo al crear" sobreviven.
+  Hecho cuando: un test modifica un usuario existente con `name=" Ana López "` y `country=" mx "`,
+  lo guarda con `save()` y comprueba `("Ana López", "MX")` tras `refresh_from_db()`; ambos
+  mutantes hacen fallar la suite; la suite completa sigue en verde.
+
+- [ ] T-017 Corrección: test de que la verificación del correo no altera el estado de la cuenta
+  Tipo: corrección | Origen: validación de RF-007
+  RF: RF-007 | Depende de: — | Archivos: 1
+  Archivos: `tests/test_inactive_login.py` o `tests/test_user_model.py`.
+  Causa: nada relaciona `EmailAddress.verified` con `is_active`; los mutantes que los acoplan
+  sobreviven.
+  Hecho cuando: una cuenta activa con correo no verificado sigue activa; una cuenta inactiva a la
+  que se le verifica el correo sigue inactiva y no puede iniciar sesión; los mutantes que acoplan
+  ambos estados hacen fallar la suite; la suite completa sigue en verde.
+
+- [ ] T-018 Corrección: test de que la fecha de alta se asigna al crear y no cambia al modificar
+  Tipo: corrección | Origen: validación de RF-008
+  RF: RF-008 | Depende de: — | Archivos: 1
+  Archivos: `tests/test_user_model.py`.
+  Causa: solo se comprueba `date_joined is not None`; el mutante `auto_now=True` sobrevive.
+  Hecho cuando: un test guarda `date_joined` al crear, modifica y guarda el usuario, y comprueba
+  que `date_joined` no cambia tras `refresh_from_db()`; el mutante hace fallar la suite; la suite
+  completa sigue en verde.
+
 ## RF sin tarea
 Ninguno.
