@@ -302,3 +302,21 @@ def test_active_manager_excludes_inactive_accounts() -> None:
 
     assert list(User.active.all()) == [active]
     assert set(User.objects.all()) == {active, inactive}
+
+
+@pytest.mark.django_db
+def test_email_keeps_dots_and_plus_tag() -> None:
+    user = make_user(email=" Ana.B+Tag@X.com ")
+    user.refresh_from_db()
+
+    assert user.email == "ana.b+tag@x.com"
+
+
+@pytest.mark.django_db
+def test_modified_email_is_normalized_on_save() -> None:
+    user = make_user(email="ana@x.com")
+    user.email = " Ana.New+Tag@X.com "
+    user.save()
+    user.refresh_from_db()
+
+    assert user.email == "ana.new+tag@x.com"

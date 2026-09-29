@@ -88,7 +88,7 @@ Rutas relativas a `backend/apps/accounts/` salvo que se indique. "Suite verde" =
   Hecho cuando: el resumen contiene qué se hizo, cómo probarlo (incluidos `migrate` y
   `createsuperuser`) y el marco teórico de los conceptos que generaron dudas.
 
-- [ ] T-012 Corrección: tests de normalización del correo al modificar y conservación de puntos y +etiqueta
+- [x] T-012 Corrección: tests de normalización del correo al modificar y conservación de puntos y +etiqueta
   Tipo: corrección | Origen: validación de RF-001
   RF: RF-001 | Depende de: — | Archivos: 1
   Archivos: `tests/test_user_model.py`.
