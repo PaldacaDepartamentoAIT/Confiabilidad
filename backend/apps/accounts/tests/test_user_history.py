@@ -1,8 +1,6 @@
 import pytest
-from django.http import HttpRequest, HttpResponse
-from django.test import Client, RequestFactory
+from django.test import Client
 from django.utils import timezone
-from simple_history.middleware import HistoryRequestMiddleware
 
 from apps.accounts.models import User
 from apps.accounts.tests.factories import DEFAULT_PASSWORD, make_user
@@ -16,11 +14,38 @@ def _history(user_id: int) -> list[str]:
     )
 
 
-def test_history_excludes_password_and_last_login() -> None:
-    fields = {field.name for field in User.history.model._meta.get_fields()}
+HISTORY_METADATA = {
+    "history_id",
+    "history_date",
+    "history_change_reason",
+    "history_type",
+    "history_user",
+}
 
-    assert {"email", "name", "birthdate", "country", "is_active"} <= fields
-    assert not {"password", "last_login"} & fields
+
+def test_history_tracks_every_field_except_password_and_last_login() -> None:
+    tracked = {field.name for field in User.history.model._meta.concrete_fields}
+    expected = {field.name for field in User._meta.concrete_fields} - {"password", "last_login"}
+
+    assert tracked == expected | HISTORY_METADATA
+
+
+@pytest.mark.django_db
+def test_change_version_stores_the_new_data() -> None:
+    user = make_user(name="Ana García", country="ES")
+    user.name = "Ana López"
+    user.country = "MX"
+    user.is_staff = True
+    user.save()
+
+    version = User.history.get(id=user.pk, history_type="~")
+    assert (version.email, version.name, version.country, version.is_staff) == (
+        user.email,
+        "Ana López",
+        "MX",
+        True,
+    )
+    assert version.history_date is not None
 
 
 @pytest.mark.django_db
@@ -52,20 +77,17 @@ def test_console_change_has_no_author() -> None:
 
 
 @pytest.mark.django_db
-def test_change_in_authenticated_request_records_author(rf: RequestFactory) -> None:
+@pytest.mark.urls("apps.accounts.tests.history_urls")
+def test_change_in_real_request_records_author(client: Client) -> None:
     admin = make_user()
     target = make_user()
-    request = rf.post("/")
-    request.user = admin
+    client.force_login(admin)
 
-    def view(_: HttpRequest) -> HttpResponse:
-        target.name = "Ana García"
-        target.save()
-        return HttpResponse()
+    resp = client.post(f"/rename/{target.pk}/", {"name": "Ana García"})
 
-    HistoryRequestMiddleware(view)(request)
-
-    assert User.history.filter(id=target.pk).latest("history_date").history_user == admin
+    assert resp.status_code == 204
+    version = User.history.filter(id=target.pk).latest("history_date")
+    assert (version.history_type, version.name, version.history_user) == ("~", "Ana García", admin)
 
 
 @pytest.mark.django_db

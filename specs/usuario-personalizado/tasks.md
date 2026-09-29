@@ -118,7 +118,7 @@ Rutas relativas a `backend/apps/accounts/` salvo que se indique. "Suite verde" =
   nombre, fecha y país no cambian y que no puede iniciar sesión, y después la reactiva e inicia
   sesión con las mismas credenciales (browser y app); la suite completa sigue en verde.
 
-- [ ] T-015 Corrección: tests del contenido completo del historial y del autor en una petición real
+- [x] T-015 Corrección: tests del contenido completo del historial y del autor en una petición real
   Tipo: corrección | Origen: validación de RF-009
   RF: RF-009 | Depende de: — | Archivos: 1-2
   Archivos: `tests/test_user_history.py` y, si hace falta, un módulo de URLs de test.
