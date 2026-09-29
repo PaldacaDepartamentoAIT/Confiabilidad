@@ -1,5 +1,5 @@
 # Spec: allauth-verificacion-codigo
-Estado: borrador
+Estado: aprobada
 Tipo: spike (entregable: decisión D-01)
 
 ## Objetivo (por qué)
@@ -129,4 +129,4 @@ determinar, para cada cliente, si el código anterior deja de aceptarse y si se 
   conversión pasa por allauth — RF: RF-005 ajustado; S-10 ajustado — Estado: clarificado
 - 2026-09-29 — Cambio (origen: validación NO CUMPLIDA): excepción para incluir o recargar
   `allauth.headless.urls`; la revisión de imports incluye los hechos por texto — RF: RF-007 —
-  Estado: pendiente de clarificar
+  Estado: clarificado
