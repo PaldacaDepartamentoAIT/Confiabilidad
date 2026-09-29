@@ -6,6 +6,17 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
 
 ## Pendiente
 
+- [ ] **Reconstruir la imagen del backend y migrar tras `usuario-personalizado`.** La rama
+  `feat/usuario-personalizado` añade dos dependencias (`pycountry` y `django-simple-history`)
+  y las migraciones `0002` y `0003` de `accounts`. En tu máquina:
+  ```bash
+  docker compose -f docker/docker-compose.yml build backend
+  docker compose -f docker/docker-compose.yml run --rm backend python manage.py migrate
+  ```
+  Si `0003` falla con "Emails that differ only in case", tienes cuentas locales cuyos correos
+  solo difieren en mayúsculas: decide cuál conservar y borra o cambia la otra; la migración no
+  fusiona cuentas a propósito (RF-011).
+
 - [ ] **Decidir los límites de peticiones (rate limiting) de allauth en `auth-headless`.**
   Hallazgo C-15 del spike `allauth-verificacion-codigo`: `ACCOUNT_RATE_LIMITS = {}` en
   `backend/config/settings.py` **no** desactiva los límites de allauth (solo `False` lo hace).
