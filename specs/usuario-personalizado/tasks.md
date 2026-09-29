@@ -82,7 +82,7 @@ Rutas relativas a `backend/apps/accounts/` salvo que se indique. "Suite verde" =
   autor en una petición autenticada y vacío por consola; el historial sobrevive al borrado; iniciar
   sesión no crea versión; suite verde.
 
-- [ ] T-011 Resumen de la feature
+- [x] T-011 Resumen de la feature
   RF: todos (documentación) | Depende de: T-001…T-010 | Archivos: 1
   Archivos: `specs/usuario-personalizado/resumen.md`.
   Hecho cuando: el resumen contiene qué se hizo, cómo probarlo (incluidos `migrate` y
