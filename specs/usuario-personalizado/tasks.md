@@ -68,7 +68,7 @@ Rutas relativas a `backend/apps/accounts/` salvo que se indique. "Suite verde" =
   Hecho cuando: una cuenta inactiva no puede iniciar sesión por browser ni por app y reactivarla lo
   permite de nuevo; suite verde.
 
-- [ ] T-009 Configuración del historial
+- [x] T-009 Configuración del historial
   RF: RF-009 | Depende de: — | Archivos: 3
   Archivos: `backend/requirements.txt` (`django-simple-history`), `backend/config/settings.py`
   (`INSTALLED_APPS` y `HistoryRequestMiddleware`), `backend/pyproject.toml` (excepción de mypy).

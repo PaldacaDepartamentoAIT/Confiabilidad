@@ -28,6 +28,7 @@ module = [
     "django_celery_beat.*",
     "allauth.*",
     "corsheaders.*",
+    "simple_history.*",
 ]
 ignore_missing_imports = true
 
