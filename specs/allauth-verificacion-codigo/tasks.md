@@ -79,7 +79,7 @@ Todas las rutas son relativas a `backend/apps/accounts/tests/spike_allauth/` sal
   adapter probados o descartados, con el motivo; la nota de la excepción de URLs cita RF-007 en
   lugar de "excepción aceptada".
 
-- [ ] T-011 Corrección: protección antienumeración explícita en la fixture
+- [x] T-011 Corrección: protección antienumeración explícita en la fixture
   Tipo: corrección | Origen: validación (observación sobre M-01)
   RF: RF-002 | Depende de: — | Archivos: 1
   Archivos: `conftest.py`.
