@@ -22,17 +22,20 @@ Todos en `backend/apps/accounts/tests/spike_allauth/`.
 
 ### M-01 Configuración del spike (`conftest.py`)
 Responsabilidad: fixture que activa, solo durante cada test, la verificación obligatoria por
-código, el reenvío, el login por código y la protección antienumeración, y apunta
-`ROOT_URLCONF` al urlconf del spike. Incluye:
+código y la protección antienumeración (explícita, `ACCOUNT_PREVENT_ENUMERATION`, para no
+depender del valor por defecto de allauth), y desactiva solo el límite de signups por IP, que la
+propia suite agota. El reenvío y el login por código se activan en los tests o fixtures que los
+necesitan. Incluye:
 - un cliente headless parametrizado (`browser` / `app`), que abstrae cómo se mantiene la sesión
   (cookie o `X-Session-Token`) y cómo se abre una "sesión nueva";
 - una utilidad que extrae el último código del buzón de correo de test.
 RF: RF-001…RF-005, RF-008
 
-### M-02 URLconf del spike (`urls.py`)
-Responsabilidad: construir las rutas headless después de aplicar los settings del spike, para
-que existan las rutas condicionadas (login por código). La fixture de M-01 recarga el módulo y
-limpia la caché de URLs.
+### M-02 Recarga de las URLs de allauth (en `conftest.py`)
+Responsabilidad: tras cambiar los settings, recargar `allauth.headless.urls` y el urlconf raíz
+(`ROOT_URLCONF`) y limpiar la caché de URLs, para que existan las rutas que dependen de settings
+(login por código). Al terminar el test se vuelven a recargar, para que desaparezcan. No hay un
+`urls.py` propio del spike (sería un envoltorio sin función). Excepción de imports: RF-007.
 RF: RF-002
 
 ### M-03 Casos de Q1 (`test_q1_user_existence.py`)
@@ -89,9 +92,12 @@ Motivo: el módulo aparte no correría en la misma ejecución del CI y duplicar�
 override deja `auth-headless` intacto (S-06).
 
 ### D-04 Rutas condicionadas
-Elegida: urlconf del spike reconstruido tras el override.
+Elegida: recargar `allauth.headless.urls` y el urlconf raíz tras el override, y otra vez al
+terminar.
 Descartada: activar `ACCOUNT_LOGIN_BY_CODE_ENABLED` globalmente.
-Motivo: las rutas se fijan al importar; activarlo globalmente cambiaría `auth-headless`.
+Motivo: las rutas se fijan al importar y el urlconf raíz guarda en caché las incluidas;
+activarlo globalmente cambiaría `auth-headless`. Recargar solo el módulo de allauth no basta si
+otro test ya resolvió URLs (se comprobó en T-002).
 
 ### D-05 Obtención del código
 Elegida: extraerlo del correo en el buzón de test (`mail.outbox`).
@@ -142,7 +148,9 @@ caracterización ya detectan los cambios que importan.
 - **Ejecución**: con Postgres, como el CI (`DATABASE_URL`); en esta sesión remota, contra la base
   de datos disponible en el entorno.
 - **Revisión RF-007**: grep de los imports de allauth en `spike_allauth/`; solo se permiten
-  `allauth.account.adapter`, `allauth.account.models` y settings.
+  `allauth.account.adapter`, `allauth.account.models` y settings, más la excepción de
+  `allauth.headless.urls`. El grep incluye los imports por texto:
+  `grep -rnE 'from allauth|import allauth|import_module\("allauth' spike_allauth/`.
 
 ## Trazabilidad
 | RF | Módulo(s) | Nivel de test |
