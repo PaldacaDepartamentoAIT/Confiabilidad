@@ -6,6 +6,7 @@ from django.contrib.auth.models import (
     PermissionsMixin,
 )
 from django.db import models
+from django.db.models.functions import Lower
 from django.utils.translation import gettext_lazy as _
 
 from apps.accounts.validators import NAME_MAX_LENGTH
@@ -46,5 +47,18 @@ class User(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS: ClassVar[list[str]] = ["name", "birthdate", "country"]
 
+    class Meta:
+        constraints: ClassVar[list[models.BaseConstraint]] = [
+            models.UniqueConstraint(
+                Lower("email"),
+                name="accounts_user_email_ci_unique",
+                violation_error_message=_("A user with this email already exists."),
+            ),
+        ]
+
     def __str__(self) -> str:
         return self.email
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        self.email = self.email.strip().lower()
+        super().save(*args, **kwargs)

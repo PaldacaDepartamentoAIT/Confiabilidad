@@ -36,7 +36,7 @@ Rutas relativas a `backend/apps/accounts/` salvo que se indique. "Suite verde" =
   Excepción: los campos obligatorios, su migración, la factoría y el seed tienen que cambiar juntos;
   separados, la suite queda en rojo entre tareas.
 
-- [ ] T-005 Correo normalizado y único sin distinguir mayúsculas
+- [x] T-005 Correo normalizado y único sin distinguir mayúsculas
   RF: RF-001, RF-002 | Depende de: T-004 | Archivos: 3
   Archivos: `models.py` (normalización en `save()`, `UniqueConstraint(Lower("email"))`),
   `migrations/0003_…` (normaliza correos existentes, aborta si chocan, crea la restricción),

@@ -115,3 +115,53 @@ def test_createsuperuser_noinput_requires_profile_fields(
 
     with pytest.raises(CommandError, match=missing):
         call_command("createsuperuser", interactive=False, stdout=StringIO(), **options)
+
+
+@pytest.mark.django_db
+def test_direct_save_trims_and_lowercases_email() -> None:
+    user = User(email=" Ana@X.com ", **DEFAULT_PROFILE)
+    user.save()
+    user.refresh_from_db()
+
+    assert user.email == "ana@x.com"
+
+
+@pytest.mark.django_db
+def test_emails_differing_in_case_collide_via_create_user() -> None:
+    make_user(email="Ana@x.com")
+
+    with pytest.raises(IntegrityError):
+        make_user(email="ana@x.com")
+
+
+@pytest.mark.django_db
+def test_emails_differing_in_case_collide_via_direct_save() -> None:
+    make_user(email="ana@x.com")
+
+    with pytest.raises(IntegrityError):
+        User(email="Ana@x.com", **DEFAULT_PROFILE).save()
+
+
+@pytest.mark.django_db
+def test_emails_differing_in_case_collide_via_bulk_create() -> None:
+    make_user(email="ana@x.com")
+
+    with pytest.raises(IntegrityError):
+        User.objects.bulk_create([User(email="Ana@x.com", **DEFAULT_PROFILE)])
+
+
+@pytest.mark.django_db
+def test_emails_differing_in_case_collide_via_queryset_update() -> None:
+    make_user(email="ana@x.com")
+    other = make_user(email="bob@x.com")
+
+    with pytest.raises(IntegrityError):
+        User.objects.filter(pk=other.pk).update(email="Ana@x.com")
+
+
+@pytest.mark.django_db
+def test_email_collides_with_inactive_account() -> None:
+    make_user(email="ana@x.com", is_active=False)
+
+    with pytest.raises(IntegrityError):
+        User.objects.bulk_create([User(email="Ana@x.com", **DEFAULT_PROFILE)])
