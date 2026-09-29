@@ -53,7 +53,7 @@ Rutas relativas a `backend/apps/accounts/` salvo que se indique. "Suite verde" =
   dos correos que solo difieren en mayúsculas, la migración falla con un mensaje que los nombra;
   suite verde. (CF-1)
 
-- [ ] T-007 Validación en todo guardado normal
+- [x] T-007 Validación en todo guardado normal
   RF: RF-003, RF-004, RF-005, RF-006 | Depende de: T-005 | Archivos: 2
   Archivos: `models.py` (`save()` con `full_clean`; con `update_fields`, solo esos campos; excepción
   `ZZ`), `tests/test_user_model.py`.

@@ -2,11 +2,14 @@ from datetime import date
 from io import StringIO
 
 import pytest
+from django.core.exceptions import ValidationError
 from django.core.management import CommandError, call_command
 from django.db import IntegrityError
+from django.utils import timezone
 
 from apps.accounts.models import User
 from apps.accounts.tests.factories import DEFAULT_PASSWORD, DEFAULT_PROFILE, make_user
+from apps.accounts.validators import PLACEHOLDER_COUNTRY
 
 SUPERUSER_OPTIONS = {
     "email": "admin@example.com",
@@ -14,6 +17,18 @@ SUPERUSER_OPTIONS = {
     "birthdate": "1990-01-01",
     "country": "ES",
 }
+INVALID_PROFILE_VALUES = [
+    pytest.param("name", "Ana  García", id="name"),
+    pytest.param("birthdate", date(2020, 1, 1), id="birthdate"),
+    pytest.param("country", "XX", id="country"),
+]
+
+
+def _placeholder_user() -> User:
+    user = make_user()
+    User.objects.filter(pk=user.pk).update(country=PLACEHOLDER_COUNTRY)
+    user.refresh_from_db()
+    return user
 
 
 @pytest.mark.django_db
@@ -165,3 +180,104 @@ def test_email_collides_with_inactive_account() -> None:
 
     with pytest.raises(IntegrityError):
         User.objects.bulk_create([User(email="Ana@x.com", **DEFAULT_PROFILE)])
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(("field", "value"), INVALID_PROFILE_VALUES)
+def test_create_user_rejects_invalid_profile(field: str, value: object) -> None:
+    with pytest.raises(ValidationError) as excinfo:
+        make_user(**{field: value})
+    assert field in excinfo.value.error_dict
+    assert not User.objects.exists()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(("field", "value"), INVALID_PROFILE_VALUES)
+def test_direct_save_rejects_invalid_profile(field: str, value: object) -> None:
+    user = make_user()
+    setattr(user, field, value)
+
+    with pytest.raises(ValidationError):
+        user.save()
+    user.refresh_from_db()
+    assert getattr(user, field) == DEFAULT_PROFILE[field]
+
+
+@pytest.mark.django_db
+def test_createsuperuser_rejects_invalid_profile(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("DJANGO_SUPERUSER_PASSWORD", "secret123")
+
+    with pytest.raises(CommandError, match="ISO 3166-1"):
+        call_command(
+            "createsuperuser",
+            interactive=False,
+            stdout=StringIO(),
+            **{**SUPERUSER_OPTIONS, "country": "XX"},
+        )
+    assert not User.objects.exists()
+
+
+@pytest.mark.django_db
+def test_profile_is_normalized_on_save() -> None:
+    user = make_user(name="  Ana García  ", country=" es ")
+    user.refresh_from_db()
+
+    assert (user.name, user.country) == ("Ana García", "ES")
+
+
+@pytest.mark.django_db
+def test_partial_save_validates_listed_fields() -> None:
+    user = make_user()
+    user.name = "Ana  García"
+
+    with pytest.raises(ValidationError):
+        user.save(update_fields=["name"])
+
+
+@pytest.mark.django_db
+def test_partial_save_skips_unlisted_invalid_fields() -> None:
+    user = make_user()
+    User.objects.filter(pk=user.pk).update(name="Ana  García")
+    user.refresh_from_db()
+    user.last_login = timezone.now()
+    user.save(update_fields=["last_login"])
+    user.refresh_from_db()
+
+    assert user.last_login is not None
+
+
+@pytest.mark.django_db
+def test_new_account_cannot_use_placeholder_country() -> None:
+    with pytest.raises(ValidationError):
+        make_user(country=PLACEHOLDER_COUNTRY)
+
+
+@pytest.mark.django_db
+def test_placeholder_account_can_record_login() -> None:
+    user = _placeholder_user()
+    user.last_login = timezone.now()
+    user.save(update_fields=["last_login"])
+    user.refresh_from_db()
+
+    assert user.last_login is not None
+
+
+@pytest.mark.django_db
+def test_placeholder_account_can_change_name_while_keeping_country() -> None:
+    user = _placeholder_user()
+    user.name = "Ana García"
+    user.save()
+    user.refresh_from_db()
+
+    assert (user.name, user.country) == ("Ana García", PLACEHOLDER_COUNTRY)
+
+
+@pytest.mark.django_db
+def test_placeholder_country_cannot_be_restored_after_change() -> None:
+    user = _placeholder_user()
+    user.country = "ES"
+    user.save()
+    user.country = PLACEHOLDER_COUNTRY
+
+    with pytest.raises(ValidationError):
+        user.save()
