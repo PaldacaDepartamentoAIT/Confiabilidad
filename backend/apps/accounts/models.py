@@ -43,6 +43,11 @@ class UserManager(BaseUserManager["User"]):
         return self.create_user(email, password, **extra)
 
 
+class ActiveUserManager(models.Manager["User"]):
+    def get_queryset(self) -> models.QuerySet["User"]:
+        return super().get_queryset().filter(is_active=True)
+
+
 class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
     name = models.CharField(max_length=NAME_MAX_LENGTH)
@@ -53,6 +58,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     date_joined = models.DateTimeField(auto_now_add=True)
 
     objects = UserManager()
+    active = ActiveUserManager()
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS: ClassVar[list[str]] = ["name", "birthdate", "country"]

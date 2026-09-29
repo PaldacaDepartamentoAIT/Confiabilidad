@@ -281,3 +281,24 @@ def test_placeholder_country_cannot_be_restored_after_change() -> None:
 
     with pytest.raises(ValidationError):
         user.save()
+
+
+@pytest.mark.django_db
+def test_new_user_defaults() -> None:
+    user = make_user()
+    user.refresh_from_db()
+
+    assert user.is_active
+    assert not user.is_staff
+    assert not user.is_superuser
+    assert user.date_joined is not None
+    assert user.last_login is None
+
+
+@pytest.mark.django_db
+def test_active_manager_excludes_inactive_accounts() -> None:
+    active = make_user()
+    inactive = make_user(is_active=False)
+
+    assert list(User.active.all()) == [active]
+    assert set(User.objects.all()) == {active, inactive}

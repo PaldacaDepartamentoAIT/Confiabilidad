@@ -61,7 +61,7 @@ Rutas relativas a `backend/apps/accounts/` salvo que se indique. "Suite verde" =
   una cuenta con relleno `ZZ` puede guardar `last_login` y cambiar su nombre, pero no poner `ZZ` de
   nuevo tras cambiar el país; suite verde.
 
-- [ ] T-008 Cuenta inactiva (borrado lógico) y atributos de administración
+- [x] T-008 Cuenta inactiva (borrado lógico) y atributos de administración
   RF: RF-007, RF-008 | Depende de: T-007 | Archivos: 3
   Archivos: `models.py` (gestor `active`), `tests/test_user_model.py` (valores por defecto,
   `User.active` excluye inactivas, `User.objects` las incluye), `tests/test_inactive_login.py`.
