@@ -158,5 +158,26 @@ Rutas relativas a `backend/apps/accounts/` salvo que se indique. "Suite verde" =
   que `date_joined` no cambia tras `refresh_from_db()`; el mutante hace fallar la suite; la suite
   completa sigue en verde.
 
+- [ ] T-019 Corrección: tests del historial en guardados parciales y tras un guardado solo de `last_login`
+  Tipo: corrección | Origen: validación de RF-009
+  RF: RF-009 | Depende de: — | Archivos: 1
+  Archivos: `tests/test_user_history.py`.
+  Causa: nada prueba `save(update_fields=[<campo rastreado>])`, `update_fields` mixtos, ni un
+  `save()` posterior sobre la misma instancia; los mutantes "quitar la condición de
+  `update_fields`", "`<=` → `&`" y "borrar el `del` del `finally`" sobreviven.
+  Hecho cuando: `save(update_fields=["is_active"])` y `save(update_fields=["name", "last_login"])`
+  registran una versión `~` con los datos nuevos; tras `save(update_fields=["last_login"])`, un
+  `save()` de la misma instancia registra `~`; los tres mutantes hacen fallar la suite; la suite
+  completa sigue en verde.
+
+- [ ] T-020 Corrección: test de rechazo de espacios Unicode seguidos en el nombre
+  Tipo: corrección | Origen: validación de RF-003
+  RF: RF-003 | Depende de: — | Archivos: 1
+  Archivos: `tests/test_validators.py`.
+  Causa: el único caso de espacios seguidos es ASCII; el mutante `isspace()` → `== " "` sobrevive.
+  Hecho cuando: `validate_name` rechaza con `name_consecutive_spaces` `"Ana\u00a0\u00a0García"`,
+  `"李\u3000\u3000小龍"` y `"Ana \u2003García"`; el mutante hace fallar la suite; la suite
+  completa sigue en verde.
+
 ## RF sin tarea
 Ninguno.
