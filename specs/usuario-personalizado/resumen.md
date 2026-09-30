@@ -64,7 +64,8 @@ Requisitos: Docker y la rama `feat/usuario-personalizado`.
 5. Ejecuta la suite completa (el mínimo de cobertura del 80 % se mide sobre todo el proyecto,
    así que ejecutar solo `apps/accounts` falla aunque pasen todos los tests):
    `docker compose -f docker/docker-compose.yml run --rm backend pytest -q`
-   Deberías ver `124 passed` y una cobertura superior al 80 %.
+   Deberías ver todos los tests en verde (`N passed`, sin `failed` ni `error`) y una cobertura
+   superior al 80 %.
 
 ## Marco teórico
 ### Borrado lógico (soft delete)
