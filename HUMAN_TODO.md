@@ -8,7 +8,7 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
 
 - [ ] **Reconstruir la imagen del backend y migrar tras `usuario-personalizado`.** La rama
   `feat/usuario-personalizado` añade dos dependencias (`pycountry` y `django-simple-history`)
-  y las migraciones `0002` y `0003` de `accounts`. En tu máquina:
+  y las migraciones `0002`, `0003` y `0004` de `accounts`. En tu máquina:
   ```bash
   docker compose -f docker/docker-compose.yml build backend
   docker compose -f docker/docker-compose.yml run --rm backend python manage.py migrate
