@@ -28,6 +28,9 @@ def test_valid_names_are_accepted(name: str) -> None:
         ("", "name_empty"),
         ("a" * 151, "name_too_long"),
         ("Ana  García", "name_consecutive_spaces"),
+        ("Ana\u00a0\u00a0García", "name_consecutive_spaces"),
+        ("李\u3000\u3000小龍", "name_consecutive_spaces"),
+        ("Ana \u2003García", "name_consecutive_spaces"),
         ("Ana\tGarcía", "name_control_char"),
         ("Ana\nGarcía", "name_control_char"),
         ("Ana García", "name_control_char"),

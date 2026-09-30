@@ -170,7 +170,7 @@ Rutas relativas a `backend/apps/accounts/` salvo que se indique. "Suite verde" =
   `save()` de la misma instancia registra `~`; los tres mutantes hacen fallar la suite; la suite
   completa sigue en verde.
 
-- [ ] T-020 Corrección: test de rechazo de espacios Unicode seguidos en el nombre
+- [x] T-020 Corrección: test de rechazo de espacios Unicode seguidos en el nombre
   Tipo: corrección | Origen: validación de RF-003
   RF: RF-003 | Depende de: — | Archivos: 1
   Archivos: `tests/test_validators.py`.
