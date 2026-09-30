@@ -158,7 +158,7 @@ Rutas relativas a `backend/apps/accounts/` salvo que se indique. "Suite verde" =
   que `date_joined` no cambia tras `refresh_from_db()`; el mutante hace fallar la suite; la suite
   completa sigue en verde.
 
-- [ ] T-019 Corrección: tests del historial en guardados parciales y tras un guardado solo de `last_login`
+- [x] T-019 Corrección: tests del historial en guardados parciales y tras un guardado solo de `last_login`
   Tipo: corrección | Origen: validación de RF-009
   RF: RF-009 | Depende de: — | Archivos: 1
   Archivos: `tests/test_user_history.py`.

@@ -113,3 +113,36 @@ def test_login_creates_no_version() -> None:
     user.refresh_from_db()
     assert user.last_login is not None
     assert _history(user.pk) == ["+"]
+
+
+@pytest.mark.django_db
+def test_partial_save_of_tracked_field_creates_version() -> None:
+    user = make_user()
+    user.is_active = False
+    user.save(update_fields=["is_active"])
+
+    assert _history(user.pk) == ["+", "~"]
+    assert User.history.get(id=user.pk, history_type="~").is_active is False
+
+
+@pytest.mark.django_db
+def test_partial_save_mixing_tracked_and_excluded_fields_creates_version() -> None:
+    user = make_user()
+    user.name = "Ana López"
+    user.last_login = timezone.now()
+    user.save(update_fields=["name", "last_login"])
+
+    assert _history(user.pk) == ["+", "~"]
+    assert User.history.get(id=user.pk, history_type="~").name == "Ana López"
+
+
+@pytest.mark.django_db
+def test_save_after_login_only_save_creates_version() -> None:
+    user = make_user()
+    user.last_login = timezone.now()
+    user.save(update_fields=["last_login"])
+    user.name = "Ana López"
+    user.save()
+
+    assert _history(user.pk) == ["+", "~"]
+    assert User.history.get(id=user.pk, history_type="~").name == "Ana López"
