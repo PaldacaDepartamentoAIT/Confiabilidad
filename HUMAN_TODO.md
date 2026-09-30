@@ -6,6 +6,20 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
 
 ## Pendiente
 
+- [ ] **Entorno remoto en el VPS: tareas de administración.** Cómo hacerlo: `README.md` →
+  *Entorno remoto (VPS por SSH)*.
+  - [ ] Crear tu propio usuario (con `sudo` y `docker`) e instalar tu clave pública
+        (*Administración del VPS*).
+  - [ ] Endurecer SSH tras comprobar que tu clave funciona.
+  - [ ] Crear la swap si `swapon --show` no muestra nada.
+  - [ ] Seguir *Alta de un trabajador* con tu usuario. Mientras `chore/entorno-remoto-ssh` no
+        esté fusionada en `main`, haz `git checkout chore/entorno-remoto-ssh` tras clonar.
+  - [ ] Comprobar que la RAM y el disco del VPS alcanzan para las personas que trabajarán a la
+        vez (`free -h`, `docker system df`).
+
+- [ ] **Dominio con HTTPS para el panel de Coolify.** Hoy escucha en `0.0.0.0:8000` por HTTP y
+  las credenciales de administrador viajan en claro. Asígnalo en Settings → Instance Domain.
+
 - [ ] **Decidir los límites de peticiones (rate limiting) de allauth en `auth-headless`.**
   Hallazgo C-15 del spike `allauth-verificacion-codigo`: `ACCOUNT_RATE_LIMITS = {}` en
   `backend/config/settings.py` **no** desactiva los límites de allauth (solo `False` lo hace).
