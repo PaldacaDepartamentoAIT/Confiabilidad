@@ -50,6 +50,14 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
   sops secrets/prod.enc.yaml
   ```
 
+- [ ] **Añadir `makemigrations --check` a la CI del backend.** Hallazgo M39 de la tercera validación
+  de `usuario-personalizado`: si se quita una restricción del modelo sin crear la migración
+  correspondiente, hoy ningún paso de la CI lo detecta hasta que alguien ejecuta `makemigrations`.
+  Hay que añadir, en el job de backend de `.github/workflows/ci.yml`, tras `mypy`:
+  `python manage.py makemigrations --check --dry-run`.
+  Decide cuándo hacerlo: es un cambio de CI independiente, en una rama `chore/` propia (por ejemplo,
+  `chore/ci-makemigrations-check`) y no dentro de `feat/usuario-personalizado`.
+
 ## Hecho
 
 <!-- Mueve aquí las tareas completadas, con fecha. -->
