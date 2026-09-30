@@ -116,7 +116,10 @@ caídas, no sustituye a la memoria.
    git config user.name "Tu Nombre" && git config user.email "tu@correo"
    cp backend/.env.example backend/.env
    ```
-6. Añade al final de `~/.bashrc` y abre una terminal nueva:
+6. Añade el bloque siguiente al final de `~/.bashrc`. Es un archivo del VPS, no de Windows:
+   `~` es tu carpeta personal (`/home/TU_USUARIO`) y, como empieza por punto, está oculto
+   (`ls -a ~` lo muestra). Ábrelo con `code ~/.bashrc` o `nano ~/.bashrc` (en nano: `Ctrl+O`,
+   Enter y `Ctrl+X`); si no existe, se crea al guardar.
    ```bash
    # Entorno remoto de Confiabilidad: proyecto y puertos propios, derivados del UID
    export COMPOSE_FILE=docker/docker-compose.yml:docker/docker-compose.remote.yml
@@ -126,9 +129,12 @@ caídas, no sustituye a la memoria.
    export DB_PORT=$(( $(id -u) - 1000 + 5432 ))
    export REDIS_PORT=$(( $(id -u) - 1000 + 6379 ))
    ```
-   Comprueba que `echo $FRONTEND_PORT $BACKEND_PORT` muestra tus puertos y que en
+   Las terminales abiertas antes de editarlo no lo cargan: abre una nueva o ejecuta
+   `source ~/.bashrc`. Comprueba que `echo $COMPOSE_FILE` imprime
+   `docker/docker-compose.yml:docker/docker-compose.remote.yml`, que
+   `echo $FRONTEND_PORT $BACKEND_PORT` muestra tus puertos y que en
    `docker compose config | grep host_ip` todas las líneas dicen `127.0.0.1`.
-7. Primer arranque y migraciones (ver *Uso diario*).
+7. Primer arranque, migraciones y superusuario para el admin (ver *Uso diario*).
 8. Desde tu PC, no desde el VPS, verifica que tus puertos **no** responden desde fuera:
    `Test-NetConnection IP_DEL_VPS -Port TU_BACKEND_PORT` (y con `TU_DB_PORT`) debe dar
    `TcpTestSucceeded : False`. Si da `True`, para tu stack y avisa al administrador.
@@ -153,8 +159,13 @@ sucesivamente. El backend nunca usa el 8000, que es de Coolify.
 | Frontend (Vite, recarga en caliente) | `http://localhost:TU_FRONTEND_PORT` |
 | Backend (Django) | `http://localhost:TU_BACKEND_PORT/api/health/` · `/admin/` |
 
-Reenvía tus puertos a mano en la pestaña **Ports** de VS Code; puede detectar también los de
-tus compañeros: ignóralos. `DB_PORT` y `REDIS_PORT` se pueden reenviar si usas un cliente de BD.
+Reenvía tus puertos a mano en la pestaña **Ports** de VS Code (`F1` → *Forward a Port*);
+puede detectar también los de tus compañeros: ignóralos. Sin VS Code, abre el túnel desde
+PowerShell y déjalo abierto mientras trabajas:
+```powershell
+ssh -N -L TU_FRONTEND_PORT:localhost:TU_FRONTEND_PORT -L TU_BACKEND_PORT:localhost:TU_BACKEND_PORT confiabilidad-vps
+```
+`DB_PORT` y `REDIS_PORT` se pueden reenviar si usas un cliente de BD.
 
 **Parar**
 ```bash
@@ -174,11 +185,23 @@ El resto de cambios de código no requiere reconstruir: el código está montado
 **Migraciones y tests**
 ```bash
 docker compose exec backend python manage.py migrate
+docker compose exec backend python manage.py createsuperuser   # para entrar en /admin/
 docker compose exec backend python manage.py makemigrations
 docker compose exec backend pytest
 # Los contenedores escriben como root; devuelve la propiedad de los archivos a tu usuario:
 docker compose exec frontend chown -R "$(id -u):$(id -g)" /workspace
 ```
+
+### Problemas frecuentes
+- `no configuration file provided: not found`: `COMPOSE_FILE` no está cargada en esa terminal.
+  Comprueba `echo $COMPOSE_FILE`; si sale vacío, ejecuta `source ~/.bashrc`. Si sigue vacío,
+  revisa con `tail -n 10 ~/.bashrc` que el bloque se guardó, y con `whoami` que lo editaste
+  con tu usuario y no como root.
+- `stat .../docker-compose.remote.yml: no such file or directory`: tu copia del repo no tiene
+  ese archivo. Actualízala con `git pull`.
+- `port is already allocated`: otro stack ocupa ese puerto. Comprueba que tus variables están
+  cargadas (`echo $BACKEND_PORT`) y que no tienes otro proyecto tuyo levantado
+  (`docker compose ls`).
 
 ### Comandos prohibidos
 El VPS comparte Docker con Coolify y con tus compañeros. No ejecutes:
