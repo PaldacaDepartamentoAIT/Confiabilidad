@@ -43,6 +43,14 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
 
 <!-- Mueve aquí las tareas completadas, con fecha. -->
 
+- [x] **Entorno remoto en el VPS: tareas de administración** (2026-09-30). Usuario propio con
+  `sudo` y `docker` y clave pública instalada, SSH endurecido, swap creada, alta de trabajador
+  completada y RAM y disco comprobados. Procedimiento en `README.md` → *Entorno remoto (VPS
+  por SSH)*.
+
+- [x] **Dominio con HTTPS para el panel de Coolify** (2026-09-30). Asignado en Settings →
+  Instance Domain; las credenciales de administrador ya no viajan en claro.
+
 - [x] **Acceso de escritura a GitHub para las sesiones web** (2026-09-28). GitHub reconectado;
   la rama `spike/allauth-verificacion-codigo` se subió correctamente.
 
