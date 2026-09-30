@@ -34,6 +34,7 @@ def test_valid_names_are_accepted(name: str) -> None:
         ("Ana\tGarcía", "name_control_char"),
         ("Ana\nGarcía", "name_control_char"),
         ("Ana García", "name_control_char"),
+        ("Ana\u2029García", "name_control_char"),
     ],
 )
 def test_invalid_names_are_rejected(name: str, code: str) -> None:

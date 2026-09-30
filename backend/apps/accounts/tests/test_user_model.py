@@ -358,3 +358,14 @@ def test_date_joined_is_set_on_creation_and_kept_on_change() -> None:
     user.refresh_from_db()
 
     assert user.date_joined == joined
+
+
+@pytest.mark.django_db
+def test_name_of_max_length_is_saved_and_longer_is_rejected() -> None:
+    user = make_user(name="a" * 150)
+    user.refresh_from_db()
+    assert user.name == "a" * 150
+
+    with pytest.raises(ValidationError) as excinfo:
+        make_user(name="a" * 151)
+    assert "name" in excinfo.value.error_dict

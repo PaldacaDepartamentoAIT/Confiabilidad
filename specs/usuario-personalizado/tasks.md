@@ -179,5 +179,16 @@ Rutas relativas a `backend/apps/accounts/` salvo que se indique. "Suite verde" =
   `"李\u3000\u3000小龍"` y `"Ana \u2003García"`; el mutante hace fallar la suite; la suite
   completa sigue en verde.
 
+- [x] T-021 Corrección: tests del separador de párrafo y del límite de 150 caracteres del nombre en el modelo
+  Tipo: corrección | Origen: validación de RF-003
+  RF: RF-003 | Depende de: — | Archivos: 2
+  Archivos: `tests/test_validators.py`, `tests/test_user_model.py`.
+  Causa: no se prueba U+2029 (sobrevive el mutante "quitar `Zp`") y el máximo de 150 solo se prueba
+  en el validador (sobrevive el mutante `max_length=100` en el campo).
+  Hecho cuando: `validate_name("Ana\u2029García")` da `name_control_char`; un usuario guardado con
+  `make_user(name="a"*150)` conserva los 150 caracteres tras `refresh_from_db()` y uno de 151 lanza
+  `ValidationError` con `name` en `error_dict`; ambos mutantes hacen fallar la suite; la suite
+  completa sigue en verde.
+
 ## RF sin tarea
 Ninguno.
