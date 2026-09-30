@@ -1,5 +1,5 @@
 # Resumen — usuario-personalizado
-Estado: implementada (pendiente de `sdd-validar`) · Última actualización: 2026-09-29
+Estado: cerrada con riesgo residual aceptado (4.ª validación) · Última actualización: 2026-09-30
 
 ## Qué se hizo
 El usuario (`accounts.User`) pasa de guardar solo el correo a tener un perfil completo, con
@@ -40,6 +40,8 @@ reglas que se cumplen en todo guardado normal y un historial auditable.
   crear usuarios (S-07). Lo resolverá la feature de registro.
 - Si se borra físicamente a quien hizo un cambio, sus versiones quedan sin autor
   (`on_delete=SET_NULL`).
+- Riesgo residual aceptado al cerrar: ningún test detectaría que el historial deje de registrar
+  cambios de una instancia tras un guardado de `last_login` que falle.
 
 ## Cómo probarlo
 Requisitos: Docker y la rama `feat/usuario-personalizado`.

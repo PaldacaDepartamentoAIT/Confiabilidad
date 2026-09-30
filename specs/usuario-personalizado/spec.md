@@ -120,3 +120,6 @@ indicándolo, sin fusionar ni borrar cuentas.
 - 2026-09-29 — Creación (feature nueva) — RF: RF-001…RF-011 — Estado: pendiente de clarificar
 - 2026-09-29 — Clarificación (C-01…C-08) — RF: RF-002…RF-005, RF-007, RF-010, RF-011 ajustados;
   S-02, S-04 ajustados; S-08…S-10 añadidos — Estado: clarificado
+- 2026-09-30 — Validación: cerrada con riesgo residual aceptado por el usuario (4 rondas;
+  145 tests, cobertura 100 %; RF-001…RF-011 cubiertos). Superviviente aceptado: N13 (historial
+  tras un guardado de last_login fallido) — Estado: cerrada
