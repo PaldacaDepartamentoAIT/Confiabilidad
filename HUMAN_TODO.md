@@ -16,6 +16,8 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
   Si `0003` falla con "Emails that differ only in case", tienes cuentas locales cuyos correos
   solo difieren en mayúsculas: decide cuál conservar y borra o cambia la otra; la migración no
   fusiona cuentas a propósito (RF-011).
+  En el VPS no uses estos comandos (se saltan el override y exponen Postgres y Redis): sigue
+  *Actualizar* y *Migraciones* de la sección *Entorno remoto* del README.
 
 - [ ] **Decidir los límites de peticiones (rate limiting) de allauth en `auth-headless`.**
   Hallazgo C-15 del spike `allauth-verificacion-codigo`: `ACCOUNT_RATE_LIMITS = {}` en

@@ -45,6 +45,8 @@ reglas que se cumplen en todo guardado normal y un historial auditable.
 
 ## Cómo probarlo
 Requisitos: Docker y la rama `feat/usuario-personalizado`.
+En el VPS no uses estos comandos (se saltan el override y exponen Postgres y Redis): sigue
+*Actualizar* y *Migraciones* de la sección *Entorno remoto* del README.
 
 1. Reconstruye la imagen (hay dependencias nuevas) y levanta la base de datos y Redis:
    `docker compose -f docker/docker-compose.yml build backend`
