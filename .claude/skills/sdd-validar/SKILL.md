@@ -49,6 +49,7 @@ Siguiente paso: <skill a ejecutar o acción del usuario>
    - *Plan*: el diseño no permite cumplir el RF.
    - *Spec*: el RF es ambiguo, contradictorio o imposible de cumplir.
 6. Si el origen es *Código* o *Test*, propón una tarea de corrección con el siguiente ID libre de `tasks.md`. Si es *Plan* o *Spec*, no propongas tarea: indica que hay que volver a `sdd-plan` o a `sdd-cambio` y por qué. Una tarea no arregla un diseño o un requisito equivocados; solo los tapa.
-7. No modifiques código ni archivos durante el diagnóstico. Muestra el informe y espera la aprobación del usuario.
-8. Cuando el usuario apruebe las tareas de corrección, añádelas a `tasks.md`. Si el veredicto es CUMPLIDA, añade al historial de la spec una entrada `Validación: CUMPLIDA` con la fecha.
-9. Indica el siguiente paso según el origen de los fallos (ver la tabla de `references/plantilla.md`).
+7. Si no hay fallos de origen *Código*, *Plan* ni *Spec*, y los de *Test* son de riesgo mínimo (impacto bajo o improbable), ofrece además cerrar la feature con riesgo residual aceptado: enumera cada riesgo y da tu recomendación. La decisión es del usuario.
+8. No modifiques código ni archivos durante el diagnóstico. Muestra el informe y espera la aprobación del usuario.
+9. Cuando el usuario apruebe las tareas de corrección, añádelas a `tasks.md`. Si el veredicto es CUMPLIDA, añade al historial de la spec una entrada `Validación: CUMPLIDA` con la fecha. Si el usuario acepta cerrar con riesgo residual, añade `Validación: cerrada con riesgo residual aceptado` con la fecha y la lista de riesgos, y recógelos en el resumen de la feature; no la marques como CUMPLIDA.
+10. Indica el siguiente paso según el origen de los fallos (ver la tabla de `references/plantilla.md`).

@@ -11,6 +11,7 @@ Suite: <n> pasan, <n> fallan (salida completa arriba)
 Criterios de finalización: <cumplidos / pendientes>
 Veredicto: CUMPLIDA | NO CUMPLIDA
 RF pendientes: <lista>
+Cierre con riesgo residual: <no procede | propuesto: riesgos y recomendación>
 
 ## Diagnóstico de fallos
 ### RF-00X
@@ -32,5 +33,6 @@ Acción: <tarea propuesta | fase a repetir y motivo>
 | Origen | Siguiente paso |
 |---|---|
 | Código o Test | Aprobar las tareas de corrección → `sdd-implementar` → `sdd-validar` en sesión nueva |
+| Solo Test, riesgo mínimo | Además: cerrar con riesgo residual aceptado (decide el usuario) |
 | Plan | `sdd-plan` → `sdd-tareas` → `sdd-implementar` → `sdd-validar` |
 | Spec | `sdd-cambio` |
