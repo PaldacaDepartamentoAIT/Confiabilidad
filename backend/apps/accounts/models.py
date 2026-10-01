@@ -1,3 +1,4 @@
+from collections.abc import Callable, Collection
 from typing import Any, ClassVar
 
 from django.contrib.auth.models import (
@@ -5,13 +6,32 @@ from django.contrib.auth.models import (
     BaseUserManager,
     PermissionsMixin,
 )
+from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models.functions import Lower
+from django.utils.translation import gettext_lazy as _
+from simple_history.models import HistoricalRecords
+
+from apps.accounts.validators import (
+    NAME_MAX_LENGTH,
+    PLACEHOLDER_COUNTRY,
+    normalize_country,
+    normalize_name,
+    validate_birthdate,
+    validate_country,
+    validate_name,
+)
 
 
 class UserManager(BaseUserManager["User"]):
     def create_user(self, email: str, password: str | None = None, **extra: Any) -> "User":
         if not email:
-            raise ValueError("El email es obligatorio")
+            raise ValueError(_("Email is required."))
+        missing = [field for field in self.model.REQUIRED_FIELDS if not extra.get(field)]
+        if missing:
+            raise ValueError(
+                _("Missing required fields: %(fields)s.") % {"fields": ", ".join(missing)}
+            )
         email = self.normalize_email(email).lower()
         user = self.model(email=email, **extra)
         user.set_password(password)
@@ -24,16 +44,94 @@ class UserManager(BaseUserManager["User"]):
         return self.create_user(email, password, **extra)
 
 
+HISTORY_EXCLUDED_FIELDS = frozenset({"password", "last_login"})
+
+
+class ActiveUserManager(models.Manager["User"]):
+    def get_queryset(self) -> models.QuerySet["User"]:
+        return super().get_queryset().filter(is_active=True)
+
+
 class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
+    name = models.CharField(max_length=NAME_MAX_LENGTH)
+    birthdate = models.DateField()
+    country = models.CharField(max_length=2)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)
 
     objects = UserManager()
+    active = ActiveUserManager()
+    history = HistoricalRecords(excluded_fields=sorted(HISTORY_EXCLUDED_FIELDS))
+    # simple-history omite el registro si este atributo existe en la instancia.
+    skip_history_when_saving: bool
 
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS: ClassVar[list[str]] = []
+    REQUIRED_FIELDS: ClassVar[list[str]] = ["name", "birthdate", "country"]
+
+    class Meta:
+        constraints: ClassVar[list[models.BaseConstraint]] = [
+            models.UniqueConstraint(
+                Lower("email"),
+                name="accounts_user_email_ci_unique",
+                violation_error_message=_("A user with this email already exists."),
+            ),
+        ]
 
     def __str__(self) -> str:
         return self.email
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        self.email = self.email.strip().lower()
+        self.name = normalize_name(self.name)
+        self.country = normalize_country(self.country)
+        # La contraseña la gestiona allauth; la unicidad del correo, la base de datos.
+        exclude = {"password"}
+        update_fields = kwargs.get("update_fields")
+        if update_fields is not None:
+            exclude |= {
+                field.name
+                for field in self._meta.concrete_fields
+                if field.name not in update_fields
+            }
+        self.full_clean(exclude=exclude, validate_unique=False, validate_constraints=False)
+        skip_history = (
+            update_fields is not None
+            and set(update_fields) <= HISTORY_EXCLUDED_FIELDS
+            and not hasattr(self, "skip_history_when_saving")
+        )
+        if skip_history:
+            self.skip_history_when_saving = True
+        try:
+            super().save(*args, **kwargs)
+        finally:
+            if skip_history:
+                del self.skip_history_when_saving
+
+    def clean_fields(self, exclude: Collection[str] | None = None) -> None:
+        excluded = set(exclude or ())
+        errors: dict[str, list[ValidationError]] = {}
+        try:
+            super().clean_fields(exclude=exclude)
+        except ValidationError as error:
+            errors = dict(error.error_dict)
+        profile_checks: dict[str, Callable[[], None]] = {
+            "name": lambda: validate_name(self.name),
+            "birthdate": lambda: validate_birthdate(self.birthdate),
+            "country": lambda: validate_country(self.country, self._stored_country()),
+        }
+        for field_name, check in profile_checks.items():
+            if field_name in excluded or field_name in errors:
+                continue
+            try:
+                check()
+            except ValidationError as error:
+                errors[field_name] = error.error_list
+        if errors:
+            raise ValidationError(errors)
+
+    def _stored_country(self) -> str | None:
+        if self._state.adding or self.country != PLACEHOLDER_COUNTRY:
+            return None
+        return type(self).objects.filter(pk=self.pk).values_list("country", flat=True).first()

@@ -70,6 +70,7 @@ def spike_settings(settings: Any) -> Any:
     # Todas las peticiones de test vienen de 127.0.0.1, así que el límite de allauth de 20
     # registros por minuto e IP se agota con la propia suite; no es objeto del spike.
     settings.ACCOUNT_RATE_LIMITS = {"signup": None}
+    settings.ACCOUNT_ADAPTER = "apps.accounts.tests.spike_allauth.adapters.ProfileFillingAdapter"
     return settings
 
 

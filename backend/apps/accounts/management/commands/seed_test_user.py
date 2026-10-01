@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Any
 
 from django.core.management.base import BaseCommand
@@ -15,5 +16,11 @@ class Command(BaseCommand):
         if User.objects.filter(email=TEST_EMAIL).exists():
             self.stdout.write(f"Usuario de prueba ya existía: {TEST_EMAIL}")
             return
-        User.objects.create_user(email=TEST_EMAIL, password=TEST_PASSWORD)
+        User.objects.create_user(
+            email=TEST_EMAIL,
+            password=TEST_PASSWORD,
+            name="Test User",
+            birthdate=date(1990, 1, 1),
+            country="ES",
+        )
         self.stdout.write(f"Usuario de prueba creado: {TEST_EMAIL}")

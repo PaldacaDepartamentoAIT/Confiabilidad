@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     "allauth.account",
     "allauth.headless",
     "django_celery_beat",
+    "simple_history",
     "apps.core",
     "apps.accounts",
 ]
@@ -43,6 +44,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
+    "simple_history.middleware.HistoryRequestMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"

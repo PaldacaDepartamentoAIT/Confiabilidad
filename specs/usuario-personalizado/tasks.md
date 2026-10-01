@@ -1,0 +1,194 @@
+# Tareas: usuario-personalizado
+Estado: aprobado
+
+Rutas relativas a `backend/apps/accounts/` salvo que se indique. "Suite verde" =
+`cd backend && pytest -q` + `mypy .` + `ruff check .` + `black --check .` sin errores.
+
+- [x] T-001 Validadores de nombre, fecha de nacimiento y país
+  RF: RF-003, RF-004, RF-005 | Depende de: — | Archivos: 3
+  Archivos: `backend/requirements.txt` (`pycountry`), `validators.py`, `tests/test_validators.py`.
+  Hecho cuando: `pytest apps/accounts/tests/test_validators.py -q` pasa: nombre (vacío, >150, doble
+  espacio, tabulador, salto de línea, tildes y otros alfabetos); edad (un día antes y el día
+  exacto de 18 años + 5 días, 29-feb → 5-mar en año no bisiesto, fecha futura); país (`es` → `ES`,
+  `XX`, `XK`, `ZZ` nuevo rechazado, `ZZ` conservado aceptado); suite verde.
+
+- [x] T-002 Creación centralizada de usuarios en los tests de auth-headless
+  RF: — (S-08, CF-4) | Depende de: — | Archivos: 3
+  Archivos: `tests/factories.py` (`make_user`), `tests/conftest.py`, `tests/test_user_model.py`.
+  Hecho cuando: ningún test de `apps/accounts/tests/` fuera del spike llama a `create_user` salvo
+  los que prueban el propio manager; `make_user` es el único punto de creación; suite verde.
+
+- [x] T-003 Adapter de test del spike que completa el perfil en el signup
+  RF: — (S-08, CF-4) | Depende de: T-002 | Archivos: 3
+  Archivos: `tests/spike_allauth/adapters.py` (`ProfileFillingAdapter` y variantes que heredan de
+  él), `tests/spike_allauth/conftest.py` (lo activa por defecto), `tests/spike_allauth/test_late_entry.py`
+  (control con `make_user`).
+  Hecho cuando: los 26 tests del spike pasan sin cambiar ninguna aserción de caracterización;
+  suite verde.
+
+- [x] T-004 Campos obligatorios name, birthdate y country con relleno
+  RF: RF-006, RF-011 (relleno) | Depende de: T-001, T-002, T-003 | Archivos: 5
+  Archivos: `models.py` (campos, `REQUIRED_FIELDS`), `migrations/0002_…` (`AddField` con relleno),
+  `tests/factories.py` (valores por defecto), `management/commands/seed_test_user.py`,
+  `tests/test_user_model.py` (obligatoriedad y `createsuperuser --noinput`).
+  Hecho cuando: `python manage.py migrate` aplica `0002`; crear un usuario sin alguno de los tres
+  campos falla; `createsuperuser --noinput` con los tres crea la cuenta; suite verde.
+  Excepción: los campos obligatorios, su migración, la factoría y el seed tienen que cambiar juntos;
+  separados, la suite queda en rojo entre tareas.
+
+- [x] T-005 Correo normalizado y único sin distinguir mayúsculas
+  RF: RF-001, RF-002 | Depende de: T-004 | Archivos: 3
+  Archivos: `models.py` (normalización en `save()`, `UniqueConstraint(Lower("email"))`),
+  `migrations/0003_…` (normaliza correos existentes, aborta si chocan, crea la restricción),
+  `tests/test_user_model.py`.
+  Hecho cuando: "Ana@x.com" y "ana@x.com" chocan por `create_user`, por `save()` directo y por
+  `bulk_create` sin normalizar (`IntegrityError`); " Ana@X.com " se guarda como "ana@x.com";
+  también choca contra una cuenta inactiva; suite verde. (CF-2)
+
+- [x] T-006 Migración sobre datos existentes
+  RF: RF-011 | Depende de: T-005 | Archivos: 1
+  Archivos: `tests/test_migrations.py`.
+  Hecho cuando: con `MigrationExecutor`, migrar a `0001`, crear cuentas, migrar a la última y
+  comprobar el relleno ("Usuario sin nombre", 1900-01-01, `ZZ`) y los correos en minúsculas; con
+  dos correos que solo difieren en mayúsculas, la migración falla con un mensaje que los nombra;
+  suite verde. (CF-1)
+
+- [x] T-007 Validación en todo guardado normal
+  RF: RF-003, RF-004, RF-005, RF-006 | Depende de: T-005 | Archivos: 2
+  Archivos: `models.py` (`save()` con `full_clean`; con `update_fields`, solo esos campos; excepción
+  `ZZ`), `tests/test_user_model.py`.
+  Hecho cuando: `save()`, `create_user` y `createsuperuser` rechazan nombre, edad o país inválidos;
+  una cuenta con relleno `ZZ` puede guardar `last_login` y cambiar su nombre, pero no poner `ZZ` de
+  nuevo tras cambiar el país; suite verde.
+
+- [x] T-008 Cuenta inactiva (borrado lógico) y atributos de administración
+  RF: RF-007, RF-008 | Depende de: T-007 | Archivos: 3
+  Archivos: `models.py` (gestor `active`), `tests/test_user_model.py` (valores por defecto,
+  `User.active` excluye inactivas, `User.objects` las incluye), `tests/test_inactive_login.py`.
+  Hecho cuando: una cuenta inactiva no puede iniciar sesión por browser ni por app y reactivarla lo
+  permite de nuevo; suite verde.
+
+- [x] T-009 Configuración del historial
+  RF: RF-009 | Depende de: — | Archivos: 3
+  Archivos: `backend/requirements.txt` (`django-simple-history`), `backend/config/settings.py`
+  (`INSTALLED_APPS` y `HistoryRequestMiddleware`), `backend/pyproject.toml` (excepción de mypy).
+  Hecho cuando: `python manage.py check` no da errores con la app instalada; suite verde.
+
+- [x] T-010 Historial de User
+  RF: RF-009, RF-010 | Depende de: T-008, T-009 | Archivos: 3
+  Archivos: `models.py` (`HistoricalRecords` sin `password` ni `last_login`; sin versión si solo
+  cambia `last_login`), `migrations/0004_…`, `tests/test_user_history.py`.
+  Hecho cuando: alta, cambio y borrado físico crean versiones sin `password` ni `last_login`, con
+  autor en una petición autenticada y vacío por consola; el historial sobrevive al borrado; iniciar
+  sesión no crea versión; suite verde.
+
+- [x] T-011 Resumen de la feature
+  RF: todos (documentación) | Depende de: T-001…T-010 | Archivos: 1
+  Archivos: `specs/usuario-personalizado/resumen.md`.
+  Hecho cuando: el resumen contiene qué se hizo, cómo probarlo (incluidos `migrate` y
+  `createsuperuser`) y el marco teórico de los conceptos que generaron dudas.
+
+- [x] T-012 Corrección: tests de normalización del correo al modificar y conservación de puntos y +etiqueta
+  Tipo: corrección | Origen: validación de RF-001
+  RF: RF-001 | Depende de: — | Archivos: 1
+  Archivos: `tests/test_user_model.py`.
+  Causa: ningún test modifica el correo de un usuario existente ni usa puntos o `+etiqueta`; los
+  mutantes "normalizar solo al crear" y "quitar la +etiqueta" sobreviven.
+  Hecho cuando: un test crea `" Ana.B+Tag@X.com "` y comprueba `"ana.b+tag@x.com"`; otro modifica
+  el correo de un usuario existente por `save()` y comprueba que se guarda normalizado; ambos
+  mutantes hacen fallar la suite; la suite completa sigue en verde.
+
+- [x] T-013 Corrección: test de obligatoriedad de nombre, fecha y país en el guardado directo del modelo
+  Tipo: corrección | Origen: validación de RF-006
+  RF: RF-006 | Depende de: — | Archivos: 1
+  Archivos: `tests/test_user_model.py`.
+  Causa: la obligatoriedad solo se prueba por `create_user` y `createsuperuser`; `models.py:117-118`
+  sin cubrir; los mutantes "rellenar en silencio" y "omitir `super().clean_fields()`" sobreviven.
+  Hecho cuando: un test parametrizado comprueba que `User(email=..., <sin un campo>).save()` lanza
+  `ValidationError` con ese campo en `error_dict` y no crea la cuenta; las líneas 117-118 quedan
+  cubiertas; la suite completa sigue en verde.
+
+- [x] T-014 Corrección: test de que desactivar una cuenta activa conserva sus datos
+  Tipo: corrección | Origen: validación de RF-007
+  RF: RF-007 | Depende de: — | Archivos: 1
+  Archivos: `tests/test_inactive_login.py`.
+  Causa: ningún test pasa una cuenta de activa a inactiva; el mutante "anonimizar al desactivar"
+  sobrevive.
+  Hecho cuando: un test crea una cuenta activa, la desactiva por `save()`, comprueba que correo,
+  nombre, fecha y país no cambian y que no puede iniciar sesión, y después la reactiva e inicia
+  sesión con las mismas credenciales (browser y app); la suite completa sigue en verde.
+
+- [x] T-015 Corrección: tests del contenido completo del historial y del autor en una petición real
+  Tipo: corrección | Origen: validación de RF-009
+  RF: RF-009 | Depende de: — | Archivos: 1-2
+  Archivos: `tests/test_user_history.py` y, si hace falta, un módulo de URLs de test.
+  Causa: el test de campos comprueba un subconjunto y el test de autor invoca el middleware a mano;
+  los mutantes "excluir más campos del historial" y "quitar `HistoryRequestMiddleware`" sobreviven.
+  Hecho cuando: el historial contiene exactamente los campos concretos de `User` salvo `password` y
+  `last_login`; una versión `~` contiene los datos modificados y `history_date`; un cambio hecho en
+  una petición real (con `Client` y el `MIDDLEWARE` de settings) registra `history_user`; ambos
+  mutantes hacen fallar la suite; la suite completa sigue en verde.
+
+- [x] T-016 Corrección: tests de normalización del nombre y del país al modificar un usuario
+  Tipo: corrección | Origen: validación de RF-003 y RF-005
+  RF: RF-003, RF-005 | Depende de: — | Archivos: 1
+  Archivos: `tests/test_user_model.py`.
+  Causa: la normalización de nombre y país solo se prueba al crear; los mutantes "recortar el
+  nombre solo al crear" y "mayúsculas del país solo al crear" sobreviven.
+  Hecho cuando: un test modifica un usuario existente con `name=" Ana López "` y `country=" mx "`,
+  lo guarda con `save()` y comprueba `("Ana López", "MX")` tras `refresh_from_db()`; ambos
+  mutantes hacen fallar la suite; la suite completa sigue en verde.
+
+- [x] T-017 Corrección: test de que la verificación del correo no altera el estado de la cuenta
+  Tipo: corrección | Origen: validación de RF-007
+  RF: RF-007 | Depende de: — | Archivos: 1
+  Archivos: `tests/test_inactive_login.py` o `tests/test_user_model.py`.
+  Causa: nada relaciona `EmailAddress.verified` con `is_active`; los mutantes que los acoplan
+  sobreviven.
+  Hecho cuando: una cuenta activa con correo no verificado sigue activa; una cuenta inactiva a la
+  que se le verifica el correo sigue inactiva y no puede iniciar sesión; los mutantes que acoplan
+  ambos estados hacen fallar la suite; la suite completa sigue en verde.
+
+- [x] T-018 Corrección: test de que la fecha de alta se asigna al crear y no cambia al modificar
+  Tipo: corrección | Origen: validación de RF-008
+  RF: RF-008 | Depende de: — | Archivos: 1
+  Archivos: `tests/test_user_model.py`.
+  Causa: solo se comprueba `date_joined is not None`; el mutante `auto_now=True` sobrevive.
+  Hecho cuando: un test guarda `date_joined` al crear, modifica y guarda el usuario, y comprueba
+  que `date_joined` no cambia tras `refresh_from_db()`; el mutante hace fallar la suite; la suite
+  completa sigue en verde.
+
+- [x] T-019 Corrección: tests del historial en guardados parciales y tras un guardado solo de `last_login`
+  Tipo: corrección | Origen: validación de RF-009
+  RF: RF-009 | Depende de: — | Archivos: 1
+  Archivos: `tests/test_user_history.py`.
+  Causa: nada prueba `save(update_fields=[<campo rastreado>])`, `update_fields` mixtos, ni un
+  `save()` posterior sobre la misma instancia; los mutantes "quitar la condición de
+  `update_fields`", "`<=` → `&`" y "borrar el `del` del `finally`" sobreviven.
+  Hecho cuando: `save(update_fields=["is_active"])` y `save(update_fields=["name", "last_login"])`
+  registran una versión `~` con los datos nuevos; tras `save(update_fields=["last_login"])`, un
+  `save()` de la misma instancia registra `~`; los tres mutantes hacen fallar la suite; la suite
+  completa sigue en verde.
+
+- [x] T-020 Corrección: test de rechazo de espacios Unicode seguidos en el nombre
+  Tipo: corrección | Origen: validación de RF-003
+  RF: RF-003 | Depende de: — | Archivos: 1
+  Archivos: `tests/test_validators.py`.
+  Causa: el único caso de espacios seguidos es ASCII; el mutante `isspace()` → `== " "` sobrevive.
+  Hecho cuando: `validate_name` rechaza con `name_consecutive_spaces` `"Ana\u00a0\u00a0García"`,
+  `"李\u3000\u3000小龍"` y `"Ana \u2003García"`; el mutante hace fallar la suite; la suite
+  completa sigue en verde.
+
+- [x] T-021 Corrección: tests del separador de párrafo y del límite de 150 caracteres del nombre en el modelo
+  Tipo: corrección | Origen: validación de RF-003
+  RF: RF-003 | Depende de: — | Archivos: 2
+  Archivos: `tests/test_validators.py`, `tests/test_user_model.py`.
+  Causa: no se prueba U+2029 (sobrevive el mutante "quitar `Zp`") y el máximo de 150 solo se prueba
+  en el validador (sobrevive el mutante `max_length=100` en el campo).
+  Hecho cuando: `validate_name("Ana\u2029García")` da `name_control_char`; un usuario guardado con
+  `make_user(name="a"*150)` conserva los 150 caracteres tras `refresh_from_db()` y uno de 151 lanza
+  `ValidationError` con `name` en `error_dict`; ambos mutantes hacen fallar la suite; la suite
+  completa sigue en verde.
+
+## RF sin tarea
+Ninguno.
