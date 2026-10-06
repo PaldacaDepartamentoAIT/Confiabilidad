@@ -6,7 +6,7 @@ Rutas relativas a `backend/apps/accounts/` salvo que se indique. "Suite verde" =
 tarea, antes de marcarla, se prueba al menos un mutante del código que introduce y debe hacer
 fallar sus tests.
 
-- [ ] T-001 Límites configurables con valores por defecto
+- [x] T-001 Límites configurables con valores por defecto
   RF: RF-019 | Depende de: — | Archivos: 3
   Archivos: `conf.py`, `backend/config/settings.py`, `tests/test_registration_conf.py`.
   Hecho cuando: sin variables de entorno, `conf` devuelve 5 intentos, 15 min de código, 15 min de
