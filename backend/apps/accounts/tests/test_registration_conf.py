@@ -48,3 +48,16 @@ def test_rotation_date_without_timezone_is_rejected(raw: str) -> None:
     with override_settings(REGISTRATION_CODE_SECRET_ROTATED_AT=raw):
         with pytest.raises(ImproperlyConfigured):
             conf.secret_rotated_at()
+
+
+@pytest.mark.parametrize("secret", ["", "   "])
+def test_empty_code_secret_is_rejected(secret: str) -> None:
+    with override_settings(REGISTRATION_CODE_SECRET=secret):
+        with pytest.raises(ImproperlyConfigured):
+            conf.code_secret()
+
+
+@override_settings(REGISTRATION_CODE_SECRET="same", REGISTRATION_CODE_SECRET_PREVIOUS="same")
+def test_previous_secret_equal_to_current_is_rejected() -> None:
+    with pytest.raises(ImproperlyConfigured):
+        conf.code_secret()

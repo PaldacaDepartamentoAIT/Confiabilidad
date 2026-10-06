@@ -147,7 +147,7 @@ fallar sus tests.
   registration` (pasos ejecutables), los límites conocidos y el marco teórico; se probó en una
   instalación limpia como en `usuario-personalizado`. (CF-3, CF-4)
 
-- [ ] T-021 Corrección: rechazar un secreto de códigos vacío
+- [x] T-021 Corrección: rechazar un secreto de códigos vacío
   Tipo: corrección | Origen: hallazgo al implementar T-004
   RF: RF-008 | Depende de: T-001 | Archivos: 2
   Archivos: `conf.py`, `tests/test_registration_conf.py`.

@@ -27,7 +27,14 @@ def secret_transition() -> timedelta:
 
 
 def code_secret() -> str:
-    return str(settings.REGISTRATION_CODE_SECRET)
+    secret = str(settings.REGISTRATION_CODE_SECRET)
+    if not secret.strip():
+        raise ImproperlyConfigured(_("REGISTRATION_CODE_SECRET must not be empty."))
+    if secret == settings.REGISTRATION_CODE_SECRET_PREVIOUS:
+        raise ImproperlyConfigured(
+            _("REGISTRATION_CODE_SECRET_PREVIOUS must differ from REGISTRATION_CODE_SECRET.")
+        )
+    return secret
 
 
 def previous_code_secret() -> str | None:
