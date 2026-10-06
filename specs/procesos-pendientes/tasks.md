@@ -41,7 +41,7 @@ fallar sus tests.
   "Ana@x.com" y "ana@x.com" chocan también por `bulk_create` (`IntegrityError`); dos con el mismo
   `public_id` chocan; suite verde. (CF-1)
 
-- [ ] T-006 Validación del registro pendiente y correo con cuenta
+- [x] T-006 Validación del registro pendiente y correo con cuenta
   RF: RF-002, RF-004 | Depende de: T-005 | Archivos: 2
   Archivos: `models.py`, `tests/test_pending_registration_model.py`.
   Hecho cuando: el correo se guarda sin espacios y en minúsculas, el nombre recortado y el país en
