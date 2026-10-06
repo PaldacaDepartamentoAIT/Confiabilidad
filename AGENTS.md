@@ -95,6 +95,9 @@ Secretos:
 
 ## Reglas
 - Lee `specs/constitution.md` y la spec activa antes de tocar código.
+- Al hablar con el usuario, cada identificador (`T-002`, `RF-005`, `D-03`, `S-06`, `C-01`,
+  `M-02`, `CF-1`, `P-04`…) va acompañado de su título o de una descripción breve la primera vez
+  que aparece en cada mensaje; por ejemplo: «T-002 (código, identificador público y huella)».
 - No te acredites como agente/IA en ninguna parte: ni en mensajes de commit
   (sin `Co-Authored-By` ni firmas), ni en descripciones de PR, ni en comentarios
   o partes visibles del código.
