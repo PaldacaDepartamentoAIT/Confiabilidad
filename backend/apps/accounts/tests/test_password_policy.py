@@ -145,3 +145,7 @@ def test_disabled_validator_makes_no_request(monkeypatch: pytest.MonkeyPatch) ->
     PwnedPasswordValidator().validate(PASSWORD)
 
     assert sent == []
+
+
+def test_help_text_mentions_breaches() -> None:
+    assert "breach" in PwnedPasswordValidator().get_help_text()
