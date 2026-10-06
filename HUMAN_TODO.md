@@ -52,6 +52,20 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
   sops secrets/prod.enc.yaml
   ```
 
+- [ ] **Definir `REGISTRATION_CODE_SECRET` en producción, cifrado con SOPS** (feature
+  `procesos-pendientes`). Protege las huellas de los códigos de registro: sin él, cualquiera con
+  la base de datos podría probar el millón de códigos posibles (RF-008). Si no se define, se usa
+  `DJANGO_SECRET_KEY`, lo que ata su rotación a la de las sesiones. Genera uno propio y
+  añádelo con `sops secrets/prod.enc.yaml`:
+  ```bash
+  python -c "import secrets; print(secrets.token_urlsafe(48))"
+  ```
+  Para rotarlo sin invalidar los códigos en curso (RF-015): pasa el valor actual a
+  `REGISTRATION_CODE_SECRET_PREVIOUS`, pon el nuevo en `REGISTRATION_CODE_SECRET` y la hora del
+  cambio en `REGISTRATION_CODE_SECRET_ROTATED_AT` (ISO 8601 con zona, p. ej.
+  `2026-10-06T10:00:00+00:00`). El anterior vale durante `REGISTRATION_SECRET_TRANSITION_MINUTES`
+  (60 por defecto); después puedes borrar las dos variables de rotación.
+
 - [ ] **Añadir `makemigrations --check` a la CI del backend.** Hallazgo M39 de la tercera validación
   de `usuario-personalizado`: si se quita una restricción del modelo sin crear la migración
   correspondiente, hoy ningún paso de la CI lo detecta hasta que alguien ejecuta `makemigrations`.

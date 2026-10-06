@@ -27,7 +27,7 @@ fallar sus tests.
   Hecho cuando: una huella hecha con el secreto anterior se acepta dentro del periodo de
   transición y se rechaza fuera de él o sin secreto anterior configurado; suite verde.
 
-- [ ] T-004 Documentar las variables nuevas y el secreto de producción
+- [x] T-004 Documentar las variables nuevas y el secreto de producción
   RF: RF-019, RF-015 (documentación) | Depende de: T-001 | Archivos: 2
   Archivos: `backend/.env.example`, `HUMAN_TODO.md`.
   Hecho cuando: `.env.example` lista las variables nuevas sin valores reales y `HUMAN_TODO.md`
