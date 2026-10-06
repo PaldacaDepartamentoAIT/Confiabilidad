@@ -147,3 +147,96 @@ def test_conflict_not_caused_by_the_email_is_not_treated_as_a_repeat(
         registration.start(email="ana@x.com", **DATA)
 
     assert not PendingRegistration.objects.filter(email="ana@x.com").exists()
+
+
+def _wrong(code: str) -> str:
+    return "000000" if code != "000000" else "111111"
+
+
+def _stored() -> PendingRegistration:
+    return PendingRegistration.objects.get()
+
+
+def test_right_code_marks_the_code_as_validated() -> None:
+    started = _start()
+
+    assert registration.verify(public_id=started.public_id, code=started.code) == "verified"
+    assert _stored().code_validated_at is not None
+    assert _stored().failed_attempts == 0
+
+
+def test_wrong_code_adds_a_failed_attempt() -> None:
+    started = _start()
+
+    for expected_attempts in (1, 2):
+        result = registration.verify(public_id=started.public_id, code=_wrong(started.code))
+        assert result == registration.VerifyResult.WRONG_CODE
+        assert _stored().failed_attempts == expected_attempts
+    assert _stored().code_validated_at is None
+
+
+def test_code_of_another_process_is_wrong() -> None:
+    ana, bea = _start("ana@x.com"), _start("bea@x.com")
+    if ana.code != bea.code:
+        result = registration.verify(public_id=ana.public_id, code=bea.code)
+        assert result == registration.VerifyResult.WRONG_CODE
+
+
+@pytest.mark.parametrize(
+    ("limit", "settings_override"),
+    [(5, {}), (2, {"REGISTRATION_MAX_FAILED_ATTEMPTS": 2})],
+)
+def test_after_max_failures_even_the_right_code_is_rejected(
+    limit: int, settings_override: dict[str, int]
+) -> None:
+    with override_settings(**settings_override):
+        started = _start()
+        for _ in range(limit):
+            registration.verify(public_id=started.public_id, code=_wrong(started.code))
+
+        result = registration.verify(public_id=started.public_id, code=started.code)
+
+    assert result == registration.VerifyResult.LOCKED
+    assert (_stored().failed_attempts, _stored().code_validated_at) == (limit, None)
+
+
+@pytest.mark.parametrize(
+    ("changes", "expected"),
+    [
+        pytest.param({"created_at": 120}, registration.VerifyResult.EXPIRED, id="process-expired"),
+        pytest.param(
+            {"code_expires_at": 1},
+            registration.VerifyResult.CODE_EXPIRED,
+            id="code-expired-in-grace",
+        ),
+    ],
+)
+def test_expired_code_or_process_is_rejected_without_counting(
+    changes: dict[str, int], expected: registration.VerifyResult
+) -> None:
+    started = _start()
+    PendingRegistration.objects.update(
+        **{field: timezone.now() - timedelta(minutes=m) for field, m in changes.items()}
+    )
+
+    for code in (started.code, _wrong(started.code)):
+        assert registration.verify(public_id=started.public_id, code=code) == expected
+    assert (_stored().failed_attempts, _stored().code_validated_at) == (0, None)
+
+
+def test_already_validated_code_rejects_any_code_without_counting() -> None:
+    started = _start()
+    registration.verify(public_id=started.public_id, code=started.code)
+
+    for code in (started.code, _wrong(started.code)):
+        result = registration.verify(public_id=started.public_id, code=code)
+        assert result == registration.VerifyResult.ALREADY_VERIFIED
+    assert _stored().failed_attempts == 0
+
+
+def test_unknown_public_id_is_rejected() -> None:
+    started = _start()
+
+    result = registration.verify(public_id="unknown", code=started.code)
+
+    assert result == registration.VerifyResult.NOT_FOUND

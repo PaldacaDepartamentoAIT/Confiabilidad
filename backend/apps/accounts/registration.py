@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import date
+from enum import StrEnum
 
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
@@ -69,6 +70,40 @@ def _reissue(pending: PendingRegistration) -> Started:
         ]
     )
     return Started(public_id=public_id, code=code)
+
+
+class VerifyResult(StrEnum):
+    VERIFIED = "verified"
+    WRONG_CODE = "wrong_code"
+    LOCKED = "locked"
+    CODE_EXPIRED = "code_expired"
+    EXPIRED = "expired"
+    ALREADY_VERIFIED = "already_verified"
+    NOT_FOUND = "not_found"
+
+
+def verify(*, public_id: str, code: str) -> VerifyResult:
+    with transaction.atomic():
+        pending = (
+            PendingRegistration.objects.select_for_update().filter(public_id=public_id).first()
+        )
+        if pending is None:
+            return VerifyResult.NOT_FOUND
+        if pending.is_expired:
+            return VerifyResult.EXPIRED
+        if pending.code_validated_at is not None:
+            return VerifyResult.ALREADY_VERIFIED
+        if pending.is_locked:
+            return VerifyResult.LOCKED
+        if timezone.now() >= pending.code_expires_at:
+            return VerifyResult.CODE_EXPIRED
+        if not codes.verify_code(public_id, code, pending.code_hash):
+            pending.failed_attempts += 1
+            pending.save(update_fields=["failed_attempts"])
+            return VerifyResult.WRONG_CODE
+        pending.code_validated_at = timezone.now()
+        pending.save(update_fields=["code_validated_at"])
+        return VerifyResult.VERIFIED
 
 
 def _is_account_conflict(error: ValidationError) -> bool:

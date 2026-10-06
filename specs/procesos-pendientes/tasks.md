@@ -69,7 +69,7 @@ fallar sus tests.
   los nuevos, cambia el `public_id`, emite un código nuevo, pone los intentos a 0 y anula la
   validación del código; el `public_id` y el código anteriores dejan de valer; suite verde.
 
-- [ ] T-010 Verificar el código
+- [x] T-010 Verificar el código
   RF: RF-009, RF-010, RF-011 | Depende de: T-008 | Archivos: 2
   Archivos: `registration.py`, `tests/test_registration_service.py`.
   Hecho cuando: el código correcto marca el código como validado; uno incorrecto suma un intento;
