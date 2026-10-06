@@ -78,6 +78,7 @@ def test_profile_is_normalized_on_save() -> None:
 @pytest.mark.parametrize(
     ("field", "value"),
     [
+        pytest.param("email", "not-an-email", id="email"),
         pytest.param("name", "Ana  García", id="name"),
         pytest.param("birthdate", date(2020, 1, 1), id="birthdate"),
         pytest.param("country", "XX", id="country"),
