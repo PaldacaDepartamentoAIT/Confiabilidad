@@ -21,7 +21,7 @@ fallar sus tests.
   cambia con otro secreto o con otro `public_id`; la verificación acepta el código correcto y
   rechaza el resto; suite verde.
 
-- [ ] T-003 Rotación del secreto de los códigos
+- [x] T-003 Rotación del secreto de los códigos
   RF: RF-015 | Depende de: T-002 | Archivos: 2
   Archivos: `codes.py`, `tests/test_codes.py`.
   Hecho cuando: una huella hecha con el secreto anterior se acepta dentro del periodo de

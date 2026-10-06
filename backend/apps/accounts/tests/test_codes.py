@@ -1,9 +1,11 @@
 import hashlib
 import hmac
 import re
+from datetime import timedelta
 
 import pytest
 from django.test import override_settings
+from django.utils import timezone
 
 from apps.accounts import codes
 
@@ -70,3 +72,58 @@ def test_verify_compares_in_constant_time(monkeypatch: pytest.MonkeyPatch) -> No
     codes.verify_code(PUBLIC_ID, "123456", codes.code_fingerprint(PUBLIC_ID, "123456"))
 
     assert len(calls) == 1
+
+
+def _old_fingerprint() -> str:
+    with override_settings(REGISTRATION_CODE_SECRET="old-secret"):
+        return codes.code_fingerprint(PUBLIC_ID, "123456")
+
+
+def _rotation(
+    minutes_ago: int | None, previous: str = "old-secret", **extra: object
+) -> override_settings:
+    rotated_at = (
+        "" if minutes_ago is None else (timezone.now() - timedelta(minutes=minutes_ago)).isoformat()
+    )
+    return override_settings(
+        REGISTRATION_CODE_SECRET="new-secret",
+        REGISTRATION_CODE_SECRET_PREVIOUS=previous,
+        REGISTRATION_CODE_SECRET_ROTATED_AT=rotated_at,
+        **extra,
+    )
+
+
+def test_previous_secret_is_accepted_during_transition() -> None:
+    fingerprint = _old_fingerprint()
+    with _rotation(30):
+        assert codes.verify_code(PUBLIC_ID, "123456", fingerprint)
+        assert not codes.verify_code(PUBLIC_ID, "654321", fingerprint)
+
+
+def test_previous_secret_is_rejected_after_transition() -> None:
+    fingerprint = _old_fingerprint()
+    with _rotation(61):
+        assert not codes.verify_code(PUBLIC_ID, "123456", fingerprint)
+
+
+def test_transition_length_follows_settings() -> None:
+    fingerprint = _old_fingerprint()
+    with _rotation(30, REGISTRATION_SECRET_TRANSITION_MINUTES=20):
+        assert not codes.verify_code(PUBLIC_ID, "123456", fingerprint)
+    with _rotation(90, REGISTRATION_SECRET_TRANSITION_MINUTES=120):
+        assert codes.verify_code(PUBLIC_ID, "123456", fingerprint)
+
+
+def test_previous_secret_is_rejected_without_full_configuration() -> None:
+    fingerprint = _old_fingerprint()
+    with _rotation(30, previous=""):
+        assert not codes.verify_code(PUBLIC_ID, "123456", fingerprint)
+    with _rotation(None):
+        assert not codes.verify_code(PUBLIC_ID, "123456", fingerprint)
+
+
+def test_new_fingerprints_use_the_current_secret_during_transition() -> None:
+    with _rotation(30):
+        fingerprint = codes.code_fingerprint(PUBLIC_ID, "123456")
+    with override_settings(REGISTRATION_CODE_SECRET="new-secret"):
+        assert codes.verify_code(PUBLIC_ID, "123456", fingerprint)
