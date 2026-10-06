@@ -3,6 +3,7 @@ from typing import Any
 
 import pytest
 from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 from django.test import override_settings
 from django.utils import timezone
 
@@ -134,3 +135,15 @@ def test_repeat_after_the_email_got_an_account_returns_account_exists() -> None:
 
     assert registration.start(email="ana@x.com", **DATA) == registration.AccountExists()
     assert PendingRegistration.objects.get().public_id == first.public_id
+
+
+def test_conflict_not_caused_by_the_email_is_not_treated_as_a_repeat(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    taken = _start("bea@x.com").public_id
+    monkeypatch.setattr("apps.accounts.registration.codes.generate_public_id", lambda: taken)
+
+    with pytest.raises(IntegrityError):
+        registration.start(email="ana@x.com", **DATA)
+
+    assert not PendingRegistration.objects.filter(email="ana@x.com").exists()
