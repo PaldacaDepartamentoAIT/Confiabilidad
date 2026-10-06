@@ -13,7 +13,7 @@ fallar sus tests.
   gracia, 1 h de vida, 1 h de transición del secreto y 2 s de espera de HIBP, y el secreto vale
   `SECRET_KEY`; con `override_settings` devuelve los valores cambiados; suite verde.
 
-- [ ] T-002 Código, identificador público y huella
+- [x] T-002 Código, identificador público y huella
   RF: RF-007, RF-008 | Depende de: T-001 | Archivos: 2
   Archivos: `codes.py`, `tests/test_codes.py`.
   Hecho cuando: el código tiene 6 dígitos (también con ceros a la izquierda); `public_id` es
