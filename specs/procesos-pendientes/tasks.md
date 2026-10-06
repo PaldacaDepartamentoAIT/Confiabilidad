@@ -55,7 +55,7 @@ fallar sus tests.
   llegue antes (moviendo las fechas con `update()`); está bloqueado con 5 intentos fallidos; con
   otros límites en `override_settings` cambian los resultados; suite verde.
 
-- [ ] T-008 Iniciar el registro
+- [x] T-008 Iniciar el registro
   RF: RF-004, RF-017 | Depende de: T-007 | Archivos: 2
   Archivos: `registration.py`, `tests/test_registration_service.py`.
   Hecho cuando: `start` crea el registro y devuelve `public_id` y el código en claro (que no queda

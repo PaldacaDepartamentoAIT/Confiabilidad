@@ -1,0 +1,47 @@
+from dataclasses import dataclass
+from datetime import date
+
+from django.core.exceptions import ValidationError
+from django.db import transaction
+from django.utils import timezone
+
+from apps.accounts import codes, conf
+from apps.accounts.models import PendingRegistration
+
+
+@dataclass(frozen=True)
+class Started:
+    public_id: str
+    code: str
+
+
+@dataclass(frozen=True)
+class AccountExists:
+    pass
+
+
+def start(*, email: str, name: str, birthdate: date, country: str) -> Started | AccountExists:
+    public_id, code = codes.generate_public_id(), codes.generate_code()
+    pending = PendingRegistration(
+        email=email,
+        name=name,
+        birthdate=birthdate,
+        country=country,
+        public_id=public_id,
+        code_hash=codes.code_fingerprint(public_id, code),
+        code_expires_at=timezone.now() + conf.code_ttl(),
+    )
+    with transaction.atomic():
+        PendingRegistration.objects.expired().filter(email__iexact=email.strip()).delete()
+        try:
+            pending.save()
+        except ValidationError as error:
+            if _is_account_conflict(error):
+                return AccountExists()
+            raise
+    return Started(public_id=public_id, code=code)
+
+
+def _is_account_conflict(error: ValidationError) -> bool:
+    errors = error.error_dict
+    return set(errors) == {"email"} and all(e.code == "email_has_account" for e in errors["email"])
