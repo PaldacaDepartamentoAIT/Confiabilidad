@@ -1,9 +1,10 @@
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 import pytest
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
 from django.db import IntegrityError, transaction
+from django.test import override_settings
 from django.utils import timezone
 
 from apps.accounts.models import PendingRegistration
@@ -117,3 +118,57 @@ def test_partial_save_skips_unlisted_fields_and_account_check() -> None:
 
     pending.refresh_from_db()
     assert pending.failed_attempts == 1
+
+
+def _ago(minutes: int) -> datetime:
+    return timezone.now() - timedelta(minutes=minutes)
+
+
+def _saved(email: str = "ana@x.com", **changes: object) -> PendingRegistration:
+    pending = _pending(email, public_id=email)
+    pending.save()
+    if changes:
+        PendingRegistration.objects.filter(pk=pending.pk).update(**changes)
+    pending.refresh_from_db()
+    return pending
+
+
+def _is_expired_everywhere(pending: PendingRegistration) -> bool:
+    in_queryset = PendingRegistration.objects.expired().filter(pk=pending.pk).exists()
+    assert pending.is_expired is in_queryset
+    return in_queryset
+
+
+@pytest.mark.parametrize(
+    ("changes", "expected"),
+    [
+        pytest.param({}, False, id="new"),
+        pytest.param({"code_expires_at": 14}, False, id="within-grace"),
+        pytest.param({"code_expires_at": 16}, True, id="after-grace"),
+        pytest.param({"created_at": 59}, False, id="within-lifetime"),
+        pytest.param({"created_at": 61}, True, id="after-lifetime-with-valid-code"),
+    ],
+)
+def test_expiry_is_whichever_comes_first(changes: dict[str, int], expected: bool) -> None:
+    pending = _saved("ana@x.com", **{field: _ago(minutes) for field, minutes in changes.items()})
+
+    assert _is_expired_everywhere(pending) is expected
+
+
+@override_settings(REGISTRATION_GRACE_MINUTES=5, REGISTRATION_MAX_LIFETIME_MINUTES=30)
+def test_expiry_follows_settings() -> None:
+    assert _is_expired_everywhere(_saved("a@x.com", code_expires_at=_ago(6)))
+    assert not _is_expired_everywhere(_saved("b@x.com", code_expires_at=_ago(4)))
+    assert _is_expired_everywhere(_saved("c@x.com", created_at=_ago(31)))
+    assert not _is_expired_everywhere(_saved("d@x.com", created_at=_ago(29)))
+
+
+def test_locked_at_max_failed_attempts() -> None:
+    assert not _saved("a@x.com", failed_attempts=4).is_locked
+    assert _saved("b@x.com", failed_attempts=5).is_locked
+
+
+@override_settings(REGISTRATION_MAX_FAILED_ATTEMPTS=3)
+def test_lock_follows_settings() -> None:
+    assert not _saved("a@x.com", failed_attempts=2).is_locked
+    assert _saved("b@x.com", failed_attempts=3).is_locked

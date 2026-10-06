@@ -1,4 +1,5 @@
 from collections.abc import Callable, Collection
+from datetime import datetime
 from typing import Any, ClassVar
 
 from django.contrib.auth.models import (
@@ -9,9 +10,11 @@ from django.contrib.auth.models import (
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.functions import Lower
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
+from apps.accounts import conf
 from apps.accounts.validators import (
     NAME_MAX_LENGTH,
     PLACEHOLDER_COUNTRY,
@@ -146,6 +149,15 @@ class User(AbstractBaseUser, PermissionsMixin):
         return type(self).objects.filter(pk=self.pk).values_list("country", flat=True).first()
 
 
+class PendingRegistrationQuerySet(models.QuerySet["PendingRegistration"]):
+    def expired(self) -> "PendingRegistrationQuerySet":
+        now = timezone.now()
+        return self.filter(
+            models.Q(code_expires_at__lte=now - conf.grace_period())
+            | models.Q(created_at__lte=now - conf.max_lifetime())
+        )
+
+
 class PendingRegistration(models.Model):
     email = models.EmailField()
     name = models.CharField(max_length=NAME_MAX_LENGTH)
@@ -157,6 +169,8 @@ class PendingRegistration(models.Model):
     failed_attempts = models.PositiveSmallIntegerField(default=0)
     code_validated_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    objects = PendingRegistrationQuerySet.as_manager()
 
     class Meta:
         constraints: ClassVar[list[models.BaseConstraint]] = [
@@ -203,3 +217,18 @@ class PendingRegistration(models.Model):
         _check_profile(self, set(exclude or ()), errors, lambda: None)
         if errors:
             raise ValidationError(errors)
+
+    @property
+    def expires_at(self) -> datetime:
+        return min(
+            self.code_expires_at + conf.grace_period(),
+            self.created_at + conf.max_lifetime(),
+        )
+
+    @property
+    def is_expired(self) -> bool:
+        return timezone.now() >= self.expires_at
+
+    @property
+    def is_locked(self) -> bool:
+        return self.failed_attempts >= conf.max_failed_attempts()

@@ -48,7 +48,7 @@ fallar sus tests.
   mayúsculas; un nombre, edad o país inválido lanza `ValidationError`; un correo que pertenece a
   una cuenta (activa o no, sin distinguir mayúsculas) no se guarda; suite verde.
 
-- [ ] T-007 Caducidad y bloqueo calculados
+- [x] T-007 Caducidad y bloqueo calculados
   RF: RF-010, RF-011 | Depende de: T-006 | Archivos: 2
   Archivos: `models.py`, `tests/test_pending_registration_model.py`.
   Hecho cuando: un registro caduca a los 15 min de caducar su código o a la 1 h de su alta, lo que
