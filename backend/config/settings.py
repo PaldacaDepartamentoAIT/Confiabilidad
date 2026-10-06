@@ -122,6 +122,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+    {"NAME": "apps.accounts.password_validation.PwnedPasswordValidator"},
 ]
 
 AUTH_USER_MODEL = "accounts.User"
@@ -198,3 +199,4 @@ REGISTRATION_SECRET_TRANSITION_MINUTES = env.int(
     "REGISTRATION_SECRET_TRANSITION_MINUTES", default=60
 )
 PWNED_PASSWORDS_TIMEOUT_SECONDS = env.float("PWNED_PASSWORDS_TIMEOUT_SECONDS", default=2.0)
+PWNED_PASSWORDS_ENABLED = env.bool("PWNED_PASSWORDS_ENABLED", default=True)

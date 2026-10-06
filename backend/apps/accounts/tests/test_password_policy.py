@@ -5,10 +5,12 @@ import urllib.request
 from datetime import date
 
 import pytest
+from django.conf import settings as django_settings
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.test import override_settings
 
+import config.settings as project_settings
 from apps.accounts.models import User
 from apps.accounts.password_validation import PwnedPasswordValidator
 
@@ -63,7 +65,7 @@ class _FakeResponse:
         return self._body
 
 
-def _serve(
+def _record(
     monkeypatch: pytest.MonkeyPatch, body: str = "", error: Exception | None = None
 ) -> list[tuple[urllib.request.Request, float]]:
     sent: list[tuple[urllib.request.Request, float]] = []
@@ -76,6 +78,13 @@ def _serve(
 
     monkeypatch.setattr("apps.accounts.password_validation.urllib.request.urlopen", fake_urlopen)
     return sent
+
+
+def _serve(
+    monkeypatch: pytest.MonkeyPatch, body: str = "", error: Exception | None = None
+) -> list[tuple[urllib.request.Request, float]]:
+    monkeypatch.setattr(django_settings, "PWNED_PASSWORDS_ENABLED", True)
+    return _record(monkeypatch, body, error)
 
 
 def test_pwned_password_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -138,9 +147,9 @@ def test_service_failure_accepts_and_logs_a_warning(
     assert PASSWORD not in caplog.text and SHA1 not in caplog.text
 
 
-@override_settings(PWNED_PASSWORDS_ENABLED=False)
 def test_disabled_validator_makes_no_request(monkeypatch: pytest.MonkeyPatch) -> None:
     sent = _serve(monkeypatch, f"{SHA1[5:]}:3\r\n")
+    monkeypatch.setattr(django_settings, "PWNED_PASSWORDS_ENABLED", False)
 
     PwnedPasswordValidator().validate(PASSWORD)
 
@@ -149,3 +158,21 @@ def test_disabled_validator_makes_no_request(monkeypatch: pytest.MonkeyPatch) ->
 
 def test_help_text_mentions_breaches() -> None:
     assert "breach" in PwnedPasswordValidator().get_help_text()
+
+
+def test_pwned_check_is_part_of_the_project_policy(monkeypatch: pytest.MonkeyPatch) -> None:
+    _serve(monkeypatch, f"{SHA1[5:]}:3\r\n")
+
+    assert "password_pwned" in _rejection_codes(PASSWORD, _user())
+
+
+def test_the_test_suite_never_queries_the_service(monkeypatch: pytest.MonkeyPatch) -> None:
+    sent = _record(monkeypatch, f"{SHA1[5:]}:3\r\n")
+
+    validate_password(PASSWORD, user=_user())
+
+    assert sent == []
+
+
+def test_service_is_enabled_by_default() -> None:
+    assert project_settings.PWNED_PASSWORDS_ENABLED is True

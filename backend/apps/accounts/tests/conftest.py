@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytest
 from django.test import Client
 
@@ -16,3 +18,8 @@ def test_user() -> User:
 @pytest.fixture
 def csrf_client() -> Client:
     return Client(enforce_csrf_checks=True)
+
+
+@pytest.fixture(autouse=True)
+def _no_pwned_passwords_requests(settings: Any) -> None:
+    settings.PWNED_PASSWORDS_ENABLED = False

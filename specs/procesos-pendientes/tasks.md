@@ -98,7 +98,7 @@ fallar sus tests.
   primeros caracteres; con tiempo agotado o error de red acepta y escribe un aviso en el log;
   suite verde.
 
-- [ ] T-014 Activar el validador de filtradas y apagarlo en los tests
+- [x] T-014 Activar el validador de filtradas y apagarlo en los tests
   RF: RF-022, RF-019 | Depende de: T-013, T-012 | Archivos: 3
   Archivos: `backend/config/settings.py`, `tests/conftest.py`, `tests/test_password_policy.py`.
   Hecho cuando: `AUTH_PASSWORD_VALIDATORS` incluye el validador; con `PWNED_PASSWORDS_ENABLED`
