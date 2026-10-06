@@ -83,7 +83,7 @@ fallar sus tests.
   y pone los intentos a 0, también tras un bloqueo; se rechaza con el código ya validado o en un
   registro caducado; suite verde.
 
-- [ ] T-012 Política de contraseñas local
+- [x] T-012 Política de contraseñas local
   RF: RF-022 | Depende de: — | Archivos: 2
   Archivos: `backend/config/settings.py`, `tests/test_password_policy.py`.
   Hecho cuando: `validate_password` rechaza 11 caracteres, una contraseña parecida al correo o al

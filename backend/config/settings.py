@@ -110,9 +110,16 @@ CHANNEL_LAYERS = {
 CELERY_BROKER_URL = env("CELERY_BROKER_URL", default=REDIS_URL)
 CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default=REDIS_URL)
 
+# Política de contraseñas del proyecto (RF-022 de procesos-pendientes).
 AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+        "OPTIONS": {"user_attributes": ("email", "name")},
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {"min_length": 12},
+    },
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
