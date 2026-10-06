@@ -62,7 +62,7 @@ fallar sus tests.
   guardado); con un correo con cuenta devuelve "cuenta existente" sin guardar nada; borra antes un
   registro caducado del mismo correo; suite verde.
 
-- [ ] T-009 Registro repetido
+- [x] T-009 Registro repetido
   RF: RF-005, RF-003 | Depende de: T-008 | Archivos: 2
   Archivos: `registration.py`, `tests/test_registration_service.py`.
   Hecho cuando: repetir `start` con un correo con registro vigente conserva sus datos, descarta

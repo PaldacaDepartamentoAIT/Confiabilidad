@@ -94,3 +94,43 @@ def test_start_deletes_only_the_expired_registration_of_the_same_email() -> None
         other.public_id,
     }
     assert new.public_id != old.public_id
+
+
+def test_repeat_keeps_the_data_and_issues_a_new_public_id_and_code() -> None:
+    first = _start("ana@x.com")
+    PendingRegistration.objects.update(
+        failed_attempts=3,
+        code_validated_at=timezone.now(),
+        code_expires_at=timezone.now() - timedelta(minutes=1),
+    )
+    created_at = PendingRegistration.objects.get().created_at
+
+    second = _start("ANA@x.com", name="Otra Persona", country="MX")
+
+    pending = PendingRegistration.objects.get()
+    assert (pending.name, pending.country, pending.created_at) == ("Ana García", "ES", created_at)
+    assert pending.public_id == second.public_id != first.public_id
+    assert (pending.failed_attempts, pending.code_validated_at) == (0, None)
+    assert pending.code_expires_at > timezone.now() + timedelta(minutes=14)
+    assert codes.verify_code(second.public_id, second.code, pending.code_hash)
+    assert not codes.verify_code(first.public_id, first.code, pending.code_hash)
+    if first.code != second.code:
+        assert not codes.verify_code(second.public_id, first.code, pending.code_hash)
+
+
+def test_repeat_with_invalid_data_is_rejected_and_changes_nothing() -> None:
+    first = _start()
+
+    with pytest.raises(ValidationError) as excinfo:
+        registration.start(email="ana@x.com", **{**DATA, "country": "XX"})
+
+    assert set(excinfo.value.error_dict) == {"country"}
+    assert PendingRegistration.objects.get().public_id == first.public_id
+
+
+def test_repeat_after_the_email_got_an_account_returns_account_exists() -> None:
+    first = _start()
+    make_user(email="ana@x.com")
+
+    assert registration.start(email="ana@x.com", **DATA) == registration.AccountExists()
+    assert PendingRegistration.objects.get().public_id == first.public_id
