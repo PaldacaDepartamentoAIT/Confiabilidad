@@ -135,3 +135,28 @@ class User(AbstractBaseUser, PermissionsMixin):
         if self._state.adding or self.country != PLACEHOLDER_COUNTRY:
             return None
         return type(self).objects.filter(pk=self.pk).values_list("country", flat=True).first()
+
+
+class PendingRegistration(models.Model):
+    email = models.EmailField()
+    name = models.CharField(max_length=NAME_MAX_LENGTH)
+    birthdate = models.DateField()
+    country = models.CharField(max_length=2)
+    public_id = models.CharField(max_length=64, unique=True)
+    code_hash = models.CharField(max_length=64)
+    code_expires_at = models.DateTimeField()
+    failed_attempts = models.PositiveSmallIntegerField(default=0)
+    code_validated_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints: ClassVar[list[models.BaseConstraint]] = [
+            models.UniqueConstraint(
+                Lower("email"),
+                name="accounts_pendingregistration_email_ci_unique",
+                violation_error_message=_("A pending registration with this email already exists."),
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return self.email

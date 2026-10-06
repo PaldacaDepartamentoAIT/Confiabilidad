@@ -33,7 +33,7 @@ fallar sus tests.
   Hecho cuando: `.env.example` lista las variables nuevas sin valores reales y `HUMAN_TODO.md`
   pide definir `REGISTRATION_CODE_SECRET` cifrado con SOPS en producción.
 
-- [ ] T-005 Modelo `PendingRegistration` con sus restricciones únicas
+- [x] T-005 Modelo `PendingRegistration` con sus restricciones únicas
   RF: RF-001, RF-003, RF-007 | Depende de: T-002 | Archivos: 3
   Archivos: `models.py`, `migrations/0005_pendingregistration.py`,
   `tests/test_pending_registration_model.py`.
