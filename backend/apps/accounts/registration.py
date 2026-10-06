@@ -106,6 +106,37 @@ def verify(*, public_id: str, code: str) -> VerifyResult:
         return VerifyResult.VERIFIED
 
 
+@dataclass(frozen=True)
+class Resent:
+    public_id: str
+    code: str
+
+
+class ResendRefusal(StrEnum):
+    EXPIRED = "expired"
+    ALREADY_VERIFIED = "already_verified"
+    NOT_FOUND = "not_found"
+
+
+def resend(*, public_id: str) -> Resent | ResendRefusal:
+    with transaction.atomic():
+        pending = (
+            PendingRegistration.objects.select_for_update().filter(public_id=public_id).first()
+        )
+        if pending is None:
+            return ResendRefusal.NOT_FOUND
+        if pending.is_expired:
+            return ResendRefusal.EXPIRED
+        if pending.code_validated_at is not None:
+            return ResendRefusal.ALREADY_VERIFIED
+        code = codes.generate_code()
+        pending.code_hash = codes.code_fingerprint(public_id, code)
+        pending.code_expires_at = timezone.now() + conf.code_ttl()
+        pending.failed_attempts = 0
+        pending.save(update_fields=["code_hash", "code_expires_at", "failed_attempts"])
+        return Resent(public_id=public_id, code=code)
+
+
 def _is_account_conflict(error: ValidationError) -> bool:
     errors = error.error_dict
     return set(errors) == {"email"} and all(e.code == "email_has_account" for e in errors["email"])

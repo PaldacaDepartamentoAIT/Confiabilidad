@@ -240,3 +240,69 @@ def test_unknown_public_id_is_rejected() -> None:
     result = registration.verify(public_id="unknown", code=started.code)
 
     assert result == registration.VerifyResult.NOT_FOUND
+
+
+def _resend(public_id: str) -> registration.Resent:
+    result = registration.resend(public_id=public_id)
+    assert isinstance(result, registration.Resent)
+    return result
+
+
+def test_resend_keeps_the_public_id_and_replaces_the_code() -> None:
+    started = _start()
+
+    resent = _resend(started.public_id)
+
+    assert resent.public_id == started.public_id == _stored().public_id
+    assert codes.verify_code(started.public_id, resent.code, _stored().code_hash)
+    if resent.code != started.code:
+        assert registration.verify(public_id=started.public_id, code=started.code) == "wrong_code"
+
+
+def test_resend_unlocks_a_locked_process() -> None:
+    started = _start()
+    for _ in range(5):
+        registration.verify(public_id=started.public_id, code=_wrong(started.code))
+
+    resent = _resend(started.public_id)
+
+    assert _stored().failed_attempts == 0
+    assert registration.verify(public_id=started.public_id, code=resent.code) == "verified"
+
+
+@override_settings(REGISTRATION_CODE_TTL_MINUTES=5)
+def test_resend_renews_an_expired_code_within_the_grace_period() -> None:
+    started = _start()
+    PendingRegistration.objects.update(code_expires_at=timezone.now() - timedelta(minutes=1))
+
+    resent = _resend(started.public_id)
+
+    remaining = _stored().code_expires_at - timezone.now()
+    assert timedelta(minutes=4) < remaining <= timedelta(minutes=5)
+    assert registration.verify(public_id=started.public_id, code=resent.code) == "verified"
+
+
+def test_resend_is_refused_once_the_code_is_validated() -> None:
+    started = _start()
+    registration.verify(public_id=started.public_id, code=started.code)
+    code_hash = _stored().code_hash
+
+    result = registration.resend(public_id=started.public_id)
+
+    assert result == registration.ResendRefusal.ALREADY_VERIFIED
+    assert _stored().code_hash == code_hash
+
+
+def test_resend_is_refused_for_an_expired_process() -> None:
+    started = _start()
+    PendingRegistration.objects.update(created_at=timezone.now() - timedelta(hours=2))
+    code_hash = _stored().code_hash
+
+    result = registration.resend(public_id=started.public_id)
+
+    assert result == registration.ResendRefusal.EXPIRED
+    assert _stored().code_hash == code_hash
+
+
+def test_resend_with_unknown_public_id_is_refused() -> None:
+    assert registration.resend(public_id="unknown") == registration.ResendRefusal.NOT_FOUND

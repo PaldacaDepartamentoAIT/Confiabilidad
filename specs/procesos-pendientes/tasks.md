@@ -76,7 +76,7 @@ fallar sus tests.
   con 5 fallos se rechaza incluso el correcto; se rechaza en un registro caducado o con el código
   ya validado; un `public_id` desconocido se rechaza; suite verde.
 
-- [ ] T-011 Reenviar el código
+- [x] T-011 Reenviar el código
   RF: RF-016 | Depende de: T-010 | Archivos: 2
   Archivos: `registration.py`, `tests/test_registration_service.py`.
   Hecho cuando: `resend` conserva el `public_id`, emite un código nuevo (el anterior deja de valer)
