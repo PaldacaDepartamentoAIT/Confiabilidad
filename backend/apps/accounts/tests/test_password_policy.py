@@ -1,10 +1,16 @@
+import hashlib
+import logging
+import urllib.error
+import urllib.request
 from datetime import date
 
 import pytest
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
+from django.test import override_settings
 
 from apps.accounts.models import User
+from apps.accounts.password_validation import PwnedPasswordValidator
 
 
 def _user(email: str = "x@example.com", name: str = "Bea Ruiz") -> User:
@@ -37,3 +43,105 @@ def test_password_similar_to_the_name_is_rejected() -> None:
 
 def test_common_password_is_rejected() -> None:
     assert "password_too_common" in _rejection_codes("qwerty123456", _user())
+
+
+PASSWORD = "Kq7#mZ2!vR9p"
+SHA1 = hashlib.sha1(PASSWORD.encode()).hexdigest().upper()
+
+
+class _FakeResponse:
+    def __init__(self, body: str) -> None:
+        self._body = body.encode()
+
+    def __enter__(self) -> "_FakeResponse":
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        return None
+
+    def read(self) -> bytes:
+        return self._body
+
+
+def _serve(
+    monkeypatch: pytest.MonkeyPatch, body: str = "", error: Exception | None = None
+) -> list[tuple[urllib.request.Request, float]]:
+    sent: list[tuple[urllib.request.Request, float]] = []
+
+    def fake_urlopen(request: urllib.request.Request, timeout: float) -> _FakeResponse:
+        sent.append((request, timeout))
+        if error is not None:
+            raise error
+        return _FakeResponse(body)
+
+    monkeypatch.setattr("apps.accounts.password_validation.urllib.request.urlopen", fake_urlopen)
+    return sent
+
+
+def test_pwned_password_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
+    _serve(monkeypatch, f"0123456789ABCDEF0123456789ABCDEF012:7\r\n{SHA1[5:]}:3\r\n")
+
+    with pytest.raises(ValidationError) as excinfo:
+        PwnedPasswordValidator().validate(PASSWORD)
+    assert excinfo.value.code == "password_pwned"
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        pytest.param("0123456789ABCDEF0123456789ABCDEF012:7\r\n", id="absent"),
+        pytest.param(f"{SHA1[5:]}:0\r\n", id="padding-with-zero-count"),
+    ],
+)
+def test_password_absent_or_padding_only_is_accepted(
+    monkeypatch: pytest.MonkeyPatch, body: str
+) -> None:
+    _serve(monkeypatch, body)
+
+    PwnedPasswordValidator().validate(PASSWORD)
+
+
+@override_settings(PWNED_PASSWORDS_TIMEOUT_SECONDS=0.5)
+def test_only_the_first_five_characters_of_the_hash_are_sent(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    sent = _serve(monkeypatch)
+
+    PwnedPasswordValidator().validate(PASSWORD)
+
+    ((request, timeout),) = sent
+    assert request.full_url == f"https://api.pwnedpasswords.com/range/{SHA1[:5]}"
+    assert request.get_header("Add-padding") == "true"
+    assert timeout == 0.5
+
+
+@pytest.mark.parametrize(
+    ("error", "body"),
+    [
+        pytest.param(TimeoutError(), "", id="timeout"),
+        pytest.param(urllib.error.URLError("unreachable"), "", id="network"),
+        pytest.param(None, f"{SHA1[5:]}:not-a-number\r\n", id="malformed"),
+    ],
+)
+def test_service_failure_accepts_and_logs_a_warning(
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+    error: Exception | None,
+    body: str,
+) -> None:
+    _serve(monkeypatch, body, error)
+
+    with caplog.at_level(logging.WARNING, logger="apps.accounts.password_validation"):
+        PwnedPasswordValidator().validate(PASSWORD)
+
+    assert any("Pwned Passwords check skipped" in r.getMessage() for r in caplog.records)
+    assert PASSWORD not in caplog.text and SHA1 not in caplog.text
+
+
+@override_settings(PWNED_PASSWORDS_ENABLED=False)
+def test_disabled_validator_makes_no_request(monkeypatch: pytest.MonkeyPatch) -> None:
+    sent = _serve(monkeypatch, f"{SHA1[5:]}:3\r\n")
+
+    PwnedPasswordValidator().validate(PASSWORD)
+
+    assert sent == []

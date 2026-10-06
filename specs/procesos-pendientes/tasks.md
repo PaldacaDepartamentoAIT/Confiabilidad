@@ -90,7 +90,7 @@ fallar sus tests.
   nombre de un `User` sin guardar y una común, y acepta una buena de 12; los 27 tests del spike y
   los de `auth-headless` siguen en verde; suite verde.
 
-- [ ] T-013 Validador de contraseñas filtradas
+- [x] T-013 Validador de contraseñas filtradas
   RF: RF-022 | Depende de: T-001 | Archivos: 2
   Archivos: `password_validation.py`, `tests/test_password_policy.py`.
   Hecho cuando, con la respuesta del servicio simulada: rechaza una contraseña cuyo sufijo de
