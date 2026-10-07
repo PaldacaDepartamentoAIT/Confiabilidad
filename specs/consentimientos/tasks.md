@@ -154,12 +154,13 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   datos y el tipo de cambio; el historial sigue tras el borrado; suite verde.
   Decisiones: al borrar la cuenta, el `SET_NULL` que vacía el usuario de aceptaciones y consentimientos lo hace Django con un `UPDATE` masivo, que no pasa por `save()`, así que no añade una versión al historial. El borrado de la cuenta sí queda en el historial del usuario, y la versión anterior conserva el id — [Cierto] — revertir: una señal `pre_delete` de `User` que guarde cada fila con el usuario vacío.
 
-- [ ] T-018 Grupo «Soporte técnico»
+- [x] T-018 Grupo «Soporte técnico»
   RF: RF-019 | Depende de: T-017 | Archivos: 2
   Archivos: `migrations/0002_support_group.py`, `tests/test_migrations.py`.
   Hecho cuando: tras migrar desde cero existe el grupo con los permisos de ver, crear, editar y
   borrar `UserTerms` y `MarketingConsent`, y ninguno de `Terms`; deshacer la migración lo borra;
   suite verde. (CF-1)
+  Decisiones: mutante equivalente — quitar el filtro `app_label=consents` no cambia nada, porque ningún otro modelo se llama `userterms` ni `marketingconsent` — [Cierto]. El nombre del grupo se guarda en español («Soporte técnico») porque es un dato visible en el panel, no un texto del código — [Probable] — revertir: renombrarlo en una migración.
 
 - [ ] T-019 Panel de documentos
   RF: RF-004, RF-005 | Depende de: T-018 | Archivos: 2
