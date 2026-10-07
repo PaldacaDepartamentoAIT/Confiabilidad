@@ -200,11 +200,12 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   Excepción: dos de los archivos son los paquetes vacíos que Django exige para descubrir comandos.
   Decisiones: el usuario se busca por correo sin distinguir mayúsculas — [Cierto]. Los errores del servicio se muestran con su mensaje en inglés, como en `registration` — [Cierto]. Mutante equivalente: mostrar el idioma pedido en lugar del del documento no cambia la salida, porque coinciden siempre — [Cierto].
 
-- [ ] T-023 Comando: conceder, revocar y estado
+- [x] T-023 Comando: conceder, revocar y estado
   RF: RF-016 | Depende de: T-022 | Archivos: 2
   Archivos: `management/commands/consents.py`, `tests/test_consents_command.py`.
   Hecho cuando: `grant-marketing <correo> --version V --locale es`, `revoke-marketing <correo>` y
   `status <correo>` llaman al servicio y muestran el resultado o el error; suite verde. (CF-5)
+  Decisiones: `revoke-marketing` sin consentimiento activo muestra `revoked: none` y termina sin error, igual que el servicio (RF-010) — [Cierto]. Mutante equivalente: la comprobación `revoked_at is None` existe solo para el tipado, porque una fila revocada siempre tiene fecha — [Cierto].
 
 - [ ] T-024 Resumen de la feature
   RF: — (AGENTS.md) | Depende de: T-021, T-023 | Archivos: 1

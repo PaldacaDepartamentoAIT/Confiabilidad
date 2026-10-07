@@ -26,6 +26,14 @@ class Command(BaseCommand):
         accept.add_argument("email")
         accept.add_argument("--version", required=True)
         accept.add_argument("--locale", required=True, choices=LOCALES)
+        grant = actions.add_parser("grant-marketing", help="Grant marketing consent for a user.")
+        grant.add_argument("email")
+        grant.add_argument("--version", required=True)
+        grant.add_argument("--locale", required=True, choices=LOCALES)
+        revoke = actions.add_parser("revoke-marketing", help="Revoke a user's marketing consent.")
+        revoke.add_argument("email")
+        status = actions.add_parser("status", help="Show a user's consent status.")
+        status.add_argument("email")
 
     def handle(self, *args: Any, **options: Any) -> None:
         getattr(self, f"_{options['action'].replace('-', '_')}")(options)
@@ -51,6 +59,28 @@ class Command(BaseCommand):
         self.stdout.write(
             f"accepted: {acceptance.terms}\naccepted_at: {acceptance.terms_accepted_at.isoformat()}"
         )
+
+    def _grant_marketing(self, options: dict[str, Any]) -> None:
+        user = _user(options["email"])
+        try:
+            consent = services.grant_marketing(
+                user, version=options["version"], locale=options["locale"]
+            )
+        except ValidationError as error:
+            raise CommandError("\n".join(error.messages)) from error
+        self.stdout.write(f"granted: {consent.terms}\ngranted_at: {consent.granted_at.isoformat()}")
+
+    def _revoke_marketing(self, options: dict[str, Any]) -> None:
+        consent = services.revoke_marketing(_user(options["email"]))
+        if consent is None or consent.revoked_at is None:
+            self.stdout.write("revoked: none")
+            return
+        self.stdout.write(f"revoked: {consent.terms}\nrevoked_at: {consent.revoked_at.isoformat()}")
+
+    def _status(self, options: dict[str, Any]) -> None:
+        status = services.consent_status(_user(options["email"]))
+        marketing = status.marketing.terms if status.marketing is not None else "none"
+        self.stdout.write(f"terms: {status.terms}\nmarketing: {marketing}")
 
 
 def _user(email: str) -> User:
