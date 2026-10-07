@@ -28,6 +28,10 @@ for _ in $(seq 1 30); do
   docker compose -f docker/docker-compose.yml exec -T db pg_isready -U confiabilidad >/dev/null 2>&1 && break
   sleep 1
 done
+if ! docker compose -f docker/docker-compose.yml exec -T db pg_isready -U confiabilidad >/dev/null 2>&1; then
+  echo "Postgres is not accepting connections after 30 s; see: docker compose -f docker/docker-compose.yml logs db" >&2
+  exit 1
+fi
 
 # Mismos valores de desarrollo que el CI (.github/workflows/ci.yml); no son secretos.
 if [ -n "${CLAUDE_ENV_FILE:-}" ]; then
