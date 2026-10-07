@@ -16,7 +16,7 @@ Si falta alguno, pídelo al usuario en un solo mensaje y no continúes hasta ten
 
 ## Contexto limpio
 
-El agente que implementó tiende a darse la razón a sí mismo. Si en esta conversación se ha implementado código de esta feature, adviértelo al usuario y recomiéndale una sesión nueva. Si el entorno permite subagentes, ejecuta la validación en uno sin el contexto previo. Continúa en esta sesión solo si el usuario lo confirma.
+El agente que implementó tiende a darse la razón a sí mismo. En ambos modos, los pasos 1 a 8 del procedimiento se ejecutan en un subagente sin el contexto de la implementación, que devuelve el informe sin modificar nada. Los pasos 9 y 10 los ejecuta el agente que lo lanzó, porque el resumen necesita el contexto de las dudas del usuario para el marco teórico. Si el entorno no admite subagentes y en esta conversación se ha implementado código de esta feature, no valides aquí: pide al usuario que lance la validación en una sesión nueva.
 
 ## Precondiciones
 
@@ -50,6 +50,7 @@ Siguiente paso: <skill a ejecutar o acción del usuario>
    - *Spec*: el RF es ambiguo, contradictorio o imposible de cumplir.
 6. Si el origen es *Código* o *Test*, propón una tarea de corrección con el siguiente ID libre de `tasks.md`. Si es *Plan* o *Spec*, no propongas tarea: indica que hay que volver a `sdd-plan` o a `sdd-cambio` y por qué. Una tarea no arregla un diseño o un requisito equivocados; solo los tapa.
 7. Si no hay fallos de origen *Código*, *Plan* ni *Spec*, y los de *Test* son de riesgo mínimo (impacto bajo o improbable), ofrece además cerrar la feature con riesgo residual aceptado: enumera cada riesgo y da tu recomendación. La decisión es del usuario.
-8. No modifiques código ni archivos durante el diagnóstico. Muestra el informe y espera la aprobación del usuario.
+8. No modifiques código ni archivos durante el diagnóstico. Muestra el informe. En modo fuerte (o sin línea `Aprobación:` en la spec), espera siempre la aprobación del usuario. En modo ligero, si el veredicto es CUMPLIDA, sigue con el paso 9 sin esperar; con cualquier otro veredicto, espera al usuario: es una parada obligatoria.
 9. Cuando el usuario apruebe las tareas de corrección, añádelas a `tasks.md`. Si el veredicto es CUMPLIDA, añade al historial de la spec una entrada `Validación: CUMPLIDA` con la fecha. Si el usuario acepta cerrar con riesgo residual, añade `Validación: cerrada con riesgo residual aceptado` con la fecha y la lista de riesgos, y recógelos en el resumen de la feature; no la marques como CUMPLIDA.
+   En modo ligero con veredicto CUMPLIDA, escribe la entrada del historial y crea o actualiza `resumen.md` sin Aceptar/Rechazar, haz un commit y súbelo, y lista ambos textos en el informe de `sdd-implementar`.
 10. Indica el siguiente paso según el origen de los fallos (ver la tabla de `references/plantilla.md`).
