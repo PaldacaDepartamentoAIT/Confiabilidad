@@ -120,7 +120,7 @@ fallar sus tests.
   Hecho cuando: `purge_expired` borra solo los caducados (por gracia o por vida máxima) y devuelve
   cuántos borró; suite verde.
 
-- [ ] T-017 Comando `registration`: iniciar, verificar y reenviar
+- [x] T-017 Comando `registration`: iniciar, verificar y reenviar
   RF: RF-023 | Depende de: T-011 | Archivos: 2
   Archivos: `management/commands/registration.py`, `tests/test_registration_command.py`.
   Hecho cuando: `registration start` muestra el `public_id` y el código (o "cuenta existente");
