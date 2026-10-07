@@ -438,3 +438,38 @@ def test_failure_while_creating_the_account_changes_nothing(
 
     assert not User.objects.exists()
     assert PendingRegistration.objects.filter(public_id=started.public_id).exists()
+
+
+def _aged(email: str, **minutes_ago: int) -> str:
+    public_id = _start(email).public_id
+    PendingRegistration.objects.filter(public_id=public_id).update(
+        **{field: timezone.now() - timedelta(minutes=m) for field, m in minutes_ago.items()}
+    )
+    return public_id
+
+
+def test_purge_deletes_only_expired_registrations_and_counts_them() -> None:
+    fresh = _aged("a@x.com")
+    in_grace = _aged("b@x.com", code_expires_at=10)
+    _aged("c@x.com", code_expires_at=16)
+    _aged("d@x.com", created_at=61)
+
+    assert registration.purge_expired() == 2
+    assert set(PendingRegistration.objects.values_list("public_id", flat=True)) == {
+        fresh,
+        in_grace,
+    }
+
+
+def test_purge_with_nothing_expired_returns_zero() -> None:
+    _start()
+
+    assert registration.purge_expired() == 0
+    assert PendingRegistration.objects.count() == 1
+
+
+@override_settings(REGISTRATION_GRACE_MINUTES=5)
+def test_purge_follows_the_configured_limits() -> None:
+    _aged("b@x.com", code_expires_at=10)
+
+    assert registration.purge_expired() == 1

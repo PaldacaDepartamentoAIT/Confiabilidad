@@ -114,7 +114,7 @@ fallar sus tests.
   incumplida y conserva el registro; sin código validado o caducado se rechaza; si el correo ya
   tiene cuenta se rechaza y se borra el registro; suite verde.
 
-- [ ] T-016 Purgar registros caducados
+- [x] T-016 Purgar registros caducados
   RF: RF-013 | Depende de: T-008 | Archivos: 2
   Archivos: `registration.py`, `tests/test_registration_service.py`.
   Hecho cuando: `purge_expired` borra solo los caducados (por gracia o por vida máxima) y devuelve

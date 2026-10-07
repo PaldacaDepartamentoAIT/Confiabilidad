@@ -179,6 +179,11 @@ def complete(*, public_id: str, password: str) -> Completed | CompleteRefusal:
         return Completed(user=user)
 
 
+def purge_expired() -> int:
+    _total, by_model = PendingRegistration.objects.expired().delete()
+    return by_model.get(PendingRegistration._meta.label, 0)
+
+
 def _is_account_conflict(error: ValidationError) -> bool:
     errors = error.error_dict
     return set(errors) == {"email"} and all(e.code == "email_has_account" for e in errors["email"])
