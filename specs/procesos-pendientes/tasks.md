@@ -194,5 +194,30 @@ fallar sus tests.
   vigencia de 5 min; los mutantes "nombre de variable mal escrito" y `code_ttl`→`grace_period`
   fallan; suite verde.
 
+- [ ] T-026 Corrección: el registro caducado del mismo correo con espacios se reemplaza
+  Tipo: corrección | Origen: segunda validación (RF-017)
+  RF: RF-017 | Depende de: — | Archivos: 1
+  Archivos: `tests/test_registration_service.py`.
+  Causa: el test de reemplazo de caducados no usa un correo con espacios; el mutante "sin
+  `.strip()`" sobrevive.
+  Hecho cuando: con un registro caducado de "ana@x.com", `start(" ANA@X.com ")` deja un único
+  registro con los datos nuevos y vigente; el mutante falla; suite verde.
+
+- [ ] T-027 Corrección: el código usa todo el rango de 6 dígitos
+  Tipo: corrección | Origen: segunda validación (RF-008)
+  RF: RF-008 | Depende de: — | Archivos: 1
+  Archivos: `tests/test_codes.py`.
+  Causa: el mutante `randbelow(10**5)` sobrevive.
+  Hecho cuando: un test comprueba que `randbelow` recibe `10**6`; el mutante falla; suite verde.
+
+- [ ] T-028 Corrección: una respuesta cortada de Have I Been Pwned también falla abierto
+  Tipo: corrección | Origen: segunda validación (RF-022)
+  RF: RF-022 | Depende de: — | Archivos: 2
+  Archivos: `password_validation.py`, `tests/test_password_policy.py`.
+  Causa: solo se capturan `OSError` y `ValueError`; `http.client.IncompleteRead` (y el resto de
+  `HTTPException`) escapan y romperían el registro.
+  Hecho cuando: con el servicio simulado lanzando `http.client.IncompleteRead`, la contraseña se
+  acepta y queda el aviso en el log; suite verde.
+
 ## RF sin tarea
 Ninguno.
