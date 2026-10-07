@@ -183,7 +183,7 @@ fallar sus tests.
   Hecho cuando: el test de cuenta creada entretanto se parametriza con cuenta activa e inactiva,
   devuelve `ACCOUNT_EXISTS` y borra el registro; el mutante `User.active` falla; suite verde.
 
-- [ ] T-025 Corrección: límites leídos de variables de entorno y vigencia del código al repetir
+- [x] T-025 Corrección: límites leídos de variables de entorno y vigencia del código al repetir
   Tipo: corrección | Origen: validación (RF-019)
   RF: RF-019 | Depende de: — | Archivos: 2
   Archivos: `tests/test_registration_conf.py`, `tests/test_registration_service.py`.

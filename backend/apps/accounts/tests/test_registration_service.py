@@ -498,3 +498,12 @@ def test_expired_registration_of_the_same_email_is_replaced_not_repeated(
     assert new.public_id != old.public_id
     assert not pending.is_expired
     assert registration.verify(public_id=new.public_id, code=new.code) == "verified"
+
+
+@override_settings(REGISTRATION_CODE_TTL_MINUTES=5)
+def test_repeat_issues_a_code_with_the_configured_lifetime() -> None:
+    _start()
+    _start()
+
+    remaining = _stored().code_expires_at - timezone.now()
+    assert timedelta(minutes=4) < remaining <= timedelta(minutes=5)
