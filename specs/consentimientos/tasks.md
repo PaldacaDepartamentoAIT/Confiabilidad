@@ -100,13 +100,14 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   usuario (cuenta borrada) conserva su huella; suite verde.
   Decisiones: vaciar el usuario de una fila existente (soporte) conserva su huella, igual que al borrar la cuenta (RF-013) — [Probable] — revertir: rechazar el usuario vacío en filas existentes. Una huella escrita a mano en una fila existente se descarta y se restaura la guardada — [Cierto].
 
-- [ ] T-012 Versión aceptada inmutable en el modelo
+- [x] T-012 Versión aceptada inmutable en el modelo
   RF: RF-005 | Depende de: T-011 | Archivos: 2
   Archivos: `models.py`, `tests/test_terms_model.py`.
   Hecho cuando: si un documento de una versión tiene una aceptación o un consentimiento (revocado
   incluido), cambiar contenido, versión, idioma, tipo, fecha de publicación o
   `requires_reacceptance` de cualquier documento de esa versión lanza `ValidationError`, y
   `delete()` también; sin aceptaciones se puede editar y borrar; suite verde.
+  Decisiones: el bloqueo se comprueba en `save()` antes de `full_clean()` y se lanza solo, para que el error no se mezcle con otros (p. ej., unicidad al cambiar el idioma); por eso el panel debe mostrar esos campos de solo lectura (T-019) — [Cierto] — revertir: moverlo a `clean()`. Guardar un documento aceptado sin cambios está permitido — [Cierto].
 
 - [ ] T-013 Aceptar términos
   RF: RF-006, RF-007, RF-014, RF-018 | Depende de: T-012 | Archivos: 2

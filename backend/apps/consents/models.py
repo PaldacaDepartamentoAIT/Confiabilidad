@@ -15,6 +15,14 @@ from apps.consents.validators import (
     validate_version,
 )
 
+PROTECTED_FIELDS = (
+    "kind",
+    "content",
+    "version",
+    "locale",
+    "published_at",
+    "requires_reacceptance",
+)
 LOCALE_CHOICES = [("es", "Español"), ("pt-BR", "Português (Brasil)"), ("en", "English")]
 
 
@@ -52,8 +60,30 @@ class Terms(models.Model):
     def save(self, *args: Any, **kwargs: Any) -> None:
         if self.kind == self.Kind.MARKETING:
             self.requires_reacceptance = False
+        if not self._state.adding:
+            stored = Terms.objects.get(pk=self.pk)
+            changed = any(
+                getattr(self, field) != getattr(stored, field) for field in PROTECTED_FIELDS
+            )
+            if changed and stored.has_acceptances():
+                raise _version_locked_error()
         self.full_clean()
         super().save(*args, **kwargs)
+
+    def delete(self, *args: Any, **kwargs: Any) -> tuple[int, dict[str, int]]:
+        if self.has_acceptances():
+            raise _version_locked_error()
+        return super().delete(*args, **kwargs)
+
+    def has_acceptances(self) -> bool:
+        # Bloquea la versión entera: basta una aceptación en cualquiera de sus idiomas (RF-005).
+        return (
+            Terms.objects.filter(kind=self.kind, version__iexact=self.version)
+            .filter(
+                models.Q(acceptances__isnull=False) | models.Q(marketing_consents__isnull=False)
+            )
+            .exists()
+        )
 
     def clean(self) -> None:
         if (
@@ -73,6 +103,13 @@ class Terms(models.Model):
         return Terms.objects.filter(kind=self.kind, version__iexact=self.version).exclude(
             pk=self.pk
         )
+
+
+def _version_locked_error() -> ValidationError:
+    return ValidationError(
+        _("This version has acceptances; its documents cannot be changed or deleted."),
+        code="version_locked",
+    )
 
 
 class UserTerms(models.Model):
