@@ -171,7 +171,7 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   no borra ninguno de sus documentos; suite verde. (CF-2)
   Decisiones: la acción de borrado masivo de Django ya consulta `has_delete_permission` por objeto; si la selección incluye un documento de una versión aceptada, rechaza toda la acción (403) y no borra nada, ni siquiera los libres. `delete_queryset` borra igualmente uno a uno y omite los bloqueados (D-04), como defensa si se llama por otra vía — [Cierto] — revertir: quitar el bloqueo de `has_delete_permission` para que la acción borre los libres y omita los bloqueados.
 
-- [ ] T-020 Panel de soporte técnico
+- [x] T-020 Panel de soporte técnico
   RF: RF-019, RF-010, RF-018, RF-012 | Depende de: T-019 | Archivos: 2
   Archivos: `admin.py`, `tests/test_admin_support.py`.
   Hecho cuando: un miembro de «Soporte técnico» ve, crea, edita y borra aceptaciones y
@@ -179,6 +179,7 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   revoca las filas seleccionadas; la huella sale de solo lectura y se calcula sola; un staff con
   los mismos permisos de modelo pero fuera del grupo recibe 403; un superusuario puede; suite verde.
   (CF-3)
+  Decisiones: el acceso exige ser staff activo, además de pertenecer al grupo o ser superusuario — [Cierto]. Al crear, el formulario exige usuario para que el error salga en el formulario y no como un 500; al editar se puede vaciar (la huella se conserva, T-011) — [Probable] — revertir: `required = True` siempre. El usuario se elige por id (`raw_id_fields`) para no cargar todos los usuarios en un desplegable — [Cierto]. La acción «Revocar» ignora las filas ya revocadas — [Cierto].
 
 - [ ] T-021 Historial en el panel, con autor y sin revertir
   RF: RF-020 | Depende de: T-020 | Archivos: 3
