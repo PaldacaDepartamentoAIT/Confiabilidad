@@ -473,3 +473,27 @@ def test_purge_follows_the_configured_limits() -> None:
     _aged("b@x.com", code_expires_at=10)
 
     assert registration.purge_expired() == 1
+
+
+@pytest.mark.parametrize(
+    "expired_by",
+    [
+        pytest.param({"code_expires_at": 16}, id="grace"),
+        pytest.param({"created_at": 61}, id="lifetime"),
+    ],
+)
+def test_expired_registration_of_the_same_email_is_replaced_not_repeated(
+    expired_by: dict[str, int],
+) -> None:
+    old = _start("ana@x.com")
+    PendingRegistration.objects.update(
+        **{field: timezone.now() - timedelta(minutes=m) for field, m in expired_by.items()}
+    )
+
+    new = _start("ANA@X.com", name="Bea Ruiz", country="MX")
+
+    pending = PendingRegistration.objects.get()
+    assert (pending.public_id, pending.name, pending.country) == (new.public_id, "Bea Ruiz", "MX")
+    assert new.public_id != old.public_id
+    assert not pending.is_expired
+    assert registration.verify(public_id=new.public_id, code=new.code) == "verified"

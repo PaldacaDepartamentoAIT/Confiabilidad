@@ -166,7 +166,7 @@ fallar sus tests.
   por "-" (un test fuerza primero "-…"); un test del comando recorre `verify`, `resend` y
   `complete` con un `public_id` que empezaría por "-"; suite verde.
 
-- [ ] T-023 Corrección: un registro caducado del mismo correo no se trata como repetido
+- [x] T-023 Corrección: un registro caducado del mismo correo no se trata como repetido
   Tipo: corrección | Origen: validación (RF-011, RF-017)
   RF: RF-011, RF-017 | Depende de: — | Archivos: 1
   Archivos: `tests/test_registration_service.py`.
