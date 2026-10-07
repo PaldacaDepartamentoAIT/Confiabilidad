@@ -1,5 +1,6 @@
 from typing import Any, ClassVar
 
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.functions import Lower
 from django.utils.translation import gettext_lazy as _
@@ -46,5 +47,26 @@ class Terms(models.Model):
         return f"{self.kind} {self.version} ({self.locale})"
 
     def save(self, *args: Any, **kwargs: Any) -> None:
+        if self.kind == self.Kind.MARKETING:
+            self.requires_reacceptance = False
         self.full_clean()
         super().save(*args, **kwargs)
+
+    def clean(self) -> None:
+        if (
+            self.kind == self.Kind.TERMS
+            and self._siblings().exclude(requires_reacceptance=self.requires_reacceptance).exists()
+        ):
+            raise ValidationError(
+                {
+                    "requires_reacceptance": ValidationError(
+                        _("Every language of a version must have the same re-acceptance value."),
+                        code="reacceptance_mismatch",
+                    )
+                }
+            )
+
+    def _siblings(self) -> models.QuerySet["Terms"]:
+        return Terms.objects.filter(kind=self.kind, version__iexact=self.version).exclude(
+            pk=self.pk
+        )

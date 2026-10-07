@@ -101,3 +101,63 @@ def test_same_version_in_another_locale_or_kind_is_allowed(other: dict[str, str]
 
 def test_document_text_shows_kind_version_and_locale() -> None:
     assert str(_document(version="2", locale="en")) == "terms 2 (en)"
+
+
+def test_terms_document_requires_reacceptance_by_default() -> None:
+    document = _document()
+    document.save()
+
+    assert document.requires_reacceptance is True
+
+
+def test_marketing_document_never_requires_reacceptance() -> None:
+    document = _document(kind=Terms.Kind.MARKETING, requires_reacceptance=True)
+    document.save()
+    document.refresh_from_db()
+
+    assert document.requires_reacceptance is False
+
+
+def test_terms_document_with_another_reacceptance_than_its_version_is_rejected() -> None:
+    _document(version="V2", locale="es", requires_reacceptance=False).save()
+
+    with pytest.raises(ValidationError) as error:
+        _document(version="v2", locale="en", requires_reacceptance=True).save()
+
+    assert "requires_reacceptance" in error.value.error_dict
+
+
+def test_changing_reacceptance_against_its_version_is_rejected() -> None:
+    _document(locale="es").save()
+    english = _document(locale="en")
+    english.save()
+
+    english.requires_reacceptance = False
+    with pytest.raises(ValidationError):
+        english.save()
+
+
+def test_same_reacceptance_in_every_locale_is_allowed() -> None:
+    for locale in ("es", "pt-BR", "en"):
+        _document(locale=locale, requires_reacceptance=False).save()
+
+    assert Terms.objects.filter(requires_reacceptance=False).count() == 3
+
+
+def test_other_versions_and_marketing_do_not_constrain_reacceptance() -> None:
+    _document(version="1", requires_reacceptance=False).save()
+    _document(kind=Terms.Kind.MARKETING, version="2", locale="en").save()
+
+    _document(version="2", locale="en", requires_reacceptance=True).save()
+
+    assert Terms.objects.count() == 3
+
+
+def test_changing_reacceptance_of_a_document_without_other_languages_is_allowed() -> None:
+    document = _document()
+    document.save()
+
+    document.requires_reacceptance = False
+    document.save()
+
+    assert Terms.objects.get().requires_reacceptance is False

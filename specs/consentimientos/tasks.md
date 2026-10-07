@@ -54,12 +54,13 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   Excepción: además se crea `migrations/__init__.py`, paquete vacío que Django exige y que faltó en el andamiaje de T-001.
   Decisiones: `save()` llama a `full_clean()` con validación de restricciones, así que un duplicado da `ValidationError` en guardados normales y `IntegrityError` solo en cargas masivas — [Cierto] — revertir: `full_clean(validate_constraints=False)`.
 
-- [ ] T-007 Exigencia de nueva aceptación
+- [x] T-007 Exigencia de nueva aceptación
   RF: RF-017, RF-001 | Depende de: T-006 | Archivos: 2
   Archivos: `models.py`, `tests/test_terms_model.py`.
   Hecho cuando: un documento de términos se crea con `requires_reacceptance=True` por defecto; uno
   de marketing se guarda siempre con `False` (D-07); guardar un documento de términos con un valor
   distinto del de otro idioma de su versión lanza `ValidationError`; suite verde.
+  Decisiones: mutante equivalente — quitar la condición `kind == terms` de la coherencia no cambia nada, porque `save()` deja siempre `False` en marketing — [Cierto]. La coherencia se compara con la versión sin distinguir mayúsculas, igual que la unicidad de RF-002 — [Cierto] — revertir: `version=` en `_siblings`.
 
 - [ ] T-008 Versión vigente
   RF: RF-003 | Depende de: T-007 | Archivos: 3
