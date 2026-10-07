@@ -72,6 +72,19 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
   sin parar durante la hora de vida del registro. En consola no hay riesgo; decide el límite (por
   correo y por IP) al especificar la feature de la API.
 
+- [ ] **Traducir el `IntegrityError` de `complete` antes de publicar la API de registro**
+  (feature `procesos-pendientes`, riesgo residual). Si otra vía crea la cuenta justo entre la
+  comprobación y el alta, `registration.complete` lanza `IntegrityError`: en la API sería un
+  error 500 y el registro pendiente se conservaría en vez de borrarse (RF-012). Debe devolver
+  "cuenta existente" y borrar el registro.
+
+- [ ] **Probar una vez el validador de contraseñas filtradas con red real** (feature
+  `procesos-pendientes`, riesgo residual). En el entorno remoto no hay salida a
+  `api.pwnedpasswords.com` y los tests lo simulan. En tu máquina, en `registration complete`
+  prueba una contraseña filtrada conocida de 12+ caracteres (por ejemplo `password1234`): debe
+  rechazarse con "appeared in a data breach". Si sale el aviso "Pwned Passwords check skipped",
+  no hay salida al servicio.
+
 - [ ] **Añadir `makemigrations --check` a la CI del backend.** Hallazgo M39 de la tercera validación
   de `usuario-personalizado`: si se quita una restricción del modelo sin crear la migración
   correspondiente, hoy ningún paso de la CI lo detecta hasta que alguien ejecuta `makemigrations`.
