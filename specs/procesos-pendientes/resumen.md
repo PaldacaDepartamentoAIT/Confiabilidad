@@ -1,5 +1,5 @@
 # Resumen — procesos-pendientes
-Estado: implementada, pendiente de validación · Última actualización: 2026-10-07
+Estado: cerrada con riesgo residual aceptado (3.ª ronda de correcciones) · Última actualización: 2026-10-07
 
 ## Qué se hizo
 El registro pasa por un **registro pendiente**: la cuenta no existe hasta que se demuestra el
@@ -28,6 +28,10 @@ mismo servicio (`apps/accounts/registration.py`).
 - **Límites configurables** por variables de entorno (RF-019); ver `backend/.env.example`.
 
 ### Límites conocidos
+Riesgos residuales aceptados al cerrar (dos validaciones independientes): la concurrencia sin
+probar con transacciones reales, el `IntegrityError` de `complete`, Have I Been Pwned sin probar
+contra el servicio real y `makemessages` sin ejecutar. Se detallan abajo.
+
 - **Reenvío sin límite de frecuencia** (S-01, S-07): cada reenvío reinicia los intentos, así que
   el tope de 5 es por código, no por proceso. Sin riesgo en consola; **la API no debe publicarse
   sin ese límite** (anotado en `HUMAN_TODO.md`).
@@ -39,7 +43,9 @@ mismo servicio (`apps/accounts/registration.py`).
 - La concurrencia (dos verificaciones o dos altas a la vez) está protegida con bloqueos de fila,
   pero ningún test la ejerce con transacciones reales.
 - Si otra vía crea la cuenta justo entre la comprobación y el alta en `complete`, sale un
-  `IntegrityError` sin traducir; la base de datos impide el duplicado igualmente.
+  `IntegrityError` sin traducir y el registro pendiente se conserva, en vez de borrarse, hasta el
+  siguiente intento; la base de datos impide el duplicado igualmente. Hay que traducirlo antes de
+  la API (anotado en `HUMAN_TODO.md`).
 - Un secreto de códigos vacío o igual al anterior se detecta en el primer uso, no al arrancar.
 - Los mensajes del comando están marcados para traducción, pero `makemessages` no se ha ejecutado
   (falta `gettext` en el entorno).
