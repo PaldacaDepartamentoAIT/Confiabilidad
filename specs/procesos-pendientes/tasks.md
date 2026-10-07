@@ -194,7 +194,7 @@ fallar sus tests.
   vigencia de 5 min; los mutantes "nombre de variable mal escrito" y `code_ttl`→`grace_period`
   fallan; suite verde.
 
-- [ ] T-026 Corrección: el registro caducado del mismo correo con espacios se reemplaza
+- [x] T-026 Corrección: el registro caducado del mismo correo con espacios se reemplaza
   Tipo: corrección | Origen: segunda validación (RF-017)
   RF: RF-017 | Depende de: — | Archivos: 1
   Archivos: `tests/test_registration_service.py`.

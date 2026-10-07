@@ -507,3 +507,14 @@ def test_repeat_issues_a_code_with_the_configured_lifetime() -> None:
 
     remaining = _stored().code_expires_at - timezone.now()
     assert timedelta(minutes=4) < remaining <= timedelta(minutes=5)
+
+
+def test_expired_registration_is_replaced_even_with_spaces_around_the_email() -> None:
+    _start("ana@x.com")
+    PendingRegistration.objects.update(code_expires_at=timezone.now() - timedelta(minutes=16))
+
+    new = _start(" ANA@X.com ", name="Bea Ruiz")
+
+    pending = PendingRegistration.objects.get()
+    assert (pending.public_id, pending.name) == (new.public_id, "Bea Ruiz")
+    assert not pending.is_expired
