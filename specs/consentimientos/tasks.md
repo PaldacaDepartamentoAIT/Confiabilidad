@@ -109,7 +109,7 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   `delete()` también; sin aceptaciones se puede editar y borrar; suite verde.
   Decisiones: el bloqueo se comprueba en `save()` antes de `full_clean()` y se lanza solo, para que el error no se mezcle con otros (p. ej., unicidad al cambiar el idioma); por eso el panel debe mostrar esos campos de solo lectura (T-019) — [Cierto] — revertir: moverlo a `clean()`. Guardar un documento aceptado sin cambios está permitido — [Cierto].
 
-- [ ] T-013 Aceptar términos
+- [x] T-013 Aceptar términos
   RF: RF-006, RF-007, RF-014, RF-018 | Depende de: T-012 | Archivos: 2
   Archivos: `services.py`, `tests/test_services.py`.
   Hecho cuando: `accept_terms` registra la aceptación del documento vigente indicado por versión e
@@ -117,6 +117,7 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   marketing, de una versión no vigente o una cuenta inactiva, sin registrar nada; repetirla
   devuelve la misma fila; tras revocarla, aceptar crea una nueva; un choque simultáneo con la
   unicidad devuelve la existente (D-10); suite verde.
+  Decisiones: el servicio recibe el usuario, la versión y el idioma; si el documento existe solo como marketing responde `wrong_kind`, y si no existe, `document_not_found` — [Cierto]. Aceptar el mismo documento en otro idioma crea otra aceptación, porque RF-007 compara documentos, no versiones — [Probable] — revertir: buscar la existente por versión. Mutante equivalente: quitar la búsqueda previa de la existente no cambia el resultado, porque la unicidad la devuelve igualmente; se mantiene por D-10 — [Cierto].
 
 - [ ] T-014 Conceder marketing
   RF: RF-008, RF-009, RF-014 | Depende de: T-013 | Archivos: 2
