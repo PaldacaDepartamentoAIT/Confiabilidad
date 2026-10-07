@@ -24,7 +24,7 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   `<https://x.com>` o `a < b` se acepta (D-08); suite verde.
   Decisiones: los códigos de idioma distinguen mayúsculas (`pt-br` y `EN` se rechazan) para que cada idioma tenga una sola forma guardada — [Probable] — revertir: normalizar a la forma canónica antes de validar. Un texto como `<b and c>` cuenta como etiqueta HTML y se rechaza — [Cierto] — revertir: exigir un nombre de etiqueta HTML conocido.
 
-- [ ] T-003 Secreto de la huella del correo
+- [x] T-003 Secreto de la huella del correo
   RF: RF-012 | Depende de: T-001 | Archivos: 3
   Archivos: `conf.py`, `backend/config/settings.py`, `tests/test_conf.py`.
   Hecho cuando: sin variable de entorno, `conf.email_hash_secret()` vale `SECRET_KEY`; con
