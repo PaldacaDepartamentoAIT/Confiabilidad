@@ -127,7 +127,7 @@ fallar sus tests.
   `verify` y `resend` muestran el resultado o el error; los datos inválidos muestran el error de
   cada campo; suite verde.
 
-- [ ] T-018 Comando `registration`: completar y purgar
+- [x] T-018 Comando `registration`: completar y purgar
   RF: RF-023, RF-013 | Depende de: T-017, T-015, T-016 | Archivos: 2
   Archivos: `management/commands/registration.py`, `tests/test_registration_command.py`.
   Hecho cuando: `registration complete` acepta `--password` (y la pide sin eco si falta) y crea la

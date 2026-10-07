@@ -1,25 +1,37 @@
 import argparse
+import getpass
 from datetime import date
 from typing import Any
 
 from django.core.exceptions import ValidationError
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop as N_
 
 from apps.accounts import registration
 
 VERIFY_ERRORS = {
-    registration.VerifyResult.WRONG_CODE: "Wrong code.",
-    registration.VerifyResult.LOCKED: "Too many failed attempts; request a new code.",
-    registration.VerifyResult.CODE_EXPIRED: "The code has expired; request a new code.",
-    registration.VerifyResult.EXPIRED: "The registration has expired; start again.",
-    registration.VerifyResult.ALREADY_VERIFIED: "The code was already verified.",
-    registration.VerifyResult.NOT_FOUND: "Unknown registration.",
+    registration.VerifyResult.WRONG_CODE: N_("Wrong code."),
+    registration.VerifyResult.LOCKED: N_("Too many failed attempts; request a new code."),
+    registration.VerifyResult.CODE_EXPIRED: N_("The code has expired; request a new code."),
+    registration.VerifyResult.EXPIRED: N_("The registration has expired; start again."),
+    registration.VerifyResult.ALREADY_VERIFIED: N_("The code was already verified."),
+    registration.VerifyResult.NOT_FOUND: N_("Unknown registration."),
 }
 RESEND_ERRORS = {
-    registration.ResendRefusal.EXPIRED: "The registration has expired; start again.",
-    registration.ResendRefusal.ALREADY_VERIFIED: "The code was already verified.",
-    registration.ResendRefusal.NOT_FOUND: "Unknown registration.",
+    registration.ResendRefusal.EXPIRED: N_("The registration has expired; start again."),
+    registration.ResendRefusal.ALREADY_VERIFIED: N_("The code was already verified."),
+    registration.ResendRefusal.NOT_FOUND: N_("Unknown registration."),
+}
+
+
+COMPLETE_ERRORS = {
+    registration.CompleteRefusal.NOT_FOUND: N_("Unknown registration."),
+    registration.CompleteRefusal.EXPIRED: N_("The registration has expired; start again."),
+    registration.CompleteRefusal.CODE_NOT_VERIFIED: N_("Verify the code before completing."),
+    registration.CompleteRefusal.ACCOUNT_EXISTS: N_(
+        "An account with this email already exists; the registration was deleted."
+    ),
 }
 
 
@@ -31,7 +43,10 @@ def _birthdate(value: str) -> date:
 
 
 class Command(BaseCommand):
-    help = "Run the pending registration from the console: start, verify and resend."
+    help = (
+        "Run the pending registration from the console: "
+        "start, verify, resend, complete and purge."
+    )
 
     def add_arguments(self, parser: CommandParser) -> None:
         actions = parser.add_subparsers(dest="action", required=True)
@@ -45,6 +60,12 @@ class Command(BaseCommand):
         verify.add_argument("code")
         resend = actions.add_parser("resend", help="Issue a new code for a registration.")
         resend.add_argument("public_id")
+        complete = actions.add_parser(
+            "complete", help="Create the account; asks for the password if not given."
+        )
+        complete.add_argument("public_id")
+        complete.add_argument("--password", help="Visible in the shell history; avoid it.")
+        actions.add_parser("purge", help="Delete expired registrations.")
 
     def handle(self, *args: Any, **options: Any) -> None:
         getattr(self, f"_{options['action']}")(options)
@@ -75,11 +96,26 @@ class Command(BaseCommand):
             raise CommandError(_(RESEND_ERRORS[result]))
         self._show_code(result.public_id, result.code)
 
+    def _complete(self, options: dict[str, Any]) -> None:
+        password = options["password"] or getpass.getpass(_("Password: "))
+        try:
+            result = registration.complete(public_id=options["public_id"], password=password)
+        except ValidationError as error:
+            raise CommandError(_format(error)) from error
+        if not isinstance(result, registration.Completed):
+            raise CommandError(_(COMPLETE_ERRORS[result]))
+        self.stdout.write(f"public_id: {options['public_id']}\naccount: {result.user.email}")
+
+    def _purge(self, options: dict[str, Any]) -> None:
+        self.stdout.write(f"deleted: {registration.purge_expired()}")
+
     def _show_code(self, public_id: str, code: str) -> None:
         self.stdout.write(f"public_id: {public_id}\ncode: {code}")
 
 
 def _format(error: ValidationError) -> str:
+    if not hasattr(error, "error_dict"):
+        return "\n".join(error.messages)
     return "\n".join(
         f"{field}: {message}"
         for field, messages in error.message_dict.items()

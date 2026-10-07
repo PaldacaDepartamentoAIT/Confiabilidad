@@ -1,12 +1,15 @@
+from datetime import timedelta
 from io import StringIO
 
 import pytest
 from django.core.management import call_command
 from django.core.management.base import CommandError
+from django.test import Client
+from django.utils import timezone
 
 from apps.accounts import codes, registration
-from apps.accounts.management.commands.registration import VERIFY_ERRORS
-from apps.accounts.models import PendingRegistration
+from apps.accounts.management.commands.registration import COMPLETE_ERRORS, VERIFY_ERRORS
+from apps.accounts.models import PendingRegistration, User
 from apps.accounts.tests.factories import make_user
 
 pytestmark = pytest.mark.django_db
@@ -115,3 +118,87 @@ def test_resend_reports_a_refusal() -> None:
 def test_an_action_is_required() -> None:
     with pytest.raises(CommandError):
         call_command("registration")
+
+
+GOOD_PASSWORD = "Kq7#mZ2!vR9p"
+
+
+def _verified() -> str:
+    started = _call(*START)
+    _call("verify", started["public_id"], started["code"])
+    return started["public_id"]
+
+
+def test_complete_with_the_password_option_creates_the_account() -> None:
+    public_id = _verified()
+
+    shown = _call("complete", public_id, "--password", GOOD_PASSWORD)
+
+    assert shown == {"public_id": public_id, "account": "ana@x.com"}
+    assert User.objects.get(email="ana@x.com").check_password(GOOD_PASSWORD)
+    assert not PendingRegistration.objects.exists()
+
+
+def test_complete_asks_for_the_password_without_echo(monkeypatch: pytest.MonkeyPatch) -> None:
+    prompts: list[str] = []
+
+    def fake_getpass(prompt: str) -> str:
+        prompts.append(prompt)
+        return GOOD_PASSWORD
+
+    monkeypatch.setattr(
+        "apps.accounts.management.commands.registration.getpass.getpass", fake_getpass
+    )
+    public_id = _verified()
+
+    _call("complete", public_id)
+
+    assert len(prompts) == 1
+    assert User.objects.get(email="ana@x.com").check_password(GOOD_PASSWORD)
+
+
+def test_complete_reports_every_broken_password_rule() -> None:
+    public_id = _verified()
+
+    with pytest.raises(CommandError) as excinfo:
+        _call("complete", public_id, "--password", "12345678")
+
+    assert len(str(excinfo.value).splitlines()) >= 3
+    assert PendingRegistration.objects.exists()
+
+
+@pytest.mark.parametrize("refusal", list(registration.CompleteRefusal))
+def test_every_complete_refusal_has_its_own_message(
+    monkeypatch: pytest.MonkeyPatch, refusal: registration.CompleteRefusal
+) -> None:
+    monkeypatch.setattr(
+        "apps.accounts.management.commands.registration.registration.complete",
+        lambda **kwargs: refusal,
+    )
+
+    with pytest.raises(CommandError) as excinfo:
+        _call("complete", "any-id", "--password", GOOD_PASSWORD)
+
+    assert str(excinfo.value) == COMPLETE_ERRORS[refusal]
+
+
+def test_purge_shows_how_many_were_deleted() -> None:
+    _call(*START)
+    _call(*[*START[:2], "bea@x.com", *START[3:]])
+    PendingRegistration.objects.filter(email="bea@x.com").update(
+        created_at=timezone.now() - timedelta(hours=2)
+    )
+
+    assert _call("purge") == {"deleted": "1"}
+    assert PendingRegistration.objects.get().email == "ana@x.com"
+
+
+def test_console_journey_creates_an_account_that_logs_in() -> None:
+    _call("complete", _verified(), "--password", GOOD_PASSWORD)
+
+    response = Client().post(
+        "/_allauth/app/v1/auth/login",
+        data={"email": "ana@x.com", "password": GOOD_PASSWORD},
+        content_type="application/json",
+    )
+    assert response.status_code == 200
