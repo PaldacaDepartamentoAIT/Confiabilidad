@@ -99,9 +99,11 @@ de la sección *Entorno remoto* del README. En los pasos, `M` abrevia
    con él. Verá **Terms acceptances** y **Marketing consents**; selecciona la aceptación de Ana y
    ejecuta la acción **Revoke selected**. En su **History** aparece el cambio con su usuario como
    autor. Un staff fuera del grupo recibe "403 Forbidden" en esas pantallas.
-10. Exige una nueva aceptación: crea la versión `2` de términos en los tres idiomas, con
-    "Requires reacceptance" marcado y fecha de ayer. Tras aceptar la `1` de nuevo (paso 6),
-    `C status ana@example.com` responde `terms: not_accepted` hasta que acepte la `2`.
+10. Exige una nueva aceptación. Vuelve a aceptar la `1` (soporte la revocó en el paso 9):
+    `C accept-terms ana@example.com --version 1 --locale es`. Crea después la versión `2` de
+    términos en los tres idiomas, con "Requires reacceptance" marcado y fecha de ayer.
+    `C status ana@example.com` responde ahora `terms: not_accepted`; tras
+    `C accept-terms ana@example.com --version 2 --locale en`, vuelve a `terms: accepted`.
 11. Ejecuta la suite completa (cobertura mínima 80 %):
     `docker compose -f docker/docker-compose.yml run --rm backend pytest -q`
 
