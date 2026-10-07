@@ -202,3 +202,17 @@ def test_console_journey_creates_an_account_that_logs_in() -> None:
         content_type="application/json",
     )
     assert response.status_code == 200
+
+
+def test_console_works_when_the_generator_first_yields_a_dash(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    values = iter(["-AbC_dashed-public-id", "XyZ_clean-public-id"])
+    monkeypatch.setattr("apps.accounts.codes.secrets.token_urlsafe", lambda _: next(values))
+    public_id = _call(*START)["public_id"]
+
+    resent = _call("resend", public_id)
+    _call("verify", public_id, resent["code"])
+    shown = _call("complete", public_id, "--password", GOOD_PASSWORD)
+
+    assert shown["account"] == "ana@x.com"

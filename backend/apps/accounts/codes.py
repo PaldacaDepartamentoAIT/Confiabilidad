@@ -15,7 +15,11 @@ def generate_code() -> str:
 
 
 def generate_public_id() -> str:
-    return secrets.token_urlsafe(_PUBLIC_ID_BYTES)
+    # Un valor que empieza por "-" se confundiría con una opción en la consola (RF-023).
+    while True:
+        public_id = secrets.token_urlsafe(_PUBLIC_ID_BYTES)
+        if not public_id.startswith("-"):
+            return public_id
 
 
 def _fingerprint(secret: str, public_id: str, code: str) -> str:

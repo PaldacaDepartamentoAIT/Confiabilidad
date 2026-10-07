@@ -127,3 +127,10 @@ def test_new_fingerprints_use_the_current_secret_during_transition() -> None:
         fingerprint = codes.code_fingerprint(PUBLIC_ID, "123456")
     with override_settings(REGISTRATION_CODE_SECRET="new-secret"):
         assert codes.verify_code(PUBLIC_ID, "123456", fingerprint)
+
+
+def test_public_id_never_starts_with_a_dash(monkeypatch: pytest.MonkeyPatch) -> None:
+    values = iter(["-starts-with-dash", "clean-id"])
+    monkeypatch.setattr("apps.accounts.codes.secrets.token_urlsafe", lambda _: next(values))
+
+    assert codes.generate_public_id() == "clean-id"
