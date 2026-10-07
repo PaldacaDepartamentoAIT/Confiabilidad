@@ -110,3 +110,50 @@ class UserTerms(models.Model):
     def save(self, *args: Any, **kwargs: Any) -> None:
         self.full_clean()
         super().save(*args, **kwargs)
+
+
+class MarketingConsent(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="marketing_consents",
+    )
+    terms = models.ForeignKey(
+        Terms,
+        on_delete=models.PROTECT,
+        related_name="marketing_consents",
+        limit_choices_to={"kind": Terms.Kind.MARKETING},
+    )
+    user_email_hash = models.CharField(max_length=64, editable=False)
+    granted = models.BooleanField(default=True)
+    granted_at = models.DateTimeField(default=timezone.now)
+    revoked_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = _("marketing consent")
+        verbose_name_plural = _("marketing consents")
+        constraints: ClassVar[list[models.BaseConstraint]] = [
+            models.UniqueConstraint(
+                fields=["user"],
+                condition=models.Q(granted=True),
+                name="consents_marketingconsent_active_unique",
+                violation_error_message=_("This user already has an active marketing consent."),
+            ),
+            models.CheckConstraint(
+                condition=models.Q(granted=True, revoked_at__isnull=True)
+                | models.Q(granted=False, revoked_at__isnull=False),
+                name="consents_marketingconsent_granted_matches_revocation",
+                violation_error_message=_(
+                    "A consent is granted if and only if it has no revocation date."
+                ),
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.terms} · {self.user_email_hash[:12]}"
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        self.full_clean()
+        super().save(*args, **kwargs)

@@ -1,4 +1,5 @@
 from datetime import timedelta
+from typing import Any
 
 import pytest
 from django.core.exceptions import ValidationError
@@ -7,7 +8,7 @@ from django.db.models import ProtectedError
 from django.utils import timezone
 
 from apps.accounts.tests.factories import make_user
-from apps.consents.models import Terms, UserTerms
+from apps.consents.models import MarketingConsent, Terms, UserTerms
 from apps.consents.tests.factories import make_document
 
 pytestmark = pytest.mark.django_db
@@ -115,3 +116,114 @@ def test_a_user_can_accept_several_documents() -> None:
     UserTerms(user=user, terms=make_document(), user_email_hash=HASH).save()
 
     assert UserTerms.objects.filter(user=user).count() == 2
+
+
+def _marketing(**overrides: Any) -> MarketingConsent:
+    fields: dict[str, Any] = {"user_email_hash": HASH, **overrides}
+    if "user" not in fields:
+        fields["user"] = make_user()
+    if "terms" not in fields:
+        fields["terms"] = make_document(kind=Terms.Kind.MARKETING)
+    return MarketingConsent(**fields)
+
+
+def test_marketing_consent_keeps_every_field() -> None:
+    before = timezone.now()
+
+    consent = _marketing()
+    consent.save()
+    consent.refresh_from_db()
+
+    assert consent.user is not None
+    assert consent.terms.kind == Terms.Kind.MARKETING
+    assert consent.user_email_hash == HASH
+    assert consent.granted is True
+    assert consent.granted_at >= before
+    assert consent.revoked_at is None
+
+
+def test_marketing_consent_of_a_terms_document_is_rejected() -> None:
+    with pytest.raises(ValidationError) as error:
+        _marketing(terms=make_document()).save()
+
+    assert "terms" in error.value.error_dict
+
+
+def test_two_active_marketing_consents_of_a_user_are_rejected() -> None:
+    user = make_user()
+    _marketing(user=user).save()
+
+    with pytest.raises(ValidationError):
+        _marketing(user=user).save()
+
+
+def test_two_active_marketing_consents_of_a_user_are_rejected_in_bulk() -> None:
+    user = make_user()
+
+    with pytest.raises(IntegrityError), transaction.atomic():
+        MarketingConsent.objects.bulk_create([_marketing(user=user), _marketing(user=user)])
+
+
+def test_a_revoked_consent_does_not_block_a_new_active_one() -> None:
+    user = make_user()
+    _marketing(user=user, granted=False, revoked_at=timezone.now()).save()
+
+    _marketing(user=user).save()
+
+    assert MarketingConsent.objects.filter(user=user).count() == 2
+
+
+def test_two_active_consents_of_different_users_are_allowed() -> None:
+    _marketing().save()
+    _marketing().save()
+
+    assert MarketingConsent.objects.filter(granted=True).count() == 2
+
+
+def test_two_active_consents_without_user_do_not_collide() -> None:
+    first, second = _marketing(), _marketing()
+    MarketingConsent.objects.bulk_create([first, second])
+
+    MarketingConsent.objects.update(user=None)
+
+    assert MarketingConsent.objects.filter(user=None, granted=True).count() == 2
+
+
+@pytest.mark.parametrize(
+    ("granted", "revoked"),
+    [(True, True), (False, False)],
+)
+def test_granted_must_match_the_revocation_date(granted: bool, revoked: bool) -> None:
+    consent = _marketing(granted=granted, revoked_at=timezone.now() if revoked else None)
+
+    with pytest.raises(ValidationError):
+        consent.save()
+    with pytest.raises(IntegrityError), transaction.atomic():
+        MarketingConsent.objects.bulk_create([consent])
+
+
+def test_deleting_the_user_keeps_the_active_consent_without_user() -> None:
+    user = make_user()
+    consent = _marketing(user=user)
+    consent.save()
+
+    user.delete()
+    consent.refresh_from_db()
+
+    assert consent.user is None
+    assert consent.granted is True
+    assert consent.user_email_hash == HASH
+
+
+def test_deleting_a_consented_document_is_protected() -> None:
+    consent = _marketing()
+    consent.save()
+
+    with pytest.raises(ProtectedError):
+        Terms.objects.filter(pk=consent.terms_id).delete()
+
+
+def test_marketing_consent_text_shows_document_and_hash_prefix() -> None:
+    consent = _marketing(terms=make_document(kind=Terms.Kind.MARKETING, version="4"))
+
+    assert str(consent) == f"marketing 4 (es) · {HASH[:12]}"

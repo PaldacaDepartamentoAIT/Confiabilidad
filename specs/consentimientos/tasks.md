@@ -82,7 +82,7 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   `ProtectedError`; suite verde.
   Decisiones: el tipo de documento se valida con `limit_choices_to` de la FK, que Django comprueba en `full_clean`; una comprobación propia era un mutante equivalente y se quitó — [Cierto] — revertir: añadir un `clean()` con la comprobación de `kind`.
 
-- [ ] T-010 Modelo `MarketingConsent`
+- [x] T-010 Modelo `MarketingConsent`
   RF: RF-010, RF-011, RF-013 | Depende de: T-009 | Archivos: 3
   Archivos: `models.py`, `migrations/0001_initial.py`, `tests/test_acceptance_models.py`.
   Hecho cuando: `migrate` aplica `0001` regenerada; se guardan usuario, documento, huella,
