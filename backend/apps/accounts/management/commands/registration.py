@@ -6,30 +6,36 @@ from typing import Any
 from django.core.exceptions import ValidationError
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 from django.utils.translation import gettext as _
-from django.utils.translation import gettext_noop as N_
+from django.utils.translation import gettext_noop
 
 from apps.accounts import registration
 
 VERIFY_ERRORS = {
-    registration.VerifyResult.WRONG_CODE: N_("Wrong code."),
-    registration.VerifyResult.LOCKED: N_("Too many failed attempts; request a new code."),
-    registration.VerifyResult.CODE_EXPIRED: N_("The code has expired; request a new code."),
-    registration.VerifyResult.EXPIRED: N_("The registration has expired; start again."),
-    registration.VerifyResult.ALREADY_VERIFIED: N_("The code was already verified."),
-    registration.VerifyResult.NOT_FOUND: N_("Unknown registration."),
+    registration.VerifyResult.WRONG_CODE: gettext_noop("Wrong code."),
+    registration.VerifyResult.LOCKED: gettext_noop("Too many failed attempts; request a new code."),
+    registration.VerifyResult.CODE_EXPIRED: gettext_noop(
+        "The code has expired; request a new code."
+    ),
+    registration.VerifyResult.EXPIRED: gettext_noop("The registration has expired; start again."),
+    registration.VerifyResult.ALREADY_VERIFIED: gettext_noop("The code was already verified."),
+    registration.VerifyResult.NOT_FOUND: gettext_noop("Unknown registration."),
 }
 RESEND_ERRORS = {
-    registration.ResendRefusal.EXPIRED: N_("The registration has expired; start again."),
-    registration.ResendRefusal.ALREADY_VERIFIED: N_("The code was already verified."),
-    registration.ResendRefusal.NOT_FOUND: N_("Unknown registration."),
+    registration.ResendRefusal.EXPIRED: gettext_noop("The registration has expired; start again."),
+    registration.ResendRefusal.ALREADY_VERIFIED: gettext_noop("The code was already verified."),
+    registration.ResendRefusal.NOT_FOUND: gettext_noop("Unknown registration."),
 }
 
 
 COMPLETE_ERRORS = {
-    registration.CompleteRefusal.NOT_FOUND: N_("Unknown registration."),
-    registration.CompleteRefusal.EXPIRED: N_("The registration has expired; start again."),
-    registration.CompleteRefusal.CODE_NOT_VERIFIED: N_("Verify the code before completing."),
-    registration.CompleteRefusal.ACCOUNT_EXISTS: N_(
+    registration.CompleteRefusal.NOT_FOUND: gettext_noop("Unknown registration."),
+    registration.CompleteRefusal.EXPIRED: gettext_noop(
+        "The registration has expired; start again."
+    ),
+    registration.CompleteRefusal.CODE_NOT_VERIFIED: gettext_noop(
+        "Verify the code before completing."
+    ),
+    registration.CompleteRefusal.ACCOUNT_EXISTS: gettext_noop(
         "An account with this email already exists; the registration was deleted."
     ),
 }
