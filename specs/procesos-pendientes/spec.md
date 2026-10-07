@@ -196,3 +196,12 @@ paso deberá mostrar el identificador público y, cuando se emita un código, el
   añadidos — Estado: clarificado
 - 2026-10-01 — División: el cambio de contraseña pasa a una feature aparte — RF: RF-006, RF-014,
   RF-018, RF-021 OBSOLETO; RF-017, RF-022, RF-023 ajustados; S-11 añadido — Estado: clarificado
+- 2026-10-07 — Validación: NO CUMPLIDA (1.ª) — RF-011, RF-012, RF-017, RF-019 (tests) y RF-023
+  (código: `public_id` que empezaban por "-"); corregido con T-022…T-025.
+- 2026-10-07 — Validación: NO CUMPLIDA (2.ª) — RF-017 (test con espacios); corregido con T-026,
+  más T-027 (rango del código) y T-028 (respuesta cortada de Have I Been Pwned).
+- 2026-10-07 — Validación: cerrada con riesgo residual aceptado — Riesgos: (1) concurrencia
+  protegida con bloqueos de fila pero sin probar con transacciones reales; (2) si otra vía crea la
+  cuenta entre la comprobación y el alta en `complete`, sale un `IntegrityError` sin traducir y el
+  registro pendiente se conserva en vez de borrarse (RF-012) hasta el siguiente intento; (3) Have I
+  Been Pwned nunca probado contra el servicio real; (4) `makemessages` no ejecutado.
