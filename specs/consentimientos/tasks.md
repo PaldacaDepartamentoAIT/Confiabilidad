@@ -44,13 +44,15 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   Hecho cuando: `.env.example` lista `CONSENT_EMAIL_HASH_SECRET` sin valor real y `HUMAN_TODO.md`
   pide definirlo cifrado con SOPS en producción, con el aviso de no rotarlo nunca (S-09, D-06).
 
-- [ ] T-006 Modelo `Terms` con su unicidad de versión
+- [x] T-006 Modelo `Terms` con su unicidad de versión
   RF: RF-001, RF-002 | Depende de: T-002 | Archivos: 3
   Archivos: `models.py`, `migrations/0001_initial.py`, `tests/test_terms_model.py`.
   Hecho cuando: `migrate` aplica `0001`; se guardan todos los campos de RF-001 con `created_at`
   automático y `published_at` opcional; un idioma, versión o contenido inválido lanza
   `ValidationError` al guardar; "V1" y "v1" del mismo tipo e idioma chocan, también por
   `bulk_create` (`IntegrityError`), y no chocan en otro idioma u otro tipo; suite verde. (CF-1)
+  Excepción: además se crea `migrations/__init__.py`, paquete vacío que Django exige y que faltó en el andamiaje de T-001.
+  Decisiones: `save()` llama a `full_clean()` con validación de restricciones, así que un duplicado da `ValidationError` en guardados normales y `IntegrityError` solo en cargas masivas — [Cierto] — revertir: `full_clean(validate_constraints=False)`.
 
 - [ ] T-007 Exigencia de nueva aceptación
   RF: RF-017, RF-001 | Depende de: T-006 | Archivos: 2
