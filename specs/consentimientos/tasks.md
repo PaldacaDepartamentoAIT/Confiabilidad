@@ -162,13 +162,14 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   suite verde. (CF-1)
   Decisiones: mutante equivalente — quitar el filtro `app_label=consents` no cambia nada, porque ningún otro modelo se llama `userterms` ni `marketingconsent` — [Cierto]. El nombre del grupo se guarda en español («Soporte técnico») porque es un dato visible en el panel, no un texto del código — [Probable] — revertir: renombrarlo en una migración.
 
-- [ ] T-019 Panel de documentos
+- [x] T-019 Panel de documentos
   RF: RF-004, RF-005 | Depende de: T-018 | Archivos: 2
   Archivos: `admin.py`, `tests/test_admin_terms.py`.
   Hecho cuando: un staff con permisos de `Terms` crea, edita y borra documentos desde el panel y
   ve si tienen aceptaciones; un staff sin permisos recibe 403; en una versión aceptada los campos
   protegidos salen de solo lectura, el borrado individual no está disponible y el borrado masivo
   no borra ninguno de sus documentos; suite verde. (CF-2)
+  Decisiones: la acción de borrado masivo de Django ya consulta `has_delete_permission` por objeto; si la selección incluye un documento de una versión aceptada, rechaza toda la acción (403) y no borra nada, ni siquiera los libres. `delete_queryset` borra igualmente uno a uno y omite los bloqueados (D-04), como defensa si se llama por otra vía — [Cierto] — revertir: quitar el bloqueo de `has_delete_permission` para que la acción borre los libres y omita los bloqueados.
 
 - [ ] T-020 Panel de soporte técnico
   RF: RF-019, RF-010, RF-018, RF-012 | Depende de: T-019 | Archivos: 2
