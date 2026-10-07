@@ -146,12 +146,13 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   suite verde.
   Decisiones: la exigencia de la versión se agrega con `BoolOr` de PostgreSQL (la base del proyecto); como RF-017 obliga a que coincida en los tres idiomas, `BoolAnd` daría lo mismo — [Cierto] — revertir: `Max` sobre un `Case`. No se filtra por tipo al contar aceptaciones: `UserTerms` solo admite documentos de términos, y el filtro era un mutante equivalente — [Cierto]. El estado devuelve `accepted`, `not_accepted` o `no_current_version` más el consentimiento de marketing activo — [Cierto].
 
-- [ ] T-017 Historial de las tres tablas
+- [x] T-017 Historial de las tres tablas
   RF: RF-020 | Depende de: T-016 | Archivos: 3
   Archivos: `models.py`, `migrations/0001_initial.py`, `tests/test_history.py`.
   Hecho cuando: `migrate` aplica `0001` regenerada con los históricos; alta, modificación y borrado
   de un documento, una aceptación y un consentimiento dejan cada uno una versión con todos sus
   datos y el tipo de cambio; el historial sigue tras el borrado; suite verde.
+  Decisiones: al borrar la cuenta, el `SET_NULL` que vacía el usuario de aceptaciones y consentimientos lo hace Django con un `UPDATE` masivo, que no pasa por `save()`, así que no añade una versión al historial. El borrado de la cuenta sí queda en el historial del usuario, y la versión anterior conserva el id — [Cierto] — revertir: una señal `pre_delete` de `User` que guarde cada fila con el usuario vacío.
 
 - [ ] T-018 Grupo «Soporte técnico»
   RF: RF-019 | Depende de: T-017 | Archivos: 2

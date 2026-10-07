@@ -6,6 +6,7 @@ from django.db import models
 from django.db.models.functions import Lower
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from simple_history.models import HistoricalRecords
 
 from apps.consents.hashing import email_fingerprint
 from apps.consents.validators import (
@@ -38,6 +39,8 @@ class Terms(models.Model):
     requires_reacceptance = models.BooleanField(default=True)
     published_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    history = HistoricalRecords()
 
     class Meta:
         verbose_name = _("legal document")
@@ -130,6 +133,8 @@ class UserTerms(models.Model):
     terms_accepted_at = models.DateTimeField(default=timezone.now)
     revoked_at = models.DateTimeField(null=True, blank=True)
 
+    history = HistoricalRecords()
+
     class Meta:
         verbose_name = _("terms acceptance")
         verbose_name_plural = _("terms acceptances")
@@ -169,6 +174,8 @@ class MarketingConsent(models.Model):
     granted = models.BooleanField(default=True)
     granted_at = models.DateTimeField(default=timezone.now)
     revoked_at = models.DateTimeField(null=True, blank=True)
+
+    history = HistoricalRecords()
 
     class Meta:
         verbose_name = _("marketing consent")
