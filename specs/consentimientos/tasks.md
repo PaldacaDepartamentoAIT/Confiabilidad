@@ -38,7 +38,7 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   y `"ana@x.com"` dan la misma; correos distintos dan huellas distintas; otro secreto da otra
   huella; coincide con un HMAC-SHA256 calculado aparte; suite verde.
 
-- [ ] T-005 Documentar el secreto de la huella
+- [x] T-005 Documentar el secreto de la huella
   RF: RF-012 (documentación) | Depende de: T-003 | Archivos: 2
   Archivos: `backend/.env.example`, `HUMAN_TODO.md`.
   Hecho cuando: `.env.example` lista `CONSENT_EMAIL_HASH_SECRET` sin valor real y `HUMAN_TODO.md`
