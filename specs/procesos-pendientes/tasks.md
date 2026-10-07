@@ -105,7 +105,7 @@ fallar sus tests.
   apagado no hace ninguna petición (lo comprueba un test); un fixture automático lo apaga en toda
   la suite de `accounts`; suite verde sin acceso a internet.
 
-- [ ] T-015 Completar el registro
+- [x] T-015 Completar el registro
   RF: RF-020, RF-012, RF-022 | Depende de: T-011, T-014 | Archivos: 2
   Archivos: `registration.py`, `tests/test_registration_service.py`.
   Hecho cuando: con el código validado y una contraseña válida se crea la cuenta (correo, nombre,

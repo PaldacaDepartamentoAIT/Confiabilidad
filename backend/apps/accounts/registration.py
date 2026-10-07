@@ -2,12 +2,14 @@ from dataclasses import dataclass
 from datetime import date
 from enum import StrEnum
 
+from allauth.account.models import EmailAddress
+from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
 from apps.accounts import codes, conf
-from apps.accounts.models import PendingRegistration
+from apps.accounts.models import PendingRegistration, User
 
 
 @dataclass(frozen=True)
@@ -135,6 +137,46 @@ def resend(*, public_id: str) -> Resent | ResendRefusal:
         pending.failed_attempts = 0
         pending.save(update_fields=["code_hash", "code_expires_at", "failed_attempts"])
         return Resent(public_id=public_id, code=code)
+
+
+@dataclass(frozen=True)
+class Completed:
+    user: User
+
+
+class CompleteRefusal(StrEnum):
+    NOT_FOUND = "not_found"
+    EXPIRED = "expired"
+    CODE_NOT_VERIFIED = "code_not_verified"
+    ACCOUNT_EXISTS = "account_exists"
+
+
+def complete(*, public_id: str, password: str) -> Completed | CompleteRefusal:
+    with transaction.atomic():
+        pending = (
+            PendingRegistration.objects.select_for_update().filter(public_id=public_id).first()
+        )
+        if pending is None:
+            return CompleteRefusal.NOT_FOUND
+        if pending.is_expired:
+            return CompleteRefusal.EXPIRED
+        if pending.code_validated_at is None:
+            return CompleteRefusal.CODE_NOT_VERIFIED
+        if User.objects.filter(email__iexact=pending.email).exists():
+            pending.delete()
+            return CompleteRefusal.ACCOUNT_EXISTS
+        user = User(
+            email=pending.email,
+            name=pending.name,
+            birthdate=pending.birthdate,
+            country=pending.country,
+        )
+        validate_password(password, user=user)
+        user.set_password(password)
+        user.save()
+        EmailAddress.objects.create(user=user, email=user.email, verified=True, primary=True)
+        pending.delete()
+        return Completed(user=user)
 
 
 def _is_account_conflict(error: ValidationError) -> bool:

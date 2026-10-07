@@ -2,13 +2,14 @@ from datetime import date, timedelta
 from typing import Any
 
 import pytest
+from allauth.account.models import EmailAddress
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
-from django.test import override_settings
+from django.test import Client, override_settings
 from django.utils import timezone
 
 from apps.accounts import codes, registration
-from apps.accounts.models import PendingRegistration
+from apps.accounts.models import PendingRegistration, User
 from apps.accounts.tests.factories import make_user
 
 pytestmark = pytest.mark.django_db
@@ -306,3 +307,134 @@ def test_resend_is_refused_for_an_expired_process() -> None:
 
 def test_resend_with_unknown_public_id_is_refused() -> None:
     assert registration.resend(public_id="unknown") == registration.ResendRefusal.NOT_FOUND
+
+
+GOOD_PASSWORD = "Kq7#mZ2!vR9p"
+
+
+def _verified(email: str = "ana@x.com") -> registration.Started:
+    started = _start(email)
+    assert registration.verify(public_id=started.public_id, code=started.code) == "verified"
+    return started
+
+
+def _complete(public_id: str, password: str = GOOD_PASSWORD) -> registration.Completed:
+    result = registration.complete(public_id=public_id, password=password)
+    assert isinstance(result, registration.Completed)
+    return result
+
+
+def test_complete_creates_the_account_and_deletes_the_registration() -> None:
+    user = _complete(_verified().public_id).user
+
+    stored = User.objects.get(pk=user.pk)
+    assert (stored.email, stored.name, stored.birthdate, stored.country) == (
+        "ana@x.com",
+        "Ana García",
+        date(1990, 5, 10),
+        "ES",
+    )
+    assert stored.check_password(GOOD_PASSWORD)
+    address = EmailAddress.objects.get(user=stored)
+    assert (address.email, address.verified, address.primary) == ("ana@x.com", True, True)
+    assert not PendingRegistration.objects.exists()
+
+
+def test_completed_account_can_log_in_through_the_app() -> None:
+    _complete(_verified().public_id)
+
+    response = Client().post(
+        "/_allauth/app/v1/auth/login",
+        data={"email": "ana@x.com", "password": GOOD_PASSWORD},
+        content_type="application/json",
+    )
+
+    assert response.status_code == 200
+    assert response.json()["meta"]["session_token"]
+
+
+def test_complete_is_allowed_in_the_grace_period_after_the_code_expired() -> None:
+    started = _verified()
+    PendingRegistration.objects.update(code_expires_at=timezone.now() - timedelta(minutes=10))
+
+    _complete(started.public_id)
+
+    assert User.objects.filter(email="ana@x.com").exists()
+
+
+def test_invalid_password_reports_every_broken_rule_and_keeps_the_registration() -> None:
+    started = _verified()
+
+    with pytest.raises(ValidationError) as excinfo:
+        registration.complete(public_id=started.public_id, password="12345678")
+
+    codes_found = {error.code for error in excinfo.value.error_list}
+    assert {
+        "password_too_short",
+        "password_too_common",
+        "password_entirely_numeric",
+    } <= codes_found
+    assert PendingRegistration.objects.filter(public_id=started.public_id).exists()
+    assert not User.objects.exists()
+
+
+def test_password_similar_to_the_registration_data_is_rejected() -> None:
+    started = _verified()
+
+    with pytest.raises(ValidationError) as excinfo:
+        registration.complete(public_id=started.public_id, password="anagarcía1990")
+
+    assert "password_too_similar" in {error.code for error in excinfo.value.error_list}
+
+
+@pytest.mark.parametrize(
+    ("prepare", "expected"),
+    [
+        pytest.param("unverified", registration.CompleteRefusal.CODE_NOT_VERIFIED, id="unverified"),
+        pytest.param("expired", registration.CompleteRefusal.EXPIRED, id="expired"),
+    ],
+)
+def test_complete_is_refused_and_keeps_the_registration(
+    prepare: str, expected: registration.CompleteRefusal
+) -> None:
+    started = _start() if prepare == "unverified" else _verified()
+    if prepare == "expired":
+        PendingRegistration.objects.update(created_at=timezone.now() - timedelta(hours=2))
+
+    assert registration.complete(public_id=started.public_id, password=GOOD_PASSWORD) == expected
+    assert PendingRegistration.objects.exists()
+    assert not User.objects.exists()
+
+
+def test_complete_with_unknown_public_id_is_refused() -> None:
+    result = registration.complete(public_id="unknown", password=GOOD_PASSWORD)
+
+    assert result == registration.CompleteRefusal.NOT_FOUND
+
+
+def test_email_taken_meanwhile_refuses_and_deletes_the_registration() -> None:
+    started = _verified()
+    make_user(email="ana@x.com")
+
+    result = registration.complete(public_id=started.public_id, password=GOOD_PASSWORD)
+
+    assert result == registration.CompleteRefusal.ACCOUNT_EXISTS
+    assert not PendingRegistration.objects.exists()
+    assert User.objects.count() == 1
+
+
+def test_failure_while_creating_the_account_changes_nothing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    started = _verified()
+
+    def broken_create(**kwargs: Any) -> None:
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(EmailAddress.objects, "create", broken_create)
+
+    with pytest.raises(RuntimeError):
+        registration.complete(public_id=started.public_id, password=GOOD_PASSWORD)
+
+    assert not User.objects.exists()
+    assert PendingRegistration.objects.filter(public_id=started.public_id).exists()
