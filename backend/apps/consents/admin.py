@@ -3,10 +3,10 @@ from __future__ import annotations
 from typing import Any
 
 from django.contrib import admin, messages
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.models import QuerySet
 from django.forms import ModelForm
-from django.http import HttpRequest
+from django.http import HttpRequest, HttpResponse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from simple_history.admin import SimpleHistoryAdmin
@@ -16,8 +16,21 @@ from apps.consents.models import PROTECTED_FIELDS, MarketingConsent, Terms, User
 SUPPORT_GROUP = "Soporte técnico"
 
 
+class _HistoryAdmin(SimpleHistoryAdmin):  # type: ignore[misc]
+    # El historial se consulta, pero no se edita ni se revierte desde el panel (RF-020).
+    def history_form_view(
+        self, request: HttpRequest, object_id: str, version_id: str, extra_context: Any = None
+    ) -> HttpResponse:
+        if request.method == "POST":
+            raise PermissionDenied
+        response: HttpResponse = super().history_form_view(
+            request, object_id, version_id, extra_context
+        )
+        return response
+
+
 @admin.register(Terms)
-class TermsAdmin(SimpleHistoryAdmin):  # type: ignore[misc]
+class TermsAdmin(_HistoryAdmin):
     list_display = (
         "kind",
         "version",
@@ -62,7 +75,7 @@ class TermsAdmin(SimpleHistoryAdmin):  # type: ignore[misc]
             )
 
 
-class _SupportAdmin(SimpleHistoryAdmin):  # type: ignore[misc]
+class _SupportAdmin(_HistoryAdmin):
     # Solo el grupo «Soporte técnico» y los superusuarios, aunque otro staff tenga permisos (D-09).
     readonly_fields = ("user_email_hash",)
     raw_id_fields = ("user",)

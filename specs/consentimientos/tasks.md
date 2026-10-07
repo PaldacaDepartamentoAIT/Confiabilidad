@@ -181,12 +181,13 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   (CF-3)
   Decisiones: el acceso exige ser staff activo, además de pertenecer al grupo o ser superusuario — [Cierto]. Al crear, el formulario exige usuario para que el error salga en el formulario y no como un 500; al editar se puede vaciar (la huella se conserva, T-011) — [Probable] — revertir: `required = True` siempre. El usuario se elige por id (`raw_id_fields`) para no cargar todos los usuarios en un desplegable — [Cierto]. La acción «Revocar» ignora las filas ya revocadas — [Cierto].
 
-- [ ] T-021 Historial en el panel, con autor y sin revertir
+- [x] T-021 Historial en el panel, con autor y sin revertir
   RF: RF-020 | Depende de: T-020 | Archivos: 3
   Archivos: `admin.py`, `backend/config/settings.py`, `tests/test_admin_history.py`.
   Hecho cuando: un cambio hecho desde el panel queda en el historial con el usuario que lo hizo;
   la vista de historial de las tres tablas se abre; la vista de revertir a una versión anterior no
   está disponible (`SIMPLE_HISTORY_REVERT_DISABLED`); suite verde. (CF-3)
+  Decisiones: `SIMPLE_HISTORY_REVERT_DISABLED` solo oculta el botón, y la vista de una versión antigua seguía aceptando POST y guardando. Se añadió `_HistoryAdmin`, que responde 403 a cualquier POST de esa vista en las tres tablas — [Cierto] — revertir: quitar `_HistoryAdmin.history_form_view`. El ajuste es global y afecta también a otros modelos con historial (hoy `User`, que no está en el panel) — [Cierto].
 
 - [ ] T-022 Comando: documento vigente y aceptar términos
   RF: RF-016 | Depende de: T-016 | Archivos: 4
