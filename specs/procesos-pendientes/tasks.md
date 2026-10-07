@@ -156,5 +156,43 @@ fallar sus tests.
   Hecho cuando: `conf.code_secret()` lanza `ImproperlyConfigured` si el secreto está vacío o solo
   tiene espacios, y si el secreto anterior es igual al vigente; suite verde.
 
+- [ ] T-022 Corrección: `public_id` que empiezan por "-" en el comando `registration`
+  Tipo: corrección | Origen: validación (RF-023)
+  RF: RF-023 | Depende de: — | Archivos: 3
+  Archivos: `codes.py`, `tests/test_codes.py`, `tests/test_registration_command.py`.
+  Causa: `token_urlsafe` puede devolver un valor que empieza por "-" (1 de cada 64) y argparse lo
+  toma por una opción en `verify`, `resend` y `complete`.
+  Hecho cuando: `generate_public_id` repite la generación hasta obtener un valor que no empieza
+  por "-" (un test fuerza primero "-…"); un test del comando recorre `verify`, `resend` y
+  `complete` con un `public_id` que empezaría por "-"; suite verde.
+
+- [ ] T-023 Corrección: un registro caducado del mismo correo no se trata como repetido
+  Tipo: corrección | Origen: validación (RF-011, RF-017)
+  RF: RF-011, RF-017 | Depende de: — | Archivos: 1
+  Archivos: `tests/test_registration_service.py`.
+  Causa: el test solo compara `public_id` y solo cubre la caducidad por vida máxima.
+  Hecho cuando: con un registro caducado por gracia y otro por vida máxima, con mayúsculas
+  distintas, `start` deja un único registro con los datos nuevos, vigente y cuyo código verifica;
+  los mutantes `iexact`→`exact` y "solo vida máxima" fallan; suite verde.
+
+- [ ] T-024 Corrección: completar cuando el correo tiene una cuenta inactiva
+  Tipo: corrección | Origen: validación (RF-012)
+  RF: RF-012 | Depende de: — | Archivos: 1
+  Archivos: `tests/test_registration_service.py`.
+  Causa: solo se prueba con una cuenta activa.
+  Hecho cuando: el test de cuenta creada entretanto se parametriza con cuenta activa e inactiva,
+  devuelve `ACCOUNT_EXISTS` y borra el registro; el mutante `User.active` falla; suite verde.
+
+- [ ] T-025 Corrección: límites leídos de variables de entorno y vigencia del código al repetir
+  Tipo: corrección | Origen: validación (RF-019)
+  RF: RF-019 | Depende de: — | Archivos: 2
+  Archivos: `tests/test_registration_conf.py`, `tests/test_registration_service.py`.
+  Causa: solo se prueba con `override_settings` y la vigencia al repetir coincide con la gracia
+  por defecto.
+  Hecho cuando: un test carga la configuración con las variables de entorno de los límites y
+  comprueba los valores; repetir un registro con `REGISTRATION_CODE_TTL_MINUTES=5` deja una
+  vigencia de 5 min; los mutantes "nombre de variable mal escrito" y `code_ttl`→`grace_period`
+  fallan; suite verde.
+
 ## RF sin tarea
 Ninguno.
