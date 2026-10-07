@@ -1,5 +1,5 @@
 # Plan: consentimientos
-Estado: borrador
+Estado: aprobado
 
 ## Módulos
 ### M-01 App `consents` (`apps/consents/`, `config/settings.py`)
