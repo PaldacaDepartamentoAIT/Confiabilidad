@@ -203,7 +203,7 @@ fallar sus tests.
   Hecho cuando: con un registro caducado de "ana@x.com", `start(" ANA@X.com ")` deja un único
   registro con los datos nuevos y vigente; el mutante falla; suite verde.
 
-- [ ] T-027 Corrección: el código usa todo el rango de 6 dígitos
+- [x] T-027 Corrección: el código usa todo el rango de 6 dígitos
   Tipo: corrección | Origen: segunda validación (RF-008)
   RF: RF-008 | Depende de: — | Archivos: 1
   Archivos: `tests/test_codes.py`.

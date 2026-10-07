@@ -134,3 +134,16 @@ def test_public_id_never_starts_with_a_dash(monkeypatch: pytest.MonkeyPatch) -> 
     monkeypatch.setattr("apps.accounts.codes.secrets.token_urlsafe", lambda _: next(values))
 
     assert codes.generate_public_id() == "clean-id"
+
+
+def test_code_is_drawn_from_the_full_six_digit_range(monkeypatch: pytest.MonkeyPatch) -> None:
+    upper_bounds: list[int] = []
+
+    def fake_randbelow(upper: int) -> int:
+        upper_bounds.append(upper)
+        return upper - 1
+
+    monkeypatch.setattr("apps.accounts.codes.secrets.randbelow", fake_randbelow)
+
+    assert codes.generate_code() == "999999"
+    assert upper_bounds == [10**6]
