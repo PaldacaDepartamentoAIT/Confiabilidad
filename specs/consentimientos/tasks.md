@@ -119,13 +119,14 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   unicidad devuelve la existente (D-10); suite verde.
   Decisiones: el servicio recibe el usuario, la versión y el idioma; si el documento existe solo como marketing responde `wrong_kind`, y si no existe, `document_not_found` — [Cierto]. Aceptar el mismo documento en otro idioma crea otra aceptación, porque RF-007 compara documentos, no versiones — [Probable] — revertir: buscar la existente por versión. Mutante equivalente: quitar la búsqueda previa de la existente no cambia el resultado, porque la unicidad la devuelve igualmente; se mantiene por D-10 — [Cierto].
 
-- [ ] T-014 Conceder marketing
+- [x] T-014 Conceder marketing
   RF: RF-008, RF-009, RF-014 | Depende de: T-013 | Archivos: 2
   Archivos: `services.py`, `tests/test_services.py`.
   Hecho cuando: `grant_marketing` registra un consentimiento activo del documento vigente indicado;
   rechaza un documento inexistente, de términos, no vigente o una cuenta inactiva; con un activo
   del mismo documento devuelve el existente; con un activo de otro documento lo revoca y crea el
   nuevo en una sola transacción; suite verde.
+  Decisiones: si al sustituir falla la creación del nuevo consentimiento, la revocación del anterior se deshace con la transacción y el usuario conserva el activo — [Cierto]. Conceder otro idioma de la misma versión cuenta como otro documento y sustituye al activo (RF-009 compara documentos) — [Probable] — revertir: comparar por versión.
 
 - [ ] T-015 Revocar marketing
   RF: RF-010, RF-014 | Depende de: T-014 | Archivos: 2

@@ -1,9 +1,10 @@
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from apps.accounts.models import User
-from apps.consents.models import Terms, UserTerms
+from apps.consents.models import MarketingConsent, Terms, UserTerms
 from apps.consents.versions import current_version
 
 
@@ -27,6 +28,37 @@ def accept_terms(user: User, *, version: str, locale: str) -> UserTerms:
                 raise
             return winner
     return acceptance
+
+
+def grant_marketing(user: User, *, version: str, locale: str) -> MarketingConsent:
+    _check_active(user)
+    document = _current_document_shown(Terms.Kind.MARKETING, version=version, locale=locale)
+    with transaction.atomic():
+        active = _active_consent(user)
+        if active is not None and active.terms_id == document.pk:
+            return active
+        if active is not None:
+            _revoke(active)
+        consent = MarketingConsent(user=user, terms=document)
+        try:
+            with transaction.atomic():
+                consent.save()
+        except (IntegrityError, ValidationError):
+            winner = MarketingConsent.objects.filter(user=user, granted=True).first()
+            if winner is None or winner.terms_id != document.pk:
+                raise
+            return winner
+    return consent
+
+
+def _active_consent(user: User) -> MarketingConsent | None:
+    return MarketingConsent.objects.select_for_update().filter(user=user, granted=True).first()
+
+
+def _revoke(consent: MarketingConsent) -> None:
+    consent.granted = False
+    consent.revoked_at = timezone.now()
+    consent.save()
 
 
 def _active_acceptance(user: User, document: Terms) -> UserTerms | None:
