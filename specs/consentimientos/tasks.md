@@ -189,7 +189,7 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   está disponible (`SIMPLE_HISTORY_REVERT_DISABLED`); suite verde. (CF-3)
   Decisiones: `SIMPLE_HISTORY_REVERT_DISABLED` solo oculta el botón, y la vista de una versión antigua seguía aceptando POST y guardando. Se añadió `_HistoryAdmin`, que responde 403 a cualquier POST de esa vista en las tres tablas — [Cierto] — revertir: quitar `_HistoryAdmin.history_form_view`. El ajuste es global y afecta también a otros modelos con historial (hoy `User`, que no está en el panel) — [Cierto].
 
-- [ ] T-022 Comando: documento vigente y aceptar términos
+- [x] T-022 Comando: documento vigente y aceptar términos
   RF: RF-016 | Depende de: T-016 | Archivos: 4
   Archivos: `management/__init__.py`, `management/commands/__init__.py`,
   `management/commands/consents.py`, `tests/test_consents_command.py`.
@@ -198,6 +198,7 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   registra la aceptación y muestra el error de D-12 si se rechaza o si el correo no existe; suite
   verde.
   Excepción: dos de los archivos son los paquetes vacíos que Django exige para descubrir comandos.
+  Decisiones: el usuario se busca por correo sin distinguir mayúsculas — [Cierto]. Los errores del servicio se muestran con su mensaje en inglés, como en `registration` — [Cierto]. Mutante equivalente: mostrar el idioma pedido en lugar del del documento no cambia la salida, porque coinciden siempre — [Cierto].
 
 - [ ] T-023 Comando: conceder, revocar y estado
   RF: RF-016 | Depende de: T-022 | Archivos: 2
