@@ -110,11 +110,19 @@ CHANNEL_LAYERS = {
 CELERY_BROKER_URL = env("CELERY_BROKER_URL", default=REDIS_URL)
 CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default=REDIS_URL)
 
+# Política de contraseñas del proyecto (RF-022 de procesos-pendientes).
 AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+        "OPTIONS": {"user_attributes": ("email", "name")},
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {"min_length": 12},
+    },
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+    {"NAME": "apps.accounts.password_validation.PwnedPasswordValidator"},
 ]
 
 AUTH_USER_MODEL = "accounts.User"
@@ -178,3 +186,17 @@ USE_TZ = True
 STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Registro pendiente: límites configurables (RF-019) y secreto de los códigos (RF-008, RF-015).
+REGISTRATION_MAX_FAILED_ATTEMPTS = env.int("REGISTRATION_MAX_FAILED_ATTEMPTS", default=5)
+REGISTRATION_CODE_TTL_MINUTES = env.int("REGISTRATION_CODE_TTL_MINUTES", default=15)
+REGISTRATION_GRACE_MINUTES = env.int("REGISTRATION_GRACE_MINUTES", default=15)
+REGISTRATION_MAX_LIFETIME_MINUTES = env.int("REGISTRATION_MAX_LIFETIME_MINUTES", default=60)
+REGISTRATION_CODE_SECRET = env("REGISTRATION_CODE_SECRET", default=SECRET_KEY)
+REGISTRATION_CODE_SECRET_PREVIOUS = env("REGISTRATION_CODE_SECRET_PREVIOUS", default="")
+REGISTRATION_CODE_SECRET_ROTATED_AT = env("REGISTRATION_CODE_SECRET_ROTATED_AT", default="")
+REGISTRATION_SECRET_TRANSITION_MINUTES = env.int(
+    "REGISTRATION_SECRET_TRANSITION_MINUTES", default=60
+)
+PWNED_PASSWORDS_TIMEOUT_SECONDS = env.float("PWNED_PASSWORDS_TIMEOUT_SECONDS", default=2.0)
+PWNED_PASSWORDS_ENABLED = env.bool("PWNED_PASSWORDS_ENABLED", default=True)
