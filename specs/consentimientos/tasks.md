@@ -91,13 +91,14 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   activos sin usuario no chocan; `granted=True` con `revoked_at` o `granted=False` sin él chocan
   con el `CheckConstraint`; borrar el usuario deja el activo activo y sin usuario; suite verde.
 
-- [ ] T-011 Huella automática y usuario obligatorio
+- [x] T-011 Huella automática y usuario obligatorio
   RF: RF-012, RF-013 | Depende de: T-004, T-010 | Archivos: 2
   Archivos: `models.py`, `tests/test_acceptance_models.py`.
   Hecho cuando: en las dos tablas, al crear se guarda la huella del correo del usuario aunque se
   pase otra; cambiar el correo del usuario no cambia la huella guardada; cambiar el usuario de la
   fila la recalcula; crear una fila sin usuario lanza `ValidationError`; guardar una fila ya sin
   usuario (cuenta borrada) conserva su huella; suite verde.
+  Decisiones: vaciar el usuario de una fila existente (soporte) conserva su huella, igual que al borrar la cuenta (RF-013) — [Probable] — revertir: rechazar el usuario vacío en filas existentes. Una huella escrita a mano en una fila existente se descarta y se restaura la guardada — [Cierto].
 
 - [ ] T-012 Versión aceptada inmutable en el modelo
   RF: RF-005 | Depende de: T-011 | Archivos: 2

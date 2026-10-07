@@ -8,6 +8,7 @@ from django.db.models import ProtectedError
 from django.utils import timezone
 
 from apps.accounts.tests.factories import make_user
+from apps.consents.hashing import email_fingerprint
 from apps.consents.models import MarketingConsent, Terms, UserTerms
 from apps.consents.tests.factories import make_document
 
@@ -26,7 +27,7 @@ def test_terms_acceptance_keeps_every_field() -> None:
 
     assert acceptance.user == user
     assert acceptance.terms == document
-    assert acceptance.user_email_hash == HASH
+    assert acceptance.user_email_hash == email_fingerprint(user.email)
     assert acceptance.terms_accepted_at >= before
     assert acceptance.revoked_at is None
 
@@ -75,7 +76,7 @@ def test_deleting_the_user_keeps_the_acceptance_without_user() -> None:
     acceptance.refresh_from_db()
 
     assert acceptance.user is None
-    assert acceptance.user_email_hash == HASH
+    assert acceptance.user_email_hash == email_fingerprint(user.email)
 
 
 def test_deleting_an_accepted_document_is_protected() -> None:
@@ -136,7 +137,7 @@ def test_marketing_consent_keeps_every_field() -> None:
 
     assert consent.user is not None
     assert consent.terms.kind == Terms.Kind.MARKETING
-    assert consent.user_email_hash == HASH
+    assert consent.user_email_hash == email_fingerprint(consent.user.email)
     assert consent.granted is True
     assert consent.granted_at >= before
     assert consent.revoked_at is None
@@ -212,7 +213,7 @@ def test_deleting_the_user_keeps_the_active_consent_without_user() -> None:
 
     assert consent.user is None
     assert consent.granted is True
-    assert consent.user_email_hash == HASH
+    assert consent.user_email_hash == email_fingerprint(user.email)
 
 
 def test_deleting_a_consented_document_is_protected() -> None:
@@ -227,3 +228,111 @@ def test_marketing_consent_text_shows_document_and_hash_prefix() -> None:
     consent = _marketing(terms=make_document(kind=Terms.Kind.MARKETING, version="4"))
 
     assert str(consent) == f"marketing 4 (es) · {HASH[:12]}"
+
+
+def _record(
+    model: type[UserTerms | MarketingConsent], **fields: Any
+) -> UserTerms | MarketingConsent:
+    kind = Terms.Kind.TERMS if model is UserTerms else Terms.Kind.MARKETING
+    fields.setdefault("terms", make_document(kind=kind))
+    return model(**fields)
+
+
+RECORD_MODELS = [UserTerms, MarketingConsent]
+
+
+@pytest.mark.parametrize("model", RECORD_MODELS)
+def test_hash_of_the_user_email_is_stored_on_create(
+    model: type[UserTerms | MarketingConsent],
+) -> None:
+    user = make_user(email="Ana@X.com")
+
+    record = _record(model, user=user, user_email_hash="typed-by-hand")
+    record.save()
+
+    assert record.user_email_hash == email_fingerprint("ana@x.com")
+
+
+@pytest.mark.parametrize("model", RECORD_MODELS)
+def test_changing_the_user_email_keeps_the_stored_hash(
+    model: type[UserTerms | MarketingConsent],
+) -> None:
+    user = make_user(email="ana@x.com")
+    record = _record(model, user=user)
+    record.save()
+
+    user.email = "ana@y.com"
+    user.save()
+    record.refresh_from_db()
+    record.save()
+
+    assert record.user_email_hash == email_fingerprint("ana@x.com")
+
+
+@pytest.mark.parametrize("model", RECORD_MODELS)
+def test_changing_the_user_of_a_record_recalculates_the_hash(
+    model: type[UserTerms | MarketingConsent],
+) -> None:
+    record = _record(model, user=make_user(email="ana@x.com"))
+    record.save()
+
+    record.user = make_user(email="bea@x.com")
+    record.save()
+
+    assert record.user_email_hash == email_fingerprint("bea@x.com")
+
+
+@pytest.mark.parametrize("model", RECORD_MODELS)
+def test_saving_again_ignores_a_hash_typed_by_hand(
+    model: type[UserTerms | MarketingConsent],
+) -> None:
+    record = _record(model, user=make_user(email="ana@x.com"))
+    record.save()
+
+    record.user_email_hash = "typed-by-hand"
+    record.save()
+    record.refresh_from_db()
+
+    assert record.user_email_hash == email_fingerprint("ana@x.com")
+
+
+@pytest.mark.parametrize("model", RECORD_MODELS)
+def test_creating_a_record_without_user_is_rejected(
+    model: type[UserTerms | MarketingConsent],
+) -> None:
+    with pytest.raises(ValidationError) as error:
+        _record(model).save()
+
+    assert "user" in error.value.error_dict
+    assert not model.objects.exists()
+
+
+@pytest.mark.parametrize("model", RECORD_MODELS)
+def test_saving_a_record_of_a_deleted_account_keeps_its_hash(
+    model: type[UserTerms | MarketingConsent],
+) -> None:
+    user = make_user(email="ana@x.com")
+    record = _record(model, user=user)
+    record.save()
+    user.delete()
+    record.refresh_from_db()
+
+    record.save()
+    record.refresh_from_db()
+
+    assert record.user is None
+    assert record.user_email_hash == email_fingerprint("ana@x.com")
+
+
+@pytest.mark.parametrize("model", RECORD_MODELS)
+def test_clearing_the_user_of_a_record_keeps_its_hash(
+    model: type[UserTerms | MarketingConsent],
+) -> None:
+    record = _record(model, user=make_user(email="ana@x.com"))
+    record.save()
+
+    record.user = None
+    record.save()
+    record.refresh_from_db()
+
+    assert record.user_email_hash == email_fingerprint("ana@x.com")

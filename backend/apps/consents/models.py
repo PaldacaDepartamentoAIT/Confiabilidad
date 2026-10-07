@@ -7,6 +7,7 @@ from django.db.models.functions import Lower
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
+from apps.consents.hashing import email_fingerprint
 from apps.consents.validators import (
     VERSION_MAX_LENGTH,
     validate_content,
@@ -108,6 +109,7 @@ class UserTerms(models.Model):
         return f"{self.terms} · {self.user_email_hash[:12]}"
 
     def save(self, *args: Any, **kwargs: Any) -> None:
+        _refresh_email_hash(self)
         self.full_clean()
         super().save(*args, **kwargs)
 
@@ -155,5 +157,24 @@ class MarketingConsent(models.Model):
         return f"{self.terms} · {self.user_email_hash[:12]}"
 
     def save(self, *args: Any, **kwargs: Any) -> None:
+        _refresh_email_hash(self)
         self.full_clean()
         super().save(*args, **kwargs)
+
+
+def _refresh_email_hash(record: UserTerms | MarketingConsent) -> None:
+    # La huella la calcula siempre el sistema: al crear y al cambiar de usuario (RF-012).
+    if record._state.adding:
+        if record.user is None:
+            raise ValidationError(
+                {"user": ValidationError(_("A user is required."), code="user_required")}
+            )
+        record.user_email_hash = email_fingerprint(record.user.email)
+        return
+    stored_user_id, stored_hash = (
+        type(record).objects.filter(pk=record.pk).values_list("user_id", "user_email_hash").get()
+    )
+    if record.user is not None and record.user_id != stored_user_id:
+        record.user_email_hash = email_fingerprint(record.user.email)
+    else:
+        record.user_email_hash = stored_hash
