@@ -156,7 +156,7 @@ fallar sus tests.
   Hecho cuando: `conf.code_secret()` lanza `ImproperlyConfigured` si el secreto está vacío o solo
   tiene espacios, y si el secreto anterior es igual al vigente; suite verde.
 
-- [ ] T-022 Corrección: `public_id` que empiezan por "-" en el comando `registration`
+- [x] T-022 Corrección: `public_id` que empiezan por "-" en el comando `registration`
   Tipo: corrección | Origen: validación (RF-023)
   RF: RF-023 | Depende de: — | Archivos: 3
   Archivos: `codes.py`, `tests/test_codes.py`, `tests/test_registration_command.py`.
