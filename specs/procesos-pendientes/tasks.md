@@ -134,7 +134,7 @@ fallar sus tests.
   cuenta o muestra cada regla incumplida; `registration purge` muestra cuántos borró; el recorrido
   `start → verify → complete` crea una cuenta que inicia sesión; suite verde. (CF-4)
 
-- [ ] T-019 Flujo de registro en Mermaid
+- [x] T-019 Flujo de registro en Mermaid
   RF: — (documentación, S-02) | Depende de: T-018 | Archivos: 1
   Archivos: `specs/procesos-pendientes/diagramas/flujo-registro.md`.
   Hecho cuando: el flujo en Mermaid refleja la spec aprobada (intentos, reenvío, gracia, vida
