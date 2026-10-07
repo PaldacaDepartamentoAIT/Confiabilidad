@@ -140,7 +140,7 @@ fallar sus tests.
   Hecho cuando: el flujo en Mermaid refleja la spec aprobada (intentos, reenvío, gracia, vida
   máxima, registro repetido, reanudar con el `public_id`) y enlaza a la imagen original.
 
-- [ ] T-020 Resumen de la feature
+- [x] T-020 Resumen de la feature
   RF: todos (documentación) | Depende de: T-001…T-019 | Archivos: 1
   Archivos: `specs/procesos-pendientes/resumen.md`.
   Hecho cuando: el resumen contiene qué se hizo, cómo recorrer el registro con `manage.py
