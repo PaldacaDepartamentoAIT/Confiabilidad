@@ -62,7 +62,7 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   distinto del de otro idioma de su versión lanza `ValidationError`; suite verde.
   Decisiones: mutante equivalente — quitar la condición `kind == terms` de la coherencia no cambia nada, porque `save()` deja siempre `False` en marketing — [Cierto]. La coherencia se compara con la versión sin distinguir mayúsculas, igual que la unicidad de RF-002 — [Cierto] — revertir: `version=` en `_siblings`.
 
-- [ ] T-008 Versión vigente
+- [x] T-008 Versión vigente
   RF: RF-003 | Depende de: T-007 | Archivos: 3
   Archivos: `versions.py`, `tests/factories.py`, `tests/test_versions.py`.
   Hecho cuando: una versión con los tres idiomas publicados está en vigor desde la fecha más
@@ -70,6 +70,7 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   varias en vigor, la vigente es la más reciente y, a igual fecha, la creada más tarde; sin
   ninguna, no hay vigente; el documento vigente en un idioma es el de la versión vigente; las
   factorías `make_document` y `publish_version` crean documentos y versiones completas; suite verde.
+  Decisiones: `InForceVersion.version` guarda la versión en minúsculas, porque es la clave común a los tres idiomas — [Cierto] — revertir: devolver la etiqueta del documento más reciente. Mutante equivalente: `published_at__lte` → `__lt` solo difiere si la publicación coincide al microsegundo con la consulta — [Cierto].
 
 - [ ] T-009 Modelo `UserTerms`
   RF: RF-007, RF-013, RF-018 | Depende de: T-008 | Archivos: 3
