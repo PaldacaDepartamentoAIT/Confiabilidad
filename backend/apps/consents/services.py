@@ -51,6 +51,14 @@ def grant_marketing(user: User, *, version: str, locale: str) -> MarketingConsen
     return consent
 
 
+def revoke_marketing(user: User) -> MarketingConsent | None:
+    with transaction.atomic():
+        active = _active_consent(user)
+        if active is not None:
+            _revoke(active)
+    return active
+
+
 def _active_consent(user: User) -> MarketingConsent | None:
     return MarketingConsent.objects.select_for_update().filter(user=user, granted=True).first()
 

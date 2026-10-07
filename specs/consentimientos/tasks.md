@@ -128,12 +128,13 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   nuevo en una sola transacción; suite verde.
   Decisiones: si al sustituir falla la creación del nuevo consentimiento, la revocación del anterior se deshace con la transacción y el usuario conserva el activo — [Cierto]. Conceder otro idioma de la misma versión cuenta como otro documento y sustituye al activo (RF-009 compara documentos) — [Probable] — revertir: comparar por versión.
 
-- [ ] T-015 Revocar marketing
+- [x] T-015 Revocar marketing
   RF: RF-010, RF-014 | Depende de: T-014 | Archivos: 2
   Archivos: `services.py`, `tests/test_services.py`.
   Hecho cuando: `revoke_marketing` pone `granted=False` y la fecha de revocación en el activo y
   conserva la fila; sin activo no cambia nada ni falla; funciona con una cuenta inactiva; suite
   verde.
+  Decisiones: `revoke_marketing` devuelve el consentimiento revocado, o `None` si no había activo, para que el comando y la futura API puedan informarlo — [Cierto].
 
 - [ ] T-016 Estado de consentimiento
   RF: RF-015, RF-017, RF-018 | Depende de: T-015 | Archivos: 3

@@ -312,3 +312,56 @@ def test_simultaneous_grant_of_another_document_is_not_hidden(
 
     with pytest.raises(ValidationError):
         services.grant_marketing(user, version="m2", locale="es")
+
+
+def test_revoking_marketing_closes_the_active_consent_and_keeps_the_row() -> None:
+    publish_version(kind=Terms.Kind.MARKETING, version="m1")
+    user = make_user()
+    consent = services.grant_marketing(user, version="m1", locale="es")
+    before = timezone.now()
+
+    revoked = services.revoke_marketing(user)
+    consent.refresh_from_db()
+
+    assert revoked == consent
+    assert consent.granted is False
+    assert consent.revoked_at is not None and consent.revoked_at >= before
+    assert MarketingConsent.objects.count() == 1
+
+
+def test_revoking_without_an_active_consent_changes_nothing() -> None:
+    publish_version(kind=Terms.Kind.MARKETING, version="m1")
+    user = make_user()
+    consent = services.grant_marketing(user, version="m1", locale="es")
+    services.revoke_marketing(user)
+    consent.refresh_from_db()
+    first_revocation = consent.revoked_at
+
+    assert services.revoke_marketing(user) is None
+    assert services.revoke_marketing(make_user()) is None
+    consent.refresh_from_db()
+    assert consent.revoked_at == first_revocation
+
+
+def test_inactive_account_can_revoke_marketing() -> None:
+    publish_version(kind=Terms.Kind.MARKETING, version="m1")
+    user = make_user()
+    services.grant_marketing(user, version="m1", locale="es")
+    user.is_active = False
+    user.save()
+
+    revoked = services.revoke_marketing(user)
+
+    assert revoked is not None and revoked.granted is False
+
+
+def test_revoking_only_touches_the_users_consent() -> None:
+    publish_version(kind=Terms.Kind.MARKETING, version="m1")
+    user, other = make_user(), make_user()
+    services.grant_marketing(user, version="m1", locale="es")
+    kept = services.grant_marketing(other, version="m1", locale="es")
+
+    services.revoke_marketing(user)
+    kept.refresh_from_db()
+
+    assert kept.granted is True
