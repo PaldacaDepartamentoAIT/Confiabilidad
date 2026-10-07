@@ -72,7 +72,7 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   factorías `make_document` y `publish_version` crean documentos y versiones completas; suite verde.
   Decisiones: `InForceVersion.version` guarda la versión en minúsculas, porque es la clave común a los tres idiomas — [Cierto] — revertir: devolver la etiqueta del documento más reciente. Mutante equivalente: `published_at__lte` → `__lt` solo difiere si la publicación coincide al microsegundo con la consulta — [Cierto].
 
-- [ ] T-009 Modelo `UserTerms`
+- [x] T-009 Modelo `UserTerms`
   RF: RF-007, RF-013, RF-018 | Depende de: T-008 | Archivos: 3
   Archivos: `models.py`, `migrations/0001_initial.py`, `tests/test_acceptance_models.py`.
   Hecho cuando: `migrate` aplica `0001` regenerada; se guardan usuario, documento, huella, fecha de
@@ -80,6 +80,7 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   no revocadas del mismo usuario y documento chocan, también por `bulk_create`, y una revocada no
   choca; borrar el usuario deja la fila con usuario vacío; borrar el documento aceptado lanza
   `ProtectedError`; suite verde.
+  Decisiones: el tipo de documento se valida con `limit_choices_to` de la FK, que Django comprueba en `full_clean`; una comprobación propia era un mutante equivalente y se quitó — [Cierto] — revertir: añadir un `clean()` con la comprobación de `kind`.
 
 - [ ] T-010 Modelo `MarketingConsent`
   RF: RF-010, RF-011, RF-013 | Depende de: T-009 | Archivos: 3

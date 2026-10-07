@@ -1,8 +1,10 @@
 from typing import Any, ClassVar
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.functions import Lower
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from apps.consents.validators import (
@@ -70,3 +72,41 @@ class Terms(models.Model):
         return Terms.objects.filter(kind=self.kind, version__iexact=self.version).exclude(
             pk=self.pk
         )
+
+
+class UserTerms(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="terms_acceptances",
+    )
+    terms = models.ForeignKey(
+        Terms,
+        on_delete=models.PROTECT,
+        related_name="acceptances",
+        limit_choices_to={"kind": Terms.Kind.TERMS},
+    )
+    user_email_hash = models.CharField(max_length=64, editable=False)
+    terms_accepted_at = models.DateTimeField(default=timezone.now)
+    revoked_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = _("terms acceptance")
+        verbose_name_plural = _("terms acceptances")
+        constraints: ClassVar[list[models.BaseConstraint]] = [
+            models.UniqueConstraint(
+                fields=["user", "terms"],
+                condition=models.Q(revoked_at__isnull=True),
+                name="consents_userterms_active_unique",
+                violation_error_message=_("This user has already accepted this document."),
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.terms} · {self.user_email_hash[:12]}"
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        self.full_clean()
+        super().save(*args, **kwargs)
