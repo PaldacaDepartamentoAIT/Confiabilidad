@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     "simple_history",
     "apps.core",
     "apps.accounts",
+    "apps.consents",
 ]
 
 MIDDLEWARE = [

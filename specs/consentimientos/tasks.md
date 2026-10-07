@@ -7,7 +7,7 @@ tarea, antes de marcarla, se prueba al menos un mutante del código que introduc
 fallar sus tests. Mientras la feature no esté terminada, `migrations/0001_initial.py` se regenera
 en cada tarea que cambia el esquema, para que al final queden solo las dos migraciones de M-11.
 
-- [ ] T-001 Andamiaje de la app `consents`
+- [x] T-001 Andamiaje de la app `consents`
   RF: — (M-01, D-01) | Depende de: — | Archivos: 4
   Archivos: `__init__.py`, `apps.py`, `tests/__init__.py`, `backend/config/settings.py`.
   Hecho cuando: `python manage.py check` no da errores y `apps.get_app_config("consents")` resuelve
