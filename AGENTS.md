@@ -30,11 +30,11 @@ Tests:
 - Frontend: `pnpm --filter frontend test`  (Vitest)
 
 Tipos:
-- Backend: `mypy backend/`  (modo estricto)
+- Backend: `cd backend && mypy .`  (modo estricto; la configuración está en `backend/pyproject.toml`)
 - Frontend/Desktop: `pnpm --filter frontend typecheck`  (`tsc --noEmit`, modo strict)
 
 Lint / formato:
-- Backend: `ruff check .` y `black .`
+- Backend: `cd backend && ruff check . && black .` (desde `backend/`, como el CI)
 - Frontend/Desktop TS: `pnpm lint` (ESLint) y `pnpm format` (Prettier)
 - Rust: `cargo fmt` y `cargo clippy`
 
@@ -129,7 +129,7 @@ Secretos:
 
 ## Al terminar cualquier tarea
 - Ejecutar los tests del área tocada (`pytest` y/o `pnpm --filter frontend test`).
-- Pasar tipos (`mypy backend/`, `pnpm --filter frontend typecheck`).
+- Pasar tipos (`cd backend && mypy .`, `pnpm --filter frontend typecheck`).
 - Pasar lint/formato (`ruff`/`black`, `eslint`/`prettier`, `cargo fmt`/`clippy`).
 - Verificar que el entorno Docker sigue levantando sin errores.
 
