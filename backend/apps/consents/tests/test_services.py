@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.utils import timezone
 
+from apps.accounts.models import User
 from apps.accounts.tests.factories import make_user
 from apps.consents import services
 from apps.consents.hashing import email_fingerprint
@@ -365,3 +366,120 @@ def test_revoking_only_touches_the_users_consent() -> None:
     kept.refresh_from_db()
 
     assert kept.granted is True
+
+
+def _terms_state(user: User) -> services.TermsState:
+    return services.consent_status(user).terms
+
+
+def test_status_without_terms_in_force_says_so() -> None:
+    make_document(version="draft")
+
+    assert _terms_state(make_user()) == services.TermsState.NO_CURRENT_VERSION
+
+
+def test_status_of_a_user_who_accepted_the_current_version() -> None:
+    publish_version(version="1")
+    user = make_user()
+    services.accept_terms(user, version="1", locale="es")
+
+    assert _terms_state(user) == services.TermsState.ACCEPTED
+    assert _terms_state(make_user()) == services.TermsState.NOT_ACCEPTED
+
+
+def test_first_version_requires_acceptance_even_if_not_flagged() -> None:
+    publish_version(version="1", requires_reacceptance=False)
+
+    assert _terms_state(make_user()) == services.TermsState.NOT_ACCEPTED
+
+
+def test_a_new_version_without_reacceptance_keeps_the_previous_acceptance_valid() -> None:
+    now = timezone.now()
+    publish_version(version="1", published_at=now - 3 * DAY)
+    user = make_user()
+    services.accept_terms(user, version="1", locale="es")
+
+    publish_version(version="1.1", published_at=now - DAY, requires_reacceptance=False)
+
+    assert _terms_state(user) == services.TermsState.ACCEPTED
+
+
+def test_a_new_version_requiring_reacceptance_invalidates_older_acceptances() -> None:
+    now = timezone.now()
+    publish_version(version="1", published_at=now - 5 * DAY)
+    publish_version(version="1.1", published_at=now - 3 * DAY, requires_reacceptance=False)
+    old_user, minor_user = make_user(), make_user()
+    UserTerms(user=old_user, terms=Terms.objects.get(version="1", locale="es")).save()
+    services.accept_terms(minor_user, version="1.1", locale="es")
+
+    publish_version(version="2", published_at=now - DAY)
+
+    assert _terms_state(old_user) == services.TermsState.NOT_ACCEPTED
+    assert _terms_state(minor_user) == services.TermsState.NOT_ACCEPTED
+
+
+def test_versions_after_the_required_one_are_valid() -> None:
+    now = timezone.now()
+    publish_version(version="2", published_at=now - 3 * DAY)
+    publish_version(version="2.1", published_at=now - DAY, requires_reacceptance=False)
+    user = make_user()
+    UserTerms(user=user, terms=Terms.objects.get(version="2", locale="en")).save()
+
+    assert _terms_state(user) == services.TermsState.ACCEPTED
+
+
+def test_a_scheduled_version_does_not_invalidate_acceptances_yet() -> None:
+    now = timezone.now()
+    publish_version(version="1", published_at=now - DAY)
+    publish_version(version="2", published_at=now + DAY)
+    user = make_user()
+    services.accept_terms(user, version="1", locale="es")
+
+    assert _terms_state(user) == services.TermsState.ACCEPTED
+
+
+def test_an_acceptance_in_another_locale_counts() -> None:
+    publish_version(version="1")
+    user = make_user()
+    services.accept_terms(user, version="1", locale="pt-BR")
+
+    assert _terms_state(user) == services.TermsState.ACCEPTED
+
+
+def test_a_revoked_acceptance_does_not_count() -> None:
+    publish_version(version="1")
+    user = make_user()
+    acceptance = services.accept_terms(user, version="1", locale="es")
+    acceptance.revoked_at = timezone.now()
+    acceptance.save()
+
+    assert _terms_state(user) == services.TermsState.NOT_ACCEPTED
+
+
+def test_an_acceptance_of_a_version_never_in_force_does_not_count() -> None:
+    publish_version(version="1")
+    user = make_user()
+    UserTerms(user=user, terms=make_document(version="draft")).save()
+
+    assert _terms_state(user) == services.TermsState.NOT_ACCEPTED
+
+
+def test_status_reports_the_active_marketing_consent() -> None:
+    publish_version(kind=Terms.Kind.MARKETING, version="m1")
+    user = make_user()
+
+    assert services.consent_status(user).marketing is None
+    consent = services.grant_marketing(user, version="m1", locale="es")
+    assert services.consent_status(user).marketing == consent
+    services.revoke_marketing(user)
+    assert services.consent_status(user).marketing is None
+
+
+def test_without_flagged_versions_any_version_in_force_is_valid() -> None:
+    now = timezone.now()
+    publish_version(version="1", published_at=now - 3 * DAY, requires_reacceptance=False)
+    publish_version(version="1.1", published_at=now - DAY, requires_reacceptance=False)
+    user = make_user()
+    UserTerms(user=user, terms=Terms.objects.get(version="1", locale="es")).save()
+
+    assert _terms_state(user) == services.TermsState.ACCEPTED

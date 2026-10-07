@@ -1,11 +1,58 @@
+from dataclasses import dataclass
+from enum import StrEnum
+
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
+from django.db.models.functions import Lower
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from apps.accounts.models import User
 from apps.consents.models import MarketingConsent, Terms, UserTerms
-from apps.consents.versions import current_version
+from apps.consents.versions import InForceVersion, current_version, in_force_versions
+
+
+class TermsState(StrEnum):
+    ACCEPTED = "accepted"
+    NOT_ACCEPTED = "not_accepted"
+    NO_CURRENT_VERSION = "no_current_version"
+
+
+@dataclass(frozen=True)
+class ConsentStatus:
+    terms: TermsState
+    marketing: MarketingConsent | None
+
+
+def consent_status(user: User) -> ConsentStatus:
+    return ConsentStatus(
+        terms=_terms_state(user),
+        marketing=MarketingConsent.objects.filter(user=user, granted=True).first(),
+    )
+
+
+def _terms_state(user: User) -> TermsState:
+    versions = in_force_versions(Terms.Kind.TERMS)
+    if not versions:
+        return TermsState.NO_CURRENT_VERSION
+    required = _required_version(versions)
+    valid = [v.version for v in versions if v.in_force_at >= required.in_force_at]
+    accepted = (
+        UserTerms.objects.filter(user=user, revoked_at__isnull=True)
+        .annotate(version_key=Lower("terms__version"))
+        .filter(version_key__in=valid)
+        .exists()
+    )
+    return TermsState.ACCEPTED if accepted else TermsState.NOT_ACCEPTED
+
+
+def _required_version(versions: list[InForceVersion]) -> InForceVersion:
+    # Las versiones vienen de la más reciente a la más antigua; la primera en vigor siempre exige
+    # aceptación (RF-017).
+    for version in versions:
+        if version.requires_reacceptance:
+            return version
+    return versions[-1]
 
 
 def accept_terms(user: User, *, version: str, locale: str) -> UserTerms:

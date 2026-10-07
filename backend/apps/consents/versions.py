@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 
+from django.contrib.postgres.aggregates import BoolOr
 from django.db.models import Count, Max
 from django.db.models.functions import Lower
 from django.utils import timezone
@@ -14,6 +15,7 @@ class InForceVersion:
     # Versión en minúsculas: "V1" y "v1" son la misma versión (RF-002).
     version: str
     in_force_at: datetime
+    requires_reacceptance: bool
 
 
 def in_force_versions(kind: str) -> list[InForceVersion]:
@@ -24,11 +26,19 @@ def in_force_versions(kind: str) -> list[InForceVersion]:
             languages=Count("id"),
             in_force_at=Max("published_at"),
             last_created_at=Max("created_at"),
+            requires_reacceptance=BoolOr("requires_reacceptance"),
         )
         .filter(languages=len(LOCALES))
         .order_by("-in_force_at", "-last_created_at")
     )
-    return [InForceVersion(version=row["key"], in_force_at=row["in_force_at"]) for row in rows]
+    return [
+        InForceVersion(
+            version=row["key"],
+            in_force_at=row["in_force_at"],
+            requires_reacceptance=row["requires_reacceptance"],
+        )
+        for row in rows
+    ]
 
 
 def current_version(kind: str) -> InForceVersion | None:

@@ -136,7 +136,7 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   verde.
   Decisiones: `revoke_marketing` devuelve el consentimiento revocado, o `None` si no había activo, para que el comando y la futura API puedan informarlo — [Cierto].
 
-- [ ] T-016 Estado de consentimiento
+- [x] T-016 Estado de consentimiento
   RF: RF-015, RF-017, RF-018 | Depende de: T-015 | Archivos: 3
   Archivos: `services.py`, `versions.py`, `tests/test_services.py`.
   Hecho cuando: `consent_status` indica "sin términos vigentes" si no hay versión en vigor; la
@@ -144,6 +144,7 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   anterior y una con exigencia la invalida; una aceptación en otro idioma de la versión vale; una
   revocada no cuenta; devuelve el consentimiento de marketing activo y su documento, o ninguno;
   suite verde.
+  Decisiones: la exigencia de la versión se agrega con `BoolOr` de PostgreSQL (la base del proyecto); como RF-017 obliga a que coincida en los tres idiomas, `BoolAnd` daría lo mismo — [Cierto] — revertir: `Max` sobre un `Case`. No se filtra por tipo al contar aceptaciones: `UserTerms` solo admite documentos de términos, y el filtro era un mutante equivalente — [Cierto]. El estado devuelve `accepted`, `not_accepted` o `no_current_version` más el consentimiento de marketing activo — [Cierto].
 
 - [ ] T-017 Historial de las tres tablas
   RF: RF-020 | Depende de: T-016 | Archivos: 3
