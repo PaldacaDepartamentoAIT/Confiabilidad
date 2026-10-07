@@ -31,7 +31,7 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   `override_settings` devuelve el valor cambiado; vacío o solo espacios lanza
   `ImproperlyConfigured`; suite verde.
 
-- [ ] T-004 Huella del correo
+- [x] T-004 Huella del correo
   RF: RF-012 | Depende de: T-003 | Archivos: 2
   Archivos: `hashing.py`, `tests/test_hashing.py`.
   Hecho cuando: la huella tiene 64 caracteres hexadecimales y no contiene el correo; `" Ana@X.com "`
