@@ -15,13 +15,14 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   Excepción: andamiaje; tres de los archivos son paquetes vacíos o casi vacíos y no se pueden
   separar sin dejar una app a medias.
 
-- [ ] T-002 Validadores de idioma, versión y contenido
+- [x] T-002 Validadores de idioma, versión y contenido
   RF: RF-001 | Depende de: T-001 | Archivos: 2
   Archivos: `validators.py`, `tests/test_validators.py`.
   Hecho cuando: se aceptan `es`, `pt-BR` y `en` y se rechazan otros (`pt`, `es-ES`, `fr`); se
   aceptan versiones como `1`, `2.1` y `2026-10` y se rechazan vacías, de 21 caracteres o con
   espacios u otros símbolos; el contenido con `<p>`, `</a>`, `<!--` o `<!DOCTYPE` se rechaza y con
   `<https://x.com>` o `a < b` se acepta (D-08); suite verde.
+  Decisiones: los códigos de idioma distinguen mayúsculas (`pt-br` y `EN` se rechazan) para que cada idioma tenga una sola forma guardada — [Probable] — revertir: normalizar a la forma canónica antes de validar. Un texto como `<b and c>` cuenta como etiqueta HTML y se rechaza — [Cierto] — revertir: exigir un nombre de etiqueta HTML conocido.
 
 - [ ] T-003 Secreto de la huella del correo
   RF: RF-012 | Depende de: T-001 | Archivos: 3
