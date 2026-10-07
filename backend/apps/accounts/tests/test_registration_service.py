@@ -412,9 +412,10 @@ def test_complete_with_unknown_public_id_is_refused() -> None:
     assert result == registration.CompleteRefusal.NOT_FOUND
 
 
-def test_email_taken_meanwhile_refuses_and_deletes_the_registration() -> None:
+@pytest.mark.parametrize("is_active", [True, False])
+def test_email_taken_meanwhile_refuses_and_deletes_the_registration(is_active: bool) -> None:
     started = _verified()
-    make_user(email="ana@x.com")
+    make_user(email="ana@x.com", is_active=is_active)
 
     result = registration.complete(public_id=started.public_id, password=GOOD_PASSWORD)
 

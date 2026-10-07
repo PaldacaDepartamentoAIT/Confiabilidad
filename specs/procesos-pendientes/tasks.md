@@ -175,7 +175,7 @@ fallar sus tests.
   distintas, `start` deja un único registro con los datos nuevos, vigente y cuyo código verifica;
   los mutantes `iexact`→`exact` y "solo vida máxima" fallan; suite verde.
 
-- [ ] T-024 Corrección: completar cuando el correo tiene una cuenta inactiva
+- [x] T-024 Corrección: completar cuando el correo tiene una cuenta inactiva
   Tipo: corrección | Origen: validación (RF-012)
   RF: RF-012 | Depende de: — | Archivos: 1
   Archivos: `tests/test_registration_service.py`.
