@@ -207,12 +207,13 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   `status <correo>` llaman al servicio y muestran el resultado o el error; suite verde. (CF-5)
   Decisiones: `revoke-marketing` sin consentimiento activo muestra `revoked: none` y termina sin error, igual que el servicio (RF-010) — [Cierto]. Mutante equivalente: la comprobación `revoked_at is None` existe solo para el tipado, porque una fila revocada siempre tiene fecha — [Cierto].
 
-- [ ] T-024 Resumen de la feature
+- [x] T-024 Resumen de la feature
   RF: — (AGENTS.md) | Depende de: T-021, T-023 | Archivos: 1
   Archivos: `specs/consentimientos/resumen.md`.
   Hecho cuando: el resumen explica qué se hizo, cómo probarlo paso a paso (panel y comando) y un
   marco teórico de los conceptos que generaron dudas (huella HMAC, versión en vigor, exigencia de
   nueva aceptación, `SET_NULL`). (CF-5)
+  Decisiones: además se anota en `HUMAN_TODO.md` la migración y la comprobación de Docker, porque la imagen no se pudo construir aquí (429 de Docker Hub) — [Cierto].
 
 ## RF sin tarea
 Ninguno.
