@@ -1,4 +1,5 @@
 import hashlib
+import http.client
 import logging
 import urllib.error
 import urllib.request
@@ -130,6 +131,7 @@ def test_only_the_first_five_characters_of_the_hash_are_sent(
         pytest.param(TimeoutError(), "", id="timeout"),
         pytest.param(urllib.error.URLError("unreachable"), "", id="network"),
         pytest.param(None, f"{SHA1[5:]}:not-a-number\r\n", id="malformed"),
+        pytest.param(http.client.IncompleteRead(b"partial"), "", id="cut-response"),
     ],
 )
 def test_service_failure_accepts_and_logs_a_warning(

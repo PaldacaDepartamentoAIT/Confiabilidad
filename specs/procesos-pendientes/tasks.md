@@ -210,7 +210,7 @@ fallar sus tests.
   Causa: el mutante `randbelow(10**5)` sobrevive.
   Hecho cuando: un test comprueba que `randbelow` recibe `10**6`; el mutante falla; suite verde.
 
-- [ ] T-028 Corrección: una respuesta cortada de Have I Been Pwned también falla abierto
+- [x] T-028 Corrección: una respuesta cortada de Have I Been Pwned también falla abierto
   Tipo: corrección | Origen: segunda validación (RF-022)
   RF: RF-022 | Depende de: — | Archivos: 2
   Archivos: `password_validation.py`, `tests/test_password_policy.py`.

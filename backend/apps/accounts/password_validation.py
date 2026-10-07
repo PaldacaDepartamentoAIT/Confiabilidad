@@ -1,4 +1,5 @@
 import hashlib
+import http.client
 import logging
 import urllib.request
 
@@ -22,7 +23,7 @@ class PwnedPasswordValidator:
         prefix, suffix = digest[:5], digest[5:]
         try:
             count = _breach_count(_fetch_range(prefix), suffix)
-        except (OSError, ValueError) as error:
+        except (OSError, ValueError, http.client.HTTPException) as error:
             logger.warning("Pwned Passwords check skipped: %s", type(error).__name__)
             return
         if count > 0:
