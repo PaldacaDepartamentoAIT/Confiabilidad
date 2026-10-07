@@ -66,6 +66,12 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
   `2026-10-06T10:00:00+00:00`). El anterior vale durante `REGISTRATION_SECRET_TRANSITION_MINUTES`
   (60 por defecto); después puedes borrar las dos variables de rotación.
 
+- [ ] **Limitar la frecuencia del reenvío de códigos antes de publicar la API de registro**
+  (feature `procesos-pendientes`, S-07). Cada reenvío reinicia los intentos, así que el tope de 5
+  intentos es por código, no por proceso: sin límite de reenvíos, un atacante puede probar códigos
+  sin parar durante la hora de vida del registro. En consola no hay riesgo; decide el límite (por
+  correo y por IP) al especificar la feature de la API.
+
 - [ ] **Añadir `makemigrations --check` a la CI del backend.** Hallazgo M39 de la tercera validación
   de `usuario-personalizado`: si se quita una restricción del modelo sin crear la migración
   correspondiente, hoy ningún paso de la CI lo detecta hasta que alguien ejecuta `makemigrations`.
