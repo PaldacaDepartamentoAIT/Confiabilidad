@@ -258,7 +258,7 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   conserva la huella; suite verde.
   Decisiones: estos tests pasaron a la primera, porque el comportamiento ya lo implementó T-027 (`clean()`, D-16). Que de verdad lo prueban se comprobó con un mutante de T-027 (sin la comparación de usuario), que los hace fallar — [Cierto].
 
-- [ ] T-029 Corrección: historial sin usuario y autor filtrado
+- [x] T-029 Corrección: historial sin usuario y autor filtrado
   Tipo: corrección | Origen: cambio H-1 (2026-10-08)
   RF: RF-020 | Depende de: T-027 | Archivos: 3
   Archivos: `models.py`, `migrations/0003_history_without_user.py`, `tests/test_history.py`.
@@ -268,6 +268,9 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   `UserTerms` y `MarketingConsent` no tienen `user`; borrar la cuenta no añade versión; con una
   petición del propio usuario de la fila o de alguien que no es staff, la versión queda sin autor,
   y con un staff distinto queda con él; suite verde.
+  Excepción: también `tests/test_migrations.py`, porque su fixture volvía a `0002` y dejaba la base
+  de tests sin `0003`; el test de que `0003` se aplica sobre `0002` vive ahí.
+  Decisiones: el panel fija `_history_user` directamente (`SimpleHistoryAdmin.save_model`) y se saltaba `get_user`; `save()` filtra también ese autor explícito — [Cierto] — revertir: quitar `_filter_explicit_author`. Un staff inactivo no consta como autor — [Probable] — revertir: no exigir `is_active` en `_allowed_author`. El autor de un borrado también se filtra — [Cierto].
 
 - [ ] T-030 Actualizar el resumen tras el cambio H-1
   RF: — (AGENTS.md) | Depende de: T-028, T-029 | Archivos: 1
