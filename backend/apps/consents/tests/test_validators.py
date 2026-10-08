@@ -73,6 +73,9 @@ def test_markdown_without_html_is_accepted(content: str) -> None:
         "<!DOCTYPE html>",
         "<?xml version='1.0'?>",
         "<DIV class='x'>",
+        "<svg/onload=alert(1)>",
+        "<img/src=x/onerror=alert(1)>",
+        "<details/open/ontoggle=alert(1)>",
     ],
 )
 def test_content_with_html_is_rejected(content: str) -> None:

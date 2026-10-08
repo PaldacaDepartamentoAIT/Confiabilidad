@@ -6,9 +6,10 @@ from django.utils.translation import gettext_lazy as _
 LOCALES = ("es", "pt-BR", "en")
 VERSION_MAX_LENGTH = 20
 _VERSION_PATTERN = re.compile(rf"[A-Za-z0-9.-]{{1,{VERSION_MAX_LENGTH}}}")
-# Etiquetas, comentarios y declaraciones HTML; deja pasar los enlaces automáticos de Markdown
+# Etiquetas (HTML acepta «/» como separador de atributos: <svg/onload=…>), comentarios y
+# declaraciones HTML; deja pasar los enlaces automáticos de Markdown
 # (<https://…>) y los signos sueltos (a < b).
-_HTML_PATTERN = re.compile(r"</?[A-Za-z][A-Za-z0-9-]*(?:\s[^>]*)?/?>|<!--|<![A-Za-z]|<\?")
+_HTML_PATTERN = re.compile(r"</?[A-Za-z][A-Za-z0-9-]*(?:[\s/][^>]*)?>|<!--|<![A-Za-z]|<\?")
 
 
 def validate_locale(value: str) -> None:

@@ -215,5 +215,23 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   nueva aceptación, `SET_NULL`). (CF-5)
   Decisiones: además se anota en `HUMAN_TODO.md` la migración y la comprobación de Docker, porque la imagen no se pudo construir aquí (429 de Docker Hub) — [Cierto].
 
+- [x] T-025 Corrección: rechazar etiquetas HTML con «/» como separador de atributos
+  Tipo: corrección | Origen: validación de RF-001
+  RF: RF-001 | Depende de: — | Archivos: 2
+  Archivos: `validators.py`, `tests/test_validators.py`.
+  Causa: `_HTML_PATTERN` solo reconoce espacios tras el nombre de la etiqueta, así que
+  `<svg/onload=…>`, `<img/src=x/onerror=…>` o `<details/open/ontoggle=…>` se guardan.
+  Hecho cuando: `test_content_with_html_is_rejected` incluye esos casos y pasa; los casos permitidos
+  de D-08 siguen aceptándose; la suite completa sigue en verde.
+
+- [ ] T-026 Corrección: versionar en el historial el vaciado del usuario al borrar la cuenta
+  Tipo: corrección | Origen: validación de RF-020
+  RF: RF-020, RF-013 | Depende de: — | Archivos: 2 o 3
+  Causa: `SET_NULL` se aplica con un `UPDATE` masivo que no deja versión ni autor en `UserTerms` ni
+  en `MarketingConsent`; además, `test_history_survives_deleting_the_user` fijaba ese fallo.
+  Hecho cuando: al borrar la cuenta queda en las dos tablas una versión `~` con el usuario vacío,
+  la huella intacta y el estado sin cambios; RF-013 sigue cumpliéndose; la suite completa sigue en
+  verde.
+
 ## RF sin tarea
 Ninguno.
