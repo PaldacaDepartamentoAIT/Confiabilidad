@@ -332,5 +332,28 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   verde.
   Decisiones: `delete()` de las dos tablas filtra `_history_user` antes de borrar; el borrado masivo (`QuerySet.delete`) no lo necesita, porque carga cada fila sin autor explícito y pasa por `get_user` — [Cierto] — revertir: quitar los `delete()` añadidos.
 
+- [ ] T-035 Corrección: el listado del panel muestra qué documentos tienen aceptaciones
+  Tipo: corrección | Origen: validación de RF-004 (5.ª ronda)
+  RF: RF-004 | Depende de: — | Archivos: 1
+  Archivos: `tests/test_admin_terms.py`.
+  Causa: el test solo llama a `has_acceptances_display()`; quitar la columna de `list_display` no
+  lo hace fallar.
+  Hecho cuando: el test comprueba en la respuesta del listado la columna «Has acceptances» con el
+  valor correcto en un documento de una versión aceptada y en uno de una versión libre; el mutante
+  que quita la columna de `list_display` lo hace fallar; la suite completa sigue en verde.
+
+- [ ] T-036 Corrección: filtrar en el borrado también al usuario guardado de la fila
+  Tipo: corrección | Origen: validación de RF-020 (5.ª ronda)
+  RF: RF-020 | Depende de: — | Archivos: 2
+  Archivos: `models.py`, `tests/test_history.py`.
+  Causa: `delete()` de `UserTerms` y `MarketingConsent` no recuerda el `user_id` guardado; si la
+  fila se vacía en memoria antes de borrarla, su dueño consta como autor de la versión `-`, tanto
+  por la petición como por `_history_user`.
+  Hecho cuando: en las dos tablas, si el dueño (staff activo) vacía el usuario en memoria y borra
+  la fila, por la petición o con `_history_user`, la versión `-` queda sin autor; si borra otro
+  staff activo, queda con él; el mutante que quita esa comprobación en `delete()` hace fallar el
+  test; además se revisan todas las vías de autor (guardar y borrar, por petición y explícito, en
+  las dos tablas) y cualquier hueco equivalente se anota; la suite completa sigue en verde.
+
 ## RF sin tarea
 Ninguno.
