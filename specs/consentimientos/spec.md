@@ -1,5 +1,5 @@
 # Spec: consentimientos
-Estado: aprobada
+Estado: borrador
 Aprobación: ligera
 
 ## Objetivo (por qué)
@@ -93,10 +93,11 @@ Cuando se registre una aceptación de términos o un consentimiento de marketing
 calcular y guardar una huella del correo del usuario normalizado (sin espacios al principio ni al
 final y en minúsculas), con un secreto del servidor, de forma que no se pueda recuperar el correo
 sin ese secreto aunque se disponga de la base de datos, y que el mismo correo produzca siempre la
-misma huella. La huella guardada no deberá cambiar aunque el usuario cambie después su correo. La
-huella nunca se introduce a mano, tampoco desde el panel; si soporte técnico cambia el usuario de
-una fila, entonces el sistema deberá recalcularla con el correo del nuevo usuario. Si se intenta
-crear una fila sin usuario, entonces el sistema deberá rechazarla.
+misma huella. La huella se calcula solo al crear la fila, nunca se introduce a mano y no se podrá
+modificar después por ninguna vía (tampoco desde el panel), aunque el usuario cambie su correo. Si
+se intenta crear una fila sin usuario, entonces el sistema deberá rechazarla. Si se intenta cambiar
+el usuario de una fila existente por otro usuario, entonces el sistema deberá rechazarlo; solo se
+permite vaciarlo, y la huella se conserva.
 
 ### RF-013 Conservación al borrar la cuenta
 Cuando se borre físicamente un usuario, el sistema deberá conservar sus aceptaciones de términos y
@@ -138,15 +139,18 @@ y RF-015.
 El sistema deberá crear un grupo «Soporte técnico» cuyos miembros puedan ver, crear, editar,
 deshabilitar (RF-010, RF-018) y borrar aceptaciones de términos y consentimientos de marketing desde
 el panel de administración. Al crear o editar se aplican las unicidades (RF-007, RF-011) y la huella
-automática (RF-012), pero se permiten documentos de versiones no vigentes y cuentas inactivas. Si un
-miembro del staff que no pertenece al grupo ni es superusuario intenta hacerlo, entonces el sistema
-deberá impedirlo.
+automática e inmutable (RF-012), pero se permiten documentos de versiones no vigentes y cuentas
+inactivas. Si un miembro del staff que no pertenece al grupo ni es superusuario intenta hacerlo,
+entonces el sistema deberá impedirlo.
 
 ### RF-020 Historial de cambios
 Cuando se cree, modifique o borre un documento, una aceptación de términos o un consentimiento de
 marketing, el sistema deberá registrar una versión con todos sus datos, la fecha, el tipo de cambio
-(alta, modificación o borrado) y quién lo hizo, si se conoce. El historial se deberá conservar tras
-el borrado y no se podrá modificar desde el panel de administración.
+(alta, modificación o borrado) y quién lo hizo, si se conoce. En el historial de aceptaciones y
+consentimientos no se deberá guardar el usuario ni ningún dato que permita llegar a su correo sin
+el secreto de RF-012: solo se registra como autor a un miembro del staff, nunca al propio usuario
+de la fila. El historial se deberá conservar tras el borrado y no se podrá modificar desde el panel
+de administración.
 
 ## Supuestos
 - S-01 Las operaciones se exponen como funciones del backend y órdenes de consola (RF-016). La API,
@@ -189,6 +193,13 @@ el borrado y no se podrá modificar desde el panel de administración.
   (S-06 de esa feature); no añade dependencias nuevas.
 - S-14 El contenido se escribe en Markdown sin HTML (C-07): quien lo muestre deberá tratar el texto
   como Markdown y no interpretar HTML.
+- S-15 Hallazgo H-1 de la validación (2026-10-08): el historial del usuario (`usuario-personalizado`)
+  guarda su correo en claro, también tras borrar la cuenta. Para que no se pueda llegar a él desde
+  las pruebas de consentimiento, el historial de aceptaciones y consentimientos no guarda el usuario
+  ni lo registra como autor (RF-020), y la huella es inmutable (RF-012). *Riesgo residual:* la fila
+  viva conserva el usuario mientras la cuenta existe, y las fechas de aceptación podrían cruzarse
+  con las fechas del historial del usuario; el correo de las cuentas borradas sigue en el historial
+  del usuario, cuya retención es de otra feature.
 
 ## Fuera de alcance
 - API, pantallas y textos mostrados al usuario final (S-01).
@@ -219,3 +230,6 @@ el borrado y no se podrá modificar desde el panel de administración.
 - 2026-10-07 — Creación (feature nueva) — RF: RF-001…RF-016 — Estado: pendiente de clarificar
 - 2026-10-07 — Clarificación (C-01…C-11) — RF: RF-001…RF-010, RF-012…RF-016 ajustados;
   RF-017…RF-020 añadidos; S-02, S-04…S-08 ajustados; S-11…S-14 añadidos — Estado: clarificado
+- 2026-10-08 — Cambio por el hallazgo H-1 de la validación: huella inmutable, sin cambiar el
+  usuario de una fila; el historial de aceptaciones y consentimientos no guarda el usuario ni lo
+  registra como autor — RF: RF-012, RF-019, RF-020; S-15 añadido — Estado: pendiente de clarificar
