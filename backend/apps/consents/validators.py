@@ -6,10 +6,14 @@ from django.utils.translation import gettext_lazy as _
 LOCALES = ("es", "pt-BR", "en")
 VERSION_MAX_LENGTH = 20
 _VERSION_PATTERN = re.compile(rf"[A-Za-z0-9.-]{{1,{VERSION_MAX_LENGTH}}}")
-# Etiquetas (HTML acepta «/» como separador de atributos: <svg/onload=…>), comentarios y
-# declaraciones HTML; deja pasar los enlaces automáticos de Markdown
-# (<https://…>) y los signos sueltos (a < b).
-_HTML_PATTERN = re.compile(r"</?[A-Za-z][A-Za-z0-9-]*(?:[\s/][^>]*)?>|<!--|<![A-Za-z]|<\?")
+# Cualquier «<» seguido de letra, «/», «!» o «?» abre HTML (etiqueta, cierre, comentario o
+# declaración), salvo que sea un enlace automático de Markdown: <esquema:…> o <correo@dominio>.
+_HTML_START = re.compile(r"<[A-Za-z/!?]")
+_AUTOLINK = re.compile(
+    r"<(?:[A-Za-z][A-Za-z0-9+.-]{1,31}:[^\s<>]*"
+    r"|[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?"
+    r"(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)*)>"
+)
 
 
 def validate_locale(value: str) -> None:
@@ -33,5 +37,5 @@ def validate_version(value: str) -> None:
 def validate_content(value: str) -> None:
     if not value.strip():
         raise ValidationError(_("Content cannot be empty."), code="content_empty")
-    if _HTML_PATTERN.search(value):
+    if any(not _AUTOLINK.match(value, tag.start()) for tag in _HTML_START.finditer(value)):
         raise ValidationError(_("Content cannot contain HTML."), code="content_has_html")

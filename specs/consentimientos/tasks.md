@@ -301,7 +301,7 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   fallar; la suite sigue en verde.
   Decisiones: el test nuevo pasó a la primera, porque el código ya era correcto (lo confirmó la validación); que mata el orden por etiqueta se comprobó con dos mutantes (`key` y `-key`) — [Cierto].
 
-- [ ] T-033 Corrección: rechazar cualquier etiqueta HTML salvo los enlaces automáticos de Markdown
+- [x] T-033 Corrección: rechazar cualquier etiqueta HTML salvo los enlaces automáticos de Markdown
   Tipo: corrección | Origen: validación de RF-001 (3.ª ronda)
   RF: RF-001 | Depende de: — | Archivos: 2
   Archivos: `validators.py`, `tests/test_validators.py`.
@@ -316,6 +316,7 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   la suite completa sigue en verde.
   Decisión a registrar: `a<b` sin espacios se rechaza (falso positivo aceptado a cambio de no
   dejar huecos).
+  Decisiones: `a<b` sin espacios se rechaza (falso positivo aceptado a cambio de no dejar huecos) — [Cierto]. Los enlaces automáticos siguen la definición de CommonMark: esquema de 2 a 32 caracteres sin espacios ni `<>`, o un correo; `<a:b>` (esquema de 1 carácter) cuenta como etiqueta y se rechaza — [Cierto] — revertir: ampliar `_AUTOLINK`. No se filtran esquemas peligrosos como `<javascript:…>`: no son HTML y RF-001 no los cubre; quien muestre el contenido debe sanear las URL — [Probable].
 
 ## RF sin tarea
 Ninguno.

@@ -54,6 +54,11 @@ def test_version_max_length_is_twenty() -> None:
         "a < b and c > d",
         "1 <2 and 3> 0",
         "Use the <- arrow",
+        "Write to <legal@x.com>.",
+        "<https://x.com/path?q=1&r=2#frag>",
+        "<ftp://files.x.com>",
+        "a < b",
+        "<3 hearts",
     ],
 )
 def test_markdown_without_html_is_accepted(content: str) -> None:
@@ -76,6 +81,15 @@ def test_markdown_without_html_is_accepted(content: str) -> None:
         "<svg/onload=alert(1)>",
         "<img/src=x/onerror=alert(1)>",
         "<details/open/ontoggle=alert(1)>",
+        "<x_y onmouseover=alert(1)>hover</x_y>",
+        "<x_y autofocus tabindex=1 onfocus=alert(1)></x_y>",
+        "<a:b onclick=alert(1)>click</a:b>",
+        "<scr\x00ipt>alert(1)</scr\x00ipt>",
+        "<![CDATA[x]]>",
+        "a<b",
+        "</x_y>",
+        "<https://x.com onclick=alert(1)>",
+        "<a:b>",
     ],
 )
 def test_content_with_html_is_rejected(content: str) -> None:
