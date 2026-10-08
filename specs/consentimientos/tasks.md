@@ -301,5 +301,21 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   fallar; la suite sigue en verde.
   Decisiones: el test nuevo pasó a la primera, porque el código ya era correcto (lo confirmó la validación); que mata el orden por etiqueta se comprobó con dos mutantes (`key` y `-key`) — [Cierto].
 
+- [ ] T-033 Corrección: rechazar cualquier etiqueta HTML salvo los enlaces automáticos de Markdown
+  Tipo: corrección | Origen: validación de RF-001 (3.ª ronda)
+  RF: RF-001 | Depende de: — | Archivos: 2
+  Archivos: `validators.py`, `tests/test_validators.py`.
+  Causa: `_HTML_PATTERN` enumera nombres de etiqueta `[A-Za-z][A-Za-z0-9-]*`, pero HTML acepta
+  cualquier carácter salvo espacio, `/` o `>`; `<x_y onmouseover=…>`, `<x_y autofocus onfocus=…>`
+  y `<a:b onclick=…>` se guardan, también desde el panel. Enumerar lo prohibido deja huecos.
+  Hecho cuando: el validador rechaza todo `<` seguido de una letra, `/`, `!` o `?` que no forme un
+  enlace automático de Markdown (`<esquema:…>` sin espacios ni `<>`, o `<correo@dominio>`);
+  `test_content_with_html_is_rejected` incluye `<x_y onmouseover=…>`, `<x_y autofocus onfocus=…>`,
+  `<a:b onclick=…>`, `<scr\x00ipt>` y `<![CDATA[x]]>`; siguen aceptándose `<https://x.com>`,
+  `<mailto:legal@x.com>`, `<legal@x.com>`, `a < b and c > d`, `1 <2 and 3> 0` y `Use the <- arrow`;
+  la suite completa sigue en verde.
+  Decisión a registrar: `a<b` sin espacios se rechaza (falso positivo aceptado a cambio de no
+  dejar huecos).
+
 ## RF sin tarea
 Ninguno.
