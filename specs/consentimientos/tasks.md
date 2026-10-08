@@ -5,7 +5,8 @@ Rutas relativas a `backend/apps/consents/` salvo que se indique. "Suite verde" =
 `cd backend && pytest -q` + `mypy .` + `ruff check .` + `black --check .` sin errores. En cada
 tarea, antes de marcarla, se prueba al menos un mutante del código que introduce y debe hacer
 fallar sus tests. Mientras la feature no esté terminada, `migrations/0001_initial.py` se regenera
-en cada tarea que cambia el esquema, para que al final queden solo las dos migraciones de M-11.
+en cada tarea que cambia el esquema, para que al final queden solo las dos migraciones de M-11. Tras el cambio H-1, la tercera
+(`0003`, D-17) es una migración nueva, porque la rama ya se ha migrado en bases de desarrollo.
 
 - [x] T-001 Andamiaje de la app `consents`
   RF: — (M-01, D-01) | Depende de: — | Archivos: 4
@@ -224,7 +225,7 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   Hecho cuando: `test_content_with_html_is_rejected` incluye esos casos y pasa; los casos permitidos
   de D-08 siguen aceptándose; la suite completa sigue en verde.
 
-- [ ] T-026 Corrección: versionar en el historial el vaciado del usuario al borrar la cuenta
+- [x] T-026 Corrección: versionar en el historial el vaciado del usuario al borrar la cuenta — DESCARTADA
   Tipo: corrección | Origen: validación de RF-020
   RF: RF-020, RF-013 | Depende de: — | Archivos: 2 o 3
   Causa: `SET_NULL` se aplica con un `UPDATE` masivo que no deja versión ni autor en `UserTerms` ni
@@ -232,6 +233,47 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   Hecho cuando: al borrar la cuenta queda en las dos tablas una versión `~` con el usuario vacío,
   la huella intacta y el estado sin cambios; RF-013 sigue cumpliéndose; la suite completa sigue en
   verde.
+  Descartada: el cambio del 2026-10-08 (C-14) decide que el vaciado por borrado de la cuenta no
+  genera versión; no se implementa. Su test lo reescribe T-029.
+
+- [ ] T-027 Corrección: huella inmutable y usuario no reasignable
+  Tipo: corrección | Origen: cambio H-1 (2026-10-08)
+  RF: RF-012, RF-019 | Depende de: — | Archivos: 2
+  Archivos: `models.py`, `tests/test_acceptance_models.py`.
+  Causa: T-011 recalculaba la huella al cambiar el usuario de una fila; RF-012 ahora lo prohíbe
+  (D-16). Ajusta T-011 sin desmarcarla.
+  Hecho cuando: en las dos tablas, asignar otro usuario a una fila existente lanza
+  `ValidationError` en `user`, también si la fila no tenía usuario; vaciarlo se permite y conserva
+  la huella; la huella guardada no cambia por ninguna vía; se retira
+  `test_changing_the_user_of_a_record_recalculates_the_hash`; suite verde.
+
+- [ ] T-028 Corrección: el panel muestra el error al reasignar el usuario
+  Tipo: corrección | Origen: cambio H-1 (2026-10-08)
+  RF: RF-012, RF-019 | Depende de: T-027 | Archivos: 1
+  Archivos: `tests/test_admin_support.py`.
+  Causa: comprobar que la regla de D-16 llega al formulario de soporte sin error 500.
+  Hecho cuando: editar desde el panel una aceptación y un consentimiento con otro usuario responde
+  200 con el error en `user` y no cambia la fila; editarlos con el usuario vacío responde 302 y
+  conserva la huella; suite verde.
+
+- [ ] T-029 Corrección: historial sin usuario y autor filtrado
+  Tipo: corrección | Origen: cambio H-1 (2026-10-08)
+  RF: RF-020 | Depende de: T-027 | Archivos: 3
+  Archivos: `models.py`, `migrations/0003_history_without_user.py`, `tests/test_history.py`.
+  Causa: T-017 guardaba el usuario en el historial y registraba como autor a cualquier usuario de
+  la petición (D-15, D-17). Ajusta T-017 sin desmarcarla.
+  Hecho cuando: `migrate` aplica `0003` sobre una base con `0002`; los históricos de
+  `UserTerms` y `MarketingConsent` no tienen `user`; borrar la cuenta no añade versión; con una
+  petición del propio usuario de la fila o de alguien que no es staff, la versión queda sin autor,
+  y con un staff distinto queda con él; suite verde.
+
+- [ ] T-030 Actualizar el resumen tras el cambio H-1
+  RF: — (AGENTS.md) | Depende de: T-028, T-029 | Archivos: 1
+  Archivos: `specs/consentimientos/resumen.md`.
+  Hecho cuando: el resumen refleja la huella inmutable, el usuario no reasignable, el historial sin
+  usuario y el autor filtrado; los límites conocidos y el marco teórico (seudonimización, «dato
+  directo») están al día, y se quita el límite del vaciado sin versión, que ahora es el
+  comportamiento pedido.
 
 ## RF sin tarea
 Ninguno.
