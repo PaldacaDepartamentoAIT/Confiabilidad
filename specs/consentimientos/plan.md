@@ -29,9 +29,10 @@ Responsabilidad: HMAC-SHA256 del correo normalizado con el secreto `CONSENT_EMAI
 RF: RF-012
 
 ### M-06 Modelos `UserTerms` y `MarketingConsent` (`apps/consents/models.py`)
-Responsabilidad: pruebas de aceptación y consentimiento. Calculan la huella al crearse o al
-cambiar de usuario, exigen usuario al crear, comprueban que el documento es del tipo correcto y
-llevan las restricciones de unicidad y coherencia de D-05.
+Responsabilidad: pruebas de aceptación y consentimiento. Calculan la huella solo al crearse y la
+conservan siempre, exigen usuario al crear, rechazan asignar otro usuario a una fila existente
+(solo se puede vaciar; D-16), comprueban que el documento es del tipo correcto y llevan las
+restricciones de unicidad y coherencia de D-05.
 RF: RF-007, RF-010, RF-011, RF-012, RF-013, RF-018
 
 ### M-07 Servicio de consentimientos (`apps/consents/services.py`)
@@ -49,7 +50,8 @@ RF: RF-004, RF-005, RF-010, RF-018, RF-019, RF-020
 
 ### M-09 Historial (`HistoricalRecords` en los tres modelos)
 Responsabilidad: una versión por alta, cambio o borrado, con el autor que ya rellena
-`HistoryRequestMiddleware`.
+`HistoryRequestMiddleware`. En `UserTerms` y `MarketingConsent` el historial excluye `user` y el
+autor pasa por un filtro que solo admite staff distinto del usuario de la fila (D-15).
 RF: RF-020
 
 ### M-10 Comando `manage.py consents` (`management/commands/consents.py`)
@@ -57,10 +59,11 @@ Responsabilidad: subcomandos `current`, `accept-terms`, `grant-marketing`, `revo
 `status`, que solo llaman a M-04 y M-07 y muestran el resultado o el error.
 RF: RF-016
 
-### M-11 Migraciones `0001_initial` y `0002_support_group`
-Responsabilidad: crear las tres tablas y sus históricos con las restricciones de D-05, y el grupo
-«Soporte técnico» con los permisos de `UserTerms` y `MarketingConsent`.
-RF: RF-002, RF-007, RF-011, RF-019 (CF-1)
+### M-11 Migraciones `0001_initial`, `0002_support_group` y `0003_history_without_user`
+Responsabilidad: crear las tres tablas y sus históricos con las restricciones de D-05, el grupo
+«Soporte técnico» con los permisos de `UserTerms` y `MarketingConsent`, y quitar `user` de los
+históricos de esas dos tablas, con sus datos (D-17).
+RF: RF-002, RF-007, RF-011, RF-019, RF-020 (CF-1)
 
 ### M-12 Configuración (`config/settings.py`, `backend/.env.example`, `HUMAN_TODO.md`)
 Responsabilidad: `CONSENT_EMAIL_HASH_SECRET` (por defecto `SECRET_KEY`, como D-02 de
@@ -98,6 +101,10 @@ RF: RF-012
 - `UniqueConstraint(user, condition=Q(granted=True))`.
 - `CheckConstraint`: `granted=True` si y solo si `revoked_at` es nulo.
 - `history = HistoricalRecords()`.
+
+Históricos: `HistoricalTerms` guarda todos los campos de `Terms`. `HistoricalUserTerms` y
+`HistoricalMarketingConsent` guardan todos los campos salvo `user` (RF-020); `history_user` es el
+autor, solo si es staff y distinto del usuario de la fila (D-15).
 
 Lo que no se guarda: la versión vigente, la fecha de entrada en vigor y si un usuario tiene los
 términos aceptados se calculan (M-04, M-07).
@@ -210,6 +217,30 @@ Elegida: los tests fijan `published_at` en el pasado o en el futuro respecto a `
 Descartada: `freezegun` u otra librería de reloj.
 Motivo: no añade dependencias (D-07 de `procesos-pendientes`).
 
+### D-15 Autor del historial filtrado
+Elegida: `HistoricalRecords(excluded_fields=["user"], get_user=…)` en `UserTerms` y
+`MarketingConsent`, con una función que devuelve el usuario de la petición solo si es staff activo
+y su id no coincide con el `user_id` de la fila; en otro caso, sin autor.
+Descartada: dejar el autor siempre vacío en esas dos tablas.
+Motivo: RF-020 exige saber qué miembro de soporte hizo cada cambio (C-2), y nunca el propio
+usuario (C-12). El gancho `get_user` de simple-history recibe la fila y la petición, así que el
+filtro no necesita código fuera del modelo.
+
+### D-16 Reasignación del usuario en `clean()`
+Elegida: en `clean()` de las dos tablas, si la fila ya existe y el `user_id` nuevo no es nulo y
+difiere del guardado (incluido el caso de una fila guardada sin usuario), `ValidationError` en
+`user`; la huella se restaura siempre desde la fila guardada.
+Descartada: comprobarlo en `save()` antes de `full_clean()`.
+Motivo: el formulario del panel llama a `full_clean()` y muestra el error junto al campo; en
+`save()` el panel respondería con un 500. Como `save()` ya llama a `full_clean()`, también se
+aplica en consola y en código.
+
+### D-17 Migración nueva para quitar el usuario del historial
+Elegida: `0003_history_without_user`, que elimina la columna `user` de los dos históricos.
+Descartada: regenerar `0001_initial`.
+Motivo: la rama ya se ha migrado en bases de desarrollo; una migración nueva se aplica sobre ellas
+sin pasos manuales (P-02) y borra los usuarios ya guardados, como pide C-16.
+
 ## Estrategia de tests
 Todo en `apps/consents/tests/`, con una factoría `make_document` y `publish_version` (los tres
 idiomas a la vez) y la factoría de usuarios de `accounts`. Prueba de mutación en cada tarea.
@@ -219,8 +250,9 @@ idiomas a la vez) y la factoría de usuarios de `accounts`. Prueba de mutación 
 - Modelo (`test_terms_model.py`): validación, unicidad sin mayúsculas también por `bulk_create`,
   coherencia de `requires_reacceptance`, inmutabilidad de la versión entera en `save()` y
   `delete()`, `PROTECT` (RF-001, RF-002, RF-005, RF-017).
-- Modelo (`test_acceptance_models.py`): huella al crear y al cambiar de usuario y no al cambiar el
-  correo del usuario, usuario obligatorio al crear, tipo de documento, unicidades parciales y
+- Modelo (`test_acceptance_models.py`): huella al crear y no al cambiar el correo del usuario,
+  reasignar el usuario rechazado (también en una fila sin usuario), vaciarlo permitido con la
+  huella intacta, usuario obligatorio al crear, tipo de documento, unicidades parciales y
   `CheckConstraint` también por `bulk_create`, conservación con `SET_NULL` al borrar la cuenta
   (RF-007, RF-011, RF-012, RF-013, RF-018).
 - Vigencia (`test_versions.py`): falta un idioma, borrador, fecha futura, varias versiones, empate
@@ -233,7 +265,8 @@ idiomas a la vez) y la factoría de usuarios de `accounts`. Prueba de mutación 
   staff sin grupo, acción «Revocar», huella de solo lectura, historial con autor y sin revertir
   (RF-004, RF-005, RF-010, RF-018, RF-019, RF-020).
 - Historial (`test_history.py`): alta, modificación y borrado en las tres tablas, conservado tras
-  el borrado (RF-020).
+  el borrado; sin `user` en los históricos de aceptaciones y consentimientos; borrar la cuenta no
+  añade versión; el propio usuario o alguien que no es staff no consta como autor (RF-020).
 - Comando (`test_consents_command.py`): cada subcomando con `call_command` y su salida (RF-016).
 - Migraciones (`test_migrations.py`): el grupo existe con sus permisos tras migrar desde cero
   (RF-019, CF-1).
@@ -252,7 +285,7 @@ idiomas a la vez) y la factoría de usuarios de `accounts`. Prueba de mutación 
 | RF-009 | M-07 | servicio |
 | RF-010 | M-06, M-07, M-08 | servicio + panel |
 | RF-011 | M-06, M-11 | modelo (bulk) + servicio |
-| RF-012 | M-05, M-06, M-12 | unitario + modelo |
+| RF-012 | M-05, M-06 (D-16), M-08, M-12 | unitario + modelo + panel |
 | RF-013 | M-06 | modelo |
 | RF-014 | M-07 | servicio |
 | RF-015 | M-07 (D-11), M-04 | servicio |
@@ -260,7 +293,7 @@ idiomas a la vez) y la factoría de usuarios de `accounts`. Prueba de mutación 
 | RF-017 | M-03, M-04, M-07 | modelo + servicio |
 | RF-018 | M-06, M-08 | modelo + panel |
 | RF-019 | M-08 (D-09), M-11 | panel + migraciones |
-| RF-020 | M-09, M-08 | historial + panel |
+| RF-020 | M-09 (D-15), M-08, M-11 (D-17) | historial + panel + migraciones |
 
 ## RF sin cobertura
 Ninguno.
