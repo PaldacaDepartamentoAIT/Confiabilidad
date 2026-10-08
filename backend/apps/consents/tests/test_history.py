@@ -1,10 +1,25 @@
+from collections.abc import Callable, Iterator
+
 import pytest
 from django.db import models
+from django.test import RequestFactory
 from django.utils import timezone
+from simple_history.models import HistoricalRecords
 
+from apps.accounts.models import User
 from apps.accounts.tests.factories import make_user
 from apps.consents.models import MarketingConsent, Terms, UserTerms
 from apps.consents.tests.factories import make_document
+
+RECORD_MODELS = [UserTerms, MarketingConsent]
+
+
+def _record(
+    model: type[UserTerms | MarketingConsent], *, user: User
+) -> UserTerms | MarketingConsent:
+    kind = Terms.Kind.TERMS if model is UserTerms else Terms.Kind.MARKETING
+    return model(user=user, terms=make_document(kind=kind))
+
 
 pytestmark = pytest.mark.django_db
 
@@ -17,11 +32,16 @@ HISTORY_METADATA = {
 }
 
 
-@pytest.mark.parametrize("model", [Terms, UserTerms, MarketingConsent])
-def test_history_tracks_every_field(model: type[models.Model]) -> None:
+@pytest.mark.parametrize(
+    ("model", "excluded"),
+    [(Terms, set()), (UserTerms, {"user"}), (MarketingConsent, {"user"})],
+)
+def test_history_tracks_every_field_except_the_user_of_records(
+    model: type[models.Model], excluded: set[str]
+) -> None:
     history_model = model.history.model  # type: ignore[attr-defined]
     tracked = {field.name for field in history_model._meta.concrete_fields}
-    expected = {field.name for field in model._meta.concrete_fields}
+    expected = {field.name for field in model._meta.concrete_fields} - excluded
 
     assert tracked == expected | HISTORY_METADATA
 
@@ -77,15 +97,108 @@ def test_marketing_history_records_create_change_and_delete() -> None:
     assert MarketingConsent.history.filter(id=pk, granted=False).count() == 2
 
 
-def test_history_survives_deleting_the_user() -> None:
+@pytest.mark.parametrize("model", RECORD_MODELS)
+def test_deleting_the_account_adds_no_version_and_keeps_no_user(
+    model: type[UserTerms | MarketingConsent],
+) -> None:
     user = make_user()
-    acceptance = UserTerms(user=user, terms=make_document())
-    acceptance.save()
-    user_id = user.pk
+    record = _record(model, user=user)
+    record.save()
 
     user.delete()
 
-    # SET_NULL lo aplica la base de datos sin pasar por save(): no añade una versión.
-    versions = UserTerms.history.filter(id=acceptance.pk)
+    versions = model.history.filter(id=record.pk)
     assert versions.count() == 1
-    assert versions.get().user_id == user_id
+    assert not hasattr(versions.get(), "user_id")
+
+
+@pytest.fixture
+def as_request_user() -> Iterator[Callable[[User], None]]:
+    def set_user(user: User) -> None:
+        request = RequestFactory().post("/")
+        request.user = user
+        HistoricalRecords.context.request = request
+
+    yield set_user
+    if hasattr(HistoricalRecords.context, "request"):
+        del HistoricalRecords.context.request
+
+
+def _last_author(record: UserTerms | MarketingConsent) -> User | None:
+    author: User | None = (
+        type(record).history.filter(id=record.pk).latest("history_date").history_user
+    )
+    return author
+
+
+@pytest.mark.parametrize("model", RECORD_MODELS)
+def test_staff_other_than_the_owner_is_recorded_as_author(
+    model: type[UserTerms | MarketingConsent], as_request_user: Callable[[User], None]
+) -> None:
+    support = make_user(is_staff=True)
+    as_request_user(support)
+
+    record = _record(model, user=make_user())
+    record.save()
+
+    assert _last_author(record) == support
+
+
+@pytest.mark.parametrize("model", RECORD_MODELS)
+@pytest.mark.parametrize("is_staff", [False, True])
+def test_the_owner_is_never_recorded_as_author(
+    model: type[UserTerms | MarketingConsent],
+    is_staff: bool,
+    as_request_user: Callable[[User], None],
+) -> None:
+    owner = make_user(is_staff=is_staff)
+    as_request_user(owner)
+
+    record = _record(model, user=owner)
+    record.save()
+    record_id = record.pk
+    record.delete()
+
+    authors = model.history.filter(id=record_id).values_list("history_user", flat=True)
+    assert list(authors) == [None, None]
+
+
+@pytest.mark.parametrize("model", RECORD_MODELS)
+def test_a_user_who_is_not_staff_is_not_recorded_as_author(
+    model: type[UserTerms | MarketingConsent], as_request_user: Callable[[User], None]
+) -> None:
+    as_request_user(make_user())
+
+    record = _record(model, user=make_user())
+    record.save()
+
+    assert _last_author(record) is None
+
+
+@pytest.mark.parametrize("model", RECORD_MODELS)
+def test_an_inactive_staff_member_is_not_recorded_as_author(
+    model: type[UserTerms | MarketingConsent], as_request_user: Callable[[User], None]
+) -> None:
+    as_request_user(make_user(is_staff=True, is_active=False))
+
+    record = _record(model, user=make_user())
+    record.save()
+
+    assert _last_author(record) is None
+
+
+@pytest.mark.parametrize("model", RECORD_MODELS)
+def test_an_explicit_author_is_filtered_too(
+    model: type[UserTerms | MarketingConsent],
+) -> None:
+    owner = make_user(is_staff=True)
+    record = _record(model, user=owner)
+    record._history_user = owner  # type: ignore[union-attr]
+    record.save()
+
+    support = make_user(is_staff=True)
+    record._history_user = support  # type: ignore[union-attr]
+    record.save()
+
+    authors = model.history.filter(id=record.pk).order_by("history_date")
+    assert [version.history_user for version in authors] == [None, support]

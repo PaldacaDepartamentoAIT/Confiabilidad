@@ -115,6 +115,25 @@ def _version_locked_error() -> ValidationError:
     )
 
 
+def _allowed_author(record: Any, author: Any) -> Any:
+    # Autor del historial: solo staff activo y nunca el usuario de la fila (RF-020).
+    if author is None or not (author.is_staff and author.is_active):
+        return None
+    if author.pk == record.user_id:
+        return None
+    return author
+
+
+def _history_author(instance: Any, request: Any = None, **kwargs: Any) -> Any:
+    return _allowed_author(instance, getattr(request, "user", None))
+
+
+def _filter_explicit_author(record: Any) -> None:
+    # El panel fija `_history_user` directamente y se saltaría `get_user`.
+    if hasattr(record, "_history_user"):
+        record._history_user = _allowed_author(record, record._history_user)
+
+
 class UserTerms(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -133,7 +152,7 @@ class UserTerms(models.Model):
     terms_accepted_at = models.DateTimeField(default=timezone.now)
     revoked_at = models.DateTimeField(null=True, blank=True)
 
-    history = HistoricalRecords()
+    history = HistoricalRecords(excluded_fields=["user"], get_user=_history_author)
 
     class Meta:
         verbose_name = _("terms acceptance")
@@ -152,6 +171,7 @@ class UserTerms(models.Model):
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         _refresh_email_hash(self)
+        _filter_explicit_author(self)
         self.full_clean()
         super().save(*args, **kwargs)
 
@@ -178,7 +198,7 @@ class MarketingConsent(models.Model):
     granted_at = models.DateTimeField(default=timezone.now)
     revoked_at = models.DateTimeField(null=True, blank=True)
 
-    history = HistoricalRecords()
+    history = HistoricalRecords(excluded_fields=["user"], get_user=_history_author)
 
     class Meta:
         verbose_name = _("marketing consent")
@@ -205,6 +225,7 @@ class MarketingConsent(models.Model):
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         _refresh_email_hash(self)
+        _filter_explicit_author(self)
         self.full_clean()
         super().save(*args, **kwargs)
 
