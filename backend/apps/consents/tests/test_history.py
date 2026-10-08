@@ -238,3 +238,41 @@ def test_another_staff_clearing_the_user_is_recorded_as_author(
     record.save()
 
     assert _last_author(record) == support
+
+
+@pytest.mark.parametrize("model", RECORD_MODELS)
+@pytest.mark.parametrize("author_kind", ["owner", "not_staff", "inactive_staff"])
+def test_an_explicit_author_is_filtered_on_delete(
+    model: type[UserTerms | MarketingConsent], author_kind: str
+) -> None:
+    owner = make_user(is_staff=True)
+    record = _record(model, user=owner)
+    record.save()
+    record_id = record.pk
+    authors = {
+        "owner": owner,
+        "not_staff": make_user(),
+        "inactive_staff": make_user(is_staff=True, is_active=False),
+    }
+
+    record._history_user = authors[author_kind]  # type: ignore[union-attr]
+    record.delete()
+
+    deletion = model.history.get(id=record_id, history_type="-")  # type: ignore[attr-defined]
+    assert deletion.history_user is None
+
+
+@pytest.mark.parametrize("model", RECORD_MODELS)
+def test_another_staff_deleting_explicitly_is_recorded_as_author(
+    model: type[UserTerms | MarketingConsent],
+) -> None:
+    record = _record(model, user=make_user(is_staff=True))
+    record.save()
+    record_id = record.pk
+    support = make_user(is_staff=True)
+
+    record._history_user = support  # type: ignore[union-attr]
+    record.delete()
+
+    deletion = model.history.get(id=record_id, history_type="-")  # type: ignore[attr-defined]
+    assert deletion.history_user == support

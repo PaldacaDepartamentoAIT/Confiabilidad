@@ -187,6 +187,10 @@ class UserTerms(models.Model):
     def clean(self) -> None:
         _check_user_not_reassigned(self)
 
+    def delete(self, *args: Any, **kwargs: Any) -> tuple[int, dict[str, int]]:
+        _filter_explicit_author(self)
+        return super().delete(*args, **kwargs)
+
 
 class MarketingConsent(models.Model):
     user = models.ForeignKey(
@@ -241,6 +245,10 @@ class MarketingConsent(models.Model):
 
     def clean(self) -> None:
         _check_user_not_reassigned(self)
+
+    def delete(self, *args: Any, **kwargs: Any) -> tuple[int, dict[str, int]]:
+        _filter_explicit_author(self)
+        return super().delete(*args, **kwargs)
 
 
 def _refresh_email_hash(record: UserTerms | MarketingConsent) -> None:

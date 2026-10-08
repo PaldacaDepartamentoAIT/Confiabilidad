@@ -318,7 +318,7 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   dejar huecos).
   Decisiones: `a<b` sin espacios se rechaza (falso positivo aceptado a cambio de no dejar huecos) — [Cierto]. Los enlaces automáticos siguen la definición de CommonMark: esquema de 2 a 32 caracteres sin espacios ni `<>`, o un correo; `<a:b>` (esquema de 1 carácter) cuenta como etiqueta y se rechaza — [Cierto] — revertir: ampliar `_AUTOLINK`. No se filtran esquemas peligrosos como `<javascript:…>`: no son HTML y RF-001 no los cubre; quien muestre el contenido debe sanear las URL — [Probable].
 
-- [ ] T-034 Corrección: filtrar también el autor explícito al borrar aceptaciones y consentimientos
+- [x] T-034 Corrección: filtrar también el autor explícito al borrar aceptaciones y consentimientos
   Tipo: corrección | Origen: validación de RF-020 (4.ª ronda)
   RF: RF-020 | Depende de: — | Archivos: 2
   Archivos: `models.py`, `tests/test_history.py`.
@@ -330,6 +330,7 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   un usuario que no es staff activo, deja la versión `-` sin autor; con otro staff activo queda con
   él; un mutante que quite el filtro en `delete()` hace fallar el test; la suite completa sigue en
   verde.
+  Decisiones: `delete()` de las dos tablas filtra `_history_user` antes de borrar; el borrado masivo (`QuerySet.delete`) no lo necesita, porque carga cada fila sin autor explícito y pasa por `get_user` — [Cierto] — revertir: quitar los `delete()` añadidos.
 
 ## RF sin tarea
 Ninguno.
