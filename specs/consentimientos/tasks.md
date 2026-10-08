@@ -270,7 +270,7 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   y con un staff distinto queda con él; suite verde.
   Excepción: también `tests/test_migrations.py`, porque su fixture volvía a `0002` y dejaba la base
   de tests sin `0003`; el test de que `0003` se aplica sobre `0002` vive ahí.
-  Decisiones: el panel fija `_history_user` directamente (`SimpleHistoryAdmin.save_model`) y se saltaba `get_user`; `save()` filtra también ese autor explícito — [Cierto] — revertir: quitar `_filter_explicit_author`. Un staff inactivo no consta como autor — [Probable] — revertir: no exigir `is_active` en `_allowed_author`. El autor de un borrado también se filtra — [Cierto].
+  Decisiones: el panel fija `_history_user` directamente (`SimpleHistoryAdmin.save_model`) y se saltaba `get_user`; `save()` filtra también ese autor explícito — [Cierto] — revertir: quitar `_filter_explicit_author`. Un staff inactivo no consta como autor — [Probable] — revertir: no exigir `is_active` en `_allowed_author`. El autor de un borrado también se filtra, pero solo por la vía de la petición; el autor explícito al borrar lo corrige T-034 — [Cierto].
 
 - [x] T-030 Actualizar el resumen tras el cambio H-1
   RF: — (AGENTS.md) | Depende de: T-028, T-029 | Archivos: 1
@@ -317,6 +317,19 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   Decisión a registrar: `a<b` sin espacios se rechaza (falso positivo aceptado a cambio de no
   dejar huecos).
   Decisiones: `a<b` sin espacios se rechaza (falso positivo aceptado a cambio de no dejar huecos) — [Cierto]. Los enlaces automáticos siguen la definición de CommonMark: esquema de 2 a 32 caracteres sin espacios ni `<>`, o un correo; `<a:b>` (esquema de 1 carácter) cuenta como etiqueta y se rechaza — [Cierto] — revertir: ampliar `_AUTOLINK`. No se filtran esquemas peligrosos como `<javascript:…>`: no son HTML y RF-001 no los cubre; quien muestre el contenido debe sanear las URL — [Probable].
+
+- [ ] T-034 Corrección: filtrar también el autor explícito al borrar aceptaciones y consentimientos
+  Tipo: corrección | Origen: validación de RF-020 (4.ª ronda)
+  RF: RF-020 | Depende de: — | Archivos: 2
+  Archivos: `models.py`, `tests/test_history.py`.
+  Causa: `_filter_explicit_author` solo se aplica en `save()`; en `delete()`, `get_history_user`
+  devuelve `_history_user` tal cual y deja como autor al dueño de la fila o a alguien que no es
+  staff. La decisión de T-029 «el autor de un borrado también se filtra» solo era cierta por la vía
+  de la petición.
+  Hecho cuando: en las dos tablas, `delete()` con `_history_user` igual al usuario de la fila, o a
+  un usuario que no es staff activo, deja la versión `-` sin autor; con otro staff activo queda con
+  él; un mutante que quite el filtro en `delete()` hace fallar el test; la suite completa sigue en
+  verde.
 
 ## RF sin tarea
 Ninguno.
