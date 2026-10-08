@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     "simple_history",
     "apps.core",
     "apps.accounts",
+    "apps.consents",
 ]
 
 MIDDLEWARE = [
@@ -200,3 +201,9 @@ REGISTRATION_SECRET_TRANSITION_MINUTES = env.int(
 )
 PWNED_PASSWORDS_TIMEOUT_SECONDS = env.float("PWNED_PASSWORDS_TIMEOUT_SECONDS", default=2.0)
 PWNED_PASSWORDS_ENABLED = env.bool("PWNED_PASSWORDS_ENABLED", default=True)
+
+# El historial se consulta en el panel, pero no se revierte desde él (RF-020 de consentimientos).
+SIMPLE_HISTORY_REVERT_DISABLED = True
+
+# Consentimientos: secreto de la huella del correo (RF-012). No debe rotar nunca (S-09).
+CONSENT_EMAIL_HASH_SECRET = env("CONSENT_EMAIL_HASH_SECRET", default=SECRET_KEY)

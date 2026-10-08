@@ -66,6 +66,30 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
   `2026-10-06T10:00:00+00:00`). El anterior vale durante `REGISTRATION_SECRET_TRANSITION_MINUTES`
   (60 por defecto); después puedes borrar las dos variables de rotación.
 
+- [ ] **Migrar y comprobar Docker tras `consentimientos`.** La rama `feat/consentimientos` añade la
+  app `consents` y sus migraciones `0001`, `0002` y `0003` (sin dependencias nuevas). En la sesión remota no
+  se pudo construir la imagen: Docker Hub respondió `429 Too Many Requests` al descargar
+  `python:3.12-slim`. En tu máquina:
+  ```bash
+  docker compose -f docker/docker-compose.yml build backend
+  docker compose -f docker/docker-compose.yml run --rm backend python manage.py migrate
+  ```
+  Deberías ver `consents.0001_initial... OK`, `consents.0002_support_group... OK` y
+  `consents.0003_history_without_user... OK`. Si aplicaste antes una versión intermedia de la rama
+  anterior a `0003`, ejecuta primero `migrate consents zero`.
+
+- [ ] **Definir `CONSENT_EMAIL_HASH_SECRET` en producción, cifrado con SOPS, y no rotarlo nunca**
+  (feature `consentimientos`). Protege la huella del correo de las aceptaciones de términos y los
+  consentimientos de marketing: sin él, cualquiera con la base de datos podría averiguar el correo
+  probando listas de correos (RF-012). Si no se define, se usa `DJANGO_SECRET_KEY`, y el día que
+  esa clave rote todas las huellas antiguas dejarán de coincidir con el correo: se pierde la prueba
+  de consentimiento de las cuentas borradas (S-09, D-06). Genera uno propio, añádelo con
+  `sops secrets/prod.enc.yaml` **antes del primer consentimiento en producción** y guárdalo
+  aparte; no lo cambies después:
+  ```bash
+  python -c "import secrets; print(secrets.token_urlsafe(48))"
+  ```
+
 - [ ] **Limitar la frecuencia del reenvío de códigos antes de publicar la API de registro**
   (feature `procesos-pendientes`, S-07). Cada reenvío reinicia los intentos, así que el tope de 5
   intentos es por código, no por proceso: sin límite de reenvíos, un atacante puede probar códigos
