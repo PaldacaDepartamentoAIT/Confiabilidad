@@ -332,7 +332,7 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   verde.
   Decisiones: `delete()` de las dos tablas filtra `_history_user` antes de borrar; el borrado masivo (`QuerySet.delete`) no lo necesita, porque carga cada fila sin autor explícito y pasa por `get_user` — [Cierto] — revertir: quitar los `delete()` añadidos.
 
-- [ ] T-035 Corrección: el listado del panel muestra qué documentos tienen aceptaciones
+- [x] T-035 Corrección: el listado del panel muestra qué documentos tienen aceptaciones
   Tipo: corrección | Origen: validación de RF-004 (5.ª ronda)
   RF: RF-004 | Depende de: — | Archivos: 1
   Archivos: `tests/test_admin_terms.py`.
@@ -341,6 +341,7 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   Hecho cuando: el test comprueba en la respuesta del listado la columna «Has acceptances» con el
   valor correcto en un documento de una versión aceptada y en uno de una versión libre; el mutante
   que quita la columna de `list_display` lo hace fallar; la suite completa sigue en verde.
+  Decisiones: el test lee la celda `field-has_acceptances_display` de cada fila renderizada con `results()` del listado, así que falla si se quita la columna o si cambia su valor; mató dos mutantes (quitar la columna y devolver siempre False) — [Cierto].
 
 - [ ] T-036 Corrección: filtrar en el borrado también al usuario guardado de la fila
   Tipo: corrección | Origen: validación de RF-020 (5.ª ronda)

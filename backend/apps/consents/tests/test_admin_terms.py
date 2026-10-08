@@ -3,13 +3,13 @@ from unittest.mock import patch
 
 import pytest
 from django.contrib.admin.sites import site
+from django.contrib.admin.templatetags.admin_list import results
 from django.contrib.auth.models import Permission
 from django.test import Client, RequestFactory
 from django.urls import reverse
 
 from apps.accounts.models import User
 from apps.accounts.tests.factories import make_user
-from apps.consents.admin import TermsAdmin
 from apps.consents.models import PROTECTED_FIELDS, Terms, UserTerms
 from apps.consents.tests.factories import make_document, publish_version
 
@@ -105,14 +105,19 @@ def test_staff_without_permissions_is_forbidden(name: str) -> None:
 def test_list_shows_which_documents_have_acceptances(editor_client: Client) -> None:
     accepted, free = publish_version(version="1"), publish_version(version="2")
     _accept(accepted["es"])
-    model_admin = site.get_model_admin(Terms)
-    assert isinstance(model_admin, TermsAdmin)
 
     response = editor_client.get(_url("changelist"))
+    changelist = response.context["cl"]
+    column = {
+        document.pk: next(
+            str(cell) for cell in row if 'class="field-has_acceptances_display"' in str(cell)
+        )
+        for document, row in zip(changelist.result_list, results(changelist), strict=True)
+    }
 
     assert response.status_code == 200
-    assert model_admin.has_acceptances_display(accepted["en"]) is True
-    assert model_admin.has_acceptances_display(free["en"]) is False
+    assert 'alt="True"' in column[accepted["en"].pk]
+    assert 'alt="False"' in column[free["en"].pk]
 
 
 def test_accepted_version_shows_protected_fields_as_read_only(editor_client: Client) -> None:
