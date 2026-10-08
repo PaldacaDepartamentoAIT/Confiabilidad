@@ -7,6 +7,7 @@ from django.db import IntegrityError, transaction
 from django.db.models import ProtectedError
 from django.utils import timezone
 
+from apps.accounts.models import User
 from apps.accounts.tests.factories import make_user
 from apps.consents.hashing import email_fingerprint
 from apps.consents.models import MarketingConsent, Terms, UserTerms
@@ -270,16 +271,55 @@ def test_changing_the_user_email_keeps_the_stored_hash(
 
 
 @pytest.mark.parametrize("model", RECORD_MODELS)
-def test_changing_the_user_of_a_record_recalculates_the_hash(
+def test_assigning_another_user_to_a_record_is_rejected(
     model: type[UserTerms | MarketingConsent],
 ) -> None:
-    record = _record(model, user=make_user(email="ana@x.com"))
+    owner = make_user(email="ana@x.com")
+    record = _record(model, user=owner)
     record.save()
 
     record.user = make_user(email="bea@x.com")
+    with pytest.raises(ValidationError) as error:
+        record.save()
+    record.refresh_from_db()
+
+    assert error.value.error_dict["user"][0].code == "user_reassigned"
+    assert record.user == owner
+    assert record.user_email_hash == email_fingerprint("ana@x.com")
+
+
+@pytest.mark.parametrize("model", RECORD_MODELS)
+def test_assigning_a_user_to_a_record_without_user_is_rejected(
+    model: type[UserTerms | MarketingConsent],
+) -> None:
+    owner = make_user(email="ana@x.com")
+    record = _record(model, user=owner)
+    record.save()
+    owner.delete()
+    record.refresh_from_db()
+
+    record.user = make_user(email="bea@x.com")
+    with pytest.raises(ValidationError) as error:
+        record.save()
+    record.refresh_from_db()
+
+    assert "user" in error.value.error_dict
+    assert record.user is None
+    assert record.user_email_hash == email_fingerprint("ana@x.com")
+
+
+@pytest.mark.parametrize("model", RECORD_MODELS)
+def test_saving_with_the_same_user_is_allowed(
+    model: type[UserTerms | MarketingConsent],
+) -> None:
+    owner = make_user(email="ana@x.com")
+    record = _record(model, user=owner)
     record.save()
 
-    assert record.user_email_hash == email_fingerprint("bea@x.com")
+    record.user = User.objects.get(pk=owner.pk)
+    record.save()
+
+    assert model.objects.get().user == owner
 
 
 @pytest.mark.parametrize("model", RECORD_MODELS)

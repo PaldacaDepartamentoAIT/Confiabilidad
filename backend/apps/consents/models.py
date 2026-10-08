@@ -155,6 +155,9 @@ class UserTerms(models.Model):
         self.full_clean()
         super().save(*args, **kwargs)
 
+    def clean(self) -> None:
+        _check_user_not_reassigned(self)
+
 
 class MarketingConsent(models.Model):
     user = models.ForeignKey(
@@ -205,9 +208,12 @@ class MarketingConsent(models.Model):
         self.full_clean()
         super().save(*args, **kwargs)
 
+    def clean(self) -> None:
+        _check_user_not_reassigned(self)
+
 
 def _refresh_email_hash(record: UserTerms | MarketingConsent) -> None:
-    # La huella la calcula siempre el sistema: al crear y al cambiar de usuario (RF-012).
+    # La huella la calcula siempre el sistema, solo al crear, y después no cambia (RF-012).
     if record._state.adding:
         if record.user is None:
             raise ValidationError(
@@ -215,10 +221,24 @@ def _refresh_email_hash(record: UserTerms | MarketingConsent) -> None:
             )
         record.user_email_hash = email_fingerprint(record.user.email)
         return
-    stored_user_id, stored_hash = (
-        type(record).objects.filter(pk=record.pk).values_list("user_id", "user_email_hash").get()
+    record.user_email_hash = (
+        type(record).objects.filter(pk=record.pk).values_list("user_email_hash", flat=True).get()
     )
-    if record.user is not None and record.user_id != stored_user_id:
-        record.user_email_hash = email_fingerprint(record.user.email)
-    else:
-        record.user_email_hash = stored_hash
+
+
+def _check_user_not_reassigned(record: UserTerms | MarketingConsent) -> None:
+    # Solo se puede vaciar el usuario; nunca asignar otro, tampoco a una fila sin usuario (RF-012).
+    if record._state.adding or record.user_id is None:
+        return
+    stored_user_id = (
+        type(record).objects.filter(pk=record.pk).values_list("user_id", flat=True).get()
+    )
+    if record.user_id != stored_user_id:
+        raise ValidationError(
+            {
+                "user": ValidationError(
+                    _("The user of an existing record cannot be changed."),
+                    code="user_reassigned",
+                )
+            }
+        )

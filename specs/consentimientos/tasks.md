@@ -236,7 +236,7 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   Descartada: el cambio del 2026-10-08 (C-14) decide que el vaciado por borrado de la cuenta no
   genera versión; no se implementa. Su test lo reescribe T-029.
 
-- [ ] T-027 Corrección: huella inmutable y usuario no reasignable
+- [x] T-027 Corrección: huella inmutable y usuario no reasignable
   Tipo: corrección | Origen: cambio H-1 (2026-10-08)
   RF: RF-012, RF-019 | Depende de: — | Archivos: 2
   Archivos: `models.py`, `tests/test_acceptance_models.py`.
@@ -246,6 +246,7 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   `ValidationError` en `user`, también si la fila no tenía usuario; vaciarlo se permite y conserva
   la huella; la huella guardada no cambia por ninguna vía; se retira
   `test_changing_the_user_of_a_record_recalculates_the_hash`; suite verde.
+  Decisiones: guardar con el mismo usuario (otra instancia del mismo id) se permite, porque no es una reasignación — [Cierto]. El error usa el código `user_reassigned` — [Cierto].
 
 - [ ] T-028 Corrección: el panel muestra el error al reasignar el usuario
   Tipo: corrección | Origen: cambio H-1 (2026-10-08)
