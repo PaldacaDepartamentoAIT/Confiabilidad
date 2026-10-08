@@ -240,3 +240,6 @@ de administración.
   asigna usuario a una fila sin él; el vaciado por borrado de la cuenta no genera versión (descarta
   la corrección T-026); los usuarios ya guardados en el historial se eliminan — RF: RF-012, RF-020
   ajustados; S-15 ajustado — Estado: impacto analizado
+- 2026-10-08 — Validación: CUMPLIDA (6.ª ronda, tras T-035 y T-036): RF-001…RF-020 con evidencia,
+  600 tests en verde (1 omitido por diseño), cobertura 100 %, `mypy`/`ruff`/`black` limpios y
+  migraciones al día — RF: — — Estado: aprobada

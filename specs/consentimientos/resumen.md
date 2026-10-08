@@ -1,5 +1,5 @@
 # Resumen — consentimientos
-Estado: implementada, pendiente de validación (2.ª ronda, tras el cambio H-1) · Última actualización: 2026-10-08
+Estado: implementada y validada (Validación: CUMPLIDA, 2026-10-08, 6.ª ronda) · Última actualización: 2026-10-08
 
 ## Qué se hizo
 El sistema guarda los textos legales versionados y la prueba de quién los aceptó y cuándo, aunque
@@ -63,6 +63,11 @@ ni API (RF-016). La API futura usará el mismo servicio (`apps/consents/services
   rotar esa clave rompería todas las huellas. Anotado en `HUMAN_TODO.md`.
 - La inmutabilidad y la coherencia de la exigencia no se garantizan en cargas masivas ni en SQL
   directo (S-10); las unicidades sí.
+- **La inmutabilidad protege los documentos que ya forman la versión, no impide añadirle uno**: si
+  soporte registra una aceptación de una versión incompleta (le falta un idioma), aún se puede
+  crear el idioma que falta, o pasar a esa versión un documento libre, y con ello la versión puede
+  entrar en vigor. RF-005 no cubre ese caso; con el flujo normal no ocurre, porque solo se acepta
+  la versión vigente, que ya tiene los tres idiomas.
 - La concurrencia (dos aceptaciones a la vez) está protegida con bloqueos de fila y la unicidad de
   la base de datos, pero ningún test la ejerce con transacciones reales.
 - Los textos nuevos están marcados para traducción, pero `makemessages` no se ha ejecutado.
