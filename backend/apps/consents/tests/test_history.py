@@ -258,7 +258,7 @@ def test_an_explicit_author_is_filtered_on_delete(
     record._history_user = authors[author_kind]  # type: ignore[union-attr]
     record.delete()
 
-    deletion = model.history.get(id=record_id, history_type="-")  # type: ignore[attr-defined]
+    deletion = model.history.get(id=record_id, history_type="-")
     assert deletion.history_user is None
 
 
@@ -274,5 +274,5 @@ def test_another_staff_deleting_explicitly_is_recorded_as_author(
     record._history_user = support  # type: ignore[union-attr]
     record.delete()
 
-    deletion = model.history.get(id=record_id, history_type="-")  # type: ignore[attr-defined]
+    deletion = model.history.get(id=record_id, history_type="-")
     assert deletion.history_user == support
