@@ -151,6 +151,15 @@ Secretos:
       el informe y no detiene;
     - un veredicto de validación distinto de CUMPLIDA: las tareas de corrección y el cierre con
       riesgo residual los decide el usuario.
+  - **Qué se muestra al pedir una aprobación (en ambos modos).** No se pide aprobar nada que el
+    usuario no haya visto. Antes de cada aprobación, el texto completo que se aprueba (o, si se
+    modifica algo existente, cada cambio con su versión anterior y la nueva) va **en el propio
+    mensaje** de la conversación: no basta con un archivo adjunto, la salida de una herramienta ni
+    un resumen. Si es demasiado largo para un mensaje, se divide en partes y se aprueba parte por
+    parte. Un resumen puede acompañar al texto, nunca sustituirlo. Si el usuario dice que no ha
+    visto lo que se le pide aprobar, esa aprobación no cuenta: se vuelve a mostrar y se vuelve a
+    preguntar. La pregunta de aprobación se hace en ese mismo mensaje, como texto final, y no con
+    una ventana de opciones que pueda ocultar lo que hay que aprobar.
   - **En ambos modos** se mantienen las reglas de ramas y commits, no acreditarse como IA,
     `HUMAN_TODO.md`, el `resumen.md` con marco teórico, el test de mutación de cada tarea y que la
     validación la haga un subagente sin contexto de la implementación (o una sesión nueva si el
