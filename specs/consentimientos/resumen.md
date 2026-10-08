@@ -78,7 +78,8 @@ de la sección *Entorno remoto* del README. En los pasos, `M` abrevia
 `M consents`.
 
 1. Levanta la base de datos y Redis y aplica las migraciones. Deberías ver
-   `consents.0001_initial... OK` y `consents.0002_support_group... OK`:
+   `consents.0001_initial... OK`, `consents.0002_support_group... OK` y
+   `consents.0003_history_without_user... OK`:
    `docker compose -f docker/docker-compose.yml up -d db redis`
    `M migrate`
 2. Crea un superusuario para el panel:

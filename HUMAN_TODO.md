@@ -67,15 +67,16 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
   (60 por defecto); después puedes borrar las dos variables de rotación.
 
 - [ ] **Migrar y comprobar Docker tras `consentimientos`.** La rama `feat/consentimientos` añade la
-  app `consents` y sus migraciones `0001` y `0002` (sin dependencias nuevas). En la sesión remota no
+  app `consents` y sus migraciones `0001`, `0002` y `0003` (sin dependencias nuevas). En la sesión remota no
   se pudo construir la imagen: Docker Hub respondió `429 Too Many Requests` al descargar
   `python:3.12-slim`. En tu máquina:
   ```bash
   docker compose -f docker/docker-compose.yml build backend
   docker compose -f docker/docker-compose.yml run --rm backend python manage.py migrate
   ```
-  Deberías ver `consents.0001_initial... OK` y `consents.0002_support_group... OK`. Si aplicaste
-  antes una versión intermedia de la rama, ejecuta primero `migrate consents zero`.
+  Deberías ver `consents.0001_initial... OK`, `consents.0002_support_group... OK` y
+  `consents.0003_history_without_user... OK`. Si aplicaste antes una versión intermedia de la rama
+  anterior a `0003`, ejecuta primero `migrate consents zero`.
 
 - [ ] **Definir `CONSENT_EMAIL_HASH_SECRET` en producción, cifrado con SOPS, y no rotarlo nunca**
   (feature `consentimientos`). Protege la huella del correo de las aceptaciones de términos y los
