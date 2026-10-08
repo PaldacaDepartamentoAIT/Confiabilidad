@@ -255,3 +255,47 @@ def test_only_active_staff_in_the_group_gets_every_permission(
     assert _permissions(member, model) == [True] * 5
     assert _permissions(outsider, model) == [False] * 5
     assert _permissions(not_staff, model) == [False] * 5
+
+
+@pytest.mark.parametrize(
+    ("model", "form"), [("userterms", _acceptance_form), ("marketingconsent", _consent_form)]
+)
+def test_reassigning_the_user_from_the_panel_shows_a_form_error(
+    support_client: Client, model: str, form: Any
+) -> None:
+    owner = make_user(email="ana@x.com")
+    kind = Terms.Kind.TERMS if model == "userterms" else Terms.Kind.MARKETING
+    record_model = UserTerms if model == "userterms" else MarketingConsent
+    record = record_model(user=owner, terms=make_document(kind=kind))
+    record.save()
+
+    response = support_client.post(
+        _url(model, "change", record.pk), form(make_user(email="bea@x.com"), record.terms)
+    )
+    record.refresh_from_db()
+
+    assert response.status_code == 200
+    assert "user" in response.context["adminform"].form.errors
+    assert record.user == owner
+    assert record.user_email_hash == email_fingerprint("ana@x.com")
+
+
+@pytest.mark.parametrize(
+    ("model", "form"), [("userterms", _acceptance_form), ("marketingconsent", _consent_form)]
+)
+def test_clearing_the_user_from_the_panel_keeps_the_hash(
+    support_client: Client, model: str, form: Any
+) -> None:
+    kind = Terms.Kind.TERMS if model == "userterms" else Terms.Kind.MARKETING
+    record_model = UserTerms if model == "userterms" else MarketingConsent
+    record = record_model(user=make_user(email="ana@x.com"), terms=make_document(kind=kind))
+    record.save()
+    data = form(make_user(), record.terms)
+    data["user"] = ""
+
+    response = support_client.post(_url(model, "change", record.pk), data)
+    record.refresh_from_db()
+
+    assert response.status_code == 302
+    assert record.user is None
+    assert record.user_email_hash == email_fingerprint("ana@x.com")

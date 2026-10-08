@@ -248,7 +248,7 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   `test_changing_the_user_of_a_record_recalculates_the_hash`; suite verde.
   Decisiones: guardar con el mismo usuario (otra instancia del mismo id) se permite, porque no es una reasignación — [Cierto]. El error usa el código `user_reassigned` — [Cierto].
 
-- [ ] T-028 Corrección: el panel muestra el error al reasignar el usuario
+- [x] T-028 Corrección: el panel muestra el error al reasignar el usuario
   Tipo: corrección | Origen: cambio H-1 (2026-10-08)
   RF: RF-012, RF-019 | Depende de: T-027 | Archivos: 1
   Archivos: `tests/test_admin_support.py`.
@@ -256,6 +256,7 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   Hecho cuando: editar desde el panel una aceptación y un consentimiento con otro usuario responde
   200 con el error en `user` y no cambia la fila; editarlos con el usuario vacío responde 302 y
   conserva la huella; suite verde.
+  Decisiones: estos tests pasaron a la primera, porque el comportamiento ya lo implementó T-027 (`clean()`, D-16). Que de verdad lo prueban se comprobó con un mutante de T-027 (sin la comparación de usuario), que los hace fallar — [Cierto].
 
 - [ ] T-029 Corrección: historial sin usuario y autor filtrado
   Tipo: corrección | Origen: cambio H-1 (2026-10-08)
