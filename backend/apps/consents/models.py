@@ -129,7 +129,8 @@ def _history_author(instance: Any, request: Any = None, **kwargs: Any) -> Any:
 
 
 def _remember_stored_user(record: Any) -> None:
-    # Al vaciar el usuario, el dueño anterior tampoco puede constar como autor (RF-020).
+    # Al vaciar el usuario (al guardar o al borrar), el dueño anterior tampoco puede constar
+    # como autor (RF-020).
     if not record._state.adding:
         record._stored_user_id = (
             type(record).objects.filter(pk=record.pk).values_list("user_id", flat=True).get()
@@ -188,6 +189,7 @@ class UserTerms(models.Model):
         _check_user_not_reassigned(self)
 
     def delete(self, *args: Any, **kwargs: Any) -> tuple[int, dict[str, int]]:
+        _remember_stored_user(self)
         _filter_explicit_author(self)
         return super().delete(*args, **kwargs)
 
@@ -247,6 +249,7 @@ class MarketingConsent(models.Model):
         _check_user_not_reassigned(self)
 
     def delete(self, *args: Any, **kwargs: Any) -> tuple[int, dict[str, int]]:
+        _remember_stored_user(self)
         _filter_explicit_author(self)
         return super().delete(*args, **kwargs)
 

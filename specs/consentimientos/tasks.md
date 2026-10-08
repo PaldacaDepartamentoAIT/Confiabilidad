@@ -343,7 +343,7 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   que quita la columna de `list_display` lo hace fallar; la suite completa sigue en verde.
   Decisiones: el test lee la celda `field-has_acceptances_display` de cada fila renderizada con `results()` del listado, así que falla si se quita la columna o si cambia su valor; mató dos mutantes (quitar la columna y devolver siempre False) — [Cierto].
 
-- [ ] T-036 Corrección: filtrar en el borrado también al usuario guardado de la fila
+- [x] T-036 Corrección: filtrar en el borrado también al usuario guardado de la fila
   Tipo: corrección | Origen: validación de RF-020 (5.ª ronda)
   RF: RF-020 | Depende de: — | Archivos: 2
   Archivos: `models.py`, `tests/test_history.py`.
@@ -355,6 +355,7 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   staff activo, queda con él; el mutante que quita esa comprobación en `delete()` hace fallar el
   test; además se revisan todas las vías de autor (guardar y borrar, por petición y explícito, en
   las dos tablas) y cualquier hueco equivalente se anota; la suite completa sigue en verde.
+  Decisiones: `delete()` recuerda el `user_id` guardado antes de borrar, igual que `save()` — [Cierto]. Revisión de las vías de autor (sondas fuera del repo): guardar y borrar, por la petición y con `_history_user`, en las dos tablas; y desde el panel, borrar, borrar en bloque, «Revoke selected» y vaciar el usuario en el formulario hechos por el propio dueño, más una instancia desfasada que se borra después de que otra vaciara el usuario. En todos los casos la versión queda sin autor; no se encontró ningún hueco equivalente — [Cierto]. Las escrituras masivas (`QuerySet.update`, `bulk_create`) no generan historial, así que no tienen autor que filtrar — [Cierto].
 
 ## RF sin tarea
 Ninguno.
