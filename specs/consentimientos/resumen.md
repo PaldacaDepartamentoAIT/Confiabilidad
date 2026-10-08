@@ -163,8 +163,12 @@ evita además cambiar su fecha de entrada en vigor, que depende de los tres idio
 
 ### Markdown sin HTML (XSS)
 El contenido se muestra en la web. Si admitiera HTML, un `<script>` o un `<img onerror=…>` se
-ejecutaría en el navegador de quien lo lee (XSS). Ojo: los navegadores aceptan `/` en lugar de un
-espacio entre la etiqueta y sus atributos (`<svg/onload=…>`), y el validador también lo rechaza. Markdown permite títulos, listas y enlaces sin
+ejecutaría en el navegador de quien lo lee (XSS). Los navegadores son muy permisivos con lo que
+consideran una etiqueta (`<svg/onload=…>`, `<x_y onfocus=…>`, `<a:b onclick=…>`), así que el
+validador no intenta enumerar las peligrosas: rechaza cualquier `<` seguido de una letra, `/`, `!`
+o `?`, salvo los enlaces automáticos de Markdown (`<https://…>`, `<correo@dominio>`). El precio es
+que `a<b` sin espacios también se rechaza. Los enlaces con esquemas peligrosos (`javascript:`) no
+son HTML y no se filtran aquí: quien muestre el contenido debe sanear las URL. Markdown permite títulos, listas y enlaces sin
 HTML, y el backend rechaza cualquier etiqueta; el frontend debe mostrarlo como Markdown sin
 interpretar HTML.
 
