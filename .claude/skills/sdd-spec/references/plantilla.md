@@ -3,6 +3,7 @@
 ```markdown
 # Spec: <feature>
 Estado: borrador | aprobada
+Aprobación: fuerte | ligera
 
 ## Objetivo (por qué)
 

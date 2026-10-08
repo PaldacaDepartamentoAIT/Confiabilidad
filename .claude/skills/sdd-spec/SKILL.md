@@ -12,6 +12,7 @@ Entrevista al usuario y redacta qué debe hacer la feature y por qué. No hables
 - **Feature**: nombre en kebab-case para la carpeta (por ejemplo, `login-con-google`).
 - **Idea inicial**: una descripción breve de lo que se quiere construir.
 - **Máximo de preguntas**: lee `sdd.max_preguntas_spec` en la sección SDD de `CLAUDE.md` o `AGENTS.md`.
+- **Modo de aprobación**: `fuerte` o `ligera` (ver «Modos de aprobación» en `AGENTS.md`).
 
 Si falta alguno, pídelo al usuario en un solo mensaje y no continúes hasta tenerlo. Si falta la configuración, sugiere además añadirla a `CLAUDE.md`.
 
@@ -33,13 +34,18 @@ Siguiente paso: <skill a ejecutar o acción del usuario>
 ## Procedimiento
 
 1. Lee `specs/constitution.md`.
-2. Haz preguntas de una en una, sin superar el máximo configurado. Cubre alcance, casos límite, errores y lo que queda fuera de alcance. Prioriza las preguntas cuya respuesta cambiaría más requisitos.
-3. Si el usuario responde "no sé", propón una opción razonable y regístrala como supuesto (`S-01`…). No la conviertas en requisito sin marcarla.
-4. Genera `specs/<feature>/spec.md` con la plantilla de `references/plantilla.md`, con `Estado: borrador`.
+2. Antes de la entrevista, pregunta al usuario qué modo de aprobación quiere para esta feature,
+   resumiendo cada modo en una línea. Esta pregunta no cuenta para el máximo configurado. Si no
+   elige, usa `fuerte`.
+3. Haz preguntas de una en una, sin superar el máximo configurado. Cubre alcance, casos límite, errores y lo que queda fuera de alcance. Prioriza las preguntas cuya respuesta cambiaría más requisitos.
+4. Si el usuario responde "no sé", propón una opción razonable y regístrala como supuesto (`S-01`…). No la conviertas en requisito sin marcarla.
+5. Genera `specs/<feature>/spec.md` con la plantilla de `references/plantilla.md`, con `Estado: borrador`
+   y, justo debajo, la línea `Aprobación: <modo elegido>`. Ningún otro skill cambia esa línea salvo
+   que el usuario lo pida de forma explícita.
    - Escribe cada RF con uno de los patrones EARS de la plantilla y con ID correlativo (`RF-001`…).
    - Cada RF describe un comportamiento observable y verificable.
-5. Muestra la spec al usuario.
-6. No marques la spec como aprobada: la aprobación se hace tras la clarificación. Indica el siguiente paso: `sdd-clarificar`.
+6. Muestra la spec al usuario.
+7. No marques la spec como aprobada: la aprobación se hace tras la clarificación. Indica el siguiente paso: `sdd-clarificar`.
 
 ## Detente si
 

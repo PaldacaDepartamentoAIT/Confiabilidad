@@ -121,11 +121,49 @@ Secretos:
 - Cada concepto que le genere dudas al usuario durante una feature se documenta en una sección
   **"Marco teórico"** de su `resumen.md`, explicado de forma accesible (qué es y por qué importa),
   para que quede como referencia reutilizable.
-- Aprobar una idea o decisión **no** aprueba su **redacción**. Antes de aplicar cualquier cambio
-  de texto o código (spec, plan, tareas, resumen, documentación o código), preséntalo al usuario y
-  ofrécele dos opciones: **Aceptar** o **Rechazar**. Si lo rechaza, permítele introducir una
-  corrección y vuelve a presentar la versión corregida. **No continúes con el flujo de trabajo
-  hasta que el usuario apruebe explícitamente.**
+- **Modos de aprobación.** Cada feature declara el suyo en `spec.md`, justo debajo de `Estado:`,
+  con la línea `Aprobación: fuerte | ligera`. `sdd-spec` lo pregunta antes de la entrevista; los
+  demás agentes y sesiones leen esa línea y la respetan sin volver a preguntar. Si falta, el modo
+  es fuerte. Solo cambia si el usuario lo pide de forma explícita, y el cambio se anota en el
+  historial de la spec.
+  - **Modo fuerte.** Aprobar una idea o decisión **no** aprueba su **redacción**. Antes de aplicar
+    cualquier cambio de texto o código (spec, plan, tareas, resumen, documentación o código),
+    preséntalo al usuario y ofrécele dos opciones: **Aceptar** o **Rechazar**. Si lo rechaza,
+    permítele introducir una corrección y vuelve a presentar la versión corregida. **No continúes
+    con el flujo de trabajo hasta que el usuario apruebe explícitamente.** Se implementa una tarea
+    cada vez y se detiene tras cada una.
+  - **Modo ligero.** Siguen necesitando aprobación explícita, y nunca se aprueban solos: la spec
+    (tras `sdd-clarificar`), el plan, la lista de tareas y cualquier cambio en ellos (`sdd-cambio`
+    con su análisis de impacto, y toda tarea nueva, sea por un bug, un mutante o la validación).
+    Todo lo demás es automático: `sdd-implementar` encadena las tareas sin pedir aprobación de cada
+    diff, y al terminarlas se lanza `sdd-validar`. Los textos que se escriben sin Aceptar/Rechazar
+    (`resumen.md`, `HUMAN_TODO.md`, las marcas y decisiones de `tasks.md`, la entrada de validación)
+    se listan en el informe final. El código se revisa en el PR, que solo se abre si el usuario lo
+    confirma. Paradas obligatorias (detente y pregunta; resuelta la parada, la cadena sigue en modo
+    ligero sin volver a preguntar):
+    - ambigüedad o contradicción en la spec;
+    - una decisión de seguridad o de diseño que la spec o el plan no cubren;
+    - una desviación del plan o la necesidad de tocar un módulo fuera de su alcance;
+    - superar `sdd.max_archivos_tarea` sin una `Excepción:` en la tarea;
+    - añadir dependencias, servicios o infraestructura;
+    - un mutante que sobrevive sin un arreglo claro: un test dentro de los archivos de la tarea que
+      lo mate sin afirmar nada que no esté en la spec o el plan. Un mutante equivalente se anota en
+      el informe y no detiene;
+    - un veredicto de validación distinto de CUMPLIDA: las tareas de corrección y el cierre con
+      riesgo residual los decide el usuario.
+  - **Qué se muestra al pedir una aprobación (en ambos modos).** No se pide aprobar nada que el
+    usuario no haya visto. Antes de cada aprobación, el texto completo que se aprueba (o, si se
+    modifica algo existente, cada cambio con su versión anterior y la nueva) va **en el propio
+    mensaje** de la conversación: no basta con un archivo adjunto, la salida de una herramienta ni
+    un resumen. Si es demasiado largo para un mensaje, se divide en partes y se aprueba parte por
+    parte. Un resumen puede acompañar al texto, nunca sustituirlo. Si el usuario dice que no ha
+    visto lo que se le pide aprobar, esa aprobación no cuenta: se vuelve a mostrar y se vuelve a
+    preguntar. La pregunta de aprobación se hace en ese mismo mensaje, como texto final, y no con
+    una ventana de opciones que pueda ocultar lo que hay que aprobar.
+  - **En ambos modos** se mantienen las reglas de ramas y commits, no acreditarse como IA,
+    `HUMAN_TODO.md`, el `resumen.md` con marco teórico, el test de mutación de cada tarea y que la
+    validación la haga un subagente sin contexto de la implementación (o una sesión nueva si el
+    entorno no admite subagentes; nunca la misma sesión).
 
 ## Al terminar cualquier tarea
 - Ejecutar los tests del área tocada (`pytest` y/o `pnpm --filter frontend test`).
