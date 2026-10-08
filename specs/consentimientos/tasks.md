@@ -272,7 +272,7 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   de tests sin `0003`; el test de que `0003` se aplica sobre `0002` vive ahí.
   Decisiones: el panel fija `_history_user` directamente (`SimpleHistoryAdmin.save_model`) y se saltaba `get_user`; `save()` filtra también ese autor explícito — [Cierto] — revertir: quitar `_filter_explicit_author`. Un staff inactivo no consta como autor — [Probable] — revertir: no exigir `is_active` en `_allowed_author`. El autor de un borrado también se filtra — [Cierto].
 
-- [ ] T-030 Actualizar el resumen tras el cambio H-1
+- [x] T-030 Actualizar el resumen tras el cambio H-1
   RF: — (AGENTS.md) | Depende de: T-028, T-029 | Archivos: 1
   Archivos: `specs/consentimientos/resumen.md`.
   Hecho cuando: el resumen refleja la huella inmutable, el usuario no reasignable, el historial sin

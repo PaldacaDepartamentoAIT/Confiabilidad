@@ -1,5 +1,5 @@
 # Resumen — consentimientos
-Estado: implementada, pendiente de validación · Última actualización: 2026-10-07
+Estado: implementada, pendiente de validación (2.ª ronda, tras el cambio H-1) · Última actualización: 2026-10-08
 
 ## Qué se hizo
 El sistema guarda los textos legales versionados y la prueba de quién los aceptó y cuándo, aunque
@@ -24,9 +24,11 @@ ni API (RF-016). La API futura usará el mismo servicio (`apps/consents/services
   activo (revoca el anterior y crea uno nuevo); como máximo un consentimiento activo por usuario; una
   cuenta inactiva no puede aceptar ni conceder, pero sí revocar (RF-006…RF-011, RF-014).
 - **Huella del correo**: cada aceptación y consentimiento guarda un HMAC-SHA256 del correo
-  normalizado con el secreto `CONSENT_EMAIL_HASH_SECRET`; la calcula siempre el sistema y no cambia
-  si el usuario cambia de correo (RF-012). Al borrar la cuenta, las filas se quedan sin usuario pero
-  con la huella, y un consentimiento de marketing activo sigue activo (RF-013, S-11).
+  normalizado con el secreto `CONSENT_EMAIL_HASH_SECRET`; la calcula siempre el sistema, solo al
+  crear la fila, y después no cambia por ninguna vía, aunque el usuario cambie de correo. El usuario
+  de una fila no se puede reasignar: solo vaciar (RF-012). Al borrar la cuenta, las filas se quedan
+  sin usuario pero con la huella, y un consentimiento de marketing activo sigue activo (RF-013,
+  S-11).
 - **Estado de un usuario**: si tiene los términos aceptados (vale una aceptación en cualquier
   idioma de una versión igual o posterior a la última que exige nueva aceptación; la primera versión
   siempre la exige) y su consentimiento de marketing activo (RF-015, RF-017).
@@ -34,8 +36,11 @@ ni API (RF-016). La API futura usará el mismo servicio (`apps/consents/services
   documentos; el grupo **«Soporte técnico»** (creado por la migración `0002`) y los superusuarios
   ven, crean, editan, revocan y borran aceptaciones y consentimientos; nadie más, aunque tenga los
   permisos de modelo (RF-004, RF-018, RF-019).
-- **Historial** de las tres tablas con autor, consultable en el panel pero sin poder revertirlo
-  (RF-020).
+- **Historial** de las tres tablas, consultable en el panel pero sin poder revertirlo (RF-020). En
+  aceptaciones y consentimientos el historial **no guarda el usuario**, y como autor solo consta un
+  miembro del staff activo distinto del usuario de la fila; si no, la versión queda sin autor. Así,
+  borrada la cuenta, ningún dato directo asocia la prueba a la persona (solo la huella, con el
+  secreto). Borrar la cuenta no añade versión (migración `0003`; hallazgo H-1, S-15).
 
 ### Límites conocidos
 - **Soporte técnico puede fabricar o borrar pruebas** (S-05). El historial deja constancia de quién
@@ -46,9 +51,11 @@ ni API (RF-016). La API futura usará el mismo servicio (`apps/consents/services
   idiomas (si nadie los aceptó), cambiarla y volver a crearlos.
 - **La acción de borrado masivo** rechaza toda la selección (403) si incluye un documento de una
   versión aceptada, también los libres; hay que quitar esos de la selección.
-- **Al borrar una cuenta**, el vaciado del usuario en aceptaciones y consentimientos no aparece en
-  su historial (lo hace la base de datos con `SET_NULL`); el borrado sí queda en el historial del
-  usuario.
+- **El correo de una cuenta borrada sigue en el historial del usuario** (`usuario-personalizado`),
+  cuya retención es de otra feature. Desde las pruebas de consentimiento ya no se llega a él por un
+  dato directo, pero las fechas de aceptación podrían cruzarse con las de ese historial (S-15).
+- **El historial no dice quién aceptó**: cuando acepta el propio usuario, la versión queda sin
+  autor; esa información solo está en la fila viva (mientras exista la cuenta) y en la huella.
 - **Un consentimiento de marketing activo de una cuenta borrada** ya solo lo puede revocar soporte,
   y si la persona vuelve a registrarse con el mismo correo puede tener dos activos con la misma
   huella, uno sin usuario (S-11).
@@ -60,7 +67,9 @@ ni API (RF-016). La API futura usará el mismo servicio (`apps/consents/services
   la base de datos, pero ningún test la ejerce con transacciones reales.
 - Los textos nuevos están marcados para traducción, pero `makemessages` no se ha ejecutado.
 - Durante la feature, `0001_initial` se regeneró varias veces: si aplicaste una versión intermedia
-  de la rama, deshaz `consents` (`migrate consents zero`) antes de migrar.
+  de la rama anterior a `0003`, deshaz `consents` (`migrate consents zero`) antes de migrar. La
+  `0003` borra para siempre los usuarios que ya hubiera en el historial de aceptaciones y
+  consentimientos (C-16).
 
 ## Cómo probarlo
 Requisitos: Docker y la rama `feat/consentimientos`. En el VPS sigue *Actualizar* y *Migraciones*
@@ -98,7 +107,10 @@ de la sección *Entorno remoto* del README. En los pasos, `M` abrevia
 9. Soporte técnico: crea en el panel un usuario staff, añádelo al grupo **Soporte técnico** y entra
    con él. Verá **Terms acceptances** y **Marketing consents**; selecciona la aceptación de Ana y
    ejecuta la acción **Revoke selected**. En su **History** aparece el cambio con su usuario como
-   autor. Un staff fuera del grupo recibe "403 Forbidden" en esas pantallas.
+   autor, pero ninguna versión muestra el usuario de la aceptación. Si editas la aceptación y le
+   pones otro usuario, el formulario responde "The user of an existing record cannot be changed.";
+   dejarlo vacío sí se guarda y conserva la huella. Un staff fuera del grupo recibe
+   "403 Forbidden" en esas pantallas.
 10. Exige una nueva aceptación. Vuelve a aceptar la `1` (soporte la revocó en el paso 9):
     `C accept-terms ana@example.com --version 1 --locale es`. Crea después la versión `2` de
     términos en los tres idiomas, con "Requires reacceptance" marcado y fecha de ayer.
@@ -123,6 +135,15 @@ borrar la cuenta vacía el usuario de la prueba pero la conserva con su huella (
 documento aceptado no se puede borrar (`PROTECT`). La prueba sobrevive a la cuenta sin guardar el
 correo en claro.
 
+### Dato directo y seudonimización
+**Seudonimizar** es sustituir lo que identifica a una persona por algo que solo se puede volver a
+asociar con información guardada aparte (aquí, el secreto de la huella). Un **dato directo** es una
+referencia a la persona, como su usuario o su identificador: si el historial de aceptaciones lo
+guardara, bastaría cruzarlo con el historial del usuario (que conserva el correo) para saber quién
+aceptó, sin necesidad del secreto. Por eso ese historial no guarda el usuario, la huella no se puede
+cambiar y el propio usuario nunca consta como autor. Las fechas no son datos directos, aunque
+podrían servir para cruzar información.
+
 ### Versión, entrada en vigor y vigente
 Una **versión** es el mismo texto legal en los tres idiomas. **Entra en vigor** cuando están
 publicados los tres, en la fecha del último. La **vigente** es la última que entró en vigor. Las
@@ -141,7 +162,8 @@ evita además cambiar su fecha de entrada en vigor, que depende de los tres idio
 
 ### Markdown sin HTML (XSS)
 El contenido se muestra en la web. Si admitiera HTML, un `<script>` o un `<img onerror=…>` se
-ejecutaría en el navegador de quien lo lee (XSS). Markdown permite títulos, listas y enlaces sin
+ejecutaría en el navegador de quien lo lee (XSS). Ojo: los navegadores aceptan `/` en lugar de un
+espacio entre la etiqueta y sus atributos (`<svg/onload=…>`), y el validador también lo rechaza. Markdown permite títulos, listas y enlaces sin
 HTML, y el backend rechaza cualquier etiqueta; el frontend debe mostrarlo como Markdown sin
 interpretar HTML.
 
