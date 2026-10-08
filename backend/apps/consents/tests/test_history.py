@@ -202,3 +202,39 @@ def test_an_explicit_author_is_filtered_too(
 
     authors = model.history.filter(id=record.pk).order_by("history_date")
     assert [version.history_user for version in authors] == [None, support]
+
+
+@pytest.mark.parametrize("model", RECORD_MODELS)
+@pytest.mark.parametrize("explicit", [False, True])
+def test_the_owner_clearing_their_own_user_is_not_recorded_as_author(
+    model: type[UserTerms | MarketingConsent],
+    explicit: bool,
+    as_request_user: Callable[[User], None],
+) -> None:
+    owner = make_user(is_staff=True)
+    record = _record(model, user=owner)
+    record.save()
+
+    record.user = None
+    if explicit:
+        record._history_user = owner  # type: ignore[union-attr]
+    else:
+        as_request_user(owner)
+    record.save()
+
+    assert _last_author(record) is None
+
+
+@pytest.mark.parametrize("model", RECORD_MODELS)
+def test_another_staff_clearing_the_user_is_recorded_as_author(
+    model: type[UserTerms | MarketingConsent], as_request_user: Callable[[User], None]
+) -> None:
+    record = _record(model, user=make_user(is_staff=True))
+    record.save()
+    support = make_user(is_staff=True)
+    as_request_user(support)
+
+    record.user = None
+    record.save()
+
+    assert _last_author(record) == support

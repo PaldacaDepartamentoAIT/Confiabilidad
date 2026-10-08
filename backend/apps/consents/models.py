@@ -119,13 +119,21 @@ def _allowed_author(record: Any, author: Any) -> Any:
     # Autor del historial: solo staff activo y nunca el usuario de la fila (RF-020).
     if author is None or not (author.is_staff and author.is_active):
         return None
-    if author.pk == record.user_id:
+    if author.pk in (record.user_id, getattr(record, "_stored_user_id", None)):
         return None
     return author
 
 
 def _history_author(instance: Any, request: Any = None, **kwargs: Any) -> Any:
     return _allowed_author(instance, getattr(request, "user", None))
+
+
+def _remember_stored_user(record: Any) -> None:
+    # Al vaciar el usuario, el dueño anterior tampoco puede constar como autor (RF-020).
+    if not record._state.adding:
+        record._stored_user_id = (
+            type(record).objects.filter(pk=record.pk).values_list("user_id", flat=True).get()
+        )
 
 
 def _filter_explicit_author(record: Any) -> None:
@@ -171,6 +179,7 @@ class UserTerms(models.Model):
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         _refresh_email_hash(self)
+        _remember_stored_user(self)
         _filter_explicit_author(self)
         self.full_clean()
         super().save(*args, **kwargs)
@@ -225,6 +234,7 @@ class MarketingConsent(models.Model):
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         _refresh_email_hash(self)
+        _remember_stored_user(self)
         _filter_explicit_author(self)
         self.full_clean()
         super().save(*args, **kwargs)

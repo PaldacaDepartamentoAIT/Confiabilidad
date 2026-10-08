@@ -280,7 +280,7 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   directo») están al día, y se quita el límite del vaciado sin versión, que ahora es el
   comportamiento pedido.
 
-- [ ] T-031 Corrección: no registrar como autor al usuario que vacía su propia fila
+- [x] T-031 Corrección: no registrar como autor al usuario que vacía su propia fila
   Tipo: corrección | Origen: validación de RF-020
   RF: RF-020 | Depende de: — | Archivos: 2
   Archivos: `models.py`, `tests/test_history.py`.
@@ -289,6 +289,7 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   Hecho cuando: en las dos tablas, si un staff vacía el usuario de su propia fila (también desde
   el panel), la versión `~` queda sin autor; si lo vacía otro staff, queda con él; en filas
   existentes se compara también con el `user_id` guardado; la suite completa sigue en verde.
+  Decisiones: `save()` recuerda el `user_id` guardado antes de escribir (`_stored_user_id`), porque el autor se resuelve después del guardado, cuando la fila ya está vacía; el filtro excluye tanto al usuario nuevo como al guardado — [Cierto] — revertir: quitar `_remember_stored_user`.
 
 - [ ] T-032 Corrección: el test de desempate de la versión vigente distingue el orden de creación del alfabético
   Tipo: corrección | Origen: validación de RF-003
