@@ -280,5 +280,24 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   directo») están al día, y se quita el límite del vaciado sin versión, que ahora es el
   comportamiento pedido.
 
+- [ ] T-031 Corrección: no registrar como autor al usuario que vacía su propia fila
+  Tipo: corrección | Origen: validación de RF-020
+  RF: RF-020 | Depende de: — | Archivos: 2
+  Archivos: `models.py`, `tests/test_history.py`.
+  Causa: `_allowed_author` compara con el `user_id` nuevo; al vaciar el usuario, el dueño (si es
+  staff activo) queda como autor, tanto por `_history_user` (panel) como por `get_user`.
+  Hecho cuando: en las dos tablas, si un staff vacía el usuario de su propia fila (también desde
+  el panel), la versión `~` queda sin autor; si lo vacía otro staff, queda con él; en filas
+  existentes se compara también con el `user_id` guardado; la suite completa sigue en verde.
+
+- [ ] T-032 Corrección: el test de desempate de la versión vigente distingue el orden de creación del alfabético
+  Tipo: corrección | Origen: validación de RF-003
+  RF: RF-003 | Depende de: — | Archivos: 1
+  Archivos: `tests/test_versions.py`.
+  Causa: el escenario crea "b" antes que "a", así que un orden alfabético también lo pasa.
+  Hecho cuando: el test cubre también el caso en que la versión creada más tarde va después
+  alfabéticamente ("a" y luego "b"; se espera "b"); un mutante que ordena por la etiqueta lo hace
+  fallar; la suite sigue en verde.
+
 ## RF sin tarea
 Ninguno.
