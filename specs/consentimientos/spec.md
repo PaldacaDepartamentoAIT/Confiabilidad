@@ -239,4 +239,4 @@ de administración.
 - 2026-10-08 — Clarificación del cambio (C-12…C-16): nunca el propio usuario como autor; tampoco se
   asigna usuario a una fila sin él; el vaciado por borrado de la cuenta no genera versión (descarta
   la corrección T-026); los usuarios ya guardados en el historial se eliminan — RF: RF-012, RF-020
-  ajustados; S-15 ajustado — Estado: clarificado
+  ajustados; S-15 ajustado — Estado: impacto analizado
