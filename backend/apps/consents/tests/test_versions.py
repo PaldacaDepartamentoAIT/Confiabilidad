@@ -125,3 +125,14 @@ def test_current_document_belongs_to_the_requested_kind() -> None:
     marketing = publish_version(kind=Terms.Kind.MARKETING, version="1")
 
     assert current_document(Terms.Kind.MARKETING, "es") == marketing["es"]
+
+
+def test_on_the_same_date_creation_order_wins_over_alphabetical_order() -> None:
+    published_at = timezone.now() - DAY
+    publish_version(version="a", published_at=published_at)
+    publish_version(version="b", published_at=published_at)
+
+    current = current_version(Terms.Kind.TERMS)
+
+    assert current is not None
+    assert current.version == "b"

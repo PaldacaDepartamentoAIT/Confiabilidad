@@ -291,7 +291,7 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   existentes se compara también con el `user_id` guardado; la suite completa sigue en verde.
   Decisiones: `save()` recuerda el `user_id` guardado antes de escribir (`_stored_user_id`), porque el autor se resuelve después del guardado, cuando la fila ya está vacía; el filtro excluye tanto al usuario nuevo como al guardado — [Cierto] — revertir: quitar `_remember_stored_user`.
 
-- [ ] T-032 Corrección: el test de desempate de la versión vigente distingue el orden de creación del alfabético
+- [x] T-032 Corrección: el test de desempate de la versión vigente distingue el orden de creación del alfabético
   Tipo: corrección | Origen: validación de RF-003
   RF: RF-003 | Depende de: — | Archivos: 1
   Archivos: `tests/test_versions.py`.
@@ -299,6 +299,7 @@ en cada tarea que cambia el esquema, para que al final queden solo las dos migra
   Hecho cuando: el test cubre también el caso en que la versión creada más tarde va después
   alfabéticamente ("a" y luego "b"; se espera "b"); un mutante que ordena por la etiqueta lo hace
   fallar; la suite sigue en verde.
+  Decisiones: el test nuevo pasó a la primera, porque el código ya era correcto (lo confirmó la validación); que mata el orden por etiqueta se comprobó con dos mutantes (`key` y `-key`) — [Cierto].
 
 ## RF sin tarea
 Ninguno.
