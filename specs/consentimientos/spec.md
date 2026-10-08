@@ -1,5 +1,5 @@
 # Spec: consentimientos
-Estado: borrador
+Estado: aprobada
 Aprobación: ligera
 
 ## Objetivo (por qué)
@@ -95,9 +95,9 @@ final y en minúsculas), con un secreto del servidor, de forma que no se pueda r
 sin ese secreto aunque se disponga de la base de datos, y que el mismo correo produzca siempre la
 misma huella. La huella se calcula solo al crear la fila, nunca se introduce a mano y no se podrá
 modificar después por ninguna vía (tampoco desde el panel), aunque el usuario cambie su correo. Si
-se intenta crear una fila sin usuario, entonces el sistema deberá rechazarla. Si se intenta cambiar
-el usuario de una fila existente por otro usuario, entonces el sistema deberá rechazarlo; solo se
-permite vaciarlo, y la huella se conserva.
+se intenta crear una fila sin usuario, entonces el sistema deberá rechazarla. Si se intenta asignar
+otro usuario a una fila existente, entonces el sistema deberá rechazarlo, también si la fila ya no
+tiene usuario; solo se permite vaciarlo, y la huella se conserva.
 
 ### RF-013 Conservación al borrar la cuenta
 Cuando se borre físicamente un usuario, el sistema deberá conservar sus aceptaciones de términos y
@@ -147,9 +147,11 @@ entonces el sistema deberá impedirlo.
 Cuando se cree, modifique o borre un documento, una aceptación de términos o un consentimiento de
 marketing, el sistema deberá registrar una versión con todos sus datos, la fecha, el tipo de cambio
 (alta, modificación o borrado) y quién lo hizo, si se conoce. En el historial de aceptaciones y
-consentimientos no se deberá guardar el usuario ni ningún dato que permita llegar a su correo sin
-el secreto de RF-012: solo se registra como autor a un miembro del staff, nunca al propio usuario
-de la fila. El historial se deberá conservar tras el borrado y no se podrá modificar desde el panel
+consentimientos no se deberá guardar el usuario de la fila, y solo se registrará como autor a un
+miembro del staff distinto de ese usuario; si el autor es el propio usuario de la fila, la versión
+quedará sin autor. Así, una vez borrada la cuenta, ningún dato directo (la huella no cuenta)
+permite asociar la prueba a la persona. El vaciado del usuario al borrar la cuenta no genera
+versión. El historial se deberá conservar tras el borrado y no se podrá modificar desde el panel
 de administración.
 
 ## Supuestos
@@ -196,10 +198,11 @@ de administración.
 - S-15 Hallazgo H-1 de la validación (2026-10-08): el historial del usuario (`usuario-personalizado`)
   guarda su correo en claro, también tras borrar la cuenta. Para que no se pueda llegar a él desde
   las pruebas de consentimiento, el historial de aceptaciones y consentimientos no guarda el usuario
-  ni lo registra como autor (RF-020), y la huella es inmutable (RF-012). *Riesgo residual:* la fila
-  viva conserva el usuario mientras la cuenta existe, y las fechas de aceptación podrían cruzarse
-  con las fechas del historial del usuario; el correo de las cuentas borradas sigue en el historial
-  del usuario, cuya retención es de otra feature.
+  ni lo registra como autor (RF-020), y la huella es inmutable (RF-012). «Dato directo» es una
+  referencia a la persona (su usuario o su identificador); las fechas no lo son (C-13). *Riesgo
+  residual:* la fila viva conserva el usuario mientras la cuenta existe, y las fechas de aceptación
+  podrían cruzarse con las del historial del usuario; el correo de las cuentas borradas sigue en el
+  historial del usuario, cuya retención es de otra feature.
 
 ## Fuera de alcance
 - API, pantallas y textos mostrados al usuario final (S-01).
@@ -232,4 +235,8 @@ de administración.
   RF-017…RF-020 añadidos; S-02, S-04…S-08 ajustados; S-11…S-14 añadidos — Estado: clarificado
 - 2026-10-08 — Cambio por el hallazgo H-1 de la validación: huella inmutable, sin cambiar el
   usuario de una fila; el historial de aceptaciones y consentimientos no guarda el usuario ni lo
-  registra como autor — RF: RF-012, RF-019, RF-020; S-15 añadido — Estado: pendiente de clarificar
+  registra como autor — RF: RF-012, RF-019, RF-020; S-15 añadido — Estado: clarificado
+- 2026-10-08 — Clarificación del cambio (C-12…C-16): nunca el propio usuario como autor; tampoco se
+  asigna usuario a una fila sin él; el vaciado por borrado de la cuenta no genera versión (descarta
+  la corrección T-026); los usuarios ya guardados en el historial se eliminan — RF: RF-012, RF-020
+  ajustados; S-15 ajustado — Estado: clarificado
