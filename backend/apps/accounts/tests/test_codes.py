@@ -180,3 +180,50 @@ def test_code_is_drawn_from_the_full_six_digit_range(monkeypatch: pytest.MonkeyP
 
     assert codes.generate_code() == "999999"
     assert upper_bounds == [10**6]
+
+
+PASSWORD_HASH = "pbkdf2_sha256$870000$salt$hash="
+
+
+@override_settings(REGISTRATION_CODE_SECRET="secret-a")
+def test_account_stamp_is_hmac_of_lowercase_email_and_password_hash() -> None:
+    message = f"password_reset_account:ana@x.com:{PASSWORD_HASH}".encode()
+    expected = hmac.new(b"secret-a", message, hashlib.sha256).hexdigest()
+
+    stamp = codes.account_stamp("Ana@X.com", PASSWORD_HASH)
+
+    assert stamp == expected
+    assert re.fullmatch(r"[0-9a-f]{64}", stamp)
+    assert "ana" not in stamp
+
+
+def test_account_stamp_changes_with_email_and_password_hash() -> None:
+    base = codes.account_stamp("ana@x.com", PASSWORD_HASH)
+
+    assert codes.account_stamp("ANA@x.com", PASSWORD_HASH) == base
+    assert codes.account_stamp("ana@y.com", PASSWORD_HASH) != base
+    assert codes.account_stamp("ana@x.com", PASSWORD_HASH + "x") != base
+
+
+def test_account_stamp_matches_only_the_same_email_and_password_hash() -> None:
+    stamp = codes.account_stamp("ana@x.com", PASSWORD_HASH)
+
+    assert codes.account_stamp_matches(stamp, "Ana@X.com", PASSWORD_HASH)
+    assert not codes.account_stamp_matches(stamp, "ana@y.com", PASSWORD_HASH)
+    assert not codes.account_stamp_matches(stamp, "ana@x.com", "other-hash")
+
+
+def test_account_stamp_with_previous_secret_matches_only_during_transition() -> None:
+    with override_settings(REGISTRATION_CODE_SECRET="old-secret"):
+        stamp = codes.account_stamp("ana@x.com", PASSWORD_HASH)
+    with _rotation(30):
+        assert codes.account_stamp_matches(stamp, "ana@x.com", PASSWORD_HASH)
+        assert not codes.account_stamp_matches(stamp, "ana@y.com", PASSWORD_HASH)
+    with _rotation(61):
+        assert not codes.account_stamp_matches(stamp, "ana@x.com", PASSWORD_HASH)
+
+
+def test_account_stamp_is_not_a_code_fingerprint() -> None:
+    stamp = codes.account_stamp("ana@x.com", "123456")
+
+    assert not codes.verify_code(RESET, "account", "ana@x.com:123456", stamp)

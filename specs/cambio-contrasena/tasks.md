@@ -21,7 +21,7 @@ esquema, para que al final quede una sola migración (M-07).
   archivos de tests del registro; es un cambio mecánico que no se puede separar sin dejar la suite
   rota entre tareas.
 
-- [ ] T-002 Huella de la cuenta
+- [x] T-002 Huella de la cuenta
   RF: RF-014, RF-015 (D-04) | Depende de: T-001 | Archivos: 2
   Archivos: `codes.py`, `tests/test_codes.py`.
   Hecho cuando: `account_stamp(email, password_hash)` es el HMAC-SHA256 de

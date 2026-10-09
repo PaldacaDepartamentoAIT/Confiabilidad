@@ -28,22 +28,39 @@ def generate_public_id() -> str:
             return public_id
 
 
-def _fingerprint(secret: str, purpose: Purpose, public_id: str, code: str) -> str:
-    message = f"{purpose}:{public_id}:{code}".encode()
-    return hmac.new(secret.encode(), message, hashlib.sha256).hexdigest()
+def _sign(secret: str, message: str) -> str:
+    return hmac.new(secret.encode(), message.encode(), hashlib.sha256).hexdigest()
+
+
+def _matches(message: str, fingerprint: str) -> bool:
+    if hmac.compare_digest(_sign(conf.code_secret(), message), fingerprint):
+        return True
+    previous = _previous_secret_in_transition()
+    return previous is not None and hmac.compare_digest(_sign(previous, message), fingerprint)
+
+
+def _code_message(purpose: Purpose, public_id: str, code: str) -> str:
+    return f"{purpose}:{public_id}:{code}"
 
 
 def code_fingerprint(purpose: Purpose, public_id: str, code: str) -> str:
-    return _fingerprint(conf.code_secret(), purpose, public_id, code)
+    return _sign(conf.code_secret(), _code_message(purpose, public_id, code))
 
 
 def verify_code(purpose: Purpose, public_id: str, code: str, fingerprint: str) -> bool:
-    if hmac.compare_digest(code_fingerprint(purpose, public_id, code), fingerprint):
-        return True
-    previous = _previous_secret_in_transition()
-    return previous is not None and hmac.compare_digest(
-        _fingerprint(previous, purpose, public_id, code), fingerprint
-    )
+    return _matches(_code_message(purpose, public_id, code), fingerprint)
+
+
+def _account_message(email: str, password_hash: str) -> str:
+    return f"password_reset_account:{email.lower()}:{password_hash}"
+
+
+def account_stamp(email: str, password_hash: str) -> str:
+    return _sign(conf.code_secret(), _account_message(email, password_hash))
+
+
+def account_stamp_matches(stamp: str, email: str, password_hash: str) -> bool:
+    return _matches(_account_message(email, password_hash), stamp)
 
 
 def _previous_secret_in_transition() -> str | None:
