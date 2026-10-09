@@ -2,12 +2,14 @@ from datetime import date, timedelta
 from typing import Any
 
 import pytest
+from allauth.account.models import EmailAddress
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.utils import timezone
 
 from apps.accounts import codes, password_reset, registration
 from apps.accounts.models import PasswordResetRequest, User
-from apps.accounts.tests.factories import make_user
+from apps.accounts.tests.factories import DEFAULT_PASSWORD, make_user
 
 pytestmark = pytest.mark.django_db
 
@@ -293,3 +295,160 @@ def test_email_case_change_alone_does_not_block(user: User) -> None:
     assert password_reset.verify(public_id=started.public_id, code=started.code) == (
         VerifyResult.VERIFIED
     )
+
+
+GOOD_PASSWORD = "Kq7#mZ2!vR9p"
+CompleteRefusal = password_reset.CompleteRefusal
+
+
+def _validated() -> password_reset.Started:
+    started = _started()
+    assert password_reset.verify(public_id=started.public_id, code=started.code) == (
+        VerifyResult.VERIFIED
+    )
+    return started
+
+
+def _account() -> User:
+    return User.objects.get(email=EMAIL)
+
+
+def test_complete_sets_the_password_verifies_the_email_and_deletes_the_request(
+    user: User,
+) -> None:
+    started = _validated()
+
+    result = password_reset.complete(public_id=started.public_id, password=GOOD_PASSWORD)
+
+    assert result == password_reset.Completed(user=user)
+    assert _account().check_password(GOOD_PASSWORD)
+    assert not PasswordResetRequest.objects.exists()
+    address = EmailAddress.objects.get(user=user)
+    assert (address.email, address.verified, address.primary) == (EMAIL, True, True)
+
+
+def test_complete_verifies_an_existing_unverified_address(user: User) -> None:
+    EmailAddress.objects.create(user=user, email=EMAIL, verified=False, primary=True)
+    started = _validated()
+
+    password_reset.complete(public_id=started.public_id, password=GOOD_PASSWORD)
+
+    address = EmailAddress.objects.get(user=user)
+    assert (address.email, address.verified, address.primary) == (EMAIL, True, True)
+
+
+def test_complete_does_not_steal_the_primary_flag(user: User) -> None:
+    EmailAddress.objects.create(user=user, email="old@x.com", verified=True, primary=True)
+    started = _validated()
+
+    password_reset.complete(public_id=started.public_id, password=GOOD_PASSWORD)
+
+    new = EmailAddress.objects.get(user=user, email=EMAIL)
+    assert (new.verified, new.primary) == (True, False)
+    assert EmailAddress.objects.get(user=user, email="old@x.com").primary
+
+
+def test_complete_accepts_the_current_password(user: User) -> None:
+    _change_password_to(user, GOOD_PASSWORD)
+    started = _validated()
+
+    result = password_reset.complete(public_id=started.public_id, password=GOOD_PASSWORD)
+
+    assert isinstance(result, password_reset.Completed)
+    assert _account().check_password(GOOD_PASSWORD)
+
+
+def _change_password_to(user: User, password: str) -> None:
+    user.set_password(password)
+    user.save()
+
+
+@pytest.mark.parametrize(
+    ("password", "codes_expected"),
+    [
+        ("12345678", {"password_too_short", "password_too_common", "password_entirely_numeric"}),
+        ("anagarcía1990", {"password_too_similar"}),
+        ("ana@x.com.1990", {"password_too_similar"}),
+    ],
+)
+def test_complete_rejects_a_password_against_the_policy(
+    user: User, password: str, codes_expected: set[str]
+) -> None:
+    started = _validated()
+
+    with pytest.raises(ValidationError) as excinfo:
+        password_reset.complete(public_id=started.public_id, password=password)
+
+    assert codes_expected <= {error.code for error in excinfo.value.error_list}
+    assert _account().check_password(DEFAULT_PASSWORD)
+    assert _stored().public_id == started.public_id
+    assert not EmailAddress.objects.exists()
+
+
+def test_complete_requires_the_validated_code(user: User) -> None:
+    started = _started()
+
+    assert password_reset.complete(public_id=started.public_id, password=GOOD_PASSWORD) == (
+        CompleteRefusal.CODE_NOT_VERIFIED
+    )
+    assert _account().check_password(DEFAULT_PASSWORD)
+    assert PasswordResetRequest.objects.exists()
+
+
+@pytest.mark.parametrize("aged", [{"code_expires_at": 16}, {"created_at": 61}])
+def test_complete_rejects_an_expired_request(user: User, aged: dict[str, int]) -> None:
+    started = _validated()
+    _age(**aged)
+
+    assert password_reset.complete(public_id=started.public_id, password=GOOD_PASSWORD) == (
+        CompleteRefusal.EXPIRED
+    )
+    assert _account().check_password(DEFAULT_PASSWORD)
+
+
+def test_complete_after_code_expiry_within_the_grace_period(user: User) -> None:
+    started = _validated()
+    _age(code_expires_at=10)
+
+    result = password_reset.complete(public_id=started.public_id, password=GOOD_PASSWORD)
+
+    assert isinstance(result, password_reset.Completed)
+
+
+def test_complete_of_an_unknown_request_is_not_found(user: User) -> None:
+    assert password_reset.complete(public_id="unknown", password=GOOD_PASSWORD) == (
+        CompleteRefusal.NOT_FOUND
+    )
+
+
+@pytest.mark.parametrize(
+    ("change", "refusal"),
+    [
+        (_deactivate, AccountRefusal.INACTIVE),
+        (_change_email, AccountRefusal.ACCOUNT_CHANGED),
+        (_change_password, AccountRefusal.ACCOUNT_CHANGED),
+    ],
+)
+def test_account_changes_block_complete(user: User, change: Any, refusal: AccountRefusal) -> None:
+    started = _validated()
+    change(user)
+    password_before = User.objects.get(pk=user.pk).password
+
+    assert password_reset.complete(public_id=started.public_id, password=GOOD_PASSWORD) == refusal
+
+    assert User.objects.get(pk=user.pk).password == password_before
+    assert _stored().public_id == started.public_id
+    assert not EmailAddress.objects.exists()
+
+
+def test_complete_is_not_found_if_the_request_changed_before_locking(
+    user: User, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    started = _validated()
+    other = make_user()
+    monkeypatch.setattr(password_reset, "_owner_id", lambda _public_id: other.pk)
+
+    assert password_reset.complete(public_id=started.public_id, password=GOOD_PASSWORD) == (
+        CompleteRefusal.NOT_FOUND
+    )
+    assert _account().check_password(DEFAULT_PASSWORD)

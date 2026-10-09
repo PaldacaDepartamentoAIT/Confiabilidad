@@ -95,7 +95,7 @@ esquema, para que al final quede una sola migración (M-07).
   [Probable] — revertir: moverlo a `processes.py` y compartirlo. El bloqueo usa
   `select_for_update(of=("self",))` para no bloquear la fila de la cuenta, según D-05 — [Cierto].
 
-- [ ] T-008 Completar el cambio
+- [x] T-008 Completar el cambio
   RF: RF-008, RF-009, RF-014, RF-015 (D-05, D-07) | Depende de: T-007 | Archivos: 2
   Archivos: `password_reset.py`, `tests/test_password_reset_service.py`.
   Hecho cuando: con el código validado, `complete` fija la contraseña (la cuenta inicia sesión con
@@ -105,6 +105,10 @@ esquema, para que al final quede una sola migración (M-07).
   lanza `ValidationError` con cada regla y conserva la solicitud y la contraseña anterior; se rechaza
   sin cambiar nada con código sin validar, solicitud caducada, cuenta inactiva, correo cambiado o
   contraseña cambiada; suite verde.
+  Decisiones: si la dirección de correo de la cuenta ya existe y está verificada, no se toca
+  (tampoco su marca de principal) — [Cierto] — revertir: forzar `primary=True` en esa dirección.
+  Si la solicitud cambia de cuenta o desaparece entre la lectura sin bloqueo y el bloqueo, se
+  responde `NOT_FOUND` — [Cierto] — revertir: reintentar la lectura.
 
 - [ ] T-009 Contador de inicios fallidos y sesiones abiertas
   RF: RF-009 (D-08, D-12; CF-3) | Depende de: T-008 | Archivos: 2

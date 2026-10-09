@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from enum import StrEnum
 
+from allauth.account.models import EmailAddress
+from django.contrib.auth.password_validation import validate_password
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
@@ -88,6 +90,67 @@ def resend(*, public_id: str) -> Resent | ResendRefusal | AccountRefusal:
         if request.code_validated_at is not None:
             return ResendRefusal.ALREADY_VERIFIED
         return Resent(public_id=public_id, code=processes.renew_code(request, _PURPOSE))
+
+
+@dataclass(frozen=True)
+class Completed:
+    user: User
+
+
+class CompleteRefusal(StrEnum):
+    NOT_FOUND = "not_found"
+    EXPIRED = "expired"
+    CODE_NOT_VERIFIED = "code_not_verified"
+
+
+def complete(*, public_id: str, password: str) -> Completed | CompleteRefusal | AccountRefusal:
+    user_id = _owner_id(public_id)
+    if user_id is None:
+        return CompleteRefusal.NOT_FOUND
+    with transaction.atomic():
+        # Cuenta antes que solicitud, el mismo orden que en start, para no interbloquearse.
+        user = User.objects.select_for_update().filter(pk=user_id).first()
+        request = (
+            PasswordResetRequest.objects.select_for_update()
+            .filter(public_id=public_id, user=user)
+            .first()
+        )
+        if user is None or request is None:
+            return CompleteRefusal.NOT_FOUND
+        if request.is_expired:
+            return CompleteRefusal.EXPIRED
+        refusal = _account_refusal(request)
+        if refusal is not None:
+            return refusal
+        if request.code_validated_at is None:
+            return CompleteRefusal.CODE_NOT_VERIFIED
+        validate_password(password, user=user)
+        user.set_password(password)
+        user.save(update_fields=["password"])
+        _mark_email_verified(user)
+        request.delete()
+        return Completed(user=user)
+
+
+def _owner_id(public_id: str) -> int | None:
+    owner: int | None = (
+        PasswordResetRequest.objects.filter(public_id=public_id)
+        .values_list("user_id", flat=True)
+        .first()
+    )
+    return owner
+
+
+def _mark_email_verified(user: User) -> None:
+    address = EmailAddress.objects.filter(user=user, email__iexact=user.email).first()
+    if address is None:
+        has_primary = EmailAddress.objects.filter(user=user, primary=True).exists()
+        EmailAddress.objects.create(
+            user=user, email=user.email, verified=True, primary=not has_primary
+        )
+    elif not address.verified:
+        address.verified = True
+        address.save(update_fields=["verified"])
 
 
 def _locked_by_public_id(public_id: str) -> PasswordResetRequest | None:
