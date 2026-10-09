@@ -53,31 +53,64 @@ contra el servicio real y `makemessages` sin ejecutar. Se detallan abajo.
 
 ## Cómo probarlo
 Requisitos: Docker y la rama `feat/procesos-pendientes`. En el VPS sigue *Actualizar* y
-*Migraciones* de la sección *Entorno remoto* del README.
+*Migraciones* de la sección *Entorno remoto* del README. Todos los comandos se ejecutan desde la
+raíz del repositorio.
 
-1. Levanta la base de datos y Redis, y aplica las migraciones. Deberías ver
-   `accounts.0005_pendingregistration... OK`:
-   `docker compose -f docker/docker-compose.yml up -d db redis`
-   `docker compose -f docker/docker-compose.yml run --rm backend python manage.py migrate`
-   En los pasos siguientes, `R` abrevia
-   `docker compose -f docker/docker-compose.yml run --rm backend python manage.py registration`.
-2. Inicia un registro. Verás dos líneas, `public_id: …` y `code: …` (6 dígitos); anótalas:
-   `R start --email Ana@Example.com --name "Ana García" --birthdate 1990-05-10 --country es`
-   Con `--country XX` o `--birthdate 2020-01-01` verás el error de ese campo.
-3. Prueba un código erróneo: `R verify <public_id> 000000` → `Wrong code.`
-4. Pide un código nuevo: `R resend <public_id>` → el mismo `public_id` y otro `code`.
-5. Verifica el código nuevo: `R verify <public_id> <code>` → `Code verified.`
+1. Levanta la base de datos y Redis:
+   ```bash
+   docker compose -f docker/docker-compose.yml up -d db redis
+   ```
+   Aplica las migraciones:
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py migrate
+   ```
+   Deberías ver `accounts.0005_pendingregistration... OK`.
+2. Inicia un registro:
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py registration start --email Ana@Example.com --name "Ana García" --birthdate 1990-05-10 --country es
+   ```
+   Verás dos líneas, `public_id: …` y `code: …` (6 dígitos). Anótalas: en los pasos siguientes,
+   `<PUBLIC_ID>` y `<CODE>` son esos valores. Con `--country XX` o `--birthdate 2020-01-01` verás
+   el error de ese campo.
+3. Prueba un código erróneo:
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py registration verify <PUBLIC_ID> 000000
+   ```
+   Deberías ver `Wrong code.`
+4. Pide un código nuevo:
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py registration resend <PUBLIC_ID>
+   ```
+   Verás el mismo `public_id` y otro `code`: desde aquí, `<CODE>` es el nuevo.
+5. Verifica el código nuevo:
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py registration verify <PUBLIC_ID> <CODE>
+   ```
+   Deberías ver `Code verified.`
 6. Completa el registro. Primero con una contraseña débil, para ver cada regla incumplida:
-   `R complete <public_id> --password 12345678`
-   Después sin `--password`: te pedirá la contraseña sin mostrarla (usa 12 caracteres o más):
-   `docker compose -f docker/docker-compose.yml run --rm backend python manage.py registration complete <public_id>`
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py registration complete <PUBLIC_ID> --password 12345678
+   ```
+   Después sin `--password`. Te pedirá la contraseña sin mostrarla; usa 12 caracteres o más:
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py registration complete <PUBLIC_ID>
+   ```
    Verás `account: ana@example.com`.
-7. Repite el paso 2: ahora responde `An account with this email already exists.`
-8. Comprueba que la cuenta inicia sesión (debe imprimir `200`):
-   `docker compose -f docker/docker-compose.yml run --rm backend python manage.py shell -c "from django.test import Client; print(Client().post('/_allauth/app/v1/auth/login', data={'email': 'ana@example.com', 'password': 'TU-CONTRASEÑA'}, content_type='application/json', HTTP_HOST='localhost').status_code)"`
-9. Purga los caducados: `R purge` → `deleted: N`.
+7. Repite el comando del paso 2: ahora responde `An account with this email already exists.`
+8. Comprueba que la cuenta inicia sesión. `<PASSWORD>` es la contraseña que fijaste en el paso 6:
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py shell -c "from django.test import Client; print(Client().post('/_allauth/app/v1/auth/login', data={'email': 'ana@example.com', 'password': '<PASSWORD>'}, content_type='application/json', HTTP_HOST='localhost').status_code)"
+   ```
+   Debe imprimir `200`.
+9. Purga los caducados:
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py registration purge
+   ```
+   Verás `deleted: N`.
 10. Ejecuta la suite completa (cobertura mínima 80 % sobre todo el proyecto):
-    `docker compose -f docker/docker-compose.yml run --rm backend pytest -q`
+    ```bash
+    docker compose -f docker/docker-compose.yml run --rm backend pytest -q
+    ```
 
 ## Marco teórico
 ### Huella del código (HMAC)
