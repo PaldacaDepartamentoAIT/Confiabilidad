@@ -565,3 +565,28 @@ def test_public_ids_do_not_cross_between_processes(user: User) -> None:
         assert getattr(pending_after, field) == getattr(pending_before, field)
     assert _account().check_password(DEFAULT_PASSWORD)
     assert list(User.objects.values_list("email", flat=True)) == [EMAIL]
+
+
+def _rotated(transition_minutes: int) -> override_settings:
+    return override_settings(
+        REGISTRATION_CODE_SECRET="new-secret",
+        REGISTRATION_CODE_SECRET_PREVIOUS="old-secret",
+        REGISTRATION_CODE_SECRET_ROTATED_AT=(timezone.now() - timedelta(minutes=30)).isoformat(),
+        REGISTRATION_SECRET_TRANSITION_MINUTES=transition_minutes,
+    )
+
+
+def test_secret_transition_follows_the_shared_setting(user: User) -> None:
+    with override_settings(REGISTRATION_CODE_SECRET="old-secret"):
+        started = _started()
+
+    with _rotated(20):
+        assert password_reset.verify(public_id=started.public_id, code=started.code) == (
+            AccountRefusal.ACCOUNT_CHANGED
+        )
+    assert _stored().code_validated_at is None
+
+    with _rotated(120):
+        assert password_reset.verify(public_id=started.public_id, code=started.code) == (
+            VerifyResult.VERIFIED
+        )

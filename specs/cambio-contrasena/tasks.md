@@ -207,7 +207,7 @@ esquema, para que al final quede una sola migración (M-07).
   `password_reset.complete`, sin modificar ninguno de los dos procesos; la suite completa sigue en
   verde.
 
-- [ ] T-018 Corrección: el periodo de transición del secreto también rige el cambio de contraseña
+- [x] T-018 Corrección: el periodo de transición del secreto también rige el cambio de contraseña
   Tipo: corrección | Origen: validación de RF-012
   RF: RF-012 | Depende de: — | Archivos: 1
   Archivos: `tests/test_password_reset_service.py`.
@@ -215,6 +215,9 @@ esquema, para que al final quede una sola migración (M-07).
   Hecho cuando: con una solicitud emitida con el secreto anterior, `password_reset.verify` rechaza
   el código con una rotación de hace 30 min y una transición de 20, y lo acepta (`VERIFIED`) con una
   transición de 120; la suite completa sigue en verde.
+  Decisiones: fuera de la transición el rechazo sale como `ACCOUNT_CHANGED`, no como código erróneo,
+  porque la huella de la cuenta también se firmó con el secreto anterior y se comprueba antes que el
+  código (D-04) — [Cierto] — revertir: comprobar el código antes que la cuenta.
 
 ## RF sin tarea
 Ninguno.
