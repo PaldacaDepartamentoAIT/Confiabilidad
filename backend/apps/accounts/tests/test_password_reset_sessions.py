@@ -3,8 +3,12 @@ from collections.abc import Callable
 from typing import Any
 
 import pytest
+from allauth.account import app_settings as allauth_account_settings
+from allauth.core.internal import ratelimit as allauth_ratelimit
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.http import HttpRequest
 from django.test import Client
 
 from apps.accounts import password_reset
@@ -119,3 +123,29 @@ def test_a_rolled_back_completion_keeps_the_failed_login_counter(
 
     assert User.objects.get(pk=user.pk).check_password(DEFAULT_PASSWORD)
     assert _app_login(client, user.email, DEFAULT_PASSWORD).status_code != 200
+
+
+def _ip_failed_logins(client: Client) -> Any:
+    request = HttpRequest()
+    request.META["REMOTE_ADDR"] = client.defaults["REMOTE_ADDR"]
+    rates = allauth_ratelimit.parse_rates(allauth_account_settings.RATE_LIMITS["login_failed"])
+    ip_rates = [rate for rate in rates if rate.per == "ip"]
+    assert ip_rates
+    return [
+        cache.get(allauth_ratelimit.get_cache_key(request, action="login_failed", rate=rate))
+        for rate in ip_rates
+    ]
+
+
+def test_completing_keeps_the_failed_login_counter_by_ip(
+    user: User, client: Client, django_capture_on_commit_callbacks: CaptureOnCommit
+) -> None:
+    _lock_out(client, user)
+    before = _ip_failed_logins(client)
+    assert all(before)
+    public_id = _validated(user)
+
+    with django_capture_on_commit_callbacks(execute=True):
+        password_reset.complete(public_id=public_id, password=NEW_PASSWORD)
+
+    assert _ip_failed_logins(client) == before

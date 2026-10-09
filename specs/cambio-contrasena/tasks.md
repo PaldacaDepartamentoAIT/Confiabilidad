@@ -187,7 +187,7 @@ esquema, para que al final quede una sola migración (M-07).
   anterior, que la solicitud se conserva y que no se ha creado ninguna `EmailAddress`; el mutante sin
   `atomic()` muere ejecutando el archivo completo; la suite completa sigue en verde.
 
-- [ ] T-016 Corrección: completar no toca el contador de inicios fallidos por IP
+- [x] T-016 Corrección: completar no toca el contador de inicios fallidos por IP
   Tipo: corrección | Origen: validación de RF-009
   RF: RF-009 | Depende de: — | Archivos: 1
   Archivos: `tests/test_password_reset_sessions.py`.
