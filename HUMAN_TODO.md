@@ -6,6 +6,14 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
 
 ## Pendiente
 
+- [ ] **Borrar la rama remota `claude/keen-davinci-jyd1ec`.** Se renombró a
+  `refactor/huellas-hmac-unificadas` (feature `huellas-hmac-unificadas`), pero el entorno remoto no
+  tiene permiso para borrar ramas en GitHub (HTTP 403). Las dos apuntan al mismo commit, así que no
+  se pierde nada. Desde tu máquina:
+  ```bash
+  git push origin --delete claude/keen-davinci-jyd1ec
+  ```
+
 - [ ] **Reconstruir la imagen del backend y migrar tras `usuario-personalizado`.** La feature
   `usuario-personalizado`, ya fusionada en `main`, añade dos dependencias (`pycountry` y `django-simple-history`)
   y las migraciones `0002`, `0003` y `0004` de `accounts`. En tu máquina:
