@@ -241,5 +241,37 @@ esquema, para que al final quede una sola migración (M-07).
   `call_command("password_reset", "purge")` muestra `deleted: 1` y el registro pendiente sigue
   existiendo; ese mutante muere al ejecutar el archivo completo; la suite completa sigue en verde.
 
+- [ ] T-021 Corrección: el reenvío no alarga la vida máxima de la solicitud
+  Tipo: corrección | Origen: validación de RF-006
+  RF: RF-006 | Depende de: — | Archivos: 1
+  Archivos: `tests/test_password_reset_service.py`.
+  Causa: ningún test fija que la hora de vida cuente desde el alta tras un reenvío; el mutante que
+  reinicia `created_at` en `renew_code` sobrevive a la suite completa.
+  Hecho cuando: con `created_at` envejecido 50 min, `resend` devuelve `Resent` y `created_at` no
+  cambia; al envejecer 61 min desde el alta, `verify`, `resend` y `complete` dan `EXPIRED`; ese
+  mutante muere ejecutando el archivo completo; la suite completa sigue en verde.
+
+- [ ] T-022 Corrección: se puede reenviar una solicitud vigente con el código caducado
+  Tipo: corrección | Origen: validación de RF-007
+  RF: RF-007 | Depende de: — | Archivos: 1
+  Archivos: `tests/test_password_reset_service.py`.
+  Causa: solo se reenvía con el código vigente; el mutante que rechaza el reenvío cuando el código
+  caducó dentro de la gracia sobrevive a la suite completa.
+  Hecho cuando: con `code_expires_at` 5 min en el pasado (solicitud vigente por la gracia), `resend`
+  devuelve `Resent` con el mismo `public_id`, intentos en 0 y `code_expires_at` en el futuro, y el
+  código nuevo da `VERIFIED`; ese mutante muere ejecutando el archivo completo; la suite completa
+  sigue en verde.
+
+- [ ] T-023 Corrección: completar no marca como principal una dirección secundaria existente
+  Tipo: corrección | Origen: validación de RF-009
+  RF: RF-009 | Depende de: — | Archivos: 1
+  Archivos: `tests/test_password_reset_service.py`.
+  Causa: ningún test cubre una cuenta cuyo correo ya existe como dirección no principal junto a otra
+  principal; el mutante que la marca como principal sobrevive a la suite completa.
+  Hecho cuando: con la dirección del correo de la cuenta no principal y sin verificar, y otra
+  dirección principal, `complete` devuelve `Completed`, la dirección queda verificada y no principal
+  y la otra sigue siendo la principal; ese mutante muere ejecutando el archivo completo; la suite
+  completa sigue en verde.
+
 ## RF sin tarea
 Ninguno.
