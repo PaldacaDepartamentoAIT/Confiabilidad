@@ -49,8 +49,12 @@ código. Todo se recorre desde consola con `manage.py password_reset`, sin front
 - Si una dirección de correo verificada en allauth pertenece a otra cuenta (posible si se cambió un
   correo desde el panel sin actualizar allauth), `complete` falla sin dejar nada a medias. El
   problema ya existía en el registro.
-- En la sesión remota no se pudo construir la imagen de Docker (el proxy intercepta TLS y `pip` no
-  confía en su certificado); las migraciones y los comandos se comprobaron con el entorno local.
+- En la sesión remota, la imagen de Docker se construyó con una copia del `Dockerfile` que añade el
+  certificado del proxy de la sesión solo durante `pip install`. Con ella, `0006` se aplicó, los
+  servicios arrancaron y la suite pasó dentro del contenedor. Falta construirla con el `Dockerfile`
+  real fuera de la sesión (anotado en `HUMAN_TODO.md`).
+- Si se ejecuta la suite con el `worker` de Compose en marcha, `apps/core/tests/test_task_worker.py`
+  falla: el worker comparte el broker y se lleva la tarea del test. Es previo a esta feature.
 
 ## Cómo probarlo
 Requisitos: Docker y la rama `feat/cambio-contrasena`. En el VPS sigue *Actualizar* y

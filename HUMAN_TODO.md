@@ -81,13 +81,18 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
 
 - [ ] **Migrar y comprobar Docker tras `cambio-contrasena`.** La rama `feat/cambio-contrasena`
   añade la migración `0006_passwordresetrequest` de `accounts` (sin dependencias nuevas). En la
-  sesión remota no se pudo construir la imagen: el proxy de la sesión intercepta TLS y `pip`, dentro
-  del contenedor, no confía en su certificado. En tu máquina:
+  sesión remota (2026-10-09) la imagen se construyó con una copia del `Dockerfile` que solo añade
+  el certificado del proxy de la sesión durante `pip install`, porque ese proxy intercepta TLS. Con
+  ella, `migrate` aplicó `0006`, backend, worker y beat arrancaron y la suite pasó dentro del
+  contenedor (703 tests). Falta construirla con el `Dockerfile` real, sin proxy. En tu máquina:
   ```bash
   docker compose -f docker/docker-compose.yml build backend
   docker compose -f docker/docker-compose.yml run --rm backend python manage.py migrate
   ```
-  Deberías ver `accounts.0006_passwordresetrequest... OK`.
+  Deberías ver `accounts.0006_passwordresetrequest... OK`. Si ejecutas la suite dentro del
+  contenedor, para antes el `worker` de Compose: comparte el broker Redis con los tests y se lleva la
+  tarea de `apps/core/tests/test_task_worker.py`, que entonces falla (la escribe en la base de
+  desarrollo, no en la de tests).
 
 - [ ] **Definir `CONSENT_EMAIL_HASH_SECRET` en producción, cifrado con SOPS, y no rotarlo nunca**
   (feature `consentimientos`). Protege la huella del correo de las aceptaciones de términos y los
