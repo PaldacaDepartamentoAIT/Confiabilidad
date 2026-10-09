@@ -1,9 +1,14 @@
 from dataclasses import dataclass
 from enum import StrEnum
 
+from allauth.account import app_settings as allauth_account_settings
+from allauth.account.adapter import get_adapter
 from allauth.account.models import EmailAddress
+from allauth.core.internal import ratelimit as allauth_ratelimit
 from django.contrib.auth.password_validation import validate_password
+from django.core.cache import cache
 from django.db import IntegrityError, transaction
+from django.http import HttpRequest
 from django.utils import timezone
 
 from apps.accounts import codes, processes
@@ -129,6 +134,8 @@ def complete(*, public_id: str, password: str) -> Completed | CompleteRefusal | 
         user.save(update_fields=["password"])
         _mark_email_verified(user)
         request.delete()
+        email = user.email
+        transaction.on_commit(lambda: _clear_failed_logins(email))
         return Completed(user=user)
 
 
@@ -151,6 +158,19 @@ def _mark_email_verified(user: User) -> None:
     elif not address.verified:
         address.verified = True
         address.save(update_fields=["verified"])
+
+
+def _clear_failed_logins(email: str) -> None:
+    # Solo las tasas por correo: la tasa por IP no es de la cuenta (S-12). Con SITE_ID, allauth no
+    # necesita una petición real para calcular la clave.
+    request = HttpRequest()
+    key = get_adapter()._get_login_attempts_cache_key(request, email=email)
+    rates = allauth_ratelimit.parse_rates(allauth_account_settings.RATE_LIMITS.get("login_failed"))
+    for rate in rates:
+        if rate.per == "key":
+            cache.delete(
+                allauth_ratelimit.get_cache_key(request, action="login_failed", rate=rate, key=key)
+            )
 
 
 def _locked_by_public_id(public_id: str) -> PasswordResetRequest | None:

@@ -110,13 +110,19 @@ esquema, para que al final quede una sola migración (M-07).
   Si la solicitud cambia de cuenta o desaparece entre la lectura sin bloqueo y el bloqueo, se
   responde `NOT_FOUND` — [Cierto] — revertir: reintentar la lectura.
 
-- [ ] T-009 Contador de inicios fallidos y sesiones abiertas
+- [x] T-009 Contador de inicios fallidos y sesiones abiertas
   RF: RF-009 (D-08, D-12; CF-3) | Depende de: T-008 | Archivos: 2
   Archivos: `password_reset.py`, `tests/test_password_reset_sessions.py`.
   Hecho cuando: tras 5 inicios de sesión fallidos por app, el correcto se rechaza
   (`too_many_login_attempts`); tras completar el cambio, el inicio de sesión con la nueva contraseña
   funciona; si `complete` falla, el contador se conserva; una sesión de navegador y un
   `X-Session-Token` abiertos antes de completar reciben 401 después; suite verde.
+  Decisiones: el test de sesiones pasó desde el principio porque fija un comportamiento que ya existe
+  (S-03, D-12), no uno nuevo — [Cierto]. Las funciones internas de allauth reciben un `HttpRequest`
+  vacío: con `SITE_ID` y una tasa por clave no leen nada de la petición — [Cierto] — revertir: pasar
+  la petición real cuando exista API. Los tests usan correo e IP aleatorios porque los contadores de
+  allauth viven en Redis y sobreviven entre ejecuciones — [Cierto]. Que la tasa por IP no cambie no
+  tiene test: borrarla exigiría la IP del cliente, que el servicio no conoce — [Probable].
 
 - [ ] T-010 Purga y límites compartidos
   RF: RF-011, RF-012 | Depende de: T-007 | Archivos: 2
