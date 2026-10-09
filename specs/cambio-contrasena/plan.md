@@ -1,5 +1,5 @@
 # Plan: cambio-contrasena
-Estado: borrador
+Estado: aprobado
 
 ## Módulos
 ### M-01 Base común de los procesos con código (`apps/accounts/models.py`)
