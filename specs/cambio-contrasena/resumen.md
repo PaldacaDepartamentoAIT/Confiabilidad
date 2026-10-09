@@ -64,8 +64,9 @@ se detalla abajo.
   falla: el worker comparte el broker y se lleva la tarea del test. Es previo a esta feature.
 
 ## Cómo probarlo
-Requisitos: Docker y la rama `feat/cambio-contrasena`. En el VPS sigue *Actualizar* y
-*Migraciones* de la sección *Entorno remoto* del README.
+Requisitos: Docker y la rama `feat/cambio-contrasena` (o `main` actualizado, cuando se fusione).
+En el VPS sigue *Actualizar* y *Migraciones* de la sección *Entorno remoto* del README. Todos los
+comandos se ejecutan desde la raíz del repositorio.
 
 1. Levanta la base de datos y Redis:
    ```bash
