@@ -55,11 +55,15 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
 - [ ] **Definir `REGISTRATION_CODE_SECRET` en producción, cifrado con SOPS** (features
   `procesos-pendientes` y `cambio-contrasena`). Protege las huellas de los códigos de registro y
   de cambio de contraseña: sin él, cualquiera con la base de datos podría probar el millón de
-  códigos posibles (RF-008) y, con un código de cambio de contraseña en curso, tomar la cuenta. Si no se define, se usa
-  `DJANGO_SECRET_KEY`, lo que ata su rotación a la de las sesiones. Genera uno propio y
-  añádelo con `sops secrets/prod.enc.yaml`:
+  códigos posibles (RF-008) y, con un código de cambio de contraseña en curso, tomar la cuenta. Si
+  no se define, se usa `DJANGO_SECRET_KEY`, lo que ata su rotación a la de las sesiones. Genera uno
+  propio:
   ```bash
   python -c "import secrets; print(secrets.token_urlsafe(48))"
+  ```
+  Añade el valor que imprime como `REGISTRATION_CODE_SECRET` en el archivo cifrado:
+  ```bash
+  sops secrets/prod.enc.yaml
   ```
   Para rotarlo sin invalidar los códigos en curso (RF-015): pasa el valor actual a
   `REGISTRATION_CODE_SECRET_PREVIOUS`, pon el nuevo en `REGISTRATION_CODE_SECRET` y la hora del
@@ -89,10 +93,19 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
   docker compose -f docker/docker-compose.yml build backend
   docker compose -f docker/docker-compose.yml run --rm backend python manage.py migrate
   ```
-  Deberías ver `accounts.0006_passwordresetrequest... OK`. Si ejecutas la suite dentro del
-  contenedor, para antes el `worker` de Compose: comparte el broker Redis con los tests y se lleva la
-  tarea de `apps/core/tests/test_task_worker.py`, que entonces falla (la escribe en la base de
-  desarrollo, no en la de tests).
+  Deberías ver `accounts.0006_passwordresetrequest... OK`.
+
+  Si ejecutas la suite dentro del contenedor, para antes el `worker` de Compose: comparte el broker
+  Redis con los tests y se lleva la tarea de `apps/core/tests/test_task_worker.py`, que entonces
+  falla (la escribe en la base de desarrollo, no en la de tests):
+  ```bash
+  docker compose -f docker/docker-compose.yml stop worker
+  ```
+  Después ejecuta la suite:
+  ```bash
+  docker compose -f docker/docker-compose.yml run --rm backend pytest -q
+  ```
+  Deberías ver todos los tests en verde.
 
 - [ ] **Definir `CONSENT_EMAIL_HASH_SECRET` en producción, cifrado con SOPS, y no rotarlo nunca**
   (feature `consentimientos`). Protege la huella del correo de las aceptaciones de términos y los

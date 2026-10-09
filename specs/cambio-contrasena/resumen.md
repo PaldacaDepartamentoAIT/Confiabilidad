@@ -67,39 +67,113 @@ se detalla abajo.
 Requisitos: Docker y la rama `feat/cambio-contrasena`. En el VPS sigue *Actualizar* y
 *Migraciones* de la sección *Entorno remoto* del README.
 
-1. Levanta la base de datos y Redis, y aplica las migraciones. Deberías ver
-   `accounts.0006_passwordresetrequest... OK`:
-   `docker compose -f docker/docker-compose.yml up -d db redis`
-   `docker compose -f docker/docker-compose.yml run --rm backend python manage.py migrate`
-   En los pasos siguientes, `R` abrevia
-   `docker compose -f docker/docker-compose.yml run --rm backend python manage.py registration`
-   y `P` abrevia
-   `docker compose -f docker/docker-compose.yml run --rm backend python manage.py password_reset`.
-2. Crea una cuenta con el registro (si ya tienes una, salta este paso):
-   `R start --email Eva@Example.com --name "Eva Pérez" --birthdate 1991-03-04 --country es`
-   `R verify <public_id> <code>` y `R complete <public_id> --password 'Kq7#mZ2!vR9p'`.
-3. Pide el cambio con un correo sin cuenta: `P start --email nadie@example.com` →
-   `No active account with this email.`
-4. Pide el cambio para la cuenta (mayúsculas y espacios dan igual). Verás `public_id: …` y
-   `code: …`; anótalos:
-   `P start --email " EVA@example.com "`
-5. Prueba un código erróneo: `P verify <public_id> 000000` → `Wrong code.`
-6. Pide un código nuevo: `P resend <public_id>` → el mismo `public_id` y otro `code`.
-7. Verifica el código nuevo: `P verify <public_id> <code>` → `Code verified.`
-8. Completa. Primero con una contraseña débil, para ver cada regla incumplida:
-   `P complete <public_id> --password 12345678`
-   Después sin `--password`: te la pedirá sin mostrarla (usa 12 caracteres o más):
-   `docker compose -f docker/docker-compose.yml run --rm backend python manage.py password_reset complete <public_id>`
-   Verás `account: eva@example.com`.
-9. Comprueba que la nueva contraseña inicia sesión (debe imprimir `200`):
-   `docker compose -f docker/docker-compose.yml run --rm backend python manage.py shell -c "from django.test import Client; print(Client().post('/_allauth/app/v1/auth/login', data={'email': 'eva@example.com', 'password': 'TU-CONTRASEÑA'}, content_type='application/json', HTTP_HOST='localhost').status_code)"`
-10. Comprueba que una solicitud deja de servir si cambia la contraseña por otra vía: repite el paso
-    4, cambia la contraseña con `docker compose -f docker/docker-compose.yml run --rm backend python manage.py changepassword eva@example.com`
-    y verifica el código: `P verify <public_id> <code>` →
-    `The account's email or password changed after the request; start again.`
-11. Purga las caducadas: `P purge` → `deleted: N`.
-12. Ejecuta la suite completa (cobertura mínima 80 % sobre todo el proyecto):
-    `docker compose -f docker/docker-compose.yml run --rm backend pytest -q`
+1. Levanta la base de datos y Redis:
+   ```bash
+   docker compose -f docker/docker-compose.yml up -d db redis
+   ```
+   Aplica las migraciones:
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py migrate
+   ```
+   Deberías ver `accounts.0006_passwordresetrequest... OK`.
+
+2. Crea una cuenta con el registro (si ya tienes una, salta al paso 3):
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py registration start --email Eva@Example.com --name "Eva Pérez" --birthdate 1991-03-04 --country es
+   ```
+   Deberías ver dos líneas, `public_id: …` y `code: …`. En el comando siguiente,
+   `<PUBLIC_ID_REGISTRO>` y `<CODE_REGISTRO>` son esos dos valores:
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py registration verify <PUBLIC_ID_REGISTRO> <CODE_REGISTRO>
+   ```
+   Deberías ver `Code verified.`. Completa el registro con el mismo `<PUBLIC_ID_REGISTRO>`:
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py registration complete <PUBLIC_ID_REGISTRO> --password 'Kq7#mZ2!vR9p'
+   ```
+   Deberías ver `account: eva@example.com`.
+
+3. Pide el cambio con un correo sin cuenta:
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py password_reset start --email nadie@example.com
+   ```
+   Deberías ver `No active account with this email.`.
+
+4. Pide el cambio para la cuenta (las mayúsculas y los espacios dan igual):
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py password_reset start --email " EVA@example.com "
+   ```
+   Deberías ver `public_id: …` y `code: …`. En los pasos siguientes, `<PUBLIC_ID>` es ese
+   `public_id`.
+
+5. Prueba un código erróneo con el `<PUBLIC_ID>` del paso 4:
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py password_reset verify <PUBLIC_ID> 000000
+   ```
+   Deberías ver `Wrong code.`.
+
+6. Pide un código nuevo:
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py password_reset resend <PUBLIC_ID>
+   ```
+   Deberías ver el mismo `public_id` y otro `code`. En el paso siguiente, `<CODE>` es ese código
+   nuevo.
+
+7. Verifica el código nuevo:
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py password_reset verify <PUBLIC_ID> <CODE>
+   ```
+   Deberías ver `Code verified.`.
+
+8. Completa primero con una contraseña débil, para ver cada regla incumplida:
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py password_reset complete <PUBLIC_ID> --password 12345678
+   ```
+   Deberías ver una línea por regla incumplida (longitud, contraseña común y solo números). Después
+   complétalo sin `--password`; te pedirá la contraseña sin mostrarla (usa 12 caracteres o más):
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py password_reset complete <PUBLIC_ID>
+   ```
+   Deberías ver `account: eva@example.com`.
+
+9. Comprueba que la nueva contraseña inicia sesión. `<NUEVA_CONTRASEÑA>` es la que escribiste en el
+   paso 8:
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py shell -c "from django.test import Client; print(Client().post('/_allauth/app/v1/auth/login', data={'email': 'eva@example.com', 'password': '<NUEVA_CONTRASEÑA>'}, content_type='application/json', HTTP_HOST='localhost').status_code)"
+   ```
+   Deberías ver `200`.
+
+10. Comprueba que una solicitud deja de servir si la contraseña cambia por otra vía. Pide una
+    solicitud nueva:
+    ```bash
+    docker compose -f docker/docker-compose.yml run --rm backend python manage.py password_reset start --email eva@example.com
+    ```
+    Anota el `public_id` y el `code` que muestra. Cambia la contraseña desde la consola de Django
+    (te la pedirá dos veces):
+    ```bash
+    docker compose -f docker/docker-compose.yml run --rm backend python manage.py changepassword eva@example.com
+    ```
+    Verifica el código de la solicitud; `<PUBLIC_ID>` y `<CODE>` son los que anotaste:
+    ```bash
+    docker compose -f docker/docker-compose.yml run --rm backend python manage.py password_reset verify <PUBLIC_ID> <CODE>
+    ```
+    Deberías ver `The account's email or password changed after the request; start again.`.
+
+11. Purga las solicitudes caducadas:
+    ```bash
+    docker compose -f docker/docker-compose.yml run --rm backend python manage.py password_reset purge
+    ```
+    Deberías ver `deleted: N`, con el número de solicitudes borradas.
+
+12. Para el `worker` de Compose si está en marcha (comparte el broker con los tests y hace fallar
+    `apps/core/tests/test_task_worker.py`):
+    ```bash
+    docker compose -f docker/docker-compose.yml stop worker
+    ```
+    Ejecuta la suite completa (cobertura mínima del 80 % sobre todo el proyecto):
+    ```bash
+    docker compose -f docker/docker-compose.yml run --rm backend pytest -q
+    ```
+    Deberías ver todos los tests en verde y `Required test coverage of 80% reached`.
 
 ## Marco teórico
 ### Enumeración de cuentas y "sin cuenta elegible"
