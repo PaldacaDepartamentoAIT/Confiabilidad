@@ -176,5 +176,45 @@ esquema, para que al final quede una sola migración (M-07).
   ejecutables de principio a fin (migrar, pedir, verificar, reenviar, completar, iniciar sesión,
   purgar, suite) y "Marco teórico" con los conceptos que generaron dudas.
 
+- [ ] T-015 Corrección: completar el cambio de contraseña es todo o nada
+  Tipo: corrección | Origen: validación de RF-009
+  RF: RF-009 | Depende de: — | Archivos: 1
+  Archivos: `tests/test_password_reset_service.py`.
+  Causa: ningún test provoca un fallo después de `set_password`; el mutante que quita
+  `transaction.atomic()` de `complete` sobrevive.
+  Hecho cuando: un test hace fallar `complete` después de fijar la contraseña (por ejemplo,
+  `_mark_email_verified` lanza `IntegrityError`) y comprueba que la contraseña sigue siendo la
+  anterior, que la solicitud se conserva y que no se ha creado ninguna `EmailAddress`; el mutante sin
+  `atomic()` muere ejecutando el archivo completo; la suite completa sigue en verde.
+
+- [ ] T-016 Corrección: completar no toca el contador de inicios fallidos por IP
+  Tipo: corrección | Origen: validación de RF-009
+  RF: RF-009 | Depende de: — | Archivos: 1
+  Archivos: `tests/test_password_reset_sessions.py`.
+  Causa: la cláusula "el contador por IP no cambia" no tiene aserción.
+  Hecho cuando: tras inicios fallidos desde una IP conocida, el valor de la clave `login_failed` por
+  IP en la caché (calculada con las funciones de `allauth.core.internal.ratelimit` y una petición
+  con esa `REMOTE_ADDR`) no está vacío y es el mismo antes y después de `complete`; la suite completa
+  sigue en verde.
+
+- [ ] T-017 Corrección: el identificador de una solicitud no sirve en el registro, ni a la inversa
+  Tipo: corrección | Origen: validación de RF-005
+  RF: RF-005 | Depende de: — | Archivos: 1
+  Archivos: `tests/test_password_reset_service.py`.
+  Causa: solo se prueba la dirección registro → solicitud, y sin `complete`.
+  Hecho cuando: el `public_id` de una solicitud da `NOT_FOUND` en `registration.verify`,
+  `registration.resend` y `registration.complete`, y el de un registro pendiente da `NOT_FOUND` en
+  `password_reset.complete`, sin modificar ninguno de los dos procesos; la suite completa sigue en
+  verde.
+
+- [ ] T-018 Corrección: el periodo de transición del secreto también rige el cambio de contraseña
+  Tipo: corrección | Origen: validación de RF-012
+  RF: RF-012 | Depende de: — | Archivos: 1
+  Archivos: `tests/test_password_reset_service.py`.
+  Causa: `REGISTRATION_SECRET_TRANSITION_MINUTES` solo se prueba con el registro.
+  Hecho cuando: con una solicitud emitida con el secreto anterior, `password_reset.verify` rechaza
+  el código con una rotación de hace 30 min y una transición de 20, y lo acepta (`VERIFIED`) con una
+  transición de 120; la suite completa sigue en verde.
+
 ## RF sin tarea
 Ninguno.
