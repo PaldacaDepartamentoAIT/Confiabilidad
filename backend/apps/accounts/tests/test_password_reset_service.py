@@ -516,3 +516,19 @@ def test_request_lifetime_follows_the_shared_setting(user: User) -> None:
     assert password_reset.verify(public_id=started.public_id, code=started.code) == (
         VerifyResult.EXPIRED
     )
+
+
+def test_complete_is_all_or_nothing(user: User, monkeypatch: pytest.MonkeyPatch) -> None:
+    started = _validated()
+
+    def fail(_user: User) -> None:
+        raise IntegrityError("unique_verified_email")
+
+    monkeypatch.setattr(password_reset, "_mark_email_verified", fail)
+
+    with pytest.raises(IntegrityError):
+        password_reset.complete(public_id=started.public_id, password=GOOD_PASSWORD)
+
+    assert _account().check_password(DEFAULT_PASSWORD)
+    assert _stored().public_id == started.public_id
+    assert not EmailAddress.objects.exists()

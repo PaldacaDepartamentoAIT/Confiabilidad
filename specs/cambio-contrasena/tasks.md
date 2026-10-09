@@ -176,7 +176,7 @@ esquema, para que al final quede una sola migración (M-07).
   ejecutables de principio a fin (migrar, pedir, verificar, reenviar, completar, iniciar sesión,
   purgar, suite) y "Marco teórico" con los conceptos que generaron dudas.
 
-- [ ] T-015 Corrección: completar el cambio de contraseña es todo o nada
+- [x] T-015 Corrección: completar el cambio de contraseña es todo o nada
   Tipo: corrección | Origen: validación de RF-009
   RF: RF-009 | Depende de: — | Archivos: 1
   Archivos: `tests/test_password_reset_service.py`.
