@@ -11,6 +11,8 @@ from django.utils import timezone
 from apps.accounts import codes, conf
 from apps.accounts.models import PendingRegistration, User
 
+_PURPOSE = codes.Purpose.REGISTRATION
+
 
 @dataclass(frozen=True)
 class Started:
@@ -31,7 +33,7 @@ def start(*, email: str, name: str, birthdate: date, country: str) -> Started | 
         birthdate=birthdate,
         country=country,
         public_id=public_id,
-        code_hash=codes.code_fingerprint(public_id, code),
+        code_hash=codes.code_fingerprint(_PURPOSE, public_id, code),
         code_expires_at=timezone.now() + conf.code_ttl(),
     )
     with transaction.atomic():
@@ -58,7 +60,7 @@ def start(*, email: str, name: str, birthdate: date, country: str) -> Started | 
 def _reissue(pending: PendingRegistration) -> Started:
     public_id, code = codes.generate_public_id(), codes.generate_code()
     pending.public_id = public_id
-    pending.code_hash = codes.code_fingerprint(public_id, code)
+    pending.code_hash = codes.code_fingerprint(_PURPOSE, public_id, code)
     pending.code_expires_at = timezone.now() + conf.code_ttl()
     pending.failed_attempts = 0
     pending.code_validated_at = None
@@ -99,7 +101,7 @@ def verify(*, public_id: str, code: str) -> VerifyResult:
             return VerifyResult.LOCKED
         if timezone.now() >= pending.code_expires_at:
             return VerifyResult.CODE_EXPIRED
-        if not codes.verify_code(public_id, code, pending.code_hash):
+        if not codes.verify_code(_PURPOSE, public_id, code, pending.code_hash):
             pending.failed_attempts += 1
             pending.save(update_fields=["failed_attempts"])
             return VerifyResult.WRONG_CODE
@@ -132,7 +134,7 @@ def resend(*, public_id: str) -> Resent | ResendRefusal:
         if pending.code_validated_at is not None:
             return ResendRefusal.ALREADY_VERIFIED
         code = codes.generate_code()
-        pending.code_hash = codes.code_fingerprint(public_id, code)
+        pending.code_hash = codes.code_fingerprint(_PURPOSE, public_id, code)
         pending.code_expires_at = timezone.now() + conf.code_ttl()
         pending.failed_attempts = 0
         pending.save(update_fields=["code_hash", "code_expires_at", "failed_attempts"])

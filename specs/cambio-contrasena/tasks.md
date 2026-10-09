@@ -8,7 +8,7 @@ fallar sus tests, ejecutando el archivo de tests completo (nunca con `-k`). Mien
 esté terminada, `migrations/0006_passwordresetrequest.py` se regenera en cada tarea que cambia el
 esquema, para que al final quede una sola migración (M-07).
 
-- [ ] T-001 Huella del código con el tipo de proceso
+- [x] T-001 Huella del código con el tipo de proceso
   RF: RF-005 (D-01) | Depende de: — | Archivos: 5
   Archivos: `codes.py`, `tests/test_codes.py`, `registration.py`,
   `tests/test_registration_service.py`, `tests/test_registration_command.py`.

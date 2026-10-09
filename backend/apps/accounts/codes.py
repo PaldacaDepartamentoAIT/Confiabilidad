@@ -1,6 +1,7 @@
 import hashlib
 import hmac
 import secrets
+from enum import StrEnum
 
 from django.utils import timezone
 
@@ -8,6 +9,11 @@ from apps.accounts import conf
 
 CODE_LENGTH = 6
 _PUBLIC_ID_BYTES = 32
+
+
+class Purpose(StrEnum):
+    REGISTRATION = "registration"
+    PASSWORD_RESET = "password_reset"
 
 
 def generate_code() -> str:
@@ -22,21 +28,21 @@ def generate_public_id() -> str:
             return public_id
 
 
-def _fingerprint(secret: str, public_id: str, code: str) -> str:
-    message = f"{public_id}:{code}".encode()
+def _fingerprint(secret: str, purpose: Purpose, public_id: str, code: str) -> str:
+    message = f"{purpose}:{public_id}:{code}".encode()
     return hmac.new(secret.encode(), message, hashlib.sha256).hexdigest()
 
 
-def code_fingerprint(public_id: str, code: str) -> str:
-    return _fingerprint(conf.code_secret(), public_id, code)
+def code_fingerprint(purpose: Purpose, public_id: str, code: str) -> str:
+    return _fingerprint(conf.code_secret(), purpose, public_id, code)
 
 
-def verify_code(public_id: str, code: str, fingerprint: str) -> bool:
-    if hmac.compare_digest(code_fingerprint(public_id, code), fingerprint):
+def verify_code(purpose: Purpose, public_id: str, code: str, fingerprint: str) -> bool:
+    if hmac.compare_digest(code_fingerprint(purpose, public_id, code), fingerprint):
         return True
     previous = _previous_secret_in_transition()
     return previous is not None and hmac.compare_digest(
-        _fingerprint(previous, public_id, code), fingerprint
+        _fingerprint(previous, purpose, public_id, code), fingerprint
     )
 
 

@@ -42,7 +42,9 @@ def test_start_shows_the_public_id_and_the_code() -> None:
 
     pending = PendingRegistration.objects.get()
     assert shown["public_id"] == pending.public_id
-    assert codes.verify_code(pending.public_id, shown["code"], pending.code_hash)
+    assert codes.verify_code(
+        codes.Purpose.REGISTRATION, pending.public_id, shown["code"], pending.code_hash
+    )
 
 
 def test_start_with_an_account_reports_it_and_stores_nothing() -> None:
@@ -107,7 +109,9 @@ def test_resend_keeps_the_public_id_and_shows_a_new_code() -> None:
 
     pending = PendingRegistration.objects.get()
     assert shown["public_id"] == started["public_id"] == pending.public_id
-    assert codes.verify_code(pending.public_id, shown["code"], pending.code_hash)
+    assert codes.verify_code(
+        codes.Purpose.REGISTRATION, pending.public_id, shown["code"], pending.code_hash
+    )
 
 
 def test_resend_reports_a_refusal() -> None:
