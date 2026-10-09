@@ -1,5 +1,5 @@
 # Resumen — cambio-contrasena
-Estado: implementada, pendiente de validación · Última actualización: 2026-10-09
+Estado: cerrada con riesgo residual aceptado (tras la 3.ª validación) · Última actualización: 2026-10-09
 
 ## Qué se hizo
 Quien olvidó su contraseña puede fijar una nueva demostrando acceso al correo de su cuenta con un
@@ -34,6 +34,13 @@ código. Todo se recorre desde consola con `manage.py password_reset`, sin front
   (`management/console.py`). El comportamiento del registro no cambió; su suite sigue en verde.
 
 ### Límites conocidos
+Riesgos residuales aceptados al cerrar, tras tres validaciones independientes (todas de origen
+*Test*, ninguna de código): las correcciones de la última ronda (T-021…T-023) solo se comprobaron
+matando los mutantes que la validación encontró, sin una cuarta validación independiente; y quedan
+sin aserción directa la búsqueda de la dirección de correo sin distinguir mayúsculas, todos los
+campos de la solicitud de una cuenta inactiva (RF-004) y el instante exacto de caducidad. El resto
+se detalla abajo.
+
 - **Sin límite de frecuencia** (S-05): pedir de nuevo o reenviar ponen los intentos a 0. En consola
   no hay riesgo; **la API no debe publicarse sin ese límite**, porque permitiría tomar cuentas
   ajenas (anotado en `HUMAN_TODO.md`).

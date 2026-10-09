@@ -200,3 +200,20 @@ reemplazarse.
 - 2026-10-09 — Clarificación (C-01…C-04) — RF: RF-001, RF-003, RF-009 ajustados; RF-014 y RF-015
   añadidos; S-02 y S-07 ajustados; S-11 y S-12 añadidos;
   CF-5 ajustado — Estado: clarificado
+- 2026-10-09 — Validación: NO CUMPLIDA (1.ª) — RF-005, RF-009, RF-012 (tests: identificadores en el
+  sentido solicitud → registro, atomicidad de completar, contador por IP y transición del secreto);
+  corregido con T-015…T-018.
+- 2026-10-09 — Validación: NO CUMPLIDA (2.ª) — RF-008, RF-011 (tests: reenviar y completar tras
+  reactivar, purga de la orden); corregido con T-019 y T-020.
+- 2026-10-09 — Validación: NO CUMPLIDA (3.ª) — RF-006, RF-007 (tests: dos mutantes sobrevivían a la
+  suite completa, reiniciar la vida al reenviar y rechazar el reenvío con el código caducado) y el
+  riesgo R-1 de RF-009 (dirección secundaria); corregido con T-021…T-023, comprobadas matando esos
+  mutantes, sin una validación independiente posterior.
+- 2026-10-09 — Validación: cerrada con riesgo residual aceptado — Riesgos: (1) T-021…T-023 sin
+  validación independiente; (2) concurrencia protegida con bloqueos de fila sin probar con
+  transacciones reales; (3) una solicitud en curso deja de servir si Django vuelve a calcular el
+  hash de la contraseña al iniciar sesión; (4) el borrado del contador de inicios fallidos usa
+  funciones internas de allauth; (5) sin aserción directa: la búsqueda de la dirección de correo
+  sin distinguir mayúsculas, todos los campos de la solicitud de una cuenta inactiva en RF-004 y el
+  instante exacto de caducidad de la solicitud; (6) la imagen de Docker no se ha construido con el
+  `Dockerfile` real.
