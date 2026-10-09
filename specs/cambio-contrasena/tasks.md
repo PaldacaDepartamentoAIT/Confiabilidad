@@ -169,7 +169,7 @@ esquema, para que al final quede una sola migración (M-07).
   mensaje y tiempo de respuesta comparable), y la entrada de `REGISTRATION_CODE_SECRET` menciona que
   ahora protege también los códigos de cambio de contraseña.
 
-- [ ] T-014 Resumen de la feature
+- [x] T-014 Resumen de la feature
   RF: — (CF-4) | Depende de: T-001…T-013 | Archivos: 1
   Archivos: `specs/cambio-contrasena/resumen.md`.
   Hecho cuando: el resumen tiene "Qué se hizo", "Límites conocidos", "Cómo probarlo" con comandos
