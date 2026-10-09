@@ -149,8 +149,8 @@ class User(AbstractBaseUser, PermissionsMixin):
         return type(self).objects.filter(pk=self.pk).values_list("country", flat=True).first()
 
 
-class PendingRegistrationQuerySet(models.QuerySet["PendingRegistration"]):
-    def expired(self) -> "PendingRegistrationQuerySet":
+class CodeProcessQuerySet[P: "CodeProcess"](models.QuerySet[P]):
+    def expired(self) -> "CodeProcessQuerySet[P]":
         now = timezone.now()
         return self.filter(
             models.Q(code_expires_at__lte=now - conf.grace_period())
@@ -158,11 +158,7 @@ class PendingRegistrationQuerySet(models.QuerySet["PendingRegistration"]):
         )
 
 
-class PendingRegistration(models.Model):
-    email = models.EmailField()
-    name = models.CharField(max_length=NAME_MAX_LENGTH)
-    birthdate = models.DateField()
-    country = models.CharField(max_length=2)
+class CodeProcess(models.Model):
     public_id = models.CharField(max_length=64, unique=True)
     code_hash = models.CharField(max_length=64)
     code_expires_at = models.DateTimeField()
@@ -170,7 +166,32 @@ class PendingRegistration(models.Model):
     code_validated_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    objects = PendingRegistrationQuerySet.as_manager()
+    class Meta:
+        abstract = True
+
+    @property
+    def expires_at(self) -> datetime:
+        return min(
+            self.code_expires_at + conf.grace_period(),
+            self.created_at + conf.max_lifetime(),
+        )
+
+    @property
+    def is_expired(self) -> bool:
+        return timezone.now() >= self.expires_at
+
+    @property
+    def is_locked(self) -> bool:
+        return self.failed_attempts >= conf.max_failed_attempts()
+
+
+class PendingRegistration(CodeProcess):
+    email = models.EmailField()
+    name = models.CharField(max_length=NAME_MAX_LENGTH)
+    birthdate = models.DateField()
+    country = models.CharField(max_length=2)
+
+    objects = CodeProcessQuerySet["PendingRegistration"].as_manager()
 
     class Meta:
         constraints: ClassVar[list[models.BaseConstraint]] = [
@@ -217,18 +238,3 @@ class PendingRegistration(models.Model):
         _check_profile(self, set(exclude or ()), errors, lambda: None)
         if errors:
             raise ValidationError(errors)
-
-    @property
-    def expires_at(self) -> datetime:
-        return min(
-            self.code_expires_at + conf.grace_period(),
-            self.created_at + conf.max_lifetime(),
-        )
-
-    @property
-    def is_expired(self) -> bool:
-        return timezone.now() >= self.expires_at
-
-    @property
-    def is_locked(self) -> bool:
-        return self.failed_attempts >= conf.max_failed_attempts()

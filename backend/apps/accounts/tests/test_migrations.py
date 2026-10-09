@@ -1,10 +1,14 @@
 from collections.abc import Iterator
 from datetime import date
+from io import StringIO
 
 import pytest
+from django.core.management import call_command
 from django.db import connection
 from django.db.migrations.executor import MigrationExecutor
 from django.db.migrations.state import StateApps
+
+from apps.accounts.models import CodeProcess, CodeProcessQuerySet, PendingRegistration
 
 INITIAL = [("accounts", "0001_initial")]
 
@@ -64,3 +68,14 @@ def test_emails_differing_only_in_case_abort_the_migration(initial_apps: StateAp
         _migrate(_latest())
 
     assert _stored_emails() == ["ana@x.com", "Ana@X.com"]
+
+
+@pytest.mark.django_db
+def test_models_have_no_pending_migrations() -> None:
+    call_command("makemigrations", "accounts", "--check", "--dry-run", stdout=StringIO())
+
+
+def test_pending_registration_shares_the_code_process_base() -> None:
+    assert CodeProcess._meta.abstract
+    assert issubclass(PendingRegistration, CodeProcess)
+    assert isinstance(PendingRegistration.objects.all(), CodeProcessQuerySet)

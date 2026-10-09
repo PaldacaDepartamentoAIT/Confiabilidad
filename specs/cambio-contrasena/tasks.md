@@ -30,13 +30,15 @@ esquema, para que al final quede una sola migración (M-07).
   `account_stamp_matches` acepta la del secreto vigente y la del anterior durante la transición, y
   rechaza la anterior fuera de ella; suite verde.
 
-- [ ] T-003 Base abstracta `CodeProcess`
+- [x] T-003 Base abstracta `CodeProcess`
   RF: RF-005, RF-006, RF-012 (D-02, refactor) | Depende de: — | Archivos: 2
   Archivos: `models.py`, `tests/test_migrations.py`.
   Hecho cuando: `PendingRegistration` hereda de `CodeProcess` (campos, `expires_at`, `is_expired`,
   `is_locked` y el queryset con `expired()`); un test nuevo ejecuta
   `makemigrations accounts --check --dry-run` y no detecta cambios; la suite del registro sigue en
   verde sin tocarla; suite verde.
+  Decisiones: `CodeProcessQuerySet` es genérico en el modelo para que mypy tipe `expired()` en cada
+  proceso — [Cierto] — revertir: un queryset por modelo.
 
 - [ ] T-004 Modelo `PasswordResetRequest` y migración `0006`
   RF: RF-001, RF-006, RF-010 | Depende de: T-003 | Archivos: 3
