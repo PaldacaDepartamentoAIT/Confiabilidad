@@ -65,7 +65,7 @@ esquema, para que al final quede una sola migración (M-07).
   explícitamente porque mypy estricto no admite la reexportación implícita — [Cierto] — revertir:
   importar `VerifyResult` desde `processes` en el comando y los tests.
 
-- [ ] T-006 Pedir el cambio de contraseña
+- [x] T-006 Pedir el cambio de contraseña
   RF: RF-002, RF-003, RF-004 (D-05, D-06) | Depende de: T-002, T-004, T-005 | Archivos: 2
   Archivos: `password_reset.py`, `tests/test_password_reset_service.py`.
   Hecho cuando: `start` con el correo de una cuenta activa (con mayúsculas y espacios) crea la
@@ -75,6 +75,9 @@ esquema, para que al final quede una sola migración (M-07).
   cuenta inactiva devuelven el mismo `NoEligibleAccount` sin crear ni tocar ninguna solicitud
   (tampoco la que la cuenta inactiva tuviera); un `IntegrityError` simulado en el alta se traduce en
   reemplazo; suite verde.
+  Decisiones: un `IntegrityError` en el alta que no se explica por una solicitud de la misma cuenta
+  (p. ej. un `public_id` repetido) se propaga en vez de ocultarse — [Cierto] — revertir: reintentar
+  el alta con otro `public_id`.
 
 - [ ] T-007 Verificar y reenviar
   RF: RF-005, RF-006, RF-007, RF-008, RF-014, RF-015 | Depende de: T-006 | Archivos: 2
