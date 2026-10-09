@@ -50,7 +50,7 @@ esquema, para que al final quede una sola migración (M-07).
   por gracia y por vida máxima y excluye las vigentes; `makemigrations --check` sin cambios; suite
   verde. (CF-1)
 
-- [ ] T-005 Operaciones comunes del código
+- [x] T-005 Operaciones comunes del código
   RF: RF-005, RF-007 (D-03) | Depende de: T-001, T-003 | Archivos: 3
   Archivos: `processes.py`, `registration.py`, `tests/test_processes.py`.
   Hecho cuando: `issue_code`, `check_code` y `renew_code` cubren, sobre un `CodeProcess`, ya
@@ -59,6 +59,11 @@ esquema, para que al final quede una sola migración (M-07).
   `processes.py` y `registration.VerifyResult` sigue existiendo; `registration.verify`,
   `registration.resend` y `registration.start` las usan y la suite del registro sigue en verde sin
   tocarla; suite verde.
+  Decisiones: `issue_code` no guarda (cada servicio decide entre alta y reemplazo, y el reemplazo
+  usa `ISSUED_FIELDS`), mientras que `renew_code` y `check_code` sí guardan — [Cierto] — revertir:
+  que `issue_code` guarde y devuelva el proceso. `registration` reexporta `VerifyResult`
+  explícitamente porque mypy estricto no admite la reexportación implícita — [Cierto] — revertir:
+  importar `VerifyResult` desde `processes` en el comando y los tests.
 
 - [ ] T-006 Pedir el cambio de contraseña
   RF: RF-002, RF-003, RF-004 (D-05, D-06) | Depende de: T-002, T-004, T-005 | Archivos: 2

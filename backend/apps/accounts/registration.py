@@ -6,10 +6,10 @@ from allauth.account.models import EmailAddress
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
-from django.utils import timezone
 
-from apps.accounts import codes, conf
+from apps.accounts import codes, processes
 from apps.accounts.models import PendingRegistration, User
+from apps.accounts.processes import VerifyResult as VerifyResult
 
 _PURPOSE = codes.Purpose.REGISTRATION
 
@@ -26,16 +26,8 @@ class AccountExists:
 
 
 def start(*, email: str, name: str, birthdate: date, country: str) -> Started | AccountExists:
-    public_id, code = codes.generate_public_id(), codes.generate_code()
-    pending = PendingRegistration(
-        email=email,
-        name=name,
-        birthdate=birthdate,
-        country=country,
-        public_id=public_id,
-        code_hash=codes.code_fingerprint(_PURPOSE, public_id, code),
-        code_expires_at=timezone.now() + conf.code_ttl(),
-    )
+    pending = PendingRegistration(email=email, name=name, birthdate=birthdate, country=country)
+    code = processes.issue_code(pending, _PURPOSE)
     with transaction.atomic():
         PendingRegistration.objects.expired().filter(email__iexact=email.strip()).delete()
         try:
@@ -54,36 +46,13 @@ def start(*, email: str, name: str, birthdate: date, country: str) -> Started | 
             if existing is None:
                 raise
             return _reissue(existing)
-    return Started(public_id=public_id, code=code)
+    return Started(public_id=pending.public_id, code=code)
 
 
 def _reissue(pending: PendingRegistration) -> Started:
-    public_id, code = codes.generate_public_id(), codes.generate_code()
-    pending.public_id = public_id
-    pending.code_hash = codes.code_fingerprint(_PURPOSE, public_id, code)
-    pending.code_expires_at = timezone.now() + conf.code_ttl()
-    pending.failed_attempts = 0
-    pending.code_validated_at = None
-    pending.save(
-        update_fields=[
-            "public_id",
-            "code_hash",
-            "code_expires_at",
-            "failed_attempts",
-            "code_validated_at",
-        ]
-    )
-    return Started(public_id=public_id, code=code)
-
-
-class VerifyResult(StrEnum):
-    VERIFIED = "verified"
-    WRONG_CODE = "wrong_code"
-    LOCKED = "locked"
-    CODE_EXPIRED = "code_expired"
-    EXPIRED = "expired"
-    ALREADY_VERIFIED = "already_verified"
-    NOT_FOUND = "not_found"
+    code = processes.issue_code(pending, _PURPOSE)
+    pending.save(update_fields=processes.ISSUED_FIELDS)
+    return Started(public_id=pending.public_id, code=code)
 
 
 def verify(*, public_id: str, code: str) -> VerifyResult:
@@ -95,19 +64,7 @@ def verify(*, public_id: str, code: str) -> VerifyResult:
             return VerifyResult.NOT_FOUND
         if pending.is_expired:
             return VerifyResult.EXPIRED
-        if pending.code_validated_at is not None:
-            return VerifyResult.ALREADY_VERIFIED
-        if pending.is_locked:
-            return VerifyResult.LOCKED
-        if timezone.now() >= pending.code_expires_at:
-            return VerifyResult.CODE_EXPIRED
-        if not codes.verify_code(_PURPOSE, public_id, code, pending.code_hash):
-            pending.failed_attempts += 1
-            pending.save(update_fields=["failed_attempts"])
-            return VerifyResult.WRONG_CODE
-        pending.code_validated_at = timezone.now()
-        pending.save(update_fields=["code_validated_at"])
-        return VerifyResult.VERIFIED
+        return processes.check_code(pending, _PURPOSE, code)
 
 
 @dataclass(frozen=True)
@@ -133,11 +90,7 @@ def resend(*, public_id: str) -> Resent | ResendRefusal:
             return ResendRefusal.EXPIRED
         if pending.code_validated_at is not None:
             return ResendRefusal.ALREADY_VERIFIED
-        code = codes.generate_code()
-        pending.code_hash = codes.code_fingerprint(_PURPOSE, public_id, code)
-        pending.code_expires_at = timezone.now() + conf.code_ttl()
-        pending.failed_attempts = 0
-        pending.save(update_fields=["code_hash", "code_expires_at", "failed_attempts"])
+        code = processes.renew_code(pending, _PURPOSE)
         return Resent(public_id=public_id, code=code)
 
 
