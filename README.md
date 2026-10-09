@@ -365,7 +365,7 @@ Para volver a trabajar en local, ejecuta de nuevo `podman_localhost_update.ps1`.
 ## Calidad
 **Backend**, desde la raíz:
 ```bash
-cd backend && pytest && mypy backend/ && ruff check . && black --check .
+cd backend && pytest && mypy . && ruff check . && black --check .
 ```
 
 **Frontend**, desde la raíz, un comando cada vez:
