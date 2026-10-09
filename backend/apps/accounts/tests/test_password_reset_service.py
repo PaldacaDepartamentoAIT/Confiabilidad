@@ -634,3 +634,21 @@ def test_resend_does_not_extend_the_request_lifetime(user: User) -> None:
     assert password_reset.complete(public_id=started.public_id, password=GOOD_PASSWORD) == (
         CompleteRefusal.EXPIRED
     )
+
+
+def test_resend_works_while_the_code_is_expired_but_the_request_is_alive(user: User) -> None:
+    started = _started()
+    PasswordResetRequest.objects.update(failed_attempts=2)
+    _age(code_expires_at=5)
+    assert not _stored().is_expired
+
+    resent = password_reset.resend(public_id=started.public_id)
+
+    assert isinstance(resent, password_reset.Resent)
+    stored = _stored()
+    assert resent.public_id == stored.public_id == started.public_id
+    assert stored.failed_attempts == 0
+    assert stored.code_expires_at > timezone.now()
+    assert password_reset.verify(public_id=started.public_id, code=resent.code) == (
+        VerifyResult.VERIFIED
+    )

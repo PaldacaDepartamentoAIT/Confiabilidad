@@ -251,7 +251,7 @@ esquema, para que al final quede una sola migración (M-07).
   cambia; al envejecer 61 min desde el alta, `verify`, `resend` y `complete` dan `EXPIRED`; ese
   mutante muere ejecutando el archivo completo; la suite completa sigue en verde.
 
-- [ ] T-022 Corrección: se puede reenviar una solicitud vigente con el código caducado
+- [x] T-022 Corrección: se puede reenviar una solicitud vigente con el código caducado
   Tipo: corrección | Origen: validación de RF-007
   RF: RF-007 | Depende de: — | Archivos: 1
   Archivos: `tests/test_password_reset_service.py`.
