@@ -652,3 +652,16 @@ def test_resend_works_while_the_code_is_expired_but_the_request_is_alive(user: U
     assert password_reset.verify(public_id=started.public_id, code=resent.code) == (
         VerifyResult.VERIFIED
     )
+
+
+def test_complete_keeps_an_existing_secondary_address_secondary(user: User) -> None:
+    EmailAddress.objects.create(user=user, email="old@x.com", verified=True, primary=True)
+    EmailAddress.objects.create(user=user, email=EMAIL, verified=False, primary=False)
+    started = _validated()
+
+    result = password_reset.complete(public_id=started.public_id, password=GOOD_PASSWORD)
+
+    assert isinstance(result, password_reset.Completed)
+    address = EmailAddress.objects.get(user=user, email=EMAIL)
+    assert (address.verified, address.primary) == (True, False)
+    assert EmailAddress.objects.get(user=user, email="old@x.com").primary

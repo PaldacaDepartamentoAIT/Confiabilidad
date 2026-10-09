@@ -262,7 +262,7 @@ esquema, para que al final quede una sola migración (M-07).
   código nuevo da `VERIFIED`; ese mutante muere ejecutando el archivo completo; la suite completa
   sigue en verde.
 
-- [ ] T-023 Corrección: completar no marca como principal una dirección secundaria existente
+- [x] T-023 Corrección: completar no marca como principal una dirección secundaria existente
   Tipo: corrección | Origen: validación de RF-009
   RF: RF-009 | Depende de: — | Archivos: 1
   Archivos: `tests/test_password_reset_service.py`.
