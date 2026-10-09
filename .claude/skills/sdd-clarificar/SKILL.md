@@ -42,9 +42,17 @@ Determínalo leyendo la spec e indícaselo al usuario:
 
 1. Lee la constitución y la spec.
 2. Busca ambigüedades, contradicciones entre RF, casos límite ausentes, RF no verificables y conflictos con la constitución, dentro del alcance del modo.
-3. No edites la spec ni propongas soluciones: el usuario debe decidir sin que una respuesta sugerida condicione su criterio.
-4. Presenta los hallazgos con el formato de `references/plantilla.md`, ordenados por gravedad.
-5. Si no hay hallazgos, dilo y pasa directamente al paso 4 de la fase B para pedir la aprobación.
+3. No edites la spec ni recomiendes soluciones: el usuario debe decidir sin que una respuesta sugerida condicione su criterio.
+4. Presenta los hallazgos con el formato de `references/plantilla.md`, ordenados por gravedad, en el propio mensaje.
+5. Después, pide la respuesta de cada hallazgo en formato de selección, con la herramienta de
+   preguntas de opción múltiple (hasta 4 hallazgos por llamada, en orden de gravedad):
+   - De 2 a 4 opciones excluyentes que cubran las respuestas razonables, cada una con una
+     descripción breve de su consecuencia. Ninguna se marca como recomendada ni se ordena por
+     preferencia (paso 3).
+   - El usuario siempre puede escribir otra respuesta; trátala igual que una opción elegida.
+   - Este formato es solo para responder hallazgos: el diff y la aprobación de la spec (pasos 3
+     y 4 de la fase B) se piden en texto, según `AGENTS.md`.
+6. Si no hay hallazgos, dilo y pasa directamente al paso 4 de la fase B para pedir la aprobación.
 
 ### Fase B: cierre
 
