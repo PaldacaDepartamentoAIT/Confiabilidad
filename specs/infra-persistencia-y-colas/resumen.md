@@ -23,45 +23,91 @@ Calidad: 13 tests automáticos en verde, cobertura 100 %, y análisis estático 
 ## Cómo probarlo (usuario)
 Requisitos: tener **Podman** funcionando. Abre una terminal en la raíz del repo.
 
+1. Sitúate en `main` actualizado (la feature ya está fusionada) y prepara los servicios, un comando
+   cada vez:
 ```powershell
-# 1. Situarte en la rama y preparar servicios
-git switch feat/infra-persistencia-y-colas
+git switch main
+```
+```powershell
+git pull
+```
+```powershell
 podman compose -f docker/docker-compose.yml up -d db redis
+```
+```powershell
 podman compose -f docker/docker-compose.yml build backend
+```
+```powershell
 podman compose -f docker/docker-compose.yml run --rm backend python manage.py migrate
+```
 
-# 2. Prueba automática completa (debe dar 13 passed, 100% cobertura)
+2. Prueba automática completa:
+```powershell
 podman compose -f docker/docker-compose.yml run --rm backend pytest -q
+```
+Debe dar 13 passed y 100 % de cobertura.
 
-# 3. Base de datos: crea un registro (repite y el total sube)
+3. Base de datos: crea un registro.
+```powershell
 podman compose -f docker/docker-compose.yml run --rm backend python manage.py demo_seed
+```
+Si lo repites, el total sube.
 
-# 4. Caché: escribe y lee una clave (imprime "Cache get -> demo-command-value")
+4. Caché: escribe y lee una clave.
+```powershell
 podman compose -f docker/docker-compose.yml run --rm backend python manage.py demo_cache
+```
+Imprime `Cache get -> demo-command-value`.
 
-# 5. Cola + worker real: arranca el worker, encola la tarea y mira los logs
+5. Cola + worker real: arranca el worker, encola la tarea y mira los logs.
+```powershell
 podman compose -f docker/docker-compose.yml up -d worker
+```
+```powershell
 podman compose -f docker/docker-compose.yml run --rm backend python manage.py demo_task
+```
+```powershell
 podman compose -f docker/docker-compose.yml logs --tail 20 worker
+```
 
-# 6. Planificador (solo desarrollo): registra la periódica, arranca el beat y espera ~60s
+6. Planificador (solo desarrollo): registra la tarea periódica, arranca el beat, espera unos 60 s
+   y mira los logs.
+```powershell
 podman compose -f docker/docker-compose.yml run --rm backend python manage.py demo_beat_register
+```
+```powershell
 podman compose -f docker/docker-compose.yml up -d beat
+```
+```powershell
 podman compose -f docker/docker-compose.yml logs --tail 30 beat worker
+```
 
-# 7. Estado en BD (evidencia de persistencia)
+7. Estado en la base de datos (evidencia de persistencia):
+```powershell
 podman compose -f docker/docker-compose.yml run --rm backend python manage.py shell -c "from apps.core.models import DemoRecord; print('total:', DemoRecord.objects.count())"
+```
 
-# Al terminar (opcional): apaga los servicios (los datos se conservan)
+Al terminar (opcional), apaga los servicios; los datos se conservan:
+```powershell
 podman compose -f docker/docker-compose.yml down
 ```
 
-Análisis estático (opcional, en el venv de Windows):
+Análisis estático (opcional, en el venv de Windows). Entra en `backend`:
 ```powershell
 cd backend
+```
+Ejecuta las tres herramientas, una cada vez:
+```powershell
 .\.venv\Scripts\python.exe -m ruff check .
+```
+```powershell
 .\.venv\Scripts\python.exe -m black --check .
+```
+```powershell
 .\.venv\Scripts\python.exe -m mypy .
+```
+Vuelve a la raíz:
+```powershell
 cd ..
 ```
 

@@ -44,30 +44,45 @@ reglas que se cumplen en todo guardado normal y un historial auditable.
   cambios de una instancia tras un guardado de `last_login` que falle.
 
 ## Cómo probarlo
-Requisitos: Docker y la rama `feat/usuario-personalizado`.
+Requisitos: Docker y `main` actualizado (la feature ya está fusionada).
 En el VPS no uses estos comandos (se saltan el override y exponen Postgres y Redis): sigue
-*Actualizar* y *Migraciones* de la sección *Entorno remoto* del README.
+*Actualizar* y *Migraciones* de la sección *Entorno remoto* del README. Todos los comandos se
+ejecutan desde la raíz del repositorio.
 
-1. Reconstruye la imagen (hay dependencias nuevas) y levanta la base de datos y Redis:
-   `docker compose -f docker/docker-compose.yml build backend`
-   `docker compose -f docker/docker-compose.yml up -d db redis`
-2. Aplica las migraciones. Deberías ver `0002_user_profile_fields`, `0003_user_email_ci_unique`
-   y `0004_historicaluser` en `OK`:
-   `docker compose -f docker/docker-compose.yml run --rm backend python manage.py migrate`
+1. Reconstruye la imagen, porque hay dependencias nuevas:
+   ```bash
+   docker compose -f docker/docker-compose.yml build backend
+   ```
+   Levanta la base de datos y Redis:
+   ```bash
+   docker compose -f docker/docker-compose.yml up -d db redis
+   ```
+2. Aplica las migraciones:
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py migrate
+   ```
+   Deberías ver `0002_user_profile_fields`, `0003_user_email_ci_unique` y `0004_historicaluser`
+   en `OK`.
 3. Crea un superusuario sin preguntas; ahora exige los tres datos nuevos:
-   `docker compose -f docker/docker-compose.yml run --rm -e DJANGO_SUPERUSER_PASSWORD=Prueba-123 backend python manage.py createsuperuser --noinput --email Admin@Example.com --name "Ana García" --birthdate 1990-05-10 --country es`
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm -e DJANGO_SUPERUSER_PASSWORD=Prueba-123 backend python manage.py createsuperuser --noinput --email Admin@Example.com --name "Ana García" --birthdate 1990-05-10 --country es
+   ```
    Se guarda como `admin@example.com` y país `ES`. Si repites con `--email ADMIN@example.com`,
    falla con una traza de `IntegrityError` ("already exists"): es el choque de correo, ver
    "Límites conocidos". Con `--country XX` o `--birthdate 2020-01-01`, falla con el motivo en
    inglés.
 4. Consulta el historial desde la consola de Django:
-   `docker compose -f docker/docker-compose.yml run --rm backend python manage.py shell -c "from apps.accounts.models import User; print(list(User.history.values_list('email', 'history_type', 'history_user')))"`
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py shell -c "from apps.accounts.models import User; print(list(User.history.values_list('email', 'history_type', 'history_user')))"
+   ```
    Verás `('admin@example.com', '+', None)`: alta hecha por consola, sin autor.
-5. Ejecuta la suite completa (el mínimo de cobertura del 80 % se mide sobre todo el proyecto,
-   así que ejecutar solo `apps/accounts` falla aunque pasen todos los tests):
-   `docker compose -f docker/docker-compose.yml run --rm backend pytest -q`
+5. Ejecuta la suite completa:
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm backend pytest -q
+   ```
    Deberías ver todos los tests en verde (`N passed`, sin `failed` ni `error`) y una cobertura
-   superior al 80 %.
+   superior al 80 %. El mínimo de cobertura se mide sobre todo el proyecto, así que ejecutar solo
+   `apps/accounts` falla aunque pasen todos los tests.
 
 ## Marco teórico
 ### Borrado lógico (soft delete)

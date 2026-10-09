@@ -55,6 +55,17 @@ Secretos:
   o en excepciones) se escriben en inglés, marcados para traducción con `gettext_lazy`.
 - Estructura y código limpios: cada carpeta (backend / frontend / desktop) es
   independiente y no invade a las demás.
+- Comandos para ejecutar: en cualquier texto (resúmenes, `HUMAN_TODO.md`, `README.md`,
+  descripciones de PR y mensajes al usuario), cada comando que alguien deba ejecutar va en su
+  propio bloque de código (```` ```bash ````), separado del texto, completo y listo para copiar y
+  pegar.
+  - Sin abreviaturas ni alias definidos en el texto (nada de `M`, `C` o `R`).
+  - Sin el resultado esperado dentro del bloque ni explicaciones en la misma línea: el resultado
+    va fuera, en la frase siguiente («Deberías ver…»).
+  - Un valor que solo se conoce al ejecutar un paso anterior se escribe en mayúsculas entre
+    ángulos (`<PUBLIC_ID>`), y la frase anterior al bloque dice de dónde sale.
+  - Mencionar un comando dentro de una frase, sin pedir que se ejecute, no lo convierte en uno
+    para copiar.
 
 ## Ramas (branches)
 - Formato: `tipo/descripcion-corta` — todo en minúsculas, sin espacios, palabras
