@@ -1,5 +1,5 @@
 # Spec: cambio-contrasena
-Estado: borrador
+Estado: aprobada
 Aprobación: ligera
 
 ## Objetivo (por qué)
@@ -17,7 +17,8 @@ y [ER](../procesos-pendientes/diagramas/er.png), con las desviaciones de S-02.
    y se emite un código (RF-002, RF-003). Si no, el resultado es "sin cuenta elegible" (RF-004).
 3. La persona introduce el código, que queda validado (RF-005).
 4. La persona introduce su nueva contraseña.
-5. Se fija la contraseña, se marca su correo como verificado y se borra la solicitud (RF-009).
+5. Se fija la contraseña, se marca su correo como verificado, se borran sus contadores de inicios
+   de sesión fallidos y se borra la solicitud (RF-009).
 
 En este documento, "RF-0xx de `procesos-pendientes`" remite a
 [su spec](../procesos-pendientes/spec.md); los RF sin esa mención son de esta feature.
@@ -26,9 +27,10 @@ En este documento, "RF-0xx de `procesos-pendientes`" remite a
 ### RF-001 Solicitud de cambio de contraseña
 El sistema deberá guardar, para cada solicitud de cambio de contraseña, la cuenta a la que
 pertenece, un identificador público, la huella del código vigente, su caducidad, el número de
-intentos fallidos, si el código ya se validó (y cuándo) y la fecha de alta, con un máximo de una
-solicitud por cuenta, garantizado también en cargas masivas y escrituras directas a la base de
-datos.
+intentos fallidos, si el código ya se validó (y cuándo), la fecha de alta y lo necesario para
+saber si el correo o la contraseña de la cuenta han cambiado desde que se pidió (RF-014, RF-015),
+con un máximo de una solicitud por cuenta, garantizado también en cargas masivas y escrituras
+directas a la base de datos.
 
 ### RF-002 Pedir el cambio
 Cuando se pida el cambio de contraseña con un correo que coincide, sin distinguir mayúsculas ni
@@ -40,7 +42,8 @@ emitir un código (RF-005).
 ### RF-003 Solicitud repetida
 Cuando se pida el cambio de contraseña para una cuenta activa que ya tiene una solicitud, vigente
 o caducada, el sistema deberá reemplazarla: identificador público nuevo, código nuevo, intentos a
-0, código sin validar y vida contada de nuevo desde ese momento.
+0, código sin validar, vida contada de nuevo desde ese momento y, como referencia para RF-014 y
+RF-015, el correo y la contraseña que la cuenta tiene en ese momento.
 
 ### RF-004 Sin cuenta elegible
 Si se pide el cambio de contraseña con un correo que no corresponde a ninguna cuenta, o cuya
@@ -76,11 +79,13 @@ operaciones.
 Cuando se complete una solicitud vigente con el código validado y una contraseña, el sistema
 deberá, en una sola operación, fijar esa contraseña en la cuenta, marcar como verificada la
 dirección de correo de la cuenta (creándola si no existe, como principal si la cuenta no tiene
-otra principal) y borrar la solicitud. Una contraseña igual a la actual se acepta si cumple la
-política. Si la contraseña no cumple la política de RF-022 de `procesos-pendientes`, evaluada con
-el correo y el nombre de la cuenta, entonces el sistema deberá rechazarlo indicando cada regla
-incumplida y conservar la solicitud. Si la solicitud no tiene el código validado o está caducada,
-entonces el sistema deberá rechazarlo sin cambiar la contraseña.
+otra principal), borrar el contador de inicios de sesión fallidos por correo que lleva allauth
+para el correo de la cuenta (el contador por IP no cambia) y borrar la solicitud. Una contraseña
+igual a la actual se acepta si cumple la política. Si la contraseña no cumple la política de
+RF-022 de `procesos-pendientes`, evaluada con el correo y el nombre de la cuenta, entonces el
+sistema deberá rechazarlo indicando cada regla incumplida y conservar la solicitud. Si la
+solicitud no tiene el código validado o está caducada, entonces el sistema deberá rechazarlo sin
+cambiar la contraseña.
 
 ### RF-010 Borrado de la cuenta
 Cuando se borre físicamente una cuenta, el sistema deberá borrar su solicitud de cambio de
@@ -103,6 +108,18 @@ contraseña (que se pide sin mostrarla en pantalla si no se indica) y purgar las
 (RF-011). Cada paso deberá mostrar el identificador público y, cuando se emita un código, el
 propio código; cuando no haya cuenta elegible (RF-004), deberá indicarlo.
 
+### RF-014 Correo cambiado tras la solicitud
+Si el correo de la cuenta ya no coincide, sin distinguir mayúsculas, con aquel al que se envió el
+código de su solicitud, entonces el sistema deberá rechazar la verificación del código, su reenvío
+y la compleción, sin modificar la solicitud, que se conserva hasta caducar o hasta reemplazarse
+(RF-003).
+
+### RF-015 Contraseña cambiada tras la solicitud
+Si la contraseña de la cuenta ha cambiado por cualquier otra vía desde que se pidió la solicitud o
+desde su último reemplazo (RF-003), entonces el sistema deberá rechazar la verificación del código,
+su reenvío y la compleción, sin modificar la solicitud, que se conserva hasta caducar o hasta
+reemplazarse.
+
 ## Supuestos
 - S-01 Esta feature no incluye API, pantallas, envío de correos, el mensaje neutro "Si existe una
   cuenta, recibirás un código", el límite de frecuencia (S-05), el cierre de sesiones ni el aviso
@@ -111,8 +128,9 @@ propio código; cuando no haya cuenta elegible (RF-004), deberá indicarlo.
   respuesta comparable al de una cuenta elegible).
 - S-02 Desviaciones respecto al diagrama ER: la solicitud no tiene `used_at` porque se borra al
   completarse (S-11 de `procesos-pendientes` prevalece sobre el diagrama; pregunta 1); hay como
-  máximo una solicitud por cuenta, aunque el diagrama dibuja "cero o muchas" (S-11); y se añade la
-  marca de código validado y su fecha, que el diagrama no tiene y que exigen RF-005 y RF-007.
+  máximo una solicitud por cuenta, aunque el diagrama dibuja "cero o muchas" (S-11); y se añaden la
+  marca de código validado y su fecha, que exigen RF-005 y RF-007, y la referencia al correo y a la
+  contraseña de la cuenta que exigen RF-014 y RF-015; el diagrama no tiene ninguna de las dos.
 - S-03 Hallazgo comprobado el 2026-10-09 con un test exploratorio: tras fijar la contraseña y
   guardar la cuenta, la siguiente petición con la cookie de sesión del navegador o con el
   `X-Session-Token` de allauth headless recibe 401. La sesión guarda una huella derivada del hash
@@ -133,8 +151,8 @@ propio código; cuando no haya cuenta elegible (RF-004), deberá indicarlo.
 - S-06 Los comandos de RF-013 muestran el código en claro porque sustituyen al correo, como S-10 de
   `procesos-pendientes`. Solo los puede ejecutar quien tiene acceso de consola al servidor.
 - S-07 Cualquier cuenta activa puede pedir el cambio, también una con el correo sin verificar, una
-  sin contraseña utilizable o una de staff; al completarlo queda con la contraseña indicada y el
-  correo verificado.
+  sin contraseña utilizable o una de staff o superusuario (confirmado en C-03); al completarlo
+  queda con la contraseña indicada y el correo verificado.
 - S-08 Marcar el correo como verificado al completar (RF-009) se decidió en la pregunta 6:
   completar demuestra el acceso al correo, igual que en el cambio de contraseña por código de
   allauth. Hoy no afecta al inicio de sesión (`ACCOUNT_EMAIL_VERIFICATION = "none"`).
@@ -142,6 +160,16 @@ propio código; cuando no haya cuenta elegible (RF-004), deberá indicarlo.
   misma en todo el proyecto.
 - S-10 Los límites son los del registro (pregunta 8). Si algún día hacen falta valores propios, se
   separan con `sdd-cambio`.
+- S-11 Una solicitud deja de servir si, después de pedirla, cambia el correo de la cuenta (RF-014,
+  C-01) o su contraseña (RF-015, C-02). *Por qué:* el código demostró el acceso a un correo
+  concreto; si la cuenta ya tiene otro, completar verificaría un correo que nunca lo recibió, y un
+  administrador que cambia el correo o la contraseña para cortar un acceso no debe ver su cambio
+  pisado por una solicitud anterior. *Coste:* quien tenga una solicitud en curso cuando eso ocurra
+  debe pedir otra.
+- S-12 Borrar al completar el contador de inicios de sesión fallidos por correo (RF-009, C-04) evita
+  que quien acaba de cambiar su contraseña siga bloqueado hasta 5 minutos por los fallos previos;
+  allauth hace lo mismo en su propio cambio de contraseña. El contador por IP no se toca: no es de
+  la cuenta.
 
 ## Fuera de alcance
 - API, pantallas, envío de correos y mensaje neutro (S-01).
@@ -162,9 +190,13 @@ propio código; cuando no haya cuenta elegible (RF-004), deberá indicarlo.
   el token de la app abiertos antes dejan de autenticar.
 - CF-4 El cambio de contraseña se puede recorrer de principio a fin solo con los comandos de
   RF-013, y los pasos están documentados en `resumen.md`.
-- CF-5 `HUMAN_TODO.md` incluye el límite de frecuencia como requisito previo a publicar la API de
-  cambio de contraseña (S-05).
+- CF-5 `HUMAN_TODO.md` incluye, como requisitos previos a publicar la API de cambio de contraseña,
+  el límite de frecuencia (S-05) y la neutralización del resultado de RF-004: mismo mensaje y tiempo
+  de respuesta comparable tenga o no cuenta el correo (S-01).
 
 ## Historial de cambios
 - 2026-10-09 — Creación (feature nueva, separada de `procesos-pendientes` el 2026-10-01) — RF:
   RF-001…RF-013 — Estado: pendiente de clarificar
+- 2026-10-09 — Clarificación (C-01…C-04) — RF: RF-001, RF-003, RF-009 ajustados; RF-014 y RF-015
+  añadidos; S-02 y S-07 ajustados; S-11 y S-12 añadidos;
+  CF-5 ajustado — Estado: clarificado
