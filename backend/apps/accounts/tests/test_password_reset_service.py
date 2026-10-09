@@ -590,3 +590,27 @@ def test_secret_transition_follows_the_shared_setting(user: User) -> None:
         assert password_reset.verify(public_id=started.public_id, code=started.code) == (
             VerifyResult.VERIFIED
         )
+
+
+def test_reactivated_account_can_resend_and_complete_again(user: User) -> None:
+    started = _started()
+    user.is_active = False
+    user.save()
+    assert password_reset.resend(public_id=started.public_id) == AccountRefusal.INACTIVE
+    assert password_reset.complete(public_id=started.public_id, password=GOOD_PASSWORD) == (
+        AccountRefusal.INACTIVE
+    )
+
+    user.is_active = True
+    user.save()
+
+    resent = password_reset.resend(public_id=started.public_id)
+    assert isinstance(resent, password_reset.Resent)
+    assert resent.public_id == started.public_id
+    assert password_reset.verify(public_id=started.public_id, code=resent.code) == (
+        VerifyResult.VERIFIED
+    )
+    result = password_reset.complete(public_id=started.public_id, password=GOOD_PASSWORD)
+    assert isinstance(result, password_reset.Completed)
+    assert _account().check_password(GOOD_PASSWORD)
+    assert not PasswordResetRequest.objects.exists()

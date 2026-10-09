@@ -219,7 +219,7 @@ esquema, para que al final quede una sola migración (M-07).
   porque la huella de la cuenta también se firmó con el secreto anterior y se comprueba antes que el
   código (D-04) — [Cierto] — revertir: comprobar el código antes que la cuenta.
 
-- [ ] T-019 Corrección: la reactivación de la cuenta vuelve a admitir el reenvío y la compleción
+- [x] T-019 Corrección: la reactivación de la cuenta vuelve a admitir el reenvío y la compleción
   Tipo: corrección | Origen: validación de RF-008
   RF: RF-008 | Depende de: — | Archivos: 1
   Archivos: `tests/test_password_reset_service.py`.
@@ -228,6 +228,8 @@ esquema, para que al final quede una sola migración (M-07).
   Hecho cuando: tras desactivar la cuenta y reactivarla antes de que la solicitud caduque, `resend`
   devuelve `Resent` con el mismo `public_id`, el código nuevo verifica y `complete` devuelve
   `Completed` (contraseña fijada y solicitud borrada); la suite completa sigue en verde.
+  Decisiones: el test desactiva y reactiva la cuenta con `save()`, como el panel, y no con
+  `update()`: así el mutante que recuerda una desactivación pasada (vía historial) muere — [Cierto].
 
 - [ ] T-020 Corrección: la orden `password_reset purge` no borra registros pendientes
   Tipo: corrección | Origen: validación de RF-011
