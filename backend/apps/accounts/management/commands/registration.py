@@ -9,6 +9,7 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
 
 from apps.accounts import registration
+from apps.accounts.management.console import format_validation_error, show_code
 
 VERIFY_ERRORS = {
     registration.VerifyResult.WRONG_CODE: gettext_noop("Wrong code."),
@@ -85,10 +86,10 @@ class Command(BaseCommand):
                 country=options["country"],
             )
         except ValidationError as error:
-            raise CommandError(_format(error)) from error
+            raise CommandError(format_validation_error(error)) from error
         if isinstance(result, registration.AccountExists):
             raise CommandError(_("An account with this email already exists."))
-        self._show_code(result.public_id, result.code)
+        show_code(self.stdout, result.public_id, result.code)
 
     def _verify(self, options: dict[str, Any]) -> None:
         result = registration.verify(public_id=options["public_id"], code=options["code"])
@@ -100,30 +101,17 @@ class Command(BaseCommand):
         result = registration.resend(public_id=options["public_id"])
         if not isinstance(result, registration.Resent):
             raise CommandError(_(RESEND_ERRORS[result]))
-        self._show_code(result.public_id, result.code)
+        show_code(self.stdout, result.public_id, result.code)
 
     def _complete(self, options: dict[str, Any]) -> None:
         password = options["password"] or getpass.getpass(_("Password: "))
         try:
             result = registration.complete(public_id=options["public_id"], password=password)
         except ValidationError as error:
-            raise CommandError(_format(error)) from error
+            raise CommandError(format_validation_error(error)) from error
         if not isinstance(result, registration.Completed):
             raise CommandError(_(COMPLETE_ERRORS[result]))
         self.stdout.write(f"public_id: {options['public_id']}\naccount: {result.user.email}")
 
     def _purge(self, options: dict[str, Any]) -> None:
         self.stdout.write(f"deleted: {registration.purge_expired()}")
-
-    def _show_code(self, public_id: str, code: str) -> None:
-        self.stdout.write(f"public_id: {public_id}\ncode: {code}")
-
-
-def _format(error: ValidationError) -> str:
-    if not hasattr(error, "error_dict"):
-        return "\n".join(error.messages)
-    return "\n".join(
-        f"{field}: {message}"
-        for field, messages in error.message_dict.items()
-        for message in messages
-    )

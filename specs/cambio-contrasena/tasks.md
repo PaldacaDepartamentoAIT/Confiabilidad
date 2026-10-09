@@ -136,12 +136,16 @@ esquema, para que al final quede una sola migración (M-07).
   operaciones comunes (T-003, T-005); fijan RF-012 para que una separación futura de límites no
   pase desapercibida — [Cierto].
 
-- [ ] T-011 Utilidades de consola compartidas
+- [x] T-011 Utilidades de consola compartidas
   RF: RF-013 (D-09, refactor) | Depende de: — | Archivos: 2
   Archivos: `management/console.py`, `management/commands/registration.py`.
   Hecho cuando: mostrar `public_id` y código, formatear `ValidationError` y pedir la contraseña sin
   eco viven en `console.py`, el comando `registration` los usa y `tests/test_registration_command.py`
   sigue en verde sin tocarlo; `manage.py help` no lista `console` como comando; suite verde.
+  Decisiones: pedir la contraseña sin eco se queda en cada comando (una línea con `getpass`) en vez
+  de pasar a `console.py`: su test parchea `getpass` a través del módulo del comando y moverla
+  obligaría a tocar ese test, que la tarea exige dejar intacto — [Cierto] — revertir: moverla y
+  cambiar el destino del parche en los tests.
 
 - [ ] T-012 Comando `manage.py password_reset`
   RF: RF-004, RF-011, RF-013 | Depende de: T-008, T-010, T-011 | Archivos: 2
