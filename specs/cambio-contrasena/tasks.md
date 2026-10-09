@@ -231,7 +231,7 @@ esquema, para que al final quede una sola migración (M-07).
   Decisiones: el test desactiva y reactiva la cuenta con `save()`, como el panel, y no con
   `update()`: así el mutante que recuerda una desactivación pasada (vía historial) muere — [Cierto].
 
-- [ ] T-020 Corrección: la orden `password_reset purge` no borra registros pendientes
+- [x] T-020 Corrección: la orden `password_reset purge` no borra registros pendientes
   Tipo: corrección | Origen: validación de RF-011
   RF: RF-011 | Depende de: — | Archivos: 1
   Archivos: `tests/test_password_reset_command.py`.
