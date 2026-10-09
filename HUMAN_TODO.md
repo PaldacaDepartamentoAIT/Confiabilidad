@@ -45,14 +45,16 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
   sops secrets/prod.enc.yaml
   ```
 
-- [ ] **Definir `REGISTRATION_CODE_SECRET` en producción, cifrado con SOPS** (feature
-  `procesos-pendientes`). Protege las huellas de los códigos de registro: sin él, cualquiera con
-  la base de datos podría probar el millón de códigos posibles (RF-008). Si no se define, se usa
-  `DJANGO_SECRET_KEY`, lo que ata su rotación a la de las sesiones. Genera uno propio:
+- [ ] **Definir `REGISTRATION_CODE_SECRET` en producción, cifrado con SOPS** (features
+  `procesos-pendientes` y `cambio-contrasena`). Protege las huellas de los códigos de registro y
+  de cambio de contraseña: sin él, cualquiera con la base de datos podría probar el millón de
+  códigos posibles (RF-008) y, con un código de cambio de contraseña en curso, tomar la cuenta. Si
+  no se define, se usa `DJANGO_SECRET_KEY`, lo que ata su rotación a la de las sesiones. Genera uno
+  propio:
   ```bash
   python -c "import secrets; print(secrets.token_urlsafe(48))"
   ```
-  Añádelo al archivo cifrado:
+  Añade el valor que imprime como `REGISTRATION_CODE_SECRET` en el archivo cifrado:
   ```bash
   sops secrets/prod.enc.yaml
   ```
@@ -82,6 +84,30 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
   Deberías ver `consents.0001_initial... OK`, `consents.0002_support_group... OK` y
   `consents.0003_history_without_user... OK`.
 
+- [ ] **Migrar y comprobar Docker tras `cambio-contrasena`.** La rama `feat/cambio-contrasena`
+  añade la migración `0006_passwordresetrequest` de `accounts` (sin dependencias nuevas). En la
+  sesión remota (2026-10-09) la imagen se construyó con una copia del `Dockerfile` que solo añade
+  el certificado del proxy de la sesión durante `pip install`, porque ese proxy intercepta TLS. Con
+  ella, `migrate` aplicó `0006`, backend, worker y beat arrancaron y la suite pasó dentro del
+  contenedor (703 tests). Falta construirla con el `Dockerfile` real, sin proxy. En tu máquina:
+  ```bash
+  docker compose -f docker/docker-compose.yml build backend
+  docker compose -f docker/docker-compose.yml run --rm backend python manage.py migrate
+  ```
+  Deberías ver `accounts.0006_passwordresetrequest... OK`.
+
+  Si ejecutas la suite dentro del contenedor, para antes el `worker` de Compose: comparte el broker
+  Redis con los tests y se lleva la tarea de `apps/core/tests/test_task_worker.py`, que entonces
+  falla (la escribe en la base de desarrollo, no en la de tests):
+  ```bash
+  docker compose -f docker/docker-compose.yml stop worker
+  ```
+  Después ejecuta la suite:
+  ```bash
+  docker compose -f docker/docker-compose.yml run --rm backend pytest -q
+  ```
+  Deberías ver todos los tests en verde.
+
 - [ ] **Definir `CONSENT_EMAIL_HASH_SECRET` en producción, cifrado con SOPS, y no rotarlo nunca**
   (feature `consentimientos`). Protege la huella del correo de las aceptaciones de términos y los
   consentimientos de marketing: sin él, cualquiera con la base de datos podría averiguar el correo
@@ -102,6 +128,21 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
   intentos es por código, no por proceso: sin límite de reenvíos, un atacante puede probar códigos
   sin parar durante la hora de vida del registro. En consola no hay riesgo; decide el límite (por
   correo y por IP) al especificar la feature de la API.
+
+- [ ] **Limitar la frecuencia de pedir y reenviar códigos antes de publicar la API de cambio de
+  contraseña** (feature `cambio-contrasena`, S-05). Aquí el riesgo es mayor que en el registro:
+  cualquiera puede pedir el cambio para el correo de otra persona, y pedirlo de nuevo o reenviar
+  el código pone los intentos a 0. Sin límite, unas 200.000 rondas de 5 intentos bastan de media
+  para acertar un código y **tomar la cuenta ajena**. En consola no hay riesgo; decide el límite
+  (por correo y por IP, para pedir y para reenviar) al especificar la API. Es bloqueante.
+
+- [ ] **Neutralizar "sin cuenta elegible" en la API de cambio de contraseña** (feature
+  `cambio-contrasena`, S-01, RF-004). El servicio `password_reset.start` responde
+  `NoEligibleAccount` cuando el correo no tiene cuenta o la cuenta está inactiva. La API debe
+  devolver exactamente el mismo mensaje que con una cuenta válida ("Si existe una cuenta,
+  recibirás un código") y con un tiempo de respuesta comparable (con cuenta se escribe en la base
+  de datos y se calcula la huella; sin cuenta, no), o revelará qué correos están registrados. Es
+  bloqueante.
 
 - [ ] **Traducir el `IntegrityError` de `complete` antes de publicar la API de registro**
   (feature `procesos-pendientes`, riesgo residual). Si otra vía crea la cuenta justo entre la
