@@ -85,10 +85,17 @@ para activar las rutas de login por código. Es el mismo punto de integración q
   sigue expuesto (`/auth/signup`), para no tener dos vías de alta. No se ha probado en este spike.
 
 ## Cómo probarlo
-1. Levanta la base de datos y Redis: `docker compose -f docker/docker-compose.yml up -d db redis`
+Todos los comandos se ejecutan desde la raíz del repositorio.
+
+1. Levanta la base de datos y Redis:
+   ```bash
+   docker compose -f docker/docker-compose.yml up -d db redis
+   ```
 2. Ejecuta los tests del spike con las variables del backend (`DATABASE_URL`, `REDIS_URL`,
    `DJANGO_SECRET_KEY`, como en tu `.env` o en el CI):
-   `cd backend && pytest apps/accounts/tests/spike_allauth -v -o addopts=`
+   ```bash
+   cd backend && pytest apps/accounts/tests/spike_allauth -v -o addopts=
+   ```
 3. Deberías ver 26 tests en verde (13 casos × browser/app).
 4. Si repites la suite completa más de 5 veces en 5 minutos, pueden fallar los tests de login de
    `auth-headless` por C-15; espera 5 minutos o vacía la caché de Redis.
