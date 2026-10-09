@@ -52,9 +52,10 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
   sops secrets/prod.enc.yaml
   ```
 
-- [ ] **Definir `REGISTRATION_CODE_SECRET` en producción, cifrado con SOPS** (feature
-  `procesos-pendientes`). Protege las huellas de los códigos de registro: sin él, cualquiera con
-  la base de datos podría probar el millón de códigos posibles (RF-008). Si no se define, se usa
+- [ ] **Definir `REGISTRATION_CODE_SECRET` en producción, cifrado con SOPS** (features
+  `procesos-pendientes` y `cambio-contrasena`). Protege las huellas de los códigos de registro y
+  de cambio de contraseña: sin él, cualquiera con la base de datos podría probar el millón de
+  códigos posibles (RF-008) y, con un código de cambio de contraseña en curso, tomar la cuenta. Si no se define, se usa
   `DJANGO_SECRET_KEY`, lo que ata su rotación a la de las sesiones. Genera uno propio y
   añádelo con `sops secrets/prod.enc.yaml`:
   ```bash
@@ -95,6 +96,21 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
   intentos es por código, no por proceso: sin límite de reenvíos, un atacante puede probar códigos
   sin parar durante la hora de vida del registro. En consola no hay riesgo; decide el límite (por
   correo y por IP) al especificar la feature de la API.
+
+- [ ] **Limitar la frecuencia de pedir y reenviar códigos antes de publicar la API de cambio de
+  contraseña** (feature `cambio-contrasena`, S-05). Aquí el riesgo es mayor que en el registro:
+  cualquiera puede pedir el cambio para el correo de otra persona, y pedirlo de nuevo o reenviar
+  el código pone los intentos a 0. Sin límite, unas 200.000 rondas de 5 intentos bastan de media
+  para acertar un código y **tomar la cuenta ajena**. En consola no hay riesgo; decide el límite
+  (por correo y por IP, para pedir y para reenviar) al especificar la API. Es bloqueante.
+
+- [ ] **Neutralizar "sin cuenta elegible" en la API de cambio de contraseña** (feature
+  `cambio-contrasena`, S-01, RF-004). El servicio `password_reset.start` responde
+  `NoEligibleAccount` cuando el correo no tiene cuenta o la cuenta está inactiva. La API debe
+  devolver exactamente el mismo mensaje que con una cuenta válida ("Si existe una cuenta,
+  recibirás un código") y con un tiempo de respuesta comparable (con cuenta se escribe en la base
+  de datos y se calcula la huella; sin cuenta, no), o revelará qué correos están registrados. Es
+  bloqueante.
 
 - [ ] **Traducir el `IntegrityError` de `complete` antes de publicar la API de registro**
   (feature `procesos-pendientes`, riesgo residual). Si otra vía crea la cuenta justo entre la

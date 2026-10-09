@@ -159,7 +159,7 @@ esquema, para que al final quede una sola migración (M-07).
   again."); son seguros en consola (S-06) y la API deberá decidir cómo mostrarlos — [Probable] —
   revertir: un único mensaje genérico.
 
-- [ ] T-013 Documentación operativa
+- [x] T-013 Documentación operativa
   RF: RF-012 (D-10; CF-5) | Depende de: — | Archivos: 2
   Archivos: `backend/.env.example`, `HUMAN_TODO.md`.
   Hecho cuando: `.env.example` dice que los límites `REGISTRATION_*` y el secreto de los códigos
