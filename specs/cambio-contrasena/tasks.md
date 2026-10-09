@@ -147,13 +147,17 @@ esquema, para que al final quede una sola migración (M-07).
   obligaría a tocar ese test, que la tarea exige dejar intacto — [Cierto] — revertir: moverla y
   cambiar el destino del parche en los tests.
 
-- [ ] T-012 Comando `manage.py password_reset`
+- [x] T-012 Comando `manage.py password_reset`
   RF: RF-004, RF-011, RF-013 | Depende de: T-008, T-010, T-011 | Archivos: 2
   Archivos: `management/commands/password_reset.py`, `tests/test_password_reset_command.py`.
   Hecho cuando: con `call_command`, `start --email` muestra `public_id` y `code`; `verify`,
   `resend` y `complete` (con `--password` y pidiéndola sin eco) recorren el cambio y `complete`
   muestra la cuenta; cada rechazo termina en `CommandError` con su mensaje; sin cuenta elegible
   muestra "No active account with this email."; `purge` muestra `deleted: N`; suite verde. (CF-4)
+  Decisiones: la cuenta inactiva y la cuenta cambiada tienen mensajes propios en consola ("The
+  account is inactive.", "The account's email or password changed after the request; start
+  again."); son seguros en consola (S-06) y la API deberá decidir cómo mostrarlos — [Probable] —
+  revertir: un único mensaje genérico.
 
 - [ ] T-013 Documentación operativa
   RF: RF-012 (D-10; CF-5) | Depende de: — | Archivos: 2
