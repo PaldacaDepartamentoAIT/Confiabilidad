@@ -124,7 +124,7 @@ esquema, para que al final quede una sola migración (M-07).
   allauth viven en Redis y sobreviven entre ejecuciones — [Cierto]. Que la tasa por IP no cambie no
   tiene test: borrarla exigiría la IP del cliente, que el servicio no conoce — [Probable].
 
-- [ ] T-010 Purga y límites compartidos
+- [x] T-010 Purga y límites compartidos
   RF: RF-011, RF-012 | Depende de: T-007 | Archivos: 2
   Archivos: `password_reset.py`, `tests/test_password_reset_service.py`.
   Hecho cuando: `purge_expired` borra solo las solicitudes caducadas, devuelve cuántas y no toca
@@ -132,6 +132,9 @@ esquema, para que al final quede una sola migración (M-07).
   `REGISTRATION_CODE_TTL_MINUTES`, `REGISTRATION_GRACE_MINUTES` y
   `REGISTRATION_MAX_LIFETIME_MINUTES` cambian el bloqueo, la vigencia del código y la caducidad de
   las solicitudes; suite verde.
+  Decisiones: los tests de límites pasaron sin código nuevo porque el servicio ya usa la base y las
+  operaciones comunes (T-003, T-005); fijan RF-012 para que una separación futura de límites no
+  pase desapercibida — [Cierto].
 
 - [ ] T-011 Utilidades de consola compartidas
   RF: RF-013 (D-09, refactor) | Depende de: — | Archivos: 2

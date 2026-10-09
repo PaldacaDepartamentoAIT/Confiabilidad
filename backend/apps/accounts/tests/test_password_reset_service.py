@@ -5,10 +5,11 @@ import pytest
 from allauth.account.models import EmailAddress
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
+from django.test import override_settings
 from django.utils import timezone
 
 from apps.accounts import codes, password_reset, registration
-from apps.accounts.models import PasswordResetRequest, User
+from apps.accounts.models import PasswordResetRequest, PendingRegistration, User
 from apps.accounts.tests.factories import DEFAULT_PASSWORD, make_user
 
 pytestmark = pytest.mark.django_db
@@ -452,3 +453,66 @@ def test_complete_is_not_found_if_the_request_changed_before_locking(
         CompleteRefusal.NOT_FOUND
     )
     assert _account().check_password(DEFAULT_PASSWORD)
+
+
+def test_purge_deletes_only_expired_requests_and_no_pending_registrations() -> None:
+    for email in ("alive@x.com", "grace@x.com", "lifetime@x.com"):
+        make_user(email=email)
+        _started(email)
+    now = timezone.now()
+    PasswordResetRequest.objects.filter(user__email="grace@x.com").update(
+        code_expires_at=now - timedelta(minutes=16)
+    )
+    PasswordResetRequest.objects.filter(user__email="lifetime@x.com").update(
+        created_at=now - timedelta(minutes=61)
+    )
+    pending = registration.start(
+        email="new@x.com", name="Nuevo", birthdate=date(1990, 1, 1), country="ES"
+    )
+    assert isinstance(pending, registration.Started)
+    PendingRegistration.objects.update(created_at=now - timedelta(minutes=61))
+
+    assert password_reset.purge_expired() == 2
+
+    assert list(PasswordResetRequest.objects.values_list("user__email", flat=True)) == [
+        "alive@x.com"
+    ]
+    assert PendingRegistration.objects.count() == 1
+    assert password_reset.purge_expired() == 0
+
+
+@override_settings(REGISTRATION_MAX_FAILED_ATTEMPTS=2)
+def test_lock_follows_the_shared_setting(user: User) -> None:
+    started = _started()
+    for _ in range(2):
+        password_reset.verify(public_id=started.public_id, code=_wrong(started.code))
+
+    assert password_reset.verify(public_id=started.public_id, code=started.code) == (
+        VerifyResult.LOCKED
+    )
+
+
+@override_settings(REGISTRATION_CODE_TTL_MINUTES=5, REGISTRATION_GRACE_MINUTES=2)
+def test_code_lifetime_and_grace_follow_the_shared_settings(user: User) -> None:
+    started = _started()
+    remaining = _stored().code_expires_at - timezone.now()
+    assert timedelta(minutes=4) < remaining <= timedelta(minutes=5)
+
+    _age(code_expires_at=1)
+    assert password_reset.verify(public_id=started.public_id, code=started.code) == (
+        VerifyResult.CODE_EXPIRED
+    )
+    _age(code_expires_at=3)
+    assert password_reset.verify(public_id=started.public_id, code=started.code) == (
+        VerifyResult.EXPIRED
+    )
+
+
+@override_settings(REGISTRATION_MAX_LIFETIME_MINUTES=10)
+def test_request_lifetime_follows_the_shared_setting(user: User) -> None:
+    started = _started()
+    _age(created_at=11)
+
+    assert password_reset.verify(public_id=started.public_id, code=started.code) == (
+        VerifyResult.EXPIRED
+    )

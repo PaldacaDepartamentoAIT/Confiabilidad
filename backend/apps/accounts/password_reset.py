@@ -139,6 +139,11 @@ def complete(*, public_id: str, password: str) -> Completed | CompleteRefusal | 
         return Completed(user=user)
 
 
+def purge_expired() -> int:
+    _total, by_model = PasswordResetRequest.objects.expired().delete()
+    return by_model.get(PasswordResetRequest._meta.label, 0)
+
+
 def _owner_id(public_id: str) -> int | None:
     owner: int | None = (
         PasswordResetRequest.objects.filter(public_id=public_id)
