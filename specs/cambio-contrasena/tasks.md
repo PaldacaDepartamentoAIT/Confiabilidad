@@ -197,7 +197,7 @@ esquema, para que al final quede una sola migración (M-07).
   con esa `REMOTE_ADDR`) no está vacío y es el mismo antes y después de `complete`; la suite completa
   sigue en verde.
 
-- [ ] T-017 Corrección: el identificador de una solicitud no sirve en el registro, ni a la inversa
+- [x] T-017 Corrección: el identificador de una solicitud no sirve en el registro, ni a la inversa
   Tipo: corrección | Origen: validación de RF-005
   RF: RF-005 | Depende de: — | Archivos: 1
   Archivos: `tests/test_password_reset_service.py`.

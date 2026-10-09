@@ -532,3 +532,36 @@ def test_complete_is_all_or_nothing(user: User, monkeypatch: pytest.MonkeyPatch)
     assert _account().check_password(DEFAULT_PASSWORD)
     assert _stored().public_id == started.public_id
     assert not EmailAddress.objects.exists()
+
+
+def test_public_ids_do_not_cross_between_processes(user: User) -> None:
+    reset = _validated()
+    pending = registration.start(
+        email="new@x.com", name="Nuevo", birthdate=date(1990, 1, 1), country="ES"
+    )
+    assert isinstance(pending, registration.Started)
+    assert registration.verify(public_id=pending.public_id, code=pending.code) == (
+        VerifyResult.VERIFIED
+    )
+    reset_before = _stored()
+    pending_before = PendingRegistration.objects.get()
+
+    assert registration.verify(public_id=reset.public_id, code=reset.code) == (
+        VerifyResult.NOT_FOUND
+    )
+    assert registration.resend(public_id=reset.public_id) == registration.ResendRefusal.NOT_FOUND
+    assert registration.complete(public_id=reset.public_id, password=GOOD_PASSWORD) == (
+        registration.CompleteRefusal.NOT_FOUND
+    )
+    assert password_reset.complete(public_id=pending.public_id, password=GOOD_PASSWORD) == (
+        CompleteRefusal.NOT_FOUND
+    )
+
+    reset_after = _stored()
+    pending_after = PendingRegistration.objects.get()
+    fields = ("public_id", "code_hash", "failed_attempts", "code_validated_at")
+    for field in fields:
+        assert getattr(reset_after, field) == getattr(reset_before, field)
+        assert getattr(pending_after, field) == getattr(pending_before, field)
+    assert _account().check_password(DEFAULT_PASSWORD)
+    assert list(User.objects.values_list("email", flat=True)) == [EMAIL]
