@@ -6,8 +6,8 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
 
 ## Pendiente
 
-- [ ] **Reconstruir la imagen del backend y migrar tras `usuario-personalizado`.** La rama
-  `feat/usuario-personalizado` añade dos dependencias (`pycountry` y `django-simple-history`)
+- [ ] **Reconstruir la imagen del backend y migrar tras `usuario-personalizado`.** La feature
+  `usuario-personalizado`, ya fusionada en `main`, añade dos dependencias (`pycountry` y `django-simple-history`)
   y las migraciones `0002`, `0003` y `0004` de `accounts`. En tu máquina:
   ```bash
   docker compose -f docker/docker-compose.yml build backend
@@ -32,19 +32,6 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
   - **Desactivarlos** como dice S-09: poner `ACCOUNT_RATE_LIMITS = False`.
 
   Siguiente paso, en ambos casos: `sdd-cambio` sobre `auth-headless` en una rama `fix/`.
-
-- [ ] **Integrar la feature `infra-persistencia-y-colas`.** Implementada y validada (CUMPLIDA)
-  en la rama `feat/infra-persistencia-y-colas`. Súbela y abre el PR a `main` (la branch
-  protection exige PR; el CI correrá Backend/Frontend/Desktop/Secretos):
-  ```bash
-  git push -u origin feat/infra-persistencia-y-colas
-  ```
-  Abre el PR (requiere haber hecho `gh auth login`; si no, ábrelo desde la web):
-  ```bash
-  gh pr create --base main --fill
-  ```
-  Quedan como **opcionales** las tareas T-009 y T-010 en
-  `specs/infra-persistencia-y-colas/tasks.md` (mejoras de tests, no bloqueantes).
 
 - [ ] **Clave age para SOPS.** Genera tu par de claves y pon la pública en `.sops.yaml`.
   Ejecútalo fuera del repo, para que `age-key.txt` no quede dentro:
@@ -75,7 +62,8 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
   `2026-10-06T10:00:00+00:00`). El anterior vale durante `REGISTRATION_SECRET_TRANSITION_MINUTES`
   (60 por defecto); después puedes borrar las dos variables de rotación.
 
-- [ ] **Migrar y comprobar Docker tras `consentimientos`.** La rama `feat/consentimientos` añade la
+- [ ] **Migrar y comprobar Docker tras `consentimientos`.** La feature `consentimientos`, ya fusionada en
+  `main`, añade la
   app `consents` y sus migraciones `0001`, `0002` y `0003` (sin dependencias nuevas). En la sesión remota no
   se pudo construir la imagen: Docker Hub respondió `429 Too Many Requests` al descargar
   `python:3.12-slim`. En tu máquina:
@@ -139,6 +127,10 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
 ## Hecho
 
 <!-- Mueve aquí las tareas completadas, con fecha. -->
+
+- [x] **Integrar la feature `infra-persistencia-y-colas`** (2026-09-25). Fusionada en `main` con el
+  PR #1. Quedan como **opcionales** las tareas T-009 y T-010 en
+  `specs/infra-persistencia-y-colas/tasks.md` (mejoras de tests, no bloqueantes).
 
 - [x] **Entorno remoto en el VPS: tareas de administración** (2026-09-30). Usuario propio con
   `sudo` y `docker` y clave pública instalada, SSH endurecido, swap creada, alta de trabajador
