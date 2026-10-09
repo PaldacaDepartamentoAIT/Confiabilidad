@@ -238,3 +238,15 @@ class PendingRegistration(CodeProcess):
         _check_profile(self, set(exclude or ()), errors, lambda: None)
         if errors:
             raise ValidationError(errors)
+
+
+class PasswordResetRequest(CodeProcess):
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE, related_name="password_reset_request"
+    )
+    account_stamp = models.CharField(max_length=64)
+
+    objects = CodeProcessQuerySet["PasswordResetRequest"].as_manager()
+
+    def __str__(self) -> str:
+        return self.user.email

@@ -40,7 +40,7 @@ esquema, para que al final quede una sola migración (M-07).
   Decisiones: `CodeProcessQuerySet` es genérico en el modelo para que mypy tipe `expired()` en cada
   proceso — [Cierto] — revertir: un queryset por modelo.
 
-- [ ] T-004 Modelo `PasswordResetRequest` y migración `0006`
+- [x] T-004 Modelo `PasswordResetRequest` y migración `0006`
   RF: RF-001, RF-006, RF-010 | Depende de: T-003 | Archivos: 3
   Archivos: `models.py`, `migrations/0006_passwordresetrequest.py`,
   `tests/test_password_reset_model.py`.
