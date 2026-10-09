@@ -23,9 +23,13 @@ Calidad: 13 tests automáticos en verde, cobertura 100 %, y análisis estático 
 ## Cómo probarlo (usuario)
 Requisitos: tener **Podman** funcionando. Abre una terminal en la raíz del repo.
 
-1. Sitúate en la rama y prepara los servicios, un comando cada vez:
+1. Sitúate en `main` actualizado (la feature ya está fusionada) y prepara los servicios, un comando
+   cada vez:
 ```powershell
-git switch feat/infra-persistencia-y-colas
+git switch main
+```
+```powershell
+git pull
 ```
 ```powershell
 podman compose -f docker/docker-compose.yml up -d db redis

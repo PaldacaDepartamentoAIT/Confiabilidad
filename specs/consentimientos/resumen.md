@@ -80,7 +80,7 @@ ni API (RF-016). La API futura usará el mismo servicio (`apps/consents/services
   consentimientos (C-16).
 
 ## Cómo probarlo
-Requisitos: Docker y la rama `feat/consentimientos`. En el VPS sigue *Actualizar* y *Migraciones*
+Requisitos: Docker y `main` actualizado (la feature ya está fusionada). En el VPS sigue *Actualizar* y *Migraciones*
 de la sección *Entorno remoto* del README. Todos los comandos se ejecutan desde la raíz del
 repositorio.
 

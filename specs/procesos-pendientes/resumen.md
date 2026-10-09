@@ -52,7 +52,7 @@ contra el servicio real y `makemessages` sin ejecutar. Se detallan abajo.
 - Nada programa la purga; hasta entonces los caducados solo se borran al repetir el mismo correo.
 
 ## Cómo probarlo
-Requisitos: Docker y la rama `feat/procesos-pendientes`. En el VPS sigue *Actualizar* y
+Requisitos: Docker y `main` actualizado (la feature ya está fusionada). En el VPS sigue *Actualizar* y
 *Migraciones* de la sección *Entorno remoto* del README. Todos los comandos se ejecutan desde la
 raíz del repositorio.
 

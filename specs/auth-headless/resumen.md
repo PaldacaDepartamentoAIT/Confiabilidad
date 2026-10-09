@@ -92,7 +92,8 @@ Calidad: 27 tests en verde, cobertura 99 %, `ruff`/`black`/`mypy` limpios. Valid
 independiente **CUMPLIDA** (ver `spec.md` → Historial).
 
 ## Cómo probarlo (usuario)
-Requisitos: **Podman**. Terminal en la raíz del repo, rama `feat/auth-headless`.
+Requisitos: **Podman**. Terminal en la raíz del repo, en `main` actualizado (la feature ya está
+fusionada).
 
 **Prueba automática (rápida):** usa el contenedor de test de la red de Podman.
 ```powershell

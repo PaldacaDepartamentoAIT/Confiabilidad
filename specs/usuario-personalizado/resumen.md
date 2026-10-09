@@ -44,7 +44,7 @@ reglas que se cumplen en todo guardado normal y un historial auditable.
   cambios de una instancia tras un guardado de `last_login` que falle.
 
 ## Cómo probarlo
-Requisitos: Docker y la rama `feat/usuario-personalizado`.
+Requisitos: Docker y `main` actualizado (la feature ya está fusionada).
 En el VPS no uses estos comandos (se saltan el override y exponen Postgres y Redis): sigue
 *Actualizar* y *Migraciones* de la sección *Entorno remoto* del README. Todos los comandos se
 ejecutan desde la raíz del repositorio.
