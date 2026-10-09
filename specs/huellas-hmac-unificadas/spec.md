@@ -37,11 +37,13 @@ sin espacios al principio ni al final y en minúsculas.
 
 ### RF-005 Compatibilidad con las huellas guardadas
 El sistema deberá producir, para cada huella ya guardada, exactamente el mismo valor que producía
-antes de esta feature, sin migrar ni recalcular datos.
+antes de esta feature, sin migrar ni recalcular datos. La única excepción es un sello de cuenta
+calculado con un correo sin normalizar: prevalece la normalización única (RF-004) y esa solicitud
+de cambio de contraseña deja de valer.
 
 ### RF-006 Comprobación de una huella
-Cuando se compruebe un valor contra una huella guardada, el sistema deberá recalcular la huella
-del valor y compararla con la guardada en tiempo constante.
+Cuando se compruebe un valor contra una huella guardada de cualquier tipo, el sistema deberá
+recalcular la huella del valor y compararla con la guardada en tiempo constante.
 
 ### RF-007 Clave anterior durante la transición
 Mientras dure el periodo de transición tras rotar la clave de un tipo que admite rotación, el
@@ -51,37 +53,49 @@ actual como las calculadas con la anterior, y fuera de ese periodo solo las de l
 ### RF-008 Clave mal configurada
 Si la clave de un tipo de huella está vacía, o la clave anterior coincide con la actual, entonces
 el sistema deberá rechazar el cálculo y la comprobación con un error de configuración que nombre
-la clave afectada.
+la clave afectada. Si la fecha de rotación no es una fecha con zona horaria, entonces el sistema
+deberá rechazar la comprobación con un error de configuración que nombre ese ajuste. Si hay clave
+anterior pero no fecha de rotación, entonces el sistema deberá ignorar la clave anterior en la
+comprobación.
 
-### RF-009 Huellas distintas entre tipos
-El sistema deberá producir huellas distintas para un mismo valor de entrada en tipos de huella
-distintos, aunque sus claves coincidan.
+### RF-009 Huellas distintas entre tipos — OBSOLETO
+OBSOLETO (2026-10-09, C-03): «un mismo valor de entrada» no tiene una lectura única, porque cada
+tipo recibe datos de forma distinta. La separación entre tipos se confía a sus claves (RF-002) y
+el riesgo queda en S-03. Texto original: ~~El sistema deberá producir huellas distintas para un
+mismo valor de entrada en tipos de huella distintos, aunque sus claves coincidan.~~
 
 ### RF-010 Detección de cálculos fuera del punto único
-Si algún código de la aplicación, fuera del punto único de cálculo y de los tests, calcula
-directamente una huella con clave, entonces la suite de tests deberá fallar e indicar el archivo
-en el que ocurre.
+Si algún código de la aplicación (incluidas las migraciones y los comandos de gestión, excluidos
+los tests), fuera del punto único de cálculo, usa una función de hash criptográfico o de HMAC,
+entonces la suite de tests deberá fallar e indicar el archivo en el que ocurre, salvo los usos de
+esta lista cerrada de excepciones:
+- la comprobación de contraseñas filtradas, que exige un hash sin clave.
+
+Añadir una excepción es un cambio de esta spec.
 
 ## Supuestos
 - S-01 RNF-25 procede de un documento de requisitos externo al repositorio. La spec lo cita con
   su texto literal y no se crea la categoría `RNF` en las convenciones del proyecto.
   *Riesgo:* si ese documento cambia, la cita queda desactualizada sin aviso.
 - S-02 Los correos guardados ya están normalizados (sin espacios y en minúsculas), así que
-  unificar la normalización (RF-004) no cambia ninguna huella guardada (RF-005). *Riesgo:* una
-  fila escrita saltándose la normalización (por ejemplo, con una actualización masiva) daría otro
-  sello de cuenta; la solicitud de cambio de contraseña en curso dejaría de valer y habría que
-  pedir otra. Las huellas de consentimiento no se ven afectadas: ya usaban esta normalización.
+  unificar la normalización (RF-004) no cambia en la práctica ninguna huella guardada. Si alguno
+  no lo está, se aplica la excepción de RF-005: esa solicitud de cambio de contraseña deja de
+  valer y hay que pedir otra. Las huellas de consentimiento no se ven afectadas: ya usaban esta
+  normalización.
 - S-03 Dos tipos de huella pueden compartir el mismo valor de clave (hoy ocurre si no se define
-  ninguna, porque las dos toman el mismo valor por defecto); no se impide. RF-009 evita que eso
-  produzca huellas iguales entre tipos.
+  ninguna, porque las dos toman el mismo valor por defecto); no se impide. *Riesgo:* con RF-009
+  obsoleto, nada garantiza que dos tipos con la misma clave no produzcan la misma huella. Hoy no
+  ocurre, porque cada tipo firma un texto con formato distinto, pero un tipo futuro podría
+  romperlo.
 - S-04 Se mantiene de dónde sale cada clave y su valor por defecto actual. *Riesgo:* si no se
   define la clave de consentimientos y se cambia el valor por defecto del que depende, las huellas
   de consentimiento guardadas dejan de coincidir.
 - S-05 La clave de consentimientos sigue sin rotar (S-09 de `consentimientos`).
 
 ## Fuera de alcance
-- Los hashes que no son huellas con clave: la comprobación de contraseñas filtradas (que exige un
-  hash sin clave) y el almacenamiento de contraseñas.
+- Los hashes que no son huellas con clave: la comprobación de contraseñas filtradas (excepción de
+  RF-010) y el almacenamiento de contraseñas, que hace el propio framework fuera del código de la
+  aplicación.
 - Que los tests usen el punto único de cálculo: pueden calcular la huella esperada por su cuenta,
   como referencia independiente.
 - Cambiar de dónde salen las claves, sus valores por defecto o hacerlas obligatorias (S-04).
@@ -96,10 +110,14 @@ en el que ocurre.
 - Para cada tipo de huella, la huella esperada calculada a mano en los tests coincide con la del
   punto único (RF-005).
 - Las suites de las features que usan huellas (`procesos-pendientes`, `cambio-contrasena` y
-  `consentimientos`) pasan sin cambiar lo que comprueban.
+  `consentimientos`) pasan. Sus tests de huellas pueden reescribirse o fusionarse con los del
+  punto único, siempre que cada RF de esas features siga cubierto por al menos un test.
 - Suite completa, tipos y lint en verde, y cobertura de líneas ≥ 80%.
 - Los resúmenes de las features afectadas reflejan el nuevo punto único de cálculo, y existe
   `specs/huellas-hmac-unificadas/resumen.md`.
 
 ## Historial de cambios
-- 2026-10-09 — Creación de la spec — RF: RF-001…RF-010 — Estado: pendiente de clarificar
+- 2026-10-09 — Creación de la spec — RF: RF-001…RF-010 — Estado: clarificado
+- 2026-10-09 — Clarificación C-01…C-06: excepción de normalización en RF-005, comprobación para
+  todos los tipos, errores de rotación en RF-008, RF-009 obsoleto y alcance y excepciones de
+  RF-010 — RF: RF-005, RF-006, RF-008, RF-009, RF-010 — Estado: clarificado
