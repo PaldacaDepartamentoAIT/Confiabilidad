@@ -614,3 +614,23 @@ def test_reactivated_account_can_resend_and_complete_again(user: User) -> None:
     assert isinstance(result, password_reset.Completed)
     assert _account().check_password(GOOD_PASSWORD)
     assert not PasswordResetRequest.objects.exists()
+
+
+def test_resend_does_not_extend_the_request_lifetime(user: User) -> None:
+    started = _started()
+    _age(created_at=50)
+    created_at = _stored().created_at
+
+    resent = password_reset.resend(public_id=started.public_id)
+
+    assert isinstance(resent, password_reset.Resent)
+    assert _stored().created_at == created_at
+    _age(created_at=61)
+    assert password_reset.verify(public_id=started.public_id, code=resent.code) == (
+        VerifyResult.EXPIRED
+    )
+    assert password_reset.resend(public_id=started.public_id) == ResendRefusal.EXPIRED
+    PasswordResetRequest.objects.update(code_validated_at=timezone.now())
+    assert password_reset.complete(public_id=started.public_id, password=GOOD_PASSWORD) == (
+        CompleteRefusal.EXPIRED
+    )

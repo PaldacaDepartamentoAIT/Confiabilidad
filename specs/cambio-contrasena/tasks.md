@@ -241,7 +241,7 @@ esquema, para que al final quede una sola migración (M-07).
   `call_command("password_reset", "purge")` muestra `deleted: 1` y el registro pendiente sigue
   existiendo; ese mutante muere al ejecutar el archivo completo; la suite completa sigue en verde.
 
-- [ ] T-021 Corrección: el reenvío no alarga la vida máxima de la solicitud
+- [x] T-021 Corrección: el reenvío no alarga la vida máxima de la solicitud
   Tipo: corrección | Origen: validación de RF-006
   RF: RF-006 | Depende de: — | Archivos: 1
   Archivos: `tests/test_password_reset_service.py`.
