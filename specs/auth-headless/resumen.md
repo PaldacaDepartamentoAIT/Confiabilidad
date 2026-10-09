@@ -100,31 +100,47 @@ podman exec conf-test pytest apps/accounts/tests/ -v --no-cov
 ```
 
 **Prueba en vivo por HTTP.** Resetea la BD de dev (por el cambio de `AUTH_USER_MODEL`) y levanta
-el stack:
+el stack, un comando cada vez:
 ```powershell
 podman compose -f docker/docker-compose.yml down -v
+```
+```powershell
 podman compose -f docker/docker-compose.yml build backend
+```
+```powershell
 podman compose -f docker/docker-compose.yml up -d db redis backend
+```
+```powershell
 podman compose -f docker/docker-compose.yml exec backend python manage.py migrate
+```
+```powershell
 podman compose -f docker/docker-compose.yml exec backend python manage.py seed_test_user
 ```
 
-Cliente **app (token)**:
+Cliente **app (token)**. Inicia sesión:
 ```powershell
-# Login → devuelve meta.session_token
 podman compose -f docker/docker-compose.yml exec backend http POST localhost:8000/_allauth/app/v1/auth/login email=test@example.com password=test-password-123
-# Sesión autenticada con el token
+```
+La respuesta trae `meta.session_token`; en el comando siguiente, `<TOKEN>` es ese valor. Consulta
+la sesión autenticada con el token:
+```powershell
 podman compose -f docker/docker-compose.yml exec backend http GET localhost:8000/_allauth/app/v1/auth/session X-Session-Token:<TOKEN>
 ```
 
-Cliente **navegador (cookie + CSRF)**:
+Cliente **navegador (cookie + CSRF)**. Pide la sesión sin haber iniciado sesión:
 ```powershell
-# 1) 401 + entrega la cookie csrftoken (es normal, aún no hay login)
-podman compose -f docker/docker-compose.yml exec backend http --session=web GET localhost:8000/_allauth/browser/v1/auth/session
-# 2) Login enviando el csrftoken como cabecera
-podman compose -f docker/docker-compose.yml exec backend http --session=web POST localhost:8000/_allauth/browser/v1/auth/login email=test@example.com password=test-password-123 X-CSRFToken:<CSRFTOKEN>
-# 3) 200 autenticado (por cookie de sesión)
 podman compose -f docker/docker-compose.yml exec backend http --session=web GET localhost:8000/_allauth/browser/v1/auth/session
 ```
+Responde 401 y entrega la cookie `csrftoken` (es normal, aún no hay login). En el comando
+siguiente, `<CSRFTOKEN>` es el valor de esa cookie, que aparece en la cabecera `Set-Cookie` de la
+respuesta. Inicia sesión enviando el `csrftoken` como cabecera:
+```powershell
+podman compose -f docker/docker-compose.yml exec backend http --session=web POST localhost:8000/_allauth/browser/v1/auth/login email=test@example.com password=test-password-123 X-CSRFToken:<CSRFTOKEN>
+```
+Vuelve a pedir la sesión:
+```powershell
+podman compose -f docker/docker-compose.yml exec backend http --session=web GET localhost:8000/_allauth/browser/v1/auth/session
+```
+Deberías ver 200, autenticado por la cookie de sesión.
 
 Credenciales del usuario de prueba: `test@example.com` / `test-password-123`.
