@@ -72,44 +72,78 @@ ni API (RF-016). La API futura usará el mismo servicio (`apps/consents/services
   la base de datos, pero ningún test la ejerce con transacciones reales.
 - Los textos nuevos están marcados para traducción, pero `makemessages` no se ha ejecutado.
 - Durante la feature, `0001_initial` se regeneró varias veces: si aplicaste una versión intermedia
-  de la rama anterior a `0003`, deshaz `consents` (`migrate consents zero`) antes de migrar. La
-  `0003` borra para siempre los usuarios que ya hubiera en el historial de aceptaciones y
+  de la rama anterior a `0003`, deshaz `consents` antes de migrar:
+  ```bash
+  docker compose -f docker/docker-compose.yml run --rm backend python manage.py migrate consents zero
+  ```
+  La `0003` borra para siempre los usuarios que ya hubiera en el historial de aceptaciones y
   consentimientos (C-16).
 
 ## Cómo probarlo
-Requisitos: Docker y la rama `feat/consentimientos`. En el VPS sigue *Actualizar* y *Migraciones*
-de la sección *Entorno remoto* del README. En los pasos, `M` abrevia
-`docker compose -f docker/docker-compose.yml run --rm backend python manage.py` y `C` abrevia
-`M consents`.
+Requisitos: Docker y `main` actualizado (la feature ya está fusionada). En el VPS sigue *Actualizar* y *Migraciones*
+de la sección *Entorno remoto* del README. Todos los comandos se ejecutan desde la raíz del
+repositorio.
 
-1. Levanta la base de datos y Redis y aplica las migraciones. Deberías ver
-   `consents.0001_initial... OK`, `consents.0002_support_group... OK` y
-   `consents.0003_history_without_user... OK`:
-   `docker compose -f docker/docker-compose.yml up -d db redis`
-   `M migrate`
+1. Levanta la base de datos y Redis:
+   ```bash
+   docker compose -f docker/docker-compose.yml up -d db redis
+   ```
+   Aplica las migraciones:
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py migrate
+   ```
+   Deberías ver `consents.0001_initial... OK`, `consents.0002_support_group... OK` y
+   `consents.0003_history_without_user... OK`.
 2. Crea un superusuario para el panel:
-   `M createsuperuser --email admin@example.com --name Admin --birthdate 1990-01-01 --country ES`
-3. Levanta el backend (`docker compose -f docker/docker-compose.yml up -d backend`) y entra en
-   <http://localhost:8000/admin/> con ese usuario. En **Consents → Legal documents** crea seis
-   documentos, todos con fecha de publicación de ayer:
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py createsuperuser --email admin@example.com --name Admin --birthdate 1990-01-01 --country ES
+   ```
+3. Levanta el backend:
+   ```bash
+   docker compose -f docker/docker-compose.yml up -d backend
+   ```
+   Entra en <http://localhost:8000/admin/> con ese usuario. En **Consents → Legal documents** crea
+   seis documentos, todos con fecha de publicación de ayer:
    - tipo *Terms of use*, versión `1`, idiomas `es`, `pt-BR` y `en`;
    - tipo *Marketing*, versión `m1`, idiomas `es`, `pt-BR` y `en`.
 
    Prueba a guardar un contenido con `<p>hola</p>`: verás "Content cannot contain HTML.".
-4. Comprueba el documento vigente: `C current --kind terms --locale es` → `version: 1` y el
-   contenido. Si quitas la fecha de un idioma, responde "There is no current version…".
-5. Crea un usuario de prueba (o usa uno existente) y mira su estado:
-   `M shell -c "from datetime import date; from apps.accounts.models import User; User.objects.create_user('ana@example.com', 'una-contraseña-larga', name='Ana García', birthdate=date(1990,5,10), country='ES')"`
-   `C status ana@example.com` → `terms: not_accepted` y `marketing: none`.
-6. Acepta y concede:
-   `C accept-terms ana@example.com --version 1 --locale es` → `accepted: terms 1 (es)`
-   `C grant-marketing ana@example.com --version m1 --locale en` → `granted: marketing m1 (en)`
-   `C status ana@example.com` → `terms: accepted` y `marketing: marketing m1 (en)`.
-   Una versión que no existe (`--version 9`) responde "The document does not exist.".
+4. Comprueba el documento vigente:
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py consents current --kind terms --locale es
+   ```
+   Deberías ver `version: 1` y el contenido. Si quitas la fecha de un idioma, responde "There is no
+   current version…".
+5. Crea un usuario de prueba (o usa uno existente):
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py shell -c "from datetime import date; from apps.accounts.models import User; User.objects.create_user('ana@example.com', 'una-contraseña-larga', name='Ana García', birthdate=date(1990,5,10), country='ES')"
+   ```
+   Mira su estado:
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py consents status ana@example.com
+   ```
+   Deberías ver `terms: not_accepted` y `marketing: none`.
+6. Acepta los términos:
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py consents accept-terms ana@example.com --version 1 --locale es
+   ```
+   Deberías ver `accepted: terms 1 (es)`. Concede el marketing:
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py consents grant-marketing ana@example.com --version m1 --locale en
+   ```
+   Deberías ver `granted: marketing m1 (en)`. Vuelve a mirar el estado:
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py consents status ana@example.com
+   ```
+   Deberías ver `terms: accepted` y `marketing: marketing m1 (en)`. Una versión que no existe
+   (`--version 9`) responde "The document does not exist.".
 7. En el panel, abre el documento de términos `1` en inglés: sus campos salen de solo lectura y no
    hay botón de borrar, porque su versión ya tiene una aceptación (aunque sea en español).
-8. Revoca el marketing: `C revoke-marketing ana@example.com` → `revoked: marketing m1 (en)`;
-   repetirlo responde `revoked: none`.
+8. Revoca el marketing:
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py consents revoke-marketing ana@example.com
+   ```
+   Deberías ver `revoked: marketing m1 (en)`; si lo repites, responde `revoked: none`.
 9. Soporte técnico: crea en el panel un usuario staff, añádelo al grupo **Soporte técnico** y entra
    con él. Verá **Terms acceptances** y **Marketing consents**; selecciona la aceptación de Ana y
    ejecuta la acción **Revoke selected**. En su **History** aparece el cambio con su usuario como
@@ -117,13 +151,24 @@ de la sección *Entorno remoto* del README. En los pasos, `M` abrevia
    pones otro usuario, el formulario responde "The user of an existing record cannot be changed.";
    dejarlo vacío sí se guarda y conserva la huella. Un staff fuera del grupo recibe
    "403 Forbidden" en esas pantallas.
-10. Exige una nueva aceptación. Vuelve a aceptar la `1` (soporte la revocó en el paso 9):
-    `C accept-terms ana@example.com --version 1 --locale es`. Crea después la versión `2` de
-    términos en los tres idiomas, con "Requires reacceptance" marcado y fecha de ayer.
-    `C status ana@example.com` responde ahora `terms: not_accepted`; tras
-    `C accept-terms ana@example.com --version 2 --locale en`, vuelve a `terms: accepted`.
+10. Exige una nueva aceptación. Vuelve a aceptar la `1`, porque soporte la revocó en el paso 9:
+    ```bash
+    docker compose -f docker/docker-compose.yml run --rm backend python manage.py consents accept-terms ana@example.com --version 1 --locale es
+    ```
+    Crea después en el panel la versión `2` de términos en los tres idiomas, con "Requires
+    reacceptance" marcado y fecha de ayer. Mira el estado:
+    ```bash
+    docker compose -f docker/docker-compose.yml run --rm backend python manage.py consents status ana@example.com
+    ```
+    Deberías ver `terms: not_accepted`. Acepta la versión `2`:
+    ```bash
+    docker compose -f docker/docker-compose.yml run --rm backend python manage.py consents accept-terms ana@example.com --version 2 --locale en
+    ```
+    Vuelve a mirar el estado con el comando anterior: deberías ver `terms: accepted`.
 11. Ejecuta la suite completa (cobertura mínima 80 %):
-    `docker compose -f docker/docker-compose.yml run --rm backend pytest -q`
+    ```bash
+    docker compose -f docker/docker-compose.yml run --rm backend pytest -q
+    ```
 
 ## Marco teórico
 ### Huella del correo (HMAC)
