@@ -79,6 +79,16 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
   `consents.0003_history_without_user... OK`. Si aplicaste antes una versión intermedia de la rama
   anterior a `0003`, ejecuta primero `migrate consents zero`.
 
+- [ ] **Migrar y comprobar Docker tras `cambio-contrasena`.** La rama `feat/cambio-contrasena`
+  añade la migración `0006_passwordresetrequest` de `accounts` (sin dependencias nuevas). En la
+  sesión remota no se pudo construir la imagen: el proxy de la sesión intercepta TLS y `pip`, dentro
+  del contenedor, no confía en su certificado. En tu máquina:
+  ```bash
+  docker compose -f docker/docker-compose.yml build backend
+  docker compose -f docker/docker-compose.yml run --rm backend python manage.py migrate
+  ```
+  Deberías ver `accounts.0006_passwordresetrequest... OK`.
+
 - [ ] **Definir `CONSENT_EMAIL_HASH_SECRET` en producción, cifrado con SOPS, y no rotarlo nunca**
   (feature `consentimientos`). Protege la huella del correo de las aceptaciones de términos y los
   consentimientos de marketing: sin él, cualquiera con la base de datos podría averiguar el correo
