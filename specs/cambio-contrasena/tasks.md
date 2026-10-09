@@ -79,7 +79,7 @@ esquema, para que al final quede una sola migración (M-07).
   (p. ej. un `public_id` repetido) se propaga en vez de ocultarse — [Cierto] — revertir: reintentar
   el alta con otro `public_id`.
 
-- [ ] T-007 Verificar y reenviar
+- [x] T-007 Verificar y reenviar
   RF: RF-005, RF-006, RF-007, RF-008, RF-014, RF-015 | Depende de: T-006 | Archivos: 2
   Archivos: `password_reset.py`, `tests/test_password_reset_service.py`.
   Hecho cuando: `verify` acepta el código correcto, suma intentos con el erróneo, bloquea al 5.º,
@@ -88,6 +88,12 @@ esquema, para que al final quede una sola migración (M-07).
   nuevo y pone los intentos a 0, y se rechaza si está validada o caducada; con la cuenta inactiva,
   con el correo cambiado o con la contraseña cambiada, ambos rechazan sin modificar la fila, y al
   reactivar la cuenta vuelven a funcionar; suite verde.
+  Decisiones: el orden de comprobación es existencia → caducidad → estado de la cuenta → reglas del
+  código, así que una solicitud caducada responde "caducada" aunque la cuenta también haya cambiado
+  — [Probable] — revertir: mover `_account_refusal` antes de la caducidad. `ResendRefusal` es propio
+  de este servicio (mismos valores que el del registro) para no acoplarlo a `registration` —
+  [Probable] — revertir: moverlo a `processes.py` y compartirlo. El bloqueo usa
+  `select_for_update(of=("self",))` para no bloquear la fila de la cuenta, según D-05 — [Cierto].
 
 - [ ] T-008 Completar el cambio
   RF: RF-008, RF-009, RF-014, RF-015 (D-05, D-07) | Depende de: T-007 | Archivos: 2
