@@ -8,9 +8,9 @@ from django.utils import timezone
 from apps.accounts.models import User
 from apps.accounts.tests.factories import make_user
 from apps.consents import services
-from apps.consents.hashing import email_fingerprint
 from apps.consents.models import MarketingConsent, Terms, UserTerms
 from apps.consents.tests.factories import make_document, publish_version
+from apps.core import fingerprints
 
 pytestmark = pytest.mark.django_db
 
@@ -30,7 +30,7 @@ def test_accepting_terms_registers_the_current_document_shown() -> None:
 
     assert acceptance.user == user
     assert acceptance.terms == documents["pt-BR"]
-    assert acceptance.user_email_hash == email_fingerprint("ana@x.com")
+    assert acceptance.user_email_hash == fingerprints.consent_email_fingerprint("ana@x.com")
     assert acceptance.terms_accepted_at >= before
     assert acceptance.revoked_at is None
 
@@ -174,7 +174,7 @@ def test_granting_marketing_registers_an_active_consent_of_the_document_shown() 
 
     assert consent.user == user
     assert consent.terms == documents["en"]
-    assert consent.user_email_hash == email_fingerprint("ana@x.com")
+    assert consent.user_email_hash == fingerprints.consent_email_fingerprint("ana@x.com")
     assert consent.granted is True
     assert consent.granted_at >= before
     assert consent.revoked_at is None

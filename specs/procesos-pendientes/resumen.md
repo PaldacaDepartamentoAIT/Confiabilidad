@@ -1,5 +1,5 @@
 # Resumen — procesos-pendientes
-Estado: cerrada con riesgo residual aceptado (3.ª ronda de correcciones) · Última actualización: 2026-10-07
+Estado: cerrada con riesgo residual aceptado (3.ª ronda de correcciones) · Última actualización: 2026-10-13
 
 ## Qué se hizo
 El registro pasa por un **registro pendiente**: la cuenta no existe hasta que se demuestra el
@@ -118,6 +118,10 @@ Guardar el código tal cual permitiría usarlo a quien lea la base de datos. Un 
 tampoco basta: con solo un millón de códigos posibles se prueban todos en segundos. El HMAC mezcla
 el código con un secreto que no está en la base de datos, así que sin ese secreto la huella no
 sirve. Atarla al `public_id` impide reutilizarla en otro proceso.
+
+Desde `huellas-hmac-unificadas`, esta huella se calcula y se comprueba en
+`backend/apps/core/fingerprints.py` (`code_fingerprint` / `code_matches`), el único sitio del
+backend que calcula huellas con clave; el formato y el secreto no cambiaron.
 
 ### Rotación del secreto
 Cambiar el secreto invalidaría todos los códigos en curso. Durante un periodo de transición se

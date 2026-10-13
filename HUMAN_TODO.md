@@ -6,6 +6,27 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
 
 ## Pendiente
 
+- [ ] **Comprobar que el entorno Docker sigue levantando tras `huellas-hmac-unificadas`.** En la
+  sesión remota no se pudo construir la imagen del backend (Docker Hub devolvió
+  `429 Too Many Requests` y `pip` falló dentro de la construcción). La feature no cambia
+  dependencias, `Dockerfile` ni `docker-compose.yml`, pero la regla del proyecto pide verificarlo.
+  En tu máquina:
+  ```bash
+  docker compose -f docker/docker-compose.yml build backend
+  ```
+  ```bash
+  docker compose -f docker/docker-compose.yml run --rm backend pytest -q
+  ```
+  Deberías ver la imagen construida y todos los tests en verde.
+
+- [ ] **Borrar la rama remota `claude/keen-davinci-jyd1ec`.** Se renombró a
+  `refactor/huellas-hmac-unificadas` (feature `huellas-hmac-unificadas`), pero el entorno remoto no
+  tiene permiso para borrar ramas en GitHub (HTTP 403). Las dos apuntan al mismo commit, así que no
+  se pierde nada. Desde tu máquina:
+  ```bash
+  git push origin --delete claude/keen-davinci-jyd1ec
+  ```
+
 - [ ] **Reconstruir la imagen del backend y migrar tras `usuario-personalizado`.** La feature
   `usuario-personalizado`, ya fusionada en `main`, añade dos dependencias (`pycountry` y `django-simple-history`)
   y las migraciones `0002`, `0003` y `0004` de `accounts`. En tu máquina:

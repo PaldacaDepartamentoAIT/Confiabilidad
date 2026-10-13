@@ -11,6 +11,7 @@ from django.utils import timezone
 from apps.accounts import codes, registration
 from apps.accounts.models import PendingRegistration, User
 from apps.accounts.tests.factories import make_user
+from apps.core import fingerprints
 
 pytestmark = pytest.mark.django_db
 
@@ -34,7 +35,7 @@ def test_start_stores_the_registration_and_returns_the_code_once() -> None:
         0,
         None,
     )
-    assert codes.verify_code(
+    assert fingerprints.code_matches(
         codes.Purpose.REGISTRATION, result.public_id, result.code, pending.code_hash
     )
     stored = PendingRegistration.objects.values().get()
@@ -116,14 +117,14 @@ def test_repeat_keeps_the_data_and_issues_a_new_public_id_and_code() -> None:
     assert pending.public_id == second.public_id != first.public_id
     assert (pending.failed_attempts, pending.code_validated_at) == (0, None)
     assert pending.code_expires_at > timezone.now() + timedelta(minutes=14)
-    assert codes.verify_code(
+    assert fingerprints.code_matches(
         codes.Purpose.REGISTRATION, second.public_id, second.code, pending.code_hash
     )
-    assert not codes.verify_code(
+    assert not fingerprints.code_matches(
         codes.Purpose.REGISTRATION, first.public_id, first.code, pending.code_hash
     )
     if first.code != second.code:
-        assert not codes.verify_code(
+        assert not fingerprints.code_matches(
             codes.Purpose.REGISTRATION, second.public_id, first.code, pending.code_hash
         )
 
@@ -263,7 +264,7 @@ def test_resend_keeps_the_public_id_and_replaces_the_code() -> None:
     resent = _resend(started.public_id)
 
     assert resent.public_id == started.public_id == _stored().public_id
-    assert codes.verify_code(
+    assert fingerprints.code_matches(
         codes.Purpose.REGISTRATION, started.public_id, resent.code, _stored().code_hash
     )
     if resent.code != started.code:

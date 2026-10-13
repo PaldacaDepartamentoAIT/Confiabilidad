@@ -14,6 +14,7 @@ from django.utils import timezone
 from apps.accounts import codes, processes
 from apps.accounts.models import PasswordResetRequest, User
 from apps.accounts.processes import VerifyResult as VerifyResult
+from apps.core import fingerprints
 
 _PURPOSE = codes.Purpose.PASSWORD_RESET
 _REPLACED_FIELDS = [*processes.ISSUED_FIELDS, "created_at", "account_stamp"]
@@ -191,7 +192,7 @@ def _account_refusal(request: PasswordResetRequest) -> AccountRefusal | None:
     user = request.user
     if not user.is_active:
         return AccountRefusal.INACTIVE
-    if not codes.account_stamp_matches(request.account_stamp, user.email, user.password):
+    if not fingerprints.account_stamp_matches(request.account_stamp, user.email, user.password):
         return AccountRefusal.ACCOUNT_CHANGED
     return None
 
@@ -203,5 +204,5 @@ def _locked_request(user: User) -> PasswordResetRequest | None:
 def _issue(request: PasswordResetRequest) -> str:
     code = processes.issue_code(request, _PURPOSE)
     request.created_at = timezone.now()
-    request.account_stamp = codes.account_stamp(request.user.email, request.user.password)
+    request.account_stamp = fingerprints.account_stamp(request.user.email, request.user.password)
     return code

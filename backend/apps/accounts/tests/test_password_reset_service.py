@@ -11,6 +11,7 @@ from django.utils import timezone
 from apps.accounts import codes, password_reset, registration
 from apps.accounts.models import PasswordResetRequest, PendingRegistration, User
 from apps.accounts.tests.factories import DEFAULT_PASSWORD, make_user
+from apps.core import fingerprints
 
 pytestmark = pytest.mark.django_db
 
@@ -46,8 +47,8 @@ def test_start_creates_a_request_with_a_code(user: User) -> None:
     stored = _stored()
     assert stored.user == user
     assert stored.public_id == result.public_id
-    assert codes.verify_code(PURPOSE, result.public_id, result.code, stored.code_hash)
-    assert codes.account_stamp_matches(stored.account_stamp, user.email, user.password)
+    assert fingerprints.code_matches(PURPOSE, result.public_id, result.code, stored.code_hash)
+    assert fingerprints.account_stamp_matches(stored.account_stamp, user.email, user.password)
     assert (stored.failed_attempts, stored.code_validated_at) == (0, None)
     assert not stored.is_expired
 
@@ -70,11 +71,11 @@ def test_repeating_replaces_the_request(user: User) -> None:
     stored = _stored()
     assert second.public_id != first.public_id
     assert stored.public_id == second.public_id
-    assert codes.verify_code(PURPOSE, second.public_id, second.code, stored.code_hash)
-    assert not codes.verify_code(PURPOSE, second.public_id, first.code, stored.code_hash)
+    assert fingerprints.code_matches(PURPOSE, second.public_id, second.code, stored.code_hash)
+    assert not fingerprints.code_matches(PURPOSE, second.public_id, first.code, stored.code_hash)
     assert (stored.failed_attempts, stored.code_validated_at) == (0, None)
     assert stored.created_at > timezone.now() - timedelta(minutes=1)
-    assert codes.account_stamp_matches(stored.account_stamp, user.email, user.password)
+    assert fingerprints.account_stamp_matches(stored.account_stamp, user.email, user.password)
 
 
 def test_repeating_replaces_an_expired_request(user: User) -> None:
@@ -129,7 +130,7 @@ def test_concurrent_insert_is_turned_into_a_replacement(
     assert len(calls) == 2
     stored = _stored()
     assert stored.public_id == second.public_id != first.public_id
-    assert codes.verify_code(PURPOSE, second.public_id, second.code, stored.code_hash)
+    assert fingerprints.code_matches(PURPOSE, second.public_id, second.code, stored.code_hash)
 
 
 def test_other_integrity_errors_are_not_hidden(user: User, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -229,8 +230,8 @@ def test_resend_keeps_the_public_id_with_a_new_code(user: User) -> None:
     assert isinstance(resent, password_reset.Resent)
     stored = _stored()
     assert resent.public_id == stored.public_id == started.public_id
-    assert codes.verify_code(PURPOSE, started.public_id, resent.code, stored.code_hash)
-    assert not codes.verify_code(PURPOSE, started.public_id, started.code, stored.code_hash)
+    assert fingerprints.code_matches(PURPOSE, started.public_id, resent.code, stored.code_hash)
+    assert not fingerprints.code_matches(PURPOSE, started.public_id, started.code, stored.code_hash)
     assert stored.failed_attempts == 0
     assert password_reset.verify(public_id=started.public_id, code=resent.code) == (
         VerifyResult.VERIFIED
