@@ -149,7 +149,7 @@ intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al
   guardián. [Cierto] Revertir: no aplica. (3) Comprobado que el guardián habría marcado el
   `codes.py` anterior a T-007 (`hashlib.sha256`, `hmac.compare_digest`, `hmac.new`). [Cierto]
 
-- [ ] T-013 Resumen de la feature
+- [x] T-013 Resumen de la feature
   RF: — (criterio de finalización) | Depende de: T-012 | Archivos: 1
   Archivos: `specs/huellas-hmac-unificadas/resumen.md` (en la raíz del repositorio).
   Hecho cuando: existe con qué se hizo, cómo probarlo con comandos copiables (`pytest` del módulo
