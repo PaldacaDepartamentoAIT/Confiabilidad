@@ -115,7 +115,7 @@ intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al
   de `consentimientos`). [Cierto] Revertir: borrar
   `test_stored_hash_is_the_fingerprint_of_the_email_however_it_is_written`.
 
-- [ ] T-010 Los modelos de consentimientos usan el punto único y desaparece `hashing.py`
+- [x] T-010 Los modelos de consentimientos usan el punto único y desaparece `hashing.py`
   RF: RF-001, RF-005 | Depende de: T-009 | Archivos: 3
   Archivos: `consents/models.py`, `consents/hashing.py` (se borra),
   `consents/tests/test_hashing.py` (se borra).
