@@ -89,13 +89,18 @@ intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al
   importa `hmac` ni `hashlib`; `test_codes.py` conserva solo los tests de esas tres piezas (los de
   huellas ya están en `core/tests/test_fingerprints.py` desde T-001 y T-002); suite verde.
 
-- [ ] T-008 `accounts/conf.py` deja de leer las claves de las huellas
+- [x] T-008 `accounts/conf.py` deja de leer las claves de las huellas
   RF: RF-002 | Depende de: T-007 | Archivos: 2
   Archivos: `accounts/conf.py`, `accounts/tests/test_registration_conf.py`.
   Hecho cuando: `conf.py` ya no tiene `code_secret`, `previous_code_secret`, `secret_rotated_at`
   ni `secret_transition`; `test_registration_conf.py` deja de probarlos (sus casos están en
   `core/tests/test_fingerprints.py` desde T-001) y sigue probando el resto de límites, incluido
   `REGISTRATION_SECRET_TRANSITION_MINUTES` leído del entorno; suite verde.
+  Decisiones: (1) `test_defaults` comprueba ahora que la transición por defecto es de 60 minutos
+  leyendo el ajuste, porque al quitar `conf.secret_transition()` se perdía esa aserción exacta
+  (los tests de `core` solo la acotan entre 30 y 61). [Cierto] Revertir: quitar esa línea.
+  (2) Tarea de solo borrado: no introduce código en el que aplicar un mutante; la equivalencia la
+  garantizan los tests de `core` (T-001) y la suite completa. [Cierto]
 
 - [ ] T-009 Tests de consentimientos contra el punto único
   RF: RF-001, RF-005 | Depende de: T-003 | Archivos: 3
