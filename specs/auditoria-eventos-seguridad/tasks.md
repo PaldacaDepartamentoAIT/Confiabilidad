@@ -57,10 +57,11 @@ empezar antes.
   Hecho cuando: `pytest backend/apps/audit/tests/test_password_changed.py` pasa: la señal `password_changed` de allauth crea una fila `PASSWORD_CHANGE` con `success=True`.
   Decisiones: el test dispara la señal `password_changed` de allauth directamente, no a través de un formulario, porque el flujo HTTP de cambio exige sesión y contraseña previa; el receptor es el mismo. Además, el helper `_session_key` tolera peticiones sin sesión. Confianza: [Probable]. Cómo revertirla: añadir un test de integración con el endpoint de cambio de contraseña.
 
-- [ ] T-011 Señales propias de accounts
+- [x] T-011 Señales propias de accounts
   RF: RF-007, RF-008, RF-010 (contrato) | Depende de: — | Archivos: 2
   Hecho cuando: `pytest backend/apps/accounts/tests/test_signals.py` pasa: existen las nueve señales de M-08 con argumentos documentados (solicitud de registro, código enviado y validado en registro, cuenta creada, código enviado y validado en restablecimiento, restablecimiento completado, perfil editado, cuenta deshabilitada).
   Decisiones: las señales no llevan la petición HTTP. La petición llega a los receptores por un middleware de `apps/audit` que guarda la petición actual en un `ContextVar`; las firmas de los servicios no cambian, decisión del usuario. El middleware se implementa en T-014 (antes de sus receptores) y se registra en `MIDDLEWARE` como Excepción de esa tarea. Confianza: [Cierto] (decisión explícita).
+  Decisiones: las nueve señales se definen como `Signal()` sin argumentos declarados en Django; los argumentos `email` y `success` se documentan en el módulo. Confianza: [Probable]. Cómo revertirla: añadir `providing_args` no existe en Django 5; bastaría con un tipo que valide los argumentos al enviar.
 
 - [ ] T-012 Emisión de las señales desde el registro
   RF: RF-007, RF-008 | Depende de: T-011 | Archivos: 2
