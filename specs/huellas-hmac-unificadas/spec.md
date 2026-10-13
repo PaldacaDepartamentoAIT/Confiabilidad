@@ -1,5 +1,5 @@
 # Spec: huellas-hmac-unificadas
-Estado: borrador
+Estado: aprobada
 Aprobación: ligera
 
 ## Objetivo (por qué)
@@ -54,11 +54,11 @@ actual como las calculadas con la anterior, y fuera de ese periodo solo las de l
 Si la clave de un tipo de huella está vacía, si la clave anterior está definida pero solo contiene
 espacios (haya o no fecha de rotación), o si la clave anterior coincide con la actual, entonces el
 sistema deberá rechazar el cálculo y la comprobación con un error de configuración que nombre la
-clave afectada. Si la fecha de rotación no es una fecha válida con zona horaria (incluida una
-fecha bien escrita pero que no existe) o es posterior al momento de la comprobación, entonces el
-sistema deberá rechazar la comprobación con un error de configuración que nombre ese ajuste. Si
-hay una clave anterior válida pero no fecha de rotación, entonces el sistema deberá ignorar la
-clave anterior en la comprobación.
+clave afectada. Si la fecha de rotación no es una fecha válida con zona horaria (incluida una fecha
+bien escrita pero que no existe) o es posterior al momento de la comprobación, sin margen para
+desfases de reloj (S-09), entonces el sistema deberá rechazar la comprobación con un error de
+configuración que nombre ese ajuste. Si hay una clave anterior válida pero no fecha de rotación,
+entonces el sistema deberá ignorar la clave anterior en la comprobación.
 
 ### RF-009 Huellas distintas entre tipos — OBSOLETO
 OBSOLETO (2026-10-09, C-03): «un mismo valor de entrada» no tiene una lectura única, porque cada
@@ -69,17 +69,21 @@ mismo valor de entrada en tipos de huella distintos, aunque sus claves coincidan
 ### RF-010 Detección de cálculos fuera del punto único
 Si algún archivo Python del backend (incluidos `manage.py`, las migraciones, los comandos de
 gestión y cualquier carpeta futura), fuera del punto único de cálculo y de los archivos de test,
-usa alguno de los elementos vigilados, directamente o a través de su paquete padre (por ejemplo,
-`import django.core` seguido de `django.core.signing.dumps`), entonces la suite de tests deberá
-fallar e indicar el archivo y el uso.
+usa alguno de los elementos vigilados, directamente o a través de cualquiera de sus paquetes
+antepasados (por ejemplo, `import django.core` o `import django` seguidos de
+`django.core.signing.dumps`), entonces la suite de tests deberá fallar e indicar el archivo y el
+uso.
 
 Elementos vigilados (lista cerrada):
 - biblioteca estándar: `hashlib`, `hmac`, `crypt` y los módulos internos de hash de Python 3.12
   (`_hashlib`, `_sha1`, `_sha2`, `_sha3`, `_md5`, `_blake2` y `_crypt`);
 - framework: `django.utils.crypto`, `django.core.signing` y `django.contrib.auth.tokens`;
 - funciones de hash en base de datos del framework: `MD5`, `SHA1`, `SHA224`, `SHA256`, `SHA384` y
-  `SHA512` de `django.db.models.functions`;
-- métodos de cookies firmadas, por su nombre: `set_signed_cookie` y `get_signed_cookie`;
+  `SHA512`, importadas desde `django.db.models.functions` o desde cualquiera de sus submódulos;
+  el resto de funciones de ese módulo sigue permitido;
+- métodos de cookies firmadas, por su nombre: cualquier acceso a un atributo llamado
+  `set_signed_cookie` o `get_signed_cookie`, se llame o no (definir un método propio con ese
+  nombre no cuenta);
 - las bibliotecas criptográficas de la tabla cerrada del plan que estén declaradas como
   dependencia del proyecto (S-07).
 
@@ -124,6 +128,10 @@ framework, que no calculan huellas con clave.
   ejemplo, `get_session_auth_hash`, `make_template_fragment_key` o `uuid.uuid5`). *Riesgo:* ese
   uso pasaría la suite sin aviso; queda a cargo de la revisión de código. RF-010 es una alarma
   sobre una lista cerrada, no una garantía de que no exista ningún hash fuera del punto único.
+- S-09 Los servidores tienen el reloj sincronizado y `REGISTRATION_CODE_SECRET_ROTATED_AT` se fija
+  con el momento real de la rotación o uno anterior, nunca con una rotación programada.
+  *Riesgo:* un servidor con el reloj atrasado respecto a esa fecha rechaza todas las
+  comprobaciones de huellas de código hasta alcanzarla (RF-008, C-12).
 
 ## Fuera de alcance
 - Los hashes que no son huellas con clave: la comprobación de contraseñas filtradas (excepción de
@@ -174,4 +182,7 @@ framework, que no calculan huellas con clave.
   de datos y las cookies firmadas; quita los módulos internos que no existen en Python 3.12;
   detecta el acceso por el paquete padre; define los archivos de test) y acepta S-08; RF-008
   rechaza una fecha de rotación futura, que antes alargaba la vida de la clave anterior (RF-007) —
-  RF: RF-007, RF-008, RF-010 — Estado: pendiente de clarificar
+  RF: RF-007, RF-008, RF-010 — Estado: clarificado
+- 2026-10-13 — Clarificación C-11…C-14: cookies firmadas por cualquier acceso, fecha futura sin
+  margen (S-09), funciones de hash en base de datos desde cualquier submódulo y acceso desde
+  cualquier paquete antepasado — RF: RF-008, RF-010 — Estado: clarificado
