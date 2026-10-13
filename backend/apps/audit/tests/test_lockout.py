@@ -74,3 +74,28 @@ def test_each_rejected_attempt_records_its_own_lockout(audit_key: None, user: Us
     _wrong_attempt()
 
     assert SecurityEvent.objects.filter(event_type=EventType.LOCKOUT).count() == 2
+
+
+def _attempts_until_limit(settings: object, adapter_path: str) -> int:
+    settings.ACCOUNT_ADAPTER = adapter_path  # type: ignore[attr-defined]
+    cache.clear()
+    for attempt in range(1, ALLAUTH_LIMIT + 3):
+        response = Client().post(
+            BROWSER_LOGIN,
+            data=json.dumps({"email": EMAIL, "password": "incorrecta"}),
+            content_type="application/json",
+            REMOTE_ADDR="203.0.113.7",
+        )
+        if "too_many_login_attempts" in response.content.decode():
+            return attempt
+    raise AssertionError("el límite de allauth no se alcanzó")
+
+
+def test_audit_adapter_trips_allauth_limit_at_the_same_attempt_as_default(
+    settings: object,
+) -> None:
+    default_attempt = _attempts_until_limit(
+        settings, "allauth.account.adapter.DefaultAccountAdapter"
+    )
+    audit_attempt = _attempts_until_limit(settings, "apps.audit.adapters.AuditAccountAdapter")
+    assert audit_attempt == default_attempt == ALLAUTH_LIMIT + 1

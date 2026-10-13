@@ -160,6 +160,12 @@ empezar antes.
   Hecho cuando: `pytest backend/apps/audit/tests/test_login_failed.py backend/apps/audit/tests/test_secrets_by_flow.py` pasa: una cuenta inactiva con contraseña correcta genera una fila `LOGIN` con `success=False` y `reason=inactive_account`, tanto por el flujo de navegador como por el headless.
   Decisiones: el motivo `inactive_account` se añade a la lista cerrada de D-14; el punto de extensión es `pre_login` (D-13). Confianza: [Cierto]. Cómo revertirla: quitar el override de `pre_login`, lo que devolvería el hueco de RF-004.
 
+- [x] T-030 Corrección: el adaptador no altera el contador de allauth
+  Tipo: corrección | Origen: validación de RF-006 | RF: RF-006 | Depende de: T-008 | Archivos: 1
+  Causa: ningún test comparaba el límite de allauth con y sin `AuditAccountAdapter`.
+  Hecho cuando: `pytest backend/apps/audit/tests/test_lockout.py` pasa con un caso que compara el intento en el que allauth dispara el límite con el adaptador de auditoría y con el adaptador por defecto (ambos en el intento 6).
+  Decisiones: la comparación se hace sobre el intento que dispara el límite, no sobre el valor interno del contador, porque allauth no expone el contador en su API pública. Confianza: [Probable]. Cómo revertirla: quitar el test; no afecta al código.
+
 ## RF sin tarea
 Ninguno. Todos los RF de la spec (RF-001 a RF-016) aparecen en al menos una tarea. RF-010 aparece como cubierto en su parte aceptada (el residual de perfil y deshabilitación queda en T-016, con emisión pendiente de otra feature).
 
@@ -169,3 +175,4 @@ Ninguno. Todos los RF de la spec (RF-001 a RF-016) aparecen en al menos una tare
 - 2026-10-13 — Tareas actualizadas tras el cambio de RF-013 y RF-015: T-024 reescrita (implementación y test, con Excepción de plantilla) y T-026 añadida — RF: RF-013, RF-015 — Estado: aprobado
 - 2026-10-13 — Correcciones de la segunda validación: T-027 (RF-012, inserción sin modificación) y T-028 (RF-014, año de calendario) — RF: RF-012, RF-014 — Estado: impacto analizado
 - 2026-10-13 — Nueva tarea T-029 tras el cambio de RF-004 (análisis de impacto aprobado) — RF: RF-004 — Estado: aprobado
+- 2026-10-13 — Corrección T-030 (test de RF-006 contra el adaptador por defecto) — RF: RF-006 — Estado: aprobado
