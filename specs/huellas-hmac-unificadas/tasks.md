@@ -240,7 +240,7 @@ intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al
   permitidas, recoge en "Errores de configuración" la clave anterior de solo espacios y la fecha
   inexistente, y su paso de prueba del guardián sigue siendo copiable y correcto.
 
-- [ ] T-021 Corrección: el guardián detecta accesos desde el paquete padre y sigue todas las formas de `-r`
+- [ ] T-021 Corrección: el guardián detecta accesos desde cualquier paquete antepasado y sigue todas las formas de `-r`
   Tipo: corrección | Origen: validación de RF-010
   RF: RF-010 | Depende de: — | Archivos: 1
   Archivos: `core/tests/test_fingerprint_guard.py`.
@@ -248,9 +248,10 @@ intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al
   reconstruye cadenas `a.b.c` desde un paquete padre; `_read_requirements` solo reconoce `-r ` y
   `--requirement ` seguidos de espacio.
   Hecho cuando: los casos sintéticos `import django.core` + `django.core.signing.dumps`,
-  `from django import utils` + `utils.crypto.salted_hmac`, `-rbase.txt` y
-  `--requirement=base.txt` fallan antes del arreglo y se marcan con su archivo después; la suite
-  completa sigue en verde.
+  `import django` + `django.core.signing.dumps`, `from django import utils` +
+  `utils.crypto.salted_hmac`, `-rbase.txt` y `--requirement=base.txt` fallan antes del arreglo y
+  se marcan con su archivo después; `import django` + `django.conf.settings` no se marca (D-09);
+  la suite completa sigue en verde.
 
 - [ ] T-022 Corrección: el test de clave vacía comprueba que el error nombra exactamente `REGISTRATION_CODE_SECRET`
   Tipo: corrección | Origen: validación de RF-008
@@ -265,9 +266,48 @@ intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al
   RF: RF-010 | Depende de: — | Archivos: 1
   Archivos: `core/tests/test_fingerprint_guard.py`.
   Causa: se pueden quitar `_sha1`, `_sha2`, `_sha3`, `_sha512`, `_md5` o `_blake2` de la lista sin
-  que falle ningún test.
-  Hecho cuando: quitar cualquiera de los módulos internos de la lista hace fallar algún test; la
-  suite completa sigue en verde.
+  que falle ningún test; además la lista incluye `_sha256` y `_sha512`, que no existen en Python
+  3.12, y le falta `_crypt` (RF-010 tras la 2.ª validación).
+  Hecho cuando: la lista de módulos internos es exactamente `_hashlib`, `_sha1`, `_sha2`, `_sha3`,
+  `_md5`, `_blake2` y `_crypt`, con un caso sintético por módulo; quitar cualquiera de ellos hace
+  fallar algún test; la suite completa sigue en verde.
+
+- [ ] T-024 Una fecha de rotación futura es un error de configuración
+  RF: RF-007, RF-008 | Depende de: T-022 | Archivos: 2
+  Archivos: `core/fingerprints.py`, `core/tests/test_fingerprints.py`.
+  Hecho cuando: con `REGISTRATION_CODE_SECRET_ROTATED_AT` un minuto en el futuro, `code_matches`
+  y `account_stamp_matches` lanzan `ImproperlyConfigured` que nombra exactamente ese ajuste, tanto
+  si la clave actual coincide como si no, con o sin clave anterior; el cálculo
+  (`code_fingerprint`, `account_stamp`) no falla; el test falla antes del arreglo; un mutante que
+  quite la comprobación de fecha futura hace fallar el test; suite verde.
+
+- [ ] T-025 El guardián vigila `crypt`, los tokens del framework y reconoce los archivos de test por su nombre
+  RF: RF-010 | Depende de: T-023 | Archivos: 1
+  Archivos: `core/tests/test_fingerprint_guard.py`.
+  Hecho cuando: los casos sintéticos `import crypt` + `crypt.crypt` y
+  `from django.contrib.auth.tokens import default_token_generator` se marcan con su archivo; un
+  `apps/x/test_x.py` y un `apps/x/tests.py` con `import hmac` no se marcan; cada caso falla antes
+  del cambio; un mutante que quite `django.contrib.auth.tokens` de la lista hace fallar su caso;
+  suite verde.
+
+- [ ] T-026 El guardián vigila las funciones de hash en base de datos y las cookies firmadas por su nombre
+  RF: RF-010 (D-05) | Depende de: T-025 | Archivos: 1
+  Archivos: `core/tests/test_fingerprint_guard.py`.
+  Hecho cuando: se marcan con su archivo `from django.db.models.functions import SHA256`,
+  `from django.db.models.functions.text import MD5`, `from django.db.models import functions` +
+  `functions.SHA512`, `response.set_signed_cookie(...)` y `request.get_signed_cookie` (sin
+  llamar); no se marcan `from django.db.models.functions import Lower` ni una clase propia que
+  define `def get_signed_cookie(self)`; el test sobre el código real sigue pasando; cada caso
+  falla antes del cambio; un mutante que vacíe la lista de atributos prohibidos hace fallar los
+  casos de cookies; suite verde.
+
+- [ ] T-027 El resumen refleja la lista cerrada de RF-010 y la fecha de rotación futura
+  RF: — (criterio de finalización) | Depende de: T-021, T-022, T-023, T-024, T-026 | Archivos: 1
+  Archivos: `specs/huellas-hmac-unificadas/resumen.md` (en la raíz del repositorio).
+  Hecho cuando: el resumen enumera la lista cerrada de elementos vigilados de RF-010 (módulos,
+  funciones de base de datos y cookies firmadas), explica el acceso desde paquetes antepasados y
+  qué archivos cuentan como test, recoge S-08 y S-09 en los límites conocidos y la fecha futura
+  en los errores de configuración, y su prueba del guardián sigue siendo copiable y correcta.
 
 ## RF sin tarea
 Ninguno. RF-009 está obsoleto.
