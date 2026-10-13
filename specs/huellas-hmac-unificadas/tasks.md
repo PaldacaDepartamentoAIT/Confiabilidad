@@ -297,7 +297,7 @@ intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al
   del cambio; un mutante que quite `django.contrib.auth.tokens` de la lista hace fallar su caso;
   suite verde.
 
-- [ ] T-026 El guardián vigila las funciones de hash en base de datos y las cookies firmadas por su nombre
+- [x] T-026 El guardián vigila las funciones de hash en base de datos y las cookies firmadas por su nombre
   RF: RF-010 (D-05) | Depende de: T-025 | Archivos: 1
   Archivos: `core/tests/test_fingerprint_guard.py`.
   Hecho cuando: se marcan con su archivo `from django.db.models.functions import SHA256`,
@@ -307,6 +307,11 @@ intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al
   define `def get_signed_cookie(self)`; el test sobre el código real sigue pasando; cada caso
   falla antes del cambio; un mutante que vacíe la lista de atributos prohibidos hace fallar los
   casos de cookies; suite verde.
+  Decisiones: (1) Un uso de función de hash en base de datos se informa hasta el nombre vigilado
+  (`django.db.models.functions.SHA512`), aunque la cadena siga (`.output_field`); un caso lo
+  fija y mata el mutante que informaba de la cadena entera. [Cierto] (2) Las cookies firmadas se
+  informan solo por el nombre del atributo (`set_signed_cookie`), porque no hay módulo del que
+  colgarlas. [Cierto] Revertir: cambiar el texto informado en `forbidden_uses`.
 
 - [ ] T-027 El resumen refleja la lista cerrada de RF-010 y la fecha de rotación futura
   RF: — (criterio de finalización) | Depende de: T-021, T-022, T-023, T-024, T-026 | Archivos: 1

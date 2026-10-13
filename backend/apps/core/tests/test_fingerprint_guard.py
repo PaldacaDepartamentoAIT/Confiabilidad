@@ -21,6 +21,11 @@ FORBIDDEN_MODULES = (
     "django.core.signing",
     "django.contrib.auth.tokens",
 )
+# Nombres vigilados dentro de un módulo permitido (y de sus submódulos) y atributos vigilados sobre
+# cualquier objeto (D-05).
+DATABASE_FUNCTIONS = "django.db.models.functions"
+DATABASE_HASH_FUNCTIONS = frozenset({"MD5", "SHA1", "SHA224", "SHA256", "SHA384", "SHA512"})
+SIGNED_COOKIE_ATTRIBUTES = frozenset({"set_signed_cookie", "get_signed_cookie"})
 # Bibliotecas criptográficas conocidas y su módulo de import: solo se vigilan si el proyecto las
 # declara como dependencia (D-08, S-07). Ampliar la tabla es un cambio de la spec.
 KNOWN_CRYPTOGRAPHIC_LIBRARIES = {
@@ -73,6 +78,16 @@ def _is_ancestor(name: str, forbidden: tuple[str, ...]) -> bool:
     return any(module.startswith(f"{name}.") for module in forbidden)
 
 
+def _database_hash_use(name: str) -> str | None:
+    if not _is_forbidden(name, (DATABASE_FUNCTIONS,)):
+        return None
+    parts = name.split(".")
+    for index in range(DATABASE_FUNCTIONS.count(".") + 1, len(parts)):
+        if parts[index] in DATABASE_HASH_FUNCTIONS:
+            return ".".join(parts[: index + 1])
+    return None
+
+
 def _dotted(node: ast.Attribute) -> tuple[ast.Name, str] | None:
     attributes: list[str] = []
     current: ast.expr = node
@@ -90,8 +105,10 @@ def forbidden_uses(source: str, forbidden: tuple[str, ...] = FORBIDDEN_MODULES) 
     aliases: dict[str, str] = {}
     uses: set[str] = set()
 
+    watched = (*forbidden, DATABASE_FUNCTIONS)
+
     def bind(local: str, full_name: str) -> None:
-        if _is_forbidden(full_name, forbidden) or _is_ancestor(full_name, forbidden):
+        if _is_forbidden(full_name, watched) or _is_ancestor(full_name, watched):
             aliases[local] = full_name
 
     for node in ast.walk(tree):
@@ -107,8 +124,11 @@ def forbidden_uses(source: str, forbidden: tuple[str, ...] = FORBIDDEN_MODULES) 
         elif isinstance(node, ast.ImportFrom) and node.module:
             for alias in node.names:
                 full_name = f"{node.module}.{alias.name}"
+                database_use = _database_hash_use(full_name)
                 if _is_forbidden(node.module, forbidden):
                     uses.add(full_name)
+                elif database_use is not None:
+                    uses.add(database_use)
                 else:
                     bind(alias.asname or alias.name, full_name)
     inner_attributes: set[int] = set()
@@ -117,6 +137,8 @@ def forbidden_uses(source: str, forbidden: tuple[str, ...] = FORBIDDEN_MODULES) 
         if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Attribute):
             inner_attributes.add(id(node.value))
     for node in ast.walk(tree):
+        if isinstance(node, ast.Attribute) and node.attr in SIGNED_COOKIE_ATTRIBUTES:
+            uses.add(node.attr)
         if not isinstance(node, ast.Attribute) or id(node) in inner_attributes:
             continue
         chain = _dotted(node)
@@ -125,8 +147,11 @@ def forbidden_uses(source: str, forbidden: tuple[str, ...] = FORBIDDEN_MODULES) 
         base, attributes = chain
         chain_bases.add(id(base))
         resolved = f"{aliases[base.id]}.{attributes}"
+        database_use = _database_hash_use(resolved)
         if _is_forbidden(resolved, forbidden):
             uses.add(_watched_prefix(resolved, forbidden))
+        elif database_use is not None:
+            uses.add(database_use)
     for node in ast.walk(tree):
         # Un uso sin atributo (por ejemplo, getattr(hashlib, ...)) cuenta como el módulo entero.
         if isinstance(node, ast.Name) and node.id in aliases and id(node) not in chain_bases:
@@ -386,5 +411,51 @@ def test_scan_reports_crypt_and_the_framework_tokens(tmp_path: Path, source: str
 def test_scan_skips_files_that_pytest_collects_as_tests(tmp_path: Path) -> None:
     _write(tmp_path, "apps/x/test_x.py", "import hmac\nhmac.new\n")
     _write(tmp_path, "apps/x/tests.py", "import hmac\nhmac.new\n")
+
+    assert scan(tmp_path) == {}
+
+
+@pytest.mark.parametrize(
+    ("source", "use"),
+    [
+        (
+            "from django.db.models.functions import SHA256\n",
+            "django.db.models.functions.SHA256",
+        ),
+        (
+            "from django.db.models.functions.text import MD5\n",
+            "django.db.models.functions.text.MD5",
+        ),
+        (
+            "from django.db.models import functions\nfunctions.SHA512('email')\n",
+            "django.db.models.functions.SHA512",
+        ),
+        (
+            "from django.db.models import functions\nfunctions.SHA512.output_field\n",
+            "django.db.models.functions.SHA512",
+        ),
+        ("def view(response):\n    response.set_signed_cookie('k', 'v')\n", "set_signed_cookie"),
+        ("def view(request):\n    reader = request.get_signed_cookie\n", "get_signed_cookie"),
+    ],
+)
+def test_scan_reports_database_hashes_and_signed_cookies(
+    tmp_path: Path, source: str, use: str
+) -> None:
+    _write(tmp_path, "apps/x/a.py", source)
+
+    assert scan(tmp_path) == {"apps/x/a.py": [use]}
+
+
+def test_scan_allows_other_database_functions_and_own_methods(tmp_path: Path) -> None:
+    _write(
+        tmp_path,
+        "apps/x/a.py",
+        "from django.db.models.functions import Lower\n"
+        "from django.db.models import functions\n"
+        "functions.Upper('email')\n"
+        "class Cookies:\n"
+        "    def get_signed_cookie(self):\n"
+        "        return None\n",
+    )
 
     assert scan(tmp_path) == {}
