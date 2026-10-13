@@ -48,6 +48,11 @@ class SecurityEventQuerySet(models.QuerySet["SecurityEvent"]):
             raise InsertOnlyError
         return super().delete()
 
+    def bulk_create(self, objs: Any, *args: Any, **kwargs: Any) -> Any:
+        if kwargs.get("update_conflicts"):
+            raise InsertOnlyError
+        return super().bulk_create(objs, *args, **kwargs)
+
     def purge_older_than(self, cutoff: datetime) -> int:
         with _purge_allowed():
             deleted, _ = self.filter(created_at__lt=cutoff).delete()
@@ -73,7 +78,7 @@ class SecurityEvent(models.Model):
         return f"{self.event_type} {self.created_at.isoformat()}"
 
     def save(self, *args: Any, **kwargs: Any) -> None:
-        if not self._state.adding:
+        if not self._state.adding or self.pk is not None:
             raise InsertOnlyError
         super().save(*args, **kwargs)
 

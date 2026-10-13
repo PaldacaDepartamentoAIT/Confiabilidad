@@ -50,3 +50,21 @@ def test_purge_context_allows_queryset_delete() -> None:
     with _purge_allowed():
         SecurityEvent.objects.filter(pk=event.pk).delete()
     assert not SecurityEvent.objects.filter(pk=event.pk).exists()
+
+
+def test_new_instance_with_existing_pk_cannot_overwrite_the_row() -> None:
+    event = _create()
+    forged = SecurityEvent(pk=event.pk, event_type=EventType.LOGIN, success=False)
+    with pytest.raises(InsertOnlyError):
+        forged.save()
+    assert SecurityEvent.objects.get(pk=event.pk).success is True
+
+
+def test_bulk_create_with_update_conflicts_cannot_overwrite_rows() -> None:
+    event = _create()
+    forged = SecurityEvent(pk=event.pk, event_type=EventType.LOGIN, success=False)
+    with pytest.raises(InsertOnlyError):
+        SecurityEvent.objects.bulk_create(
+            [forged], update_conflicts=True, unique_fields=["pk"], update_fields=["success"]
+        )
+    assert SecurityEvent.objects.get(pk=event.pk).success is True

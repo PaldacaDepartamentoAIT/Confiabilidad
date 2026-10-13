@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import UTC, timedelta
 from io import StringIO
 
 import pytest
@@ -39,3 +39,36 @@ def test_purge_with_nothing_to_delete_deletes_nothing() -> None:
     recent = _event(timedelta(days=1))
     call_command("purge_security_events", stdout=StringIO())
     assert SecurityEvent.objects.filter(pk=recent.pk).exists()
+
+
+def test_retention_cutoff_is_one_calendar_year_across_leap_day() -> None:
+    from datetime import datetime
+
+    from apps.audit.management.commands.purge_security_events import retention_cutoff
+
+    assert retention_cutoff(datetime(2028, 3, 1, tzinfo=UTC)) == datetime(2027, 3, 1, tzinfo=UTC)
+
+
+def test_retention_cutoff_from_leap_day_falls_back_to_february_28() -> None:
+    from datetime import datetime
+
+    from apps.audit.management.commands.purge_security_events import retention_cutoff
+
+    assert retention_cutoff(datetime(2028, 2, 29, tzinfo=UTC)) == datetime(2027, 2, 28, tzinfo=UTC)
+
+
+def test_event_exactly_one_calendar_year_old_is_kept_on_leap_window() -> None:
+    from datetime import datetime
+
+    from apps.audit.management.commands.purge_security_events import retention_cutoff
+
+    cutoff = retention_cutoff(datetime(2028, 3, 1, tzinfo=UTC))
+    kept = SecurityEvent.objects.create(
+        event_type=EventType.LOGIN, success=True, created_at=cutoff + timedelta(hours=12)
+    )
+    SecurityEvent.objects.create(
+        event_type=EventType.LOGIN, success=True, created_at=cutoff - timedelta(seconds=1)
+    )
+    SecurityEvent.objects.purge_older_than(cutoff)
+    assert SecurityEvent.objects.filter(pk=kept.pk).exists()
+    assert SecurityEvent.objects.count() == 1

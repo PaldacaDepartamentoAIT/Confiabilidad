@@ -142,6 +142,18 @@ empezar antes.
   Hecho cuando: `pytest backend/apps/core/tests/test_real_ip.py` pasa con un caso en el que `TRUSTED_PROXY_IPS` vacía no confía en ninguna cabecera y registra la IP de la conexión directa, y otro en el que una IP parecida pero distinta de una entrada de la lista no se considera de confianza.
   Decisiones: el código ya cumplía (pertenencia exacta y lista vacía por defecto); el test se verificó con un mutante de coincidencia por prefijo, que hace fallar el caso de IP parecida. Confianza: [Cierto]. Cómo revertirla: no aplica.
 
+- [x] T-027 Corrección: rechazar la modificación por las vías de inserción
+  Tipo: corrección | Origen: validación de RF-012 | RF: RF-012 | Depende de: T-003 | Archivos: 2
+  Causa: `save()` sobre una instancia nueva con pk existente hace UPDATE en Django y sobrescribe la fila; `bulk_create(update_conflicts=True)` tampoco tenía guarda. Confirmado con una prueba que cambió `success` de una fila.
+  Hecho cuando: `pytest backend/apps/audit/tests/test_insert_only.py` pasa con casos en los que una instancia nueva con pk existente y `bulk_create` con `update_conflicts` lanzan `InsertOnlyError` y dejan la fila intacta; la suite de auditoría sigue en verde.
+  Decisiones: `save()` rechaza cualquier instancia con pk antes de guardar, así que ya no admite claves explícitas; la aplicación nunca las usa. `bulk_create` rechaza `update_conflicts`. Confianza: [Probable]. Cómo revertirla: permitir claves explícitas solo si la fila no existe, comprobándolo antes de guardar.
+
+- [x] T-028 Corrección: retención de un año de calendario
+  Tipo: corrección | Origen: validación de RF-014 | RF: RF-014 | Depende de: T-019 | Archivos: 2
+  Causa: `timedelta(days=365)` no equivale a un año de calendario cuando la ventana incluye un 29 de febrero.
+  Hecho cuando: `pytest backend/apps/audit/tests/test_purge.py` pasa con casos de frontera en un año bisiesto (1 de marzo de 2028 y 29 de febrero de 2028) y la suite de auditoría sigue en verde.
+  Decisiones: la retención usa la biblioteca estándar, sin dependencias nuevas; si la fecha de referencia es 29 de febrero, el corte cae el 28 de febrero del año anterior. Confianza: [Cierto]. Cómo revertirla: volver a `timedelta(days=365)`, lo que la spec actual no acepta.
+
 ## RF sin tarea
 Ninguno. Todos los RF de la spec (RF-001 a RF-016) aparecen en al menos una tarea. RF-010 aparece como cubierto en su parte aceptada (el residual de perfil y deshabilitación queda en T-016, con emisión pendiente de otra feature).
 
@@ -149,3 +161,4 @@ Ninguno. Todos los RF de la spec (RF-001 a RF-016) aparecen en al menos una tare
 - 2026-10-13 — Borrador inicial de tareas — RF: RF-001 a RF-016 — Estado: borrador
 - 2026-10-13 — Aprobación de las tareas (T-001 a T-021) por el usuario; sin implementar — RF: RF-001 a RF-016 — Estado: aprobado
 - 2026-10-13 — Tareas actualizadas tras el cambio de RF-013 y RF-015: T-024 reescrita (implementación y test, con Excepción de plantilla) y T-026 añadida — RF: RF-013, RF-015 — Estado: aprobado
+- 2026-10-13 — Correcciones de la segunda validación: T-027 (RF-012, inserción sin modificación) y T-028 (RF-014, año de calendario) — RF: RF-012, RF-014 — Estado: impacto analizado

@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime
 from typing import Any
 
 from django.core.management.base import BaseCommand
@@ -6,7 +6,12 @@ from django.utils import timezone
 
 from apps.audit.models import SecurityEvent
 
-RETENTION = timedelta(days=365)
+
+def retention_cutoff(now: datetime) -> datetime:
+    try:
+        return now.replace(year=now.year - 1)
+    except ValueError:
+        return now.replace(year=now.year - 1, day=28)
 
 
 class Command(BaseCommand):
@@ -20,7 +25,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args: Any, **options: Any) -> None:
-        cutoff = timezone.now() - RETENTION
+        cutoff = retention_cutoff(timezone.now())
         if options["dry_run"]:
             count = SecurityEvent.objects.filter(created_at__lt=cutoff).count()
             self.stdout.write(f"{count} security events would be deleted.")
