@@ -137,9 +137,10 @@ empezar antes.
   Hecho cuando: `pytest backend/apps/audit/tests/test_secrets_by_flow.py` pasa: para cada flujo (login ok, login fallido, bloqueo, cierre de sesión, registro, código, restablecimiento, cambio de contraseña), ni la contraseña, ni el código, ni el token de sesión, ni el correo en claro aparecen en ningún campo de las filas.
   Decisiones: el test pasó sin cambios de código porque el registro ya era seguro en los siete flujos; por eso se verificó con un mutante que guarda el correo en claro, que hace fallar los siete casos. Confianza: [Cierto]. Cómo revertirla: no aplica.
 
-- [ ] T-026 Test: lista de proxies vacía no confía en ningún proxy
+- [x] T-026 Test: lista de proxies vacía no confía en ningún proxy
   Tipo: test | Origen: cambio de RF-015 | RF: RF-015 | Depende de: T-020 | Archivos: 1
   Hecho cuando: `pytest backend/apps/core/tests/test_real_ip.py` pasa con un caso en el que `TRUSTED_PROXY_IPS` vacía no confía en ninguna cabecera y registra la IP de la conexión directa, y otro en el que una IP parecida pero distinta de una entrada de la lista no se considera de confianza.
+  Decisiones: el código ya cumplía (pertenencia exacta y lista vacía por defecto); el test se verificó con un mutante de coincidencia por prefijo, que hace fallar el caso de IP parecida. Confianza: [Cierto]. Cómo revertirla: no aplica.
 
 ## RF sin tarea
 Ninguno. Todos los RF de la spec (RF-001 a RF-016) aparecen en al menos una tarea. RF-010 aparece como cubierto en su parte aceptada (el residual de perfil y deshabilitación queda en T-016, con emisión pendiente de otra feature).

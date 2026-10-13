@@ -36,3 +36,14 @@ def test_forwarded_header_from_untrusted_connection_is_ignored(trusted_proxy: No
 
 def test_without_forwarded_header_keeps_remote_addr(trusted_proxy: None) -> None:
     assert _capture_remote_addr(TRUSTED_PROXY) == TRUSTED_PROXY
+
+
+def test_empty_trusted_list_ignores_forwarded_header_even_from_proxy_like_address(
+    settings: object,
+) -> None:
+    settings.TRUSTED_PROXY_IPS = []  # type: ignore[attr-defined]
+    assert _capture_remote_addr(TRUSTED_PROXY, "1.1.1.1") == TRUSTED_PROXY
+
+
+def test_similar_but_different_address_is_not_trusted(trusted_proxy: None) -> None:
+    assert _capture_remote_addr("10.0.0.50", "1.1.1.1") == "10.0.0.50"
