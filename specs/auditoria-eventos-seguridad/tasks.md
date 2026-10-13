@@ -94,9 +94,10 @@ empezar antes.
   Hecho cuando: `pytest backend/apps/audit/tests/test_permission.py` pasa: tras migrar, existe `auth.Permission` con codename `view_securityevent` para `audit`.
   Decisiones: esta tarea no escribe código. El test pasa sin implementación porque Django crea `view_securityevent`; no prueba un comportamiento nuevo. El comportamiento que sí depende del permiso (el admin deniega sin él) se prueba en T-018. Confianza: [Cierto]. Cómo revertirla: no aplica.
 
-- [ ] T-018 Admin de solo lectura
+- [x] T-018 Admin de solo lectura
   RF: RF-012, RF-013 | Depende de: T-017 | Archivos: 2
   Hecho cuando: `pytest backend/apps/audit/tests/test_admin.py` pasa: con el permiso se listan las filas con los filtros de RF-013; sin el permiso se deniega el acceso; añadir, cambiar y borrar están desactivados.
+  Decisiones: los filtros por IP y por huella del correo se implementan como búsqueda (`search_fields`), no como filtros laterales, porque Django solo ofrece filtros laterales para valores enumerables. Confianza: [Probable]. Cómo revertirla: añadir `SimpleListFilter` personalizados para IP y huella.
 
 - [x] T-019 Comando de purga
   RF: RF-014, RF-012 | Depende de: T-003 | Archivos: 3
