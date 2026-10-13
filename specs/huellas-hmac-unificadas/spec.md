@@ -1,5 +1,5 @@
 # Spec: huellas-hmac-unificadas
-Estado: aprobada
+Estado: borrador
 Aprobación: ligera
 
 ## Objetivo (por qué)
@@ -51,12 +51,13 @@ sistema deberá aceptar en la comprobación (RF-006) tanto las huellas calculada
 actual como las calculadas con la anterior, y fuera de ese periodo solo las de la clave actual.
 
 ### RF-008 Clave mal configurada
-Si la clave de un tipo de huella está vacía, o la clave anterior coincide con la actual, entonces
-el sistema deberá rechazar el cálculo y la comprobación con un error de configuración que nombre
-la clave afectada. Si la fecha de rotación no es una fecha con zona horaria, entonces el sistema
-deberá rechazar la comprobación con un error de configuración que nombre ese ajuste. Si hay clave
-anterior pero no fecha de rotación, entonces el sistema deberá ignorar la clave anterior en la
-comprobación.
+Si la clave de un tipo de huella está vacía, si la clave anterior está definida pero solo contiene
+espacios, o si la clave anterior coincide con la actual, entonces el sistema deberá rechazar el
+cálculo y la comprobación con un error de configuración que nombre la clave afectada. Si la fecha
+de rotación no es una fecha válida con zona horaria (incluida una fecha bien escrita pero que no
+existe), entonces el sistema deberá rechazar la comprobación con un error de configuración que
+nombre ese ajuste. Si hay clave anterior pero no fecha de rotación, entonces el sistema deberá
+ignorar la clave anterior en la comprobación.
 
 ### RF-009 Huellas distintas entre tipos — OBSOLETO
 OBSOLETO (2026-10-09, C-03): «un mismo valor de entrada» no tiene una lectura única, porque cada
@@ -66,12 +67,15 @@ mismo valor de entrada en tipos de huella distintos, aunque sus claves coincidan
 
 ### RF-010 Detección de cálculos fuera del punto único
 Si algún código de la aplicación (incluidas las migraciones y los comandos de gestión, excluidos
-los tests), fuera del punto único de cálculo, usa una función de hash criptográfico o de HMAC,
-entonces la suite de tests deberá fallar e indicar el archivo en el que ocurre, salvo los usos de
-esta lista cerrada de excepciones:
+los tests), fuera del punto único de cálculo, usa una función de hash criptográfico, de HMAC o de
+firma con clave, ya sea de la biblioteca estándar (incluidos sus módulos internos), del framework
+(incluida su firma de datos) o de una biblioteca criptográfica instalada, entonces la suite de
+tests deberá fallar e indicar el archivo en el que ocurre, salvo los usos de esta lista cerrada de
+excepciones:
 - la comprobación de contraseñas filtradas, que exige un hash sin clave.
 
-Añadir una excepción es un cambio de esta spec.
+Añadir una excepción es un cambio de esta spec. Quedan fuera de esta detección los módulos que se
+cargan de forma dinámica a partir de su nombre escrito como texto (S-06).
 
 ## Supuestos
 - S-01 RNF-25 procede de un documento de requisitos externo al repositorio. La spec lo cita con
@@ -91,6 +95,8 @@ Añadir una excepción es un cambio de esta spec.
   define la clave de consentimientos y se cambia el valor por defecto del que depende, las huellas
   de consentimiento guardadas dejan de coincidir.
 - S-05 La clave de consentimientos sigue sin rotar (S-09 de `consentimientos`).
+- S-06 Nadie carga a propósito un módulo de hash por su nombre en texto para esquivar la detección
+  de RF-010. *Riesgo:* ese uso pasaría la suite sin aviso; queda a cargo de la revisión de código.
 
 ## Fuera de alcance
 - Los hashes que no son huellas con clave: la comprobación de contraseñas filtradas (excepción de
@@ -103,6 +109,7 @@ Añadir una excepción es un cambio de esta spec.
 - Recuperar un correo o un código a partir de su huella: no es posible por diseño.
 - Cambiar el formato de cualquier huella existente o migrar huellas guardadas (RF-005).
 - Añadir la categoría `RNF` a las convenciones del proyecto (S-01).
+- Detectar módulos de hash cargados de forma dinámica a partir de su nombre en texto (RF-010, S-06).
 
 ## Criterios de finalización
 - Ninguna huella con clave de correos, códigos o sellos de cuenta se calcula fuera del punto
@@ -121,3 +128,8 @@ Añadir una excepción es un cambio de esta spec.
 - 2026-10-09 — Clarificación C-01…C-06: excepción de normalización en RF-005, comprobación para
   todos los tipos, errores de rotación en RF-008, RF-009 obsoleto y alcance y excepciones de
   RF-010 — RF: RF-005, RF-006, RF-008, RF-009, RF-010 — Estado: clarificado
+- 2026-10-13 — Cambio tras la validación: RF-010 amplía los usos detectados (módulos internos de
+  la biblioteca estándar, firma de datos del framework y bibliotecas criptográficas instaladas) y
+  acepta el límite de los módulos cargados de forma dinámica (S-06); RF-008 trata como error una
+  clave anterior de solo espacios y precisa que una fecha de rotación inexistente es inválida —
+  RF: RF-008, RF-010 — Estado: pendiente de clarificar
