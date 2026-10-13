@@ -144,6 +144,7 @@ ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
 ACCOUNT_EMAIL_VERIFICATION = "none"
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_RATE_LIMITS: dict[str, object] = {}
+ACCOUNT_ADAPTER = "apps.audit.adapters.AuditAccountAdapter"
 HEADLESS_ONLY = True
 
 # CORS: solo el cliente de escritorio Tauri (la web es mismo origen). Orígenes por entorno.

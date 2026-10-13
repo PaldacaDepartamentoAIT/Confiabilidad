@@ -37,9 +37,10 @@ empezar antes.
   Decisiones: el receptor escucha `django.contrib.auth.signals.user_logged_in`, no la de allauth, porque Django la emite en cualquier login (también el del panel de administración) y allauth la usa a través de `login()`. Confianza: [Probable]. Cómo revertirla: conectar la señal de allauth y aceptar que el admin no quede auditado.
   Nota: el middleware con `ContextVar` (decisión de T-011) no se necesita aquí; se implementa en T-014, que es donde los receptores de señales propias de accounts lo necesitan.
 
-- [ ] T-007 Adaptador y registro de fallo de inicio de sesión
+- [x] T-007 Adaptador y registro de fallo de inicio de sesión
   RF: RF-004 | Depende de: T-005 | Archivos: 3
   Hecho cuando: `pytest backend/apps/audit/tests/test_login_failed.py` pasa: una contraseña incorrecta crea una fila `LOGIN` con `success=False` y el motivo en metadatos; un correo inexistente crea la fila sin clave de sesión; la prueba también confirma que el flujo headless llama al mismo adaptador (D-03).
+  Decisiones: los rechazos por límite no llegan a `authentication_failed` (allauth los lanza en `pre_authenticate` con `too_many_login_attempts`, `allauth/account/adapter.py`, línea 800). Por eso T-008 sobrescribe también `pre_authenticate`. El adaptador lleva `# type: ignore[misc]` porque allauth no publica tipos. Confianza: [Cierto]. Cómo revertirla: no aplica; es la forma de heredar de una clase sin tipos bajo mypy estricto. Los tests vacían la caché de límites en cada test para no arrastrar intentos entre pruebas.
 
 - [ ] T-008 Bloqueo por límite de intentos
   RF: RF-005, RF-006 | Depende de: T-007 | Archivos: 2
