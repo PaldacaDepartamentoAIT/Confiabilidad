@@ -240,7 +240,7 @@ intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al
   permitidas, recoge en "Errores de configuración" la clave anterior de solo espacios y la fecha
   inexistente, y su paso de prueba del guardián sigue siendo copiable y correcto.
 
-- [ ] T-021 Corrección: el guardián detecta accesos desde cualquier paquete antepasado y sigue todas las formas de `-r`
+- [x] T-021 Corrección: el guardián detecta accesos desde cualquier paquete antepasado y sigue todas las formas de `-r`
   Tipo: corrección | Origen: validación de RF-010
   RF: RF-010 | Depende de: — | Archivos: 1
   Archivos: `core/tests/test_fingerprint_guard.py`.
@@ -252,6 +252,13 @@ intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al
   `utils.crypto.salted_hmac`, `-rbase.txt` y `--requirement=base.txt` fallan antes del arreglo y
   se marcan con su archivo después; `import django` + `django.conf.settings` no se marca (D-09);
   la suite completa sigue en verde.
+  Decisiones: (1) El guardián informa del módulo vigilado más el primer nombre usado
+  (`django.core.signing.dumps`), y un `import` con puntos de un módulo vigilado se sigue marcando
+  aunque no se use; el caso antiguo `import django.core.signing` + `.Signer` se redujo al import,
+  porque ahora daba dos usos y el uso por cadena ya lo cubren los casos nuevos. [Cierto] Revertir:
+  restaurar ese caso con los dos usos esperados. (2) Mutante equivalente: quitar el `.` en
+  `_is_ancestor` solo registra alias de más, y un alias solo se informa si la cadena resuelta es
+  un elemento vigilado exacto. [Probable]
 
 - [x] T-022 Corrección: el test de clave vacía comprueba que el error nombra exactamente `REGISTRATION_CODE_SECRET`
   Tipo: corrección | Origen: validación de RF-008

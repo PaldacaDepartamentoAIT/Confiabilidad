@@ -29,6 +29,7 @@ KNOWN_CRYPTOGRAPHIC_LIBRARIES = {
     "pynacl": "nacl",
 }
 _REQUIREMENT_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*")
+_INCLUDE = re.compile(r"(?:-r\s*|--requirement(?:\s+|=))(\S+)")
 # Lista cerrada de excepciones de RF-010: añadir una es un cambio de la spec.
 ALLOWED_USES = {("apps/accounts/password_validation.py", "hashlib.sha1")}
 
@@ -39,8 +40,9 @@ def _read_requirements(path: Path, declared: set[str], visited: set[Path]) -> No
     visited.add(path)
     for raw_line in path.read_text().splitlines():
         line = raw_line.split("#", 1)[0].strip()
-        if line.startswith(("-r ", "--requirement ")):
-            _read_requirements(path.parent / line.split(maxsplit=1)[1], declared, visited)
+        include = _INCLUDE.match(line)
+        if include:
+            _read_requirements(path.parent / include.group(1), declared, visited)
         elif line and not line.startswith("-"):
             match = _REQUIREMENT_NAME.match(line)
             if match:
@@ -62,41 +64,82 @@ def _forbidden_modules(root: Path) -> tuple[str, ...]:
     )
 
 
-def _is_forbidden(module: str, forbidden: tuple[str, ...]) -> bool:
-    return any(module == name or module.startswith(f"{name}.") for name in forbidden)
+def _is_forbidden(name: str, forbidden: tuple[str, ...]) -> bool:
+    return any(name == module or name.startswith(f"{module}.") for module in forbidden)
+
+
+def _is_ancestor(name: str, forbidden: tuple[str, ...]) -> bool:
+    return any(module.startswith(f"{name}.") for module in forbidden)
+
+
+def _dotted(node: ast.Attribute) -> tuple[ast.Name, str] | None:
+    attributes: list[str] = []
+    current: ast.expr = node
+    while isinstance(current, ast.Attribute):
+        attributes.append(current.attr)
+        current = current.value
+    if not isinstance(current, ast.Name):
+        return None
+    return current, ".".join(reversed(attributes))
 
 
 def forbidden_uses(source: str, forbidden: tuple[str, ...] = FORBIDDEN_MODULES) -> list[str]:
     tree = ast.parse(source)
+    # Nombre local -> ruta completa, para imports vigilados o antepasados de uno vigilado (D-09).
     aliases: dict[str, str] = {}
     uses: set[str] = set()
+
+    def bind(local: str, full_name: str) -> None:
+        if _is_forbidden(full_name, forbidden) or _is_ancestor(full_name, forbidden):
+            aliases[local] = full_name
+
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             for alias in node.names:
-                if not _is_forbidden(alias.name, forbidden):
+                if alias.asname is not None:
+                    bind(alias.asname, alias.name)
                     continue
-                if alias.asname is None and "." in alias.name:
+                if "." in alias.name and _is_forbidden(alias.name, forbidden):
                     uses.add(alias.name)
-                else:
-                    aliases[alias.asname or alias.name] = alias.name
+                top_level = alias.name.split(".", 1)[0]
+                bind(top_level, top_level)
         elif isinstance(node, ast.ImportFrom) and node.module:
             for alias in node.names:
                 full_name = f"{node.module}.{alias.name}"
                 if _is_forbidden(node.module, forbidden):
                     uses.add(full_name)
-                elif _is_forbidden(full_name, forbidden):
-                    aliases[alias.asname or alias.name] = full_name
-    attribute_bases: set[int] = set()
+                else:
+                    bind(alias.asname or alias.name, full_name)
+    inner_attributes: set[int] = set()
+    chain_bases: set[int] = set()
     for node in ast.walk(tree):
-        if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name):
-            if node.value.id in aliases:
-                attribute_bases.add(id(node.value))
-                uses.add(f"{aliases[node.value.id]}.{node.attr}")
+        if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Attribute):
+            inner_attributes.add(id(node.value))
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Attribute) or id(node) in inner_attributes:
+            continue
+        chain = _dotted(node)
+        if chain is None or chain[0].id not in aliases:
+            continue
+        base, attributes = chain
+        chain_bases.add(id(base))
+        resolved = f"{aliases[base.id]}.{attributes}"
+        if _is_forbidden(resolved, forbidden):
+            uses.add(_watched_prefix(resolved, forbidden))
     for node in ast.walk(tree):
         # Un uso sin atributo (por ejemplo, getattr(hashlib, ...)) cuenta como el módulo entero.
-        if isinstance(node, ast.Name) and node.id in aliases and id(node) not in attribute_bases:
-            uses.add(aliases[node.id])
+        if isinstance(node, ast.Name) and node.id in aliases and id(node) not in chain_bases:
+            if _is_forbidden(aliases[node.id], forbidden):
+                uses.add(aliases[node.id])
     return sorted(uses)
+
+
+def _watched_prefix(resolved: str, forbidden: tuple[str, ...]) -> str:
+    # Se informa del módulo vigilado más el primer nombre usado: `hashlib.sha256`, no la cadena
+    # entera (`hashlib.sha256().hexdigest`).
+    module = max((name for name in forbidden if _is_forbidden(resolved, (name,))), key=len)
+    rest = resolved[len(module) + 1 :]
+    return f"{module}.{rest.split('.', 1)[0]}" if rest else module
 
 
 def _is_scanned(relative: Path) -> bool:
@@ -170,7 +213,7 @@ def test_scan_reports_the_file_and_the_use(
         ),
         (
             "apps/x/i.py",
-            "import django.core.signing\ndjango.core.signing.Signer\n",
+            "import django.core.signing\n",
             "django.core.signing",
         ),
         ("manage.py", "import hmac\nhmac.new\n", "hmac.new"),
@@ -263,3 +306,44 @@ def test_real_requirements_are_read_including_included_files() -> None:
     declared = declared_requirements(BACKEND_DIR)
 
     assert {"django", "django-allauth", "pytest"} <= declared
+
+
+@pytest.mark.parametrize(
+    ("source", "use"),
+    [
+        ("import django.core\ndjango.core.signing.dumps(1)\n", "django.core.signing.dumps"),
+        ("import django\ndjango.core.signing.dumps(1)\n", "django.core.signing.dumps"),
+        (
+            "from django import utils\nutils.crypto.salted_hmac('s', 'v')\n",
+            "django.utils.crypto.salted_hmac",
+        ),
+        ("import django.utils as du\ndu.crypto.salted_hmac\n", "django.utils.crypto.salted_hmac"),
+    ],
+)
+def test_scan_reports_uses_through_any_ancestor_package(
+    tmp_path: Path, source: str, use: str
+) -> None:
+    _write(tmp_path, "apps/x/a.py", source)
+
+    assert scan(tmp_path) == {"apps/x/a.py": [use]}
+
+
+def test_scan_ignores_ancestor_packages_used_for_something_else(tmp_path: Path) -> None:
+    _write(
+        tmp_path,
+        "apps/x/a.py",
+        "import django\nimport django.core\ndjango.conf.settings\nprint(django)\n",
+    )
+
+    assert scan(tmp_path) == {}
+
+
+@pytest.mark.parametrize(
+    "include", ["-rbase.txt", "-r base.txt", "--requirement=base.txt", "--requirement base.txt"]
+)
+def test_scan_follows_every_form_of_included_requirements(tmp_path: Path, include: str) -> None:
+    _write(tmp_path, "requirements.txt", f"{include}\n")
+    _write(tmp_path, "base.txt", "cryptography>=42\n")
+    _write(tmp_path, "apps/x/c.py", _CRYPTOGRAPHY_USE)
+
+    assert scan(tmp_path) == {"apps/x/c.py": ["cryptography.hazmat.primitives.hashes"]}
