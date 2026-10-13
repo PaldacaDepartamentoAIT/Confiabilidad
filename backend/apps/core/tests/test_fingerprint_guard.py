@@ -12,11 +12,10 @@ FORBIDDEN_MODULES = (
     "_hashlib",
     "_sha1",
     "_sha2",
-    "_sha256",
-    "_sha512",
     "_sha3",
     "_md5",
     "_blake2",
+    "_crypt",
     "django.utils.crypto",
     "django.core.signing",
 )
@@ -205,7 +204,6 @@ def test_scan_reports_the_file_and_the_use(
     ("relative", "source", "use"),
     [
         ("apps/x/f.py", "import _hashlib\n_hashlib.new\n", "_hashlib.new"),
-        ("apps/x/g.py", "import _sha256\n_sha256.sha256(b'')\n", "_sha256.sha256"),
         (
             "apps/x/h.py",
             "from django.core import signing\nsigning.dumps(1)\n",
@@ -347,3 +345,19 @@ def test_scan_follows_every_form_of_included_requirements(tmp_path: Path, includ
     _write(tmp_path, "apps/x/c.py", _CRYPTOGRAPHY_USE)
 
     assert scan(tmp_path) == {"apps/x/c.py": ["cryptography.hazmat.primitives.hashes"]}
+
+
+PYTHON_INTERNAL_HASH_MODULES = ("_hashlib", "_sha1", "_sha2", "_sha3", "_md5", "_blake2", "_crypt")
+
+
+@pytest.mark.parametrize("module", PYTHON_INTERNAL_HASH_MODULES)
+def test_scan_reports_every_internal_hash_module(tmp_path: Path, module: str) -> None:
+    _write(tmp_path, "apps/x/a.py", f"import {module}\n{module}.new\n")
+
+    assert scan(tmp_path) == {"apps/x/a.py": [f"{module}.new"]}
+
+
+def test_only_internal_hash_modules_of_python_3_12_are_watched() -> None:
+    internal = tuple(name for name in FORBIDDEN_MODULES if name.startswith("_"))
+
+    assert internal == PYTHON_INTERNAL_HASH_MODULES

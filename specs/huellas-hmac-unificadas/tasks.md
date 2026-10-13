@@ -268,7 +268,7 @@ intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al
   Hecho cuando: el mutante que cambia el nombre del ajuste en el mensaje hace fallar el test; la
   suite completa sigue en verde.
 
-- [ ] T-023 Corrección: un caso sintético por cada módulo interno vigilado
+- [x] T-023 Corrección: un caso sintético por cada módulo interno vigilado
   Tipo: corrección | Origen: validación de RF-010
   RF: RF-010 | Depende de: — | Archivos: 1
   Archivos: `core/tests/test_fingerprint_guard.py`.
