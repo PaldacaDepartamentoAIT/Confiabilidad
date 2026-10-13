@@ -208,6 +208,14 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
   ```
   Deberías ver la IP del contenedor del proxy en la sección `Containers`, en el campo `IPv4Address`. Si la red tiene otro nombre, lista las redes con `docker network ls`.
 
+- [ ] **Añadir `AUDIT_HASH_SECRET` a tu `.env` local** (feature `auditoria-eventos-seguridad`).
+  Sin esta variable `manage.py runserver` y `manage.py check` fallan. Copia el valor de desarrollo de
+  `backend/.env.example` (o genera uno propio) en tu `backend/.env`:
+  ```bash
+  grep -n "AUDIT_HASH_SECRET" backend/.env.example
+  ```
+  Deberías ver la línea `AUDIT_HASH_SECRET=dev-audit-secret-change-me`. Cópiala a tu `backend/.env`.
+
 ## Hecho
 
 <!-- Mueve aquí las tareas completadas, con fecha. -->

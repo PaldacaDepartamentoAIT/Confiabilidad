@@ -20,10 +20,12 @@ empezar antes.
   Hecho cuando: `pytest backend/apps/audit/tests/test_insert_only.py` pasa: `save()` sobre una fila existente, `delete()` y `update()`/`delete()` del QuerySet lanzan error; crear filas sigue funcionando. Deja un contexto privado `_purge_allowed` que solo usa T-019.
   Decisiones: el permiso de borrado de la purga es un `ContextVar` (`_purge_allowed`), no un parámetro, para que el admin y el ORM no puedan activarlo por accidente. Confianza: [Probable]. Cómo revertirla: sustituir el contexto por un método de clase `purge_older_than` que llame a `QuerySet.delete` sin guarda, y quitar `_purge_allowed`.
 
-- [ ] T-004 Huellas de auditoría en el punto único (M-09)
+- [x] T-004 Huellas de auditoría en el punto único (M-09)
   RF: RF-011 | Depende de: T-001, huellas-hmac-unificadas en `main` | Archivos: 3
+  Excepción: el check de arranque necesita `apps/core/checks.py` y un `ready()` en `apps/core/apps.py` para registrarse; y `backend/.env.example` recibe la variable nueva. Son archivos de configuración sin lógica de huellas, confirmados por el usuario.
   Hecho cuando: `pytest backend/apps/core/tests/test_audit_fingerprints.py` pasa con vectores fijos del correo normalizado y de la clave de sesión; sin `AUDIT_HASH_SECRET` la configuración lanza `ImproperlyConfigured`; el guardián de huellas sigue en verde.
   Decisiones: `AUDIT_HASH_SECRET` falla al arrancar mediante un check de Django (`manage.py check`, `runserver`) además de al usar la clave, decisión del usuario (D-05). El check necesita un archivo más: se declara aquí como Excepción al implementar T-004. Confianza: [Cierto] (decisión explícita).
+  Decisiones: las huellas de auditoría separan finalidades con un prefijo (`audit_email:` y `audit_session:`) además de la clave propia, para que un correo y una clave de sesión con el mismo texto no produzcan la misma huella. Confianza: [Probable]. Cómo revertirla: quitar el prefijo y aceptar la colisión teórica entre correo y clave de sesión.
 
 - [ ] T-005 Registrador `record_event`
   RF: RF-001, RF-011 | Depende de: T-002, T-004 | Archivos: 2
