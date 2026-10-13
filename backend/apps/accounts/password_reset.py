@@ -71,6 +71,9 @@ def verify(*, public_id: str, code: str) -> VerifyResult | AccountRefusal:
         if request is None:
             return VerifyResult.NOT_FOUND
         if request.is_expired:
+            signals.password_reset_code_verified.send(
+                sender=PasswordResetRequest, email=request.user.email, success=False
+            )
             return VerifyResult.EXPIRED
         refusal = _account_refusal(request)
         if refusal is not None:

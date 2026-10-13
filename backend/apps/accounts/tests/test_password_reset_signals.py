@@ -86,3 +86,22 @@ def test_complete_emits_password_reset_completed(
     result = password_reset.complete(public_id=started.public_id, password=NEW_PASSWORD)
     assert isinstance(result, password_reset.Completed)
     assert captured["password_reset_completed"] == [{"email": EMAIL, "success": True}]
+
+
+def test_verify_after_grace_period_emits_failed_verification(
+    user: User, captured: dict[str, list[dict[str, Any]]]
+) -> None:
+    from datetime import timedelta
+
+    from django.utils import timezone
+
+    from apps.accounts import conf
+    from apps.accounts.models import PasswordResetRequest
+
+    started = _start()
+    PasswordResetRequest.objects.filter(public_id=started.public_id).update(
+        code_expires_at=timezone.now() - conf.grace_period() - timedelta(minutes=1)
+    )
+    captured["password_reset_code_verified"].clear()
+    password_reset.verify(public_id=started.public_id, code=started.code)
+    assert captured["password_reset_code_verified"] == [{"email": EMAIL, "success": False}]

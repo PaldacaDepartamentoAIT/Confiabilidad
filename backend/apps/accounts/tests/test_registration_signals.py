@@ -83,3 +83,22 @@ def test_complete_emits_account_created(captured: dict[str, list[dict[str, Any]]
     result = registration.complete(public_id=started.public_id, password=PASSWORD)
     assert isinstance(result, registration.Completed)
     assert captured["account_created"] == [{"email": EMAIL, "success": True}]
+
+
+def test_verify_after_grace_period_emits_failed_verification(
+    captured: dict[str, list[dict[str, Any]]],
+) -> None:
+    from datetime import timedelta
+
+    from django.utils import timezone
+
+    from apps.accounts import conf
+    from apps.accounts.models import PendingRegistration
+
+    started = _start()
+    PendingRegistration.objects.filter(public_id=started.public_id).update(
+        code_expires_at=timezone.now() - conf.grace_period() - timedelta(minutes=1)
+    )
+    captured["registration_code_verified"].clear()
+    registration.verify(public_id=started.public_id, code=started.code)
+    assert captured["registration_code_verified"] == [{"email": EMAIL, "success": False}]

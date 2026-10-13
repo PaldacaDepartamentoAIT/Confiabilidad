@@ -75,6 +75,9 @@ def verify(*, public_id: str, code: str) -> VerifyResult:
         if pending is None:
             return VerifyResult.NOT_FOUND
         if pending.is_expired:
+            signals.registration_code_verified.send(
+                sender=PendingRegistration, email=pending.email, success=False
+            )
             return VerifyResult.EXPIRED
         result = processes.check_code(pending, _PURPOSE, code)
         signals.registration_code_verified.send(

@@ -115,7 +115,7 @@ empezar antes.
   Hecho cuando: `pytest backend/apps/audit/tests/test_acceptance.py` pasa: un login correcto y otro fallido enviados por HTTP desde el proxy de confianza generan dos filas con la IP real del cliente.
   Decisiones: el test de aceptación de la feature pasó al primer intento, porque cierra la cadena de piezas ya verificadas por separado. Se añadió el caso de cabecera falsa desde conexión directa para matar un mutante que sobrevivía. Confianza: [Cierto]. Cómo revertirla: no aplica.
 
-- [ ] T-022 Corrección: código caducado tras el periodo de gracia no se registra
+- [x] T-022 Corrección: código caducado tras el periodo de gracia no se registra
   Tipo: corrección | Origen: validación de RF-008 | RF: RF-008 | Depende de: T-012, T-013 | Archivos: 4
   Excepción: son dos flujos con el mismo cambio, cada uno con su servicio y su test (`registration.py` y `test_registration_signals.py`; `password_reset.py` y `test_password_reset_signals.py`).
   Causa: `verify` devuelve `EXPIRED` antes de emitir la señal cuando el proceso superó el periodo de gracia; no queda fila.
