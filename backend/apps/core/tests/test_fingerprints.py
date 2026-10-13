@@ -4,6 +4,7 @@ import os
 import re
 import subprocess
 import sys
+from collections.abc import Callable
 from datetime import timedelta
 from pathlib import Path
 
@@ -448,3 +449,23 @@ def test_empty_previous_code_key_is_ignored_without_error(minutes_ago: int | Non
     with _rotation(minutes_ago, previous=""):
         fingerprint = fingerprints.code_fingerprint(REG, PUBLIC_ID, "123456")
         assert fingerprints.code_matches(REG, PUBLIC_ID, "123456", fingerprint)
+
+
+@pytest.mark.parametrize("previous", ["old-secret", ""])
+def test_future_rotation_date_is_rejected_when_matching(previous: str) -> None:
+    with override_settings(REGISTRATION_CODE_SECRET="new-secret"):
+        fingerprint = fingerprints.code_fingerprint(REG, PUBLIC_ID, "123456")
+        stamp = fingerprints.account_stamp("ana@x.com", PASSWORD_HASH)
+    with _rotation(-1, previous=previous):
+        assert fingerprints.code_fingerprint(REG, PUBLIC_ID, "123456") == fingerprint
+        assert fingerprints.account_stamp("ana@x.com", PASSWORD_HASH) == stamp
+        checks: list[Callable[[], bool]] = [
+            lambda: fingerprints.code_matches(REG, PUBLIC_ID, "123456", fingerprint),
+            lambda: fingerprints.code_matches(REG, PUBLIC_ID, "654321", fingerprint),
+            lambda: fingerprints.account_stamp_matches(stamp, "ana@x.com", PASSWORD_HASH),
+        ]
+        for check in checks:
+            with pytest.raises(
+                ImproperlyConfigured, match=r"\bREGISTRATION_CODE_SECRET_ROTATED_AT\b"
+            ):
+                check()

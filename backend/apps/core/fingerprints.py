@@ -44,6 +44,10 @@ def _previous_code_key_in_transition() -> str | None:
         raise invalid_date from error
     if rotated_at is None or rotated_at.tzinfo is None:
         raise invalid_date
+    if rotated_at > timezone.now():
+        raise ImproperlyConfigured(
+            _("REGISTRATION_CODE_SECRET_ROTATED_AT must not be in the future.")
+        )
     previous = settings.REGISTRATION_CODE_SECRET_PREVIOUS
     if not previous:
         return None

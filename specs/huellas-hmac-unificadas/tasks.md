@@ -272,7 +272,7 @@ intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al
   `_md5`, `_blake2` y `_crypt`, con un caso sintético por módulo; quitar cualquiera de ellos hace
   fallar algún test; la suite completa sigue en verde.
 
-- [ ] T-024 Una fecha de rotación futura es un error de configuración
+- [x] T-024 Una fecha de rotación futura es un error de configuración
   RF: RF-007, RF-008 | Depende de: T-022 | Archivos: 2
   Archivos: `core/fingerprints.py`, `core/tests/test_fingerprints.py`.
   Hecho cuando: con `REGISTRATION_CODE_SECRET_ROTATED_AT` un minuto en el futuro, `code_matches`
