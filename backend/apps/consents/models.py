@@ -8,13 +8,13 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
-from apps.consents.hashing import email_fingerprint
 from apps.consents.validators import (
     VERSION_MAX_LENGTH,
     validate_content,
     validate_locale,
     validate_version,
 )
+from apps.core import fingerprints
 
 PROTECTED_FIELDS = (
     "kind",
@@ -261,7 +261,7 @@ def _refresh_email_hash(record: UserTerms | MarketingConsent) -> None:
             raise ValidationError(
                 {"user": ValidationError(_("A user is required."), code="user_required")}
             )
-        record.user_email_hash = email_fingerprint(record.user.email)
+        record.user_email_hash = fingerprints.consent_email_fingerprint(record.user.email)
         return
     record.user_email_hash = (
         type(record).objects.filter(pk=record.pk).values_list("user_email_hash", flat=True).get()

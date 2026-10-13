@@ -38,6 +38,14 @@ Siguiente paso: <skill a ejecutar o acción del usuario>
    resumiendo cada modo en una línea. Esta pregunta no cuenta para el máximo configurado. Si no
    elige, usa `fuerte`.
 3. Haz preguntas de una en una, sin superar el máximo configurado. Cubre alcance, casos límite, errores y lo que queda fuera de alcance. Prioriza las preguntas cuya respuesta cambiaría más requisitos.
+   - Cada pregunta (también la del paso 2) se hace en formato de selección, con la herramienta
+     de preguntas de opción múltiple: de 2 a 4 opciones excluyentes, cada una con una descripción
+     breve de su consecuencia, y la recomendada en primer lugar con «(Recomendada)» al final.
+   - El contexto necesario para decidir va en el texto de la pregunta o en las descripciones de
+     las opciones; si no cabe, explícalo antes en el mensaje.
+   - El usuario siempre puede escribir otra respuesta; trátala igual que una opción elegida.
+   - Este formato es solo para la entrevista: las aprobaciones de texto siguen las reglas de
+     `AGENTS.md` (texto completo en el mensaje y pregunta final en texto).
 4. Si el usuario responde "no sé", propón una opción razonable y regístrala como supuesto (`S-01`…). No la conviertas en requisito sin marcarla.
 5. Genera `specs/<feature>/spec.md` con la plantilla de `references/plantilla.md`, con `Estado: borrador`
    y, justo debajo, la línea `Aprobación: <modo elegido>`. Ningún otro skill cambia esa línea salvo

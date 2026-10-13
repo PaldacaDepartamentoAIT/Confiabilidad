@@ -10,9 +10,9 @@ from django.utils import timezone
 
 from apps.accounts.models import User
 from apps.accounts.tests.factories import make_user
-from apps.consents.hashing import email_fingerprint
 from apps.consents.models import MarketingConsent, Terms, UserTerms
 from apps.consents.tests.factories import make_document
+from apps.core import fingerprints
 
 pytestmark = pytest.mark.django_db
 
@@ -86,7 +86,7 @@ def test_support_creates_an_acceptance_of_a_non_current_document_for_an_inactive
     assert response.status_code == 302
     acceptance = UserTerms.objects.get()
     assert (acceptance.user, acceptance.terms) == (user, draft)
-    assert acceptance.user_email_hash == email_fingerprint("ana@x.com")
+    assert acceptance.user_email_hash == fingerprints.consent_email_fingerprint("ana@x.com")
 
 
 def test_support_creates_a_marketing_consent(support_client: Client) -> None:
@@ -277,7 +277,7 @@ def test_reassigning_the_user_from_the_panel_shows_a_form_error(
     assert response.status_code == 200
     assert "user" in response.context["adminform"].form.errors
     assert record.user == owner
-    assert record.user_email_hash == email_fingerprint("ana@x.com")
+    assert record.user_email_hash == fingerprints.consent_email_fingerprint("ana@x.com")
 
 
 @pytest.mark.parametrize(
@@ -298,4 +298,4 @@ def test_clearing_the_user_from_the_panel_keeps_the_hash(
 
     assert response.status_code == 302
     assert record.user is None
-    assert record.user_email_hash == email_fingerprint("ana@x.com")
+    assert record.user_email_hash == fingerprints.consent_email_fingerprint("ana@x.com")

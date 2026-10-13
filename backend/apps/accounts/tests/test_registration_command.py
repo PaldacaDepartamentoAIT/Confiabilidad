@@ -11,6 +11,7 @@ from apps.accounts import codes, registration
 from apps.accounts.management.commands.registration import COMPLETE_ERRORS, VERIFY_ERRORS
 from apps.accounts.models import PendingRegistration, User
 from apps.accounts.tests.factories import make_user
+from apps.core import fingerprints
 
 pytestmark = pytest.mark.django_db
 
@@ -42,7 +43,7 @@ def test_start_shows_the_public_id_and_the_code() -> None:
 
     pending = PendingRegistration.objects.get()
     assert shown["public_id"] == pending.public_id
-    assert codes.verify_code(
+    assert fingerprints.code_matches(
         codes.Purpose.REGISTRATION, pending.public_id, shown["code"], pending.code_hash
     )
 
@@ -109,7 +110,7 @@ def test_resend_keeps_the_public_id_and_shows_a_new_code() -> None:
 
     pending = PendingRegistration.objects.get()
     assert shown["public_id"] == started["public_id"] == pending.public_id
-    assert codes.verify_code(
+    assert fingerprints.code_matches(
         codes.Purpose.REGISTRATION, pending.public_id, shown["code"], pending.code_hash
     )
 

@@ -9,9 +9,9 @@ from django.utils import timezone
 
 from apps.accounts.models import User
 from apps.accounts.tests.factories import make_user
-from apps.consents.hashing import email_fingerprint
 from apps.consents.models import MarketingConsent, Terms, UserTerms
 from apps.consents.tests.factories import make_document
+from apps.core import fingerprints
 
 pytestmark = pytest.mark.django_db
 
@@ -28,9 +28,18 @@ def test_terms_acceptance_keeps_every_field() -> None:
 
     assert acceptance.user == user
     assert acceptance.terms == document
-    assert acceptance.user_email_hash == email_fingerprint(user.email)
+    assert acceptance.user_email_hash == fingerprints.consent_email_fingerprint(user.email)
     assert acceptance.terms_accepted_at >= before
     assert acceptance.revoked_at is None
+
+
+def test_stored_hash_is_the_fingerprint_of_the_email_however_it_is_written() -> None:
+    user = make_user()
+
+    acceptance = UserTerms.objects.create(user=user, terms=make_document())
+
+    written_differently = f"  {user.email.upper()}\t"
+    assert acceptance.user_email_hash == fingerprints.consent_email_fingerprint(written_differently)
 
 
 def test_terms_acceptance_of_a_marketing_document_is_rejected() -> None:
@@ -77,7 +86,7 @@ def test_deleting_the_user_keeps_the_acceptance_without_user() -> None:
     acceptance.refresh_from_db()
 
     assert acceptance.user is None
-    assert acceptance.user_email_hash == email_fingerprint(user.email)
+    assert acceptance.user_email_hash == fingerprints.consent_email_fingerprint(user.email)
 
 
 def test_deleting_an_accepted_document_is_protected() -> None:
@@ -138,7 +147,7 @@ def test_marketing_consent_keeps_every_field() -> None:
 
     assert consent.user is not None
     assert consent.terms.kind == Terms.Kind.MARKETING
-    assert consent.user_email_hash == email_fingerprint(consent.user.email)
+    assert consent.user_email_hash == fingerprints.consent_email_fingerprint(consent.user.email)
     assert consent.granted is True
     assert consent.granted_at >= before
     assert consent.revoked_at is None
@@ -214,7 +223,7 @@ def test_deleting_the_user_keeps_the_active_consent_without_user() -> None:
 
     assert consent.user is None
     assert consent.granted is True
-    assert consent.user_email_hash == email_fingerprint(user.email)
+    assert consent.user_email_hash == fingerprints.consent_email_fingerprint(user.email)
 
 
 def test_deleting_a_consented_document_is_protected() -> None:
@@ -251,7 +260,7 @@ def test_hash_of_the_user_email_is_stored_on_create(
     record = _record(model, user=user, user_email_hash="typed-by-hand")
     record.save()
 
-    assert record.user_email_hash == email_fingerprint("ana@x.com")
+    assert record.user_email_hash == fingerprints.consent_email_fingerprint("ana@x.com")
 
 
 @pytest.mark.parametrize("model", RECORD_MODELS)
@@ -267,7 +276,7 @@ def test_changing_the_user_email_keeps_the_stored_hash(
     record.refresh_from_db()
     record.save()
 
-    assert record.user_email_hash == email_fingerprint("ana@x.com")
+    assert record.user_email_hash == fingerprints.consent_email_fingerprint("ana@x.com")
 
 
 @pytest.mark.parametrize("model", RECORD_MODELS)
@@ -285,7 +294,7 @@ def test_assigning_another_user_to_a_record_is_rejected(
 
     assert error.value.error_dict["user"][0].code == "user_reassigned"
     assert record.user == owner
-    assert record.user_email_hash == email_fingerprint("ana@x.com")
+    assert record.user_email_hash == fingerprints.consent_email_fingerprint("ana@x.com")
 
 
 @pytest.mark.parametrize("model", RECORD_MODELS)
@@ -305,7 +314,7 @@ def test_assigning_a_user_to_a_record_without_user_is_rejected(
 
     assert "user" in error.value.error_dict
     assert record.user is None
-    assert record.user_email_hash == email_fingerprint("ana@x.com")
+    assert record.user_email_hash == fingerprints.consent_email_fingerprint("ana@x.com")
 
 
 @pytest.mark.parametrize("model", RECORD_MODELS)
@@ -333,7 +342,7 @@ def test_saving_again_ignores_a_hash_typed_by_hand(
     record.save()
     record.refresh_from_db()
 
-    assert record.user_email_hash == email_fingerprint("ana@x.com")
+    assert record.user_email_hash == fingerprints.consent_email_fingerprint("ana@x.com")
 
 
 @pytest.mark.parametrize("model", RECORD_MODELS)
@@ -361,7 +370,7 @@ def test_saving_a_record_of_a_deleted_account_keeps_its_hash(
     record.refresh_from_db()
 
     assert record.user is None
-    assert record.user_email_hash == email_fingerprint("ana@x.com")
+    assert record.user_email_hash == fingerprints.consent_email_fingerprint("ana@x.com")
 
 
 @pytest.mark.parametrize("model", RECORD_MODELS)
@@ -375,4 +384,4 @@ def test_clearing_the_user_of_a_record_keeps_its_hash(
     record.save()
     record.refresh_from_db()
 
-    assert record.user_email_hash == email_fingerprint("ana@x.com")
+    assert record.user_email_hash == fingerprints.consent_email_fingerprint("ana@x.com")

@@ -1,5 +1,5 @@
 # Resumen — consentimientos
-Estado: implementada y validada (Validación: CUMPLIDA, 2026-10-08, 6.ª ronda) · Última actualización: 2026-10-08
+Estado: implementada y validada (Validación: CUMPLIDA, 2026-10-08, 6.ª ronda) · Última actualización: 2026-10-13
 
 ## Qué se hizo
 El sistema guarda los textos legales versionados y la prueba de quién los aceptó y cuándo, aunque
@@ -178,6 +178,11 @@ el que coincide: los correos se adivinan fácilmente. El HMAC mezcla el correo c
 servidor**, así que sin ese secreto no se puede ni comprobar ni revertir. Sirve para demostrar, ya
 borrada la cuenta, que "quien tenía el correo X aceptó": se calcula la huella de X con el secreto y
 se busca. Por eso el secreto no puede cambiar nunca.
+
+Desde `huellas-hmac-unificadas`, esta huella se calcula en `backend/apps/core/fingerprints.py`
+(`consent_email_fingerprint`, y `consent_email_matches` para comprobarla), el único sitio del
+backend que calcula huellas con clave; el antiguo módulo de huellas de `consents` ya no existe. El
+formato y el secreto no cambiaron.
 
 ### Seudonimización y borrado de la cuenta (`SET_NULL`, `PROTECT`, `CASCADE`)
 Al borrar algo referenciado por una FK, la base de datos puede borrar también las filas que lo
