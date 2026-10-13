@@ -199,6 +199,15 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
   sops secrets/prod.enc.yaml
   ```
 
+- [ ] **Configurar `TRUSTED_PROXY_IPS` con la IP del proxy de entrada** (feature
+  `auditoria-eventos-seguridad`). Sin esta variable la aplicación no confía en ningún proxy y registra
+  la IP del proxy en lugar de la del cliente. Obtén la IP del contenedor de entrada en la red de Docker
+  y ponla en el entorno de despliegue (separada por comas si hay varias):
+  ```bash
+  docker network inspect confiabilidad
+  ```
+  Deberías ver la IP del contenedor del proxy en la sección `Containers`, en el campo `IPv4Address`.
+
 ## Hecho
 
 <!-- Mueve aquí las tareas completadas, con fecha. -->

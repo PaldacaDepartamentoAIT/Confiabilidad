@@ -87,9 +87,10 @@ empezar antes.
   Hecho cuando: `pytest backend/apps/audit/tests/test_purge.py` pasa: `manage.py purge_security_events --dry-run` informa del número sin borrar nada; sin `--dry-run` borra solo filas de más de un año y deja las recientes intactas.
   Decisiones: "un año" se implementa como 365 días fijos (`timedelta(days=365)`), no como calendario (366 en años bisiestos). Confianza: [Suposición]. Cómo revertirla: usar `dateutil.relativedelta(years=1)` o equivalente y ajustar el test de la frontera.
 
-- [ ] T-020 Confianza en el proxy de entrada
+- [x] T-020 Confianza en el proxy de entrada
   RF: RF-015 | Depende de: — | Archivos: 3
   Hecho cuando: `pytest backend/apps/core/tests/test_real_ip.py` pasa: un `X-Forwarded-For` desde una conexión no confiable se ignora; desde `TRUSTED_PROXY_IPS` se usa la última entrada. El test existente que asumía confianza en cualquier cabecera se actualiza. Este cambio afecta a toda la aplicación, no solo a la auditoría.
+  Decisiones: `TRUSTED_PROXY_IPS` por defecto es lista vacía, es decir, no se confía en ningún proxy hasta configurarlo; en un despliegue detrás del proxy la IP registrada será la del proxy hasta que se fije su IP. Confianza: [Probable]. Cómo revertirla: restaurar la lectura de la última entrada sin comprobación (no recomendado).
 
 - [ ] T-021 Prueba de aceptación de la feature
   RF: RF-001, RF-003, RF-004, RF-015 | Depende de: T-006, T-007, T-020 | Archivos: 1

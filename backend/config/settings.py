@@ -35,6 +35,8 @@ INSTALLED_APPS = [
     "apps.audit",
 ]
 
+TRUSTED_PROXY_IPS: list[str] = env.list("TRUSTED_PROXY_IPS", default=[])
+
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "apps.core.middleware.RealClientIPMiddleware",

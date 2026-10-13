@@ -1,5 +1,6 @@
 from collections.abc import Callable
 
+from django.conf import settings
 from django.http import HttpRequest, HttpResponse
 
 
@@ -9,7 +10,7 @@ class RealClientIPMiddleware:
 
     def __call__(self, request: HttpRequest) -> HttpResponse:
         forwarded = request.META.get("HTTP_X_FORWARDED_FOR")
-        if forwarded:
-            # Un único proxy de confianza: la última entrada es la IP real del cliente (S-08).
+        # Solo el proxy de entrada de confianza puede indicar la IP real (S-08, RF-015).
+        if forwarded and request.META.get("REMOTE_ADDR") in settings.TRUSTED_PROXY_IPS:
             request.META["REMOTE_ADDR"] = forwarded.split(",")[-1].strip()
         return self.get_response(request)
