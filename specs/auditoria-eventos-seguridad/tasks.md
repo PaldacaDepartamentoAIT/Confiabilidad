@@ -23,6 +23,7 @@ empezar antes.
 - [ ] T-004 Huellas de auditoría en el punto único (M-09)
   RF: RF-011 | Depende de: T-001, huellas-hmac-unificadas en `main` | Archivos: 3
   Hecho cuando: `pytest backend/apps/core/tests/test_audit_fingerprints.py` pasa con vectores fijos del correo normalizado y de la clave de sesión; sin `AUDIT_HASH_SECRET` la configuración lanza `ImproperlyConfigured`; el guardián de huellas sigue en verde.
+  Decisiones: `AUDIT_HASH_SECRET` falla al arrancar mediante un check de Django (`manage.py check`, `runserver`) además de al usar la clave, decisión del usuario (D-05). El check necesita un archivo más: se declara aquí como Excepción al implementar T-004. Confianza: [Cierto] (decisión explícita).
 
 - [ ] T-005 Registrador `record_event`
   RF: RF-001, RF-011 | Depende de: T-002, T-004 | Archivos: 2
@@ -51,6 +52,7 @@ empezar antes.
 - [ ] T-011 Señales propias de accounts
   RF: RF-007, RF-008, RF-010 (contrato) | Depende de: — | Archivos: 2
   Hecho cuando: `pytest backend/apps/accounts/tests/test_signals.py` pasa: existen las nueve señales de M-08 con argumentos documentados (solicitud de registro, código enviado y validado en registro, cuenta creada, código enviado y validado en restablecimiento, restablecimiento completado, perfil editado, cuenta deshabilitada).
+  Decisiones: las señales no llevan la petición HTTP. La petición llega a los receptores por un middleware de `apps/audit` que guarda la petición actual en un `ContextVar`; las firmas de los servicios no cambian, decisión del usuario. El middleware se implementa en T-006 y se registra en `MIDDLEWARE` como Excepción de esa tarea. Confianza: [Cierto] (decisión explícita).
 
 - [ ] T-012 Emisión de las señales desde el registro
   RF: RF-007, RF-008 | Depende de: T-011 | Archivos: 2
@@ -72,10 +74,10 @@ empezar antes.
   RF: RF-010 (parcial, residual aceptado) | Depende de: T-011 | Archivos: 2
   Hecho cuando: `pytest backend/apps/audit/tests/test_profile_events.py` pasa: enviar `profile_edited` crea una fila `PROFILE_EDIT` y enviar `account_disabled` crea una fila `ACCOUNT_DISABLE`. La prueba envía la señal a mano porque ningún flujo la emite todavía.
 
-- [ ] T-017 Permiso de consulta
-  RF: RF-013 | Depende de: T-002 | Archivos: 3
-  Excepción: `makemigrations` genera `migrations/0002` y la migración es parte del cambio del permiso.
-  Hecho cuando: `pytest backend/apps/audit/tests/test_permission.py` pasa: existe el permiso `view_securityevent` y `makemigrations --check` no detecta cambios.
+- [ ] T-017 Permiso de consulta (permiso por defecto)
+  RF: RF-013 | Depende de: T-002 | Archivos: 1
+  Decisiones: se usa el permiso por defecto `view_securityevent` que Django crea para `SecurityEvent`; sin `Meta.permissions` ni migración, decisión del usuario (D-06). Confianza: [Cierto] (decisión explícita).
+  Hecho cuando: `pytest backend/apps/audit/tests/test_permission.py` pasa: tras migrar, existe `auth.Permission` con codename `view_securityevent` para `audit`.
 
 - [ ] T-018 Admin de solo lectura
   RF: RF-012, RF-013 | Depende de: T-017 | Archivos: 2
