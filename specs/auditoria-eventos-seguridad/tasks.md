@@ -83,9 +83,10 @@ empezar antes.
   Hecho cuando: `pytest backend/apps/audit/tests/test_password_reset_events.py` pasa: las señales de restablecimiento crean filas `CODE_SENT`, `CODE_VERIFIED` y `PASSWORD_RESET`, y un código rechazado crea `CODE_VERIFIED` con `success=False`.
   Decisiones: `password_reset_completed` se registra como `PASSWORD_RESET` (restablecimiento), no como `PASSWORD_CHANGE`, que es el cambio con contraseña conocida de T-010. Confianza: [Cierto] (distinción de RF-002). Cómo revertirla: cambiar el mapeo en `receivers.py`.
 
-- [ ] T-016 Receptores de perfil y deshabilitación
+- [x] T-016 Receptores de perfil y deshabilitación
   RF: RF-010 (parcial, residual aceptado) | Depende de: T-011 | Archivos: 2
   Hecho cuando: `pytest backend/apps/audit/tests/test_profile_events.py` pasa: enviar `profile_edited` crea una fila `PROFILE_EDIT` y enviar `account_disabled` crea una fila `ACCOUNT_DISABLE`. La prueba envía la señal a mano porque ningún flujo la emite todavía.
+  Decisiones: ningún flujo emite hoy `profile_edited` ni `account_disabled`; el test las envía a mano. Es el residual de RF-010 aceptado en el plan. Confianza: [Cierto]. Cómo revertirla: no aplica.
 
 - [ ] T-017 Permiso de consulta (permiso por defecto)
   RF: RF-013 | Depende de: T-002 | Archivos: 1
