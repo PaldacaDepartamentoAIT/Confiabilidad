@@ -1,5 +1,5 @@
 # Plan: auditoria-eventos-seguridad
-Estado: aprobado
+Estado: borrador
 
 ## Módulos
 ### M-01 Modelo SecurityEvent
@@ -21,8 +21,9 @@ RF: RF-003, RF-007, RF-008, RF-009, RF-010 (parcial, ver «RF sin cobertura»)
 
 ### M-04 Adaptador de allauth
 Responsabilidad: subclase de `DefaultAccountAdapter` que sobrescribe `authentication_failed` para
-registrar el fallo y el bloqueo por límite. No cuenta intentos ni bloquea: solo registra lo que
-allauth ya decidió.
+registrar el fallo por credenciales incorrectas, `pre_authenticate` para el bloqueo por límite y
+`pre_login` para la cuenta inactiva con credenciales válidas (D-13). No cuenta intentos ni bloquea:
+solo registra lo que allauth ya decidió.
 RF: RF-004, RF-005, RF-006
 
 ### M-05 Admin de solo lectura
@@ -142,6 +143,25 @@ coincidencia exacta, y la IP sin prefijo (coincidencia parcial).
 Descartada: la coincidencia parcial que usa hoy `search_fields` para la huella. Motivo: H-11 eligió
 coincidencia exacta, y una búsqueda parcial sobre una huella hexadecimal no aporta nada.
 
+### D-13 Detección de cuenta inactiva con credenciales válidas
+Elegida: sobrescribir `pre_login` en `AuditAccountAdapter`. Si `user.is_active` es falso, registrar un
+fallo de inicio de sesión con motivo `inactive_account` y después llamar a `super().pre_login`, que es
+quien responde con la página de cuenta inactiva. `pre_login` se llama en el flujo de login compartido
+por el navegador y el headless (`allauth/account/internal/flows/login.py`, línea 94).
+Descartada: sobrescribir `authenticate` o `authentication_failed`. Motivo: la validación comprobó que
+con credenciales válidas la cuenta inactiva no llega a `authentication_failed` (no hay fila); en
+allauth 65.x la decisión la toma `pre_login`. Descartada también una señal, que allauth no emite para
+este caso.
+*Suposición:* en el flujo de registro `pre_login` no ve cuentas inactivas, porque con la verificación
+de correo desactivada las cuentas nuevas se crean activas. Se verifica en la tarea.
+
+### D-14 Motivos de metadatos: lista cerrada de tres códigos
+Elegida: el campo `metadata["reason"]` toma solo estos valores, que corresponden a los motivos de la
+spec: `invalid_credentials` (credenciales incorrectas), `too_many_login_attempts` (límite de intentos
+alcanzado) e `inactive_account` (cuenta inactiva). Los dos primeros ya existen en el código.
+Descartada: el texto que devuelva allauth en cada caso, que no es verificable (decisión H-15).
+Motivo: la spec pide una lista fija, y los códigos evitan depender de textos traducibles.
+
 ### D-10 Tipos de evento: un valor por tipo de RF-002
 Elegida: `TextChoices` con 11 valores. El rechazo de código es `CODE_VERIFIED` con `success=False`
 (H-06).
@@ -160,6 +180,9 @@ Se sigue TDD (P-04). Cobertura ≥80% en código nuevo (P-05).
   `change_securityevent` pero sin `view_securityevent`, el listado devuelve 403 (T-023). Filtros de
   tipo, resultado y rango de fechas, y búsqueda exacta por huella y parcial por IP (T-024).
 - **Lista de proxies vacía**: `TRUSTED_PROXY_IPS` sin configurar no confía en ningún proxy (T-026).
+- **Cuenta inactiva con credenciales válidas** (RF-004): `test_login_failed.py` registra una fila
+  `LOGIN` con `success=False` y `reason=inactive_account`, tanto por el navegador como por el headless
+  (T-029). `test_secrets_by_flow.py` añade el flujo de cuenta inactiva.
 - **Comando**: `--dry-run` no borra; la purga elimina solo eventos de más de un año (RF-014).
 - **CLI (P-03)**: `pytest backend/apps/audit`; `python manage.py purge_security_events --dry-run`;
   una petición de login por HTTP con `curl` contra el servidor de desarrollo.
@@ -170,7 +193,7 @@ Se sigue TDD (P-04). Cobertura ≥80% en código nuevo (P-05).
 | RF-001 | M-01, M-02 | Unitario, integración |
 | RF-002 | M-01 | Unitario |
 | RF-003 | M-02, M-03 | Integración |
-| RF-004 | M-02, M-04 | Integración |
+| RF-004 | M-02, M-04 (D-13, D-14) | Integración |
 | RF-005 | M-04 | Integración |
 | RF-006 | M-04 | Integración (contador de allauth no cambia) |
 | RF-007 | M-03, M-08 | Integración |
@@ -197,3 +220,4 @@ de forma explícita.
 - 2026-10-13 — Borrador inicial del plan — RF: RF-001 a RF-016 — Estado: borrador
 - 2026-10-13 — Aprobación del plan con el residual de RF-010 aceptado por el usuario — RF: RF-001 a RF-016 — Estado: aprobado
 - 2026-10-13 — Actualización tras el cambio de RF-013 y RF-015 (M-05, M-07, D-06, D-08; nuevas D-11 y D-12) — RF: RF-013, RF-015 — Estado: aprobado
+- 2026-10-13 — Actualización tras RF-004 (M-04; nuevas D-13 y D-14) — RF: RF-004 — Estado: borrador
