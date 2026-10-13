@@ -313,7 +313,7 @@ intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al
   informan solo por el nombre del atributo (`set_signed_cookie`), porque no hay módulo del que
   colgarlas. [Cierto] Revertir: cambiar el texto informado en `forbidden_uses`.
 
-- [ ] T-027 El resumen refleja la lista cerrada de RF-010 y la fecha de rotación futura
+- [x] T-027 El resumen refleja la lista cerrada de RF-010 y la fecha de rotación futura
   RF: — (criterio de finalización) | Depende de: T-021, T-022, T-023, T-024, T-026 | Archivos: 1
   Archivos: `specs/huellas-hmac-unificadas/resumen.md` (en la raíz del repositorio).
   Hecho cuando: el resumen enumera la lista cerrada de elementos vigilados de RF-010 (módulos,

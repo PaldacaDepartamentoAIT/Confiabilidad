@@ -25,22 +25,30 @@ alguien vuelve a calcular un hash fuera de ese módulo (RF-010).
   consentimientos, aunque hoy nadie la compare.
 - **Errores de configuración** (RF-008): una clave vacía o de solo espacios, una clave anterior
   de solo espacios (haya o no fecha de rotación) o una clave anterior igual a la actual impiden
-  calcular y comprobar. Una fecha de rotación mal formada, sin zona horaria o que no existe (por
-  ejemplo, `2026-13-01T10:00:00+00:00`) impide **cualquier** comprobación, aunque la clave actual
-  coincida. Esto es más estricto que antes, cuando el error solo aparecía si la clave actual no
+  calcular y comprobar. Una fecha de rotación mal formada, sin zona horaria, que no existe (por
+  ejemplo, `2026-13-01T10:00:00+00:00`) o posterior al momento actual, sin ningún margen, impide
+  **cualquier** comprobación, aunque la clave actual coincida. Esto es más estricto que antes, cuando el error solo aparecía si la clave actual no
   coincidía; se decidió así durante T-001. Una clave anterior vacía, o una válida sin fecha de
   rotación, se ignora.
 - **Guardián** (`backend/apps/core/tests/test_fingerprint_guard.py`, RF-010): analiza con `ast`
   todos los `.py` de `backend/` (`manage.py`, `apps/`, `config/`, migraciones, comandos de gestión
-  y cualquier carpeta nueva), salvo los tests, los `conftest.py`, las carpetas ocultas y el punto
-  único, y falla si alguno importa o usa:
-  - `hashlib`, `hmac` o sus módulos internos (`_hashlib`, `_sha1`, `_sha2`, `_sha256`, `_sha512`,
-    `_sha3`, `_md5`, `_blake2`);
-  - `django.utils.crypto` o `django.core.signing` (la firma de datos del framework);
-  - una biblioteca criptográfica **declarada** en `backend/requirements*.txt` (siguiendo los `-r`):
-    `cryptography`, `pycryptodome`, `pycryptodomex` o `pynacl`. Hoy no se declara ninguna (S-07).
+  y cualquier carpeta nueva), salvo los archivos de test (carpetas `tests/`, `conftest.py`,
+  `test_*.py` y `tests.py`), las carpetas ocultas y el punto único. Falla si alguno usa un elemento
+  de esta **lista cerrada**:
+  - módulos enteros: `hashlib`, `hmac`, `crypt`, los módulos internos de hash de Python 3.12
+    (`_hashlib`, `_sha1`, `_sha2`, `_sha3`, `_md5`, `_blake2`, `_crypt`), `django.utils.crypto`,
+    `django.core.signing` y `django.contrib.auth.tokens`;
+  - las funciones de hash en base de datos `MD5`, `SHA1`, `SHA224`, `SHA256`, `SHA384` y `SHA512`
+    de `django.db.models.functions` o de sus submódulos (el resto de funciones, como `Lower`, está
+    permitido);
+  - cualquier acceso a un atributo `set_signed_cookie` o `get_signed_cookie` (cookies firmadas);
+  - una biblioteca criptográfica **declarada** en `backend/requirements*.txt` (siguiendo `-r` en
+    todas sus formas): `cryptography`, `pycryptodome`, `pycryptodomex` o `pynacl`. Hoy no se
+    declara ninguna (S-07).
 
-  Las utilidades de contraseñas del framework (`django.contrib.auth.hashers`) están permitidas. La
+  El uso cuenta tanto directo como a través de cualquier paquete antepasado: `import django`
+  seguido de `django.core.signing.dumps(...)` se marca, pero `django.conf.settings` no. Las
+  utilidades de contraseñas del framework (`django.contrib.auth.hashers`) están permitidas. La
   única excepción es `hashlib.sha1` en `apps/accounts/password_validation.py` (contraseñas
   filtradas). El mensaje de fallo indica el archivo y el uso.
 - **Lo que desaparece:** las funciones de huella de `apps/accounts/codes.py` (que conserva
@@ -57,6 +65,13 @@ alguien vuelve a calcular un hash fuera de ese módulo (RF-010).
   firme un texto con el mismo formato (S-03). Hoy no ocurre: cada tipo firma un formato distinto.
 - Rotar `DJANGO_SECRET_KEY` sin haber definido `CONSENT_EMAIL_HASH_SECRET` rompe las huellas de
   consentimiento guardadas (S-04). No cambia con esta feature.
+- El guardián es una alarma sobre una lista cerrada, no una garantía (S-08): no ve funciones
+  prohibidas que llegan reexportadas por un módulo permitido (por ejemplo,
+  `hashers.hashlib.sha256`) ni utilidades que calculan un hash por dentro (`get_session_auth_hash`,
+  `make_template_fragment_key`, `uuid.uuid5`). Eso queda a cargo de la revisión de código.
+- `REGISTRATION_CODE_SECRET_ROTATED_AT` debe ser el momento real de la rotación o uno anterior,
+  nunca una rotación programada, y los servidores deben tener el reloj sincronizado (S-09): con
+  una fecha futura, todas las comprobaciones de huellas de código fallan hasta alcanzarla.
 
 ## Cómo probarlo
 Todo se hace desde `backend/`, sin frontend.
