@@ -1,5 +1,5 @@
 # Tareas: auditoria-eventos-seguridad
-Estado: borrador
+Estado: aprobado
 
 Bloqueo externo (S-02): T-004 necesita que `huellas-hmac-unificadas` esté en `main`, porque
 `apps/core/fingerprints.py` no existe todavía en `main`. Las tareas que no dependen de T-004 pueden
@@ -145,4 +145,4 @@ Ninguno. Todos los RF de la spec (RF-001 a RF-016) aparecen en al menos una tare
 ## Historial
 - 2026-10-13 — Borrador inicial de tareas — RF: RF-001 a RF-016 — Estado: borrador
 - 2026-10-13 — Aprobación de las tareas (T-001 a T-021) por el usuario; sin implementar — RF: RF-001 a RF-016 — Estado: aprobado
-- 2026-10-13 — Tareas actualizadas tras el cambio de RF-013 y RF-015: T-024 reescrita (implementación y test, con Excepción de plantilla) y T-026 añadida — RF: RF-013, RF-015 — Estado: borrador
+- 2026-10-13 — Tareas actualizadas tras el cambio de RF-013 y RF-015: T-024 reescrita (implementación y test, con Excepción de plantilla) y T-026 añadida — RF: RF-013, RF-015 — Estado: aprobado
