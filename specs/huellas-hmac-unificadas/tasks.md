@@ -166,7 +166,7 @@ intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al
   mención a `codes.code_fingerprint`, `codes.verify_code`, `codes.account_stamp` ni
   `consents/hashing.py` como lugar del cálculo.
 
-- [ ] T-015 Corrección: una fecha de rotación imposible da el error de configuración de RF-008
+- [x] T-015 Corrección: una fecha de rotación imposible da el error de configuración de RF-008
   Tipo: corrección | Origen: validación de RF-008
   RF: RF-008 | Depende de: — | Archivos: 2
   Archivos: `core/fingerprints.py`, `core/tests/test_fingerprints.py`.

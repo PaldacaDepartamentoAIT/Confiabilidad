@@ -174,7 +174,10 @@ def test_previous_code_key_equal_to_current_is_rejected() -> None:
 
 
 @pytest.mark.parametrize("previous", ["old-secret", ""])
-@pytest.mark.parametrize("raw", ["not-a-date", "2026-10-06T10:00:00"])
+@pytest.mark.parametrize(
+    "raw",
+    ["not-a-date", "2026-10-06T10:00:00", "2026-13-01T10:00:00+00:00", "2026-02-30T10:00:00+00:00"],
+)
 def test_rotation_date_without_timezone_is_rejected_only_when_matching(
     raw: str, previous: str
 ) -> None:

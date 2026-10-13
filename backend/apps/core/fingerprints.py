@@ -32,11 +32,15 @@ def _previous_code_key_in_transition() -> str | None:
     raw_rotated_at = settings.REGISTRATION_CODE_SECRET_ROTATED_AT
     if not raw_rotated_at:
         return None
-    rotated_at = parse_datetime(raw_rotated_at)
+    invalid_date = ImproperlyConfigured(
+        _("REGISTRATION_CODE_SECRET_ROTATED_AT must be an ISO 8601 datetime with a timezone.")
+    )
+    try:
+        rotated_at = parse_datetime(raw_rotated_at)
+    except ValueError as error:
+        raise invalid_date from error
     if rotated_at is None or rotated_at.tzinfo is None:
-        raise ImproperlyConfigured(
-            _("REGISTRATION_CODE_SECRET_ROTATED_AT must be an ISO 8601 datetime with a timezone.")
-        )
+        raise invalid_date
     previous = settings.REGISTRATION_CODE_SECRET_PREVIOUS
     if not previous:
         return None
