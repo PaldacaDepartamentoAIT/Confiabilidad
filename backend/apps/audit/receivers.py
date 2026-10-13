@@ -6,6 +6,9 @@ from django.dispatch import receiver
 
 from apps.accounts.signals import (
     account_created,
+    password_reset_code_sent,
+    password_reset_code_verified,
+    password_reset_completed,
     pending_registration_requested,
     registration_code_sent,
     registration_code_verified,
@@ -87,3 +90,18 @@ def _record_account_signal(event_type: EventType, email: str, success: bool) -> 
         email=email,
         session_key=_session_key(request),
     )
+
+
+@receiver(password_reset_code_sent)
+def on_password_reset_code_sent(sender: type, email: str, success: bool, **kwargs: Any) -> None:
+    _record_account_signal(EventType.CODE_SENT, email, success)
+
+
+@receiver(password_reset_code_verified)
+def on_password_reset_code_verified(sender: type, email: str, success: bool, **kwargs: Any) -> None:
+    _record_account_signal(EventType.CODE_VERIFIED, email, success)
+
+
+@receiver(password_reset_completed)
+def on_password_reset_completed(sender: type, email: str, success: bool, **kwargs: Any) -> None:
+    _record_account_signal(EventType.PASSWORD_RESET, email, success)
