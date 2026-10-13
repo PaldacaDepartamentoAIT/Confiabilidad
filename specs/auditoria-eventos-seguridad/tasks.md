@@ -1,5 +1,5 @@
 # Tareas: auditoria-eventos-seguridad
-Estado: aprobado
+Estado: borrador
 
 Bloqueo externo (S-02): T-004 necesita que `huellas-hmac-unificadas` esté en `main`, porque
 `apps/core/fingerprints.py` no existe todavía en `main`. Las tareas que no dependen de T-004 pueden
@@ -126,13 +126,18 @@ empezar antes.
   Causa: `ModelAdmin.has_view_permission` acepta el permiso de vista o el de cambio; un usuario con solo `change_securityevent` ve el listado.
   Hecho cuando: `pytest backend/apps/audit/tests/test_admin.py` pasa con un caso en el que un usuario con solo `change_securityevent` recibe 403 en el listado.
 
-- [ ] T-024 Test: filtros de RF-013 en el admin
-  Tipo: test | Origen: validación de RF-013 | RF: RF-013 | Depende de: T-018, cambio de spec de RF-013 aprobado | Archivos: 1
-  Hecho cuando: `pytest backend/apps/audit/tests/test_admin.py` pasa comprobando los filtros y la búsqueda que el RF-013 aprobado exige. Pendiente de la decisión sobre RF-013 (filtro lateral o búsqueda).
+- [ ] T-024 Filtros y búsqueda de RF-013 en el admin
+  Tipo: implementación y test | Origen: validación de RF-013 y cambio de spec aprobado | RF: RF-013 | Depende de: T-018, T-023 | Archivos: 3
+  Excepción: la plantilla del filtro de rango (D-11, `apps/audit/templates/admin/audit/filter_date_range.html`) es el tercer archivo; no tiene lógica de negocio.
+  Hecho cuando: `pytest backend/apps/audit/tests/test_admin.py` pasa: los filtros laterales por tipo, resultado y rango de fechas (`desde`, `hasta`) devuelven solo los eventos del rango; la búsqueda por huella del correo es exacta y la búsqueda por IP es parcial.
 
 - [ ] T-025 Test: ningún secreto en ningún flujo
   Tipo: test | Origen: validación de RF-011 | RF: RF-011 | Depende de: T-006, T-007, T-008, T-009, T-010, T-012, T-013, T-014, T-015, T-016 | Archivos: 1
   Hecho cuando: `pytest backend/apps/audit/tests/test_secrets_by_flow.py` pasa: para cada flujo (login ok, login fallido, bloqueo, cierre de sesión, registro, código, restablecimiento, cambio de contraseña), ni la contraseña, ni el código, ni el token de sesión, ni el correo en claro aparecen en ningún campo de las filas.
+
+- [ ] T-026 Test: lista de proxies vacía no confía en ningún proxy
+  Tipo: test | Origen: cambio de RF-015 | RF: RF-015 | Depende de: T-020 | Archivos: 1
+  Hecho cuando: `pytest backend/apps/core/tests/test_real_ip.py` pasa con un caso en el que `TRUSTED_PROXY_IPS` vacía no confía en ninguna cabecera y registra la IP de la conexión directa, y otro en el que una IP parecida pero distinta de una entrada de la lista no se considera de confianza.
 
 ## RF sin tarea
 Ninguno. Todos los RF de la spec (RF-001 a RF-016) aparecen en al menos una tarea. RF-010 aparece como cubierto en su parte aceptada (el residual de perfil y deshabilitación queda en T-016, con emisión pendiente de otra feature).
@@ -140,3 +145,4 @@ Ninguno. Todos los RF de la spec (RF-001 a RF-016) aparecen en al menos una tare
 ## Historial
 - 2026-10-13 — Borrador inicial de tareas — RF: RF-001 a RF-016 — Estado: borrador
 - 2026-10-13 — Aprobación de las tareas (T-001 a T-021) por el usuario; sin implementar — RF: RF-001 a RF-016 — Estado: aprobado
+- 2026-10-13 — Tareas actualizadas tras el cambio de RF-013 y RF-015: T-024 reescrita (implementación y test, con Excepción de plantilla) y T-026 añadida — RF: RF-013, RF-015 — Estado: borrador
