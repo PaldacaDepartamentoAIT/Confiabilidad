@@ -59,7 +59,7 @@ intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al
   huellas nuevas siguen verificando con las funciones antiguas porque el formato es idéntico,
   RF-005); suite verde.
 
-- [ ] T-005 Tests del registro y de los procesos contra el punto único
+- [x] T-005 Tests del registro y de los procesos contra el punto único
   RF: RF-001, RF-005 | Depende de: T-004 | Archivos: 3
   Archivos: `accounts/tests/test_processes.py`, `accounts/tests/test_registration_service.py`,
   `accounts/tests/test_registration_command.py`.
@@ -67,6 +67,11 @@ intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al
   a `codes.code_fingerprint` ni a `codes.verify_code`; conservan el mismo número de aserciones
   sobre huellas; un mutante en el mensaje de `code_fingerprint` hace fallar al menos uno de ellos;
   suite verde.
+  Decisiones: un mutante que cambia el mensaje igual al calcular y al comprobar (por ejemplo,
+  truncar el código) sobrevive en estos tests de integración, porque la ida y vuelta sigue siendo
+  coherente; quitar el propósito del mensaje sí lo mata (`test_processes.py`), y los mutantes de
+  formato los matan los vectores fijos de `core/tests/test_fingerprints.py` (D-06). [Cierto]
+  Revertir: no aplica (es una limitación de los tests de integración, no un cambio de código).
 
 - [ ] T-006 Tests del cambio de contraseña contra el punto único
   RF: RF-001, RF-005 | Depende de: T-004 | Archivos: 2

@@ -8,6 +8,7 @@ from apps.accounts import codes, processes, registration
 from apps.accounts.models import PasswordResetRequest
 from apps.accounts.processes import VerifyResult
 from apps.accounts.tests.factories import make_user
+from apps.core import fingerprints
 
 pytestmark = pytest.mark.django_db
 
@@ -31,8 +32,8 @@ def test_issue_code_sets_a_fresh_public_id_and_code() -> None:
 
     stored = _stored(request)
     assert stored.public_id and not stored.public_id.startswith("-")
-    assert codes.verify_code(PURPOSE, stored.public_id, code, stored.code_hash)
-    assert not codes.verify_code(
+    assert fingerprints.code_matches(PURPOSE, stored.public_id, code, stored.code_hash)
+    assert not fingerprints.code_matches(
         codes.Purpose.REGISTRATION, stored.public_id, code, stored.code_hash
     )
     assert before + timedelta(minutes=15) <= stored.code_expires_at
@@ -51,8 +52,8 @@ def test_issue_code_replaces_everything_on_an_existing_process() -> None:
 
     stored = _stored(request)
     assert stored.public_id != old_public_id
-    assert codes.verify_code(PURPOSE, stored.public_id, new_code, stored.code_hash)
-    assert not codes.verify_code(PURPOSE, stored.public_id, old_code, stored.code_hash)
+    assert fingerprints.code_matches(PURPOSE, stored.public_id, new_code, stored.code_hash)
+    assert not fingerprints.code_matches(PURPOSE, stored.public_id, old_code, stored.code_hash)
     assert (stored.failed_attempts, stored.code_validated_at) == (0, None)
 
 
@@ -81,7 +82,9 @@ def test_wrong_code_adds_a_failed_attempt() -> None:
 
 def test_code_of_another_purpose_is_wrong() -> None:
     request, code = _issued()
-    request.code_hash = codes.code_fingerprint(codes.Purpose.REGISTRATION, request.public_id, code)
+    request.code_hash = fingerprints.code_fingerprint(
+        codes.Purpose.REGISTRATION, request.public_id, code
+    )
 
     assert processes.check_code(request, PURPOSE, code) == VerifyResult.WRONG_CODE
 
@@ -122,8 +125,8 @@ def test_renew_code_keeps_the_public_id_and_resets_attempts() -> None:
 
     stored = _stored(request)
     assert stored.public_id == public_id
-    assert codes.verify_code(PURPOSE, public_id, new_code, stored.code_hash)
-    assert not codes.verify_code(PURPOSE, public_id, old_code, stored.code_hash)
+    assert fingerprints.code_matches(PURPOSE, public_id, new_code, stored.code_hash)
+    assert not fingerprints.code_matches(PURPOSE, public_id, old_code, stored.code_hash)
     assert stored.failed_attempts == 0
     assert stored.code_expires_at > timezone.now()
 
