@@ -1,5 +1,5 @@
 # Spec: huellas-hmac-unificadas
-Estado: borrador
+Estado: aprobada
 Aprobación: ligera
 
 ## Objetivo (por qué)
@@ -52,12 +52,12 @@ actual como las calculadas con la anterior, y fuera de ese periodo solo las de l
 
 ### RF-008 Clave mal configurada
 Si la clave de un tipo de huella está vacía, si la clave anterior está definida pero solo contiene
-espacios, o si la clave anterior coincide con la actual, entonces el sistema deberá rechazar el
-cálculo y la comprobación con un error de configuración que nombre la clave afectada. Si la fecha
-de rotación no es una fecha válida con zona horaria (incluida una fecha bien escrita pero que no
-existe), entonces el sistema deberá rechazar la comprobación con un error de configuración que
-nombre ese ajuste. Si hay clave anterior pero no fecha de rotación, entonces el sistema deberá
-ignorar la clave anterior en la comprobación.
+espacios (haya o no fecha de rotación), o si la clave anterior coincide con la actual, entonces el
+sistema deberá rechazar el cálculo y la comprobación con un error de configuración que nombre la
+clave afectada. Si la fecha de rotación no es una fecha válida con zona horaria (incluida una
+fecha bien escrita pero que no existe), entonces el sistema deberá rechazar la comprobación con un
+error de configuración que nombre ese ajuste. Si hay una clave anterior válida pero no fecha de
+rotación, entonces el sistema deberá ignorar la clave anterior en la comprobación.
 
 ### RF-009 Huellas distintas entre tipos — OBSOLETO
 OBSOLETO (2026-10-09, C-03): «un mismo valor de entrada» no tiene una lectura única, porque cada
@@ -66,16 +66,18 @@ el riesgo queda en S-03. Texto original: ~~El sistema deberá producir huellas d
 mismo valor de entrada en tipos de huella distintos, aunque sus claves coincidan.~~
 
 ### RF-010 Detección de cálculos fuera del punto único
-Si algún código de la aplicación (incluidas las migraciones y los comandos de gestión, excluidos
-los tests), fuera del punto único de cálculo, usa una función de hash criptográfico, de HMAC o de
-firma con clave, ya sea de la biblioteca estándar (incluidos sus módulos internos), del framework
-(incluida su firma de datos) o de una biblioteca criptográfica instalada, entonces la suite de
-tests deberá fallar e indicar el archivo en el que ocurre, salvo los usos de esta lista cerrada de
-excepciones:
+Si algún archivo Python del backend (incluidos `manage.py`, las migraciones, los comandos de
+gestión y cualquier carpeta futura; excluidos los tests), fuera del punto único de cálculo, usa
+una función de hash criptográfico, de HMAC o de firma con clave, ya sea de la biblioteca estándar
+(incluidos sus módulos internos), del framework (incluida su firma de datos) o de una biblioteca
+criptográfica declarada como dependencia del proyecto, entonces la suite de tests deberá fallar e
+indicar el archivo en el que ocurre, salvo los usos de esta lista cerrada de excepciones:
 - la comprobación de contraseñas filtradas, que exige un hash sin clave.
 
 Añadir una excepción es un cambio de esta spec. Quedan fuera de esta detección los módulos que se
-cargan de forma dinámica a partir de su nombre escrito como texto (S-06).
+cargan de forma dinámica a partir de su nombre escrito como texto (S-06), las bibliotecas
+criptográficas que solo llegan como dependencia de otras (S-07) y las utilidades de contraseñas
+del framework, que no calculan huellas con clave.
 
 ## Supuestos
 - S-01 RNF-25 procede de un documento de requisitos externo al repositorio. La spec lo cita con
@@ -97,6 +99,10 @@ cargan de forma dinámica a partir de su nombre escrito como texto (S-06).
 - S-05 La clave de consentimientos sigue sin rotar (S-09 de `consentimientos`).
 - S-06 Nadie carga a propósito un módulo de hash por su nombre en texto para esquivar la detección
   de RF-010. *Riesgo:* ese uso pasaría la suite sin aviso; queda a cargo de la revisión de código.
+- S-07 Hoy el proyecto no declara ninguna biblioteca criptográfica; `cryptography` está instalada
+  solo como dependencia de otras y RF-010 no la vigila (C-07). *Riesgo:* una huella calculada con
+  ella pasaría la suite sin aviso; queda a cargo de la revisión de código, y declararla como
+  dependencia la pondría bajo vigilancia.
 
 ## Fuera de alcance
 - Los hashes que no son huellas con clave: la comprobación de contraseñas filtradas (excepción de
@@ -110,6 +116,9 @@ cargan de forma dinámica a partir de su nombre escrito como texto (S-06).
 - Cambiar el formato de cualquier huella existente o migrar huellas guardadas (RF-005).
 - Añadir la categoría `RNF` a las convenciones del proyecto (S-01).
 - Detectar módulos de hash cargados de forma dinámica a partir de su nombre en texto (RF-010, S-06).
+- Vigilar bibliotecas criptográficas no declaradas como dependencia del proyecto (RF-010, S-07).
+- Vigilar las utilidades de contraseñas del framework usadas desde el código de la aplicación
+  (RF-010, C-08).
 
 ## Criterios de finalización
 - Ninguna huella con clave de correos, códigos o sellos de cuenta se calcula fuera del punto
@@ -132,4 +141,8 @@ cargan de forma dinámica a partir de su nombre escrito como texto (S-06).
   la biblioteca estándar, firma de datos del framework y bibliotecas criptográficas instaladas) y
   acepta el límite de los módulos cargados de forma dinámica (S-06); RF-008 trata como error una
   clave anterior de solo espacios y precisa que una fecha de rotación inexistente es inválida —
-  RF: RF-008, RF-010 — Estado: pendiente de clarificar
+  RF: RF-008, RF-010 — Estado: clarificado
+- 2026-10-13 — Clarificación C-07…C-10: RF-010 vigila solo las bibliotecas criptográficas
+  declaradas (S-07), permite las utilidades de contraseñas del framework y cubre todo el backend;
+  RF-008 rechaza siempre una clave anterior de solo espacios — RF: RF-008, RF-010 — Estado:
+  clarificado
