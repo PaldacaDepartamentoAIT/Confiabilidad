@@ -215,7 +215,7 @@ intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al
   igual que cualquier módulo importado como alias; importarlo sin usarlo no calcula nada.
   [Cierto] Revertir: marcar también el import en `forbidden_uses`.
 
-- [ ] T-019 El guardián vigila las bibliotecas criptográficas declaradas como dependencia
+- [x] T-019 El guardián vigila las bibliotecas criptográficas declaradas como dependencia
   RF: RF-010 (D-08) | Depende de: T-018 | Archivos: 1
   Archivos: `core/tests/test_fingerprint_guard.py`.
   Hecho cuando: con un `requirements.txt` sintético sin bibliotecas criptográficas, un archivo que
@@ -224,6 +224,12 @@ intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al
   `pycryptodome` → `Crypto`; el test sobre el código real lee los `requirements*.txt` reales y
   pasa; un mutante que vacíe la tabla de bibliotecas conocidas hace fallar el caso declarado;
   suite verde.
+  Decisiones: (1) En lugar de afirmar que los requirements reales no declaran ninguna biblioteca
+  criptográfica (lo que haría fallar la suite solo por declararla, algo que D-08 no pide), un test
+  comprueba que se leen los reales siguiendo `-r` (`django`, `django-allauth`, `pytest`).
+  [Cierto] Revertir: borrar `test_real_requirements_are_read_including_included_files`. (2) Los
+  nombres se normalizan a minúsculas y `_` → `-`, y se ignoran los comentarios, también tras un
+  `-r`; un caso con comentario al final del `-r` mata el mutante que no los quitaba. [Cierto]
 
 - [ ] T-020 El resumen refleja las correcciones de la validación
   RF: — (criterio de finalización) | Depende de: T-015, T-016, T-017, T-019 | Archivos: 1

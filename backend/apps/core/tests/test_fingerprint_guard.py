@@ -1,4 +1,5 @@
 import ast
+import re
 from pathlib import Path
 
 import pytest
@@ -19,22 +20,60 @@ FORBIDDEN_MODULES = (
     "django.utils.crypto",
     "django.core.signing",
 )
+# Bibliotecas criptográficas conocidas y su módulo de import: solo se vigilan si el proyecto las
+# declara como dependencia (D-08, S-07). Ampliar la tabla es un cambio de la spec.
+KNOWN_CRYPTOGRAPHIC_LIBRARIES = {
+    "cryptography": "cryptography",
+    "pycryptodome": "Crypto",
+    "pycryptodomex": "Cryptodome",
+    "pynacl": "nacl",
+}
+_REQUIREMENT_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*")
 # Lista cerrada de excepciones de RF-010: añadir una es un cambio de la spec.
 ALLOWED_USES = {("apps/accounts/password_validation.py", "hashlib.sha1")}
 
 
-def _is_forbidden(module: str) -> bool:
-    return any(module == name or module.startswith(f"{name}.") for name in FORBIDDEN_MODULES)
+def _read_requirements(path: Path, declared: set[str], visited: set[Path]) -> None:
+    if path in visited or not path.is_file():
+        return
+    visited.add(path)
+    for raw_line in path.read_text().splitlines():
+        line = raw_line.split("#", 1)[0].strip()
+        if line.startswith(("-r ", "--requirement ")):
+            _read_requirements(path.parent / line.split(maxsplit=1)[1], declared, visited)
+        elif line and not line.startswith("-"):
+            match = _REQUIREMENT_NAME.match(line)
+            if match:
+                declared.add(match.group().lower().replace("_", "-"))
 
 
-def forbidden_uses(source: str) -> list[str]:
+def declared_requirements(root: Path) -> set[str]:
+    declared: set[str] = set()
+    visited: set[Path] = set()
+    for path in sorted(root.glob("requirements*.txt")):
+        _read_requirements(path, declared, visited)
+    return declared
+
+
+def _forbidden_modules(root: Path) -> tuple[str, ...]:
+    declared = declared_requirements(root)
+    return FORBIDDEN_MODULES + tuple(
+        module for name, module in KNOWN_CRYPTOGRAPHIC_LIBRARIES.items() if name in declared
+    )
+
+
+def _is_forbidden(module: str, forbidden: tuple[str, ...]) -> bool:
+    return any(module == name or module.startswith(f"{name}.") for name in forbidden)
+
+
+def forbidden_uses(source: str, forbidden: tuple[str, ...] = FORBIDDEN_MODULES) -> list[str]:
     tree = ast.parse(source)
     aliases: dict[str, str] = {}
     uses: set[str] = set()
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             for alias in node.names:
-                if not _is_forbidden(alias.name):
+                if not _is_forbidden(alias.name, forbidden):
                     continue
                 if alias.asname is None and "." in alias.name:
                     uses.add(alias.name)
@@ -43,9 +82,9 @@ def forbidden_uses(source: str) -> list[str]:
         elif isinstance(node, ast.ImportFrom) and node.module:
             for alias in node.names:
                 full_name = f"{node.module}.{alias.name}"
-                if _is_forbidden(node.module):
+                if _is_forbidden(node.module, forbidden):
                     uses.add(full_name)
-                elif _is_forbidden(full_name):
+                elif _is_forbidden(full_name, forbidden):
                     aliases[alias.asname or alias.name] = full_name
     attribute_bases: set[int] = set()
     for node in ast.walk(tree):
@@ -70,13 +109,14 @@ def _is_scanned(relative: Path) -> bool:
 
 def scan(root: Path) -> dict[str, list[str]]:
     found: dict[str, list[str]] = {}
+    forbidden = _forbidden_modules(root)
     for path in sorted(root.rglob("*.py")):
         relative = path.relative_to(root)
         if not _is_scanned(relative):
             continue
         uses = [
             use
-            for use in forbidden_uses(path.read_text())
+            for use in forbidden_uses(path.read_text(), forbidden)
             if (relative.as_posix(), use) not in ALLOWED_USES
         ]
         if uses:
@@ -192,3 +232,34 @@ def test_no_fingerprint_is_computed_outside_the_single_point() -> None:
     assert found == {}, "Hashes computed outside apps/core/fingerprints.py (RF-010): " + "; ".join(
         f"{path}: {', '.join(uses)}" for path, uses in sorted(found.items())
     )
+
+
+_CRYPTOGRAPHY_USE = "from cryptography.hazmat.primitives import hashes\nhashes.SHA256()\n"
+
+
+def test_scan_ignores_cryptographic_libraries_that_are_not_declared(tmp_path: Path) -> None:
+    _write(tmp_path, "requirements.txt", "Django>=5.0\n# cryptography is only transitive\n")
+    _write(tmp_path, "apps/x/c.py", _CRYPTOGRAPHY_USE)
+
+    assert scan(tmp_path) == {}
+
+
+def test_scan_reports_a_declared_cryptographic_library(tmp_path: Path) -> None:
+    _write(tmp_path, "requirements.txt", "Django>=5.0\ncryptography>=42\n")
+    _write(tmp_path, "apps/x/c.py", _CRYPTOGRAPHY_USE)
+
+    assert scan(tmp_path) == {"apps/x/c.py": ["cryptography.hazmat.primitives.hashes"]}
+
+
+def test_scan_follows_included_requirement_files(tmp_path: Path) -> None:
+    _write(tmp_path, "requirements-dev.txt", "-r requirements/base.txt  # shared\npytest>=8\n")
+    _write(tmp_path, "requirements/base.txt", "PyCryptodome==3.20  # hashes\n")
+    _write(tmp_path, "apps/x/d.py", "from Crypto.Hash import SHA256\n")
+
+    assert scan(tmp_path) == {"apps/x/d.py": ["Crypto.Hash.SHA256"]}
+
+
+def test_real_requirements_are_read_including_included_files() -> None:
+    declared = declared_requirements(BACKEND_DIR)
+
+    assert {"django", "django-allauth", "pytest"} <= declared
