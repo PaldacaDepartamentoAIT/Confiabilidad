@@ -68,9 +68,10 @@ empezar antes.
   Hecho cuando: `pytest backend/apps/accounts/tests/test_registration_signals.py` pasa: `start()`, `resend()`, `verify()` y `complete()` de `registration.py` emiten sus señales con el resultado correcto.
   Decisiones: la regresión de 33 logins en accounts vino de los receptores de login con `AUDIT_HASH_SECRET` vacía en tests; se corrigió con `backend/conftest.py`, un fixture autouse que fija una clave de prueba, no con cambios de producción. Tras la corrección, `apps/accounts` pasa entero (358). Confianza: [Cierto]. Cómo revertirla: quitar el fixture y definir la variable en el entorno de CI.
 
-- [ ] T-013 Emisión de las señales desde el restablecimiento de contraseña
+- [x] T-013 Emisión de las señales desde el restablecimiento de contraseña
   RF: RF-008, RF-010 (restablecimiento) | Depende de: T-011 | Archivos: 2
   Hecho cuando: `pytest backend/apps/accounts/tests/test_password_reset_signals.py` pasa: `start()`, `verify()` y `complete()` de `password_reset.py` emiten `password_reset_code_sent`, `password_reset_code_verified` y `password_reset_completed`.
+  Decisiones: no se emite `password_reset_code_sent` cuando `start()` devuelve `NoEligibleAccount`, porque no se envía ningún código; así evita registrar peticiones para correos inexistentes como si hubieran sido enviadas. Confianza: [Probable]. Cómo revertirla: emitir también en `NoEligibleAccount` con `success=False`, lo que cambiaría el conteo de filas de esos casos.
 
 - [ ] T-014 Receptores de registro
   RF: RF-007, RF-008 | Depende de: T-012, T-005 | Archivos: 2

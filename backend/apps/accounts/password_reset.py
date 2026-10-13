@@ -11,7 +11,7 @@ from django.db import IntegrityError, transaction
 from django.http import HttpRequest
 from django.utils import timezone
 
-from apps.accounts import codes, processes
+from apps.accounts import codes, processes, signals
 from apps.accounts.models import PasswordResetRequest, User
 from apps.accounts.processes import VerifyResult as VerifyResult
 from apps.core import fingerprints
@@ -31,6 +31,13 @@ class NoEligibleAccount:
     pass
 
 
+def _started(request: PasswordResetRequest, code: str) -> Started:
+    signals.password_reset_code_sent.send(
+        sender=PasswordResetRequest, email=request.user.email, success=True
+    )
+    return Started(public_id=request.public_id, code=code)
+
+
 def start(*, email: str) -> Started | NoEligibleAccount:
     with transaction.atomic():
         user = User.objects.select_for_update().filter(email__iexact=email.strip()).first()
@@ -43,14 +50,14 @@ def start(*, email: str) -> Started | NoEligibleAccount:
             try:
                 with transaction.atomic():
                     request.save()
-                return Started(public_id=request.public_id, code=code)
+                return _started(request, code)
             except IntegrityError:
                 request = _locked_request(user)
                 if request is None:
                     raise
         code = _issue(request)
         request.save(update_fields=_REPLACED_FIELDS)
-        return Started(public_id=request.public_id, code=code)
+        return _started(request, code)
 
 
 class AccountRefusal(StrEnum):
@@ -68,7 +75,13 @@ def verify(*, public_id: str, code: str) -> VerifyResult | AccountRefusal:
         refusal = _account_refusal(request)
         if refusal is not None:
             return refusal
-        return processes.check_code(request, _PURPOSE, code)
+        result = processes.check_code(request, _PURPOSE, code)
+        signals.password_reset_code_verified.send(
+            sender=PasswordResetRequest,
+            email=request.user.email,
+            success=result is VerifyResult.VERIFIED,
+        )
+        return result
 
 
 @dataclass(frozen=True)
@@ -95,7 +108,11 @@ def resend(*, public_id: str) -> Resent | ResendRefusal | AccountRefusal:
             return refusal
         if request.code_validated_at is not None:
             return ResendRefusal.ALREADY_VERIFIED
-        return Resent(public_id=public_id, code=processes.renew_code(request, _PURPOSE))
+        code = processes.renew_code(request, _PURPOSE)
+        signals.password_reset_code_sent.send(
+            sender=PasswordResetRequest, email=request.user.email, success=True
+        )
+        return Resent(public_id=public_id, code=code)
 
 
 @dataclass(frozen=True)
@@ -137,6 +154,7 @@ def complete(*, public_id: str, password: str) -> Completed | CompleteRefusal | 
         request.delete()
         email = user.email
         transaction.on_commit(lambda: _clear_failed_logins(email))
+        signals.password_reset_completed.send(sender=User, email=user.email, success=True)
         return Completed(user=user)
 
 
