@@ -1,5 +1,5 @@
 # Plan: auditoria-eventos-seguridad
-Estado: aprobado
+Estado: borrador
 
 ## Módulos
 ### M-01 Modelo SecurityEvent
@@ -26,8 +26,10 @@ allauth ya decidió.
 RF: RF-004, RF-005, RF-006
 
 ### M-05 Admin de solo lectura
-Responsabilidad: `SecurityEventAdmin` sin añadir, cambiar ni borrar; permiso `view_securityevent`
-para ver; filtros por fecha, tipo, IP y huella del correo.
+Responsabilidad: `SecurityEventAdmin` sin añadir, cambiar ni borrar. La vista se concede solo con el
+permiso `view_securityevent` (`has_view_permission` lo comprueba explícitamente). Filtros laterales por
+tipo, resultado y rango de fechas (filtro personalizado, D-11); búsqueda por dirección IP y búsqueda
+exacta por huella del correo (D-12).
 RF: RF-012, RF-013
 
 ### M-06 Comando de purga
@@ -36,9 +38,10 @@ Es la única vía de borrado (RF-012, RF-014).
 RF: RF-012, RF-014
 
 ### M-07 IP real del cliente (cambio en `apps/core`)
-Responsabilidad: `RealClientIPMiddleware` solo lee `X-Forwarded-For` cuando `REMOTE_ADDR` pertenece a
-la lista de proxies de confianza (ajuste nuevo `TRUSTED_PROXY_IPS`). En cualquier otro caso deja la
-IP de la conexión directa.
+Responsabilidad: `RealClientIPMiddleware` solo lee `X-Forwarded-For` cuando `REMOTE_ADDR` coincide
+exactamente con una IP de la lista de proxies de confianza (ajuste `TRUSTED_PROXY_IPS`, leído del
+entorno de despliegue). Con la lista vacía o sin configurar, no confía en ningún proxy y registra la IP
+de la conexión directa. La aplicación arranca en ese caso.
 RF: RF-015
 *Cambio aprobado: toca `apps/core`, fuera de la feature, con permiso explícito del usuario.*
 
@@ -100,9 +103,12 @@ compromete la otra y ambas se pueden correlacionar. Coste: una entrada en `HUMAN
 la clave y cifrarla con SOPS. Sin esa clave configurada, la aplicación debe fallar al arrancar (no usar
 `SECRET_KEY` como valor por defecto).
 
-### D-06 Permiso de consulta: permiso específico
-Elegida: `Meta.permissions = [("view_security_event", ...)]` y `has_view_permission` lo comprueba.
-Descartada: `is_staff`, que ya decidiste no usar (H-07).
+### D-06 Permiso de consulta: permiso específico por defecto
+Elegida: el permiso por defecto `view_securityevent` que Django crea para `SecurityEvent`, sin
+`Meta.permissions` ni migración; `has_view_permission` lo comprueba explícitamente (decisión del
+usuario al resolver T-017, y corrección de T-023 tras la validación).
+Descartada: un permiso propio `view_security_event` (dos permisos de vista distintos), y `is_staff`,
+que ya decidiste no usar (H-07). Motivo de la corrección: el texto anterior mezclaba ambos.
 
 ### D-07 Solo inserción: guardas en tres puntos
 Elegida: `save()` lanza error si la fila ya existe; `delete()` y el `QuerySet` de update y delete
@@ -111,15 +117,30 @@ no ofrece cambiar ni borrar.
 Descartada: un rol de base de datos sin UPDATE ni DELETE, que está fuera de alcance (spec).
 Motivo: las guardas viven en el código y se prueban con tests.
 
-### D-08 Confianza en el proxy (aprobada)
-Elegida: M-07 con lista `TRUSTED_PROXY_IPS` tomada del entorno.
-Descartada: seguir leyendo `X-Forwarded-For` sin comprobar la conexión. Motivo: hoy cualquier cliente
-puede falsificar la IP en conexiones directas.
+### D-08 Confianza en el proxy (aprobada, ampliada tras el cambio de RF-015)
+Elegida: M-07 con lista `TRUSTED_PROXY_IPS` tomada del entorno, con entradas que son IP exactas y
+valor por defecto vacío (no confía en ningún proxy, y la aplicación arranca).
+Descartada: seguir leyendo `X-Forwarded-For` sin comprobar la conexión, y entradas en formato CIDR
+(H-09 eligió IP exactas). Motivo: hoy cualquier cliente puede falsificar la IP en conexiones directas.
 
 ### D-09 Purga manual con comando
 Elegida: `manage.py purge_security_events` con `--dry-run`, que la persona operadora ejecuta.
 Descartada: tarea de Celery beat. Motivo: S-03 dice que no es automática; añadirla exigiría
 infraestructura nueva.
+
+### D-11 Filtro de rango de fechas en el admin
+Elegida: un filtro lateral personalizado (`SimpleListFilter` con plantilla propia) con dos campos
+`desde` y `hasta` en formato `AAAA-MM-DD`, que filtra por `created_at__date` (UTC). Requiere una
+plantilla nueva, `apps/audit/templates/admin/audit/filter_date_range.html`.
+Descartada: el filtro de fecha de Django (solo ofrece periodos predefinidos, como hoy o los últimos
+7 días, no un rango libre) y `date_hierarchy` (navega por año, mes y día, sin rango libre). Motivo: el
+RF-013 aprobado pide un rango de fechas.
+
+### D-12 Búsqueda exacta por huella del correo
+Elegida: en `search_fields`, la huella del correo con prefijo `=` (`=user_email_hash`), que exige
+coincidencia exacta, y la IP sin prefijo (coincidencia parcial).
+Descartada: la coincidencia parcial que usa hoy `search_fields` para la huella. Motivo: H-11 eligió
+coincidencia exacta, y una búsqueda parcial sobre una huella hexadecimal no aporta nada.
 
 ### D-10 Tipos de evento: un valor por tipo de RF-002
 Elegida: `TextChoices` con 11 valores. El rechazo de código es `CODE_VERIFIED` con `success=False`
@@ -135,7 +156,10 @@ Se sigue TDD (P-04). Cobertura ≥80% en código nuevo (P-05).
   filas (RF-005); señales de accounts emiten las filas esperadas (RF-007, RF-008).
 - **Integración de IP (`apps/core/tests/`)**: `X-Forwarded-For` falso desde conexión directa no cambia
   la IP (RF-015).
-- **Admin**: solo lectura, sin borrar ni añadir, y acceso denegado sin el permiso (RF-013).
+- **Admin**: solo lectura, sin borrar ni añadir, y acceso denegado sin el permiso (RF-013). Con
+  `change_securityevent` pero sin `view_securityevent`, el listado devuelve 403 (T-023). Filtros de
+  tipo, resultado y rango de fechas, y búsqueda exacta por huella y parcial por IP (T-024).
+- **Lista de proxies vacía**: `TRUSTED_PROXY_IPS` sin configurar no confía en ningún proxy (T-026).
 - **Comando**: `--dry-run` no borra; la purga elimina solo eventos de más de un año (RF-014).
 - **CLI (P-03)**: `pytest backend/apps/audit`; `python manage.py purge_security_events --dry-run`;
   una petición de login por HTTP con `curl` contra el servidor de desarrollo.
@@ -155,9 +179,9 @@ Se sigue TDD (P-04). Cobertura ≥80% en código nuevo (P-05).
 | RF-010 | M-03, M-08 | Integración (parcial, ver abajo) |
 | RF-011 | M-01, M-02, M-09 | Unitario |
 | RF-012 | M-01, M-05, M-06 | Unitario, admin |
-| RF-013 | M-05 | Admin |
+| RF-013 | M-05 (D-11, D-12) | Admin |
 | RF-014 | M-06 | Comando |
-| RF-015 | M-07 | Integración en `apps/core` |
+| RF-015 | M-07 (D-08) | Integración en `apps/core` |
 | RF-016 | M-01 | Unitario |
 
 ## RF sin cobertura
@@ -172,3 +196,4 @@ de forma explícita.
 ## Historial
 - 2026-10-13 — Borrador inicial del plan — RF: RF-001 a RF-016 — Estado: borrador
 - 2026-10-13 — Aprobación del plan con el residual de RF-010 aceptado por el usuario — RF: RF-001 a RF-016 — Estado: aprobado
+- 2026-10-13 — Actualización tras el cambio de RF-013 y RF-015 (M-05, M-07, D-06, D-08; nuevas D-11 y D-12) — RF: RF-013, RF-015 — Estado: borrador
