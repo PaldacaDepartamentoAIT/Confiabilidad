@@ -157,7 +157,7 @@ intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al
   un marco teórico (HMAC frente a cifrado, por qué una huella no se descifra, separación por clave
   y por formato, y qué es una lista cerrada de excepciones).
 
-- [ ] T-014 Los resúmenes de las features afectadas remiten al punto único
+- [x] T-014 Los resúmenes de las features afectadas remiten al punto único
   RF: — (criterio de finalización) | Depende de: T-013 | Archivos: 3
   Archivos: `specs/procesos-pendientes/resumen.md`, `specs/cambio-contrasena/resumen.md`,
   `specs/consentimientos/resumen.md`.

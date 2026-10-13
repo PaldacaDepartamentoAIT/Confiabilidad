@@ -1,5 +1,5 @@
 # Resumen — cambio-contrasena
-Estado: cerrada con riesgo residual aceptado (tras la 3.ª validación) · Última actualización: 2026-10-09
+Estado: cerrada con riesgo residual aceptado (tras la 3.ª validación) · Última actualización: 2026-10-13
 
 ## Qué se hizo
 Quien olvidó su contraseña puede fijar una nueva demostrando acceso al correo de su cuenta con un
@@ -200,6 +200,12 @@ solicitud guarda una huella de ambos (correo + hash de la contraseña) en lugar 
 verificar o completar la huella ya no coincide, algo cambió y la solicitud deja de servir. Así no se
 duplica el correo ni el hash de la contraseña en otra tabla; es la misma idea que usan los enlaces
 de restablecimiento de Django.
+
+Desde `huellas-hmac-unificadas`, la huella del código y la de la cuenta se calculan y se comprueban
+en `backend/apps/core/fingerprints.py` (`code_fingerprint` / `code_matches` y `account_stamp` /
+`account_stamp_matches`). El correo de la huella de la cuenta se normaliza ahora igual que en
+consentimientos (sin espacios a los lados, además de en minúsculas); como los correos de las
+cuentas ya se guardan así, ninguna huella guardada cambia.
 
 ### Por qué las sesiones dejan de valer sin borrarlas
 Django guarda en cada sesión una huella derivada del hash de la contraseña. En cada petición la
