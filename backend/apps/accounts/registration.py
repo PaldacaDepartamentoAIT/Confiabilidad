@@ -7,7 +7,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 
-from apps.accounts import codes, processes
+from apps.accounts import codes, processes, signals
 from apps.accounts.models import PendingRegistration, User
 from apps.accounts.processes import VerifyResult as VerifyResult
 
@@ -35,6 +35,9 @@ def start(*, email: str, name: str, birthdate: date, country: str) -> Started | 
                 pending.save()
         except ValidationError as error:
             if _is_account_conflict(error):
+                signals.pending_registration_requested.send(
+                    sender=PendingRegistration, email=email, success=False
+                )
                 return AccountExists()
             raise
         except IntegrityError:
@@ -46,13 +49,22 @@ def start(*, email: str, name: str, birthdate: date, country: str) -> Started | 
             if existing is None:
                 raise
             return _reissue(existing)
+    _announce_started(pending.email)
     return Started(public_id=pending.public_id, code=code)
 
 
 def _reissue(pending: PendingRegistration) -> Started:
     code = processes.issue_code(pending, _PURPOSE)
     pending.save(update_fields=processes.ISSUED_FIELDS)
+    _announce_started(pending.email)
     return Started(public_id=pending.public_id, code=code)
+
+
+def _announce_started(email: str) -> None:
+    signals.pending_registration_requested.send(
+        sender=PendingRegistration, email=email, success=True
+    )
+    signals.registration_code_sent.send(sender=PendingRegistration, email=email, success=True)
 
 
 def verify(*, public_id: str, code: str) -> VerifyResult:
@@ -64,7 +76,13 @@ def verify(*, public_id: str, code: str) -> VerifyResult:
             return VerifyResult.NOT_FOUND
         if pending.is_expired:
             return VerifyResult.EXPIRED
-        return processes.check_code(pending, _PURPOSE, code)
+        result = processes.check_code(pending, _PURPOSE, code)
+        signals.registration_code_verified.send(
+            sender=PendingRegistration,
+            email=pending.email,
+            success=result is VerifyResult.VERIFIED,
+        )
+        return result
 
 
 @dataclass(frozen=True)
@@ -91,6 +109,9 @@ def resend(*, public_id: str) -> Resent | ResendRefusal:
         if pending.code_validated_at is not None:
             return ResendRefusal.ALREADY_VERIFIED
         code = processes.renew_code(pending, _PURPOSE)
+        signals.registration_code_sent.send(
+            sender=PendingRegistration, email=pending.email, success=True
+        )
         return Resent(public_id=public_id, code=code)
 
 
@@ -131,6 +152,7 @@ def complete(*, public_id: str, password: str) -> Completed | CompleteRefusal:
         user.save()
         EmailAddress.objects.create(user=user, email=user.email, verified=True, primary=True)
         pending.delete()
+        signals.account_created.send(sender=User, email=user.email, success=True)
         return Completed(user=user)
 
 
