@@ -187,5 +187,45 @@ intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al
   `django_assert_num_queries(0)` cubre `account_stamp` y `account_stamp_matches`; la suite
   completa sigue en verde.
 
+- [ ] T-017 Una clave anterior de solo espacios es un error de configuración
+  RF: RF-008 | Depende de: T-015 | Archivos: 2
+  Archivos: `core/fingerprints.py`, `core/tests/test_fingerprints.py`.
+  Hecho cuando: con `REGISTRATION_CODE_SECRET_PREVIOUS="   "`, tanto `code_fingerprint` como
+  `code_matches` (y `account_stamp` / `account_stamp_matches`) lanzan `ImproperlyConfigured` que
+  nombra `REGISTRATION_CODE_SECRET_PREVIOUS`, con fecha de rotación válida y sin ella; una clave
+  anterior vacía (`""`) se sigue ignorando sin error; el test falla antes del arreglo; un mutante
+  que quite la comprobación de espacios hace fallar el test; suite verde.
+
+- [ ] T-018 El guardián recorre todo el backend y vigila los módulos internos y la firma del framework
+  RF: RF-010 | Depende de: — | Archivos: 1
+  Archivos: `core/tests/test_fingerprint_guard.py`.
+  Hecho cuando: con fuentes sintéticas en `tmp_path`, el escaneo marca e indica el archivo para
+  `import _hashlib`, `import _sha256`, `from django.core import signing` y
+  `django.core.signing.Signer`, en `manage.py` y en una carpeta nueva (`otra/x.py`); no marca
+  `from django.contrib.auth.hashers import make_password`, ni nada dentro de `tests/`, de un
+  `conftest.py`, de una carpeta oculta ni de `apps/core/fingerprints.py`; el test sobre el código
+  real recorre `backend/` completo y pasa; cada caso nuevo falla antes de ampliar la lista; un
+  mutante que vuelva a limitar el recorrido a `apps/` y `config/` hace fallar el caso de
+  `manage.py`; suite verde.
+
+- [ ] T-019 El guardián vigila las bibliotecas criptográficas declaradas como dependencia
+  RF: RF-010 (D-08) | Depende de: T-018 | Archivos: 1
+  Archivos: `core/tests/test_fingerprint_guard.py`.
+  Hecho cuando: con un `requirements.txt` sintético sin bibliotecas criptográficas, un archivo que
+  importa `cryptography` no se marca; con `cryptography>=42` declarado (también a través de un
+  `-r` a otro archivo de requisitos), el mismo archivo se marca con su uso; lo mismo para
+  `pycryptodome` → `Crypto`; el test sobre el código real lee los `requirements*.txt` reales y
+  pasa; un mutante que vacíe la tabla de bibliotecas conocidas hace fallar el caso declarado;
+  suite verde.
+
+- [ ] T-020 El resumen refleja las correcciones de la validación
+  RF: — (criterio de finalización) | Depende de: T-015, T-016, T-017, T-019 | Archivos: 1
+  Archivos: `specs/huellas-hmac-unificadas/resumen.md` (en la raíz del repositorio).
+  Hecho cuando: el resumen dice que el guardián recorre todo `backend/`, enumera los módulos
+  vigilados (incluidos los internos y `django.core.signing`), explica que solo vigila las
+  bibliotecas criptográficas declaradas (S-07) y que las utilidades de contraseñas están
+  permitidas, recoge en "Errores de configuración" la clave anterior de solo espacios y la fecha
+  inexistente, y su paso de prueba del guardián sigue siendo copiable y correcto.
+
 ## RF sin tarea
 Ninguno. RF-009 está obsoleto.
