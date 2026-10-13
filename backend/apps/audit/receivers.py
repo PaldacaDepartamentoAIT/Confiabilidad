@@ -1,6 +1,6 @@
 from typing import Any
 
-from allauth.account.signals import password_changed
+from allauth.account.signals import password_changed, password_reset, password_set, user_signed_up
 from django.contrib.auth.signals import user_logged_in, user_logged_out
 from django.dispatch import receiver
 
@@ -117,3 +117,36 @@ def on_profile_edited(sender: type, email: str, success: bool, **kwargs: Any) ->
 @receiver(account_disabled)
 def on_account_disabled(sender: type, email: str, success: bool, **kwargs: Any) -> None:
     _record_account_signal(EventType.ACCOUNT_DISABLE, email, success)
+
+
+@receiver(password_set)
+def on_password_set(sender: type, request: Any, user: Any, **kwargs: Any) -> None:
+    record_event(
+        EventType.PASSWORD_CHANGE,
+        success=True,
+        request=request,
+        email=user.email,
+        session_key=_session_key(request),
+    )
+
+
+@receiver(password_reset)
+def on_allauth_password_reset(sender: type, request: Any, user: Any, **kwargs: Any) -> None:
+    record_event(
+        EventType.PASSWORD_RESET,
+        success=True,
+        request=request,
+        email=user.email,
+        session_key=_session_key(request),
+    )
+
+
+@receiver(user_signed_up)
+def on_user_signed_up(sender: type, request: Any, user: Any, **kwargs: Any) -> None:
+    record_event(
+        EventType.ACCOUNT_REGISTRATION,
+        success=True,
+        request=request,
+        email=user.email,
+        session_key=_session_key(request),
+    )
