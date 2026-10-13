@@ -185,4 +185,4 @@ framework, que no calculan huellas con clave.
   RF: RF-007, RF-008, RF-010 — Estado: clarificado
 - 2026-10-13 — Clarificación C-11…C-14: cookies firmadas por cualquier acceso, fecha futura sin
   margen (S-09), funciones de hash en base de datos desde cualquier submódulo y acceso desde
-  cualquier paquete antepasado — RF: RF-008, RF-010 — Estado: clarificado
+  cualquier paquete antepasado — RF: RF-008, RF-010 — Estado: impacto analizado
