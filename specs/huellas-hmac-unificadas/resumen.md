@@ -23,23 +23,36 @@ alguien vuelve a calcular un hash fuera de ese módulo (RF-010).
   `User` ya se guardan normalizados, en la práctica no cambia ningún sello (S-02).
 - **Comprobación en tiempo constante para todos los tipos** (RF-006), también para la huella de
   consentimientos, aunque hoy nadie la compare.
-- **Errores de configuración** (RF-008): una clave vacía, o una clave anterior igual a la actual,
-  impide calcular y comprobar. Una fecha de rotación mal formada impide **cualquier**
-  comprobación, aunque la clave actual coincida. Esto es más estricto que antes, cuando el error
-  solo aparecía si la clave actual no coincidía; se decidió así durante T-001. Una clave anterior
-  sin fecha de rotación se ignora.
+- **Errores de configuración** (RF-008): una clave vacía o de solo espacios, una clave anterior
+  de solo espacios (haya o no fecha de rotación) o una clave anterior igual a la actual impiden
+  calcular y comprobar. Una fecha de rotación mal formada, sin zona horaria o que no existe (por
+  ejemplo, `2026-13-01T10:00:00+00:00`) impide **cualquier** comprobación, aunque la clave actual
+  coincida. Esto es más estricto que antes, cuando el error solo aparecía si la clave actual no
+  coincidía; se decidió así durante T-001. Una clave anterior vacía, o una válida sin fecha de
+  rotación, se ignora.
 - **Guardián** (`backend/apps/core/tests/test_fingerprint_guard.py`, RF-010): analiza con `ast`
-  todos los `.py` de `apps/` y `config/`, migraciones y comandos de gestión incluidos, y falla si
-  alguno, fuera de los tests y del punto único, importa o usa `hashlib`, `hmac` o
-  `django.utils.crypto`. La única excepción es `hashlib.sha1` en
-  `apps/accounts/password_validation.py` (contraseñas filtradas). El mensaje de fallo indica el
-  archivo y el uso.
+  todos los `.py` de `backend/` (`manage.py`, `apps/`, `config/`, migraciones, comandos de gestión
+  y cualquier carpeta nueva), salvo los tests, los `conftest.py`, las carpetas ocultas y el punto
+  único, y falla si alguno importa o usa:
+  - `hashlib`, `hmac` o sus módulos internos (`_hashlib`, `_sha1`, `_sha2`, `_sha256`, `_sha512`,
+    `_sha3`, `_md5`, `_blake2`);
+  - `django.utils.crypto` o `django.core.signing` (la firma de datos del framework);
+  - una biblioteca criptográfica **declarada** en `backend/requirements*.txt` (siguiendo los `-r`):
+    `cryptography`, `pycryptodome`, `pycryptodomex` o `pynacl`. Hoy no se declara ninguna (S-07).
+
+  Las utilidades de contraseñas del framework (`django.contrib.auth.hashers`) están permitidas. La
+  única excepción es `hashlib.sha1` en `apps/accounts/password_validation.py` (contraseñas
+  filtradas). El mensaje de fallo indica el archivo y el uso.
 - **Lo que desaparece:** las funciones de huella de `apps/accounts/codes.py` (que conserva
   `Purpose`, `generate_code` y `generate_public_id`), las lecturas de claves de
   `apps/accounts/conf.py`, y `apps/consents/hashing.py` y `apps/consents/conf.py`.
 
 ### Límites conocidos
-- El guardián no ve imports dinámicos (`importlib.import_module("hashlib")`, `__import__`).
+- El guardián no ve imports dinámicos (`importlib.import_module("hashlib")`, `__import__`) (S-06).
+- `cryptography` está instalada como dependencia de otras bibliotecas, pero no declarada, así que
+  el guardián no la vigila (S-07). Si se declara en `requirements.txt`, pasa a vigilarse sola.
+  Una biblioteca criptográfica que no esté en la tabla del guardián tampoco se vigila: añadirla es
+  un cambio de la spec.
 - Con RF-009 obsoleto, nada impide que un tipo de huella futuro, con la misma clave que otro,
   firme un texto con el mismo formato (S-03). Hoy no ocurre: cada tipo firma un formato distinto.
 - Rotar `DJANGO_SECRET_KEY` sin haber definido `CONSENT_EMAIL_HASH_SECRET` rompe las huellas de

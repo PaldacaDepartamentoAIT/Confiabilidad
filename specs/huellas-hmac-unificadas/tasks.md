@@ -231,7 +231,7 @@ intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al
   nombres se normalizan a minúsculas y `_` → `-`, y se ignoran los comentarios, también tras un
   `-r`; un caso con comentario al final del `-r` mata el mutante que no los quitaba. [Cierto]
 
-- [ ] T-020 El resumen refleja las correcciones de la validación
+- [x] T-020 El resumen refleja las correcciones de la validación
   RF: — (criterio de finalización) | Depende de: T-015, T-016, T-017, T-019 | Archivos: 1
   Archivos: `specs/huellas-hmac-unificadas/resumen.md` (en la raíz del repositorio).
   Hecho cuando: el resumen dice que el guardián recorre todo `backend/`, enumera los módulos
