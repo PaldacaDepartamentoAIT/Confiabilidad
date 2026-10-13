@@ -5,8 +5,9 @@ Bloqueo externo (S-02): T-004 necesita que `huellas-hmac-unificadas` esté en `m
 `apps/core/fingerprints.py` no existe todavía en `main`. Las tareas que no dependen de T-004 pueden
 empezar antes.
 
-- [ ] T-001 Andamiaje de la app `audit`
+- [x] T-001 Andamiaje de la app `audit`
   RF: ninguno (base de T-002) | Depende de: — | Archivos: 3
+  Excepción: el test de registro necesita `apps/audit/tests/test_app.py` y `apps/audit/tests/__init__.py` (como en el resto de apps); son el cuarto y quinto archivo, y no tienen lógica.
   Hecho cuando: `python manage.py check` pasa con `audit` en `INSTALLED_APPS`.
 
 - [ ] T-002 Modelo SecurityEvent con tipos, campos e índice
