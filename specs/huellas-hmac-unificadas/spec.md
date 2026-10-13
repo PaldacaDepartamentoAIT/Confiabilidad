@@ -145,4 +145,4 @@ del framework, que no calculan huellas con clave.
 - 2026-10-13 — Clarificación C-07…C-10: RF-010 vigila solo las bibliotecas criptográficas
   declaradas (S-07), permite las utilidades de contraseñas del framework y cubre todo el backend;
   RF-008 rechaza siempre una clave anterior de solo espacios — RF: RF-008, RF-010 — Estado:
-  clarificado
+  impacto analizado
