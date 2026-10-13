@@ -253,7 +253,7 @@ intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al
   se marcan con su archivo después; `import django` + `django.conf.settings` no se marca (D-09);
   la suite completa sigue en verde.
 
-- [ ] T-022 Corrección: el test de clave vacía comprueba que el error nombra exactamente `REGISTRATION_CODE_SECRET`
+- [x] T-022 Corrección: el test de clave vacía comprueba que el error nombra exactamente `REGISTRATION_CODE_SECRET`
   Tipo: corrección | Origen: validación de RF-008
   RF: RF-008 | Depende de: — | Archivos: 1
   Archivos: `core/tests/test_fingerprints.py`.

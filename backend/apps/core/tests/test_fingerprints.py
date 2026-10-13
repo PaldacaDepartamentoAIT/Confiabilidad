@@ -159,9 +159,9 @@ def test_new_code_fingerprints_use_the_current_key_during_transition() -> None:
 @pytest.mark.parametrize("key", ["", "   "])
 def test_empty_code_key_is_rejected_when_computing_and_matching(key: str) -> None:
     with override_settings(REGISTRATION_CODE_SECRET=key):
-        with pytest.raises(ImproperlyConfigured, match="REGISTRATION_CODE_SECRET"):
+        with pytest.raises(ImproperlyConfigured, match=r"\bREGISTRATION_CODE_SECRET\b"):
             fingerprints.code_fingerprint(REG, PUBLIC_ID, "123456")
-        with pytest.raises(ImproperlyConfigured, match="REGISTRATION_CODE_SECRET"):
+        with pytest.raises(ImproperlyConfigured, match=r"\bREGISTRATION_CODE_SECRET\b"):
             fingerprints.code_matches(REG, PUBLIC_ID, "123456", "0" * 64)
 
 
