@@ -48,10 +48,25 @@ class SecurityEventQuerySet(models.QuerySet["SecurityEvent"]):
             raise InsertOnlyError
         return super().delete()
 
-    def bulk_create(self, objs: Any, *args: Any, **kwargs: Any) -> Any:
-        if kwargs.get("update_conflicts"):
+    def bulk_create(
+        self,
+        objs: Any,
+        batch_size: int | None = None,
+        ignore_conflicts: bool = False,
+        update_conflicts: bool = False,
+        update_fields: Any = None,
+        unique_fields: Any = None,
+    ) -> Any:
+        if update_conflicts:
             raise InsertOnlyError
-        return super().bulk_create(objs, *args, **kwargs)
+        return super().bulk_create(
+            objs,
+            batch_size=batch_size,
+            ignore_conflicts=ignore_conflicts,
+            update_conflicts=update_conflicts,
+            update_fields=update_fields,
+            unique_fields=unique_fields,
+        )
 
     def purge_older_than(self, cutoff: datetime) -> int:
         with _purge_allowed():

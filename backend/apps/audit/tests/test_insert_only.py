@@ -68,3 +68,11 @@ def test_bulk_create_with_update_conflicts_cannot_overwrite_rows() -> None:
             [forged], update_conflicts=True, unique_fields=["pk"], update_fields=["success"]
         )
     assert SecurityEvent.objects.get(pk=event.pk).success is True
+
+
+def test_bulk_create_with_positional_update_conflicts_cannot_overwrite_rows() -> None:
+    event = _create()
+    forged = SecurityEvent(pk=event.pk, event_type=EventType.LOGIN, success=False)
+    with pytest.raises(InsertOnlyError):
+        SecurityEvent.objects.bulk_create([forged], None, False, True, ["success"], ["id"])
+    assert SecurityEvent.objects.get(pk=event.pk).success is True

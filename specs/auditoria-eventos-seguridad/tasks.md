@@ -172,6 +172,12 @@ empezar antes.
   Hecho cuando: `pytest backend/apps/audit/tests/test_allauth_signals.py` pasa: `password_set` crea `PASSWORD_CHANGE`, `password_reset` crea `PASSWORD_RESET` y `user_signed_up` crea `ACCOUNT_REGISTRATION`, cada uno con IP real.
   Decisiones: `password_set` se registra como cambio de contraseña, porque RF-002 no tiene un tipo propio. `user_signed_up` solo se emite si se usa el registro de allauth; hoy el registro es propio y emite sus señales, así que no hay duplicado. Confianza: [Probable]. Cómo revertirla: quitar los tres receptores; si se activa el registro de allauth junto al propio, habrá que deduplicar `ACCOUNT_REGISTRATION`.
 
+- [x] T-032 Corrección: rechazar `bulk_create` con `update_conflicts` también en llamada posicional
+  Tipo: corrección | Origen: validación de RF-012 | RF: RF-012 | Depende de: T-027 | Archivos: 2
+  Causa: la guarda de `bulk_create` inspeccionaba solo los argumentos con nombre; Django acepta `update_conflicts` en cualquier posición y el valor posicional cambiaba la fila (confirmado con una prueba).
+  Hecho cuando: `pytest backend/apps/audit/tests/test_insert_only.py` pasa con la llamada posicional lanzando `InsertOnlyError` y la fila intacta; la suite de auditoría sigue en verde.
+  Decisiones: la firma de `bulk_create` se declara explícitamente con los parámetros de Django, para que la guarda vea `update_conflicts` sin importar cómo se pase. Confianza: [Cierto]. Cómo revertirla: volver a `*args, **kwargs`, lo que reabre el hueco.
+
 ## RF sin tarea
 Ninguno. Todos los RF de la spec (RF-001 a RF-016) aparecen en al menos una tarea. RF-010 aparece como cubierto en su parte aceptada (el residual de perfil y deshabilitación queda en T-016, con emisión pendiente de otra feature).
 
@@ -183,3 +189,4 @@ Ninguno. Todos los RF de la spec (RF-001 a RF-016) aparecen en al menos una tare
 - 2026-10-13 — Nueva tarea T-029 tras el cambio de RF-004 (análisis de impacto aprobado) — RF: RF-004 — Estado: aprobado
 - 2026-10-13 — Corrección T-030 (test de RF-006 contra el adaptador por defecto) — RF: RF-006 — Estado: aprobado
 - 2026-10-13 — T-031 (receptores de M-03 que faltaban) — RF: RF-007, RF-010 — Estado: aprobado
+- 2026-10-13 — Corrección T-032 (bulk_create con update_conflicts posicional) tras la validación — RF: RF-012 — Estado: aprobado
