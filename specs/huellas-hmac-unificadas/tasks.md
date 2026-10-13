@@ -1,5 +1,5 @@
 # Tareas: huellas-hmac-unificadas
-Estado: borrador
+Estado: aprobado
 
 Rutas relativas a `backend/apps/` salvo que se indique. "Suite verde" = `cd backend && pytest -q`
 + `mypy .` + `ruff check .` + `black --check .` sin errores. En cada tarea que cambia código de
