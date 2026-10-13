@@ -4,6 +4,7 @@ from django.utils import timezone
 
 from apps.accounts import codes, conf
 from apps.accounts.models import CodeProcess
+from apps.core import fingerprints
 
 ISSUED_FIELDS = [
     "public_id",
@@ -45,7 +46,7 @@ def check_code(process: CodeProcess, purpose: codes.Purpose, code: str) -> Verif
         return VerifyResult.LOCKED
     if timezone.now() >= process.code_expires_at:
         return VerifyResult.CODE_EXPIRED
-    if not codes.verify_code(purpose, process.public_id, code, process.code_hash):
+    if not fingerprints.code_matches(purpose, process.public_id, code, process.code_hash):
         process.failed_attempts += 1
         process.save(update_fields=["failed_attempts"])
         return VerifyResult.WRONG_CODE
@@ -56,6 +57,6 @@ def check_code(process: CodeProcess, purpose: codes.Purpose, code: str) -> Verif
 
 def _set_new_code(process: CodeProcess, purpose: codes.Purpose) -> str:
     code = codes.generate_code()
-    process.code_hash = codes.code_fingerprint(purpose, process.public_id, code)
+    process.code_hash = fingerprints.code_fingerprint(purpose, process.public_id, code)
     process.code_expires_at = timezone.now() + conf.code_ttl()
     return code

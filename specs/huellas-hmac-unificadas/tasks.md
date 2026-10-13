@@ -50,7 +50,7 @@ intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al
   la clave sale de `CONSENT_EMAIL_HASH_SECRET`, con `SECRET_KEY` como valor por defecto (también
   leída del entorno en un subproceso, como hoy); sin consultas a la base de datos; suite verde.
 
-- [ ] T-004 Los procesos de registro y de cambio de contraseña usan el punto único
+- [x] T-004 Los procesos de registro y de cambio de contraseña usan el punto único
   RF: RF-001 | Depende de: T-002 | Archivos: 2
   Archivos: `accounts/processes.py`, `accounts/password_reset.py`.
   Hecho cuando: el comando siguiente no devuelve nada:
