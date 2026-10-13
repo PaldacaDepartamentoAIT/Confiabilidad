@@ -27,7 +27,7 @@ empezar antes.
   Decisiones: `AUDIT_HASH_SECRET` falla al arrancar mediante un check de Django (`manage.py check`, `runserver`) además de al usar la clave, decisión del usuario (D-05). El check necesita un archivo más: se declara aquí como Excepción al implementar T-004. Confianza: [Cierto] (decisión explícita).
   Decisiones: las huellas de auditoría separan finalidades con un prefijo (`audit_email:` y `audit_session:`) además de la clave propia, para que un correo y una clave de sesión con el mismo texto no produzcan la misma huella. Confianza: [Probable]. Cómo revertirla: quitar el prefijo y aceptar la colisión teórica entre correo y clave de sesión.
 
-- [ ] T-005 Registrador `record_event`
+- [x] T-005 Registrador `record_event`
   RF: RF-001, RF-011 | Depende de: T-002, T-004 | Archivos: 2
   Hecho cuando: `pytest backend/apps/audit/tests/test_recorder.py` pasa: la IP sale de `REMOTE_ADDR`, el correo se guarda solo como huella normalizada, no aparece ningún valor en claro y los metadatos se guardan.
 
