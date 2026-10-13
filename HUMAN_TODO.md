@@ -204,9 +204,9 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
   la IP del proxy en lugar de la del cliente. Obtén la IP del contenedor de entrada en la red de Docker
   y ponla en el entorno de despliegue (separada por comas si hay varias):
   ```bash
-  docker network inspect confiabilidad
+  docker network inspect confiabilidad_default
   ```
-  Deberías ver la IP del contenedor del proxy en la sección `Containers`, en el campo `IPv4Address`.
+  Deberías ver la IP del contenedor del proxy en la sección `Containers`, en el campo `IPv4Address`. Si la red tiene otro nombre, lista las redes con `docker network ls`.
 
 ## Hecho
 
