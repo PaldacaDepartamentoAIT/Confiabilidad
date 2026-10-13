@@ -9,6 +9,7 @@ SINGLE_POINT = "apps/core/fingerprints.py"
 FORBIDDEN_MODULES = (
     "hashlib",
     "hmac",
+    "crypt",
     "_hashlib",
     "_sha1",
     "_sha2",
@@ -18,6 +19,7 @@ FORBIDDEN_MODULES = (
     "_crypt",
     "django.utils.crypto",
     "django.core.signing",
+    "django.contrib.auth.tokens",
 )
 # Bibliotecas criptográficas conocidas y su módulo de import: solo se vigilan si el proyecto las
 # declara como dependencia (D-08, S-07). Ampliar la tabla es un cambio de la spec.
@@ -142,7 +144,9 @@ def _watched_prefix(resolved: str, forbidden: tuple[str, ...]) -> str:
 
 
 def _is_scanned(relative: Path) -> bool:
-    if "tests" in relative.parts or relative.name == "conftest.py":
+    if "tests" in relative.parts or relative.name in ("conftest.py", "tests.py"):
+        return False
+    if relative.name.startswith("test_"):
         return False
     if any(part.startswith(".") for part in relative.parts):
         return False
@@ -361,3 +365,28 @@ def test_only_internal_hash_modules_of_python_3_12_are_watched() -> None:
     internal = tuple(name for name in FORBIDDEN_MODULES if name.startswith("_"))
 
     assert internal == PYTHON_INTERNAL_HASH_MODULES
+
+
+@pytest.mark.parametrize(
+    ("source", "use"),
+    [
+        ("import crypt\ncrypt.crypt('x')\n", "crypt.crypt"),
+        (
+            "from django.contrib.auth.tokens import default_token_generator\n",
+            "django.contrib.auth.tokens.default_token_generator",
+        ),
+    ],
+)
+def test_scan_reports_crypt_and_the_framework_tokens(
+    tmp_path: Path, source: str, use: str
+) -> None:
+    _write(tmp_path, "apps/x/a.py", source)
+
+    assert scan(tmp_path) == {"apps/x/a.py": [use]}
+
+
+def test_scan_skips_files_that_pytest_collects_as_tests(tmp_path: Path) -> None:
+    _write(tmp_path, "apps/x/test_x.py", "import hmac\nhmac.new\n")
+    _write(tmp_path, "apps/x/tests.py", "import hmac\nhmac.new\n")
+
+    assert scan(tmp_path) == {}

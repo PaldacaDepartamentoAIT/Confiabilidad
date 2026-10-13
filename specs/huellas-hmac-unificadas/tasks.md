@@ -288,7 +288,7 @@ intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al
   (`code_fingerprint`, `account_stamp`) no falla; el test falla antes del arreglo; un mutante que
   quite la comprobación de fecha futura hace fallar el test; suite verde.
 
-- [ ] T-025 El guardián vigila `crypt`, los tokens del framework y reconoce los archivos de test por su nombre
+- [x] T-025 El guardián vigila `crypt`, los tokens del framework y reconoce los archivos de test por su nombre
   RF: RF-010 | Depende de: T-023 | Archivos: 1
   Archivos: `core/tests/test_fingerprint_guard.py`.
   Hecho cuando: los casos sintéticos `import crypt` + `crypt.crypt` y
