@@ -165,6 +165,19 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
   Decide cuándo hacerlo: es un cambio de CI independiente, en una rama `chore/` propia (por ejemplo,
   `chore/ci-makemigrations-check`) y no dentro de `feat/usuario-personalizado`.
 
+- [ ] **Definir `AUDIT_HASH_SECRET` en producción, cifrado con SOPS, y no rotarlo nunca** (feature
+  `auditoria-eventos-seguridad`). Calcula las huellas HMAC del correo y de la clave de sesión de los
+  eventos de seguridad. Usa una clave propia, distinta de `CONSENT_EMAIL_HASH_SECRET`, para que una
+  filtración de una tabla no permita correlacionar la otra. Si no se define, la aplicación no debe
+  arrancar. Genera la clave:
+  ```bash
+  python -c "import secrets; print(secrets.token_urlsafe(48))"
+  ```
+  Añade el valor que imprime como `AUDIT_HASH_SECRET` en el archivo cifrado:
+  ```bash
+  sops secrets/prod.enc.yaml
+  ```
+
 ## Hecho
 
 <!-- Mueve aquí las tareas completadas, con fecha. -->

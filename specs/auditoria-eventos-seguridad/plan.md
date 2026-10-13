@@ -1,5 +1,5 @@
 # Plan: auditoria-eventos-seguridad
-Estado: borrador
+Estado: aprobado
 
 ## Módulos
 ### M-01 Modelo SecurityEvent
@@ -171,3 +171,4 @@ de forma explícita.
 
 ## Historial
 - 2026-10-13 — Borrador inicial del plan — RF: RF-001 a RF-016 — Estado: borrador
+- 2026-10-13 — Aprobación del plan con el residual de RF-010 aceptado por el usuario — RF: RF-001 a RF-016 — Estado: aprobado
