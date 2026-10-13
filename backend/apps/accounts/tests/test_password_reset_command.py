@@ -16,6 +16,7 @@ from apps.accounts.management.commands.password_reset import (
 )
 from apps.accounts.models import PasswordResetRequest, PendingRegistration, User
 from apps.accounts.tests.factories import DEFAULT_PASSWORD, make_user
+from apps.core import fingerprints
 
 pytestmark = pytest.mark.django_db
 
@@ -56,7 +57,7 @@ def test_start_shows_the_public_id_and_the_code() -> None:
 
     stored = PasswordResetRequest.objects.get()
     assert shown["public_id"] == stored.public_id
-    assert codes.verify_code(
+    assert fingerprints.code_matches(
         codes.Purpose.PASSWORD_RESET, stored.public_id, shown["code"], stored.code_hash
     )
 
@@ -101,7 +102,7 @@ def test_resend_keeps_the_public_id_and_shows_a_new_code() -> None:
 
     stored = PasswordResetRequest.objects.get()
     assert resent["public_id"] == started["public_id"]
-    assert codes.verify_code(
+    assert fingerprints.code_matches(
         codes.Purpose.PASSWORD_RESET, stored.public_id, resent["code"], stored.code_hash
     )
 

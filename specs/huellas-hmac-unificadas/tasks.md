@@ -73,7 +73,7 @@ intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al
   formato los matan los vectores fijos de `core/tests/test_fingerprints.py` (D-06). [Cierto]
   Revertir: no aplica (es una limitación de los tests de integración, no un cambio de código).
 
-- [ ] T-006 Tests del cambio de contraseña contra el punto único
+- [x] T-006 Tests del cambio de contraseña contra el punto único
   RF: RF-001, RF-005 | Depende de: T-004 | Archivos: 2
   Archivos: `accounts/tests/test_password_reset_service.py`,
   `accounts/tests/test_password_reset_command.py`.
