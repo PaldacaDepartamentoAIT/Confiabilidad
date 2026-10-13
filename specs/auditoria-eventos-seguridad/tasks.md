@@ -110,9 +110,10 @@ empezar antes.
   Hecho cuando: `pytest backend/apps/core/tests/test_real_ip.py` pasa: un `X-Forwarded-For` desde una conexión no confiable se ignora; desde `TRUSTED_PROXY_IPS` se usa la última entrada. El test existente que asumía confianza en cualquier cabecera se actualiza. Este cambio afecta a toda la aplicación, no solo a la auditoría.
   Decisiones: `TRUSTED_PROXY_IPS` por defecto es lista vacía, es decir, no se confía en ningún proxy hasta configurarlo; en un despliegue detrás del proxy la IP registrada será la del proxy hasta que se fije su IP. Confianza: [Probable]. Cómo revertirla: restaurar la lectura de la última entrada sin comprobación (no recomendado).
 
-- [ ] T-021 Prueba de aceptación de la feature
+- [x] T-021 Prueba de aceptación de la feature
   RF: RF-001, RF-003, RF-004, RF-015 | Depende de: T-006, T-007, T-020 | Archivos: 1
   Hecho cuando: `pytest backend/apps/audit/tests/test_acceptance.py` pasa: un login correcto y otro fallido enviados por HTTP desde el proxy de confianza generan dos filas con la IP real del cliente.
+  Decisiones: el test de aceptación de la feature pasó al primer intento, porque cierra la cadena de piezas ya verificadas por separado. Se añadió el caso de cabecera falsa desde conexión directa para matar un mutante que sobrevivía. Confianza: [Cierto]. Cómo revertirla: no aplica.
 
 ## RF sin tarea
 Ninguno. Todos los RF de la spec (RF-001 a RF-016) aparecen en al menos una tarea. RF-010 aparece como cubierto en su parte aceptada (el residual de perfil y deshabilitación queda en T-016, con emisión pendiente de otra feature).
