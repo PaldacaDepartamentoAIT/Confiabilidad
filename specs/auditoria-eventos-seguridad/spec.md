@@ -1,5 +1,5 @@
 # Spec: auditoria-eventos-seguridad
-Estado: borrador
+Estado: aprobada
 Aprobación: ligera
 
 ## Objetivo (por qué)
@@ -19,7 +19,9 @@ Depende de las features `usuario-personalizado`, `auth-headless`, `cambio-contra
 ### RF-001 Contenido de cada evento
 Cuando ocurra un evento de la lista de RF-002, el sistema deberá guardar un registro con: tipo de
 evento, marca de tiempo en UTC, clave de sesión, dirección IP del cliente, user agent, huella del
-correo, resultado (éxito o fallo) y metadatos.
+correo, resultado (éxito o fallo) y metadatos. La clave de sesión puede estar vacía cuando no exista
+sesión. El evento no tiene referencia directa a la cuenta del usuario; la relación con la cuenta se
+hace solo mediante la huella del correo.
 
 ### RF-002 Tipos de evento
 El sistema deberá reconocer exactamente estos tipos de evento: registro de cuenta, solicitud de
@@ -40,7 +42,8 @@ tiene vínculo con una cuenta.
 
 ### RF-005 Bloqueo por límite de intentos
 Cuando la librería de autenticación rechace un intento porque se ha superado el límite, el sistema
-deberá registrar un evento de tipo bloqueo por cada intento rechazado.
+deberá registrar, por ese mismo intento, un evento de fallo de inicio de sesión (RF-004) y un evento
+de tipo bloqueo.
 
 ### RF-006 Fuente única de intentos fallidos
 El sistema no deberá contar intentos fallidos ni bloquear cuentas por su cuenta; la única fuente de
@@ -51,8 +54,10 @@ Cuando se cree una cuenta, o cuando se cree una solicitud de registro pendiente,
 registrar un evento del tipo correspondiente con su resultado.
 
 ### RF-008 Códigos
-Cuando se envíe un código, o cuando se valide o se rechace uno, el sistema deberá registrar un
-evento de envío o de validación con su resultado.
+Cuando se envíe un código, el sistema deberá registrar un evento de envío con su resultado. Cuando
+se valide un código, el sistema deberá registrar un evento de validación con resultado éxito. Cuando
+un código sea rechazado (incorrecto o caducado), el sistema deberá registrar un evento de validación
+con resultado fallo.
 
 ### RF-009 Cierre de sesión
 Cuando una persona cierre sesión, el sistema deberá registrar un evento de cierre de sesión.
@@ -64,25 +69,30 @@ una cuenta, el sistema deberá registrar un evento del tipo correspondiente con 
 ### RF-011 Sin datos sensibles
 El sistema nunca deberá guardar en un evento contraseñas, códigos, tokens ni el correo en claro.
 La clave de sesión se guarda como huella calculada con HMAC, nunca en claro. El correo se guarda
-como huella HMAC de su versión en minúsculas, sin espacios al principio ni al final.
+como huella HMAC de su versión en minúsculas, sin espacios al principio ni al final. Los metadatos
+son una lista abierta de datos no sensibles.
 
 ### RF-012 Solo inserción desde la aplicación
 El sistema no deberá permitir modificar ni borrar eventos desde el panel de administración, desde
-el ORM ni desde ninguna vía de la aplicación. Si se intenta, entonces el sistema deberá rechazar la
-operación.
+el ORM ni desde ninguna otra vía de la aplicación, salvo el comando de purga de RF-014, que es la
+única vía autorizada de borrado. Si se intenta modificar un evento, o borrarlo fuera de esa vía,
+entonces el sistema deberá rechazar la operación.
 
 ### RF-013 Consulta para investigación
-El sistema deberá mostrar los eventos a las personas con permiso de staff en el panel de
-administración, en modo solo lectura, con filtros por fecha, tipo, IP y huella del correo.
+El sistema deberá mostrar los eventos a las personas con el permiso específico de visualización de
+eventos de seguridad en el panel de administración, en modo solo lectura, con filtros por fecha,
+tipo, IP y huella del correo.
 
 ### RF-014 Conservación
 El sistema deberá conservar cada evento durante un año desde su marca de tiempo. Ningún evento de
-menos de un año deberá borrarse, y los de más de un año deberán poder eliminarse con un único
-comando.
+menos de un año deberá borrarse, y los de más de un año deberán poder eliminarse únicamente mediante
+ese comando.
 
 ### RF-015 IP real del cliente
-Cuando una petición llegue a través de intermediarios, el sistema deberá registrar la IP del
-cliente original y no la del intermediario.
+Solo el proxy de entrada definido en la configuración Docker del proyecto es un intermediario de
+confianza. Cuando una petición llegue a través de él, el sistema deberá registrar la IP del cliente
+original. Para cualquier otra conexión, el sistema deberá registrar la IP de la conexión directa,
+ignorando las cabeceras de intermediarios.
 
 ### RF-016 Marca de tiempo indexada
 El sistema deberá guardar la marca de tiempo de cada evento en UTC e indexarla.
@@ -94,7 +104,7 @@ El sistema deberá guardar la marca de tiempo de cada evento en UTC e indexarla.
   centralizada que está en curso. Esta feature no empieza su implementación hasta que esa utilidad
   esté mergeada.
 - S-03 La purga de los eventos de más de un año la ejecuta una persona operadora; no es automática.
-  *Suposición:* confirmar en la clarificación.
+  *Suposición:* no confirmada explícitamente en la clarificación.
 
 ## Fuera de alcance
 - Alertas, paneles de análisis o detección automática de ataques.
@@ -106,13 +116,21 @@ El sistema deberá guardar la marca de tiempo de cada evento en UTC e indexarla.
 ## Criterios de finalización
 - Un inicio de sesión exitoso y un inicio de sesión fallido generan dos filas, cada una con la IP
   real del cliente, con un test que lo demuestre.
+- Un intento rechazado por límite genera exactamente dos filas: un fallo de inicio de sesión y un
+  bloqueo.
+- Un código rechazado genera un evento de validación con resultado fallo.
 - Cada tipo de evento de RF-002 tiene al menos un test que comprueba su registro.
 - Ningún evento contiene contraseñas, códigos, tokens ni correos en claro; un test lo verifica con
   datos reales de cada flujo.
-- Editar o borrar un evento desde el ORM y desde el panel de administración falla, con un test.
-- El panel de administración muestra los eventos en solo lectura y con los filtros de RF-013.
+- Una petición con cabecera de intermediario falsa, llegada sin pasar por el proxy de confianza,
+  registra la IP de la conexión directa.
+- Editar o borrar un evento desde el ORM y desde el panel de administración falla, con un test; el
+  comando de purga es la única vía que borra, con un test.
+- El panel de administración muestra los eventos en solo lectura, solo al usuario con el permiso de
+  RF-013, y con los filtros de RF-013.
 - Un comando documentado purga los eventos de más de un año y no toca los recientes.
 - Toda la verificación se puede repetir desde la consola (pruebas o comando de gestión), sin frontend.
 
 ## Historial de cambios
 - 2026-10-13 — Creación de la spec a partir de la entrevista (modo ligero) — RF: RF-001 a RF-016 — Estado: pendiente de clarificar
+- 2026-10-13 — Clarificación con H-01 a H-08 (borrado solo por purga, dos filas por bloqueo, proxy de confianza fijo, clave de sesión opcional, metadatos abiertos, rechazo de código como validación fallida, permiso específico de consulta, sin vínculo directo a la cuenta) — RF: RF-001, RF-005, RF-008, RF-011 a RF-015 — Estado: clarificado
