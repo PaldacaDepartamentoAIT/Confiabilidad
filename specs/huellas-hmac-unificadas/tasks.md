@@ -1,0 +1,138 @@
+# Tareas: huellas-hmac-unificadas
+Estado: borrador
+
+Rutas relativas a `backend/apps/` salvo que se indique. "Suite verde" = `cd backend && pytest -q`
++ `mypy .` + `ruff check .` + `black --check .` sin errores. En cada tarea que cambia código de
+producción, antes de marcarla, se prueba al menos un mutante de ese código y debe hacer fallar
+sus tests, ejecutando el archivo de tests completo (nunca con `-k`). En las tareas que solo
+mueven tests (T-005, T-006 y T-009), el mutante se aplica a `core/fingerprints.py` y debe hacer
+fallar los tests movidos. Hasta T-007 y T-010 conviven el cálculo antiguo y el nuevo: es
+intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al final.
+
+- [ ] T-001 Huella del código con su clave y su política de rotación
+  RF: RF-001, RF-002, RF-003, RF-005, RF-006, RF-007, RF-008 | Depende de: — | Archivos: 2
+  Archivos: `core/fingerprints.py`, `core/tests/test_fingerprints.py`.
+  Hecho cuando: `code_fingerprint(purpose, public_id, code)` coincide con dos vectores literales
+  (registro y cambio de contraseña) generados con el `codes.code_fingerprint` actual antes de
+  escribir el módulo nuevo (D-06), y con el HMAC calculado a mano; `code_matches` compara con la
+  primitiva única en tiempo constante (espía: una llamada); acepta la clave anterior dentro del
+  periodo de transición y la rechaza fuera de él; da los errores de RF-008 (clave vacía o anterior
+  igual a la actual al calcular y comprobar; fecha de rotación inválida solo al comprobar; clave
+  anterior sin fecha, ignorada); no hace ninguna consulta a la base de datos
+  (`django_assert_num_queries(0)`); la clave por defecto sigue siendo `SECRET_KEY`; suite verde.
+
+- [ ] T-002 Sello de cuenta con la normalización única del correo
+  RF: RF-004, RF-005, RF-006, RF-007 | Depende de: T-001 | Archivos: 2
+  Archivos: `core/fingerprints.py`, `core/tests/test_fingerprints.py`.
+  Hecho cuando: `account_stamp(email, password_hash)` coincide con un vector literal generado con
+  el `codes.account_stamp` actual para un correo ya normalizado; `" Ana@X.com "` y `"ana@x.com"`
+  dan el mismo sello (RF-004); `account_stamp_matches` compara en tiempo constante y acepta la
+  clave anterior solo durante la transición; un sello nunca valida como huella de código; suite
+  verde.
+
+- [ ] T-003 Huella del correo de consentimientos con su clave sin rotación
+  RF: RF-002, RF-003, RF-004, RF-005, RF-006, RF-008 | Depende de: T-001 | Archivos: 2
+  Archivos: `core/fingerprints.py`, `core/tests/test_fingerprints.py`.
+  Hecho cuando: `consent_email_fingerprint(email)` coincide con un vector literal generado con el
+  `email_fingerprint` actual de `consents/hashing.py`; normaliza el correo igual que el sello;
+  `consent_email_matches` compara en tiempo constante y nunca usa una clave anterior, aunque
+  existan los ajustes de rotación de la clave de códigos; una clave vacía da el error de RF-008;
+  la clave sale de `CONSENT_EMAIL_HASH_SECRET`, con `SECRET_KEY` como valor por defecto (también
+  leída del entorno en un subproceso, como hoy); sin consultas a la base de datos; suite verde.
+
+- [ ] T-004 Los procesos de registro y de cambio de contraseña usan el punto único
+  RF: RF-001 | Depende de: T-002 | Archivos: 2
+  Archivos: `accounts/processes.py`, `accounts/password_reset.py`.
+  Hecho cuando: el comando siguiente no devuelve nada:
+  `grep -nE "codes\.(code_fingerprint|verify_code|account_stamp)" backend/apps/accounts/processes.py backend/apps/accounts/password_reset.py`;
+  las suites existentes de registro, cambio de contraseña y sus comandos pasan sin tocarlas (las
+  huellas nuevas siguen verificando con las funciones antiguas porque el formato es idéntico,
+  RF-005); suite verde.
+
+- [ ] T-005 Tests del registro y de los procesos contra el punto único
+  RF: RF-001, RF-005 | Depende de: T-004 | Archivos: 3
+  Archivos: `accounts/tests/test_processes.py`, `accounts/tests/test_registration_service.py`,
+  `accounts/tests/test_registration_command.py`.
+  Hecho cuando: esos tres archivos comprueban las huellas con `core.fingerprints` y ya no llaman
+  a `codes.code_fingerprint` ni a `codes.verify_code`; conservan el mismo número de aserciones
+  sobre huellas; un mutante en el mensaje de `code_fingerprint` hace fallar al menos uno de ellos;
+  suite verde.
+
+- [ ] T-006 Tests del cambio de contraseña contra el punto único
+  RF: RF-001, RF-005 | Depende de: T-004 | Archivos: 2
+  Archivos: `accounts/tests/test_password_reset_service.py`,
+  `accounts/tests/test_password_reset_command.py`.
+  Hecho cuando: esos dos archivos comprueban códigos y sellos con `core.fingerprints` y ya no
+  llaman a `codes.verify_code` ni a `codes.account_stamp_matches`; conservan el mismo número de
+  aserciones sobre huellas; un mutante en el mensaje de `account_stamp` hace fallar al menos uno
+  de ellos; suite verde.
+
+- [ ] T-007 `codes.py` deja de firmar y comparar
+  RF: RF-001 | Depende de: T-005, T-006 | Archivos: 2
+  Archivos: `accounts/codes.py`, `accounts/tests/test_codes.py`.
+  Hecho cuando: `codes.py` solo contiene `Purpose`, `generate_code` y `generate_public_id`, y no
+  importa `hmac` ni `hashlib`; `test_codes.py` conserva solo los tests de esas tres piezas (los de
+  huellas ya están en `core/tests/test_fingerprints.py` desde T-001 y T-002); suite verde.
+
+- [ ] T-008 `accounts/conf.py` deja de leer las claves de las huellas
+  RF: RF-002 | Depende de: T-007 | Archivos: 2
+  Archivos: `accounts/conf.py`, `accounts/tests/test_registration_conf.py`.
+  Hecho cuando: `conf.py` ya no tiene `code_secret`, `previous_code_secret`, `secret_rotated_at`
+  ni `secret_transition`; `test_registration_conf.py` deja de probarlos (sus casos están en
+  `core/tests/test_fingerprints.py` desde T-001) y sigue probando el resto de límites, incluido
+  `REGISTRATION_SECRET_TRANSITION_MINUTES` leído del entorno; suite verde.
+
+- [ ] T-009 Tests de consentimientos contra el punto único
+  RF: RF-001, RF-005 | Depende de: T-003 | Archivos: 3
+  Archivos: `consents/tests/test_acceptance_models.py`, `consents/tests/test_admin_support.py`,
+  `consents/tests/test_services.py`.
+  Hecho cuando: esos tres archivos calculan la huella esperada con
+  `core.fingerprints.consent_email_fingerprint` y ya no importan `consents.hashing`; un mutante que
+  quite `strip()` en la normalización hace fallar al menos uno de ellos; suite verde.
+
+- [ ] T-010 Los modelos de consentimientos usan el punto único y desaparece `hashing.py`
+  RF: RF-001, RF-005 | Depende de: T-009 | Archivos: 3
+  Archivos: `consents/models.py`, `consents/hashing.py` (se borra),
+  `consents/tests/test_hashing.py` (se borra).
+  Hecho cuando: `models.py` calcula `user_email_hash` con `consent_email_fingerprint`; los dos
+  archivos borrados no existen; los tests de consentimientos pasan sin cambios (RF-012 de
+  `consentimientos`, huella inmutable); suite verde.
+
+- [ ] T-011 Desaparece `consents/conf.py`
+  RF: RF-002 | Depende de: T-010 | Archivos: 2
+  Archivos: `consents/conf.py` (se borra), `consents/tests/test_conf.py` (se borra).
+  Hecho cuando: los dos archivos no existen, nada importa `apps.consents.conf`
+  (`grep -rn "consents.conf\|consents import conf" backend/apps` no devuelve nada) y sus casos
+  (valor por defecto, ajuste, clave vacía y lectura del entorno) están en
+  `core/tests/test_fingerprints.py` desde T-003; suite verde.
+
+- [ ] T-012 Test guardián de cálculos fuera del punto único
+  RF: RF-010, RF-001 | Depende de: T-007, T-011 | Archivos: 1
+  Archivos: `core/tests/test_fingerprint_guard.py`.
+  Hecho cuando: el test recorre `apps/` y `config/` sin las carpetas `tests/` ni
+  `core/fingerprints.py`, y pasa sobre el código real con la única excepción
+  (`accounts/password_validation.py`, `hashlib.sha1`); con fuentes sintéticas en `tmp_path`
+  falla e indica el archivo para `import hashlib`, `from hmac import new as x`,
+  `django.utils.crypto.salted_hmac`, una migración y `hashlib.sha256` en el archivo de la
+  excepción; un mutante que vacíe la lista de usos prohibidos hace fallar los casos sintéticos;
+  suite verde.
+
+- [ ] T-013 Resumen de la feature
+  RF: — (criterio de finalización) | Depende de: T-012 | Archivos: 1
+  Archivos: `specs/huellas-hmac-unificadas/resumen.md` (en la raíz del repositorio).
+  Hecho cuando: existe con qué se hizo, cómo probarlo con comandos copiables (`pytest` del módulo
+  y del guardián, y `manage.py registration` y `manage.py password_reset` de extremo a extremo) y
+  un marco teórico (HMAC frente a cifrado, por qué una huella no se descifra, separación por clave
+  y por formato, y qué es una lista cerrada de excepciones).
+
+- [ ] T-014 Los resúmenes de las features afectadas remiten al punto único
+  RF: — (criterio de finalización) | Depende de: T-013 | Archivos: 3
+  Archivos: `specs/procesos-pendientes/resumen.md`, `specs/cambio-contrasena/resumen.md`,
+  `specs/consentimientos/resumen.md`.
+  Hecho cuando: cada uno indica, junto a su explicación de la huella, que el cálculo vive en
+  `backend/apps/core/fingerprints.py` desde `huellas-hmac-unificadas`, y no queda en ellos ninguna
+  mención a `codes.code_fingerprint`, `codes.verify_code`, `codes.account_stamp` ni
+  `consents/hashing.py` como lugar del cálculo.
+
+## RF sin tarea
+Ninguno. RF-009 está obsoleto.
