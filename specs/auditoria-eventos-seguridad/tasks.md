@@ -10,7 +10,7 @@ empezar antes.
   Excepción: el test de registro necesita `apps/audit/tests/test_app.py` y `apps/audit/tests/__init__.py` (como en el resto de apps); son el cuarto y quinto archivo, y no tienen lógica.
   Hecho cuando: `python manage.py check` pasa con `audit` en `INSTALLED_APPS`.
 
-- [ ] T-002 Modelo SecurityEvent con tipos, campos e índice
+- [x] T-002 Modelo SecurityEvent con tipos, campos e índice
   RF: RF-001, RF-002, RF-016 | Depende de: T-001 | Archivos: 3
   Excepción: `makemigrations` genera `migrations/__init__.py` junto a `0001_initial.py`; no es lógica.
   Hecho cuando: `pytest backend/apps/audit/tests/test_model.py` pasa y `python manage.py makemigrations --check` no detecta cambios.
