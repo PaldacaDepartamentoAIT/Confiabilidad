@@ -21,7 +21,10 @@ def _code_key() -> str:
     key = str(settings.REGISTRATION_CODE_SECRET)
     if not key.strip():
         raise ImproperlyConfigured(_("REGISTRATION_CODE_SECRET must not be empty."))
-    if key == settings.REGISTRATION_CODE_SECRET_PREVIOUS:
+    previous = str(settings.REGISTRATION_CODE_SECRET_PREVIOUS)
+    if previous and not previous.strip():
+        raise ImproperlyConfigured(_("REGISTRATION_CODE_SECRET_PREVIOUS must not be blank."))
+    if key == previous:
         raise ImproperlyConfigured(
             _("REGISTRATION_CODE_SECRET_PREVIOUS must differ from REGISTRATION_CODE_SECRET.")
         )

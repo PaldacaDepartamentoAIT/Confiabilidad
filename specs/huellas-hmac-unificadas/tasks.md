@@ -191,7 +191,7 @@ intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al
   defecto y hacer una consulta dentro de `account_stamp_matches`, que falla por exceso de
   consultas). [Cierto] Revertir: borrar los tres tests nuevos.
 
-- [ ] T-017 Una clave anterior de solo espacios es un error de configuración
+- [x] T-017 Una clave anterior de solo espacios es un error de configuración
   RF: RF-008 | Depende de: T-015 | Archivos: 2
   Archivos: `core/fingerprints.py`, `core/tests/test_fingerprints.py`.
   Hecho cuando: con `REGISTRATION_CODE_SECRET_PREVIOUS="   "`, tanto `code_fingerprint` como

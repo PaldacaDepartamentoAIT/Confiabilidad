@@ -426,3 +426,25 @@ def test_account_stamps_never_query_the_database(
     with django_assert_num_queries(0), _rotation(30):
         fingerprints.account_stamp("ana@x.com", PASSWORD_HASH)
         fingerprints.account_stamp_matches(old_stamp, "ana@x.com", PASSWORD_HASH)
+
+
+@pytest.mark.parametrize("minutes_ago", [30, None])
+def test_blank_previous_code_key_is_rejected_when_computing_and_matching(
+    minutes_ago: int | None,
+) -> None:
+    with _rotation(minutes_ago, previous="   "):
+        for compute in (
+            lambda: fingerprints.code_fingerprint(REG, PUBLIC_ID, "123456"),
+            lambda: fingerprints.code_matches(REG, PUBLIC_ID, "123456", "0" * 64),
+            lambda: fingerprints.account_stamp("ana@x.com", PASSWORD_HASH),
+            lambda: fingerprints.account_stamp_matches("0" * 64, "ana@x.com", PASSWORD_HASH),
+        ):
+            with pytest.raises(ImproperlyConfigured, match="REGISTRATION_CODE_SECRET_PREVIOUS"):
+                compute()
+
+
+@pytest.mark.parametrize("minutes_ago", [30, None])
+def test_empty_previous_code_key_is_ignored_without_error(minutes_ago: int | None) -> None:
+    with _rotation(minutes_ago, previous=""):
+        fingerprint = fingerprints.code_fingerprint(REG, PUBLIC_ID, "123456")
+        assert fingerprints.code_matches(REG, PUBLIC_ID, "123456", fingerprint)
