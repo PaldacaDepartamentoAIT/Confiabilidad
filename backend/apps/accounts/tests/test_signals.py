@@ -1,6 +1,10 @@
+import pytest
 from django.dispatch import Signal
 
 from apps.accounts import signals
+
+# Desde T-014 hay un receptor que escribe en la base de datos.
+pytestmark = pytest.mark.django_db
 
 SIGNAL_NAMES = {
     "pending_registration_requested",
