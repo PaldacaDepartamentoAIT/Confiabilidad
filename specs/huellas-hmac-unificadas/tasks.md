@@ -102,13 +102,18 @@ intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al
   (2) Tarea de solo borrado: no introduce código en el que aplicar un mutante; la equivalencia la
   garantizan los tests de `core` (T-001) y la suite completa. [Cierto]
 
-- [ ] T-009 Tests de consentimientos contra el punto único
+- [x] T-009 Tests de consentimientos contra el punto único
   RF: RF-001, RF-005 | Depende de: T-003 | Archivos: 3
   Archivos: `consents/tests/test_acceptance_models.py`, `consents/tests/test_admin_support.py`,
   `consents/tests/test_services.py`.
   Hecho cuando: esos tres archivos calculan la huella esperada con
   `core.fingerprints.consent_email_fingerprint` y ya no importan `consents.hashing`; un mutante que
   quite `strip()` en la normalización hace fallar al menos uno de ellos; suite verde.
+  Decisiones: el mutante que quita `strip()` sobrevivía al principio, porque los correos de los
+  tests ya están normalizados; añadí en `test_acceptance_models.py` un test que comprueba que la
+  huella guardada coincide con la del correo escrito con espacios y mayúsculas (RF-004, y RF-012
+  de `consentimientos`). [Cierto] Revertir: borrar
+  `test_stored_hash_is_the_fingerprint_of_the_email_however_it_is_written`.
 
 - [ ] T-010 Los modelos de consentimientos usan el punto único y desaparece `hashing.py`
   RF: RF-001, RF-005 | Depende de: T-009 | Archivos: 3
