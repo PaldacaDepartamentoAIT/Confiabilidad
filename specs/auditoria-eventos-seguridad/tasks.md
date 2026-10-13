@@ -63,9 +63,10 @@ empezar antes.
   Decisiones: las señales no llevan la petición HTTP. La petición llega a los receptores por un middleware de `apps/audit` que guarda la petición actual en un `ContextVar`; las firmas de los servicios no cambian, decisión del usuario. El middleware se implementa en T-014 (antes de sus receptores) y se registra en `MIDDLEWARE` como Excepción de esa tarea. Confianza: [Cierto] (decisión explícita).
   Decisiones: las nueve señales se definen como `Signal()` sin argumentos declarados en Django; los argumentos `email` y `success` se documentan en el módulo. Confianza: [Probable]. Cómo revertirla: añadir `providing_args` no existe en Django 5; bastaría con un tipo que valide los argumentos al enviar.
 
-- [ ] T-012 Emisión de las señales desde el registro
+- [x] T-012 Emisión de las señales desde el registro
   RF: RF-007, RF-008 | Depende de: T-011 | Archivos: 2
   Hecho cuando: `pytest backend/apps/accounts/tests/test_registration_signals.py` pasa: `start()`, `resend()`, `verify()` y `complete()` de `registration.py` emiten sus señales con el resultado correcto.
+  Decisiones: la regresión de 33 logins en accounts vino de los receptores de login con `AUDIT_HASH_SECRET` vacía en tests; se corrigió con `backend/conftest.py`, un fixture autouse que fija una clave de prueba, no con cambios de producción. Tras la corrección, `apps/accounts` pasa entero (358). Confianza: [Cierto]. Cómo revertirla: quitar el fixture y definir la variable en el entorno de CI.
 
 - [ ] T-013 Emisión de las señales desde el restablecimiento de contraseña
   RF: RF-008, RF-010 (restablecimiento) | Depende de: T-011 | Archivos: 2
