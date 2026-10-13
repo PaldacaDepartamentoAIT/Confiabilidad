@@ -1,5 +1,5 @@
 # Spec: auditoria-eventos-seguridad
-Estado: aprobada
+Estado: borrador
 Aprobación: ligera
 
 ## Objetivo (por qué)
@@ -80,8 +80,8 @@ entonces el sistema deberá rechazar la operación.
 
 ### RF-013 Consulta para investigación
 El sistema deberá mostrar los eventos a las personas con el permiso específico de visualización de
-eventos de seguridad en el panel de administración, en modo solo lectura, con filtros por fecha,
-tipo, IP y huella del correo.
+eventos de seguridad en el panel de administración, en modo solo lectura, con filtros laterales por
+tipo, resultado y fecha, y búsqueda por dirección IP y por huella del correo.
 
 ### RF-014 Conservación
 El sistema deberá conservar cada evento durante un año desde su marca de tiempo. Ningún evento de
@@ -89,8 +89,8 @@ menos de un año deberá borrarse, y los de más de un año deberán poder elimi
 ese comando.
 
 ### RF-015 IP real del cliente
-Solo el proxy de entrada definido en la configuración Docker del proyecto es un intermediario de
-confianza. Cuando una petición llegue a través de él, el sistema deberá registrar la IP del cliente
+Solo las conexiones desde las direcciones de la lista de proxies de confianza, configurada en el
+entorno de despliegue, son intermediarios de confianza. Cuando una petición llegue a través de él, el sistema deberá registrar la IP del cliente
 original. Para cualquier otra conexión, el sistema deberá registrar la IP de la conexión directa,
 ignorando las cabeceras de intermediarios.
 
@@ -134,3 +134,4 @@ El sistema deberá guardar la marca de tiempo de cada evento en UTC e indexarla.
 ## Historial de cambios
 - 2026-10-13 — Creación de la spec a partir de la entrevista (modo ligero) — RF: RF-001 a RF-016 — Estado: pendiente de clarificar
 - 2026-10-13 — Clarificación con H-01 a H-08 (borrado solo por purga, dos filas por bloqueo, proxy de confianza fijo, clave de sesión opcional, metadatos abiertos, rechazo de código como validación fallida, permiso específico de consulta, sin vínculo directo a la cuenta) — RF: RF-001, RF-005, RF-008, RF-011 a RF-015 — Estado: clarificado
+- 2026-10-13 — Cambio de RF-013 (filtros laterales por tipo, resultado y fecha; búsqueda por IP y huella del correo) y de RF-015 (lista de proxies en el entorno de despliegue) tras la validación — RF: RF-013, RF-015 — Estado: pendiente de clarificar
