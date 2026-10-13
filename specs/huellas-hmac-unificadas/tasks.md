@@ -9,7 +9,7 @@ mueven tests (T-005, T-006 y T-009), el mutante se aplica a `core/fingerprints.p
 fallar los tests movidos. Hasta T-007 y T-010 conviven el cálculo antiguo y el nuevo: es
 intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al final.
 
-- [ ] T-001 Huella del código con su clave y su política de rotación
+- [x] T-001 Huella del código con su clave y su política de rotación
   RF: RF-001, RF-002, RF-003, RF-005, RF-006, RF-007, RF-008 | Depende de: — | Archivos: 2
   Archivos: `core/fingerprints.py`, `core/tests/test_fingerprints.py`.
   Hecho cuando: `code_fingerprint(purpose, public_id, code)` coincide con dos vectores literales
@@ -20,6 +20,16 @@ intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al
   igual a la actual al calcular y comprobar; fecha de rotación inválida solo al comprobar; clave
   anterior sin fecha, ignorada); no hace ninguna consulta a la base de datos
   (`django_assert_num_queries(0)`); la clave por defecto sigue siendo `SECRET_KEY`; suite verde.
+  Decisiones: (1) una fecha de rotación mal formada hace fallar toda comprobación, aunque la
+  clave actual coincida y aunque no haya clave anterior, como dice el texto de RF-008; antes solo
+  fallaba si la clave actual no coincidía. Lo decidió el usuario en una parada de esta tarea.
+  [Cierto] Revertir: leer la clave anterior solo tras fallar la actual en `_matches`. (2) La
+  política de cada clave es un `_KeyPolicy` con dos funciones (actual y anterior en transición),
+  para que la huella de consentimientos (T-003) use la misma comparación sin clave anterior.
+  [Probable] Revertir: dos funciones `_matches` separadas. (3) Un test comprueba que una clave
+  anterior vacía nunca se usa como clave, para matar un mutante que aceptaría huellas firmadas con
+  la clave vacía. [Cierto] Revertir: borrar
+  `test_empty_previous_code_key_is_never_used_as_a_key`.
 
 - [ ] T-002 Sello de cuenta con la normalización única del correo
   RF: RF-004, RF-005, RF-006, RF-007 | Depende de: T-001 | Archivos: 2
