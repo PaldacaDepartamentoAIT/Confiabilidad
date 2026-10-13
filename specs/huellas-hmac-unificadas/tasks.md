@@ -123,7 +123,7 @@ intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al
   archivos borrados no existen; los tests de consentimientos pasan sin cambios (RF-012 de
   `consentimientos`, huella inmutable); suite verde.
 
-- [ ] T-011 Desaparece `consents/conf.py`
+- [x] T-011 Desaparece `consents/conf.py`
   RF: RF-002 | Depende de: T-010 | Archivos: 2
   Archivos: `consents/conf.py` (se borra), `consents/tests/test_conf.py` (se borra).
   Hecho cuando: los dos archivos no existen, nada importa `apps.consents.conf`
