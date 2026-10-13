@@ -1,7 +1,11 @@
 import hashlib
 import hmac
+import os
 import re
+import subprocess
+import sys
 from datetime import timedelta
+from pathlib import Path
 
 import pytest
 from django.conf import settings
@@ -262,3 +266,118 @@ def test_account_stamp_is_not_a_code_fingerprint() -> None:
     stamp = fingerprints.account_stamp("ana@x.com", "123456")
 
     assert not fingerprints.code_matches(RESET, "account", "ana@x.com:123456", stamp)
+
+
+CONSENT_VECTOR = "b0b244fb77dfac662c5db03baa83cb0190d37c4ca9e63c549a6755b31dccdedf"
+
+
+@override_settings(CONSENT_EMAIL_HASH_SECRET="vector-consent-key")
+def test_consent_email_fingerprint_matches_the_stored_vector() -> None:
+    assert fingerprints.consent_email_fingerprint("ana@x.com") == CONSENT_VECTOR
+
+
+@override_settings(CONSENT_EMAIL_HASH_SECRET="secret")
+def test_consent_email_fingerprint_is_hmac_of_the_normalized_email() -> None:
+    expected = hmac.new(b"secret", b"ana@x.com", hashlib.sha256).hexdigest()
+
+    fingerprint = fingerprints.consent_email_fingerprint(" Ana@X.com ")
+
+    assert fingerprint == expected
+    assert re.fullmatch(r"[0-9a-f]{64}", fingerprint)
+
+
+def test_consent_email_fingerprint_changes_with_email_and_key() -> None:
+    with override_settings(CONSENT_EMAIL_HASH_SECRET="one"):
+        base = fingerprints.consent_email_fingerprint("ana@x.com")
+        other_email = fingerprints.consent_email_fingerprint("ana@y.com")
+    with override_settings(CONSENT_EMAIL_HASH_SECRET="two"):
+        other_key = fingerprints.consent_email_fingerprint("ana@x.com")
+
+    assert len({base, other_email, other_key}) == 3
+
+
+def test_consent_email_matches_only_the_same_normalized_email() -> None:
+    fingerprint = fingerprints.consent_email_fingerprint("ana@x.com")
+
+    assert fingerprints.consent_email_matches(" ANA@x.com ", fingerprint)
+    assert not fingerprints.consent_email_matches("ana@y.com", fingerprint)
+
+
+def test_consent_email_matches_compares_in_constant_time(monkeypatch: pytest.MonkeyPatch) -> None:
+    fingerprint = fingerprints.consent_email_fingerprint("ana@x.com")
+    calls = _compare_spy(monkeypatch)
+
+    assert fingerprints.consent_email_matches("ana@x.com", fingerprint)
+    assert calls == [(fingerprint, fingerprint)]
+
+
+def test_consent_email_never_uses_a_previous_key() -> None:
+    with override_settings(CONSENT_EMAIL_HASH_SECRET="old-secret"):
+        fingerprint = fingerprints.consent_email_fingerprint("ana@x.com")
+    with _rotation(30, CONSENT_EMAIL_HASH_SECRET="new-consent-secret"):
+        assert not fingerprints.consent_email_matches("ana@x.com", fingerprint)
+
+
+def test_consent_email_ignores_the_code_key_configuration() -> None:
+    with override_settings(
+        REGISTRATION_CODE_SECRET="", REGISTRATION_CODE_SECRET_ROTATED_AT="not-a-date"
+    ):
+        fingerprint = fingerprints.consent_email_fingerprint("ana@x.com")
+        assert fingerprints.consent_email_matches("ana@x.com", fingerprint)
+
+
+@pytest.mark.parametrize("key", ["", "   "])
+def test_empty_consent_key_is_rejected_when_computing_and_matching(key: str) -> None:
+    with override_settings(CONSENT_EMAIL_HASH_SECRET=key):
+        with pytest.raises(ImproperlyConfigured, match="CONSENT_EMAIL_HASH_SECRET"):
+            fingerprints.consent_email_fingerprint("ana@x.com")
+        with pytest.raises(ImproperlyConfigured, match="CONSENT_EMAIL_HASH_SECRET"):
+            fingerprints.consent_email_matches("ana@x.com", "0" * 64)
+
+
+def test_consent_key_defaults_to_secret_key() -> None:
+    assert settings.CONSENT_EMAIL_HASH_SECRET == settings.SECRET_KEY
+    expected = hmac.new(settings.SECRET_KEY.encode(), b"ana@x.com", hashlib.sha256).hexdigest()
+
+    assert fingerprints.consent_email_fingerprint("ana@x.com") == expected
+
+
+BACKEND_DIR = Path(__file__).resolve().parents[3]
+_PRINT_CONSENT_KEY = (
+    "import django\n"
+    "django.setup()\n"
+    "from django.conf import settings\n"
+    "print(settings.CONSENT_EMAIL_HASH_SECRET)\n"
+)
+
+
+def _consent_key_from_environment(**variables: str) -> str:
+    env = {key: value for key, value in os.environ.items() if key != "CONSENT_EMAIL_HASH_SECRET"}
+    env.update(variables, DJANGO_SETTINGS_MODULE="config.settings")
+    result = subprocess.run(
+        [sys.executable, "-c", _PRINT_CONSENT_KEY],
+        cwd=BACKEND_DIR,
+        env=env,
+        capture_output=True,
+        text=True,
+        check=True,
+        timeout=60,
+    )
+    return result.stdout.splitlines()[-1]
+
+
+def test_consent_key_is_read_from_environment_variable() -> None:
+    assert _consent_key_from_environment(CONSENT_EMAIL_HASH_SECRET="from-env") == "from-env"
+
+
+def test_consent_key_without_environment_variable_is_secret_key() -> None:
+    assert _consent_key_from_environment(DJANGO_SECRET_KEY="the-key") == "the-key"
+
+
+@pytest.mark.django_db
+def test_consent_email_fingerprints_never_query_the_database(
+    django_assert_num_queries: DjangoAssertNumQueries,
+) -> None:
+    with django_assert_num_queries(0):
+        fingerprint = fingerprints.consent_email_fingerprint("ana@x.com")
+        fingerprints.consent_email_matches("ana@x.com", fingerprint)

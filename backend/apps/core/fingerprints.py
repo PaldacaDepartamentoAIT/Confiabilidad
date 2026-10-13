@@ -49,6 +49,17 @@ def _previous_code_key_in_transition() -> str | None:
 _CODE_KEYS = _KeyPolicy(_code_key, _previous_code_key_in_transition)
 
 
+def _consent_key() -> str:
+    key = str(settings.CONSENT_EMAIL_HASH_SECRET)
+    if not key.strip():
+        raise ImproperlyConfigured(_("CONSENT_EMAIL_HASH_SECRET must not be empty."))
+    return key
+
+
+# Las huellas de consentimiento son pruebas permanentes: su clave nunca rota (S-09).
+_CONSENT_KEYS = _KeyPolicy(_consent_key, lambda: None)
+
+
 def _sign(key: str, message: str) -> str:
     return hmac.new(key.encode(), message.encode(), hashlib.sha256).hexdigest()
 
@@ -87,3 +98,11 @@ def account_stamp(email: str, password_hash: str) -> str:
 
 def account_stamp_matches(stamp: str, email: str, password_hash: str) -> bool:
     return _matches(_CODE_KEYS, _account_message(email, password_hash), stamp)
+
+
+def consent_email_fingerprint(email: str) -> str:
+    return _sign(_CONSENT_KEYS.current(), _normalize_email(email))
+
+
+def consent_email_matches(email: str, fingerprint: str) -> bool:
+    return _matches(_CONSENT_KEYS, _normalize_email(email), fingerprint)

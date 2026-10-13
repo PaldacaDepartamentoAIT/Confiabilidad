@@ -40,7 +40,7 @@ intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al
   clave anterior solo durante la transición; un sello nunca valida como huella de código; suite
   verde.
 
-- [ ] T-003 Huella del correo de consentimientos con su clave sin rotación
+- [x] T-003 Huella del correo de consentimientos con su clave sin rotación
   RF: RF-002, RF-003, RF-004, RF-005, RF-006, RF-008 | Depende de: T-001 | Archivos: 2
   Archivos: `core/fingerprints.py`, `core/tests/test_fingerprints.py`.
   Hecho cuando: `consent_email_fingerprint(email)` coincide con un vector literal generado con el
