@@ -8,6 +8,7 @@ from apps.audit.models import EventType
 from apps.audit.recorder import record_event
 
 LOGIN_LIMIT_CODE = "too_many_login_attempts"
+INACTIVE_ACCOUNT_CODE = "inactive_account"
 
 
 class AuditAccountAdapter(DefaultAccountAdapter):  # type: ignore[misc]  # allauth no publica tipos
@@ -45,3 +46,14 @@ class AuditAccountAdapter(DefaultAccountAdapter):  # type: ignore[misc]  # allau
             email=email,
             metadata={"reason": LOGIN_LIMIT_CODE},
         )
+
+    def pre_login(self, request: HttpRequest, user: Any, **kwargs: Any) -> Any:
+        if not user.is_active:
+            record_event(
+                EventType.LOGIN,
+                success=False,
+                request=request,
+                email=user.email,
+                metadata={"reason": INACTIVE_ACCOUNT_CODE},
+            )
+        return super().pre_login(request, user, **kwargs)

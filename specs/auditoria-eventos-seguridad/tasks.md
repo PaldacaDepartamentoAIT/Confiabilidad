@@ -154,6 +154,12 @@ empezar antes.
   Hecho cuando: `pytest backend/apps/audit/tests/test_purge.py` pasa con casos de frontera en un año bisiesto (1 de marzo de 2028 y 29 de febrero de 2028) y la suite de auditoría sigue en verde.
   Decisiones: la retención usa la biblioteca estándar, sin dependencias nuevas; si la fecha de referencia es 29 de febrero, el corte cae el 28 de febrero del año anterior. Confianza: [Cierto]. Cómo revertirla: volver a `timedelta(days=365)`, lo que la spec actual no acepta.
 
+- [x] T-029 Cuenta inactiva con credenciales válidas registrada como fallo
+  Tipo: implementación y test | Origen: cambio de RF-004 (análisis de impacto aprobado) | RF: RF-004 | Depende de: T-007 | Archivos: 3
+  Causa: allauth rechaza la cuenta inactiva en `pre_login`, después de comprobar la contraseña; `authentication_failed` no se llama y no queda fila.
+  Hecho cuando: `pytest backend/apps/audit/tests/test_login_failed.py backend/apps/audit/tests/test_secrets_by_flow.py` pasa: una cuenta inactiva con contraseña correcta genera una fila `LOGIN` con `success=False` y `reason=inactive_account`, tanto por el flujo de navegador como por el headless.
+  Decisiones: el motivo `inactive_account` se añade a la lista cerrada de D-14; el punto de extensión es `pre_login` (D-13). Confianza: [Cierto]. Cómo revertirla: quitar el override de `pre_login`, lo que devolvería el hueco de RF-004.
+
 ## RF sin tarea
 Ninguno. Todos los RF de la spec (RF-001 a RF-016) aparecen en al menos una tarea. RF-010 aparece como cubierto en su parte aceptada (el residual de perfil y deshabilitación queda en T-016, con emisión pendiente de otra feature).
 
@@ -162,3 +168,4 @@ Ninguno. Todos los RF de la spec (RF-001 a RF-016) aparecen en al menos una tare
 - 2026-10-13 — Aprobación de las tareas (T-001 a T-021) por el usuario; sin implementar — RF: RF-001 a RF-016 — Estado: aprobado
 - 2026-10-13 — Tareas actualizadas tras el cambio de RF-013 y RF-015: T-024 reescrita (implementación y test, con Excepción de plantilla) y T-026 añadida — RF: RF-013, RF-015 — Estado: aprobado
 - 2026-10-13 — Correcciones de la segunda validación: T-027 (RF-012, inserción sin modificación) y T-028 (RF-014, año de calendario) — RF: RF-012, RF-014 — Estado: impacto analizado
+- 2026-10-13 — Nueva tarea T-029 tras el cambio de RF-004 (análisis de impacto aprobado) — RF: RF-004 — Estado: aprobado

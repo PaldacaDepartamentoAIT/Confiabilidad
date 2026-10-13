@@ -106,3 +106,11 @@ def test_password_change_stores_no_secret(user: User) -> None:
 @pytest.fixture
 def audit_key(settings: object) -> None:
     settings.AUDIT_HASH_SECRET = "test-audit-key"  # type: ignore[attr-defined]
+
+
+def test_inactive_account_login_stores_no_secret() -> None:
+    User.objects.create_user(
+        EMAIL, PASSWORD, name="Ana", birthdate=date(1990, 1, 1), country="ES", is_active=False
+    )
+    _login(PASSWORD)
+    _assert_no_secret([PASSWORD])

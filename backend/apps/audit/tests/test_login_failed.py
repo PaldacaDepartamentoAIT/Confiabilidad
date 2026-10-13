@@ -72,3 +72,31 @@ def test_password_is_never_stored(audit_key: None, user: User) -> None:
     event = SecurityEvent.objects.get(event_type=EventType.LOGIN, success=False)
     stored = f"{event.user_agent} {event.user_email_hash} {event.session_key} {event.metadata}"
     assert "contraseña-incorrecta" not in stored
+
+
+def test_inactive_account_with_valid_password_records_failed_login(
+    audit_key: None,
+) -> None:
+    inactive = User.objects.create_user(
+        "ina@x.com", PASSWORD, name="Ina", birthdate=date(1990, 1, 1), country="ES", is_active=False
+    )
+    assert inactive.is_active is False
+    _post(BROWSER_LOGIN, "ina@x.com", PASSWORD)
+
+    event = SecurityEvent.objects.get(event_type=EventType.LOGIN, success=False)
+    assert event.metadata == {"reason": "inactive_account"}
+    assert event.user_email_hash == audit_email_fingerprint("ina@x.com")
+
+
+def test_inactive_account_is_recorded_on_headless_flow_too(audit_key: None) -> None:
+    User.objects.create_user(
+        "ina@x.com", PASSWORD, name="Ina", birthdate=date(1990, 1, 1), country="ES", is_active=False
+    )
+    _post(APP_LOGIN, "ina@x.com", PASSWORD)
+
+    assert (
+        SecurityEvent.objects.filter(
+            event_type=EventType.LOGIN, success=False, metadata={"reason": "inactive_account"}
+        ).count()
+        == 1
+    )
