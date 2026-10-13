@@ -71,3 +71,19 @@ def code_fingerprint(purpose: str, public_id: str, code: str) -> str:
 
 def code_matches(purpose: str, public_id: str, code: str, fingerprint: str) -> bool:
     return _matches(_CODE_KEYS, _code_message(purpose, public_id, code), fingerprint)
+
+
+def _normalize_email(email: str) -> str:
+    return email.strip().lower()
+
+
+def _account_message(email: str, password_hash: str) -> str:
+    return f"password_reset_account:{_normalize_email(email)}:{password_hash}"
+
+
+def account_stamp(email: str, password_hash: str) -> str:
+    return _sign(_CODE_KEYS.current(), _account_message(email, password_hash))
+
+
+def account_stamp_matches(stamp: str, email: str, password_hash: str) -> bool:
+    return _matches(_CODE_KEYS, _account_message(email, password_hash), stamp)

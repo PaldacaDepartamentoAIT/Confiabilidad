@@ -202,3 +202,63 @@ def test_code_fingerprints_never_query_the_database(
     with django_assert_num_queries(0), _rotation(30):
         fingerprints.code_fingerprint(REG, PUBLIC_ID, "123456")
         fingerprints.code_matches(REG, PUBLIC_ID, "123456", fingerprint)
+
+
+PASSWORD_HASH = "pbkdf2_sha256$870000$salt$hash="
+STAMP_VECTOR = "27e2bc21dc9aeb0e3ef4d84e062e17c2e624212c6af3bca268a20dd116913145"
+
+
+@override_settings(REGISTRATION_CODE_SECRET="vector-code-key")
+def test_account_stamp_matches_the_stored_vector() -> None:
+    assert fingerprints.account_stamp("ana@x.com", PASSWORD_HASH) == STAMP_VECTOR
+
+
+@override_settings(REGISTRATION_CODE_SECRET="secret-a")
+def test_account_stamp_is_hmac_of_normalized_email_and_password_hash() -> None:
+    message = f"password_reset_account:ana@x.com:{PASSWORD_HASH}".encode()
+    expected = hmac.new(b"secret-a", message, hashlib.sha256).hexdigest()
+
+    stamp = fingerprints.account_stamp(" Ana@X.com ", PASSWORD_HASH)
+
+    assert stamp == expected
+    assert re.fullmatch(r"[0-9a-f]{64}", stamp)
+
+
+def test_account_stamp_changes_with_email_and_password_hash() -> None:
+    base = fingerprints.account_stamp("ana@x.com", PASSWORD_HASH)
+
+    assert fingerprints.account_stamp(" ANA@x.com\t", PASSWORD_HASH) == base
+    assert fingerprints.account_stamp("ana@y.com", PASSWORD_HASH) != base
+    assert fingerprints.account_stamp("ana@x.com", PASSWORD_HASH + "x") != base
+
+
+def test_account_stamp_matches_only_the_same_email_and_password_hash() -> None:
+    stamp = fingerprints.account_stamp("ana@x.com", PASSWORD_HASH)
+
+    assert fingerprints.account_stamp_matches(stamp, " Ana@X.com ", PASSWORD_HASH)
+    assert not fingerprints.account_stamp_matches(stamp, "ana@y.com", PASSWORD_HASH)
+    assert not fingerprints.account_stamp_matches(stamp, "ana@x.com", "other-hash")
+
+
+def test_account_stamp_matches_compares_in_constant_time(monkeypatch: pytest.MonkeyPatch) -> None:
+    stamp = fingerprints.account_stamp("ana@x.com", PASSWORD_HASH)
+    calls = _compare_spy(monkeypatch)
+
+    assert fingerprints.account_stamp_matches(stamp, "ana@x.com", PASSWORD_HASH)
+    assert calls == [(stamp, stamp)]
+
+
+def test_account_stamp_with_previous_key_matches_only_during_transition() -> None:
+    with override_settings(REGISTRATION_CODE_SECRET="old-secret"):
+        stamp = fingerprints.account_stamp("ana@x.com", PASSWORD_HASH)
+    with _rotation(30):
+        assert fingerprints.account_stamp_matches(stamp, "ana@x.com", PASSWORD_HASH)
+        assert not fingerprints.account_stamp_matches(stamp, "ana@y.com", PASSWORD_HASH)
+    with _rotation(61):
+        assert not fingerprints.account_stamp_matches(stamp, "ana@x.com", PASSWORD_HASH)
+
+
+def test_account_stamp_is_not_a_code_fingerprint() -> None:
+    stamp = fingerprints.account_stamp("ana@x.com", "123456")
+
+    assert not fingerprints.code_matches(RESET, "account", "ana@x.com:123456", stamp)

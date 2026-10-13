@@ -31,7 +31,7 @@ intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al
   la clave vacía. [Cierto] Revertir: borrar
   `test_empty_previous_code_key_is_never_used_as_a_key`.
 
-- [ ] T-002 Sello de cuenta con la normalización única del correo
+- [x] T-002 Sello de cuenta con la normalización única del correo
   RF: RF-004, RF-005, RF-006, RF-007 | Depende de: T-001 | Archivos: 2
   Archivos: `core/fingerprints.py`, `core/tests/test_fingerprints.py`.
   Hecho cuando: `account_stamp(email, password_hash)` coincide con un vector literal generado con
