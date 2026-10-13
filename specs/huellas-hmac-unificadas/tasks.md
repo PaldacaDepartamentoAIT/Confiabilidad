@@ -166,5 +166,26 @@ intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al
   mención a `codes.code_fingerprint`, `codes.verify_code`, `codes.account_stamp` ni
   `consents/hashing.py` como lugar del cálculo.
 
+- [ ] T-015 Corrección: una fecha de rotación imposible da el error de configuración de RF-008
+  Tipo: corrección | Origen: validación de RF-008
+  RF: RF-008 | Depende de: — | Archivos: 2
+  Archivos: `core/fingerprints.py`, `core/tests/test_fingerprints.py`.
+  Causa: `parse_datetime` lanza `ValueError` con fechas bien escritas pero imposibles, y
+  `_previous_code_key_in_transition` no lo convierte en `ImproperlyConfigured`.
+  Hecho cuando: añadir `2026-13-01T10:00:00+00:00` a la parametrización de
+  `test_rotation_date_without_timezone_is_rejected_only_when_matching` falla antes del arreglo y
+  pasa después con `ImproperlyConfigured` que nombra `REGISTRATION_CODE_SECRET_ROTATED_AT`; un
+  mutante que quite la captura hace fallar ese caso; la suite completa sigue en verde.
+
+- [ ] T-016 Corrección: test de la clave de códigos leída del entorno y sello sin consultas a la base de datos
+  Tipo: corrección | Origen: validación de RF-003
+  RF: RF-003 | Depende de: — | Archivos: 1
+  Archivos: `core/tests/test_fingerprints.py`.
+  Causa: ningún test comprueba que `REGISTRATION_CODE_SECRET` se lee del entorno (ni que, sin la
+  variable, vale `DJANGO_SECRET_KEY`), y el test de cero consultas no cubre el sello de cuenta.
+  Hecho cuando: un test de subproceso, como los de consentimientos, comprueba ambos valores;
+  `django_assert_num_queries(0)` cubre `account_stamp` y `account_stamp_matches`; la suite
+  completa sigue en verde.
+
 ## RF sin tarea
 Ninguno. RF-009 está obsoleto.
