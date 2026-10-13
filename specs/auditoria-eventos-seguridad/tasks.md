@@ -31,9 +31,11 @@ empezar antes.
   RF: RF-001, RF-011 | Depende de: T-002, T-004 | Archivos: 2
   Hecho cuando: `pytest backend/apps/audit/tests/test_recorder.py` pasa: la IP sale de `REMOTE_ADDR`, el correo se guarda solo como huella normalizada, no aparece ningún valor en claro y los metadatos se guardan.
 
-- [ ] T-006 Receptor de inicio de sesión exitoso
+- [x] T-006 Receptor de inicio de sesión exitoso
   RF: RF-003 | Depende de: T-005 | Archivos: 3
   Hecho cuando: `pytest backend/apps/audit/tests/test_login_success.py` pasa: un login correcto crea una fila `LOGIN` con `success=True` cuyo `session_key` es la huella de la clave de la sesión ya rotada.
+  Decisiones: el receptor escucha `django.contrib.auth.signals.user_logged_in`, no la de allauth, porque Django la emite en cualquier login (también el del panel de administración) y allauth la usa a través de `login()`. Confianza: [Probable]. Cómo revertirla: conectar la señal de allauth y aceptar que el admin no quede auditado.
+  Nota: el middleware con `ContextVar` (decisión de T-011) no se necesita aquí; se implementa en T-014, que es donde los receptores de señales propias de accounts lo necesitan.
 
 - [ ] T-007 Adaptador y registro de fallo de inicio de sesión
   RF: RF-004 | Depende de: T-005 | Archivos: 3
@@ -54,7 +56,7 @@ empezar antes.
 - [ ] T-011 Señales propias de accounts
   RF: RF-007, RF-008, RF-010 (contrato) | Depende de: — | Archivos: 2
   Hecho cuando: `pytest backend/apps/accounts/tests/test_signals.py` pasa: existen las nueve señales de M-08 con argumentos documentados (solicitud de registro, código enviado y validado en registro, cuenta creada, código enviado y validado en restablecimiento, restablecimiento completado, perfil editado, cuenta deshabilitada).
-  Decisiones: las señales no llevan la petición HTTP. La petición llega a los receptores por un middleware de `apps/audit` que guarda la petición actual en un `ContextVar`; las firmas de los servicios no cambian, decisión del usuario. El middleware se implementa en T-006 y se registra en `MIDDLEWARE` como Excepción de esa tarea. Confianza: [Cierto] (decisión explícita).
+  Decisiones: las señales no llevan la petición HTTP. La petición llega a los receptores por un middleware de `apps/audit` que guarda la petición actual en un `ContextVar`; las firmas de los servicios no cambian, decisión del usuario. El middleware se implementa en T-014 (antes de sus receptores) y se registra en `MIDDLEWARE` como Excepción de esa tarea. Confianza: [Cierto] (decisión explícita).
 
 - [ ] T-012 Emisión de las señales desde el registro
   RF: RF-007, RF-008 | Depende de: T-011 | Archivos: 2
