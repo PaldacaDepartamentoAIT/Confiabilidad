@@ -240,5 +240,34 @@ intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al
   permitidas, recoge en "Errores de configuración" la clave anterior de solo espacios y la fecha
   inexistente, y su paso de prueba del guardián sigue siendo copiable y correcto.
 
+- [ ] T-021 Corrección: el guardián detecta accesos desde el paquete padre y sigue todas las formas de `-r`
+  Tipo: corrección | Origen: validación de RF-010
+  RF: RF-010 | Depende de: — | Archivos: 1
+  Archivos: `core/tests/test_fingerprint_guard.py`.
+  Causa: `forbidden_uses` solo registra alias de imports cuyo nombre ya está prohibido y no
+  reconstruye cadenas `a.b.c` desde un paquete padre; `_read_requirements` solo reconoce `-r ` y
+  `--requirement ` seguidos de espacio.
+  Hecho cuando: los casos sintéticos `import django.core` + `django.core.signing.dumps`,
+  `from django import utils` + `utils.crypto.salted_hmac`, `-rbase.txt` y
+  `--requirement=base.txt` fallan antes del arreglo y se marcan con su archivo después; la suite
+  completa sigue en verde.
+
+- [ ] T-022 Corrección: el test de clave vacía comprueba que el error nombra exactamente `REGISTRATION_CODE_SECRET`
+  Tipo: corrección | Origen: validación de RF-008
+  RF: RF-008 | Depende de: — | Archivos: 1
+  Archivos: `core/tests/test_fingerprints.py`.
+  Causa: `match="REGISTRATION_CODE_SECRET"` también coincide con `_PREVIOUS` y `_ROTATED_AT`.
+  Hecho cuando: el mutante que cambia el nombre del ajuste en el mensaje hace fallar el test; la
+  suite completa sigue en verde.
+
+- [ ] T-023 Corrección: un caso sintético por cada módulo interno vigilado
+  Tipo: corrección | Origen: validación de RF-010
+  RF: RF-010 | Depende de: — | Archivos: 1
+  Archivos: `core/tests/test_fingerprint_guard.py`.
+  Causa: se pueden quitar `_sha1`, `_sha2`, `_sha3`, `_sha512`, `_md5` o `_blake2` de la lista sin
+  que falle ningún test.
+  Hecho cuando: quitar cualquiera de los módulos internos de la lista hace fallar algún test; la
+  suite completa sigue en verde.
+
 ## RF sin tarea
 Ninguno. RF-009 está obsoleto.
