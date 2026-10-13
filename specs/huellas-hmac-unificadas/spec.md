@@ -1,5 +1,5 @@
 # Spec: huellas-hmac-unificadas
-Estado: borrador
+Estado: aprobada
 Aprobación: ligera
 
 ## Objetivo (por qué)
