@@ -4,6 +4,13 @@ from allauth.account.signals import password_changed
 from django.contrib.auth.signals import user_logged_in, user_logged_out
 from django.dispatch import receiver
 
+from apps.accounts.signals import (
+    account_created,
+    pending_registration_requested,
+    registration_code_sent,
+    registration_code_verified,
+)
+from apps.audit.middleware import current_request
 from apps.audit.models import EventType
 from apps.audit.recorder import record_event
 
@@ -45,5 +52,38 @@ def on_password_changed(sender: type, request: Any, user: Any, **kwargs: Any) ->
         success=True,
         request=request,
         email=user.email,
+        session_key=_session_key(request),
+    )
+
+
+@receiver(pending_registration_requested)
+def on_pending_registration_requested(
+    sender: type, email: str, success: bool, **kwargs: Any
+) -> None:
+    _record_account_signal(EventType.PENDING_REGISTRATION, email, success)
+
+
+@receiver(registration_code_sent)
+def on_registration_code_sent(sender: type, email: str, success: bool, **kwargs: Any) -> None:
+    _record_account_signal(EventType.CODE_SENT, email, success)
+
+
+@receiver(registration_code_verified)
+def on_registration_code_verified(sender: type, email: str, success: bool, **kwargs: Any) -> None:
+    _record_account_signal(EventType.CODE_VERIFIED, email, success)
+
+
+@receiver(account_created)
+def on_account_created(sender: type, email: str, success: bool, **kwargs: Any) -> None:
+    _record_account_signal(EventType.ACCOUNT_REGISTRATION, email, success)
+
+
+def _record_account_signal(event_type: EventType, email: str, success: bool) -> None:
+    request = current_request()
+    record_event(
+        event_type,
+        success=success,
+        request=request,
+        email=email,
         session_key=_session_key(request),
     )

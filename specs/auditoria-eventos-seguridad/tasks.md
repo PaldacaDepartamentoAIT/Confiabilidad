@@ -73,9 +73,10 @@ empezar antes.
   Hecho cuando: `pytest backend/apps/accounts/tests/test_password_reset_signals.py` pasa: `start()`, `verify()` y `complete()` de `password_reset.py` emiten `password_reset_code_sent`, `password_reset_code_verified` y `password_reset_completed`.
   Decisiones: no se emite `password_reset_code_sent` cuando `start()` devuelve `NoEligibleAccount`, porque no se envía ningún código; así evita registrar peticiones para correos inexistentes como si hubieran sido enviadas. Confianza: [Probable]. Cómo revertirla: emitir también en `NoEligibleAccount` con `success=False`, lo que cambiaría el conteo de filas de esos casos.
 
-- [ ] T-014 Receptores de registro
+- [x] T-014 Receptores de registro
   RF: RF-007, RF-008 | Depende de: T-012, T-005 | Archivos: 2
   Hecho cuando: `pytest backend/apps/audit/tests/test_registration_events.py` pasa: cada señal de registro crea exactamente una fila del tipo correspondiente, con `success` y metadatos correctos.
+  Excepción (aprobada por el usuario al elegir el middleware): además de los dos archivos de la tarea, se crea `apps/audit/middleware.py` y se registra `apps.audit.middleware.CurrentRequestMiddleware` en `MIDDLEWARE`; el middleware guarda la petición en un `ContextVar` que leen los receptores. Es el middleware que decidió el usuario para las señales sin petición, y se implementa aquí porque es donde lo necesitan los receptores de registro. Confianza: [Cierto]. Cómo revertirla: pasar `request` a cada servicio, decisión descartada.
 
 - [ ] T-015 Receptores de restablecimiento de contraseña
   RF: RF-008, RF-010 (restablecimiento) | Depende de: T-013, T-010 | Archivos: 2

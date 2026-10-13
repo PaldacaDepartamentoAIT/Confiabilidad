@@ -49,6 +49,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
     "simple_history.middleware.HistoryRequestMiddleware",
+    "apps.audit.middleware.CurrentRequestMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
