@@ -177,7 +177,7 @@ intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al
   pasa después con `ImproperlyConfigured` que nombra `REGISTRATION_CODE_SECRET_ROTATED_AT`; un
   mutante que quite la captura hace fallar ese caso; la suite completa sigue en verde.
 
-- [ ] T-016 Corrección: test de la clave de códigos leída del entorno y sello sin consultas a la base de datos
+- [x] T-016 Corrección: test de la clave de códigos leída del entorno y sello sin consultas a la base de datos
   Tipo: corrección | Origen: validación de RF-003
   RF: RF-003 | Depende de: — | Archivos: 1
   Archivos: `core/tests/test_fingerprints.py`.
@@ -186,6 +186,10 @@ intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al
   Hecho cuando: un test de subproceso, como los de consentimientos, comprueba ambos valores;
   `django_assert_num_queries(0)` cubre `account_stamp` y `account_stamp_matches`; la suite
   completa sigue en verde.
+  Decisiones: tarea solo de tests sobre código ya correcto: los tests pasan desde el principio, y
+  su utilidad se demostró con mutantes (leer otra variable de entorno, cambiar el valor por
+  defecto y hacer una consulta dentro de `account_stamp_matches`, que falla por exceso de
+  consultas). [Cierto] Revertir: borrar los tres tests nuevos.
 
 - [ ] T-017 Una clave anterior de solo espacios es un error de configuración
   RF: RF-008 | Depende de: T-015 | Archivos: 2

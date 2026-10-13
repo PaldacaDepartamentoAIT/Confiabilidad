@@ -384,3 +384,45 @@ def test_consent_email_fingerprints_never_query_the_database(
     with django_assert_num_queries(0):
         fingerprint = fingerprints.consent_email_fingerprint("ana@x.com")
         fingerprints.consent_email_matches("ana@x.com", fingerprint)
+
+
+_PRINT_CODE_KEY = (
+    "import django\n"
+    "django.setup()\n"
+    "from django.conf import settings\n"
+    "print(settings.REGISTRATION_CODE_SECRET)\n"
+)
+
+
+def _code_key_from_environment(**variables: str) -> str:
+    env = {key: value for key, value in os.environ.items() if key != "REGISTRATION_CODE_SECRET"}
+    env.update(variables, DJANGO_SETTINGS_MODULE="config.settings")
+    result = subprocess.run(
+        [sys.executable, "-c", _PRINT_CODE_KEY],
+        cwd=BACKEND_DIR,
+        env=env,
+        capture_output=True,
+        text=True,
+        check=True,
+        timeout=60,
+    )
+    return result.stdout.splitlines()[-1]
+
+
+def test_code_key_is_read_from_environment_variable() -> None:
+    assert _code_key_from_environment(REGISTRATION_CODE_SECRET="from-env") == "from-env"
+
+
+def test_code_key_without_environment_variable_is_secret_key() -> None:
+    assert _code_key_from_environment(DJANGO_SECRET_KEY="the-key") == "the-key"
+
+
+@pytest.mark.django_db
+def test_account_stamps_never_query_the_database(
+    django_assert_num_queries: DjangoAssertNumQueries,
+) -> None:
+    with override_settings(REGISTRATION_CODE_SECRET="old-secret"):
+        old_stamp = fingerprints.account_stamp("ana@x.com", PASSWORD_HASH)
+    with django_assert_num_queries(0), _rotation(30):
+        fingerprints.account_stamp("ana@x.com", PASSWORD_HASH)
+        fingerprints.account_stamp_matches(old_stamp, "ana@x.com", PASSWORD_HASH)
