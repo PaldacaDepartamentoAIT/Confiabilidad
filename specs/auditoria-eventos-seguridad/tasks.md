@@ -52,9 +52,10 @@ empezar antes.
   Hecho cuando: `pytest backend/apps/audit/tests/test_logout.py` pasa: un cierre de sesión crea una fila `LOGOUT` con la huella de la sesión que se cierra, capturada antes de vaciarla.
   Decisiones: se usa `user_logged_out` de Django, que se emite antes de vaciar la sesión, así que la clave aún existe. Confianza: [Cierto] (comportamiento de Django). Cómo revertirla: no aplica.
 
-- [ ] T-010 Cambio de contraseña
+- [x] T-010 Cambio de contraseña
   RF: RF-010 (cambio) | Depende de: T-006 | Archivos: 2
   Hecho cuando: `pytest backend/apps/audit/tests/test_password_changed.py` pasa: la señal `password_changed` de allauth crea una fila `PASSWORD_CHANGE` con `success=True`.
+  Decisiones: el test dispara la señal `password_changed` de allauth directamente, no a través de un formulario, porque el flujo HTTP de cambio exige sesión y contraseña previa; el receptor es el mismo. Además, el helper `_session_key` tolera peticiones sin sesión. Confianza: [Probable]. Cómo revertirla: añadir un test de integración con el endpoint de cambio de contraseña.
 
 - [ ] T-011 Señales propias de accounts
   RF: RF-007, RF-008, RF-010 (contrato) | Depende de: — | Archivos: 2
