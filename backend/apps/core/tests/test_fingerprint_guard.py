@@ -377,9 +377,7 @@ def test_only_internal_hash_modules_of_python_3_12_are_watched() -> None:
         ),
     ],
 )
-def test_scan_reports_crypt_and_the_framework_tokens(
-    tmp_path: Path, source: str, use: str
-) -> None:
+def test_scan_reports_crypt_and_the_framework_tokens(tmp_path: Path, source: str, use: str) -> None:
     _write(tmp_path, "apps/x/a.py", source)
 
     assert scan(tmp_path) == {"apps/x/a.py": [use]}
