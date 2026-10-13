@@ -15,9 +15,10 @@ empezar antes.
   Excepción: `makemigrations` genera `migrations/__init__.py` junto a `0001_initial.py`; no es lógica.
   Hecho cuando: `pytest backend/apps/audit/tests/test_model.py` pasa y `python manage.py makemigrations --check` no detecta cambios.
 
-- [ ] T-003 Guardas de solo inserción
+- [x] T-003 Guardas de solo inserción
   RF: RF-012 | Depende de: T-002 | Archivos: 2
   Hecho cuando: `pytest backend/apps/audit/tests/test_insert_only.py` pasa: `save()` sobre una fila existente, `delete()` y `update()`/`delete()` del QuerySet lanzan error; crear filas sigue funcionando. Deja un contexto privado `_purge_allowed` que solo usa T-019.
+  Decisiones: el permiso de borrado de la purga es un `ContextVar` (`_purge_allowed`), no un parámetro, para que el admin y el ORM no puedan activarlo por accidente. Confianza: [Probable]. Cómo revertirla: sustituir el contexto por un método de clase `purge_older_than` que llame a `QuerySet.delete` sin guarda, y quitar `_purge_allowed`.
 
 - [ ] T-004 Huellas de auditoría en el punto único (M-09)
   RF: RF-011 | Depende de: T-001, huellas-hmac-unificadas en `main` | Archivos: 3

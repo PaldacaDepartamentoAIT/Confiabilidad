@@ -1,5 +1,27 @@
+from collections.abc import Iterator
+from contextlib import contextmanager
+from contextvars import ContextVar
+from typing import Any
+
 from django.db import models
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
+
+_purge_context: ContextVar[bool] = ContextVar("audit_purge_allowed", default=False)
+
+
+@contextmanager
+def _purge_allowed() -> Iterator[None]:
+    token = _purge_context.set(True)
+    try:
+        yield
+    finally:
+        _purge_context.reset(token)
+
+
+class InsertOnlyError(Exception):
+    def __init__(self) -> None:
+        super().__init__(_("Security events are insert-only; they cannot be changed or deleted."))
 
 
 class EventType(models.TextChoices):
@@ -16,6 +38,16 @@ class EventType(models.TextChoices):
     ACCOUNT_DISABLE = "account_disable", "Account disable"
 
 
+class SecurityEventQuerySet(models.QuerySet["SecurityEvent"]):
+    def update(self, **kwargs: Any) -> int:
+        raise InsertOnlyError
+
+    def delete(self) -> tuple[int, dict[str, int]]:
+        if not _purge_context.get():
+            raise InsertOnlyError
+        return super().delete()
+
+
 class SecurityEvent(models.Model):
     event_type = models.CharField(max_length=32, choices=EventType.choices, db_index=True)
     created_at = models.DateTimeField(default=timezone.now, db_index=True)
@@ -26,8 +58,20 @@ class SecurityEvent(models.Model):
     success = models.BooleanField()
     metadata = models.JSONField(default=dict, blank=True)
 
+    objects = SecurityEventQuerySet.as_manager()
+
     class Meta:
         ordering = ["-created_at"]
 
     def __str__(self) -> str:
         return f"{self.event_type} {self.created_at.isoformat()}"
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        if not self._state.adding:
+            raise InsertOnlyError
+        super().save(*args, **kwargs)
+
+    def delete(self, *args: Any, **kwargs: Any) -> tuple[int, dict[str, int]]:
+        if not _purge_context.get():
+            raise InsertOnlyError
+        return super().delete(*args, **kwargs)
