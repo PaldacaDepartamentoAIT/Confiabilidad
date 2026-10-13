@@ -1,5 +1,5 @@
 # Plan: huellas-hmac-unificadas
-Estado: borrador
+Estado: aprobado
 
 ## Módulos
 ### M-01 Punto único de cálculo (`apps/core/fingerprints.py`)
