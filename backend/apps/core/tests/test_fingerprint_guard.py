@@ -4,9 +4,21 @@ from pathlib import Path
 import pytest
 
 BACKEND_DIR = Path(__file__).resolve().parents[3]
-SCANNED_DIRS = ("apps", "config")
 SINGLE_POINT = "apps/core/fingerprints.py"
-FORBIDDEN_MODULES = ("hashlib", "hmac", "django.utils.crypto")
+FORBIDDEN_MODULES = (
+    "hashlib",
+    "hmac",
+    "_hashlib",
+    "_sha1",
+    "_sha2",
+    "_sha256",
+    "_sha512",
+    "_sha3",
+    "_md5",
+    "_blake2",
+    "django.utils.crypto",
+    "django.core.signing",
+)
 # Lista cerrada de excepciones de RF-010: añadir una es un cambio de la spec.
 ALLOWED_USES = {("apps/accounts/password_validation.py", "hashlib.sha1")}
 
@@ -48,20 +60,27 @@ def forbidden_uses(source: str) -> list[str]:
     return sorted(uses)
 
 
+def _is_scanned(relative: Path) -> bool:
+    if "tests" in relative.parts or relative.name == "conftest.py":
+        return False
+    if any(part.startswith(".") for part in relative.parts):
+        return False
+    return relative.as_posix() != SINGLE_POINT
+
+
 def scan(root: Path) -> dict[str, list[str]]:
     found: dict[str, list[str]] = {}
-    for directory in SCANNED_DIRS:
-        for path in sorted((root / directory).rglob("*.py")):
-            relative = path.relative_to(root)
-            if "tests" in relative.parts or relative.as_posix() == SINGLE_POINT:
-                continue
-            uses = [
-                use
-                for use in forbidden_uses(path.read_text())
-                if (relative.as_posix(), use) not in ALLOWED_USES
-            ]
-            if uses:
-                found[relative.as_posix()] = uses
+    for path in sorted(root.rglob("*.py")):
+        relative = path.relative_to(root)
+        if not _is_scanned(relative):
+            continue
+        uses = [
+            use
+            for use in forbidden_uses(path.read_text())
+            if (relative.as_posix(), use) not in ALLOWED_USES
+        ]
+        if uses:
+            found[relative.as_posix()] = uses
     return found
 
 
@@ -99,6 +118,43 @@ def test_scan_reports_the_file_and_the_use(
     assert scan(tmp_path) == {relative: [use]}
 
 
+@pytest.mark.parametrize(
+    ("relative", "source", "use"),
+    [
+        ("apps/x/f.py", "import _hashlib\n_hashlib.new\n", "_hashlib.new"),
+        ("apps/x/g.py", "import _sha256\n_sha256.sha256(b'')\n", "_sha256.sha256"),
+        (
+            "apps/x/h.py",
+            "from django.core import signing\nsigning.dumps(1)\n",
+            "django.core.signing.dumps",
+        ),
+        (
+            "apps/x/i.py",
+            "import django.core.signing\ndjango.core.signing.Signer\n",
+            "django.core.signing",
+        ),
+        ("manage.py", "import hmac\nhmac.new\n", "hmac.new"),
+        ("otra/x.py", "from hashlib import md5\n", "hashlib.md5"),
+    ],
+)
+def test_scan_covers_the_whole_backend_and_internal_modules(
+    tmp_path: Path, relative: str, source: str, use: str
+) -> None:
+    _write(tmp_path, relative, source)
+
+    assert scan(tmp_path) == {relative: [use]}
+
+
+def test_scan_allows_the_framework_password_utilities(tmp_path: Path) -> None:
+    _write(
+        tmp_path,
+        "apps/x/passwords.py",
+        "from django.contrib.auth.hashers import make_password\nmake_password('x')\n",
+    )
+
+    assert scan(tmp_path) == {}
+
+
 def test_scan_reports_a_module_used_without_an_attribute(tmp_path: Path) -> None:
     _write(tmp_path, "apps/x/a.py", "import hashlib\ngetattr(hashlib, 'sha256')\n")
     _write(tmp_path, "apps/x/b.py", "from django.utils import crypto\ncrypto.salted_hmac\n")
@@ -121,6 +177,9 @@ def test_scan_allows_only_the_listed_exception(tmp_path: Path) -> None:
 
 def test_scan_skips_tests_and_the_single_point(tmp_path: Path) -> None:
     _write(tmp_path, "apps/x/tests/test_a.py", "import hmac\nhmac.new\n")
+    _write(tmp_path, "tests/test_b.py", "import hmac\nhmac.new\n")
+    _write(tmp_path, "apps/x/conftest.py", "import hmac\nhmac.new\n")
+    _write(tmp_path, ".cache/c.py", "import hmac\nhmac.new\n")
     _write(tmp_path, "apps/core/fingerprints.py", "import hmac\nhmac.new\n")
     _write(tmp_path, "apps/x/clean.py", "import secrets\nsecrets.token_urlsafe(8)\n")
 

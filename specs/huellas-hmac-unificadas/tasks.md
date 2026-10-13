@@ -200,7 +200,7 @@ intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al
   anterior vacía (`""`) se sigue ignorando sin error; el test falla antes del arreglo; un mutante
   que quite la comprobación de espacios hace fallar el test; suite verde.
 
-- [ ] T-018 El guardián recorre todo el backend y vigila los módulos internos y la firma del framework
+- [x] T-018 El guardián recorre todo el backend y vigila los módulos internos y la firma del framework
   RF: RF-010 | Depende de: — | Archivos: 1
   Archivos: `core/tests/test_fingerprint_guard.py`.
   Hecho cuando: con fuentes sintéticas en `tmp_path`, el escaneo marca e indica el archivo para
@@ -211,6 +211,9 @@ intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al
   real recorre `backend/` completo y pasa; cada caso nuevo falla antes de ampliar la lista; un
   mutante que vuelva a limitar el recorrido a `apps/` y `config/` hace fallar el caso de
   `manage.py`; suite verde.
+  Decisiones: `from django.core import signing` solo se marca cuando se usa (`signing.dumps`),
+  igual que cualquier módulo importado como alias; importarlo sin usarlo no calcula nada.
+  [Cierto] Revertir: marcar también el import en `forbidden_uses`.
 
 - [ ] T-019 El guardián vigila las bibliotecas criptográficas declaradas como dependencia
   RF: RF-010 (D-08) | Depende de: T-018 | Archivos: 1
