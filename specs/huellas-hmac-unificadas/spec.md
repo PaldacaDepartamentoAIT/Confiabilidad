@@ -1,5 +1,5 @@
 # Spec: huellas-hmac-unificadas
-Estado: aprobada
+Estado: borrador
 Aprobación: ligera
 
 ## Objetivo (por qué)
@@ -55,9 +55,10 @@ Si la clave de un tipo de huella está vacía, si la clave anterior está defini
 espacios (haya o no fecha de rotación), o si la clave anterior coincide con la actual, entonces el
 sistema deberá rechazar el cálculo y la comprobación con un error de configuración que nombre la
 clave afectada. Si la fecha de rotación no es una fecha válida con zona horaria (incluida una
-fecha bien escrita pero que no existe), entonces el sistema deberá rechazar la comprobación con un
-error de configuración que nombre ese ajuste. Si hay una clave anterior válida pero no fecha de
-rotación, entonces el sistema deberá ignorar la clave anterior en la comprobación.
+fecha bien escrita pero que no existe) o es posterior al momento de la comprobación, entonces el
+sistema deberá rechazar la comprobación con un error de configuración que nombre ese ajuste. Si
+hay una clave anterior válida pero no fecha de rotación, entonces el sistema deberá ignorar la
+clave anterior en la comprobación.
 
 ### RF-009 Huellas distintas entre tipos — OBSOLETO
 OBSOLETO (2026-10-09, C-03): «un mismo valor de entrada» no tiene una lectura única, porque cada
@@ -67,17 +68,32 @@ mismo valor de entrada en tipos de huella distintos, aunque sus claves coincidan
 
 ### RF-010 Detección de cálculos fuera del punto único
 Si algún archivo Python del backend (incluidos `manage.py`, las migraciones, los comandos de
-gestión y cualquier carpeta futura; excluidos los tests), fuera del punto único de cálculo, usa
-una función de hash criptográfico, de HMAC o de firma con clave, ya sea de la biblioteca estándar
-(incluidos sus módulos internos), del framework (incluida su firma de datos) o de una biblioteca
-criptográfica declarada como dependencia del proyecto, entonces la suite de tests deberá fallar e
-indicar el archivo en el que ocurre, salvo los usos de esta lista cerrada de excepciones:
+gestión y cualquier carpeta futura), fuera del punto único de cálculo y de los archivos de test,
+usa alguno de los elementos vigilados, directamente o a través de su paquete padre (por ejemplo,
+`import django.core` seguido de `django.core.signing.dumps`), entonces la suite de tests deberá
+fallar e indicar el archivo y el uso.
+
+Elementos vigilados (lista cerrada):
+- biblioteca estándar: `hashlib`, `hmac`, `crypt` y los módulos internos de hash de Python 3.12
+  (`_hashlib`, `_sha1`, `_sha2`, `_sha3`, `_md5`, `_blake2` y `_crypt`);
+- framework: `django.utils.crypto`, `django.core.signing` y `django.contrib.auth.tokens`;
+- funciones de hash en base de datos del framework: `MD5`, `SHA1`, `SHA224`, `SHA256`, `SHA384` y
+  `SHA512` de `django.db.models.functions`;
+- métodos de cookies firmadas, por su nombre: `set_signed_cookie` y `get_signed_cookie`;
+- las bibliotecas criptográficas de la tabla cerrada del plan que estén declaradas como
+  dependencia del proyecto (S-07).
+
+Son archivos de test los que están dentro de una carpeta `tests/`, los `conftest.py` y los que
+pytest recoge como test (`test_*.py` y `tests.py`).
+
+Excepciones (lista cerrada):
 - la comprobación de contraseñas filtradas, que exige un hash sin clave.
 
-Añadir una excepción es un cambio de esta spec. Quedan fuera de esta detección los módulos que se
-cargan de forma dinámica a partir de su nombre escrito como texto (S-06), las bibliotecas
-criptográficas que solo llegan como dependencia de otras (S-07) y las utilidades de contraseñas
-del framework, que no calculan huellas con clave.
+Añadir un elemento vigilado o una excepción es un cambio de esta spec. Fuera de la lista vigilada
+no se garantiza la detección: módulos cargados por su nombre en texto (S-06), bibliotecas no
+declaradas o fuera de la tabla (S-07), funciones prohibidas que llegan reexportadas por un módulo
+permitido y utilidades que calculan un hash por dentro (S-08), y las utilidades de contraseñas del
+framework, que no calculan huellas con clave.
 
 ## Supuestos
 - S-01 RNF-25 procede de un documento de requisitos externo al repositorio. La spec lo cita con
@@ -103,6 +119,11 @@ del framework, que no calculan huellas con clave.
   solo como dependencia de otras y RF-010 no la vigila (C-07). *Riesgo:* una huella calculada con
   ella pasaría la suite sin aviso; queda a cargo de la revisión de código, y declararla como
   dependencia la pondría bajo vigilancia.
+- S-08 Nadie calcula una huella con funciones que llegan reexportadas por un módulo permitido
+  (por ejemplo, `hashers.hashlib.sha256`) ni con utilidades que calculan un hash por dentro (por
+  ejemplo, `get_session_auth_hash`, `make_template_fragment_key` o `uuid.uuid5`). *Riesgo:* ese
+  uso pasaría la suite sin aviso; queda a cargo de la revisión de código. RF-010 es una alarma
+  sobre una lista cerrada, no una garantía de que no exista ningún hash fuera del punto único.
 
 ## Fuera de alcance
 - Los hashes que no son huellas con clave: la comprobación de contraseñas filtradas (excepción de
@@ -119,6 +140,8 @@ del framework, que no calculan huellas con clave.
 - Vigilar bibliotecas criptográficas no declaradas como dependencia del proyecto (RF-010, S-07).
 - Vigilar las utilidades de contraseñas del framework usadas desde el código de la aplicación
   (RF-010, C-08).
+- Detectar cualquier hash fuera de la lista vigilada de RF-010: reexports y utilidades con hash
+  interno (S-08).
 
 ## Criterios de finalización
 - Ninguna huella con clave de correos, códigos o sellos de cuenta se calcula fuera del punto
@@ -146,3 +169,9 @@ del framework, que no calculan huellas con clave.
   declaradas (S-07), permite las utilidades de contraseñas del framework y cubre todo el backend;
   RF-008 rechaza siempre una clave anterior de solo espacios — RF: RF-008, RF-010 — Estado:
   impacto analizado
+- 2026-10-13 — Cambio tras la 2.ª validación: RF-010 pasa a ser una lista cerrada de elementos
+  vigilados (añade `crypt`, `_crypt`, `django.contrib.auth.tokens`, las funciones de hash en base
+  de datos y las cookies firmadas; quita los módulos internos que no existen en Python 3.12;
+  detecta el acceso por el paquete padre; define los archivos de test) y acepta S-08; RF-008
+  rechaza una fecha de rotación futura, que antes alargaba la vida de la clave anterior (RF-007) —
+  RF: RF-007, RF-008, RF-010 — Estado: pendiente de clarificar
