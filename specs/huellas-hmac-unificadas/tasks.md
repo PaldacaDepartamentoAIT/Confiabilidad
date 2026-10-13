@@ -131,7 +131,7 @@ intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al
   (valor por defecto, ajuste, clave vacía y lectura del entorno) están en
   `core/tests/test_fingerprints.py` desde T-003; suite verde.
 
-- [ ] T-012 Test guardián de cálculos fuera del punto único
+- [x] T-012 Test guardián de cálculos fuera del punto único
   RF: RF-010, RF-001 | Depende de: T-007, T-011 | Archivos: 1
   Archivos: `core/tests/test_fingerprint_guard.py`.
   Hecho cuando: el test recorre `apps/` y `config/` sin las carpetas `tests/` ni
@@ -141,6 +141,13 @@ intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al
   `django.utils.crypto.salted_hmac`, una migración y `hashlib.sha256` en el archivo de la
   excepción; un mutante que vacíe la lista de usos prohibidos hace fallar los casos sintéticos;
   suite verde.
+  Decisiones: (1) Un módulo prohibido usado sin atributo (por ejemplo, `getattr(hashlib, ...)`)
+  cuenta como uso del módulo entero, que ninguna excepción cubre; y `from django.utils import
+  crypto` se trata como un alias de `django.utils.crypto`. [Cierto] Revertir: quitar el último
+  bucle de `forbidden_uses` y la rama `elif _is_forbidden(full_name)`. (2) No detecta imports
+  dinámicos (`importlib.import_module("hashlib")`, `__import__`): queda como límite conocido del
+  guardián. [Cierto] Revertir: no aplica. (3) Comprobado que el guardián habría marcado el
+  `codes.py` anterior a T-007 (`hashlib.sha256`, `hmac.compare_digest`, `hmac.new`). [Cierto]
 
 - [ ] T-013 Resumen de la feature
   RF: — (criterio de finalización) | Depende de: T-012 | Archivos: 1
