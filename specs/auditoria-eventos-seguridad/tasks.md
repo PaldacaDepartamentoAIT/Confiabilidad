@@ -88,10 +88,11 @@ empezar antes.
   Hecho cuando: `pytest backend/apps/audit/tests/test_profile_events.py` pasa: enviar `profile_edited` crea una fila `PROFILE_EDIT` y enviar `account_disabled` crea una fila `ACCOUNT_DISABLE`. La prueba envía la señal a mano porque ningún flujo la emite todavía.
   Decisiones: ningún flujo emite hoy `profile_edited` ni `account_disabled`; el test las envía a mano. Es el residual de RF-010 aceptado en el plan. Confianza: [Cierto]. Cómo revertirla: no aplica.
 
-- [ ] T-017 Permiso de consulta (permiso por defecto)
+- [x] T-017 Permiso de consulta (permiso por defecto)
   RF: RF-013 | Depende de: T-002 | Archivos: 1
   Decisiones: se usa el permiso por defecto `view_securityevent` que Django crea para `SecurityEvent`; sin `Meta.permissions` ni migración, decisión del usuario (D-06). Confianza: [Cierto] (decisión explícita).
   Hecho cuando: `pytest backend/apps/audit/tests/test_permission.py` pasa: tras migrar, existe `auth.Permission` con codename `view_securityevent` para `audit`.
+  Decisiones: esta tarea no escribe código. El test pasa sin implementación porque Django crea `view_securityevent`; no prueba un comportamiento nuevo. El comportamiento que sí depende del permiso (el admin deniega sin él) se prueba en T-018. Confianza: [Cierto]. Cómo revertirla: no aplica.
 
 - [ ] T-018 Admin de solo lectura
   RF: RF-012, RF-013 | Depende de: T-017 | Archivos: 2
