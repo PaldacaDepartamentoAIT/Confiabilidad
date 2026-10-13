@@ -121,7 +121,7 @@ empezar antes.
   Causa: `verify` devuelve `EXPIRED` antes de emitir la señal cuando el proceso superó el periodo de gracia; no queda fila.
   Hecho cuando: `pytest backend/apps/accounts/tests/test_registration_signals.py backend/apps/accounts/tests/test_password_reset_signals.py` pasa con un caso de código caducado tras la gracia que emite la señal con `success=False`, y la suite completa sigue en verde.
 
-- [ ] T-023 Corrección: el admin concede la vista solo con `view_securityevent`
+- [x] T-023 Corrección: el admin concede la vista solo con `view_securityevent`
   Tipo: corrección | Origen: validación de RF-013 | RF: RF-013 | Depende de: T-018 | Archivos: 2
   Causa: `ModelAdmin.has_view_permission` acepta el permiso de vista o el de cambio; un usuario con solo `change_securityevent` ve el listado.
   Hecho cuando: `pytest backend/apps/audit/tests/test_admin.py` pasa con un caso en el que un usuario con solo `change_securityevent` recibe 403 en el listado.

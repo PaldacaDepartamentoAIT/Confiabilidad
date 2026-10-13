@@ -65,3 +65,15 @@ def test_change_and_delete_are_disabled(viewer: User, event: SecurityEvent) -> N
     assert model_admin.has_add_permission(request) is False
     assert model_admin.has_change_permission(request, event) is False
     assert model_admin.has_delete_permission(request, event) is False
+
+
+def test_change_permission_alone_does_not_grant_the_list(event: SecurityEvent) -> None:
+    user = User.objects.create_user(
+        "editor@x.com", "Clave-segura-2026!", name="Edi", birthdate="1990-01-01", country="ES"
+    )
+    user.is_staff = True
+    user.save()
+    user.user_permissions.add(Permission.objects.get(codename="change_securityevent"))
+    client = Client()
+    client.force_login(user)
+    assert client.get(CHANGELIST).status_code == 403

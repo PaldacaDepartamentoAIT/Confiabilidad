@@ -25,6 +25,9 @@ class SecurityEventAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     def has_add_permission(self, request: HttpRequest) -> bool:
         return False
 
+    def has_view_permission(self, request: HttpRequest, obj: Any = None) -> bool:
+        return request.user.has_perm("audit.view_securityevent")
+
     def has_change_permission(self, request: HttpRequest, obj: Any = None) -> bool:
         return False
 
