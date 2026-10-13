@@ -178,6 +178,12 @@ empezar antes.
   Hecho cuando: `pytest backend/apps/audit/tests/test_insert_only.py` pasa con la llamada posicional lanzando `InsertOnlyError` y la fila intacta; la suite de auditoría sigue en verde.
   Decisiones: la firma de `bulk_create` se declara explícitamente con los parámetros de Django, para que la guarda vea `update_conflicts` sin importar cómo se pase. Confianza: [Cierto]. Cómo revertirla: volver a `*args, **kwargs`, lo que reabre el hueco.
 
+- [x] T-033 Corrección: `_base_manager` y el POST del admin no saltan las guardas de solo inserción
+  Tipo: corrección | Origen: validación de RF-012 | RF: RF-012 | Depende de: T-032 | Archivos: 3
+  Causa: `SecurityEvent._base_manager` era un `Manager` plano sin guardas (confirmado con una prueba); el admin no tenía test de POST al cambio y al borrado.
+  Hecho cuando: `pytest backend/apps/audit/tests/test_insert_only.py backend/apps/audit/tests/test_admin.py` pasa con `_base_manager` lanzando `InsertOnlyError` y la fila intacta, y con POST al cambio y al borrado devolviendo 403 con la fila intacta; `makemigrations --check` sin cambios; la suite completa sigue en verde.
+  Decisiones: se fija `base_manager_name = "objects"` en `Meta`, para que el gestor base sea el mismo que el de guardas. Confianza: [Cierto]. Cómo revertirla: quitar la línea, lo que reabre el hueco.
+
 ## RF sin tarea
 Ninguno. Todos los RF de la spec (RF-001 a RF-016) aparecen en al menos una tarea. RF-010 aparece como cubierto en su parte aceptada (el residual de perfil y deshabilitación queda en T-016, con emisión pendiente de otra feature).
 
@@ -190,3 +196,4 @@ Ninguno. Todos los RF de la spec (RF-001 a RF-016) aparecen en al menos una tare
 - 2026-10-13 — Corrección T-030 (test de RF-006 contra el adaptador por defecto) — RF: RF-006 — Estado: aprobado
 - 2026-10-13 — T-031 (receptores de M-03 que faltaban) — RF: RF-007, RF-010 — Estado: aprobado
 - 2026-10-13 — Corrección T-032 (bulk_create con update_conflicts posicional) tras la validación — RF: RF-012 — Estado: aprobado
+- 2026-10-13 — Corrección T-033 (gestor base sin guardas) tras la validación — RF: RF-012 — Estado: aprobado

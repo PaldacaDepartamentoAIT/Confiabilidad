@@ -76,3 +76,13 @@ def test_bulk_create_with_positional_update_conflicts_cannot_overwrite_rows() ->
     with pytest.raises(InsertOnlyError):
         SecurityEvent.objects.bulk_create([forged], None, False, True, ["success"], ["id"])
     assert SecurityEvent.objects.get(pk=event.pk).success is True
+
+
+def test_base_manager_cannot_update_or_delete_rows() -> None:
+    event = _create()
+    with pytest.raises(InsertOnlyError):
+        SecurityEvent._base_manager.filter(pk=event.pk).update(success=False)
+    assert SecurityEvent.objects.get(pk=event.pk).success is True
+    with pytest.raises(InsertOnlyError):
+        SecurityEvent._base_manager.filter(pk=event.pk).delete()
+    assert SecurityEvent.objects.filter(pk=event.pk).exists()

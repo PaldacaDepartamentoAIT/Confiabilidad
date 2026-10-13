@@ -88,6 +88,7 @@ class SecurityEvent(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+        base_manager_name = "objects"
 
     def __str__(self) -> str:
         return f"{self.event_type} {self.created_at.isoformat()}"

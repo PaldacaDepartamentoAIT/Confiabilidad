@@ -120,3 +120,15 @@ def test_email_hash_search_is_exact(viewer: User) -> None:
 def test_ip_search_is_partial(viewer: User) -> None:
     _event_at(datetime(2026, 3, 5, tzinfo=UTC), ip="203.0.113.7")
     assert _count(viewer, "?q=203.0.113") == 1
+
+
+def test_post_to_change_and_delete_cannot_modify_the_row(
+    viewer: User, event: SecurityEvent
+) -> None:
+    client = Client()
+    client.force_login(viewer)
+    change = client.post(f"/admin/audit/securityevent/{event.pk}/change/", {"success": "on"})
+    delete = client.post(f"/admin/audit/securityevent/{event.pk}/delete/", {"post": "yes"})
+    assert change.status_code == 403
+    assert delete.status_code == 403
+    assert SecurityEvent.objects.filter(pk=event.pk).exists()
