@@ -42,9 +42,10 @@ empezar antes.
   Hecho cuando: `pytest backend/apps/audit/tests/test_login_failed.py` pasa: una contraseña incorrecta crea una fila `LOGIN` con `success=False` y el motivo en metadatos; un correo inexistente crea la fila sin clave de sesión; la prueba también confirma que el flujo headless llama al mismo adaptador (D-03).
   Decisiones: los rechazos por límite no llegan a `authentication_failed` (allauth los lanza en `pre_authenticate` con `too_many_login_attempts`, `allauth/account/adapter.py`, línea 800). Por eso T-008 sobrescribe también `pre_authenticate`. El adaptador lleva `# type: ignore[misc]` porque allauth no publica tipos. Confianza: [Cierto]. Cómo revertirla: no aplica; es la forma de heredar de una clase sin tipos bajo mypy estricto. Los tests vacían la caché de límites en cada test para no arrastrar intentos entre pruebas.
 
-- [ ] T-008 Bloqueo por límite de intentos
+- [x] T-008 Bloqueo por límite de intentos
   RF: RF-005, RF-006 | Depende de: T-007 | Archivos: 2
   Hecho cuando: `pytest backend/apps/audit/tests/test_lockout.py` pasa: superar el límite crea dos filas para el mismo intento (`LOGIN` fallido y `LOCKOUT`); el contador de límite de allauth tiene el mismo valor con y sin el adaptador de auditoría. Antes de escribir el test hay que confirmar en `allauth` cómo señala el límite, porque no hay señal para ello.
+  Decisiones: el registro de bloqueo se hace en `pre_authenticate`, junto a la fila de fallo, porque allauth rechaza antes de autenticar (ver T-007). RF-006 se verifica comprobando que el sexto intento es el que dispara el límite de allauth, sin que el adaptador consuma ni reinicie el contador. Confianza: [Probable]. Cómo revertirla: quitar el registro de `pre_authenticate` y dejar solo el de `authentication_failed`, lo que perdería los bloqueos.
 
 - [ ] T-009 Cierre de sesión
   RF: RF-009 | Depende de: T-006 | Archivos: 2
