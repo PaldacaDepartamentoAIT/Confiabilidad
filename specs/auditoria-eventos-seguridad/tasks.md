@@ -81,10 +81,11 @@ empezar antes.
   RF: RF-012, RF-013 | Depende de: T-017 | Archivos: 2
   Hecho cuando: `pytest backend/apps/audit/tests/test_admin.py` pasa: con el permiso se listan las filas con los filtros de RF-013; sin el permiso se deniega el acceso; añadir, cambiar y borrar están desactivados.
 
-- [ ] T-019 Comando de purga
+- [x] T-019 Comando de purga
   RF: RF-014, RF-012 | Depende de: T-003 | Archivos: 3
   Excepción: `management/__init__.py` y `management/commands/__init__.py` son paquetes que Django exige; no son lógica.
   Hecho cuando: `pytest backend/apps/audit/tests/test_purge.py` pasa: `manage.py purge_security_events --dry-run` informa del número sin borrar nada; sin `--dry-run` borra solo filas de más de un año y deja las recientes intactas.
+  Decisiones: "un año" se implementa como 365 días fijos (`timedelta(days=365)`), no como calendario (366 en años bisiestos). Confianza: [Suposición]. Cómo revertirla: usar `dateutil.relativedelta(years=1)` o equivalente y ajustar el test de la frontera.
 
 - [ ] T-020 Confianza en el proxy de entrada
   RF: RF-015 | Depende de: — | Archivos: 3

@@ -1,6 +1,7 @@
 from collections.abc import Iterator
 from contextlib import contextmanager
 from contextvars import ContextVar
+from datetime import datetime
 from typing import Any
 
 from django.db import models
@@ -46,6 +47,11 @@ class SecurityEventQuerySet(models.QuerySet["SecurityEvent"]):
         if not _purge_context.get():
             raise InsertOnlyError
         return super().delete()
+
+    def purge_older_than(self, cutoff: datetime) -> int:
+        with _purge_allowed():
+            deleted, _ = self.filter(created_at__lt=cutoff).delete()
+        return deleted
 
 
 class SecurityEvent(models.Model):
