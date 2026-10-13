@@ -82,7 +82,7 @@ intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al
   aserciones sobre huellas; un mutante en el mensaje de `account_stamp` hace fallar al menos uno
   de ellos; suite verde.
 
-- [ ] T-007 `codes.py` deja de firmar y comparar
+- [x] T-007 `codes.py` deja de firmar y comparar
   RF: RF-001 | Depende de: T-005, T-006 | Archivos: 2
   Archivos: `accounts/codes.py`, `accounts/tests/test_codes.py`.
   Hecho cuando: `codes.py` solo contiene `Purpose`, `generate_code` y `generate_public_id`, y no
