@@ -24,9 +24,13 @@ de cada tipo y aplicar su política. Clave de códigos: `REGISTRATION_CODE_SECRE
 `REGISTRATION_CODE_SECRET_PREVIOUS`, `REGISTRATION_CODE_SECRET_ROTATED_AT` y
 `REGISTRATION_SECRET_TRANSITION_MINUTES`. Clave de consentimientos: `CONSENT_EMAIL_HASH_SECRET`,
 sin clave anterior. Los nombres de los ajustes y sus valores por defecto no cambian (S-04). Los
-errores de configuración (`ImproperlyConfigured`, mensajes en inglés con `gettext_lazy`) son los
-de hoy: clave vacía o anterior igual a la actual, al calcular y al comprobar; fecha de rotación
-sin zona horaria o mal formada, solo al comprobar; clave anterior sin fecha, se ignora.
+errores de configuración (`ImproperlyConfigured`, mensajes en inglés con `gettext_lazy` que
+nombran el ajuste) son: clave actual vacía o de solo espacios, clave anterior de solo espacios
+(haya o no fecha de rotación) y clave anterior igual a la actual, al calcular y al comprobar;
+fecha de rotación mal formada, sin zona horaria o inexistente (el `ValueError` que lanza
+`parse_datetime` con una fecha bien escrita que no existe se convierte en este error), en toda
+comprobación, aunque la clave actual coincida. Una clave anterior vacía (`""`), o una válida sin
+fecha de rotación, se ignora.
 Sustituye a `code_secret`, `previous_code_secret`, `secret_rotated_at` y `secret_transition` de
 `apps/accounts/conf.py` y a `apps/consents/conf.py`.
 RF: RF-002, RF-003, RF-007, RF-008
@@ -39,12 +43,19 @@ Responsabilidad: llamar a M-01 en lugar de a `apps/accounts/codes.py` (huellas) 
 RF: RF-001
 
 ### M-04 Test guardián (`apps/core/tests/test_fingerprint_guard.py`)
-Responsabilidad: recorrer todos los `.py` de `apps/` y `config/` (migraciones y comandos de
-gestión incluidos), excluir las carpetas `tests/` y el propio M-01, analizar cada archivo con
-`ast` y fallar si importa o usa `hmac`, `hashlib` o `django.utils.crypto`. La lista cerrada de
-excepciones vive en el propio test como pares (archivo, uso): hoy, solo
+Responsabilidad: recorrer todos los `.py` de `backend/` (`manage.py`, `apps/`, `config/`,
+migraciones, comandos de gestión y cualquier carpeta futura), excluir las carpetas `tests/`, los
+`conftest.py`, las carpetas ocultas (`.mypy_cache`, `.pytest_cache`…) y el propio M-01, analizar
+cada archivo con `ast` y fallar si importa o usa un módulo prohibido:
+- biblioteca estándar: `hashlib`, `hmac` y sus módulos internos `_hashlib`, `_sha1`, `_sha2`,
+  `_sha256`, `_sha512`, `_sha3`, `_md5` y `_blake2`;
+- framework: `django.utils.crypto` y `django.core.signing` (su firma de datos);
+- bibliotecas criptográficas declaradas como dependencia del proyecto (D-08); hoy, ninguna.
+
+`django.contrib.auth.hashers` (utilidades de contraseñas) no está prohibido (C-08). La lista
+cerrada de excepciones vive en el propio test como pares (archivo, uso): hoy, solo
 (`apps/accounts/password_validation.py`, `hashlib.sha1`). El mensaje de fallo lista cada archivo
-y el uso encontrado.
+y el uso encontrado. No detecta módulos cargados por su nombre en texto (S-06).
 RF: RF-010
 
 ### M-05 Documentación (`specs/huellas-hmac-unificadas/resumen.md` y resúmenes afectados)
@@ -112,22 +123,37 @@ Descartada: ofrecer solo el cálculo para ese tipo.
 Motivo: lo pide RF-006 (C-06: comprobación para todos los tipos), y así nadie compara esa huella
 con `==` cuando haga falta.
 
+### D-08 Bibliotecas criptográficas declaradas
+Elegida: el guardián lee `backend/requirements*.txt` y, para cada dependencia declarada que esté
+en una tabla cerrada de bibliotecas criptográficas conocidas (`cryptography` → `cryptography`,
+`pycryptodome` → `Crypto`, `pycryptodomex` → `Cryptodome`, `pynacl` → `nacl`), añade su módulo
+de import a los prohibidos. Hoy no se declara ninguna, así que no añade nada; si alguien declara
+`cryptography`, sus usos pasan a hacer fallar la suite sin tocar el test.
+Descartada: prohibir siempre `cryptography` y las demás, estén declaradas o no.
+Motivo: C-07 decidió vigilar solo las declaradas (S-07). Leer los requirements en lugar de fijar
+la lista evita que el guardián se quede atrás el día que se declare una. Una biblioteca que no
+esté en la tabla no se vigila: la tabla se amplía con un cambio de esta spec.
+
 ## Estrategia de tests
 - **Unitario (`apps/core/tests/test_fingerprints.py`)**: vectores fijos de los cuatro mensajes
   (registro, cambio de contraseña, sello y consentimiento) (RF-001, RF-005); normalización del
   correo en el sello y en el consentimiento (RF-004); comparación en tiempo constante espiando la
   primitiva de M-01 para los tres tipos (RF-006); rotación: la clave anterior se acepta dentro
   del periodo y se rechaza fuera, y el consentimiento nunca usa clave anterior (RF-002, RF-007);
-  los cuatro casos de error de RF-008; ninguna consulta a la base de datos al calcular ni al
-  comprobar, con `django_assert_num_queries(0)` de pytest-django (RF-003). Los tests de
+  todos los casos de error de RF-008 (clave vacía o de espacios, clave anterior de espacios con
+  y sin fecha, clave anterior igual a la actual, fecha mal formada, sin zona horaria o
+  inexistente, también cuando la clave actual coincide); ninguna consulta a la base de datos al
+  calcular ni al comprobar, con `django_assert_num_queries(0)` de pytest-django (RF-003). Los tests de
   `apps/accounts/tests/test_codes.py`, `apps/consents/tests/test_hashing.py`,
   `apps/consents/tests/test_conf.py` y la parte de secretos de
   `apps/accounts/tests/test_registration_conf.py` se reescriben o se mueven aquí, sin perder
   ningún RF de sus features (C-05).
 - **Guardián (`apps/core/tests/test_fingerprint_guard.py`)**: el test sobre el código real
   (RF-010), más casos con fuentes sintéticas en `tmp_path` (import directo, `from … import …
-  as`, `django.utils.crypto`, excepción permitida y excepción con otro uso) para demostrar que
-  detecta e indica el archivo.
+  as`, `django.utils.crypto`, `django.core.signing`, `_hashlib`, `_sha256`, `manage.py`, una
+  carpeta nueva, excepción permitida, excepción con otro uso, `django.contrib.auth.hashers`
+  permitido, `cryptography` permitido sin declarar y prohibido al declararlo en un
+  `requirements.txt` sintético) para demostrar que detecta e indica el archivo.
 - **Integración (suites existentes)**: `test_processes.py`, `test_registration_service.py`,
   `test_password_reset_service.py`, sus comandos y los tests de consentimientos deben pasar. Solo
   se tocan sus rutas de `monkeypatch` u `override_settings` si apuntan a lo movido.
@@ -148,7 +174,7 @@ con `==` cuando haga falta.
 | RF-007 | M-02 | Unitario |
 | RF-008 | M-02 | Unitario |
 | RF-009 | — | OBSOLETO |
-| RF-010 | M-04 | Guardián (código real + fuentes sintéticas) |
+| RF-010 | M-04 (D-05, D-08) | Guardián (código real + fuentes sintéticas + requirements sintéticos) |
 
 ## RF sin cobertura
 Ninguno. RF-009 está obsoleto y no se diseña.
