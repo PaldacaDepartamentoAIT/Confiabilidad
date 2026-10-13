@@ -126,10 +126,11 @@ empezar antes.
   Causa: `ModelAdmin.has_view_permission` acepta el permiso de vista o el de cambio; un usuario con solo `change_securityevent` ve el listado.
   Hecho cuando: `pytest backend/apps/audit/tests/test_admin.py` pasa con un caso en el que un usuario con solo `change_securityevent` recibe 403 en el listado.
 
-- [ ] T-024 Filtros y búsqueda de RF-013 en el admin
+- [x] T-024 Filtros y búsqueda de RF-013 en el admin
   Tipo: implementación y test | Origen: validación de RF-013 y cambio de spec aprobado | RF: RF-013 | Depende de: T-018, T-023 | Archivos: 3
   Excepción: la plantilla del filtro de rango (D-11, `apps/audit/templates/admin/audit/filter_date_range.html`) es el tercer archivo; no tiene lógica de negocio.
   Hecho cuando: `pytest backend/apps/audit/tests/test_admin.py` pasa: los filtros laterales por tipo, resultado y rango de fechas (`desde`, `hasta`) devuelven solo los eventos del rango; la búsqueda por huella del correo es exacta y la búsqueda por IP es parcial.
+  Decisiones: el `force_login` de los tests genera filas `LOGIN` por el receptor de auditoría, así que los tests de conteo usan tipos que el propio login no produce (`CODE_SENT`, `LOGOUT`). Confianza: [Cierto]. Cómo revertirla: no aplica, es el comportamiento correcto de la auditoría.
 
 - [ ] T-025 Test: ningún secreto en ningún flujo
   Tipo: test | Origen: validación de RF-011 | RF: RF-011 | Depende de: T-006, T-007, T-008, T-009, T-010, T-012, T-013, T-014, T-015, T-016 | Archivos: 1

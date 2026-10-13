@@ -1,0 +1,16 @@
+{% load i18n %}
+<details open>
+  <summary>{{ title }}</summary>
+  <form method="get">
+    {% for key, value in spec.hidden_fields %}
+      <input type="hidden" name="{{ key }}" value="{{ value }}">
+    {% endfor %}
+    <p>
+      <label>{% translate "From" %} <input type="date" name="desde" value="{{ spec.start }}"></label>
+    </p>
+    <p>
+      <label>{% translate "To" %} <input type="date" name="hasta" value="{{ spec.end }}"></label>
+    </p>
+    <button type="submit">{% translate "Apply" %}</button>
+  </form>
+</details>
