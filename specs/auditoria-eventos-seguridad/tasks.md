@@ -132,9 +132,10 @@ empezar antes.
   Hecho cuando: `pytest backend/apps/audit/tests/test_admin.py` pasa: los filtros laterales por tipo, resultado y rango de fechas (`desde`, `hasta`) devuelven solo los eventos del rango; la búsqueda por huella del correo es exacta y la búsqueda por IP es parcial.
   Decisiones: el `force_login` de los tests genera filas `LOGIN` por el receptor de auditoría, así que los tests de conteo usan tipos que el propio login no produce (`CODE_SENT`, `LOGOUT`). Confianza: [Cierto]. Cómo revertirla: no aplica, es el comportamiento correcto de la auditoría.
 
-- [ ] T-025 Test: ningún secreto en ningún flujo
+- [x] T-025 Test: ningún secreto en ningún flujo
   Tipo: test | Origen: validación de RF-011 | RF: RF-011 | Depende de: T-006, T-007, T-008, T-009, T-010, T-012, T-013, T-014, T-015, T-016 | Archivos: 1
   Hecho cuando: `pytest backend/apps/audit/tests/test_secrets_by_flow.py` pasa: para cada flujo (login ok, login fallido, bloqueo, cierre de sesión, registro, código, restablecimiento, cambio de contraseña), ni la contraseña, ni el código, ni el token de sesión, ni el correo en claro aparecen en ningún campo de las filas.
+  Decisiones: el test pasó sin cambios de código porque el registro ya era seguro en los siete flujos; por eso se verificó con un mutante que guarda el correo en claro, que hace fallar los siete casos. Confianza: [Cierto]. Cómo revertirla: no aplica.
 
 - [ ] T-026 Test: lista de proxies vacía no confía en ningún proxy
   Tipo: test | Origen: cambio de RF-015 | RF: RF-015 | Depende de: T-020 | Archivos: 1
