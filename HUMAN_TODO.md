@@ -239,6 +239,12 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
   ```
   Deberías ver la imagen construida y todos los tests en verde.
 
+- [ ] **Fusionar `feat/auditoria-eventos-seguridad` con tu autoría** (decisión del 2026-10-14). Los
+  commits de la rama tienen como autor `Claude <noreply@anthropic.com>`, que viene de la configuración
+  git del entorno remoto, y P-10 prohíbe acreditar a una IA. Al fusionar el PR, usa «Squash and merge»
+  desde tu cuenta para que el commit resultante quede a tu nombre. `main` ya tiene commits anteriores
+  con ese autor: corregirlos exige reescribir la rama principal y es una decisión aparte.
+
 ## Hecho
 
 <!-- Mueve aquí las tareas completadas, con fecha. -->
