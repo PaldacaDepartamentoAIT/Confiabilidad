@@ -1,5 +1,5 @@
 # Plan: correo-asincrono-plantillas
-Estado: borrador
+Estado: aprobado
 
 ## Módulos
 ### M-01 App `apps/emails`: modelos y migraciones
@@ -22,9 +22,9 @@ quien llama y, al confirmarse, la encola en Celery. Resuelve el idioma, aplica e
 tienes cuenta" y cifra el código. No añade cabeceras ni enlaces de baja.
 RF: RF-002, RF-003, RF-007, RF-011, RF-013
 
-### M-04 Cifrado del código (`apps/emails/crypto.py`)
-Responsabilidad: cifrar y descifrar el código de un correo pendiente con una clave propia (con clave
-anterior opcional para rotarla).
+### M-04 Máscara del código (`apps/core/fingerprints.py`, punto único de `huellas-hmac-unificadas`)
+Responsabilidad: ocultar y recuperar el código de un correo pendiente con una máscara HMAC de clave
+propia.
 RF: RF-018
 
 ### M-05 Entrega y reintentos (`apps/emails/delivery.py`, `apps/emails/tasks.py`, `apps/emails/errors.py`)
@@ -48,7 +48,7 @@ RF: RF-009, RF-025
 
 ### M-08 Configuración (`config/settings.py`, `backend/.env.example`, `HUMAN_TODO.md`)
 Responsabilidad: proveedor SMTP por variables de entorno (consola en desarrollo), remitente,
-dirección de soporte, dirección base del frontend, clave de cifrado de los códigos, ventanas
+dirección de soporte, dirección base del frontend, clave de la máscara de los códigos, ventanas
 configurables (aviso "ya tienes cuenta" y reintento de avisos) y el barrido en el planificador.
 RF: RF-007, RF-016, RF-018, RF-024
 
@@ -71,8 +71,8 @@ RF: RF-004, RF-005, RF-006, RF-008, RF-019
   `consents`), `subject`, `body`, `updated_at`. Única por (`kind`, `locale`). Historial con
   `simple_history` (autor por `HistoryRequestMiddleware`).
 - `OutboundEmail`: `kind`, `locale`, `recipient`, `context` (JSON con el nombre y los datos no
-  secretos), `purpose` y `public_id` (solo en los de código), `encrypted_code` (nulo salvo en los de
-  código pendientes), `status` (`pending` | `failed`), `attempts`, `next_attempt_at`, `last_error`,
+  secretos), `purpose` y `public_id` (solo en los de código), `masked_code` (entero) y `code_nonce` (texto),
+  nulos salvo en los de código pendientes, `status` (`pending` | `failed`), `attempts`, `next_attempt_at`, `last_error`,
   `created_at`. Índice por (`status`, `next_attempt_at`). Los entregados y los descartados se borran;
   los fallidos se quedan, sin código, hasta que soporte los borre.
 - `FailedEmail`: modelo proxy de `OutboundEmail` con `status = failed`, solo para el panel.
@@ -118,7 +118,7 @@ llegar dos veces (entrega al menos una vez).
 
 ### D-05 Vigencia del código consultada al entregar
 Elegida: `apps/emails` mantiene un registro de comprobadores por propósito, y `apps/accounts` (en
-`AppConfig.ready`) registra uno que, con el propósito, el `public_id` y el código descifrado,
+`AppConfig.ready`) registra uno que, con el propósito, el `public_id` y el código recuperado,
 devuelve la caducidad del código si el proceso existe, el código coincide con su huella, no está
 validado y no ha caducado; si no, nada. Sin caducidad, el correo se descarta (RF-015).
 Descartada: copiar la caducidad en la fila (no detecta un código validado ni reemplazado) e importar
@@ -127,16 +127,22 @@ la bandeja).
 Motivo: detecta caducado, validado y reemplazado con la misma regla de huella que ya usa la
 verificación, sin acoplar las apps.
 
-### D-06 Cifrado del código con Fernet
-Elegida: `cryptography.fernet` (`MultiFernet` con la clave actual y, si existe, la anterior). Clave
-en `EMAIL_CODE_KEY`; si no se define, se deriva de `DJANGO_SECRET_KEY` con SHA-256 para que
-desarrollo y CI funcionen igual. El texto cifrado se borra al entregar, descartar o fallar.
-`cryptography` ya está instalada (la trae `daphne`), pero hay que **declararla en
-`requirements.txt`**: usarla sin declararla dejaría el proyecto a merced de las dependencias de
-`daphne`.
-Descartada: AES-GCM montado a mano con `cryptography.hazmat` (más código, más fácil de equivocarse)
-y no cifrar (rechazado en C-02 de la spec).
-Motivo: Fernet autentica y cifra, y su formato está probado.
+### D-06 Código oculto con una máscara HMAC
+Elegida: se guarda (código + máscara) mod 10⁶, donde la máscara es HMAC-SHA256(clave, nonce
+aleatorio de 128 bits de la fila) reducido a 6 dígitos, calculado en `apps/core/fingerprints.py`.
+Para recuperarlo se resta la máscara. La clave es propia (`EMAIL_CODE_SECRET`, RF-018); sin
+definir, se usa `email-code:` + `DJANGO_SECRET_KEY`, y es un error de configuración que coincida con
+`REGISTRATION_CODE_SECRET`. No admite clave anterior: al rotarla, los correos de código pendientes
+dan un código que no coincide con su huella y se descartan; la persona puede reenviar. El valor y el
+nonce se borran al entregar, descartar o fallar.
+Descartada: Fernet de `cryptography` (dependencia nueva, y el guardián de `huellas-hmac-unificadas`
+obliga a usarla en el mismo punto único) y guardar solo la huella (no se puede deshacer).
+Motivo: sin dependencias y con la misma primitiva y el mismo punto único que el resto del proyecto.
+Sin la clave, el valor guardado no revela nada del código, porque el nonce no se repite. La
+integridad la da la comprobación de la huella al entregar (D-05). *Coste:* es una construcción
+propia, aunque estándar; repetir un nonce con la misma clave revelaría la diferencia entre dos
+códigos, por eso es aleatorio de 128 bits. Añadir esta clave exige un `sdd-cambio` de RF-002 de
+`huellas-hmac-unificadas` antes de implementar.
 
 ### D-07 Sintaxis propia de plantilla con lista blanca
 Elegida: `{{ variable }}`, sustituida con una expresión regular; cada tipo tiene sus variables
@@ -205,10 +211,11 @@ Descartada: confiar solo en el panel.
 Motivo: RF-022 exige impedir el borrado por cualquier vía de la aplicación.
 
 ## Estrategia de tests
-- Unitario (`test_rendering.py`, `test_crypto.py`, `test_errors.py`): variables y validación por
-  tipo, enlaces de otro dominio, bloque fijo en los tres idiomas, plazo con redondeo y "menos de un
-  minuto", nombres Unicode insertados tal cual, cifrado y rotación de clave, clasificación de cada
-  excepción SMTP (RF-010, RF-014, RF-018, RF-021, RF-023, RF-026).
+- Unitario (`test_rendering.py`, `test_errors.py` y, en `apps/core/tests/test_fingerprints.py`, la
+  máscara): variables y validación por tipo, enlaces de otro dominio, bloque fijo en los tres
+  idiomas, plazo con redondeo y "menos de un minuto", nombres Unicode insertados tal cual, ida y
+  vuelta de la máscara, nonce distinto por fila, clave propia distinta de la de códigos y error si
+  coinciden, clasificación de cada excepción SMTP (RF-010, RF-014, RF-018, RF-021, RF-023, RF-026).
 - Servicio (`test_outbox.py`, `test_delivery.py`) con el proveedor simulado (D-15) y fechas movidas
   con `update()` (D-07 de `procesos-pendientes`): encolado al confirmar y nada si se deshace, fila
   pendiente si encolar falla y barrido posterior, reintento hasta entregar, descarte de código
@@ -249,7 +256,7 @@ Motivo: RF-022 exige impedir el borrado por cualquier vía de la aplicación.
 | RF-015 | M-05, M-09 (D-04, D-05) | servicio |
 | RF-016 | M-05, M-08 (D-04) | servicio |
 | RF-017 | M-01, M-05, M-06 (D-12) | servicio + panel |
-| RF-018 | M-04, M-05 (D-06) | unitario + servicio |
+| RF-018 | M-04 (en `core`), M-05 (D-06) | unitario + servicio |
 | RF-019 | M-10 | servicio (en `procesos-pendientes` y `cambio-contrasena`) |
 | RF-020 | M-01, M-06 | modelo + panel |
 | RF-021 | M-02, M-06 (D-07) | unitario + panel |
@@ -272,6 +279,6 @@ que esas tareas estén hechas.
   de enviarlo.
 - Con MXroute, el límite de envío por hora (S-15) se manifiesta como errores temporales: los correos
   esperan y se reintentan, en orden de llegada (S-16).
-- Sin `EMAIL_CODE_KEY`, la clave se deriva de `DJANGO_SECRET_KEY`: rotar esta última invalida los
-  códigos cifrados pendientes, que se descartarán como si hubieran fallado. En producción debe
-  definirse aparte (`HUMAN_TODO.md`).
+- Sin `EMAIL_CODE_SECRET`, la clave se deriva de `DJANGO_SECRET_KEY`: rotar esta última descarta
+  los correos de código pendientes (la persona puede reenviar). En producción debe definirse aparte
+  (`HUMAN_TODO.md`).
