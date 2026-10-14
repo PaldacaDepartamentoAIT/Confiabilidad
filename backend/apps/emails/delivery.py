@@ -41,10 +41,12 @@ def deliver(email_id: int) -> None:
     values = {key: str(value) for key, value in email.context.items()}
     if email.masked_code is not None:
         code = fingerprints.unmask_code(email.masked_code, email.code_nonce)
-        if _code_expiry(email, code) is None:
+        expiry = _code_expiry(email, code)
+        if expiry is None:
             email.delete()
             return
         values["code"] = code
+        values["expires_in"] = rendering.expires_in(email.locale, expiry - timezone.now())
         values["link"] = rendering.process_link(email.purpose, email.public_id)
     template = EmailTemplate.objects.get(kind=email.kind, locale=email.locale)
     subject, body = rendering.compose(

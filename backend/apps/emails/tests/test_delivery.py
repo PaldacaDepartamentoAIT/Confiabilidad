@@ -364,3 +364,13 @@ def test_registering_a_checker_makes_it_available() -> None:
     delivery.register_code_check("password_reset", check)
 
     assert delivery._CODE_CHECKS["password_reset"] is check
+
+
+def test_the_remaining_time_is_computed_when_the_email_is_delivered(checker: Any) -> None:
+    checker.expiry = timezone.now() + timedelta(minutes=6, seconds=10)
+
+    delivery.deliver(_code_email().pk)
+
+    [message] = FakeBackend.sent
+    assert "El código vence en 6 minutos." in message.body
+    assert "15 minutos" not in message.body

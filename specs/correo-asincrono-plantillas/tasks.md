@@ -253,7 +253,7 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   (2) Un correo descartado se borra entero, código incluido, sin dejar rastro en el registro de
   fallos: no es un fallo del proveedor. [Probable] Revertir: marcarlo como `failed`.
 
-- [ ] T-021 Plazo calculado al entregar
+- [x] T-021 Plazo calculado al entregar
   RF: RF-014 | Depende de: T-005, T-020 | Archivos: 2
   Archivos: `delivery.py`, `tests/test_delivery.py`.
   Hecho cuando: un correo encolado con 15 min de vigencia y entregado cuando quedan 6 min 10 s dice
