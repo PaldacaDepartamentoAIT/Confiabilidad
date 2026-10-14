@@ -265,10 +265,12 @@ empezar antes.
   Mutantes: (1) emitir un fallo de registro en `EXPIRED` y en `ACCOUNT_EXISTS` → detectado por los dos tests. (2) Emitirlo antes de validar la contraseña → equivalente: `complete()` revierte la fila al relanzar `ValidationError`, como en T-037.
   Decisiones: el proceso se caduca una hora atrás, más allá de la gracia de 15 minutos. Los tests pasan sin cambiar código; los prueba el mutante 1. Confianza: [Cierto]. Cómo revertirla: quitar los tests.
 
-- [ ] T-046 Corrección: con el proceso caducado se registra la validación fallida aunque la cuenta haya cambiado
+- [x] T-046 Corrección: con el proceso caducado se registra la validación fallida aunque la cuenta haya cambiado
   Tipo: corrección | Origen: validación de RF-008 | RF: RF-008 | Depende de: — | Archivos: 1 (`apps/audit/tests/test_password_reset_events.py`)
   Causa: ningún test combina la caducidad del proceso con un cambio de cuenta, y el mutante que comprueba la cuenta antes que la caducidad sobrevive.
   Hecho cuando: `pytest backend/apps/audit/tests/test_password_reset_events.py` pasa con un proceso caducado tras la gracia y la cuenta inactiva, con el correo cambiado o con la contraseña cambiada. En los tres casos `verify` devuelve `EXPIRED` y queda una fila `CODE_VERIFIED` con `success=False`. El mutante se detecta.
+  Mutantes: comprobar la cuenta antes que la caducidad → detectado en los tres casos.
+  Decisiones: el proceso se caduca una hora atrás, después de cambiar la cuenta. Pasa sin cambiar código; lo prueba el mutante. Confianza: [Cierto]. Cómo revertirla: quitar el test.
 
 - [ ] T-047 Corrección: los espacios en `TRUSTED_PROXY_IPS` no quitan la confianza a un proxy
   Tipo: corrección | Origen: validación de RF-015 | RF: RF-015 | Depende de: — | Archivos: 2 (`apps/core/middleware.py`, `apps/core/tests/test_real_ip.py`)

@@ -174,3 +174,17 @@ def test_account_refusal_leaves_no_verification_row(
 
     assert result is refusal
     assert _verifications() == []
+
+
+@pytest.mark.parametrize("change", [_deactivate, _change_email, _change_password])
+def test_expired_process_is_recorded_as_failed_even_if_the_account_changed(
+    audit_key: None, change: Callable[[User], None]
+) -> None:
+    started = _started_reset()
+    change(User.objects.get(email=EMAIL))
+    PasswordResetRequest.objects.update(code_expires_at=timezone.now() - timedelta(hours=1))
+
+    result = password_reset.verify(public_id=started.public_id, code=started.code)
+
+    assert result is VerifyResult.EXPIRED
+    assert _verifications() == [False]
