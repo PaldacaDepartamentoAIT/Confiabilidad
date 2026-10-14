@@ -2,10 +2,12 @@ from collections.abc import Callable
 from typing import Any
 
 import pytest
+from django.core.exceptions import ValidationError
 from django.http import HttpResponse
 from django.test import RequestFactory
 
-from apps.accounts import signals
+from apps.accounts import password_reset, signals
+from apps.accounts.tests.factories import make_user
 from apps.audit.middleware import CurrentRequestMiddleware
 from apps.audit.models import EventType, SecurityEvent
 from apps.core.fingerprints import audit_email_fingerprint
@@ -13,6 +15,7 @@ from apps.core.fingerprints import audit_email_fingerprint
 pytestmark = pytest.mark.django_db
 
 EMAIL = "ana@x.com"
+WEAK_PASSWORD = "12345678"
 
 
 @pytest.fixture
@@ -55,3 +58,18 @@ def test_rejected_reset_code_is_recorded_as_failed_verification(audit_key: None)
     )
     event = SecurityEvent.objects.get(event_type=EventType.CODE_VERIFIED)
     assert event.success is False
+
+
+def test_reset_rejected_for_weak_password_leaves_no_reset_or_failure_row(audit_key: None) -> None:
+    make_user(email=EMAIL, name="Ana García")
+    started = password_reset.start(email=EMAIL)
+    assert isinstance(started, password_reset.Started)
+    assert password_reset.verify(public_id=started.public_id, code=started.code) == (
+        password_reset.VerifyResult.VERIFIED
+    )
+    with pytest.raises(ValidationError):
+        _inside_request(
+            lambda: password_reset.complete(public_id=started.public_id, password=WEAK_PASSWORD)
+        )
+    assert not SecurityEvent.objects.filter(event_type=EventType.PASSWORD_RESET).exists()
+    assert not SecurityEvent.objects.filter(success=False).exists()

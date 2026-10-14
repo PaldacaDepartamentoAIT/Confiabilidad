@@ -202,6 +202,13 @@ empezar antes.
   Hecho cuando: `pytest backend/apps/audit/tests/test_purge.py` pasa con un caso que, con referencia posterior, conserva un evento reciente; `purge_expired` toma el reloj dentro de la función y no recibe la fecha del llamador; la suite de auditoría sigue en verde.
   Decisiones: `purge_expired()` no recibe parámetros y toma `timezone.now()` dentro de la función. Confianza: [Cierto]. Cómo revertirla: volver a aceptar `now`, lo que reabre el hueco.
 
+- [x] T-037 Test: un cambio o restablecimiento rechazado por contraseña no válida no deja evento
+  Tipo: test | Origen: aclaración de RF-010 | RF: RF-010 | Depende de: T-031 | Archivos: 2 (`apps/audit/tests/test_password_reset_events.py`, `apps/audit/tests/test_password_changed.py`)
+  Causa: ningún test comprobaba que el rechazo por contraseña no válida no deja fila; la regla nueva no tenía prueba.
+  Hecho cuando: `pytest backend/apps/audit/tests/test_password_reset_events.py backend/apps/audit/tests/test_password_changed.py` pasa con un intento rechazado por contraseña no válida sin filas nuevas de restablecimiento ni de fallo; un mutante que registra un fallo en el cambio lo detecta.
+  Mutantes: (1) cambio: registrar un fallo desde el adaptador de allauth → detectado (1 fallo). (2) restablecimiento: registrar un fallo con la señal dentro de la transacción de `complete()` → sin efecto observable, porque la transacción revierte la fila al relanzar el error. Anotado como mutante equivalente; no detiene.
+  Decisiones: el cambio se prueba con el formulario de allauth y el restablecimiento con el servicio real. Confianza: [Cierto]. Cómo revertirla: quitar los dos tests.
+
 ## RF sin tarea
 Ninguno. Todos los RF de la spec (RF-001 a RF-016) aparecen en al menos una tarea. RF-010 aparece como cubierto en su parte aceptada (el residual de perfil y deshabilitación queda en T-016, con emisión pendiente de otra feature).
 
@@ -217,3 +224,4 @@ Ninguno. Todos los RF de la spec (RF-001 a RF-016) aparecen en al menos una tare
 - 2026-10-13 — Corrección T-033 (gestor base sin guardas) tras la validación — RF: RF-012 — Estado: aprobado
 - 2026-10-14 — Correcciones T-034 (save_base) y T-035 (purga de un año sin método público) tras la validación — RF: RF-012, RF-014 — Estado: aprobado
 - 2026-10-14 — Corrección T-036 (purga sin fecha de referencia del llamador) tras la validación de RF-014 — RF: RF-014 — Estado: aprobado
+- 2026-10-14 — T-037 (test de rechazo por contraseña no válida, aclaración de RF-010) — RF: RF-010 — Estado: aprobado
