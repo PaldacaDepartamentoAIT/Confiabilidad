@@ -101,11 +101,15 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   `soporte@localhost`, que en producción debe definirse (T-030). [Cierto] (3) `compose()` reúne
   sustitución y bloque para que la entrega (T-013) tenga una sola llamada. [Cierto]
 
-- [ ] T-008 Idiomas admitidos y normalización
+- [x] T-008 Idiomas admitidos y normalización
   RF: RF-013 (D-10) | Depende de: — | Archivos: 2
   Archivos: `locales.py`, `tests/test_locales.py`.
   Hecho cuando: `"es"`, `"pt-BR"`, `"pt-br"`, `"pt_BR"`, `"EN"` y `" en "` se normalizan a `es`,
   `pt-BR`, `pt-BR`, `pt-BR`, `en` y `en`; `None`, `""`, `"fr"` y `"pt"` dan `es`; suite verde.
+  Decisiones: (1) Una variante regional distinta de pt-BR (`es-MX`, `pt-PT`) cae en el idioma por
+  defecto, no en su idioma base: la spec solo admite los tres. [Probable] Revertir: mapear la
+  parte anterior al guion. (2) `LANGUAGE_CHOICES` vive aquí para que `accounts` lo use en T-009;
+  `EmailTemplate.Locale` repite los mismos tres valores. [Cierto] Revertir: unificarlos.
 
 - [ ] T-009 Idioma en la cuenta y en el registro pendiente
   RF: RF-012 (D-10) | Depende de: T-008 | Archivos: 3
