@@ -212,4 +212,8 @@ SIMPLE_HISTORY_REVERT_DISABLED = True
 
 # Consentimientos: secreto de la huella del correo (RF-012). No debe rotar nunca (S-09).
 CONSENT_EMAIL_HASH_SECRET = env("CONSENT_EMAIL_HASH_SECRET", default=SECRET_KEY)
-AUDIT_HASH_SECRET = env("AUDIT_HASH_SECRET", default="")
+# En desarrollo hay un valor fijo para que Docker arranque sin .env; sin DEBUG, audit.E001 exige la
+# clave (D-05, P-02).
+AUDIT_HASH_SECRET = env("AUDIT_HASH_SECRET", default="") or (
+    "dev-audit-secret-change-me" if DEBUG else ""
+)

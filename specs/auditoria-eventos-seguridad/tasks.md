@@ -244,10 +244,12 @@ empezar antes.
   Mutantes: la fila `LOGIN` del límite con `invalid_credentials` → detectado.
   Decisiones: el test toma solo las filas con `id` mayor que la última anterior al intento rechazado, para contar exactamente las que deja ese intento. Pasa sin cambiar código; lo prueba el mutante. Confianza: [Cierto]. Cómo revertirla: quitar el test.
 
-- [ ] T-043 Corrección: el backend arranca en desarrollo sin `.env` y sigue fallando en producción sin clave
+- [x] T-043 Corrección: el backend arranca en desarrollo sin `.env` y sigue fallando en producción sin clave
   Tipo: corrección | Origen: validación (P-02) | RF: RF-011 (D-05) | Depende de: — | Archivos: 2 (`config/settings.py`, `apps/core/tests/test_audit_fingerprints.py`)
   Causa: D-05 hace fallar el arranque sin `AUDIT_HASH_SECRET`, y Docker Compose no le da valor.
   Hecho cuando: un test en un proceso aparte comprueba que `manage.py check` pasa con `DJANGO_DEBUG=1` y la clave vacía, y falla con `audit.E001` con `DJANGO_DEBUG=0` y la clave vacía. Un mutante que usa el valor de desarrollo también sin `DEBUG` se detecta.
+  Mutantes: valor de desarrollo también sin `DEBUG` → detectado.
+  Decisiones: una clave vacía cuenta como ausente (`env(...) or ...`), para que `AUDIT_HASH_SECRET=` en el entorno no deje sin valor el desarrollo. Los tests lanzan `manage.py check` en un proceso aparte para leer `settings.py` desde cero. Confianza: [Cierto]. Cómo revertirla: volver a `default=""`, lo que rompe P-02.
 
 - [ ] T-044 Test: el cambio de contraseña por el flujo real deja su fila
   Tipo: test | Origen: validación (R-5) | RF: RF-010 | Depende de: T-037 | Archivos: 1 (`apps/audit/tests/test_password_changed.py`)
