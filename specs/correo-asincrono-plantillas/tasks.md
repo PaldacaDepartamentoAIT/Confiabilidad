@@ -273,7 +273,7 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   (2) Un correo descartado se borra entero, código incluido, sin dejar rastro en el registro de
   fallos: no es un fallo del proveedor. [Probable] Revertir: marcarlo como `failed`.
 
-- [ ] T-023 Proveedor por entorno y barrido en el planificador
+- [x] T-023 Proveedor por entorno y barrido en el planificador
   RF: RF-024 (D-02, D-14) | Depende de: T-013 | Archivos: 3
   Archivos: `config/settings.py`, `.env.example`, `apps/emails/tests/test_settings.py` (en
   `backend/`).
@@ -282,6 +282,10 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   backend SMTP con esos valores; sin `EMAIL_BACKEND` definido, usa el de consola;
   `CELERY_BEAT_SCHEDULE` incluye `dispatch_due` cada 30 s; `.env.example` documenta todas las
   variables de la feature comentadas; suite verde.
+  Decisiones: (1) El registro de comprobadores vive en `delivery.py` (`register_code_check`); el
+  comprobador recibe `public_id` y el código recuperado y devuelve la caducidad o `None`. [Cierto]
+  (2) Un correo descartado se borra entero, código incluido, sin dejar rastro en el registro de
+  fallos: no es un fallo del proveedor. [Probable] Revertir: marcarlo como `failed`.
 
 - [ ] T-024 Panel de plantillas
   RF: RF-020, RF-021, RF-022 (D-16) | Depende de: T-004, T-007 | Archivos: 2

@@ -203,6 +203,23 @@ REGISTRATION_SECRET_TRANSITION_MINUTES = env.int(
 PWNED_PASSWORDS_TIMEOUT_SECONDS = env.float("PWNED_PASSWORDS_TIMEOUT_SECONDS", default=2.0)
 PWNED_PASSWORDS_ENABLED = env.bool("PWNED_PASSWORDS_ENABLED", default=True)
 
+# Correos: proveedor de envío por entorno (D-02). Sin EMAIL_BACKEND, el correo completo sale
+# por la consola del worker. En producción: SMTP contra MXroute, con las credenciales en SOPS.
+EMAIL_BACKEND = env("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
+EMAIL_HOST = env("EMAIL_HOST", default="localhost")
+EMAIL_PORT = env.int("EMAIL_PORT", default=465)
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
+EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL", default=True)
+EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=False)
+EMAIL_TIMEOUT = env.int("EMAIL_TIMEOUT", default=10)
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="no-responder@localhost")
+
+# Barrido de la bandeja de salida: encola los correos pendientes con el intento vencido (D-14).
+CELERY_BEAT_SCHEDULE = {
+    "emails-dispatch-due": {"task": "apps.emails.tasks.dispatch_due", "schedule": 30.0},
+}
+
 # Correos: dirección del frontend a la que llevan los enlaces de los correos (D-09).
 FRONTEND_BASE_URL = env("FRONTEND_BASE_URL", default="http://localhost:5173")
 # Dirección a la que el titular reporta un aviso de seguridad que no reconoce (RF-010).
