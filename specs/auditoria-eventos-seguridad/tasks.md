@@ -230,10 +230,12 @@ empezar antes.
   Mutantes: (1) `apps/audit/admin.py` importa `_purge_allowed` → detectado. (2) El escáner deja de resolver `modulo.purge_expired` → lo detectan sus tests unitarios (2 fallos).
   Decisiones: análisis estático con `ast`, con el mismo patrón que `apps/core/tests/test_fingerprint_guard.py`. Cubre imports absolutos y relativos, alias, atributos y `getattr` con el nombre literal. No cubre accesos dinámicos con nombres construidos en ejecución, que quedan como riesgo residual junto al SQL directo (RF-012). El test pasa sin cambiar código, porque hoy solo el modelo y el comando usan la purga. Confianza: [Cierto]. Cómo revertirla: quitar el archivo.
 
-- [ ] T-041 Corrección: tests de los rechazos de código sin cobertura
+- [x] T-041 Corrección: tests de los rechazos de código sin cobertura
   Tipo: corrección | Origen: validación de RF-008 | RF: RF-008 | Depende de: T-038 | Archivos: 2 (`apps/audit/tests/test_registration_events.py`, `apps/audit/tests/test_password_reset_events.py`)
   Causa: ningún test comprueba que `LOCKED` y `ALREADY_VERIFIED` dejan `CODE_VERIFIED` con `success=False`, ni que `NOT_FOUND` y `AccountRefusal` no dejan fila. D-16 afirmaba lo contrario.
   Hecho cuando: `pytest backend/apps/audit/tests/test_registration_events.py backend/apps/audit/tests/test_password_reset_events.py` pasa con los servicios reales. `LOCKED` y `ALREADY_VERIFIED` dejan una fila con `success=False`. `NOT_FOUND` y la negativa por cuenta inactiva, correo cambiado o contraseña cambiada no dejan fila `CODE_VERIFIED`. Un mutante que no registra `LOCKED` y otro que registra en `AccountRefusal` se detectan.
+  Mutantes: no registrar `LOCKED` en `registration.verify` → detectado; lo mismo en `password_reset.verify` → detectado; registrar fallo en `AccountRefusal` → detectado en los tres casos (cuenta inactiva, correo cambiado y contraseña cambiada).
+  Decisiones: los tests pasan sin cambiar código, porque el comportamiento ya era el correcto; lo prueban los mutantes. `LOCKED` y `ALREADY_VERIFIED` se prueban en los dos servicios, no solo en uno. Confianza: [Cierto]. Cómo revertirla: quitar los tests.
 
 - [ ] T-042 Corrección: el fallo de inicio de sesión por límite lleva su motivo
   Tipo: corrección | Origen: validación de RF-004 y RF-005 | RF: RF-004, RF-005 | Depende de: T-030 | Archivos: 1 (`apps/audit/tests/test_lockout.py`)

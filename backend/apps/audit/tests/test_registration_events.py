@@ -7,7 +7,7 @@ from django.http import HttpResponse
 from django.test import RequestFactory
 from django.utils import timezone
 
-from apps.accounts import registration, signals
+from apps.accounts import conf, registration, signals
 from apps.accounts.models import PendingRegistration
 from apps.accounts.processes import VerifyResult
 from apps.audit.middleware import CurrentRequestMiddleware, current_request
@@ -90,3 +90,52 @@ def test_code_expired_within_grace_is_recorded_as_failed_verification(audit_key:
     event = SecurityEvent.objects.get(event_type=EventType.CODE_VERIFIED)
     assert event.success is False
     assert event.user_email_hash == audit_email_fingerprint(EMAIL)
+
+
+def _started_registration() -> registration.Started:
+    started = registration.start(
+        email=EMAIL, name="Ana García", birthdate=date(1990, 1, 1), country="ES"
+    )
+    assert isinstance(started, registration.Started)
+    return started
+
+
+def _wrong(code: str) -> str:
+    return "1" * len(code) if code == "0" * len(code) else "0" * len(code)
+
+
+def _verifications() -> list[bool]:
+    return list(
+        SecurityEvent.objects.filter(event_type=EventType.CODE_VERIFIED)
+        .order_by("id")
+        .values_list("success", flat=True)
+    )
+
+
+def test_locked_code_is_recorded_as_failed_verification(audit_key: None) -> None:
+    started = _started_registration()
+    limit = conf.max_failed_attempts()
+    for _ in range(limit):
+        registration.verify(public_id=started.public_id, code=_wrong(started.code))
+
+    result = registration.verify(public_id=started.public_id, code=started.code)
+
+    assert result is VerifyResult.LOCKED
+    assert _verifications() == [False] * (limit + 1)
+
+
+def test_already_verified_code_is_recorded_as_failed_verification(audit_key: None) -> None:
+    started = _started_registration()
+    registration.verify(public_id=started.public_id, code=started.code)
+
+    result = registration.verify(public_id=started.public_id, code=started.code)
+
+    assert result is VerifyResult.ALREADY_VERIFIED
+    assert _verifications() == [True, False]
+
+
+def test_unknown_registration_leaves_no_verification_row(audit_key: None) -> None:
+    result = registration.verify(public_id="unknown", code="000000")
+
+    assert result is VerifyResult.NOT_FOUND
+    assert _verifications() == []

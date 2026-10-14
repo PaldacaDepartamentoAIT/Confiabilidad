@@ -8,8 +8,8 @@ from django.http import HttpResponse
 from django.test import RequestFactory
 from django.utils import timezone
 
-from apps.accounts import password_reset, signals
-from apps.accounts.models import PasswordResetRequest
+from apps.accounts import conf, password_reset, signals
+from apps.accounts.models import PasswordResetRequest, User
 from apps.accounts.processes import VerifyResult
 from apps.accounts.tests.factories import make_user
 from apps.audit.middleware import CurrentRequestMiddleware
@@ -93,3 +93,84 @@ def test_reset_rejected_for_weak_password_leaves_no_reset_or_failure_row(audit_k
         )
     assert not SecurityEvent.objects.filter(event_type=EventType.PASSWORD_RESET).exists()
     assert not SecurityEvent.objects.filter(success=False).exists()
+
+
+def _started_reset() -> password_reset.Started:
+    make_user(email=EMAIL, name="Ana García")
+    started = password_reset.start(email=EMAIL)
+    assert isinstance(started, password_reset.Started)
+    return started
+
+
+def _wrong(code: str) -> str:
+    return "1" * len(code) if code == "0" * len(code) else "0" * len(code)
+
+
+def _verifications() -> list[bool]:
+    return list(
+        SecurityEvent.objects.filter(event_type=EventType.CODE_VERIFIED)
+        .order_by("id")
+        .values_list("success", flat=True)
+    )
+
+
+def test_locked_reset_code_is_recorded_as_failed_verification(audit_key: None) -> None:
+    started = _started_reset()
+    limit = conf.max_failed_attempts()
+    for _ in range(limit):
+        password_reset.verify(public_id=started.public_id, code=_wrong(started.code))
+
+    result = password_reset.verify(public_id=started.public_id, code=started.code)
+
+    assert result is VerifyResult.LOCKED
+    assert _verifications() == [False] * (limit + 1)
+
+
+def test_already_verified_reset_code_is_recorded_as_failed_verification(audit_key: None) -> None:
+    started = _started_reset()
+    password_reset.verify(public_id=started.public_id, code=started.code)
+
+    result = password_reset.verify(public_id=started.public_id, code=started.code)
+
+    assert result is VerifyResult.ALREADY_VERIFIED
+    assert _verifications() == [True, False]
+
+
+def test_unknown_reset_leaves_no_verification_row(audit_key: None) -> None:
+    result = password_reset.verify(public_id="unknown", code="000000")
+
+    assert result is VerifyResult.NOT_FOUND
+    assert _verifications() == []
+
+
+def _deactivate(user: User) -> None:
+    User.objects.filter(pk=user.pk).update(is_active=False)
+
+
+def _change_email(user: User) -> None:
+    User.objects.filter(pk=user.pk).update(email="nueva@x.com")
+
+
+def _change_password(user: User) -> None:
+    user.set_password("another-long-passw0rd")
+    user.save()
+
+
+@pytest.mark.parametrize(
+    ("change", "refusal"),
+    [
+        (_deactivate, password_reset.AccountRefusal.INACTIVE),
+        (_change_email, password_reset.AccountRefusal.ACCOUNT_CHANGED),
+        (_change_password, password_reset.AccountRefusal.ACCOUNT_CHANGED),
+    ],
+)
+def test_account_refusal_leaves_no_verification_row(
+    audit_key: None, change: Callable[[User], None], refusal: password_reset.AccountRefusal
+) -> None:
+    started = _started_reset()
+    change(User.objects.get(email=EMAIL))
+
+    result = password_reset.verify(public_id=started.public_id, code=started.code)
+
+    assert result is refusal
+    assert _verifications() == []
