@@ -227,6 +227,18 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
   ```
   Deberías ver `Applying audit.0001_initial... OK` y `Applying audit.0002_securityevent_base_manager... OK`.
 
+- [ ] **Comprobar que el entorno Docker sigue levantando tras `auditoria-eventos-seguridad`.** En la
+  sesión remota no se pudo construir la imagen del backend (Docker Hub devolvió
+  `429 Too Many Requests` al descargar `python:3.12-slim`). La feature no cambia dependencias,
+  `Dockerfile` ni `docker-compose.yml`, pero la regla del proyecto pide verificarlo. En tu máquina:
+  ```bash
+  docker compose -f docker/docker-compose.yml build backend
+  ```
+  ```bash
+  docker compose -f docker/docker-compose.yml run --rm backend pytest -q
+  ```
+  Deberías ver la imagen construida y todos los tests en verde.
+
 ## Hecho
 
 <!-- Mueve aquí las tareas completadas, con fecha. -->
