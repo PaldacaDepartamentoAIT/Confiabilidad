@@ -90,11 +90,16 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   `soporte@localhost`, que en producción debe definirse (T-030). [Cierto] (3) `compose()` reúne
   sustitución y bloque para que la entrega (T-013) tenga una sola llamada. [Cierto]
 
-- [ ] T-007 Plantillas iniciales
+- [x] T-007 Plantillas iniciales
   RF: RF-001, RF-022 (CF-3, S-17) | Depende de: T-004, T-005, T-006 | Archivos: 2
   Archivos: `migrations/0002_initial_templates.py`, `tests/test_migrations.py`.
   Hecho cuando: tras `migrate` existen las 21 plantillas (7 tipos × 3 idiomas), todas pasan la
   validación de T-004; deshacer la migración las borra; suite verde. Los textos se revisan en el PR.
+  Decisiones: (1) Textos del bloque: «Si no fuiste tú, escríbenos a <soporte> y restablece tu
+  contraseña cuanto antes» y sus equivalentes en pt-BR y en; se revisan en el PR (S-17). [Probable]
+  Revertir: cambiar `_REPORT_BLOCKS`. (2) `EMAIL_SUPPORT_ADDRESS` vale por defecto
+  `soporte@localhost`, que en producción debe definirse (T-030). [Cierto] (3) `compose()` reúne
+  sustitución y bloque para que la entrega (T-013) tenga una sola llamada. [Cierto]
 
 - [ ] T-008 Idiomas admitidos y normalización
   RF: RF-013 (D-10) | Depende de: — | Archivos: 2
