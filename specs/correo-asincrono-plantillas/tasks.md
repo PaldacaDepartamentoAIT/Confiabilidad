@@ -51,13 +51,23 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   desconocido lanza `ValueError`, porque solo puede venir de un error de programación. [Probable]
   Revertir: devolver la dirección base.
 
-- [ ] T-004 Validación de plantillas al guardar
+- [x] T-004 Validación de plantillas al guardar
   RF: RF-021 (D-07) | Depende de: T-003 | Archivos: 3
   Archivos: `rendering.py`, `models.py`, `tests/test_rendering.py`.
   Hecho cuando: guardar una plantilla de código sin `{{ code }}`, `{{ link }}` o `{{ expires_in }}`,
   con una variable que su tipo no admite (`{{ code }}` en un aviso) o con una dirección web cuyo
   dominio no es el de `FRONTEND_BASE_URL` lanza `ValidationError` que enumera cada problema, y la
   fila guardada no cambia; una plantilla correcta se guarda; suite verde.
+  Decisiones: (1) Los datos obligatorios valen en el asunto o en el cuerpo. [Probable] Revertir:
+  validar solo `body`. (2) También se rechaza cualquier `{{ … }}` o `{% … %}` que no sea una
+  variable simple, para que una errata no llegue tal cual al correo. [Probable] Revertir: quitar
+  el primer bucle de `validate_template`. (3) Solo se detectan direcciones que empiezan por
+  `http://`, `https://` o `www.`; un dominio suelto (`otro.com`) no se reconoce como enlace.
+  [Cierto] Revertir: ampliar `_ADDRESS`. (4) El dominio debe ser exactamente el de
+  `FRONTEND_BASE_URL`; un subdominio no vale. [Probable] Revertir: aceptar subdominios en
+  `_is_application_address`. (5) `save()` valida con `full_clean` siempre, como `User`. [Cierto]
+  (6) El test del guardado inválido está en `test_rendering.py` para respetar los tres archivos de
+  la tarea. [Cierto]
 
 - [ ] T-005 Plazo relativo por idioma
   RF: RF-014 (D-08) | Depende de: T-002 | Archivos: 2

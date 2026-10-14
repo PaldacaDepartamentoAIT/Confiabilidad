@@ -5,6 +5,8 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
+from apps.emails import rendering
+
 
 def _deletion_refused() -> ValidationError:
     return ValidationError(_("Email templates cannot be deleted."), code="template_protected")
@@ -53,6 +55,13 @@ class EmailTemplate(models.Model):
 
     def __str__(self) -> str:
         return f"{self.kind} ({self.locale})"
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        self.full_clean(validate_unique=False, validate_constraints=False)
+        super().save(*args, **kwargs)
+
+    def clean(self) -> None:
+        rendering.validate_template(self.kind, self.subject, self.body)
 
     def delete(self, *args: Any, **kwargs: Any) -> tuple[int, dict[str, int]]:
         raise _deletion_refused()

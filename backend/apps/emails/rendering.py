@@ -1,7 +1,9 @@
 import re
 from collections.abc import Mapping
+from urllib.parse import urlsplit
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
 # Solo variables simples: sin atributos, filtros ni etiquetas que alguien pueda usar desde el panel.
@@ -33,3 +35,67 @@ def process_link(purpose: str, public_id: str) -> str:
         raise ValueError(_("Unknown process purpose: %(purpose)s") % {"purpose": purpose})
     base = str(settings.FRONTEND_BASE_URL).rstrip("/")
     return f"{base}{path}#{public_id}"
+
+
+CODE_KINDS = frozenset({"registration_code", "password_reset_code"})
+_CODE_VALUES = frozenset({"code", "link", "expires_in"})
+_ANY_BRACES = re.compile(r"\{\{(.*?)\}\}|\{%.*?%\}", re.S)
+_ADDRESS = re.compile(r"(?:https?://|www\.)[^\s<>\"')]+", re.I)
+
+
+def allowed_values(kind: str) -> frozenset[str]:
+    return frozenset({"name"}) | (_CODE_VALUES if kind in CODE_KINDS else frozenset())
+
+
+def required_values(kind: str) -> frozenset[str]:
+    return _CODE_VALUES if kind in CODE_KINDS else frozenset()
+
+
+def validate_template(kind: str, subject: str, body: str) -> None:
+    text = f"{subject}\n{body}"
+    used = placeholders(text)
+    problems: list[ValidationError] = []
+    for match in _ANY_BRACES.finditer(text):
+        if not _PLACEHOLDER.fullmatch(match.group(0)):
+            problems.append(
+                ValidationError(
+                    _("Unsupported template syntax: %(syntax)s"),
+                    code="template_syntax",
+                    params={"syntax": match.group(0)},
+                )
+            )
+    for name in sorted(used - allowed_values(kind)):
+        problems.append(
+            ValidationError(
+                _("This kind of email does not accept {{ %(name)s }}."),
+                code="template_value_not_allowed",
+                params={"name": name},
+            )
+        )
+    for name in sorted(required_values(kind) - used):
+        problems.append(
+            ValidationError(
+                _("This kind of email requires {{ %(name)s }}."),
+                code="template_value_missing",
+                params={"name": name},
+            )
+        )
+    for address in _ADDRESS.findall(text):
+        if not _is_application_address(address):
+            problems.append(
+                ValidationError(
+                    _("Links may only point to the application: %(address)s"),
+                    code="template_foreign_link",
+                    params={"address": address},
+                )
+            )
+    if problems:
+        raise ValidationError(problems)
+
+
+def _is_application_address(address: str) -> bool:
+    if not address.lower().startswith(("http://", "https://")):
+        address = f"https://{address}"
+    host = urlsplit(address).hostname
+    application_host = urlsplit(str(settings.FRONTEND_BASE_URL)).hostname
+    return host is not None and host == application_host

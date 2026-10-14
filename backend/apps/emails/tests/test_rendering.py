@@ -1,4 +1,5 @@
 import pytest
+from django.core.exceptions import ValidationError
 
 from apps.emails import rendering
 
@@ -60,3 +61,109 @@ def test_the_link_carries_the_public_id_in_the_fragment(
 def test_a_link_for_an_unknown_purpose_is_refused() -> None:
     with pytest.raises(ValueError):
         rendering.process_link("newsletter", "abc")
+
+
+CODE_BODY = "Hola, {{ name }}. Tu código es {{ code }}; vence en {{ expires_in }}. {{ link }}"
+
+
+def _messages(error: ValidationError) -> str:
+    return " | ".join(str(message) for message in error.messages)
+
+
+@pytest.fixture
+def _frontend(settings: object) -> None:
+    settings.FRONTEND_BASE_URL = "https://app.ejemplo.com"  # type: ignore[attr-defined]
+
+
+@pytest.mark.usefixtures("_frontend")
+@pytest.mark.parametrize("missing", ["code", "link", "expires_in"])
+@pytest.mark.parametrize("kind", ["registration_code", "password_reset_code"])
+def test_a_code_template_without_a_required_value_is_rejected(kind: str, missing: str) -> None:
+    body = CODE_BODY.replace("{{ " + missing + " }}", "")
+
+    with pytest.raises(ValidationError) as error:
+        rendering.validate_template(kind, "Tu código", body)
+
+    assert missing in _messages(error.value)
+
+
+@pytest.mark.usefixtures("_frontend")
+def test_required_values_may_be_in_the_subject() -> None:
+    rendering.validate_template(
+        "registration_code", "{{ code }} es tu código", CODE_BODY.replace("{{ code }}", "")
+    )
+
+
+@pytest.mark.usefixtures("_frontend")
+@pytest.mark.parametrize(
+    "kind",
+    [
+        "account_exists",
+        "password_reset_done",
+        "password_changed",
+        "account_disabled",
+        "sessions_closed",
+    ],
+)
+def test_a_notice_does_not_accept_code_values(kind: str) -> None:
+    with pytest.raises(ValidationError) as error:
+        rendering.validate_template(
+            kind, "Aviso", "Hola, {{ name }}. Código: {{ code }} {{ link }}"
+        )
+
+    assert "code" in _messages(error.value)
+    assert "link" in _messages(error.value)
+
+
+@pytest.mark.usefixtures("_frontend")
+def test_unsupported_template_syntax_is_rejected() -> None:
+    with pytest.raises(ValidationError) as error:
+        rendering.validate_template("account_exists", "Aviso", "Hola, {{ user.__class__ }}")
+
+    assert "user.__class__" in _messages(error.value)
+
+
+@pytest.mark.usefixtures("_frontend")
+@pytest.mark.parametrize(
+    "address", ["https://otro.com/x", "http://app.ejemplo.com.evil.io", "www.otro.com"]
+)
+def test_a_link_to_another_domain_is_rejected(address: str) -> None:
+    with pytest.raises(ValidationError) as error:
+        rendering.validate_template("account_exists", "Aviso", f"Entra en {address} ahora")
+
+    assert address in _messages(error.value)
+
+
+@pytest.mark.usefixtures("_frontend")
+def test_a_link_to_the_application_domain_is_accepted() -> None:
+    rendering.validate_template(
+        "account_exists", "Aviso", "Entra en https://app.ejemplo.com/login, {{ name }}."
+    )
+
+
+@pytest.mark.usefixtures("_frontend")
+def test_every_problem_is_listed_at_once() -> None:
+    with pytest.raises(ValidationError) as error:
+        rendering.validate_template("registration_code", "Código", "{{ foo }} https://otro.com")
+
+    messages = _messages(error.value)
+    for expected in ("foo", "code", "link", "expires_in", "https://otro.com"):
+        assert expected in messages
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("_frontend")
+def test_an_invalid_template_is_not_saved() -> None:
+    from apps.emails.models import EmailTemplate
+
+    template, _ = EmailTemplate.objects.get_or_create(
+        kind="account_exists", locale="es", defaults={"subject": "Asunto", "body": "Cuerpo"}
+    )
+    stored = template.body
+    template.body = "Hola, {{ code }}"
+
+    with pytest.raises(ValidationError):
+        template.save()
+
+    template.refresh_from_db()
+    assert template.body == stored
