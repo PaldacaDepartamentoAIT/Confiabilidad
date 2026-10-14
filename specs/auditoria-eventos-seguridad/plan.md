@@ -91,6 +91,8 @@ Descartada: un middleware que lea respuestas 400, o una señal inexistente. Moti
 emite señal para fallos de login (`allauth/account/adapter.py`, línea 824); el adaptador es su
 punto de extensión oficial y no añade lógica de bloqueo.
 *Suposición:* el flujo de headless llama a ese mismo método. Se verifica en la primera tarea de M-04.
+El 429 de la limitación por IP de la vista de login no se registra (RF-004 aclarado): no evalúa
+credenciales, y registrarlo permitiría inflar la tabla con dos filas por petición.
 
 ### D-04 Huellas de clave de sesión y correo
 Elegida: M-09 calcula ambas con HMAC-SHA256 y la clave de auditoría (D-05). El correo se normaliza
@@ -174,7 +176,7 @@ Motivo: la spec pide una lista fija, y los códigos evitan depender de textos tr
 
 ### D-15 Cambio o restablecimiento rechazado por contraseña no válida: sin evento de fallo
 Elegida: el receptor de cambio y de restablecimiento de contraseña solo registra el evento cuando el
-cambio o el restablecimiento se completa. El rechazo por contraseña no válida no deja ninguna fila (RF-010,
+cambio o el restablecimiento se completa. Ningún rechazo, por ningún motivo, deja fila (RF-010,
 aclarado).
 Descartada: registrar un fallo con un motivo nuevo (por ejemplo `invalid_password`). Motivo: decisión del
 usuario al resolver la ambigüedad de RF-010; un motivo nuevo obligaría a ampliar D-14, que fija tres códigos.
@@ -256,3 +258,4 @@ de forma explícita.
 - 2026-10-14 — Actualización tras la validación de RF-014 (D-07, M-01, M-06) y aclaración de RF-010 (nueva D-15) — RF: RF-010, RF-012, RF-014 — Estado: aprobado
 - 2026-10-14 — Actualización tras la aclaración de RF-008 (nueva D-16) y de RF-012 (D-07 y residual de SQL directo) — RF: RF-008, RF-012 — Estado: aprobado
 - 2026-10-14 — Actualización tras la tercera validación: D-05 (valor de desarrollo con `DEBUG`, P-02), D-07 y residual con el nuevo alcance de RF-012, D-16 (verificación con T-041 y precedencia de la caducidad) — RF: RF-008, RF-011, RF-012 — Estado: aprobado
+- 2026-10-14 — Actualización tras la cuarta validación: D-03 (el 429 por IP no se registra) y D-15 (ningún rechazo de contraseña deja fila) — RF: RF-004, RF-010 — Estado: aprobado

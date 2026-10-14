@@ -41,7 +41,9 @@ credenciales incorrectas, límite de intentos alcanzado o cuenta inactiva. Esto 
 el correo no corresponde a ninguna cuenta; en ese caso el evento no tiene vínculo con una cuenta.
 Esto ocurre también cuando la cuenta está inactiva aunque las credenciales sean válidas. Este
 requisito cubre los rechazos que la aplicación puede producir con su configuración actual; si se
-activan nuevas comprobaciones, la spec deberá ampliarse.
+activan nuevas comprobaciones, la spec deberá ampliarse. Quedan fuera los rechazos por la limitación de
+peticiones por IP de la vista de login, que responde antes de comprobar las credenciales: esos rechazos
+no dejan evento.
 
 ### RF-005 Bloqueo por límite de intentos
 Cuando la librería de autenticación rechace un intento porque se ha superado el límite, el sistema
@@ -56,7 +58,8 @@ esas decisiones es la librería de autenticación.
 Cuando se cree una cuenta, o cuando se cree una solicitud de registro pendiente, el sistema deberá
 registrar un evento del tipo correspondiente con su resultado. Si la creación de la cuenta se rechaza
 (cuenta ya existente, proceso caducado o contraseña no válida), entonces el sistema no deberá registrar
-un evento de registro de cuenta.
+un evento de registro de cuenta. Las altas que no pasan por el flujo de registro (comandos de gestión
+como `seed_test_user` o `createsuperuser`) quedan fuera de este requisito.
 
 ### RF-008 Códigos
 Cuando se envíe un código, el sistema deberá registrar un evento de envío con su resultado. Cuando
@@ -73,7 +76,7 @@ Cuando una persona cierre sesión, el sistema deberá registrar un evento de cie
 
 ### RF-010 Contraseña y perfil
 Cuando se cambie o restablezca una contraseña, cuando se edite un perfil o cuando se deshabilite
-una cuenta, el sistema deberá registrar un evento del tipo correspondiente con su resultado. Si un cambio o un restablecimiento de contraseña se rechaza por una contraseña no válida, entonces el sistema no deberá registrar ningún evento de fallo.
+una cuenta, el sistema deberá registrar un evento del tipo correspondiente con su resultado. Si un cambio o un restablecimiento de contraseña se rechaza, por cualquier motivo, entonces el sistema no deberá registrar ningún evento de fallo.
 
 ### RF-011 Sin datos sensibles
 El sistema nunca deberá guardar en un evento contraseñas, códigos, tokens ni el correo en claro.
@@ -127,6 +130,9 @@ El sistema deberá guardar la marca de tiempo de cada evento en UTC e indexarla.
 - Registro de consultas o lecturas de los propios eventos.
 - Eventos de otros módulos que no estén en RF-002.
 - Protección de la base de datos a nivel de rol (no se elige en esta feature).
+- Los inicios de sesión fallidos en el panel de administración de Django, que no pasan por allauth.
+- Distinguir una reautenticación de un inicio de sesión: una reautenticación rechazada puede
+  registrarse como inicio de sesión fallido.
 
 ## Criterios de finalización
 - Un inicio de sesión exitoso y un inicio de sesión fallido generan dos filas, cada una con la IP
@@ -154,3 +160,4 @@ El sistema deberá guardar la marca de tiempo de cada evento en UTC e indexarla.
 - 2026-10-14 — Aclaración de RF-010: un cambio o restablecimiento de contraseña rechazado por contraseña no válida no deja evento de fallo (opción B aprobada) — RF: RF-010 — Estado: impacto analizado
 - 2026-10-14 — Aclaración de RF-008 (qué es un código rechazado) y de RF-012 (vías de la aplicación; el SQL directo queda como riesgo residual), y corrección de la entrada de RF-004 del 2026-10-13, tras la validación — RF: RF-004, RF-008, RF-012 — Estado: impacto analizado
 - 2026-10-14 — Tras la tercera validación: alcance de RF-012 (APIs internas del ORM, comandos integrados de Django y uso deliberado del permiso de purga como riesgo residual), aclaración de RF-007 (creación rechazada sin evento) y de RF-008 (la caducidad prevalece sobre el cambio de cuenta) — RF: RF-007, RF-008, RF-012 — Estado: impacto analizado
+- 2026-10-14 — Tras la cuarta validación: RF-004 excluye el 429 de la limitación por IP de la vista de login, RF-010 extiende a cualquier rechazo de contraseña la ausencia de evento, RF-007 excluye las altas fuera del flujo de registro, y dos entradas nuevas en «Fuera de alcance» (login fallido en el admin y reautenticación) — RF: RF-004, RF-007, RF-010 — Estado: impacto analizado

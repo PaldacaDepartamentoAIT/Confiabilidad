@@ -258,6 +258,21 @@ empezar antes.
   Mutantes: receptor de `password_changed` desconectado → detectado (el test nuevo y el de la señal).
   Decisiones: la sesión se inicia con `force_login`, que también deja una fila `LOGIN` correcta; por eso el rechazo comprueba que no hay ninguna fila `PASSWORD_CHANGE` ni ninguna con `success=False`. Confianza: [Cierto]. Cómo revertirla: quitar los dos tests.
 
+- [ ] T-045 Corrección: una creación de cuenta rechazada no deja evento de registro
+  Tipo: corrección | Origen: validación de RF-007 | RF: RF-007 | Depende de: — | Archivos: 1 (`apps/audit/tests/test_registration_events.py`)
+  Causa: la cláusula aclarada de RF-007 no tiene test, y un mutante que registra `ACCOUNT_REGISTRATION` en los rechazos de `complete()` sobrevive.
+  Hecho cuando: `pytest backend/apps/audit/tests/test_registration_events.py` pasa con el servicio real en tres casos: cuenta ya existente, proceso caducado y contraseña no válida. En ninguno queda fila `ACCOUNT_REGISTRATION`. El mutante que emite en `ACCOUNT_EXISTS` y `EXPIRED` se detecta. El caso de contraseña no válida puede ser un mutante equivalente por la transacción; se anota y no detiene.
+
+- [ ] T-046 Corrección: con el proceso caducado se registra la validación fallida aunque la cuenta haya cambiado
+  Tipo: corrección | Origen: validación de RF-008 | RF: RF-008 | Depende de: — | Archivos: 1 (`apps/audit/tests/test_password_reset_events.py`)
+  Causa: ningún test combina la caducidad del proceso con un cambio de cuenta, y el mutante que comprueba la cuenta antes que la caducidad sobrevive.
+  Hecho cuando: `pytest backend/apps/audit/tests/test_password_reset_events.py` pasa con un proceso caducado tras la gracia y la cuenta inactiva, con el correo cambiado o con la contraseña cambiada. En los tres casos `verify` devuelve `EXPIRED` y queda una fila `CODE_VERIFIED` con `success=False`. El mutante se detecta.
+
+- [ ] T-047 Corrección: los espacios en `TRUSTED_PROXY_IPS` no quitan la confianza a un proxy
+  Tipo: corrección | Origen: validación de RF-015 | RF: RF-015 | Depende de: — | Archivos: 2 (`apps/core/middleware.py`, `apps/core/tests/test_real_ip.py`)
+  Causa: `env.list` conserva los espacios, así que `10.0.0.1, 10.0.0.2` deja fuera el segundo proxy sin avisar.
+  Hecho cuando: `pytest backend/apps/core/tests/test_real_ip.py` pasa con una lista con espacios en la que los dos proxies son de confianza. Un mutante que deja de quitar los espacios se detecta.
+
 ## RF sin tarea
 Ninguno. Todos los RF de la spec (RF-001 a RF-016) aparecen en al menos una tarea. RF-010 aparece como cubierto en su parte aceptada (el residual de perfil y deshabilitación queda en T-016, con emisión pendiente de otra feature).
 
@@ -276,3 +291,4 @@ Ninguno. Todos los RF de la spec (RF-001 a RF-016) aparecen en al menos una tare
 - 2026-10-14 — T-037 (test de rechazo por contraseña no válida, aclaración de RF-010) — RF: RF-010 — Estado: aprobado
 - 2026-10-14 — T-038 (caducidad dentro de la gracia), T-039 (traducción de `audit.E001`) y T-040 (uso del permiso de purga) tras la validación y la aclaración de RF-008 y RF-012 — RF: RF-008, RF-012, RF-014 — Estado: aprobado
 - 2026-10-14 — T-041 (rechazos de código), T-042 (motivo del fallo por límite), T-043 (arranque en desarrollo, P-02) y T-044 (cambio de contraseña por el flujo real) tras la tercera validación — RF: RF-004, RF-005, RF-008, RF-010, RF-011 — Estado: aprobado
+- 2026-10-14 — T-045 (creación rechazada), T-046 (caducidad frente a cambio de cuenta) y T-047 (espacios en `TRUSTED_PROXY_IPS`) tras la cuarta validación — RF: RF-007, RF-008, RF-015 — Estado: aprobado
