@@ -244,4 +244,4 @@ igual que RF-005 con un registro real.
   siempre un identificador y la consola deja de mostrar el código — RF: RF-008 y RF-023
   modificados; RF-024 y RF-025 añadidos; secuencia, S-01, S-05, S-10, fuera de alcance y CF-4
   ajustados; CF-5 añadido. Clarificado (C-01…C-04): RF-016, RF-019, RF-024 y RF-025 ajustados —
-  Estado: clarificado
+  Estado: impacto analizado
