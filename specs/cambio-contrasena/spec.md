@@ -257,4 +257,4 @@ anula el identificador sin solicitud anterior, igual que RF-003 con una solicitu
   siempre un identificador y la consola deja de mostrar el código — RF: RF-002, RF-004, RF-007,
   RF-009, RF-012 y RF-013 modificados; RF-016 y RF-017 añadidos; secuencia, S-01, S-06, fuera de
   alcance, CF-4 y CF-5 ajustados; CF-6 añadido. Clarificado (C-01, C-02): RF-005, RF-008,
-  RF-010, RF-014 y RF-015 ajustados; S-13 añadido — Estado: clarificado
+  RF-010, RF-014 y RF-015 ajustados; S-13 añadido — Estado: impacto analizado
