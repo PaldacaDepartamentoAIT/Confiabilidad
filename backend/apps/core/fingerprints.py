@@ -1,5 +1,6 @@
 import hashlib
 import hmac
+import secrets
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import timedelta
@@ -117,3 +118,32 @@ def consent_email_fingerprint(email: str) -> str:
 
 def consent_email_matches(email: str, fingerprint: str) -> bool:
     return _matches(_CONSENT_KEYS, _normalize_email(email), fingerprint)
+
+
+# Máscara reversible del código de un correo pendiente (RF-011): no es una huella, se deshace con
+# su clave. La integridad la da la huella del código al entregarlo (S-10).
+_CODE_SPACE = 10**6
+
+
+def _mask_key() -> str:
+    key = str(settings.EMAIL_CODE_SECRET)
+    if not key.strip():
+        raise ImproperlyConfigured(_("EMAIL_CODE_SECRET must not be empty."))
+    if key == str(settings.REGISTRATION_CODE_SECRET):
+        raise ImproperlyConfigured(
+            _("EMAIL_CODE_SECRET must differ from REGISTRATION_CODE_SECRET.")
+        )
+    return key
+
+
+def _mask(nonce: str) -> int:
+    return int(_sign(_mask_key(), f"email_code_mask:{nonce}"), 16) % _CODE_SPACE
+
+
+def mask_code(code: str) -> tuple[int, str]:
+    nonce = secrets.token_hex(16)
+    return (int(code) + _mask(nonce)) % _CODE_SPACE, nonce
+
+
+def unmask_code(masked: int, nonce: str) -> str:
+    return f"{(masked - _mask(nonce)) % _CODE_SPACE:06d}"

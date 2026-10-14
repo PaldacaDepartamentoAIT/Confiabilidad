@@ -217,3 +217,7 @@ SIMPLE_HISTORY_REVERT_DISABLED = True
 
 # Consentimientos: secreto de la huella del correo (RF-012). No debe rotar nunca (S-09).
 CONSENT_EMAIL_HASH_SECRET = env("CONSENT_EMAIL_HASH_SECRET", default=SECRET_KEY)
+
+# Correos: clave de la máscara del código de los correos pendientes, distinta de la de códigos
+# (RF-011 de huellas-hmac-unificadas). No rota: al cambiarla se descartan los correos pendientes.
+EMAIL_CODE_SECRET = env("EMAIL_CODE_SECRET", default=f"email-code:{SECRET_KEY}")

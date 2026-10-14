@@ -321,7 +321,7 @@ intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al
   qué archivos cuentan como test, recoge S-08 y S-09 en los límites conocidos y la fecha futura
   en los errores de configuración, y su prueba del guardián sigue siendo copiable y correcta.
 
-- [ ] T-028 Máscara reversible del código con clave propia
+- [x] T-028 Máscara reversible del código con clave propia
   RF: RF-003, RF-011 | Depende de: — | Archivos: 3
   Archivos: `core/fingerprints.py`, `core/tests/test_fingerprints.py`, `config/settings.py`
   (en `backend/`).
@@ -332,6 +332,12 @@ intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al
   ocultar y al recuperar; sin definir, vale `"email-code:"` + `SECRET_KEY`; ni ocultar ni
   recuperar consultan la base de datos; el guardián sigue pasando; un mutante que quite el
   `mod 10⁶` o el nonce hace fallar un test; suite verde.
+  Decisiones: (1) `enqueue` recibe la cuenta (`account`) en vez de una función aparte para los
+  avisos, para no cambiar la interfaz de T-011. Si se pasa con un aviso, manda su idioma; con un
+  correo de código se ignora. [Probable] Revertir: separar `enqueue_notice`. (2) Sin cuenta, un
+  aviso usa el idioma indicado; M-10 debe pasar siempre la cuenta en los avisos. [Probable]
+  (3) `outbox` importa `User` solo para los tipos (`TYPE_CHECKING`), sin dependencia en tiempo de
+  ejecución hacia `accounts` (D-05). [Cierto]
 
 - [ ] T-029 Documentar la clave de la máscara
   RF: — (criterio de finalización) | Depende de: T-028 | Archivos: 2
