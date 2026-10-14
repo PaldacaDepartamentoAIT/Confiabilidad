@@ -1,5 +1,5 @@
 # Resumen — auditoria-eventos-seguridad
-Estado: pendiente de validación · Última actualización: 2026-10-14
+Estado: cerrada con riesgo residual aceptado · Última actualización: 2026-10-14
 
 ## Qué se hizo
 Una app nueva, `backend/apps/audit/`, guarda un registro de cada evento sensible de una cuenta en la
@@ -89,6 +89,16 @@ de borrar es el comando de purga de eventos de más de un año.
 - **Restablecimiento nativo de allauth**: su receptor está conectado, pero hoy la ruta nativa no
   funciona por falta de `HEADLESS_FRONTEND_URLS`. El restablecimiento propio de accounts sí se
   registra.
+- **Proxies encadenados** (RF-015): con dos proxies de confianza en cadena se registra la IP del proxy
+  interior, no la del cliente. La spec contempla un único proxy.
+- **Correo mal formado** (RF-004): un login con un correo no válido responde 400 sin evento.
+- **Bloqueo por el límite de IP** (RF-005): el límite por IP de allauth también genera `LOCKOUT` con la
+  huella del correo intentado, y los metadatos no lo distinguen del límite por cuenta.
+- **Huecos de test aceptados**: el 429 por IP sin fila (RF-004), la presencia de los filtros laterales
+  y el «hasta» inclusivo (RF-013), y la huella de sesión del flujo `app` (RF-003, RF-009) no tienen
+  test; la validación los confirmó con sondas.
+- **Docker** (P-02): la construcción de la imagen no se pudo verificar en la sesión remota (Docker Hub
+  devolvió 429); está en `HUMAN_TODO.md`.
 
 ## Cómo probarlo
 Todo se hace sin frontend, desde la raíz del repositorio. Docker Compose activa `DJANGO_DEBUG`, así que
