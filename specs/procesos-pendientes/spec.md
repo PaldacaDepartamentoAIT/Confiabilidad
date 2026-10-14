@@ -1,5 +1,5 @@
 # Spec: procesos-pendientes (registro pendiente)
-Estado: borrador
+Estado: aprobada
 
 ## Objetivo (por qué)
 El registro exige demostrar acceso al correo con un código antes de crear la cuenta. Esta feature
@@ -97,8 +97,9 @@ secreto anterior.
 
 ### RF-016 Reenvío del código
 Cuando se reenvíe el código de un proceso vigente sin el código validado, el sistema deberá
-conservar su identificador público, emitir un código nuevo y poner los intentos a 0. Si el proceso
-ya tiene el código validado, entonces el sistema deberá rechazar el reenvío.
+conservar su identificador público, poner los intentos a 0 y responder de inmediato, y emitir el
+código nuevo, con su correo, fuera de la respuesta. Si el proceso ya tiene el código validado,
+entonces el sistema deberá rechazar el reenvío.
 
 ### RF-017 Registros pendientes caducados del mismo correo
 Cuando se cree un registro pendiente, el sistema deberá borrar antes cualquier registro pendiente
@@ -110,8 +111,9 @@ Movido a la feature de cambio de contraseña (S-11).
 ### RF-019 Límites configurables
 El sistema deberá permitir ajustar por configuración, sin cambiar el código, el máximo de
 intentos fallidos, la vigencia del código, la gracia tras caducar el código, la vida máxima del
-proceso, el periodo de transición del secreto (RF-015) y el tiempo máximo de espera del servicio de
-contraseñas filtradas (RF-022).
+proceso, el periodo de transición del secreto (RF-015), el tiempo máximo de espera del servicio de
+contraseñas filtradas (RF-022) y el tiempo durante el que se reintenta el trabajo de empezar el
+registro (RF-024; 5 minutos por defecto).
 
 ### RF-020 Completar el registro
 Cuando se complete un registro pendiente con el código validado y una contraseña, el sistema
@@ -146,8 +148,12 @@ Cuando se solicite un registro con datos válidos (RF-002), el sistema deberá d
 un identificador público nuevo, con el mismo formato tenga o no cuenta el correo, y hacer fuera de
 la respuesta todo el trabajo que depende de ello: comprobar cuentas y registros pendientes (RF-004,
 RF-005, RF-017), crear o reemplazar el registro pendiente con ese identificador y emitir el código.
-Si los datos no son válidos, entonces el sistema deberá rechazarlos en la propia respuesta,
-indicando cada error.
+Si el nombre, la fecha de nacimiento, el país o el formato del correo no son válidos, entonces el
+sistema deberá rechazarlos en la propia respuesta, indicando cada error. Que el correo pertenezca a
+una cuenta o tenga un registro pendiente nunca se indicará en la respuesta. Si el trabajo de fuera
+de la respuesta falla, entonces el sistema deberá reintentarlo solo durante el tiempo configurado
+(RF-019). Si sigue fallando, el identificador se comportará como uno sin registro detrás (RF-025),
+sin enviar correo, y el fallo quedará en el registro de eventos del servidor.
 
 ### RF-025 Identificador sin registro detrás
 Si el correo de una solicitud de registro pertenece a una cuenta (RF-004), entonces el
@@ -155,7 +161,8 @@ identificador devuelto no tendrá registro pendiente detrás. Verificarlo, reenv
 dejarlo caducar deberá dar los mismos resultados, en el mismo orden y con los mismos plazos, que un
 registro pendiente real cuyo código nunca se acierta, incluido el bloqueo por intentos (RF-010). El
 trabajo que distinga uno de otro (emitir el código y enviar el correo) se hará fuera de la
-respuesta.
+respuesta. Una solicitud nueva con el mismo correo anula el identificador sin registro anterior,
+igual que RF-005 con un registro real.
 
 ## Supuestos
 - S-01 Esta feature no incluye API, pantallas, mensajes neutros, redirecciones, el límite de
@@ -236,4 +243,5 @@ respuesta.
 - 2026-10-14 — Cambio por `correo-asincrono-plantillas` (S-07, S-08): empezar el registro devuelve
   siempre un identificador y la consola deja de mostrar el código — RF: RF-008 y RF-023
   modificados; RF-024 y RF-025 añadidos; secuencia, S-01, S-05, S-10, fuera de alcance y CF-4
-  ajustados; CF-5 añadido — Estado: pendiente de clarificar
+  ajustados; CF-5 añadido. Clarificado (C-01…C-04): RF-016, RF-019, RF-024 y RF-025 ajustados —
+  Estado: clarificado
