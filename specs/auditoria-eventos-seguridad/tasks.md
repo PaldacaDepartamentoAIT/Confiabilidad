@@ -258,10 +258,12 @@ empezar antes.
   Mutantes: receptor de `password_changed` desconectado → detectado (el test nuevo y el de la señal).
   Decisiones: la sesión se inicia con `force_login`, que también deja una fila `LOGIN` correcta; por eso el rechazo comprueba que no hay ninguna fila `PASSWORD_CHANGE` ni ninguna con `success=False`. Confianza: [Cierto]. Cómo revertirla: quitar los dos tests.
 
-- [ ] T-045 Corrección: una creación de cuenta rechazada no deja evento de registro
+- [x] T-045 Corrección: una creación de cuenta rechazada no deja evento de registro
   Tipo: corrección | Origen: validación de RF-007 | RF: RF-007 | Depende de: — | Archivos: 1 (`apps/audit/tests/test_registration_events.py`)
   Causa: la cláusula aclarada de RF-007 no tiene test, y un mutante que registra `ACCOUNT_REGISTRATION` en los rechazos de `complete()` sobrevive.
   Hecho cuando: `pytest backend/apps/audit/tests/test_registration_events.py` pasa con el servicio real en tres casos: cuenta ya existente, proceso caducado y contraseña no válida. En ninguno queda fila `ACCOUNT_REGISTRATION`. El mutante que emite en `ACCOUNT_EXISTS` y `EXPIRED` se detecta. El caso de contraseña no válida puede ser un mutante equivalente por la transacción; se anota y no detiene.
+  Mutantes: (1) emitir un fallo de registro en `EXPIRED` y en `ACCOUNT_EXISTS` → detectado por los dos tests. (2) Emitirlo antes de validar la contraseña → equivalente: `complete()` revierte la fila al relanzar `ValidationError`, como en T-037.
+  Decisiones: el proceso se caduca una hora atrás, más allá de la gracia de 15 minutos. Los tests pasan sin cambiar código; los prueba el mutante 1. Confianza: [Cierto]. Cómo revertirla: quitar los tests.
 
 - [ ] T-046 Corrección: con el proceso caducado se registra la validación fallida aunque la cuenta haya cambiado
   Tipo: corrección | Origen: validación de RF-008 | RF: RF-008 | Depende de: — | Archivos: 1 (`apps/audit/tests/test_password_reset_events.py`)

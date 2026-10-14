@@ -3,6 +3,7 @@ from datetime import date, timedelta
 from typing import Any
 
 import pytest
+from django.core.exceptions import ValidationError
 from django.http import HttpResponse
 from django.test import RequestFactory
 from django.utils import timezone
@@ -10,6 +11,7 @@ from django.utils import timezone
 from apps.accounts import conf, registration, signals
 from apps.accounts.models import PendingRegistration
 from apps.accounts.processes import VerifyResult
+from apps.accounts.tests.factories import make_user
 from apps.audit.middleware import CurrentRequestMiddleware, current_request
 from apps.audit.models import EventType, SecurityEvent
 from apps.core.fingerprints import audit_email_fingerprint
@@ -139,3 +141,44 @@ def test_unknown_registration_leaves_no_verification_row(audit_key: None) -> Non
 
     assert result is VerifyResult.NOT_FOUND
     assert _verifications() == []
+
+
+def _verified_registration() -> registration.Started:
+    started = _started_registration()
+    assert registration.verify(public_id=started.public_id, code=started.code) is (
+        VerifyResult.VERIFIED
+    )
+    return started
+
+
+def _registrations() -> int:
+    return SecurityEvent.objects.filter(event_type=EventType.ACCOUNT_REGISTRATION).count()
+
+
+def test_complete_refused_for_existing_account_leaves_no_registration_row(audit_key: None) -> None:
+    started = _verified_registration()
+    make_user(email=EMAIL, name="Ana García")
+
+    result = registration.complete(public_id=started.public_id, password="Kq7#mZ2!vR9p")
+
+    assert result is registration.CompleteRefusal.ACCOUNT_EXISTS
+    assert _registrations() == 0
+
+
+def test_complete_refused_for_expired_process_leaves_no_registration_row(audit_key: None) -> None:
+    started = _verified_registration()
+    PendingRegistration.objects.update(code_expires_at=timezone.now() - timedelta(hours=1))
+
+    result = registration.complete(public_id=started.public_id, password="Kq7#mZ2!vR9p")
+
+    assert result is registration.CompleteRefusal.EXPIRED
+    assert _registrations() == 0
+
+
+def test_complete_refused_for_weak_password_leaves_no_registration_row(audit_key: None) -> None:
+    started = _verified_registration()
+
+    with pytest.raises(ValidationError):
+        registration.complete(public_id=started.public_id, password="12345678")
+
+    assert _registrations() == 0
