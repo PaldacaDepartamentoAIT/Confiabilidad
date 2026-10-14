@@ -209,8 +209,10 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
   Deberías ver la IP del contenedor del proxy en la sección `Containers`, en el campo `IPv4Address`. Si la red tiene otro nombre, lista las redes con `docker network ls`.
 
 - [ ] **Añadir `AUDIT_HASH_SECRET` a tu `.env` local** (feature `auditoria-eventos-seguridad`).
-  Sin esta variable `manage.py runserver` y `manage.py check` fallan. Copia el valor de desarrollo de
-  `backend/.env.example` (o genera uno propio) en tu `backend/.env`:
+  Con `DJANGO_DEBUG` activo (como en Docker Compose), si falta se usa el valor de desarrollo
+  `dev-audit-secret-change-me`; sin `DEBUG`, `manage.py runserver` y `manage.py check` fallan con
+  `audit.E001`. Para no depender de ese valor por defecto, copia el de `backend/.env.example` (o genera
+  uno propio) en tu `backend/.env`:
   ```bash
   grep -n "AUDIT_HASH_SECRET" backend/.env.example
   ```
