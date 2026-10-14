@@ -196,6 +196,12 @@ empezar antes.
   Hecho cuando: `pytest backend/apps/audit/tests/test_purge.py` pasa: el gestor ya no expone `purge_older_than`, y la purga (función interna `purge_expired`) usa siempre el corte de un año; el comando sigue purgando solo eventos de más de un año; la suite de auditoría sigue en verde.
   Decisiones: mecanismo elegido por el usuario: quitar el método público. La purga pasa a la función interna `purge_expired(now)` en `models.py`, que calcula el corte con `retention_cutoff`; el comando la usa y la lógica del corte se mueve a `models.py`. Confianza: [Cierto]. Cómo revertirla: volver a exponer un método que acepte fecha de corte, lo que reabre el hueco.
 
+- [x] T-036 Corrección: la purga no borra eventos de menos de un año aunque se pase una fecha posterior
+  Tipo: corrección | Origen: validación de RF-014 | RF: RF-014 | Depende de: T-035 | Archivos: 3
+  Causa: `purge_expired(now)` recibe la fecha de referencia del llamador; con una fecha futura el corte también queda en el futuro y borra eventos recientes (confirmado: referencia ahora+800 días borró un evento de hace un día).
+  Hecho cuando: `pytest backend/apps/audit/tests/test_purge.py` pasa con un caso que, con referencia posterior, conserva un evento reciente; `purge_expired` toma el reloj dentro de la función y no recibe la fecha del llamador; la suite de auditoría sigue en verde.
+  Decisiones: `purge_expired()` no recibe parámetros y toma `timezone.now()` dentro de la función. Confianza: [Cierto]. Cómo revertirla: volver a aceptar `now`, lo que reabre el hueco.
+
 ## RF sin tarea
 Ninguno. Todos los RF de la spec (RF-001 a RF-016) aparecen en al menos una tarea. RF-010 aparece como cubierto en su parte aceptada (el residual de perfil y deshabilitación queda en T-016, con emisión pendiente de otra feature).
 
@@ -210,3 +216,4 @@ Ninguno. Todos los RF de la spec (RF-001 a RF-016) aparecen en al menos una tare
 - 2026-10-13 — Corrección T-032 (bulk_create con update_conflicts posicional) tras la validación — RF: RF-012 — Estado: aprobado
 - 2026-10-13 — Corrección T-033 (gestor base sin guardas) tras la validación — RF: RF-012 — Estado: aprobado
 - 2026-10-14 — Correcciones T-034 (save_base) y T-035 (purga de un año sin método público) tras la validación — RF: RF-012, RF-014 — Estado: aprobado
+- 2026-10-14 — Corrección T-036 (purga sin fecha de referencia del llamador) tras la validación de RF-014 — RF: RF-014 — Estado: aprobado

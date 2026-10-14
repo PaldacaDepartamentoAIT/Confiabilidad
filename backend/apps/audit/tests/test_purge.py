@@ -1,5 +1,6 @@
-from datetime import UTC, timedelta
+from datetime import UTC, datetime, timedelta
 from io import StringIO
+from unittest.mock import patch
 
 import pytest
 from django.core.management import call_command
@@ -42,24 +43,18 @@ def test_purge_with_nothing_to_delete_deletes_nothing() -> None:
 
 
 def test_retention_cutoff_is_one_calendar_year_across_leap_day() -> None:
-    from datetime import datetime
-
     from apps.audit.models import retention_cutoff
 
     assert retention_cutoff(datetime(2028, 3, 1, tzinfo=UTC)) == datetime(2027, 3, 1, tzinfo=UTC)
 
 
 def test_retention_cutoff_from_leap_day_falls_back_to_february_28() -> None:
-    from datetime import datetime
-
     from apps.audit.models import retention_cutoff
 
     assert retention_cutoff(datetime(2028, 2, 29, tzinfo=UTC)) == datetime(2027, 2, 28, tzinfo=UTC)
 
 
 def test_event_exactly_one_calendar_year_old_is_kept_on_leap_window() -> None:
-    from datetime import datetime
-
     from apps.audit.models import retention_cutoff
 
     cutoff = retention_cutoff(datetime(2028, 3, 1, tzinfo=UTC))
@@ -69,9 +64,22 @@ def test_event_exactly_one_calendar_year_old_is_kept_on_leap_window() -> None:
     SecurityEvent.objects.create(
         event_type=EventType.LOGIN, success=True, created_at=cutoff - timedelta(seconds=1)
     )
-    purge_expired(datetime(2028, 3, 1, tzinfo=UTC))
+    with patch("apps.audit.models.timezone") as clock:
+        clock.now.return_value = datetime(2028, 3, 1, tzinfo=UTC)
+        purge_expired()
     assert SecurityEvent.objects.filter(pk=kept.pk).exists()
     assert SecurityEvent.objects.count() == 1
+
+
+def test_purge_cannot_receive_a_later_reference_date() -> None:
+    with pytest.raises(TypeError):
+        purge_expired(timezone.now() + timedelta(days=800))  # type: ignore[call-arg]
+
+
+def test_purge_keeps_recent_events_with_the_real_clock() -> None:
+    recent = _event(timedelta(days=364, hours=23))
+    assert purge_expired() == 0
+    assert SecurityEvent.objects.filter(pk=recent.pk).exists()
 
 
 def test_manager_has_no_public_purge_method() -> None:

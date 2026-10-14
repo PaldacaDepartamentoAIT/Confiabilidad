@@ -111,8 +111,8 @@ def retention_cutoff(now: datetime) -> datetime:
         return now.replace(year=now.year - 1, day=28)
 
 
-def purge_expired(now: datetime) -> int:
-    cutoff = retention_cutoff(now)
+def purge_expired() -> int:
+    cutoff = retention_cutoff(timezone.now())
     with _purge_allowed():
         deleted, _ = SecurityEvent.objects.filter(created_at__lt=cutoff).delete()
     return deleted

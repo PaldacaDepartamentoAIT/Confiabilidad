@@ -22,5 +22,5 @@ class Command(BaseCommand):
             count = SecurityEvent.objects.filter(created_at__lt=cutoff).count()
             self.stdout.write(f"{count} security events would be deleted.")
             return
-        deleted = purge_expired(timezone.now())
+        deleted = purge_expired()
         self.stdout.write(f"{deleted} security events deleted.")
