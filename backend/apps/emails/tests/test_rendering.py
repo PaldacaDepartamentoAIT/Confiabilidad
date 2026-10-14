@@ -40,3 +40,23 @@ def test_placeholders_of_the_template_are_listed() -> None:
 
 def test_attribute_access_is_not_a_placeholder() -> None:
     assert rendering.placeholders("{{ user.__class__ }} {{ name|upper }}") == set()
+
+
+@pytest.mark.parametrize("base", ["https://app.ejemplo.com", "https://app.ejemplo.com/"])
+@pytest.mark.parametrize(
+    ("purpose", "path"),
+    [("registration", "/register/continue"), ("password_reset", "/password-reset/continue")],
+)
+def test_the_link_carries_the_public_id_in_the_fragment(
+    settings: object, base: str, purpose: str, path: str
+) -> None:
+    settings.FRONTEND_BASE_URL = base  # type: ignore[attr-defined]
+
+    link = rendering.process_link(purpose, "abc_DEF-123")
+
+    assert link == f"https://app.ejemplo.com{path}#abc_DEF-123"
+
+
+def test_a_link_for_an_unknown_purpose_is_refused() -> None:
+    with pytest.raises(ValueError):
+        rendering.process_link("newsletter", "abc")

@@ -203,6 +203,9 @@ REGISTRATION_SECRET_TRANSITION_MINUTES = env.int(
 PWNED_PASSWORDS_TIMEOUT_SECONDS = env.float("PWNED_PASSWORDS_TIMEOUT_SECONDS", default=2.0)
 PWNED_PASSWORDS_ENABLED = env.bool("PWNED_PASSWORDS_ENABLED", default=True)
 
+# Correos: dirección del frontend a la que llevan los enlaces de los correos (D-09).
+FRONTEND_BASE_URL = env("FRONTEND_BASE_URL", default="http://localhost:5173")
+
 # El historial se consulta en el panel, pero no se revierte desde él (RF-020 de consentimientos).
 SIMPLE_HISTORY_REVERT_DISABLED = True
 

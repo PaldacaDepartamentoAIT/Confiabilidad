@@ -39,13 +39,17 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   (3) Un mutante que admitía puntos en el nombre sobrevivía, porque esa clave nunca está en los
   valores; lo mata `test_attribute_access_is_not_a_placeholder`. [Cierto]
 
-- [ ] T-003 Enlaces con el identificador en el fragmento
+- [x] T-003 Enlaces con el identificador en el fragmento
   RF: RF-004, RF-005 (D-09) | Depende de: T-002 | Archivos: 3
   Archivos: `rendering.py`, `tests/test_rendering.py`, `config/settings.py` (en `backend/`).
   Hecho cuando: con `FRONTEND_BASE_URL=https://app.ejemplo.com`, el enlace de registro es
   `https://app.ejemplo.com/register/continue#<public_id>` y el de restablecimiento
   `https://app.ejemplo.com/password-reset/continue#<public_id>`; una barra final en la dirección
   base no duplica la barra; suite verde.
+  Decisiones: (1) `FRONTEND_BASE_URL` vale por defecto `http://localhost:5173`, el puerto del
+  frontend en `docker-compose.yml`. [Cierto] Revertir: cambiar el valor por defecto. (2) Un propósito
+  desconocido lanza `ValueError`, porque solo puede venir de un error de programación. [Probable]
+  Revertir: devolver la dirección base.
 
 - [ ] T-004 Validación de plantillas al guardar
   RF: RF-021 (D-07) | Depende de: T-003 | Archivos: 3
