@@ -4,7 +4,7 @@ Estado: aprobado
 ## Módulos
 ### M-01 Modelo SecurityEvent
 Responsabilidad: tabla de eventos, tipos (11 valores de RF-002), campos de RF-001, índice en
-`created_at`, y guardas de solo inserción (save, delete y QuerySet).
+`created_at`, y guardas de solo inserción (`save`, `save_base`, `delete`, `update` y `delete` del QuerySet, `bulk_create` con `update_conflicts` y el gestor base).
 RF: RF-001, RF-002, RF-011, RF-012, RF-016
 
 ### M-02 Registrador
@@ -34,8 +34,9 @@ exacta por huella del correo (D-12).
 RF: RF-012, RF-013
 
 ### M-06 Comando de purga
-Responsabilidad: `manage.py purge_security_events --dry-run` borra solo eventos con más de un año.
-Es la única vía de borrado (RF-012, RF-014).
+Responsabilidad: `manage.py purge_security_events --dry-run` llama a `purge_expired()` (M-01), que borra
+solo eventos con más de un año y no recibe fecha de referencia (T-035, T-036). Es la única vía de borrado
+(RF-012, RF-014).
 RF: RF-012, RF-014
 
 ### M-07 IP real del cliente (cambio en `apps/core`)
@@ -113,8 +114,10 @@ que ya decidiste no usar (H-07). Motivo de la corrección: el texto anterior mez
 
 ### D-07 Solo inserción: guardas en tres puntos
 Elegida: `save()` lanza error si la fila ya existe; `delete()` y el `QuerySet` de update y delete
-lanzan error salvo cuando los llama el método `purge_older_than` del comando de purga (M-06). El admin
-no ofrece cambiar ni borrar.
+lanzan error salvo cuando los llama la función interna `purge_expired()` de `models.py`, que toma el corte
+de un año con el reloj del servidor y no recibe fecha (T-035, T-036). `save_base()` y `QuerySet.bulk_create`
+con `update_conflicts` también lanzan (T-032, T-034), y `base_manager_name = "objects"` hace que el gestor
+base aplique las mismas guardas (T-033). El admin no ofrece cambiar ni borrar.
 Descartada: un rol de base de datos sin UPDATE ni DELETE, que está fuera de alcance (spec).
 Motivo: las guardas viven en el código y se prueban con tests.
 
@@ -161,6 +164,14 @@ spec: `invalid_credentials` (credenciales incorrectas), `too_many_login_attempts
 alcanzado) e `inactive_account` (cuenta inactiva). Los dos primeros ya existen en el código.
 Descartada: el texto que devuelva allauth en cada caso, que no es verificable (decisión H-15).
 Motivo: la spec pide una lista fija, y los códigos evitan depender de textos traducibles.
+
+### D-15 Cambio o restablecimiento rechazado por contraseña no válida: sin evento de fallo
+Elegida: el receptor de cambio y de restablecimiento de contraseña solo registra el evento cuando el
+cambio o el restablecimiento se completa. El rechazo por contraseña no válida no deja ninguna fila (RF-010,
+aclarado).
+Descartada: registrar un fallo con un motivo nuevo (por ejemplo `invalid_password`). Motivo: decisión del
+usuario al resolver la ambigüedad de RF-010; un motivo nuevo obligaría a ampliar D-14, que fija tres códigos.
+Verificación: T-037.
 
 ### D-10 Tipos de evento: un valor por tipo de RF-002
 Elegida: `TextChoices` con 11 valores. El rechazo de código es `CODE_VERIFIED` con `success=False`
@@ -221,3 +232,4 @@ de forma explícita.
 - 2026-10-13 — Aprobación del plan con el residual de RF-010 aceptado por el usuario — RF: RF-001 a RF-016 — Estado: aprobado
 - 2026-10-13 — Actualización tras el cambio de RF-013 y RF-015 (M-05, M-07, D-06, D-08; nuevas D-11 y D-12) — RF: RF-013, RF-015 — Estado: aprobado
 - 2026-10-13 — Actualización tras RF-004 (M-04; nuevas D-13 y D-14) — RF: RF-004 — Estado: aprobado
+- 2026-10-14 — Actualización tras la validación de RF-014 (D-07, M-01, M-06) y aclaración de RF-010 (nueva D-15) — RF: RF-010, RF-012, RF-014 — Estado: aprobado

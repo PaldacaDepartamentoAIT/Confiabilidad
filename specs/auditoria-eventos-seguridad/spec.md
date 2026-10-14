@@ -67,7 +67,7 @@ Cuando una persona cierre sesión, el sistema deberá registrar un evento de cie
 
 ### RF-010 Contraseña y perfil
 Cuando se cambie o restablezca una contraseña, cuando se edite un perfil o cuando se deshabilite
-una cuenta, el sistema deberá registrar un evento del tipo correspondiente con su resultado.
+una cuenta, el sistema deberá registrar un evento del tipo correspondiente con su resultado. Si un cambio o un restablecimiento de contraseña se rechaza por una contraseña no válida, entonces el sistema no deberá registrar ningún evento de fallo.
 
 ### RF-011 Sin datos sensibles
 El sistema nunca deberá guardar en un evento contraseñas, códigos, tokens ni el correo en claro.
@@ -140,3 +140,4 @@ El sistema deberá guardar la marca de tiempo de cada evento en UTC e indexarla.
 - 2026-10-13 — Clarificación con H-01 a H-08 (borrado solo por purga, dos filas por bloqueo, proxy de confianza fijo, clave de sesión opcional, metadatos abiertos, rechazo de código como validación fallida, permiso específico de consulta, sin vínculo directo a la cuenta) — RF: RF-001, RF-005, RF-008, RF-011 a RF-015 — Estado: clarificado
 - 2026-10-13 — Cambio de RF-013 (filtros laterales por tipo, resultado y fecha; búsqueda por IP y huella del correo) y de RF-015 (lista de proxies en el entorno de despliegue) tras la validación — RF: RF-013, RF-015 — Estado: impacto analizado
 - 2026-10-13 — Cambio de RF-004: se registran también los rechazos posteriores a credenciales válidas (correo sin verificar o cuenta inactiva) — RF: RF-004 — Estado: impacto analizado
+- 2026-10-14 — Aclaración de RF-010: un cambio o restablecimiento de contraseña rechazado por contraseña no válida no deja evento de fallo (opción B aprobada) — RF: RF-010 — Estado: impacto analizado
