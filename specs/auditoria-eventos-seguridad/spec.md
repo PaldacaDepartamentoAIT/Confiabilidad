@@ -59,8 +59,11 @@ registrar un evento del tipo correspondiente con su resultado.
 ### RF-008 Códigos
 Cuando se envíe un código, el sistema deberá registrar un evento de envío con su resultado. Cuando
 se valide un código, el sistema deberá registrar un evento de validación con resultado éxito. Cuando
-un código sea rechazado (incorrecto o caducado), el sistema deberá registrar un evento de validación
-con resultado fallo.
+un código sea rechazado, el sistema deberá registrar un evento de validación con resultado fallo. Un
+código es rechazado cuando es incorrecto, cuando ha caducado él o su proceso, cuando se ha alcanzado el
+límite de intentos o cuando ya se había validado. Si el proceso no existe, o si se rechaza por un cambio
+en la cuenta (cuenta inactiva, o correo o contraseña cambiados), entonces el sistema no deberá registrar
+ningún evento de validación.
 
 ### RF-009 Cierre de sesión
 Cuando una persona cierre sesión, el sistema deberá registrar un evento de cierre de sesión.
@@ -79,7 +82,10 @@ son una lista abierta de datos no sensibles.
 El sistema no deberá permitir modificar ni borrar eventos desde el panel de administración, desde
 el ORM ni desde ninguna otra vía de la aplicación, salvo el comando de purga de RF-014, que es la
 única vía autorizada de borrado. Si se intenta modificar un evento, o borrarlo fuera de esa vía,
-entonces el sistema deberá rechazar la operación.
+entonces el sistema deberá rechazar la operación. Las vías de la aplicación son el ORM, el panel de
+administración y los comandos de gestión. El SQL directo contra la base de datos no es una vía de la
+aplicación: queda como riesgo residual aceptado, igual que la protección a nivel de rol, que está fuera de
+alcance.
 
 ### RF-013 Consulta para investigación
 El sistema deberá mostrar los eventos a las personas con el permiso específico de visualización de
@@ -139,5 +145,6 @@ El sistema deberá guardar la marca de tiempo de cada evento en UTC e indexarla.
 - 2026-10-13 — Creación de la spec a partir de la entrevista (modo ligero) — RF: RF-001 a RF-016 — Estado: pendiente de clarificar
 - 2026-10-13 — Clarificación con H-01 a H-08 (borrado solo por purga, dos filas por bloqueo, proxy de confianza fijo, clave de sesión opcional, metadatos abiertos, rechazo de código como validación fallida, permiso específico de consulta, sin vínculo directo a la cuenta) — RF: RF-001, RF-005, RF-008, RF-011 a RF-015 — Estado: clarificado
 - 2026-10-13 — Cambio de RF-013 (filtros laterales por tipo, resultado y fecha; búsqueda por IP y huella del correo) y de RF-015 (lista de proxies en el entorno de despliegue) tras la validación — RF: RF-013, RF-015 — Estado: impacto analizado
-- 2026-10-13 — Cambio de RF-004: se registran también los rechazos posteriores a credenciales válidas (correo sin verificar o cuenta inactiva) — RF: RF-004 — Estado: impacto analizado
+- 2026-10-13 — Cambio de RF-004: se registran también los rechazos posteriores a credenciales válidas (cuenta inactiva; el correo sin verificar no aplica porque la verificación de correo está desactivada — corregido el 2026-10-14) — RF: RF-004 — Estado: impacto analizado
 - 2026-10-14 — Aclaración de RF-010: un cambio o restablecimiento de contraseña rechazado por contraseña no válida no deja evento de fallo (opción B aprobada) — RF: RF-010 — Estado: impacto analizado
+- 2026-10-14 — Aclaración de RF-008 (qué es un código rechazado) y de RF-012 (vías de la aplicación; el SQL directo queda como riesgo residual), y corrección de la entrada de RF-004 del 2026-10-13, tras la validación — RF: RF-004, RF-008, RF-012 — Estado: impacto analizado

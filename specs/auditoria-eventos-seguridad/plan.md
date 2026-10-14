@@ -117,7 +117,10 @@ Elegida: `save()` lanza error si la fila ya existe; `delete()` y el `QuerySet` d
 lanzan error salvo cuando los llama la función interna `purge_expired()` de `models.py`, que toma el corte
 de un año con el reloj del servidor y no recibe fecha (T-035, T-036). `save_base()` y `QuerySet.bulk_create`
 con `update_conflicts` también lanzan (T-032, T-034), y `base_manager_name = "objects"` hace que el gestor
-base aplique las mismas guardas (T-033). El admin no ofrece cambiar ni borrar.
+base aplique las mismas guardas (T-033). El admin no ofrece cambiar ni borrar. El SQL directo
+(`.raw()`, `connection.cursor()`) no tiene guarda: es riesgo residual aceptado (RF-012 aclarado).
+`_purge_allowed` solo se usa en `models.py`, y `purge_expired()` de auditoría solo la importa el comando
+de purga; un test lo comprueba con análisis estático del backend (T-040).
 Descartada: un rol de base de datos sin UPDATE ni DELETE, que está fuera de alcance (spec).
 Motivo: las guardas viven en el código y se prueban con tests.
 
@@ -173,6 +176,16 @@ Descartada: registrar un fallo con un motivo nuevo (por ejemplo `invalid_passwor
 usuario al resolver la ambigüedad de RF-010; un motivo nuevo obligaría a ampliar D-14, que fija tres códigos.
 Verificación: T-037.
 
+### D-16 Código rechazado: qué genera evento de validación
+Elegida: `CODE_VERIFIED` con `success=False` cuando el código es incorrecto (`WRONG_CODE`), ha caducado
+(`CODE_EXPIRED`, o el proceso con `EXPIRED`), se alcanzó el límite (`LOCKED`) o ya estaba validado
+(`ALREADY_VERIFIED`). Sin evento cuando el proceso no existe (`NOT_FOUND`) o el restablecimiento se rechaza
+por la cuenta (`AccountRefusal`). Es lo que ya hacen `registration.verify` y `password_reset.verify`.
+Descartada: registrar también `NOT_FOUND` y `AccountRefusal`. Motivo: RF-008 aclarado; con `NOT_FOUND` no
+hay correo con el que calcular la huella, y la negativa por la cuenta no llega a evaluar el código.
+Verificación: tests de accounts (`test_registration_signals.py`) y T-038 para la caducidad dentro de la
+gracia.
+
 ### D-10 Tipos de evento: un valor por tipo de RF-002
 Elegida: `TextChoices` con 11 valores. El rechazo de código es `CODE_VERIFIED` con `success=False`
 (H-06).
@@ -208,7 +221,7 @@ Se sigue TDD (P-04). Cobertura ≥80% en código nuevo (P-05).
 | RF-005 | M-04 | Integración |
 | RF-006 | M-04 | Integración (contador de allauth no cambia) |
 | RF-007 | M-03, M-08 | Integración |
-| RF-008 | M-03, M-08 | Integración |
+| RF-008 | M-03, M-08 (D-16) | Integración |
 | RF-009 | M-03 | Integración |
 | RF-010 | M-03, M-08 | Integración (parcial, ver abajo) |
 | RF-011 | M-01, M-02, M-09 | Unitario |
@@ -223,6 +236,8 @@ Se sigue TDD (P-04). Cobertura ≥80% en código nuevo (P-05).
   cubren la edición de perfil y la deshabilitación de cuenta; el cambio y el restablecimiento de
   contraseña tienen emisor completo. **Nada emite hoy** la edición de perfil ni la deshabilitación,
   porque no existen esos flujos en el código. Quedan pendientes hasta que su feature los cree.
+- **RF-012 (residual, aceptado por decisión del usuario el 2026-10-14):** el SQL directo contra la base
+  de datos no tiene guarda (D-07). La spec aclarada lo excluye de las vías de la aplicación.
 
 La regla de `sdd-plan` impide aprobar con RF sin cobertura. Este residual se acepta solo si lo confirmas
 de forma explícita.
@@ -233,3 +248,4 @@ de forma explícita.
 - 2026-10-13 — Actualización tras el cambio de RF-013 y RF-015 (M-05, M-07, D-06, D-08; nuevas D-11 y D-12) — RF: RF-013, RF-015 — Estado: aprobado
 - 2026-10-13 — Actualización tras RF-004 (M-04; nuevas D-13 y D-14) — RF: RF-004 — Estado: aprobado
 - 2026-10-14 — Actualización tras la validación de RF-014 (D-07, M-01, M-06) y aclaración de RF-010 (nueva D-15) — RF: RF-010, RF-012, RF-014 — Estado: aprobado
+- 2026-10-14 — Actualización tras la aclaración de RF-008 (nueva D-16) y de RF-012 (D-07 y residual de SQL directo) — RF: RF-008, RF-012 — Estado: aprobado

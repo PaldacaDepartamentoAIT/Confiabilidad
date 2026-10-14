@@ -209,6 +209,21 @@ empezar antes.
   Mutantes: (1) cambio: registrar un fallo desde el adaptador de allauth → detectado (1 fallo). (2) restablecimiento: registrar un fallo con la señal dentro de la transacción de `complete()` → sin efecto observable, porque la transacción revierte la fila al relanzar el error. Anotado como mutante equivalente; no detiene.
   Decisiones: el cambio se prueba con el formulario de allauth y el restablecimiento con el servicio real. Confianza: [Cierto]. Cómo revertirla: quitar los dos tests.
 
+- [ ] T-038 Test: un código caducado dentro del periodo de gracia deja una validación fallida
+  Tipo: test | Origen: validación (H4) | RF: RF-008 | Depende de: T-022 | Archivos: 2 (`apps/audit/tests/test_registration_events.py`, `apps/audit/tests/test_password_reset_events.py`)
+  Causa: `CODE_EXPIRED` (código caducado con el proceso aún dentro de la gracia) no tenía test propio; la rama genérica lo cubría sin ninguna aserción.
+  Hecho cuando: `pytest backend/apps/audit/tests/test_registration_events.py backend/apps/audit/tests/test_password_reset_events.py` pasa con un código caducado dentro de la gracia, enviado al servicio real de registro y al de restablecimiento, que deja una fila `CODE_VERIFIED` con `success=False`; un mutante que registra éxito con `CODE_EXPIRED` lo detecta.
+
+- [ ] T-039 Corrección: el mensaje del check `audit.E001` se marca para traducción
+  Tipo: corrección | Origen: validación (H5) | RF: — (convención de `AGENTS.md`; D-05) | Depende de: — | Archivos: 2 (`apps/core/checks.py`, `apps/core/tests/test_audit_fingerprints.py`)
+  Causa: el mensaje «AUDIT_HASH_SECRET must not be empty.» no usa `gettext_lazy`, que `AGENTS.md` exige para los textos de error.
+  Hecho cuando: `pytest backend/apps/core/tests/test_audit_fingerprints.py` pasa con el mensaje de `audit.E001` como texto perezoso de traducción y el mismo contenido; un mutante que quita `gettext_lazy` lo detecta.
+
+- [ ] T-040 Test: el permiso interno de purga solo se usa en el modelo y la purga de auditoría solo la llama su comando
+  Tipo: test | Origen: validación (H3) y aclaración de RF-012 | RF: RF-012, RF-014 | Depende de: T-036 | Archivos: 1 (`apps/audit/tests/test_purge_access.py`)
+  Causa: `_purge_allowed` se puede importar desde cualquier módulo, y nada comprobaba que solo la purga lo usa.
+  Hecho cuando: `pytest backend/apps/audit/tests/test_purge_access.py` pasa: fuera de `apps/audit/models.py` y de los tests, ningún archivo del backend nombra `_purge_allowed` ni `_purge_context`, y fuera de `apps/audit/management/commands/purge_security_events.py` ningún archivo importa `purge_expired` de `apps.audit.models`; un mutante que usa `_purge_allowed` en otro módulo lo detecta.
+
 ## RF sin tarea
 Ninguno. Todos los RF de la spec (RF-001 a RF-016) aparecen en al menos una tarea. RF-010 aparece como cubierto en su parte aceptada (el residual de perfil y deshabilitación queda en T-016, con emisión pendiente de otra feature).
 
@@ -225,3 +240,4 @@ Ninguno. Todos los RF de la spec (RF-001 a RF-016) aparecen en al menos una tare
 - 2026-10-14 — Correcciones T-034 (save_base) y T-035 (purga de un año sin método público) tras la validación — RF: RF-012, RF-014 — Estado: aprobado
 - 2026-10-14 — Corrección T-036 (purga sin fecha de referencia del llamador) tras la validación de RF-014 — RF: RF-014 — Estado: aprobado
 - 2026-10-14 — T-037 (test de rechazo por contraseña no válida, aclaración de RF-010) — RF: RF-010 — Estado: aprobado
+- 2026-10-14 — T-038 (caducidad dentro de la gracia), T-039 (traducción de `audit.E001`) y T-040 (uso del permiso de purga) tras la validación y la aclaración de RF-008 y RF-012 — RF: RF-008, RF-012, RF-014 — Estado: aprobado
