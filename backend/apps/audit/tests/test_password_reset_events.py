@@ -1,12 +1,16 @@
 from collections.abc import Callable
+from datetime import timedelta
 from typing import Any
 
 import pytest
 from django.core.exceptions import ValidationError
 from django.http import HttpResponse
 from django.test import RequestFactory
+from django.utils import timezone
 
 from apps.accounts import password_reset, signals
+from apps.accounts.models import PasswordResetRequest
+from apps.accounts.processes import VerifyResult
 from apps.accounts.tests.factories import make_user
 from apps.audit.middleware import CurrentRequestMiddleware
 from apps.audit.models import EventType, SecurityEvent
@@ -58,6 +62,22 @@ def test_rejected_reset_code_is_recorded_as_failed_verification(audit_key: None)
     )
     event = SecurityEvent.objects.get(event_type=EventType.CODE_VERIFIED)
     assert event.success is False
+
+
+def test_reset_code_expired_within_grace_is_recorded_as_failed_verification(
+    audit_key: None,
+) -> None:
+    make_user(email=EMAIL, name="Ana García")
+    started = password_reset.start(email=EMAIL)
+    assert isinstance(started, password_reset.Started)
+    PasswordResetRequest.objects.update(code_expires_at=timezone.now() - timedelta(minutes=1))
+
+    result = password_reset.verify(public_id=started.public_id, code=started.code)
+
+    assert result is VerifyResult.CODE_EXPIRED
+    event = SecurityEvent.objects.get(event_type=EventType.CODE_VERIFIED)
+    assert event.success is False
+    assert event.user_email_hash == audit_email_fingerprint(EMAIL)
 
 
 def test_reset_rejected_for_weak_password_leaves_no_reset_or_failure_row(audit_key: None) -> None:

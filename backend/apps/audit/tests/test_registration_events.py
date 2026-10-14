@@ -1,11 +1,15 @@
 from collections.abc import Callable
+from datetime import date, timedelta
 from typing import Any
 
 import pytest
 from django.http import HttpResponse
 from django.test import RequestFactory
+from django.utils import timezone
 
-from apps.accounts import signals
+from apps.accounts import registration, signals
+from apps.accounts.models import PendingRegistration
+from apps.accounts.processes import VerifyResult
 from apps.audit.middleware import CurrentRequestMiddleware, current_request
 from apps.audit.models import EventType, SecurityEvent
 from apps.core.fingerprints import audit_email_fingerprint
@@ -71,3 +75,18 @@ def test_registration_signals_map_to_their_event_type(
     event = SecurityEvent.objects.get(event_type=event_type)
     assert event.success is False
     assert event.ip == "203.0.113.7"
+
+
+def test_code_expired_within_grace_is_recorded_as_failed_verification(audit_key: None) -> None:
+    started = registration.start(
+        email=EMAIL, name="Ana García", birthdate=date(1990, 1, 1), country="ES"
+    )
+    assert isinstance(started, registration.Started)
+    PendingRegistration.objects.update(code_expires_at=timezone.now() - timedelta(minutes=1))
+
+    result = registration.verify(public_id=started.public_id, code=started.code)
+
+    assert result is VerifyResult.CODE_EXPIRED
+    event = SecurityEvent.objects.get(event_type=EventType.CODE_VERIFIED)
+    assert event.success is False
+    assert event.user_email_hash == audit_email_fingerprint(EMAIL)

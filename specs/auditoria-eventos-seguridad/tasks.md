@@ -209,10 +209,12 @@ empezar antes.
   Mutantes: (1) cambio: registrar un fallo desde el adaptador de allauth → detectado (1 fallo). (2) restablecimiento: registrar un fallo con la señal dentro de la transacción de `complete()` → sin efecto observable, porque la transacción revierte la fila al relanzar el error. Anotado como mutante equivalente; no detiene.
   Decisiones: el cambio se prueba con el formulario de allauth y el restablecimiento con el servicio real. Confianza: [Cierto]. Cómo revertirla: quitar los dos tests.
 
-- [ ] T-038 Test: un código caducado dentro del periodo de gracia deja una validación fallida
+- [x] T-038 Test: un código caducado dentro del periodo de gracia deja una validación fallida
   Tipo: test | Origen: validación (H4) | RF: RF-008 | Depende de: T-022 | Archivos: 2 (`apps/audit/tests/test_registration_events.py`, `apps/audit/tests/test_password_reset_events.py`)
   Causa: `CODE_EXPIRED` (código caducado con el proceso aún dentro de la gracia) no tenía test propio; la rama genérica lo cubría sin ninguna aserción.
   Hecho cuando: `pytest backend/apps/audit/tests/test_registration_events.py backend/apps/audit/tests/test_password_reset_events.py` pasa con un código caducado dentro de la gracia, enviado al servicio real de registro y al de restablecimiento, que deja una fila `CODE_VERIFIED` con `success=False`; un mutante que registra éxito con `CODE_EXPIRED` lo detecta.
+  Mutantes: `success` verdadero también con `CODE_EXPIRED`, en `registration.verify` y en `password_reset.verify` → ambos detectados.
+  Decisiones: el test pasa sin cambiar código, porque el comportamiento ya existía; lo que prueba que sirve son los mutantes. El código se caduca un minuto (gracia de 15 minutos por defecto). Los tests van del servicio a la fila, lo que cubre también la mitad de H7 para la caducidad. Confianza: [Cierto]. Cómo revertirla: quitar los dos tests.
 
 - [ ] T-039 Corrección: el mensaje del check `audit.E001` se marca para traducción
   Tipo: corrección | Origen: validación (H5) | RF: — (convención de `AGENTS.md`; D-05) | Depende de: — | Archivos: 2 (`apps/core/checks.py`, `apps/core/tests/test_audit_fingerprints.py`)
