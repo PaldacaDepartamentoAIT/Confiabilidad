@@ -272,10 +272,12 @@ empezar antes.
   Mutantes: comprobar la cuenta antes que la caducidad → detectado en los tres casos.
   Decisiones: el proceso se caduca una hora atrás, después de cambiar la cuenta. Pasa sin cambiar código; lo prueba el mutante. Confianza: [Cierto]. Cómo revertirla: quitar el test.
 
-- [ ] T-047 Corrección: los espacios en `TRUSTED_PROXY_IPS` no quitan la confianza a un proxy
+- [x] T-047 Corrección: los espacios en `TRUSTED_PROXY_IPS` no quitan la confianza a un proxy
   Tipo: corrección | Origen: validación de RF-015 | RF: RF-015 | Depende de: — | Archivos: 2 (`apps/core/middleware.py`, `apps/core/tests/test_real_ip.py`)
   Causa: `env.list` conserva los espacios, así que `10.0.0.1, 10.0.0.2` deja fuera el segundo proxy sin avisar.
   Hecho cuando: `pytest backend/apps/core/tests/test_real_ip.py` pasa con una lista con espacios en la que los dos proxies son de confianza. Un mutante que deja de quitar los espacios se detecta.
+  Mutantes: no quitar los espacios → detectado en los dos proxies.
+  Decisiones: los espacios se quitan en el middleware, en cada petición, y no en `settings.py`, para que el test pueda fijar la lista con `settings`. También se descartan las entradas vacías (por ejemplo, una coma final), para que una `REMOTE_ADDR` vacía nunca sea de confianza. Confianza: [Cierto]. Cómo revertirla: volver a comparar con la lista tal cual.
 
 ## RF sin tarea
 Ninguno. Todos los RF de la spec (RF-001 a RF-016) aparecen en al menos una tarea. RF-010 aparece como cubierto en su parte aceptada (el residual de perfil y deshabilitación queda en T-016, con emisión pendiente de otra feature).

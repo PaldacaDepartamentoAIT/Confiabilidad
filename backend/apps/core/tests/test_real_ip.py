@@ -47,3 +47,10 @@ def test_empty_trusted_list_ignores_forwarded_header_even_from_proxy_like_addres
 
 def test_similar_but_different_address_is_not_trusted(trusted_proxy: None) -> None:
     assert _capture_remote_addr("10.0.0.50", "1.1.1.1") == "10.0.0.50"
+
+
+@pytest.mark.parametrize("proxy", ["10.0.0.5", "10.0.0.6"])
+def test_spaces_around_trusted_entries_do_not_drop_a_proxy(settings: object, proxy: str) -> None:
+    # Así llega «10.0.0.5 , 10.0.0.6» desde env.list, que no quita los espacios.
+    settings.TRUSTED_PROXY_IPS = ["10.0.0.5 ", " 10.0.0.6"]  # type: ignore[attr-defined]
+    assert _capture_remote_addr(proxy, "1.1.1.1") == "1.1.1.1"
