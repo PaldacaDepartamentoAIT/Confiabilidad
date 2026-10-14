@@ -203,7 +203,7 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   (3) `outbox` importa `User` solo para los tipos (`TYPE_CHECKING`), sin dependencia en tiempo de
   ejecución hacia `accounts` (D-05). [Cierto]
 
-- [ ] T-017 Tope del aviso "ya tienes cuenta"
+- [x] T-017 Tope del aviso "ya tienes cuenta"
   RF: RF-007 (D-11) | Depende de: T-011 | Archivos: 5
   Archivos: `models.py`, `outbox.py`, `migrations/0001_initial.py`, `tests/test_outbox.py`,
   `config/settings.py` (en `backend/`).
@@ -213,6 +213,12 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   borrar la cuenta borra su marca; suite verde.
   Excepción: `0001_initial.py` se regenera con `makemigrations` y la ventana necesita su ajuste en
   `settings.py`; los tres archivos restantes son el comportamiento y su test.
+  Decisiones: (1) `enqueue` recibe la cuenta (`account`) en vez de una función aparte para los
+  avisos, para no cambiar la interfaz de T-011. Si se pasa con un aviso, manda su idioma; con un
+  correo de código se ignora. [Probable] Revertir: separar `enqueue_notice`. (2) Sin cuenta, un
+  aviso usa el idioma indicado; M-10 debe pasar siempre la cuenta en los avisos. [Probable]
+  (3) `outbox` importa `User` solo para los tipos (`TYPE_CHECKING`), sin dependencia en tiempo de
+  ejecución hacia `accounts` (D-05). [Cierto]
 
 - [ ] T-018 El código se guarda oculto en la bandeja
   RF: RF-018 (D-06) | Depende de: T-011 y T-028 de `huellas-hmac-unificadas` | Archivos: 2

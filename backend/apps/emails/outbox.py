@@ -1,12 +1,16 @@
 import logging
 from collections.abc import Mapping
+from datetime import timedelta
 from typing import TYPE_CHECKING
 
 from celery import current_app
+from django.conf import settings
 from django.db import transaction
+from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from apps.emails import locales, rendering
-from apps.emails.models import OutboundEmail
+from apps.emails.models import AccountExistsNotice, OutboundEmail
 
 if TYPE_CHECKING:
     from apps.accounts.models import User
@@ -14,6 +18,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 DELIVER_TASK = "apps.emails.tasks.deliver"
+ACCOUNT_EXISTS = "account_exists"
 
 
 def enqueue(
@@ -23,7 +28,9 @@ def enqueue(
     locale: str,
     context: Mapping[str, str] | None = None,
     account: "User | None" = None,
-) -> OutboundEmail:
+) -> OutboundEmail | None:
+    if kind == ACCOUNT_EXISTS and not _account_exists_allowed(account):
+        return None
     email = OutboundEmail.objects.create(
         kind=kind,
         recipient=recipient,
@@ -47,3 +54,21 @@ def _language(kind: str, requested: str, account: "User | None") -> str:
     if account is not None and kind not in rendering.CODE_KINDS:
         return locales.normalize(account.language)
     return locales.normalize(requested)
+
+
+def _account_exists_allowed(account: "User | None") -> bool:
+    if account is None:
+        raise ValueError(_("An account exists notice needs the account."))
+    now = timezone.now()
+    window = timedelta(minutes=settings.EMAIL_ACCOUNT_EXISTS_WINDOW_MINUTES)
+    with transaction.atomic():
+        notice, created = AccountExistsNotice.objects.select_for_update().get_or_create(
+            user=account, defaults={"last_queued_at": now}
+        )
+        if created:
+            return True
+        if now < notice.last_queued_at + window:
+            return False
+        notice.last_queued_at = now
+        notice.save(update_fields=["last_queued_at"])
+        return True

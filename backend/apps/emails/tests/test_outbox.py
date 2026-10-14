@@ -1,12 +1,14 @@
+from datetime import timedelta
 from typing import Any
 from unittest import mock
 
 import pytest
 from django.db import transaction
+from django.utils import timezone
 
 from apps.accounts.tests.factories import make_user
 from apps.emails import outbox
-from apps.emails.models import OutboundEmail
+from apps.emails.models import AccountExistsNotice, OutboundEmail
 
 pytestmark = pytest.mark.django_db
 
@@ -21,7 +23,9 @@ def _enqueue(**overrides: Any) -> OutboundEmail:
         "context": {"name": "Ana"},
     }
     values.update(overrides)
-    return outbox.enqueue(**values)
+    email = outbox.enqueue(**values)
+    assert email is not None
+    return email
 
 
 @pytest.fixture
@@ -111,3 +115,77 @@ def test_a_code_email_ignores_the_language_of_the_account(send_task: Any) -> Non
     email = _enqueue(kind="password_reset_code", locale="pt-BR", account=account)
 
     assert OutboundEmail.objects.get(pk=email.pk).locale == "pt-BR"
+
+
+def _account_exists(account: Any) -> OutboundEmail | None:
+    return outbox.enqueue(
+        kind="account_exists", recipient=account.email, locale="es", account=account
+    )
+
+
+def _age_notice(account: Any, minutes: int) -> None:
+    AccountExistsNotice.objects.filter(user=account).update(
+        last_queued_at=timezone.now() - timedelta(minutes=minutes)
+    )
+
+
+def test_the_first_account_exists_notice_is_queued(send_task: Any) -> None:
+    assert _account_exists(make_user()) is not None
+
+
+@pytest.mark.parametrize(
+    ("window", "minutes_ago", "queued"),
+    [(60, 59, False), (60, 61, True), (10, 11, True), (10, 9, False)],
+)
+def test_a_second_account_exists_notice_waits_for_the_window(
+    send_task: Any, settings: Any, window: int, minutes_ago: int, queued: bool
+) -> None:
+    settings.EMAIL_ACCOUNT_EXISTS_WINDOW_MINUTES = window
+    account = make_user()
+    _account_exists(account)
+    _age_notice(account, minutes_ago)
+
+    second = _account_exists(account)
+
+    assert (second is not None) is queued
+    assert OutboundEmail.objects.filter(kind="account_exists").count() == (2 if queued else 1)
+
+
+def test_the_cap_does_not_touch_other_kinds_or_other_accounts(send_task: Any) -> None:
+    account = make_user()
+    _account_exists(account)
+
+    assert _account_exists(make_user()) is not None
+    assert _enqueue(kind="password_changed", account=account) is not None
+    assert _enqueue(kind="password_changed", account=account) is not None
+
+
+def test_deleting_the_account_deletes_its_cap(send_task: Any) -> None:
+    account = make_user()
+    _account_exists(account)
+
+    account.delete()
+
+    assert not AccountExistsNotice.objects.exists()
+
+
+def test_an_account_exists_notice_needs_the_account(send_task: Any) -> None:
+    with pytest.raises(ValueError):
+        outbox.enqueue(kind="account_exists", recipient="ana@example.com", locale="es")
+
+
+def test_a_notice_after_the_window_restarts_the_window(send_task: Any) -> None:
+    account = make_user()
+    _account_exists(account)
+    _age_notice(account, 61)
+    _account_exists(account)
+
+    assert _account_exists(account) is None
+
+
+def test_an_account_exists_cap_reads_as_its_account_and_time(send_task: Any) -> None:
+    account = make_user()
+    _account_exists(account)
+    notice = AccountExistsNotice.objects.get(user=account)
+
+    assert str(notice).startswith(f"{account.pk} @ ")

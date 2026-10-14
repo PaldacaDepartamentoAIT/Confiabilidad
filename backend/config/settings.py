@@ -209,6 +209,8 @@ FRONTEND_BASE_URL = env("FRONTEND_BASE_URL", default="http://localhost:5173")
 EMAIL_SUPPORT_ADDRESS = env("EMAIL_SUPPORT_ADDRESS", default="soporte@localhost")
 # Horas durante las que se reintenta un aviso de seguridad que el proveedor no acepta (RF-016).
 EMAIL_NOTICE_RETRY_HOURS = env.int("EMAIL_NOTICE_RETRY_HOURS", default=24)
+# Minutos durante los que una cuenta no recibe otro aviso "ya tienes cuenta" (RF-007).
+EMAIL_ACCOUNT_EXISTS_WINDOW_MINUTES = env.int("EMAIL_ACCOUNT_EXISTS_WINDOW_MINUTES", default=60)
 
 # El historial se consulta en el panel, pero no se revierte desde él (RF-020 de consentimientos).
 SIMPLE_HISTORY_REVERT_DISABLED = True

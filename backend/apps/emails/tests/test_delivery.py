@@ -99,6 +99,7 @@ def test_an_email_left_pending_by_a_queue_outage_goes_out_on_the_next_sweep(
             locale="en",
             context={"name": "Ana"},
         )
+    assert email is not None
     send_task.side_effect = None
     send_task.reset_mock()
 

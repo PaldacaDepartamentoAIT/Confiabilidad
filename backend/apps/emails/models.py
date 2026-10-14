@@ -1,5 +1,6 @@
 from typing import Any, ClassVar
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
@@ -97,3 +98,14 @@ class OutboundEmail(models.Model):
 
     def __str__(self) -> str:
         return f"{self.kind} → {self.recipient}"
+
+
+class AccountExistsNotice(models.Model):
+    # Hora del último aviso "ya tienes cuenta" encolado para la cuenta: es el tope de RF-007.
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="account_exists_notice"
+    )
+    last_queued_at = models.DateTimeField()
+
+    def __str__(self) -> str:
+        return f"{self.user_id} @ {self.last_queued_at:%Y-%m-%d %H:%M}"
