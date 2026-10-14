@@ -9,7 +9,7 @@ Mientras la feature no esté terminada, `migrations/0001_initial.py` se regenera
 cambia el esquema, para que al final quede una sola migración de esquema. Las fechas se mueven en
 los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de reloj.
 
-- [ ] T-001 App `emails` y modelo `EmailTemplate`
+- [x] T-001 App `emails` y modelo `EmailTemplate`
   RF: RF-001, RF-020, RF-022 (D-16) | Depende de: — | Archivos: 6
   Archivos: `__init__.py`, `apps.py`, `models.py`, `migrations/__init__.py`,
   `migrations/0001_initial.py`, `tests/test_models.py`, más `config/settings.py` (en `backend/`).
@@ -20,6 +20,10 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   suite verde.
   Excepción: crear una app de Django exige su esqueleto (`__init__.py`, `apps.py`, paquete de
   migraciones) y darla de alta en `settings.py`; no se puede repartir sin dejar una app a medias.
+  Decisiones: (1) También se crea `tests/__init__.py`, como en `consents`, para que los módulos de
+  test no choquen por nombre con los de otras apps. [Cierto] Revertir: borrarlo. (2) Los tests
+  reutilizan la plantilla existente con `get_or_create` en vez de borrar: no hay ninguna vía para
+  borrar plantillas, ni siquiera para tests (RF-022). [Cierto] Revertir: no aplica.
 
 - [ ] T-002 Sustitución de variables como texto
   RF: RF-023 (D-07) | Depende de: T-001 | Archivos: 2
