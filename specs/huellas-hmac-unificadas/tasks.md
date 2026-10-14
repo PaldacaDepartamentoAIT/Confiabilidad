@@ -339,7 +339,7 @@ intencionado, para que la suite no se rompa entre tareas, y T-012 lo prohíbe al
   (3) `outbox` importa `User` solo para los tipos (`TYPE_CHECKING`), sin dependencia en tiempo de
   ejecución hacia `accounts` (D-05). [Cierto]
 
-- [ ] T-029 Documentar la clave de la máscara
+- [x] T-029 Documentar la clave de la máscara
   RF: — (criterio de finalización) | Depende de: T-028 | Archivos: 2
   Archivos: `specs/huellas-hmac-unificadas/resumen.md` (en la raíz), `backend/.env.example`.
   Hecho cuando: el resumen explica la máscara (qué es, por qué no es una huella, su clave, que no
