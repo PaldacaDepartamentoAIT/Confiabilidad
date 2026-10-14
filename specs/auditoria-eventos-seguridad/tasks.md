@@ -237,10 +237,12 @@ empezar antes.
   Mutantes: no registrar `LOCKED` en `registration.verify` → detectado; lo mismo en `password_reset.verify` → detectado; registrar fallo en `AccountRefusal` → detectado en los tres casos (cuenta inactiva, correo cambiado y contraseña cambiada).
   Decisiones: los tests pasan sin cambiar código, porque el comportamiento ya era el correcto; lo prueban los mutantes. `LOCKED` y `ALREADY_VERIFIED` se prueban en los dos servicios, no solo en uno. Confianza: [Cierto]. Cómo revertirla: quitar los tests.
 
-- [ ] T-042 Corrección: el fallo de inicio de sesión por límite lleva su motivo
+- [x] T-042 Corrección: el fallo de inicio de sesión por límite lleva su motivo
   Tipo: corrección | Origen: validación de RF-004 y RF-005 | RF: RF-004, RF-005 | Depende de: T-030 | Archivos: 1 (`apps/audit/tests/test_lockout.py`)
   Causa: el test cuenta las filas `LOGIN` fallidas, pero no comprueba el motivo de la fila del intento rechazado por límite.
   Hecho cuando: `pytest backend/apps/audit/tests/test_lockout.py` pasa comprobando que el intento rechazado deja exactamente dos filas: `LOGIN` con `success=False` y `reason=too_many_login_attempts`, y `LOCKOUT`. Un mutante que graba `invalid_credentials` se detecta.
+  Mutantes: la fila `LOGIN` del límite con `invalid_credentials` → detectado.
+  Decisiones: el test toma solo las filas con `id` mayor que la última anterior al intento rechazado, para contar exactamente las que deja ese intento. Pasa sin cambiar código; lo prueba el mutante. Confianza: [Cierto]. Cómo revertirla: quitar el test.
 
 - [ ] T-043 Corrección: el backend arranca en desarrollo sin `.env` y sigue fallando en producción sin clave
   Tipo: corrección | Origen: validación (P-02) | RF: RF-011 (D-05) | Depende de: — | Archivos: 2 (`config/settings.py`, `apps/core/tests/test_audit_fingerprints.py`)

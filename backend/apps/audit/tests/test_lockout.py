@@ -60,6 +60,22 @@ def test_rejected_attempt_by_limit_records_failed_login_and_lockout(
     assert lockout.metadata == {"reason": "too_many_login_attempts"}
 
 
+def test_rejected_attempt_by_limit_creates_exactly_a_failed_login_and_a_lockout(
+    audit_key: None, user: User
+) -> None:
+    for _ in range(ALLAUTH_LIMIT):
+        _wrong_attempt()
+    last_id = SecurityEvent.objects.order_by("-id").values_list("id", flat=True).first() or 0
+
+    _wrong_attempt()
+
+    created = SecurityEvent.objects.filter(id__gt=last_id).order_by("id")
+    assert [(row.event_type, row.success, row.metadata) for row in created] == [
+        (EventType.LOGIN, False, {"reason": "too_many_login_attempts"}),
+        (EventType.LOCKOUT, False, {"reason": "too_many_login_attempts"}),
+    ]
+
+
 def test_attempts_under_the_limit_record_no_lockout(audit_key: None, user: User) -> None:
     for _ in range(ALLAUTH_LIMIT):
         _wrong_attempt()
