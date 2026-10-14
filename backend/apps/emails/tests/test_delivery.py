@@ -118,3 +118,99 @@ def test_the_sweep_task_returns_how_many_emails_it_queued(send_task: Any) -> Non
     _pending()
 
     assert tasks.dispatch_due() == 1
+
+
+def _due_now(email: OutboundEmail) -> None:
+    OutboundEmail.objects.filter(pk=email.pk).update(next_attempt_at=timezone.now())
+
+
+def _wait_after_failure(attempts_before: int) -> float:
+    email = _pending(attempts=attempts_before)
+    FakeBackend.reset(TimeoutError("slow"))
+    before = timezone.now()
+
+    delivery.deliver(email.pk)
+
+    email.refresh_from_db()
+    return (email.next_attempt_at - before).total_seconds()
+
+
+def test_a_temporary_error_keeps_the_email_pending_for_a_later_attempt() -> None:
+    email = _pending()
+    FakeBackend.reset(TimeoutError("slow server"))
+
+    delivery.deliver(email.pk)
+
+    email.refresh_from_db()
+    assert email.status == OutboundEmail.Status.PENDING
+    assert email.attempts == 1
+    assert "slow server" in email.last_error
+    assert FakeBackend.sent == []
+
+
+@pytest.mark.parametrize(
+    ("attempts_before", "expected_seconds"),
+    [(0, 30), (1, 60), (2, 120), (3, 240), (4, 480), (5, 900), (12, 900)],
+)
+def test_the_wait_doubles_up_to_fifteen_minutes(
+    attempts_before: int, expected_seconds: int
+) -> None:
+    waited = _wait_after_failure(attempts_before)
+
+    assert expected_seconds <= waited < expected_seconds + 5
+
+
+def test_an_email_is_delivered_after_two_temporary_errors() -> None:
+    email = _pending()
+    FakeBackend.reset(TimeoutError("one"), ConnectionError("two"))
+
+    for _ in range(3):
+        delivery.deliver(email.pk)
+        _due_now(email)
+
+    assert len(FakeBackend.sent) == 1
+    assert not OutboundEmail.objects.filter(pk=email.pk).exists()
+
+
+def test_a_failed_attempt_is_not_retried_before_its_time() -> None:
+    email = _pending()
+    FakeBackend.reset(TimeoutError("slow"))
+    delivery.deliver(email.pk)
+
+    delivery.deliver(email.pk)
+
+    email.refresh_from_db()
+    assert email.attempts == 1
+    assert FakeBackend.sent == []
+
+
+@pytest.mark.parametrize(
+    ("hours", "window", "status"), [(25, 24, "failed"), (23, 24, "pending"), (3, 2, "failed")]
+)
+def test_a_notice_stops_being_retried_after_its_window(
+    settings: Any, hours: int, window: int, status: str
+) -> None:
+    settings.EMAIL_NOTICE_RETRY_HOURS = window
+    email = _pending()
+    OutboundEmail.objects.filter(pk=email.pk).update(
+        created_at=timezone.now() - timedelta(hours=hours)
+    )
+    FakeBackend.reset(TimeoutError("slow"))
+
+    delivery.deliver(email.pk)
+
+    email.refresh_from_db()
+    assert email.status == status
+
+
+def test_the_notice_window_does_not_apply_to_code_emails(settings: Any) -> None:
+    settings.EMAIL_NOTICE_RETRY_HOURS = 1
+    email = _pending(kind="registration_code")
+    OutboundEmail.objects.filter(pk=email.pk).update(created_at=timezone.now() - timedelta(hours=2))
+    FakeBackend.reset(TimeoutError("slow"))
+
+    with mock.patch("apps.emails.delivery.rendering.compose", return_value=("A", "B")):
+        delivery.deliver(email.pk)
+
+    email.refresh_from_db()
+    assert email.status == OutboundEmail.Status.PENDING

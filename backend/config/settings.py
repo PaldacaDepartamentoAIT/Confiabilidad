@@ -207,6 +207,8 @@ PWNED_PASSWORDS_ENABLED = env.bool("PWNED_PASSWORDS_ENABLED", default=True)
 FRONTEND_BASE_URL = env("FRONTEND_BASE_URL", default="http://localhost:5173")
 # Dirección a la que el titular reporta un aviso de seguridad que no reconoce (RF-010).
 EMAIL_SUPPORT_ADDRESS = env("EMAIL_SUPPORT_ADDRESS", default="soporte@localhost")
+# Horas durante las que se reintenta un aviso de seguridad que el proveedor no acepta (RF-016).
+EMAIL_NOTICE_RETRY_HOURS = env.int("EMAIL_NOTICE_RETRY_HOURS", default=24)
 
 # El historial se consulta en el panel, pero no se revierte desde él (RF-020 de consentimientos).
 SIMPLE_HISTORY_REVERT_DISABLED = True

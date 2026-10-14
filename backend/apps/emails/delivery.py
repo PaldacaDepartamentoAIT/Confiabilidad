@@ -1,3 +1,4 @@
+import logging
 from datetime import timedelta
 
 from celery import current_app
@@ -10,8 +11,12 @@ from apps.emails import rendering
 from apps.emails.models import EmailTemplate, OutboundEmail
 from apps.emails.outbox import DELIVER_TASK
 
+logger = logging.getLogger(__name__)
+
 # Mientras dura la reserva, ningún otro intento toma la misma fila (D-04).
 LEASE = timedelta(minutes=5)
+FIRST_WAIT = timedelta(seconds=30)
+MAX_WAIT = timedelta(minutes=15)
 
 
 def deliver(email_id: int) -> None:
@@ -22,7 +27,11 @@ def deliver(email_id: int) -> None:
     subject, body = rendering.compose(
         email.kind, email.locale, template.subject, template.body, email.context
     )
-    EmailMessage(subject, body, settings.DEFAULT_FROM_EMAIL, [email.recipient]).send()
+    try:
+        EmailMessage(subject, body, settings.DEFAULT_FROM_EMAIL, [email.recipient]).send()
+    except Exception as error:
+        _record_failure(email, error)
+        return
     email.delete()
 
 
@@ -52,3 +61,25 @@ def _claim(email_id: int) -> OutboundEmail | None:
             email.next_attempt_at = timezone.now() + LEASE
             email.save(update_fields=["next_attempt_at"])
         return email
+
+
+def _record_failure(email: OutboundEmail, error: BaseException) -> None:
+    email.attempts += 1
+    email.last_error = f"{type(error).__name__}: {error}"
+    if _window_is_over(email):
+        email.status = OutboundEmail.Status.FAILED
+    else:
+        email.next_attempt_at = timezone.now() + _wait(email.attempts)
+    email.save(update_fields=["attempts", "last_error", "status", "next_attempt_at"])
+    logger.info("Outbound email %s failed (attempt %s).", email.pk, email.attempts)
+
+
+def _wait(attempts: int) -> timedelta:
+    return min(FIRST_WAIT * (1 << (attempts - 1)), MAX_WAIT)
+
+
+def _window_is_over(email: OutboundEmail) -> bool:
+    if email.kind in rendering.CODE_KINDS:
+        return False
+    window = timedelta(hours=settings.EMAIL_NOTICE_RETRY_HOURS)
+    return timezone.now() >= email.created_at + window

@@ -169,7 +169,7 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   (3) La plantilla se lee al entregar, no al encolar: un cambio de soporte vale para los correos
   pendientes. [Probable] Revertir: guardar asunto y cuerpo en la fila al encolar.
 
-- [ ] T-014 Reintentos con espera creciente y reserva del intento
+- [x] T-014 Reintentos con espera creciente y reserva del intento
   RF: RF-016, RF-026 (D-04) | Depende de: T-013 | Archivos: 3
   Archivos: `delivery.py`, `tests/test_delivery.py`, `config/settings.py` (en `backend/`).
   Hecho cuando: tras un error temporal, la fila sigue `pending` con `attempts` + 1 y el siguiente
@@ -177,6 +177,11 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   entrega y se borra; un aviso con más de `EMAIL_NOTICE_RETRY_HOURS` (24 por defecto) desde su
   encolado deja de reintentarse y pasa a `failed`; una fila reservada por otro intento no se envía
   dos veces; suite verde.
+  Decisiones: (1) Las tareas llevan su nombre explícito (`apps.emails.tasks.deliver`) para que no
+  dependa del módulo desde el que Celery las descubre. [Cierto] (2) La reserva del intento (D-04)
+  entra ya aquí: `deliver` solo toma una fila pendiente y vencida, y la aparta 5 minutos. [Cierto]
+  (3) La plantilla se lee al entregar, no al encolar: un cambio de soporte vale para los correos
+  pendientes. [Probable] Revertir: guardar asunto y cuerpo en la fila al encolar.
 
 - [ ] T-015 Fallo definitivo y registro de fallos
   RF: RF-017, RF-026 (D-12) | Depende de: T-014 | Archivos: 2
