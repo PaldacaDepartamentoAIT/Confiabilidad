@@ -4,11 +4,12 @@ from typing import Any
 import pytest
 from django.apps import apps as global_apps
 from django.contrib.auth.models import Group
-from django.test import Client
+from django.test import Client, RequestFactory
 from django.urls import reverse
 
 from apps.accounts.models import User
 from apps.accounts.tests.factories import make_user
+from apps.emails.admin import is_support
 from apps.emails.models import EmailTemplate
 
 pytestmark = pytest.mark.django_db
@@ -119,6 +120,7 @@ def test_staff_outside_support_cannot_reach_the_templates() -> None:
 
 def test_a_version_of_the_history_can_be_read(allowed_client: Client) -> None:
     template = _template()
+    template.save()
     version = template.history.latest("history_date")
     version_url = reverse(
         "admin:emails_emailtemplate_simple_history", args=[template.pk, version.history_id]
@@ -127,12 +129,15 @@ def test_a_version_of_the_history_can_be_read(allowed_client: Client) -> None:
     assert allowed_client.get(version_url).status_code == 200
 
 
-def test_a_support_member_without_staff_access_cannot_reach_the_templates() -> None:
+def test_a_support_member_without_staff_access_is_not_support() -> None:
     user = _support_member()
     user.is_staff = False
     user.save()
+    request = RequestFactory().get("/")
+    request.user = user
+
+    assert is_support(request) is False
 
     response = _client(user).get(_url("changelist"))
-
     assert response.status_code == 302
     assert "/login/" in response["Location"]
