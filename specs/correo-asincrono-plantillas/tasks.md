@@ -25,13 +25,19 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   reutilizan la plantilla existente con `get_or_create` en vez de borrar: no hay ninguna vía para
   borrar plantillas, ni siquiera para tests (RF-022). [Cierto] Revertir: no aplica.
 
-- [ ] T-002 Sustitución de variables como texto
+- [x] T-002 Sustitución de variables como texto
   RF: RF-023 (D-07) | Depende de: T-001 | Archivos: 2
   Archivos: `rendering.py`, `tests/test_rendering.py`.
   Hecho cuando: `{{ name }}` y `{{name}}` se sustituyen por su valor; un nombre con acentos,
   alfabeto no latino y emoji (`"Zoë 李 👋"`) sale idéntico en asunto y cuerpo; `{{ user.__class__ }}`,
   `{% if %}` y `{name}` no se evalúan; un valor que contiene `{{ code }}` no se vuelve a sustituir;
   suite verde.
+  Decisiones: (1) `rendering.placeholders(text)` lista las variables de un texto; lo usará la
+  validación de T-004. [Cierto] Revertir: inlinear la expresión. (2) Una variable sin valor se deja
+  tal cual en el texto en vez de vaciarla: la validación de T-004 impide guardarla, y así un fallo
+  se ve en vez de producir un hueco silencioso. [Probable] Revertir: devolver `""` en `_replace`.
+  (3) Un mutante que admitía puntos en el nombre sobrevivía, porque esa clave nunca está en los
+  valores; lo mata `test_attribute_access_is_not_a_placeholder`. [Cierto]
 
 - [ ] T-003 Enlaces con el identificador en el fragmento
   RF: RF-004, RF-005 (D-09) | Depende de: T-002 | Archivos: 3
