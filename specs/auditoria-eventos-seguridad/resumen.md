@@ -6,8 +6,9 @@ Una app nueva, `backend/apps/audit/`, guarda un registro de cada evento sensible
 tabla `audit_securityevent` (modelo `SecurityEvent`). Cada fila lleva tipo de evento, fecha en UTC,
 IP real del cliente, user agent, huella HMAC del correo, huella HMAC de la clave de sesión, resultado
 (éxito o fallo) y metadatos (RF-001). No hay clave foránea a la cuenta: la relación con una persona
-solo se hace con la huella del correo. La tabla solo admite inserciones desde la aplicación, y la
-única forma de borrar es el comando de purga de eventos de más de un año.
+solo se hace con la huella del correo. Por las vías de la aplicación (la API pública del ORM, el panel
+de administración y los comandos de la aplicación) la tabla solo admite inserciones, y la única forma
+de borrar es el comando de purga de eventos de más de un año.
 
 - **Once tipos de evento** (RF-002): registro de cuenta, solicitud de registro pendiente, envío de
   código, validación de código, inicio de sesión, bloqueo por límite, cierre de sesión, cambio de
@@ -28,13 +29,16 @@ solo se hace con la huella del correo. La tabla solo admite inserciones desde la
   recibe, así que accounts no importa nada de audit. Un código rechazado deja una validación con
   resultado fallo cuando es incorrecto, ha caducado él o su proceso, se alcanzó el límite de intentos o
   ya estaba validado. Si el proceso no existe, o el restablecimiento se rechaza porque la cuenta cambió
-  o está inactiva, no se registra nada.
+  o está inactiva, no se registra nada. Si el proceso ha caducado, se registra el fallo aunque la cuenta
+  también haya cambiado. Una creación de cuenta rechazada (cuenta ya existente, proceso caducado o
+  contraseña no válida) no deja ningún evento de registro.
 - **Contraseña** (RF-010): se registran el cambio y el restablecimiento completados. Un intento
   rechazado por una contraseña no válida no deja ninguna fila.
 - **Sin datos sensibles** (RF-011): nunca se guardan contraseñas, códigos, tokens ni el correo en claro.
   El correo (en minúsculas y sin espacios a los lados) y la clave de sesión se guardan como HMAC-SHA256
   con la clave `AUDIT_HASH_SECRET`, calculada en el punto único `apps/core/fingerprints.py`. Si la clave
-  está vacía, `manage.py check` falla con `audit.E001`.
+  falta o está vacía y `DJANGO_DEBUG` está activo (desarrollo, Docker Compose), se usa el valor de
+  desarrollo `dev-audit-secret-change-me`; sin `DEBUG`, `manage.py check` falla con `audit.E001`.
 - **Solo inserción** (RF-012): `save()` y `save_base()` sobre una fila existente, `delete()`, `update()`
   y `delete()` del QuerySet, `bulk_create` con `update_conflicts` y el gestor base lanzan
   `InsertOnlyError`. El admin no ofrece añadir, cambiar ni borrar (un POST directo responde 403). El
@@ -49,7 +53,7 @@ solo se hace con la huella del correo. La tabla solo admite inserciones desde la
 - **IP real** (RF-015): `RealClientIPMiddleware` (`apps/core/middleware.py`) solo lee `X-Forwarded-For`
   cuando la conexión llega desde una IP exacta de `TRUSTED_PROXY_IPS`, y toma la última entrada. Si la
   lista está vacía, no confía en nadie y registra la IP de la conexión directa.
-- **Configuración nueva**: `AUDIT_HASH_SECRET` (obligatoria), `TRUSTED_PROXY_IPS` (vacía por defecto),
+- **Configuración nueva**: `AUDIT_HASH_SECRET` (obligatoria sin `DEBUG`), `TRUSTED_PROXY_IPS` (vacía por defecto),
   `ACCOUNT_ADAPTER` y el middleware `apps.audit.middleware.CurrentRequestMiddleware`. Las acciones
   humanas pendientes (clave en producción, IP del proxy, `.env` local y migraciones) están en
   `HUMAN_TODO.md`.
@@ -58,15 +62,19 @@ solo se hace con la huella del correo. La tabla solo admite inserciones desde la
 - **Perfil y deshabilitación sin emisor** (RF-010): los receptores y las señales existen, pero hoy
   ningún flujo del código edita perfiles ni deshabilita cuentas, así que no se generan esas filas. Se
   activarán solas cuando la feature que cree esos flujos emita las señales.
-- **SQL directo** (RF-012): las guardas viven en el ORM. Una consulta SQL directa contra la base de
-  datos puede modificar o borrar filas. La protección con un rol de base de datos está fuera de
-  alcance. El test que vigila el permiso de purga tampoco ve accesos con nombres construidos en
-  ejecución.
+- **Vías fuera de la aplicación** (RF-012): las guardas viven en los métodos públicos del ORM. Pueden
+  modificar o borrar filas el SQL directo contra la base de datos, las APIs internas del ORM (por
+  ejemplo `_raw_delete`), los métodos base llamados sin pasar por el modelo, los comandos integrados de
+  Django (`flush`, `migrate audit zero`, `shell`) y el código que use a propósito el permiso interno de
+  la purga. La protección a nivel de base de datos está fuera de alcance. El test que vigila el permiso
+  de purga no ve accesos con nombres construidos en ejecución.
 - **Restablecimiento rechazado**: que un restablecimiento con contraseña no válida no deje fila lo
   garantiza hoy la transacción de `complete()`, que revierte cualquier fila escrita antes del error.
-- **Arranque sin clave en ASGI**: `manage.py check` falla sin `AUDIT_HASH_SECRET`, pero un servidor
-  ASGI no ejecuta los checks al arrancar; sin la clave, el primer evento falla con
+- **Arranque sin clave en ASGI**: sin `DEBUG`, `manage.py check` falla sin `AUDIT_HASH_SECRET`, pero un
+  servidor ASGI no ejecuta los checks al arrancar; sin la clave, el primer evento falla con
   `ImproperlyConfigured`.
+- **`X-Forwarded-For` sin validar como IP**: la última entrada se usa tal cual. Solo importa si el proxy
+  de confianza está mal configurado.
 - **`TRUSTED_PROXY_IPS` sin validar**: una entrada en formato CIDR nunca coincide. Es un fallo seguro
   (no confía), pero silencioso.
 - **Restablecimiento nativo de allauth**: su receptor está conectado, pero hoy la ruta nativa no
@@ -74,8 +82,8 @@ solo se hace con la huella del correo. La tabla solo admite inserciones desde la
   registra.
 
 ## Cómo probarlo
-Todo se hace sin frontend, desde la raíz del repositorio. Antes, añade `AUDIT_HASH_SECRET` a tu
-`backend/.env` (ver `HUMAN_TODO.md`).
+Todo se hace sin frontend, desde la raíz del repositorio. Docker Compose activa `DJANGO_DEBUG`, así que
+funciona sin `backend/.env`; para usar tu propia clave de desarrollo, mira `HUMAN_TODO.md`.
 
 1. Ejecuta los tests de auditoría:
    ```bash
@@ -196,6 +204,13 @@ directo queda como riesgo aceptado.
 Una función de purga que recibe «la fecha de hoy» como parámetro permite pasarle una fecha futura, y
 entonces el corte de un año también se mueve al futuro y borra eventos recientes. Tomar el reloj
 dentro de la función elimina esa posibilidad: nadie puede adelantar la purga desde el código.
+
+### Clave obligatoria en producción, valor fijo en desarrollo
+En producción, arrancar sin la clave de auditoría sería peligroso: los eventos fallarían o, peor, se
+firmarían con una clave conocida. Por eso, sin `DEBUG`, el check `audit.E001` impide arrancar. En
+desarrollo, en cambio, un clon limpio tiene que levantarse con un solo `docker compose up` (P-02), así
+que con `DEBUG` activo se usa un valor fijo y público. Ese valor no protege nada, y no tiene que
+hacerlo: en desarrollo no hay datos reales.
 
 ### Un año de calendario y el 29 de febrero
 «Un año» no son 365 días: entre el 1 de marzo de 2027 y el de 2028 hay 366. La purga resta un año de
