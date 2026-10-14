@@ -251,10 +251,12 @@ empezar antes.
   Mutantes: valor de desarrollo también sin `DEBUG` → detectado.
   Decisiones: una clave vacía cuenta como ausente (`env(...) or ...`), para que `AUDIT_HASH_SECRET=` en el entorno no deje sin valor el desarrollo. Los tests lanzan `manage.py check` en un proceso aparte para leer `settings.py` desde cero. Confianza: [Cierto]. Cómo revertirla: volver a `default=""`, lo que rompe P-02.
 
-- [ ] T-044 Test: el cambio de contraseña por el flujo real deja su fila
+- [x] T-044 Test: el cambio de contraseña por el flujo real deja su fila
   Tipo: test | Origen: validación (R-5) | RF: RF-010 | Depende de: T-037 | Archivos: 1 (`apps/audit/tests/test_password_changed.py`)
   Causa: el cambio correcto solo se prueba enviando la señal a mano.
   Hecho cuando: `pytest backend/apps/audit/tests/test_password_changed.py` pasa con un cambio por `/_allauth/browser/v1/account/password/change` que deja una fila `PASSWORD_CHANGE` con `success=True`, y con un rechazo por contraseña no válida que no deja fila. Un mutante que desconecta el receptor se detecta.
+  Mutantes: receptor de `password_changed` desconectado → detectado (el test nuevo y el de la señal).
+  Decisiones: la sesión se inicia con `force_login`, que también deja una fila `LOGIN` correcta; por eso el rechazo comprueba que no hay ninguna fila `PASSWORD_CHANGE` ni ninguna con `success=False`. Confianza: [Cierto]. Cómo revertirla: quitar los dos tests.
 
 ## RF sin tarea
 Ninguno. Todos los RF de la spec (RF-001 a RF-016) aparecen en al menos una tarea. RF-010 aparece como cubierto en su parte aceptada (el residual de perfil y deshabilitación queda en T-016, con emisión pendiente de otra feature).
