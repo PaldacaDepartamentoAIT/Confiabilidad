@@ -117,3 +117,21 @@ def consent_email_fingerprint(email: str) -> str:
 
 def consent_email_matches(email: str, fingerprint: str) -> bool:
     return _matches(_CONSENT_KEYS, _normalize_email(email), fingerprint)
+
+
+_AUDIT_KEYS = _KeyPolicy(lambda: _audit_key(), lambda: None)
+
+
+def _audit_key() -> str:
+    key = str(settings.AUDIT_HASH_SECRET)
+    if not key.strip():
+        raise ImproperlyConfigured(_("AUDIT_HASH_SECRET must not be empty."))
+    return key
+
+
+def audit_email_fingerprint(email: str) -> str:
+    return _sign(_AUDIT_KEYS.current(), f"audit_email:{_normalize_email(email)}")
+
+
+def audit_session_fingerprint(session_key: str) -> str:
+    return _sign(_AUDIT_KEYS.current(), f"audit_session:{session_key}")

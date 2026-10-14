@@ -32,7 +32,10 @@ INSTALLED_APPS = [
     "apps.core",
     "apps.accounts",
     "apps.consents",
+    "apps.audit",
 ]
+
+TRUSTED_PROXY_IPS: list[str] = env.list("TRUSTED_PROXY_IPS", default=[])
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -46,6 +49,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
     "simple_history.middleware.HistoryRequestMiddleware",
+    "apps.audit.middleware.CurrentRequestMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -141,6 +145,7 @@ ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
 ACCOUNT_EMAIL_VERIFICATION = "none"
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_RATE_LIMITS: dict[str, object] = {}
+ACCOUNT_ADAPTER = "apps.audit.adapters.AuditAccountAdapter"
 HEADLESS_ONLY = True
 
 # CORS: solo el cliente de escritorio Tauri (la web es mismo origen). Orígenes por entorno.
@@ -207,3 +212,8 @@ SIMPLE_HISTORY_REVERT_DISABLED = True
 
 # Consentimientos: secreto de la huella del correo (RF-012). No debe rotar nunca (S-09).
 CONSENT_EMAIL_HASH_SECRET = env("CONSENT_EMAIL_HASH_SECRET", default=SECRET_KEY)
+# En desarrollo hay un valor fijo para que Docker arranque sin .env; sin DEBUG, audit.E001 exige la
+# clave (D-05, P-02).
+AUDIT_HASH_SECRET = env("AUDIT_HASH_SECRET", default="") or (
+    "dev-audit-secret-change-me" if DEBUG else ""
+)
