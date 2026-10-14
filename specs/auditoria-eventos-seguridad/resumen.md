@@ -23,7 +23,9 @@ de borrar es el comando de purga de eventos de más de un año.
   contraseña sea correcta).
 - **Bloqueo por límite** (RF-005): el intento que allauth rechaza por el límite deja dos filas, un
   inicio de sesión fallido y un bloqueo. La aplicación no cuenta intentos ni bloquea por su cuenta: eso
-  lo decide allauth (RF-006).
+  lo decide allauth (RF-006). La limitación de peticiones por IP de la vista de login (30 por minuto)
+  responde 429 antes de comprobar la contraseña y no deja fila: esas peticiones no prueban credenciales,
+  y registrarlas permitiría inflar la tabla.
 - **Cierre de sesión** (RF-009), **registro y solicitud pendiente** (RF-007) y **códigos** (RF-008): los
   servicios de `apps/accounts` emiten señales propias (`apps/accounts/signals.py`) y la auditoría las
   recibe, así que accounts no importa nada de audit. Un código rechazado deja una validación con
@@ -33,7 +35,7 @@ de borrar es el comando de purga de eventos de más de un año.
   también haya cambiado. Una creación de cuenta rechazada (cuenta ya existente, proceso caducado o
   contraseña no válida) no deja ningún evento de registro.
 - **Contraseña** (RF-010): se registran el cambio y el restablecimiento completados. Un intento
-  rechazado por una contraseña no válida no deja ninguna fila.
+  rechazado, por cualquier motivo, no deja ninguna fila.
 - **Sin datos sensibles** (RF-011): nunca se guardan contraseñas, códigos, tokens ni el correo en claro.
   El correo (en minúsculas y sin espacios a los lados) y la clave de sesión se guardan como HMAC-SHA256
   con la clave `AUDIT_HASH_SECRET`, calculada en el punto único `apps/core/fingerprints.py`. Si la clave
@@ -52,7 +54,8 @@ de borrar es el comando de purga de eventos de más de un año.
   pasarle una fecha.
 - **IP real** (RF-015): `RealClientIPMiddleware` (`apps/core/middleware.py`) solo lee `X-Forwarded-For`
   cuando la conexión llega desde una IP exacta de `TRUSTED_PROXY_IPS`, y toma la última entrada. Si la
-  lista está vacía, no confía en nadie y registra la IP de la conexión directa.
+  lista está vacía, no confía en nadie y registra la IP de la conexión directa. Los espacios alrededor de
+  cada IP de la lista se ignoran.
 - **Configuración nueva**: `AUDIT_HASH_SECRET` (obligatoria sin `DEBUG`), `TRUSTED_PROXY_IPS` (vacía por defecto),
   `ACCOUNT_ADAPTER` y el middleware `apps.audit.middleware.CurrentRequestMiddleware`. Las acciones
   humanas pendientes (clave en producción, IP del proxy, `.env` local y migraciones) están en
@@ -68,8 +71,14 @@ de borrar es el comando de purga de eventos de más de un año.
   Django (`flush`, `migrate audit zero`, `shell`) y el código que use a propósito el permiso interno de
   la purga. La protección a nivel de base de datos está fuera de alcance. El test que vigila el permiso
   de purga no ve accesos con nombres construidos en ejecución.
-- **Restablecimiento rechazado**: que un restablecimiento con contraseña no válida no deje fila lo
-  garantiza hoy la transacción de `complete()`, que revierte cualquier fila escrita antes del error.
+- **Rechazos dentro de una transacción**: que un restablecimiento o una creación de cuenta rechazados
+  por contraseña no válida no dejen fila lo garantiza hoy la transacción de `complete()`, que revierte
+  cualquier fila escrita antes del error.
+- **Altas fuera del registro** (RF-007): `seed_test_user` y `createsuperuser` crean cuentas sin evento
+  de registro.
+- **Login fallido en el panel de administración**: no pasa por allauth y no deja fila; el login
+  correcto sí se registra.
+- **Reautenticación**: una reautenticación rechazada puede registrarse como inicio de sesión fallido.
 - **Arranque sin clave en ASGI**: sin `DEBUG`, `manage.py check` falla sin `AUDIT_HASH_SECRET`, pero un
   servidor ASGI no ejecuta los checks al arrancar; sin la clave, el primer evento falla con
   `ImproperlyConfigured`.
