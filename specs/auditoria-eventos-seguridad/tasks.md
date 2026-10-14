@@ -223,10 +223,12 @@ empezar antes.
   Mutantes: mensaje como `str` sin `gettext_lazy` → detectado.
   Decisiones: los stubs de Django tipan `msg` de `Error` como `str`, aunque Django acepta textos perezosos; se usa `# type: ignore[arg-type]` en esa línea, con un comentario que lo explica. Confianza: [Cierto]. Cómo revertirla: volver al texto plano, lo que incumple la convención de `AGENTS.md`.
 
-- [ ] T-040 Test: el permiso interno de purga solo se usa en el modelo y la purga de auditoría solo la llama su comando
+- [x] T-040 Test: el permiso interno de purga solo se usa en el modelo y la purga de auditoría solo la llama su comando
   Tipo: test | Origen: validación (H3) y aclaración de RF-012 | RF: RF-012, RF-014 | Depende de: T-036 | Archivos: 1 (`apps/audit/tests/test_purge_access.py`)
   Causa: `_purge_allowed` se puede importar desde cualquier módulo, y nada comprobaba que solo la purga lo usa.
   Hecho cuando: `pytest backend/apps/audit/tests/test_purge_access.py` pasa: fuera de `apps/audit/models.py` y de los tests, ningún archivo del backend nombra `_purge_allowed` ni `_purge_context`, y fuera de `apps/audit/management/commands/purge_security_events.py` ningún archivo importa `purge_expired` de `apps.audit.models`; un mutante que usa `_purge_allowed` en otro módulo lo detecta.
+  Mutantes: (1) `apps/audit/admin.py` importa `_purge_allowed` → detectado. (2) El escáner deja de resolver `modulo.purge_expired` → lo detectan sus tests unitarios (2 fallos).
+  Decisiones: análisis estático con `ast`, con el mismo patrón que `apps/core/tests/test_fingerprint_guard.py`. Cubre imports absolutos y relativos, alias, atributos y `getattr` con el nombre literal. No cubre accesos dinámicos con nombres construidos en ejecución, que quedan como riesgo residual junto al SQL directo (RF-012). El test pasa sin cambiar código, porque hoy solo el modelo y el comando usan la purga. Confianza: [Cierto]. Cómo revertirla: quitar el archivo.
 
 ## RF sin tarea
 Ninguno. Todos los RF de la spec (RF-001 a RF-016) aparecen en al menos una tarea. RF-010 aparece como cubierto en su parte aceptada (el residual de perfil y deshabilitación queda en T-016, con emisión pendiente de otra feature).
