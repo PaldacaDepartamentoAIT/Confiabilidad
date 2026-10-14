@@ -115,3 +115,24 @@ def test_staff_outside_support_cannot_reach_the_templates() -> None:
 
     assert client.get(_url("changelist")).status_code == 403
     assert client.get(_url("change", _template().pk)).status_code == 403
+
+
+def test_a_version_of_the_history_can_be_read(allowed_client: Client) -> None:
+    template = _template()
+    version = template.history.latest("history_date")
+    version_url = reverse(
+        "admin:emails_emailtemplate_simple_history", args=[template.pk, version.history_id]
+    )
+
+    assert allowed_client.get(version_url).status_code == 200
+
+
+def test_a_support_member_without_staff_access_cannot_reach_the_templates() -> None:
+    user = _support_member()
+    user.is_staff = False
+    user.save()
+
+    response = _client(user).get(_url("changelist"))
+
+    assert response.status_code == 302
+    assert "/login/" in response["Location"]
