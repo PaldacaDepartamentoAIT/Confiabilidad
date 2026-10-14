@@ -368,8 +368,12 @@ def test_registering_a_checker_makes_it_available() -> None:
 
 def test_the_remaining_time_is_computed_when_the_email_is_delivered(checker: Any) -> None:
     checker.expiry = timezone.now() + timedelta(minutes=6, seconds=10)
+    email = _code_email()
+    OutboundEmail.objects.filter(pk=email.pk).update(
+        created_at=timezone.now() - timedelta(minutes=9)
+    )
 
-    delivery.deliver(_code_email().pk)
+    delivery.deliver(email.pk)
 
     [message] = FakeBackend.sent
     assert "El código vence en 6 minutos." in message.body
