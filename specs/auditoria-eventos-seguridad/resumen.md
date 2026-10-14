@@ -316,9 +316,9 @@ van en orden: algunos usan valores que obtienes en un paso anterior.
 16. Comprueba que el acceso exige el permiso específico. Crea un usuario de staff con solo el permiso
     de ver eventos:
     ```bash
-    docker compose -f docker/docker-compose.yml run --rm backend python manage.py shell -c "from datetime import date; from django.contrib.auth.models import Permission; from apps.accounts.models import User; u = User.objects.create_user('lector@example.com', 'Lector-Seguro-2026!', name='Lector', birthdate=date(1990, 1, 1), country='ES', is_staff=True); u.user_permissions.add(Permission.objects.get(codename='view_securityevent'))"
+    docker compose -f docker/docker-compose.yml run --rm backend python manage.py shell -c "from datetime import date; from django.contrib.auth.models import Permission; from apps.accounts.models import User; u = User.objects.create_user('lector@example.com', 'Lector-Seguro-2026', name='Lector', birthdate=date(1990, 1, 1), country='ES', is_staff=True); u.user_permissions.add(Permission.objects.get(codename='view_securityevent'))"
     ```
-    Cierra la sesión del panel, entra como `lector@example.com` con la contraseña `Lector-Seguro-2026!`
+    Cierra la sesión del panel, entra como `lector@example.com` con la contraseña `Lector-Seguro-2026`
     y abre la misma dirección del paso 14: deberías ver los eventos en solo lectura. Quítale el permiso:
     ```bash
     docker compose -f docker/docker-compose.yml run --rm backend python manage.py shell -c "from apps.accounts.models import User; User.objects.get(email='lector@example.com').user_permissions.clear()"
