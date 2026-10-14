@@ -3,6 +3,8 @@ from collections.abc import Iterator
 
 import pytest
 from django.apps import apps as global_apps
+from django.contrib.auth.management import create_permissions
+from django.contrib.auth.models import Group, Permission
 from django.db import connection
 from django.db.migrations.executor import MigrationExecutor
 
@@ -73,3 +75,52 @@ def test_creating_the_initial_templates_keeps_edited_ones(schema_only: None) -> 
     template.refresh_from_db()
     assert template.body == "Edited, {{ name }}."
     assert EmailTemplate.objects.count() == 21
+
+
+SUPPORT_GROUP = "Soporte técnico"
+EMAIL_PERMISSIONS = {
+    ("emails", "view_emailtemplate"),
+    ("emails", "change_emailtemplate"),
+    ("emails", "view_failedemail"),
+    ("emails", "delete_failedemail"),
+}
+PERMISSIONS = ("emails", "0003_support_permissions")
+
+
+def _group_permissions() -> set[tuple[str, str]]:
+    group = Group.objects.get(name=SUPPORT_GROUP)
+    return set(group.permissions.values_list("content_type__app_label", "codename"))
+
+
+@pytest.fixture
+def before_permissions(transactional_db: None) -> Iterator[None]:
+    _migrate(INITIAL)
+    # Otros tests transaccionales pueden haber vaciado el grupo que crea `consents.0002`.
+    Group.objects.get_or_create(name=SUPPORT_GROUP)
+    yield
+    _migrate(_latest())
+
+
+def test_support_gets_the_email_permissions_on_top_of_its_own(before_permissions: None) -> None:
+    consents_before = {perm for perm in _group_permissions() if perm[0] == "consents"}
+
+    _migrate(PERMISSIONS)
+
+    permissions = _group_permissions()
+    assert EMAIL_PERMISSIONS <= permissions
+    assert {perm for perm in permissions if perm[0] == "consents"} == consents_before
+    assert {perm for perm in permissions if perm[0] == "emails"} == EMAIL_PERMISSIONS
+
+
+def test_rolling_back_removes_only_the_email_permissions(before_permissions: None) -> None:
+    _migrate(PERMISSIONS)
+    create_permissions(global_apps.get_app_config("consents"), verbosity=0)
+    Group.objects.get(name=SUPPORT_GROUP).permissions.add(
+        Permission.objects.get(content_type__app_label="consents", codename="view_userterms")
+    )
+    consents_permissions = {perm for perm in _group_permissions() if perm[0] == "consents"}
+
+    _migrate(INITIAL)
+
+    assert _group_permissions() == consents_permissions
+    assert ("consents", "view_userterms") in consents_permissions
