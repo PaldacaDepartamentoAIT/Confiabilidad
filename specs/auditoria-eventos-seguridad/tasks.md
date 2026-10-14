@@ -184,6 +184,18 @@ empezar antes.
   Hecho cuando: `pytest backend/apps/audit/tests/test_insert_only.py backend/apps/audit/tests/test_admin.py` pasa con `_base_manager` lanzando `InsertOnlyError` y la fila intacta, y con POST al cambio y al borrado devolviendo 403 con la fila intacta; `makemigrations --check` sin cambios; la suite completa sigue en verde.
   Decisiones: se fija `base_manager_name = "objects"` en `Meta`, para que el gestor base sea el mismo que el de guardas. Confianza: [Cierto]. Cómo revertirla: quitar la línea, lo que reabre el hueco.
 
+- [x] T-034 Corrección: `save_base()` sobre una fila existente debe rechazarse
+  Tipo: corrección | Origen: validación de RF-012 | RF: RF-012 | Depende de: T-033 | Archivos: 2
+  Causa: `save_base()` escribe la fila sin pasar por la guarda de `save()`; confirmado con una prueba que cambió `success` de True a False.
+  Hecho cuando: `pytest backend/apps/audit/tests/test_insert_only.py` pasa con `save_base()` sobre una fila existente lanzando `InsertOnlyError` y la fila intacta; la suite de auditoría sigue en verde.
+  Decisiones: `save_base()` aplica la misma guarda que `save()`. Confianza: [Cierto]. Cómo revertirla: quitar el override, lo que reabre el hueco.
+
+- [x] T-035 Corrección: la purga no puede borrar eventos de menos de un año
+  Tipo: corrección | Origen: validación de RF-014 | RF: RF-014 | Depende de: T-028 | Archivos: 2
+  Causa: `purge_older_than(ahora)` aceptaba cualquier corte y borró un evento de hace un día (confirmado).
+  Hecho cuando: `pytest backend/apps/audit/tests/test_purge.py` pasa: el gestor ya no expone `purge_older_than`, y la purga (función interna `purge_expired`) usa siempre el corte de un año; el comando sigue purgando solo eventos de más de un año; la suite de auditoría sigue en verde.
+  Decisiones: mecanismo elegido por el usuario: quitar el método público. La purga pasa a la función interna `purge_expired(now)` en `models.py`, que calcula el corte con `retention_cutoff`; el comando la usa y la lógica del corte se mueve a `models.py`. Confianza: [Cierto]. Cómo revertirla: volver a exponer un método que acepte fecha de corte, lo que reabre el hueco.
+
 ## RF sin tarea
 Ninguno. Todos los RF de la spec (RF-001 a RF-016) aparecen en al menos una tarea. RF-010 aparece como cubierto en su parte aceptada (el residual de perfil y deshabilitación queda en T-016, con emisión pendiente de otra feature).
 
@@ -197,3 +209,4 @@ Ninguno. Todos los RF de la spec (RF-001 a RF-016) aparecen en al menos una tare
 - 2026-10-13 — T-031 (receptores de M-03 que faltaban) — RF: RF-007, RF-010 — Estado: aprobado
 - 2026-10-13 — Corrección T-032 (bulk_create con update_conflicts posicional) tras la validación — RF: RF-012 — Estado: aprobado
 - 2026-10-13 — Corrección T-033 (gestor base sin guardas) tras la validación — RF: RF-012 — Estado: aprobado
+- 2026-10-14 — Correcciones T-034 (save_base) y T-035 (purga de un año sin método público) tras la validación — RF: RF-012, RF-014 — Estado: aprobado

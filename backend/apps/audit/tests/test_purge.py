@@ -5,7 +5,7 @@ import pytest
 from django.core.management import call_command
 from django.utils import timezone
 
-from apps.audit.models import EventType, SecurityEvent
+from apps.audit.models import EventType, SecurityEvent, purge_expired
 
 pytestmark = pytest.mark.django_db
 
@@ -44,7 +44,7 @@ def test_purge_with_nothing_to_delete_deletes_nothing() -> None:
 def test_retention_cutoff_is_one_calendar_year_across_leap_day() -> None:
     from datetime import datetime
 
-    from apps.audit.management.commands.purge_security_events import retention_cutoff
+    from apps.audit.models import retention_cutoff
 
     assert retention_cutoff(datetime(2028, 3, 1, tzinfo=UTC)) == datetime(2027, 3, 1, tzinfo=UTC)
 
@@ -52,7 +52,7 @@ def test_retention_cutoff_is_one_calendar_year_across_leap_day() -> None:
 def test_retention_cutoff_from_leap_day_falls_back_to_february_28() -> None:
     from datetime import datetime
 
-    from apps.audit.management.commands.purge_security_events import retention_cutoff
+    from apps.audit.models import retention_cutoff
 
     assert retention_cutoff(datetime(2028, 2, 29, tzinfo=UTC)) == datetime(2027, 2, 28, tzinfo=UTC)
 
@@ -60,7 +60,7 @@ def test_retention_cutoff_from_leap_day_falls_back_to_february_28() -> None:
 def test_event_exactly_one_calendar_year_old_is_kept_on_leap_window() -> None:
     from datetime import datetime
 
-    from apps.audit.management.commands.purge_security_events import retention_cutoff
+    from apps.audit.models import retention_cutoff
 
     cutoff = retention_cutoff(datetime(2028, 3, 1, tzinfo=UTC))
     kept = SecurityEvent.objects.create(
@@ -69,6 +69,10 @@ def test_event_exactly_one_calendar_year_old_is_kept_on_leap_window() -> None:
     SecurityEvent.objects.create(
         event_type=EventType.LOGIN, success=True, created_at=cutoff - timedelta(seconds=1)
     )
-    SecurityEvent.objects.purge_older_than(cutoff)
+    purge_expired(datetime(2028, 3, 1, tzinfo=UTC))
     assert SecurityEvent.objects.filter(pk=kept.pk).exists()
     assert SecurityEvent.objects.count() == 1
+
+
+def test_manager_has_no_public_purge_method() -> None:
+    assert not hasattr(SecurityEvent.objects, "purge_older_than")

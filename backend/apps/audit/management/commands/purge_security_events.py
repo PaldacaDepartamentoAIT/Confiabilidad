@@ -1,17 +1,9 @@
-from datetime import datetime
 from typing import Any
 
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-from apps.audit.models import SecurityEvent
-
-
-def retention_cutoff(now: datetime) -> datetime:
-    try:
-        return now.replace(year=now.year - 1)
-    except ValueError:
-        return now.replace(year=now.year - 1, day=28)
+from apps.audit.models import SecurityEvent, purge_expired, retention_cutoff
 
 
 class Command(BaseCommand):
@@ -30,5 +22,5 @@ class Command(BaseCommand):
             count = SecurityEvent.objects.filter(created_at__lt=cutoff).count()
             self.stdout.write(f"{count} security events would be deleted.")
             return
-        deleted = SecurityEvent.objects.purge_older_than(cutoff)
+        deleted = purge_expired(timezone.now())
         self.stdout.write(f"{deleted} security events deleted.")

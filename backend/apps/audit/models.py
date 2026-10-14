@@ -68,11 +68,6 @@ class SecurityEventQuerySet(models.QuerySet["SecurityEvent"]):
             unique_fields=unique_fields,
         )
 
-    def purge_older_than(self, cutoff: datetime) -> int:
-        with _purge_allowed():
-            deleted, _ = self.filter(created_at__lt=cutoff).delete()
-        return deleted
-
 
 class SecurityEvent(models.Model):
     event_type = models.CharField(max_length=32, choices=EventType.choices, db_index=True)
@@ -98,7 +93,26 @@ class SecurityEvent(models.Model):
             raise InsertOnlyError
         super().save(*args, **kwargs)
 
+    def save_base(self, *args: Any, **kwargs: Any) -> None:
+        if not self._state.adding or self.pk is not None:
+            raise InsertOnlyError
+        super().save_base(*args, **kwargs)
+
     def delete(self, *args: Any, **kwargs: Any) -> tuple[int, dict[str, int]]:
         if not _purge_context.get():
             raise InsertOnlyError
         return super().delete(*args, **kwargs)
+
+
+def retention_cutoff(now: datetime) -> datetime:
+    try:
+        return now.replace(year=now.year - 1)
+    except ValueError:
+        return now.replace(year=now.year - 1, day=28)
+
+
+def purge_expired(now: datetime) -> int:
+    cutoff = retention_cutoff(now)
+    with _purge_allowed():
+        deleted, _ = SecurityEvent.objects.filter(created_at__lt=cutoff).delete()
+    return deleted

@@ -86,3 +86,11 @@ def test_base_manager_cannot_update_or_delete_rows() -> None:
     with pytest.raises(InsertOnlyError):
         SecurityEvent._base_manager.filter(pk=event.pk).delete()
     assert SecurityEvent.objects.filter(pk=event.pk).exists()
+
+
+def test_save_base_cannot_overwrite_an_existing_row() -> None:
+    event = _create()
+    event.success = False
+    with pytest.raises(InsertOnlyError):
+        event.save_base()
+    assert SecurityEvent.objects.get(pk=event.pk).success is True
