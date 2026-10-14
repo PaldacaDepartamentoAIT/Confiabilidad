@@ -111,13 +111,17 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   parte anterior al guion. (2) `LANGUAGE_CHOICES` vive aquí para que `accounts` lo use en T-009;
   `EmailTemplate.Locale` repite los mismos tres valores. [Cierto] Revertir: unificarlos.
 
-- [ ] T-009 Idioma en la cuenta y en el registro pendiente
+- [x] T-009 Idioma en la cuenta y en el registro pendiente
   RF: RF-012 (D-10) | Depende de: T-008 | Archivos: 3
   Archivos: `apps/accounts/models.py`, `apps/accounts/migrations/0007_language.py`,
   `apps/accounts/tests/test_language.py` (en `backend/`).
   Hecho cuando: `User` y `PendingRegistration` tienen `language` con los tres idiomas y `es` por
   defecto; una cuenta creada antes de la migración queda en `es`; un idioma no admitido falla la
   validación; el cambio de idioma de una cuenta queda en su historial; suite verde.
+  Decisiones: (1) Una variante regional distinta de pt-BR (`es-MX`, `pt-PT`) cae en el idioma por
+  defecto, no en su idioma base: la spec solo admite los tres. [Probable] Revertir: mapear la
+  parte anterior al guion. (2) `LANGUAGE_CHOICES` vive aquí para que `accounts` lo use en T-009;
+  `EmailTemplate.Locale` repite los mismos tres valores. [Cierto] Revertir: unificarlos.
 
 - [ ] T-010 La cuenta hereda el idioma al completar el registro
   RF: RF-012 | Depende de: T-009 | Archivos: 2

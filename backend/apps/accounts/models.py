@@ -24,6 +24,8 @@ from apps.accounts.validators import (
     validate_country,
     validate_name,
 )
+from apps.emails.locales import DEFAULT as DEFAULT_LANGUAGE
+from apps.emails.locales import LANGUAGE_CHOICES
 
 
 class UserManager(BaseUserManager["User"]):
@@ -80,6 +82,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     name = models.CharField(max_length=NAME_MAX_LENGTH)
     birthdate = models.DateField()
     country = models.CharField(max_length=2)
+    language = models.CharField(max_length=5, choices=LANGUAGE_CHOICES, default=DEFAULT_LANGUAGE)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)
@@ -190,6 +193,7 @@ class PendingRegistration(CodeProcess):
     name = models.CharField(max_length=NAME_MAX_LENGTH)
     birthdate = models.DateField()
     country = models.CharField(max_length=2)
+    language = models.CharField(max_length=5, choices=LANGUAGE_CHOICES, default=DEFAULT_LANGUAGE)
 
     objects = CodeProcessQuerySet["PendingRegistration"].as_manager()
 
