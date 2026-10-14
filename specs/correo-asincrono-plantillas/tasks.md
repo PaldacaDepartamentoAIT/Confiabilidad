@@ -130,7 +130,7 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   Hecho cuando: completar un registro pendiente en `pt-BR` crea la cuenta en `pt-BR`; el resto de
   la suite del registro sigue en verde; suite verde.
 
-- [ ] T-011 Bandeja y encolado al confirmar
+- [x] T-011 Bandeja y encolado al confirmar
   RF: RF-002, RF-003 (D-01) | Depende de: T-001 | Archivos: 4
   Archivos: `models.py`, `outbox.py`, `migrations/0001_initial.py`, `tests/test_outbox.py`.
   Hecho cuando: pedir un correo dentro de una transacción crea su fila `pending` y, al confirmar,
@@ -138,6 +138,10 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   encola nada; si encolar lanza un error de conexión, la operación termina bien y la fila queda
   `pending`; suite verde.
   Excepción: `0001_initial.py` se regenera con `makemigrations` y no se edita a mano.
+  Decisiones: (1) Una variante regional distinta de pt-BR (`es-MX`, `pt-PT`) cae en el idioma por
+  defecto, no en su idioma base: la spec solo admite los tres. [Probable] Revertir: mapear la
+  parte anterior al guion. (2) `LANGUAGE_CHOICES` vive aquí para que `accounts` lo use en T-009;
+  `EmailTemplate.Locale` repite los mismos tres valores. [Cierto] Revertir: unificarlos.
 
 - [ ] T-012 Proveedor simulado y clasificación de errores
   RF: RF-026 (D-03, D-15) | Depende de: — | Archivos: 3

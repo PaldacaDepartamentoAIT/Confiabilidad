@@ -2,6 +2,7 @@ from typing import Any, ClassVar
 
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
@@ -65,3 +66,34 @@ class EmailTemplate(models.Model):
 
     def delete(self, *args: Any, **kwargs: Any) -> tuple[int, dict[str, int]]:
         raise _deletion_refused()
+
+
+class OutboundEmail(models.Model):
+    class Status(models.TextChoices):
+        PENDING = "pending", _("Pending")
+        FAILED = "failed", _("Failed")
+
+    kind = models.CharField(max_length=32, choices=EmailTemplate.Kind.choices)
+    locale = models.CharField(max_length=5, choices=EmailTemplate.Locale.choices)
+    recipient = models.EmailField()
+    # Solo datos no secretos (nombre, identificador público); el código nunca va aquí (RF-018).
+    context = models.JSONField(default=dict, blank=True)
+    purpose = models.CharField(max_length=32, blank=True)
+    public_id = models.CharField(max_length=64, blank=True)
+    masked_code = models.PositiveIntegerField(null=True, blank=True)
+    code_nonce = models.CharField(max_length=32, blank=True)
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
+    attempts = models.PositiveSmallIntegerField(default=0)
+    next_attempt_at = models.DateTimeField(default=timezone.now)
+    last_error = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = _("outbound email")
+        verbose_name_plural = _("outbound emails")
+        indexes: ClassVar[list[models.Index]] = [
+            models.Index(fields=["status", "next_attempt_at"], name="emails_outbound_due_idx"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.kind} → {self.recipient}"
