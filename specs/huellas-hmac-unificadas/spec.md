@@ -211,4 +211,4 @@ recuperar el código con un error de configuración que nombre esa clave.
 - 2026-10-14 — Cambio por `correo-asincrono-plantillas` (D-06): el punto único calcula también la
   máscara reversible del código de los correos pendientes — RF: RF-001 modificado; RF-011 añadido;
   objetivo, S-10, fuera de alcance y criterios ajustados. Clarificado (C-01, C-02): RF-003
-  ajustado; RF-011 sin cambios — Estado: clarificado
+  ajustado; RF-011 sin cambios — Estado: impacto analizado
