@@ -155,7 +155,7 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   uno solo 4xx, se reintenta. [Probable] Revertir: usar `any` en `classify`. (2) La autenticación
   fallida (535) es temporal, como dice D-03; el tercer mutante lo confirma. [Cierto]
 
-- [ ] T-013 Entrega desde la cola y barrido periódico
+- [x] T-013 Entrega desde la cola y barrido periódico
   RF: RF-002, RF-011 (D-01) | Depende de: T-011, T-012 | Archivos: 3
   Archivos: `tasks.py`, `delivery.py`, `tests/test_delivery.py`.
   Hecho cuando: `deliver(id)` entrega un aviso pendiente por el backend simulado, con el asunto y
@@ -163,6 +163,11 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   `List-Unsubscribe` ni enlace de baja; `dispatch_due()` encola las filas `pending` con el intento
   vencido y no las futuras; una fila que quedó `pending` porque la cola estaba caída sale en el
   siguiente barrido; suite verde.
+  Decisiones: (1) Las tareas llevan su nombre explícito (`apps.emails.tasks.deliver`) para que no
+  dependa del módulo desde el que Celery las descubre. [Cierto] (2) La reserva del intento (D-04)
+  entra ya aquí: `deliver` solo toma una fila pendiente y vencida, y la aparta 5 minutos. [Cierto]
+  (3) La plantilla se lee al entregar, no al encolar: un cambio de soporte vale para los correos
+  pendientes. [Probable] Revertir: guardar asunto y cuerpo en la fila al encolar.
 
 - [ ] T-014 Reintentos con espera creciente y reserva del intento
   RF: RF-016, RF-026 (D-04) | Depende de: T-013 | Archivos: 3
