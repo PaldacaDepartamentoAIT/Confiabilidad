@@ -216,6 +216,15 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
   ```
   Deberías ver la línea `AUDIT_HASH_SECRET=dev-audit-secret-change-me`. Cópiala a tu `backend/.env`.
 
+- [ ] **Aplicar las migraciones de auditoría en tu base de desarrollo** (feature
+  `auditoria-eventos-seguridad`). Sin ellas, `manage.py purge_security_events` falla con
+  `relation "audit_securityevent" does not exist`. Con `AUDIT_HASH_SECRET` ya en tu `backend/.env`,
+  ejecuta desde la raíz del repositorio:
+  ```bash
+  cd backend && python manage.py migrate
+  ```
+  Deberías ver `Applying audit.0001_initial... OK` y `Applying audit.0002_securityevent_base_manager... OK`.
+
 ## Hecho
 
 <!-- Mueve aquí las tareas completadas, con fecha. -->
