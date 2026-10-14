@@ -102,7 +102,10 @@ de borrar es el comando de purga de eventos de más de un año.
 
 ## Cómo probarlo
 Todo se hace sin frontend, desde la raíz del repositorio. Docker Compose activa `DJANGO_DEBUG`, así que
-funciona sin `backend/.env`; para usar tu propia clave de desarrollo, mira `HUMAN_TODO.md`.
+funciona sin `backend/.env`; para usar tu propia clave de desarrollo, mira `HUMAN_TODO.md`. Los pasos
+van en orden: algunos usan valores que obtienes en un paso anterior.
+
+### Tests automáticos
 
 1. Ejecuta los tests de auditoría:
    ```bash
@@ -110,6 +113,8 @@ funciona sin `backend/.env`; para usar tu propia clave de desarrollo, mira `HUMA
    ```
    Deberías ver todos los tests en verde. El criterio principal de la feature (un inicio de sesión
    exitoso y uno fallido dejan dos filas con la IP real) está en `apps/audit/tests/test_acceptance.py`.
+
+### Preparación
 
 2. Levanta la base de datos, Redis y el backend, y aplica las migraciones:
    ```bash
@@ -135,12 +140,14 @@ funciona sin `backend/.env`; para usar tu propia clave de desarrollo, mira `HUMA
    ```
    Te pedirá una contraseña; usa una robusta. Deberías ver `account: auditoria@example.com`.
 
+### Inicio de sesión e IP real
+
 4. Inicia sesión con la contraseña correcta. `<PASSWORD>` es la que escribiste en el paso 3:
    ```bash
    curl -s -X POST http://localhost:8000/_allauth/app/v1/auth/login -H "Content-Type: application/json" -d '{"email": "auditoria@example.com", "password": "<PASSWORD>"}'
    ```
-   Deberías ver `"status": 200` y un `session_token`. Ahora con una contraseña incorrecta y una
-   cabecera de intermediario falsa:
+   Deberías ver `"status": 200` y un `session_token`; apúntalo, es el `<SESSION_TOKEN>` del paso 6.
+   Ahora con una contraseña incorrecta y una cabecera de intermediario falsa:
    ```bash
    curl -s -X POST http://localhost:8000/_allauth/app/v1/auth/login -H "Content-Type: application/json" -H "X-Forwarded-For: 203.0.113.99" -d '{"email": "auditoria@example.com", "password": "incorrecta"}'
    ```
@@ -154,44 +161,212 @@ funciona sin `backend/.env`; para usar tu propia clave de desarrollo, mira `HUMA
    `login True <IP> {}` y los eventos del registro (`account_registration`, `code_verified`,
    `code_sent` y `pending_registration`). Las dos filas de login tienen la misma IP, la de la conexión
    directa al contenedor (en local con Docker, la puerta de enlace de su red, por ejemplo
-   `172.18.0.1`), y no `203.0.113.99`: sin `TRUSTED_PROXY_IPS`, la cabecera se ignora.
+   `172.18.0.1`), y no `203.0.113.99`: sin `TRUSTED_PROXY_IPS`, la cabecera se ignora. Apunta esa IP:
+   es la `<IP_DIRECTA>` del paso 17. Comprueba también que no se guarda nada en claro:
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py shell -c "from apps.audit.models import SecurityEvent; e = SecurityEvent.objects.filter(event_type='login', success=True).first(); print(e.user_email_hash, e.session_key)"
+   ```
+   Deberías ver dos textos de 64 caracteres hexadecimales: las huellas del correo y de la sesión. Ni el
+   correo ni la clave de sesión aparecen en claro.
 
-6. Intenta borrar los eventos desde el ORM:
-   ```bash
-   docker compose -f docker/docker-compose.yml run --rm backend python manage.py shell -c "from apps.audit.models import SecurityEvent; SecurityEvent.objects.all().delete()"
-   ```
-   Deberías ver un error que termina en
-   `InsertOnlyError: Security events are insert-only; they cannot be changed or deleted.`
+### Contraseña y sesión
 
-7. Prueba el comando de purga, primero sin borrar:
+6. Cambia la contraseña. `<SESSION_TOKEN>` sale del paso 4 y `<PASSWORD>` es la actual. Prueba
+   primero con una contraseña débil, que se rechaza:
    ```bash
-   docker compose -f docker/docker-compose.yml run --rm backend python manage.py purge_security_events --dry-run
+   curl -s -X POST http://localhost:8000/_allauth/app/v1/account/password/change -H "Content-Type: application/json" -H "X-Session-Token: <SESSION_TOKEN>" -d '{"current_password": "<PASSWORD>", "new_password": "12345678"}'
    ```
-   Deberías ver `0 security events would be deleted.`, porque todos los eventos tienen menos de un año.
-   La purga real borra solo los de más de un año:
+   Deberías ver `"status": 400`, y el rechazo no deja ninguna fila. Ahora con una contraseña nueva
+   robusta que eliges tú, `<NEW_PASSWORD>`:
    ```bash
-   docker compose -f docker/docker-compose.yml run --rm backend python manage.py purge_security_events
+   curl -s -X POST http://localhost:8000/_allauth/app/v1/account/password/change -H "Content-Type: application/json" -H "X-Session-Token: <SESSION_TOKEN>" -d '{"current_password": "<PASSWORD>", "new_password": "<NEW_PASSWORD>"}'
    ```
-   Deberías ver `0 security events deleted.` y las filas del paso 5 siguen ahí.
+   Deberías ver `"status": 200`. Comprueba las filas de cambio de contraseña:
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py shell -c "from apps.audit.models import SecurityEvent; print([(e.success, e.metadata) for e in SecurityEvent.objects.filter(event_type='password_change')])"
+   ```
+   Deberías ver `[(True, {})]`: una sola fila, la del cambio correcto.
 
-8. Consulta los eventos en el panel de administración. Crea un superusuario (te pedirá los datos):
+7. Cierra sesión. El cambio de contraseña invalida la sesión del paso 4, así que inicia sesión otra vez
+   con `<NEW_PASSWORD>`:
    ```bash
-   docker compose -f docker/docker-compose.yml run --rm backend python manage.py createsuperuser
+   curl -s -X POST http://localhost:8000/_allauth/app/v1/auth/login -H "Content-Type: application/json" -d '{"email": "auditoria@example.com", "password": "<NEW_PASSWORD>"}'
    ```
-   Abre `http://localhost:8000/admin/audit/securityevent/` e inicia sesión. Deberías ver los eventos,
-   los filtros laterales por tipo, resultado y fechas, y ningún botón para añadir, editar ni borrar.
-   Para buscar los eventos de un correo, calcula su huella:
+   Deberías ver `"status": 200` y un `session_token` nuevo. En el comando siguiente,
+   `<NEW_SESSION_TOKEN>` es ese valor:
    ```bash
-   docker compose -f docker/docker-compose.yml run --rm backend python manage.py shell -c "from apps.core.fingerprints import audit_email_fingerprint; print(audit_email_fingerprint('auditoria@example.com'))"
+   curl -s -X DELETE http://localhost:8000/_allauth/app/v1/auth/session -H "X-Session-Token: <NEW_SESSION_TOKEN>"
    ```
-   Deberías ver 64 caracteres hexadecimales. Pégalos en la búsqueda del panel: deberías ver solo los
-   eventos de ese correo.
+   Deberías ver `"status": 401`: allauth responde así porque ya no hay sesión. Comprueba la fila:
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py shell -c "from apps.audit.models import SecurityEvent; print([(e.success, e.metadata) for e in SecurityEvent.objects.filter(event_type='logout')[:1]])"
+   ```
+   Deberías ver `[(True, {})]`.
 
-9. Ejecuta la suite completa:
+### Códigos
+
+8. Envía un código incorrecto en un registro nuevo:
    ```bash
-   docker compose -f docker/docker-compose.yml run --rm backend pytest
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py registration start --email otra@example.com --name "Otra Persona" --birthdate 1990-01-01 --country es
    ```
-   Deberías ver todos los tests en verde y la cobertura por encima del 80 %.
+   Deberías ver `public_id: …` y `code: …`. `<PUBLIC_ID>` es ese `public_id`; usa `000000` como código
+   (si justo te tocó ese código, usa `111111`):
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py registration verify <PUBLIC_ID> 000000
+   ```
+   Deberías ver `CommandError: Wrong code.`. Comprueba la fila:
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py shell -c "from apps.audit.models import SecurityEvent; print([(e.success, e.metadata) for e in SecurityEvent.objects.filter(event_type='code_verified')[:1]])"
+   ```
+   Deberías ver `[(False, {})]`: la validación fallida queda registrada.
+
+### Rechazos del inicio de sesión
+
+9. Desactiva la cuenta e intenta entrar con la contraseña correcta (`<NEW_PASSWORD>` del paso 6):
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py shell -c "from apps.accounts.models import User; User.objects.filter(email='auditoria@example.com').update(is_active=False)"
+   ```
+   ```bash
+   curl -s -X POST http://localhost:8000/_allauth/app/v1/auth/login -H "Content-Type: application/json" -d '{"email": "auditoria@example.com", "password": "<NEW_PASSWORD>"}'
+   ```
+   Deberías ver `"status": 401`. Comprueba la fila:
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py shell -c "from apps.audit.models import SecurityEvent; print([(e.success, e.metadata) for e in SecurityEvent.objects.filter(event_type='login')[:1]])"
+   ```
+   Deberías ver `[(False, {'reason': 'inactive_account'})]`. Vuelve a activar la cuenta:
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py shell -c "from apps.accounts.models import User; User.objects.filter(email='auditoria@example.com').update(is_active=True)"
+   ```
+
+10. Provoca el bloqueo por límite con varios intentos fallidos seguidos:
+    ```bash
+    for intento in 1 2 3 4 5 6; do curl -s -X POST http://localhost:8000/_allauth/app/v1/auth/login -H "Content-Type: application/json" -d '{"email": "auditoria@example.com", "password": "incorrecta"}'; echo; done
+    ```
+    Deberías ver `"status": 400` en todas las respuestas, y en la última (o antes, si en los últimos
+    minutos ya hubo intentos fallidos) el código `too_many_login_attempts`. Comprueba las filas:
+    ```bash
+    docker compose -f docker/docker-compose.yml run --rm backend python manage.py shell -c "from apps.audit.models import SecurityEvent; print([(e.success, e.metadata) for e in SecurityEvent.objects.filter(event_type='lockout')[:1]])"
+    ```
+    Deberías ver `[(False, {'reason': 'too_many_login_attempts'})]`. Junto a ese bloqueo, el mismo
+    intento deja una fila `login` fallida con el mismo motivo. allauth bloquea ese correo durante unos
+    minutos; el paso 11 lo libera.
+
+11. Restablece la contraseña con el comando de restablecimiento:
+    ```bash
+    docker compose -f docker/docker-compose.yml run --rm backend python manage.py password_reset start --email auditoria@example.com
+    ```
+    Deberías ver `public_id: …` y `code: …`. En los dos comandos siguientes, `<PUBLIC_ID>` y `<CODE>`
+    son esos valores:
+    ```bash
+    docker compose -f docker/docker-compose.yml run --rm backend python manage.py password_reset verify <PUBLIC_ID> <CODE>
+    ```
+    ```bash
+    docker compose -f docker/docker-compose.yml run --rm backend python manage.py password_reset complete <PUBLIC_ID>
+    ```
+    Te pedirá la contraseña nueva. Deberías ver `account: auditoria@example.com`. Comprueba la fila:
+    ```bash
+    docker compose -f docker/docker-compose.yml run --rm backend python manage.py shell -c "from apps.audit.models import SecurityEvent; print([(e.success, e.metadata) for e in SecurityEvent.objects.filter(event_type='password_reset')[:1]])"
+    ```
+    Deberías ver `[(True, {})]`. El restablecimiento también borra los intentos fallidos, así que el
+    bloqueo del paso 10 desaparece.
+
+### Solo inserción y purga
+
+12. Intenta modificar y borrar los eventos desde el ORM:
+    ```bash
+    docker compose -f docker/docker-compose.yml run --rm backend python manage.py shell -c "from apps.audit.models import SecurityEvent; SecurityEvent.objects.all().update(success=True)"
+    ```
+    ```bash
+    docker compose -f docker/docker-compose.yml run --rm backend python manage.py shell -c "from apps.audit.models import SecurityEvent; SecurityEvent.objects.all().delete()"
+    ```
+    En los dos casos deberías ver un error que termina en
+    `InsertOnlyError: Security events are insert-only; they cannot be changed or deleted.`
+
+13. Crea un evento con más de un año de antigüedad (insertar sí está permitido) y prueba la purga:
+    ```bash
+    docker compose -f docker/docker-compose.yml run --rm backend python manage.py shell -c "from datetime import timedelta; from django.utils import timezone; from apps.audit.models import SecurityEvent; SecurityEvent.objects.create(event_type='login', success=True, created_at=timezone.now() - timedelta(days=400))"
+    ```
+    ```bash
+    docker compose -f docker/docker-compose.yml run --rm backend python manage.py purge_security_events --dry-run
+    ```
+    Deberías ver `1 security events would be deleted.`, y no se borra nada. Ahora la purga real:
+    ```bash
+    docker compose -f docker/docker-compose.yml run --rm backend python manage.py purge_security_events
+    ```
+    Deberías ver `1 security events deleted.`. Los eventos de los pasos anteriores siguen ahí: la
+    purga nunca borra eventos de menos de un año.
+
+### Consulta en el panel de administración
+
+14. Crea un superusuario (te pedirá los datos):
+    ```bash
+    docker compose -f docker/docker-compose.yml run --rm backend python manage.py createsuperuser
+    ```
+    Abre `http://localhost:8000/admin/audit/securityevent/` e inicia sesión. Deberías ver los eventos,
+    los filtros laterales por tipo, resultado y fechas (`desde` y `hasta`), y ningún botón para añadir,
+    editar ni borrar. Si abres un evento, todos sus campos son de solo lectura.
+
+15. Busca los eventos de un correo. Calcula su huella:
+    ```bash
+    docker compose -f docker/docker-compose.yml run --rm backend python manage.py shell -c "from apps.core.fingerprints import audit_email_fingerprint; print(audit_email_fingerprint('auditoria@example.com'))"
+    ```
+    Deberías ver 64 caracteres hexadecimales. Pégalos en la búsqueda del panel: deberías ver solo los
+    eventos de ese correo. La búsqueda por IP admite una parte de la dirección (por ejemplo, `172.18`).
+
+16. Comprueba que el acceso exige el permiso específico. Crea un usuario de staff con solo el permiso
+    de ver eventos:
+    ```bash
+    docker compose -f docker/docker-compose.yml run --rm backend python manage.py shell -c "from datetime import date; from django.contrib.auth.models import Permission; from apps.accounts.models import User; u = User.objects.create_user('lector@example.com', 'Lector-Seguro-2026!', name='Lector', birthdate=date(1990, 1, 1), country='ES', is_staff=True); u.user_permissions.add(Permission.objects.get(codename='view_securityevent'))"
+    ```
+    Cierra la sesión del panel, entra como `lector@example.com` con la contraseña `Lector-Seguro-2026!`
+    y abre la misma dirección del paso 14: deberías ver los eventos en solo lectura. Quítale el permiso:
+    ```bash
+    docker compose -f docker/docker-compose.yml run --rm backend python manage.py shell -c "from apps.accounts.models import User; User.objects.get(email='lector@example.com').user_permissions.clear()"
+    ```
+    Recarga la página: deberías ver `403 Forbidden`.
+
+### Configuración
+
+17. Prueba el proxy de confianza. Para el backend y vuelve a arrancarlo confiando en la IP que apuntaste
+    en el paso 5 (`<IP_DIRECTA>`):
+    ```bash
+    docker compose -f docker/docker-compose.yml stop backend
+    ```
+    ```bash
+    docker compose -f docker/docker-compose.yml run --rm --service-ports -e TRUSTED_PROXY_IPS=<IP_DIRECTA> backend
+    ```
+    Deja ese terminal abierto y, en otro, repite el login fallido con la cabecera:
+    ```bash
+    curl -s -X POST http://localhost:8000/_allauth/app/v1/auth/login -H "Content-Type: application/json" -H "X-Forwarded-For: 203.0.113.99" -d '{"email": "auditoria@example.com", "password": "incorrecta"}'
+    ```
+    ```bash
+    docker compose -f docker/docker-compose.yml run --rm backend python manage.py shell -c "from apps.audit.models import SecurityEvent; print(SecurityEvent.objects.filter(event_type='login').first().ip)"
+    ```
+    Deberías ver `203.0.113.99`: ahora la conexión llega desde un proxy de confianza y se usa la IP del
+    cliente original. Detén el backend del primer terminal con Ctrl+C y vuelve a levantarlo como antes:
+    ```bash
+    docker compose -f docker/docker-compose.yml up -d backend
+    ```
+
+18. Comprueba la clave de auditoría. Con `DEBUG` y sin clave, el backend arranca con el valor de
+    desarrollo:
+    ```bash
+    docker compose -f docker/docker-compose.yml run --rm -e DJANGO_DEBUG=1 -e AUDIT_HASH_SECRET= backend python manage.py check
+    ```
+    Deberías ver `System check identified no issues (0 silenced).`. Sin `DEBUG` y sin clave, como en
+    producción, no arranca:
+    ```bash
+    docker compose -f docker/docker-compose.yml run --rm -e DJANGO_DEBUG=0 -e AUDIT_HASH_SECRET= backend python manage.py check
+    ```
+    Deberías ver `(audit.E001) AUDIT_HASH_SECRET must not be empty.`.
+
+### Suite completa
+
+19. Ejecuta la suite completa:
+    ```bash
+    docker compose -f docker/docker-compose.yml run --rm backend pytest
+    ```
+    Deberías ver todos los tests en verde y la cobertura por encima del 80 %.
 
 ## Marco teórico
 ### Huella HMAC del correo y de la sesión
