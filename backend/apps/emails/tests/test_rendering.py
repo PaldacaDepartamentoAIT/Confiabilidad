@@ -205,3 +205,47 @@ def test_the_remaining_time_never_shows_a_clock_time() -> None:
         phrase = rendering.expires_in(locale, timedelta(hours=2, minutes=3))
         assert ":" not in phrase
         assert phrase.startswith("123 ")
+
+
+NOTICE_KINDS = [
+    "account_exists",
+    "password_reset_done",
+    "password_changed",
+    "account_disabled",
+    "sessions_closed",
+]
+FOOTER_HINTS = {"es": "restablece", "pt-BR": "redefina", "en": "reset"}
+
+
+@pytest.fixture
+def _support(settings: object) -> None:
+    settings.EMAIL_SUPPORT_ADDRESS = "ayuda@ejemplo.com"  # type: ignore[attr-defined]
+
+
+@pytest.mark.usefixtures("_support")
+@pytest.mark.parametrize("locale", ["es", "pt-BR", "en"])
+@pytest.mark.parametrize("kind", NOTICE_KINDS)
+def test_a_security_notice_ends_with_the_report_block(kind: str, locale: str) -> None:
+    subject, body = rendering.compose(kind, locale, "Aviso", "Hola, {{ name }}.", {"name": "Ana"})
+
+    assert subject == "Aviso"
+    assert body.startswith("Hola, Ana.")
+    footer = body.removeprefix("Hola, Ana.")
+    assert "ayuda@ejemplo.com" in footer
+    assert FOOTER_HINTS[locale] in footer.lower()
+    assert footer == rendering.report_block(locale)
+
+
+@pytest.mark.usefixtures("_support")
+@pytest.mark.parametrize("kind", ["registration_code", "password_reset_code"])
+def test_a_code_email_has_no_report_block(kind: str) -> None:
+    _, body = rendering.compose(kind, "es", "Código", "Tu código es {{ code }}.", {"code": "1"})
+
+    assert body == "Tu código es 1."
+
+
+@pytest.mark.usefixtures("_support")
+def test_the_report_blocks_differ_by_language() -> None:
+    blocks = {rendering.report_block(locale) for locale in ("es", "pt-BR", "en")}
+
+    assert len(blocks) == 3

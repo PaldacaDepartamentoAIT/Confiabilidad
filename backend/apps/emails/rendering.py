@@ -118,3 +118,25 @@ def expires_in(locale: str, remaining: timedelta) -> str:
     if minutes == 1:
         return one
     return many.format(n=minutes)
+
+
+# Bloque fijo de los avisos de seguridad: lo añade el sistema y no se edita en el panel (RF-010).
+_REPORT_BLOCKS = {
+    "es": "Si no fuiste tú, escríbenos a {support} y restablece tu contraseña cuanto antes.",
+    "pt-BR": "Se não foi você, escreva para {support} e redefina sua senha o quanto antes.",
+    "en": "If this wasn't you, write to {support} and reset your password as soon as possible.",
+}
+
+
+def report_block(locale: str) -> str:
+    support = str(settings.EMAIL_SUPPORT_ADDRESS)
+    return "\n\n" + _REPORT_BLOCKS[locale].format(support=support)
+
+
+def compose(
+    kind: str, locale: str, subject: str, body: str, values: Mapping[str, str]
+) -> tuple[str, str]:
+    rendered_body = render_text(body, values)
+    if kind not in CODE_KINDS:
+        rendered_body += report_block(locale)
+    return render_text(subject, values), rendered_body

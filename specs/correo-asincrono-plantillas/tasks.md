@@ -78,12 +78,17 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   Decisiones: (1) Un plazo de cero o negativo también da "menos de un minuto"; la entrega descarta
   antes el código caducado (T-020). [Probable] Revertir: lanzar un error si `remaining <= 0`.
 
-- [ ] T-006 Bloque fijo de reporte en los avisos de seguridad
+- [x] T-006 Bloque fijo de reporte en los avisos de seguridad
   RF: RF-010 (D-08) | Depende de: T-002 | Archivos: 3
   Archivos: `rendering.py`, `tests/test_rendering.py`, `config/settings.py` (en `backend/`).
   Hecho cuando: los cinco avisos terminan, después del texto editable, con el bloque de su idioma,
   que nombra `EMAIL_SUPPORT_ADDRESS` y recomienda restablecer la contraseña; los dos correos de
   código no lo llevan; el bloque no forma parte del texto guardado en la plantilla; suite verde.
+  Decisiones: (1) Textos del bloque: «Si no fuiste tú, escríbenos a <soporte> y restablece tu
+  contraseña cuanto antes» y sus equivalentes en pt-BR y en; se revisan en el PR (S-17). [Probable]
+  Revertir: cambiar `_REPORT_BLOCKS`. (2) `EMAIL_SUPPORT_ADDRESS` vale por defecto
+  `soporte@localhost`, que en producción debe definirse (T-030). [Cierto] (3) `compose()` reúne
+  sustitución y bloque para que la entrega (T-013) tenga una sola llamada. [Cierto]
 
 - [ ] T-007 Plantillas iniciales
   RF: RF-001, RF-022 (CF-3, S-17) | Depende de: T-004, T-005, T-006 | Archivos: 2
