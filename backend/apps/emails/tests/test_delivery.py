@@ -112,3 +112,9 @@ def test_an_email_left_pending_by_a_queue_outage_goes_out_on_the_next_sweep(
 def test_the_tasks_are_registered_under_the_names_the_outbox_uses() -> None:
     assert tasks.deliver.name == outbox.DELIVER_TASK
     assert tasks.dispatch_due.name == "apps.emails.tasks.dispatch_due"
+
+
+def test_the_sweep_task_returns_how_many_emails_it_queued(send_task: Any) -> None:
+    _pending()
+
+    assert tasks.dispatch_due() == 1
