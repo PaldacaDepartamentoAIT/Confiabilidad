@@ -183,7 +183,7 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   (3) La plantilla se lee al entregar, no al encolar: un cambio de soporte vale para los correos
   pendientes. [Probable] Revertir: guardar asunto y cuerpo en la fila al encolar.
 
-- [ ] T-015 Fallo definitivo y registro de fallos
+- [x] T-015 Fallo definitivo y registro de fallos
   RF: RF-017, RF-026 (D-12) | Depende de: T-014 | Archivos: 2
   Archivos: `delivery.py`, `tests/test_delivery.py`.
   Hecho cuando: un error definitivo pasa la fila a `failed` al primer intento, sin reintentar; una

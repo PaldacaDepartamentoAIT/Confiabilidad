@@ -1,4 +1,5 @@
 import importlib
+import smtplib
 from datetime import timedelta
 from typing import Any
 from unittest import mock
@@ -214,3 +215,24 @@ def test_the_notice_window_does_not_apply_to_code_emails(settings: Any) -> None:
 
     email.refresh_from_db()
     assert email.status == OutboundEmail.Status.PENDING
+
+
+def test_a_permanent_rejection_fails_the_email_at_the_first_attempt(send_task: Any) -> None:
+    email = _pending()
+    FakeBackend.reset(smtplib.SMTPRecipientsRefused({"ana@example.com": (550, b"No such user")}))
+
+    delivery.deliver(email.pk)
+
+    failed = OutboundEmail.objects.get(pk=email.pk)
+    assert failed.status == OutboundEmail.Status.FAILED
+    assert failed.attempts == 1
+    assert "No such user" in failed.last_error
+    assert (failed.kind, failed.locale, failed.recipient) == (
+        "password_changed",
+        "es",
+        "ana@example.com",
+    )
+    assert failed.created_at == email.created_at
+    _due_now(failed)
+    assert delivery.dispatch_due() == 0
+    send_task.assert_not_called()

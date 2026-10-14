@@ -8,6 +8,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps.emails import rendering
+from apps.emails.errors import Failure, classify
 from apps.emails.models import EmailTemplate, OutboundEmail
 from apps.emails.outbox import DELIVER_TASK
 
@@ -66,7 +67,7 @@ def _claim(email_id: int) -> OutboundEmail | None:
 def _record_failure(email: OutboundEmail, error: BaseException) -> None:
     email.attempts += 1
     email.last_error = f"{type(error).__name__}: {error}"
-    if _window_is_over(email):
+    if classify(error) is Failure.PERMANENT or _window_is_over(email):
         email.status = OutboundEmail.Status.FAILED
     else:
         email.next_attempt_at = timezone.now() + _wait(email.attempts)
