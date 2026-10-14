@@ -216,10 +216,12 @@ empezar antes.
   Mutantes: `success` verdadero también con `CODE_EXPIRED`, en `registration.verify` y en `password_reset.verify` → ambos detectados.
   Decisiones: el test pasa sin cambiar código, porque el comportamiento ya existía; lo que prueba que sirve son los mutantes. El código se caduca un minuto (gracia de 15 minutos por defecto). Los tests van del servicio a la fila, lo que cubre también la mitad de H7 para la caducidad. Confianza: [Cierto]. Cómo revertirla: quitar los dos tests.
 
-- [ ] T-039 Corrección: el mensaje del check `audit.E001` se marca para traducción
+- [x] T-039 Corrección: el mensaje del check `audit.E001` se marca para traducción
   Tipo: corrección | Origen: validación (H5) | RF: — (convención de `AGENTS.md`; D-05) | Depende de: — | Archivos: 2 (`apps/core/checks.py`, `apps/core/tests/test_audit_fingerprints.py`)
   Causa: el mensaje «AUDIT_HASH_SECRET must not be empty.» no usa `gettext_lazy`, que `AGENTS.md` exige para los textos de error.
   Hecho cuando: `pytest backend/apps/core/tests/test_audit_fingerprints.py` pasa con el mensaje de `audit.E001` como texto perezoso de traducción y el mismo contenido; un mutante que quita `gettext_lazy` lo detecta.
+  Mutantes: mensaje como `str` sin `gettext_lazy` → detectado.
+  Decisiones: los stubs de Django tipan `msg` de `Error` como `str`, aunque Django acepta textos perezosos; se usa `# type: ignore[arg-type]` en esa línea, con un comentario que lo explica. Confianza: [Cierto]. Cómo revertirla: volver al texto plano, lo que incumple la convención de `AGENTS.md`.
 
 - [ ] T-040 Test: el permiso interno de purga solo se usa en el modelo y la purga de auditoría solo la llama su comando
   Tipo: test | Origen: validación (H3) y aclaración de RF-012 | RF: RF-012, RF-014 | Depende de: T-036 | Archivos: 1 (`apps/audit/tests/test_purge_access.py`)

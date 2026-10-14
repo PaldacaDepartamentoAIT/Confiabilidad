@@ -1,5 +1,6 @@
 import pytest
 from django.core.exceptions import ImproperlyConfigured
+from django.utils.functional import Promise
 
 from apps.core.checks import check_audit_hash_secret
 from apps.core.fingerprints import audit_email_fingerprint, audit_session_fingerprint
@@ -44,3 +45,10 @@ def test_check_reports_error_when_key_is_missing(settings: object) -> None:
 
 def test_check_is_silent_when_key_is_set(audit_key: None) -> None:
     assert check_audit_hash_secret(None) == []
+
+
+def test_check_message_is_marked_for_translation(settings: object) -> None:
+    settings.AUDIT_HASH_SECRET = ""  # type: ignore[attr-defined]
+    (error,) = check_audit_hash_secret(None)
+    assert isinstance(error.msg, Promise)
+    assert str(error.msg) == "AUDIT_HASH_SECRET must not be empty."
