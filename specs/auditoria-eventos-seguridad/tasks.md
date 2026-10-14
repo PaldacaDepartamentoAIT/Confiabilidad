@@ -230,6 +230,26 @@ empezar antes.
   Mutantes: (1) `apps/audit/admin.py` importa `_purge_allowed` → detectado. (2) El escáner deja de resolver `modulo.purge_expired` → lo detectan sus tests unitarios (2 fallos).
   Decisiones: análisis estático con `ast`, con el mismo patrón que `apps/core/tests/test_fingerprint_guard.py`. Cubre imports absolutos y relativos, alias, atributos y `getattr` con el nombre literal. No cubre accesos dinámicos con nombres construidos en ejecución, que quedan como riesgo residual junto al SQL directo (RF-012). El test pasa sin cambiar código, porque hoy solo el modelo y el comando usan la purga. Confianza: [Cierto]. Cómo revertirla: quitar el archivo.
 
+- [ ] T-041 Corrección: tests de los rechazos de código sin cobertura
+  Tipo: corrección | Origen: validación de RF-008 | RF: RF-008 | Depende de: T-038 | Archivos: 2 (`apps/audit/tests/test_registration_events.py`, `apps/audit/tests/test_password_reset_events.py`)
+  Causa: ningún test comprueba que `LOCKED` y `ALREADY_VERIFIED` dejan `CODE_VERIFIED` con `success=False`, ni que `NOT_FOUND` y `AccountRefusal` no dejan fila. D-16 afirmaba lo contrario.
+  Hecho cuando: `pytest backend/apps/audit/tests/test_registration_events.py backend/apps/audit/tests/test_password_reset_events.py` pasa con los servicios reales. `LOCKED` y `ALREADY_VERIFIED` dejan una fila con `success=False`. `NOT_FOUND` y la negativa por cuenta inactiva, correo cambiado o contraseña cambiada no dejan fila `CODE_VERIFIED`. Un mutante que no registra `LOCKED` y otro que registra en `AccountRefusal` se detectan.
+
+- [ ] T-042 Corrección: el fallo de inicio de sesión por límite lleva su motivo
+  Tipo: corrección | Origen: validación de RF-004 y RF-005 | RF: RF-004, RF-005 | Depende de: T-030 | Archivos: 1 (`apps/audit/tests/test_lockout.py`)
+  Causa: el test cuenta las filas `LOGIN` fallidas, pero no comprueba el motivo de la fila del intento rechazado por límite.
+  Hecho cuando: `pytest backend/apps/audit/tests/test_lockout.py` pasa comprobando que el intento rechazado deja exactamente dos filas: `LOGIN` con `success=False` y `reason=too_many_login_attempts`, y `LOCKOUT`. Un mutante que graba `invalid_credentials` se detecta.
+
+- [ ] T-043 Corrección: el backend arranca en desarrollo sin `.env` y sigue fallando en producción sin clave
+  Tipo: corrección | Origen: validación (P-02) | RF: RF-011 (D-05) | Depende de: — | Archivos: 2 (`config/settings.py`, `apps/core/tests/test_audit_fingerprints.py`)
+  Causa: D-05 hace fallar el arranque sin `AUDIT_HASH_SECRET`, y Docker Compose no le da valor.
+  Hecho cuando: un test en un proceso aparte comprueba que `manage.py check` pasa con `DJANGO_DEBUG=1` y la clave vacía, y falla con `audit.E001` con `DJANGO_DEBUG=0` y la clave vacía. Un mutante que usa el valor de desarrollo también sin `DEBUG` se detecta.
+
+- [ ] T-044 Test: el cambio de contraseña por el flujo real deja su fila
+  Tipo: test | Origen: validación (R-5) | RF: RF-010 | Depende de: T-037 | Archivos: 1 (`apps/audit/tests/test_password_changed.py`)
+  Causa: el cambio correcto solo se prueba enviando la señal a mano.
+  Hecho cuando: `pytest backend/apps/audit/tests/test_password_changed.py` pasa con un cambio por `/_allauth/browser/v1/account/password/change` que deja una fila `PASSWORD_CHANGE` con `success=True`, y con un rechazo por contraseña no válida que no deja fila. Un mutante que desconecta el receptor se detecta.
+
 ## RF sin tarea
 Ninguno. Todos los RF de la spec (RF-001 a RF-016) aparecen en al menos una tarea. RF-010 aparece como cubierto en su parte aceptada (el residual de perfil y deshabilitación queda en T-016, con emisión pendiente de otra feature).
 
@@ -247,3 +267,4 @@ Ninguno. Todos los RF de la spec (RF-001 a RF-016) aparecen en al menos una tare
 - 2026-10-14 — Corrección T-036 (purga sin fecha de referencia del llamador) tras la validación de RF-014 — RF: RF-014 — Estado: aprobado
 - 2026-10-14 — T-037 (test de rechazo por contraseña no válida, aclaración de RF-010) — RF: RF-010 — Estado: aprobado
 - 2026-10-14 — T-038 (caducidad dentro de la gracia), T-039 (traducción de `audit.E001`) y T-040 (uso del permiso de purga) tras la validación y la aclaración de RF-008 y RF-012 — RF: RF-008, RF-012, RF-014 — Estado: aprobado
+- 2026-10-14 — T-041 (rechazos de código), T-042 (motivo del fallo por límite), T-043 (arranque en desarrollo, P-02) y T-044 (cambio de contraseña por el flujo real) tras la tercera validación — RF: RF-004, RF-005, RF-008, RF-010, RF-011 — Estado: aprobado

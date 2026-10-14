@@ -54,7 +54,9 @@ esas decisiones es la librería de autenticación.
 
 ### RF-007 Registro y solicitud pendiente
 Cuando se cree una cuenta, o cuando se cree una solicitud de registro pendiente, el sistema deberá
-registrar un evento del tipo correspondiente con su resultado.
+registrar un evento del tipo correspondiente con su resultado. Si la creación de la cuenta se rechaza
+(cuenta ya existente, proceso caducado o contraseña no válida), entonces el sistema no deberá registrar
+un evento de registro de cuenta.
 
 ### RF-008 Códigos
 Cuando se envíe un código, el sistema deberá registrar un evento de envío con su resultado. Cuando
@@ -63,7 +65,8 @@ un código sea rechazado, el sistema deberá registrar un evento de validación 
 código es rechazado cuando es incorrecto, cuando ha caducado él o su proceso, cuando se ha alcanzado el
 límite de intentos o cuando ya se había validado. Si el proceso no existe, o si se rechaza por un cambio
 en la cuenta (cuenta inactiva, o correo o contraseña cambiados), entonces el sistema no deberá registrar
-ningún evento de validación.
+ningún evento de validación. Si el proceso ha caducado, el sistema deberá registrar la validación
+fallida aunque la cuenta también haya cambiado.
 
 ### RF-009 Cierre de sesión
 Cuando una persona cierre sesión, el sistema deberá registrar un evento de cierre de sesión.
@@ -82,10 +85,12 @@ son una lista abierta de datos no sensibles.
 El sistema no deberá permitir modificar ni borrar eventos desde el panel de administración, desde
 el ORM ni desde ninguna otra vía de la aplicación, salvo el comando de purga de RF-014, que es la
 única vía autorizada de borrado. Si se intenta modificar un evento, o borrarlo fuera de esa vía,
-entonces el sistema deberá rechazar la operación. Las vías de la aplicación son el ORM, el panel de
-administración y los comandos de gestión. El SQL directo contra la base de datos no es una vía de la
-aplicación: queda como riesgo residual aceptado, igual que la protección a nivel de rol, que está fuera de
-alcance.
+entonces el sistema deberá rechazar la operación. Las vías de la aplicación son la API pública del ORM, el panel de
+administración y los comandos de gestión de la aplicación. Quedan fuera, como riesgo residual
+aceptado, el SQL directo contra la base de datos, las APIs internas del ORM y sus métodos base llamados
+sin pasar por el modelo, los comandos integrados de Django (como `flush`, `migrate` o `shell`) y el
+código que use a propósito el permiso interno de la purga. La protección a nivel de base de datos está
+fuera de alcance.
 
 ### RF-013 Consulta para investigación
 El sistema deberá mostrar los eventos a las personas con el permiso específico de visualización de
@@ -148,3 +153,4 @@ El sistema deberá guardar la marca de tiempo de cada evento en UTC e indexarla.
 - 2026-10-13 — Cambio de RF-004: se registran también los rechazos posteriores a credenciales válidas (cuenta inactiva; el correo sin verificar no aplica porque la verificación de correo está desactivada — corregido el 2026-10-14) — RF: RF-004 — Estado: impacto analizado
 - 2026-10-14 — Aclaración de RF-010: un cambio o restablecimiento de contraseña rechazado por contraseña no válida no deja evento de fallo (opción B aprobada) — RF: RF-010 — Estado: impacto analizado
 - 2026-10-14 — Aclaración de RF-008 (qué es un código rechazado) y de RF-012 (vías de la aplicación; el SQL directo queda como riesgo residual), y corrección de la entrada de RF-004 del 2026-10-13, tras la validación — RF: RF-004, RF-008, RF-012 — Estado: impacto analizado
+- 2026-10-14 — Tras la tercera validación: alcance de RF-012 (APIs internas del ORM, comandos integrados de Django y uso deliberado del permiso de purga como riesgo residual), aclaración de RF-007 (creación rechazada sin evento) y de RF-008 (la caducidad prevalece sobre el cambio de cuenta) — RF: RF-007, RF-008, RF-012 — Estado: impacto analizado

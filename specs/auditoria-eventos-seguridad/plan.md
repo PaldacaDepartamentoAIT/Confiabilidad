@@ -103,7 +103,9 @@ Elegida: un ajuste nuevo `AUDIT_HASH_SECRET` en el almacén de secretos, distint
 Descartada: reutilizar `CONSENT_EMAIL_HASH_SECRET`. Motivo: con la misma clave, filtrar una tabla
 compromete la otra y ambas se pueden correlacionar. Coste: una entrada en `HUMAN_TODO.md` para generar
 la clave y cifrarla con SOPS. Sin esa clave configurada, la aplicación debe fallar al arrancar (no usar
-`SECRET_KEY` como valor por defecto).
+`SECRET_KEY` como valor por defecto). En desarrollo (`DJANGO_DEBUG` activo), si `AUDIT_HASH_SECRET` falta
+o está vacía, se usa el valor `dev-audit-secret-change-me`, el mismo de `.env.example`. Con `DEBUG`
+desactivado, `audit.E001` sigue impidiendo arrancar (T-043, P-02).
 
 ### D-06 Permiso de consulta: permiso específico por defecto
 Elegida: el permiso por defecto `view_securityevent` que Django crea para `SecurityEvent`, sin
@@ -117,8 +119,10 @@ Elegida: `save()` lanza error si la fila ya existe; `delete()` y el `QuerySet` d
 lanzan error salvo cuando los llama la función interna `purge_expired()` de `models.py`, que toma el corte
 de un año con el reloj del servidor y no recibe fecha (T-035, T-036). `save_base()` y `QuerySet.bulk_create`
 con `update_conflicts` también lanzan (T-032, T-034), y `base_manager_name = "objects"` hace que el gestor
-base aplique las mismas guardas (T-033). El admin no ofrece cambiar ni borrar. El SQL directo
-(`.raw()`, `connection.cursor()`) no tiene guarda: es riesgo residual aceptado (RF-012 aclarado).
+base aplique las mismas guardas (T-033). El admin no ofrece cambiar ni borrar. Las vías que RF-012 deja
+fuera (SQL directo, APIs internas del ORM como `_raw_delete`, métodos base llamados sin pasar por el
+modelo, comandos integrados de Django como `flush` y uso deliberado del permiso de purga) no tienen
+guarda: son riesgo residual aceptado.
 `_purge_allowed` solo se usa en `models.py`, y `purge_expired()` de auditoría solo la importa el comando
 de purga; un test lo comprueba con análisis estático del backend (T-040).
 Descartada: un rol de base de datos sin UPDATE ni DELETE, que está fuera de alcance (spec).
@@ -183,8 +187,8 @@ Elegida: `CODE_VERIFIED` con `success=False` cuando el código es incorrecto (`W
 por la cuenta (`AccountRefusal`). Es lo que ya hacen `registration.verify` y `password_reset.verify`.
 Descartada: registrar también `NOT_FOUND` y `AccountRefusal`. Motivo: RF-008 aclarado; con `NOT_FOUND` no
 hay correo con el que calcular la huella, y la negativa por la cuenta no llega a evaluar el código.
-Verificación: tests de accounts (`test_registration_signals.py`) y T-038 para la caducidad dentro de la
-gracia.
+Verificación: T-038 (caducidad dentro de la gracia) y T-041 (límite, ya validado, proceso inexistente y
+negativa por la cuenta). La caducidad del proceso se comprueba antes que la cuenta.
 
 ### D-10 Tipos de evento: un valor por tipo de RF-002
 Elegida: `TextChoices` con 11 valores. El rechazo de código es `CODE_VERIFIED` con `success=False`
@@ -236,8 +240,10 @@ Se sigue TDD (P-04). Cobertura ≥80% en código nuevo (P-05).
   cubren la edición de perfil y la deshabilitación de cuenta; el cambio y el restablecimiento de
   contraseña tienen emisor completo. **Nada emite hoy** la edición de perfil ni la deshabilitación,
   porque no existen esos flujos en el código. Quedan pendientes hasta que su feature los cree.
-- **RF-012 (residual, aceptado por decisión del usuario el 2026-10-14):** el SQL directo contra la base
-  de datos no tiene guarda (D-07). La spec aclarada lo excluye de las vías de la aplicación.
+- **RF-012 (residual, aceptado por decisión del usuario el 2026-10-14):** no tienen guarda el SQL directo,
+  las APIs internas del ORM, los métodos base llamados sin pasar por el modelo, los comandos integrados de
+  Django (`flush`, `migrate`, `shell`) ni el uso deliberado del permiso de purga (D-07). La spec aclarada
+  los excluye de las vías de la aplicación.
 
 La regla de `sdd-plan` impide aprobar con RF sin cobertura. Este residual se acepta solo si lo confirmas
 de forma explícita.
@@ -249,3 +255,4 @@ de forma explícita.
 - 2026-10-13 — Actualización tras RF-004 (M-04; nuevas D-13 y D-14) — RF: RF-004 — Estado: aprobado
 - 2026-10-14 — Actualización tras la validación de RF-014 (D-07, M-01, M-06) y aclaración de RF-010 (nueva D-15) — RF: RF-010, RF-012, RF-014 — Estado: aprobado
 - 2026-10-14 — Actualización tras la aclaración de RF-008 (nueva D-16) y de RF-012 (D-07 y residual de SQL directo) — RF: RF-008, RF-012 — Estado: aprobado
+- 2026-10-14 — Actualización tras la tercera validación: D-05 (valor de desarrollo con `DEBUG`, P-02), D-07 y residual con el nuevo alcance de RF-012, D-16 (verificación con T-041 y precedencia de la caducidad) — RF: RF-008, RF-011, RF-012 — Estado: aprobado
