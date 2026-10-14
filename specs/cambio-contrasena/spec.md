@@ -1,5 +1,5 @@
 # Spec: cambio-contrasena
-Estado: borrador
+Estado: aprobada
 Aprobación: ligera
 
 ## Objetivo (por qué)
@@ -59,8 +59,8 @@ El sistema deberá aplicar a cada solicitud las reglas del código de `procesos-
 (RF-008); verificación con suma de intentos fallidos y rechazo de cualquier código una vez
 validado (RF-009); bloqueo al alcanzar el máximo de intentos fallidos, 5 por defecto, hasta que se
 emita un código nuevo (RF-010); y aceptación durante el periodo de transición de los códigos
-emitidos con el secreto anterior (RF-015). Un identificador público de un registro pendiente no
-deberá servir como identificador de una solicitud, ni a la inversa.
+emitidos con el secreto anterior (RF-015). Un identificador público de un registro pendiente,
+tenga o no registro detrás, no deberá servir como identificador de una solicitud, ni a la inversa.
 
 ### RF-006 Caducidad de la solicitud
 Una solicitud caduca al cumplirse lo primero de: 15 minutos después de que caduque su código
@@ -74,8 +74,9 @@ código nuevo, con su correo, fuera de la respuesta. Si la solicitud ya tiene el
 entonces el sistema deberá rechazar el reenvío.
 
 ### RF-008 Cuenta inactiva con una solicitud en curso
-Mientras la cuenta de una solicitud esté inactiva, el sistema deberá rechazar la verificación de
-su código, su reenvío y su compleción sin modificar la solicitud, que se conserva hasta caducar.
+Mientras la cuenta de una solicitud esté inactiva, el sistema deberá responder a la verificación
+de su código, su reenvío y su compleción como si la solicitud hubiera caducado (RF-006), sin
+modificarla; la solicitud se conserva hasta caducar.
 Si la cuenta se reactiva antes de que la solicitud caduque, la solicitud vuelve a admitir esas
 operaciones.
 
@@ -95,7 +96,8 @@ cambiar la contraseña.
 
 ### RF-010 Borrado de la cuenta
 Cuando se borre físicamente una cuenta, el sistema deberá borrar su solicitud de cambio de
-contraseña.
+contraseña, y su identificador deberá responder como el de una solicitud caducada (RF-006) hasta el
+momento en que la solicitud habría caducado.
 
 ### RF-011 Limpieza
 El sistema deberá permitir borrar desde consola todas las solicitudes caducadas, informando de
@@ -117,15 +119,15 @@ haya o no cuenta elegible (RF-004, RF-017); nunca el código.
 
 ### RF-014 Correo cambiado tras la solicitud
 Si el correo de la cuenta ya no coincide, sin distinguir mayúsculas, con aquel al que se envió el
-código de su solicitud, entonces el sistema deberá rechazar la verificación del código, su reenvío
-y la compleción, sin modificar la solicitud, que se conserva hasta caducar o hasta reemplazarse
-(RF-003).
+código de su solicitud, entonces el sistema deberá responder a la verificación del código, su
+reenvío y la compleción como si la solicitud hubiera caducado (RF-006), sin modificarla; la
+solicitud se conserva hasta caducar o hasta reemplazarse (RF-003).
 
 ### RF-015 Contraseña cambiada tras la solicitud
 Si la contraseña de la cuenta ha cambiado por cualquier otra vía desde que se pidió la solicitud o
-desde su último reemplazo (RF-003), entonces el sistema deberá rechazar la verificación del código,
-su reenvío y la compleción, sin modificar la solicitud, que se conserva hasta caducar o hasta
-reemplazarse.
+desde su último reemplazo (RF-003), entonces el sistema deberá responder a la verificación del
+código, su reenvío y la compleción como si la solicitud hubiera caducado (RF-006), sin modificarla;
+la solicitud se conserva hasta caducar o hasta reemplazarse.
 
 ### RF-016 Pedir el cambio sin revelar la cuenta
 Cuando se pida el cambio de contraseña, el sistema deberá devolver de inmediato un identificador
@@ -196,6 +198,11 @@ anula el identificador sin solicitud anterior, igual que RF-003 con una solicitu
   que quien acaba de cambiar su contraseña siga bloqueado hasta 5 minutos por los fallos previos;
   allauth hace lo mismo en su propio cambio de contraseña. El contador por IP no se toca: no es de
   la cuenta.
+- S-13 Responder como caducada cuando la cuenta se deshabilita, se borra o cambia de correo o
+  contraseña (RF-008, RF-010, RF-014, RF-015) evita revelar qué pasó (C-01 del cambio del
+  2026-10-14). *Riesgo aceptado:* quien tenga el identificador puede notar que caducó antes de
+  tiempo, o que revive al reactivarse la cuenta, y deducir así que el correo tenía cuenta. Solo
+  ocurre si el titular o soporte actúan sobre la cuenta durante la vida de la solicitud.
 
 ## Fuera de alcance
 - API, pantallas y mensaje neutro (S-01). El envío de correos es de `correo-asincrono-plantillas`.
@@ -249,4 +256,5 @@ anula el identificador sin solicitud anterior, igual que RF-003 con una solicitu
 - 2026-10-14 — Cambio por `correo-asincrono-plantillas` (S-07, S-08): pedir el cambio devuelve
   siempre un identificador y la consola deja de mostrar el código — RF: RF-002, RF-004, RF-007,
   RF-009, RF-012 y RF-013 modificados; RF-016 y RF-017 añadidos; secuencia, S-01, S-06, fuera de
-  alcance, CF-4 y CF-5 ajustados; CF-6 añadido — Estado: pendiente de clarificar
+  alcance, CF-4 y CF-5 ajustados; CF-6 añadido. Clarificado (C-01, C-02): RF-005, RF-008,
+  RF-010, RF-014 y RF-015 ajustados; S-13 añadido — Estado: clarificado
