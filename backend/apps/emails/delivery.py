@@ -7,6 +7,7 @@ from django.core.mail import EmailMessage
 from django.db import transaction
 from django.utils import timezone
 
+from apps.core import fingerprints
 from apps.emails import rendering
 from apps.emails.errors import Failure, classify
 from apps.emails.models import EmailTemplate, OutboundEmail
@@ -26,7 +27,7 @@ def deliver(email_id: int) -> None:
         return
     template = EmailTemplate.objects.get(kind=email.kind, locale=email.locale)
     subject, body = rendering.compose(
-        email.kind, email.locale, template.subject, template.body, email.context
+        email.kind, email.locale, template.subject, template.body, _values(email)
     )
     try:
         EmailMessage(subject, body, settings.DEFAULT_FROM_EMAIL, [email.recipient]).send()
@@ -69,9 +70,19 @@ def _record_failure(email: OutboundEmail, error: BaseException) -> None:
     email.last_error = f"{type(error).__name__}: {error}"
     if classify(error) is Failure.PERMANENT or _window_is_over(email):
         email.status = OutboundEmail.Status.FAILED
+        _forget_code(email)
     else:
         email.next_attempt_at = timezone.now() + _wait(email.attempts)
-    email.save(update_fields=["attempts", "last_error", "status", "next_attempt_at"])
+    email.save(
+        update_fields=[
+            "attempts",
+            "last_error",
+            "status",
+            "next_attempt_at",
+            "masked_code",
+            "code_nonce",
+        ]
+    )
     logger.info("Outbound email %s failed (attempt %s).", email.pk, email.attempts)
 
 
@@ -84,3 +95,16 @@ def _window_is_over(email: OutboundEmail) -> bool:
         return False
     window = timedelta(hours=settings.EMAIL_NOTICE_RETRY_HOURS)
     return timezone.now() >= email.created_at + window
+
+
+def _values(email: OutboundEmail) -> dict[str, str]:
+    values = {key: str(value) for key, value in email.context.items()}
+    if email.masked_code is not None:
+        values["code"] = fingerprints.unmask_code(email.masked_code, email.code_nonce)
+        values["link"] = rendering.process_link(email.purpose, email.public_id)
+    return values
+
+
+def _forget_code(email: OutboundEmail) -> None:
+    email.masked_code = None
+    email.code_nonce = ""

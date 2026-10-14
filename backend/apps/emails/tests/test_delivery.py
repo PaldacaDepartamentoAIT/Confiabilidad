@@ -1,4 +1,5 @@
 import importlib
+import logging
 import smtplib
 from datetime import timedelta
 from typing import Any
@@ -8,6 +9,7 @@ import pytest
 from django.apps import apps as global_apps
 from django.utils import timezone
 
+from apps.core import fingerprints
 from apps.emails import delivery, outbox, tasks
 from apps.emails.models import OutboundEmail
 from apps.emails.tests.backends import FAKE_BACKEND, FakeBackend
@@ -237,3 +239,56 @@ def test_a_permanent_rejection_fails_the_email_at_the_first_attempt(send_task: A
     _due_now(failed)
     assert delivery.dispatch_due() == 0
     send_task.assert_not_called()
+
+
+CODE = "482915"
+
+
+def _code_email() -> OutboundEmail:
+    masked, nonce = fingerprints.mask_code(CODE)
+    return _pending(
+        kind="registration_code",
+        purpose="registration",
+        public_id="pub_123",
+        masked_code=masked,
+        code_nonce=nonce,
+    )
+
+
+def test_a_code_email_is_delivered_with_the_original_code_and_its_link(caplog: Any) -> None:
+    caplog.set_level(logging.DEBUG)
+    email = _code_email()
+
+    delivery.deliver(email.pk)
+
+    [message] = FakeBackend.sent
+    assert CODE in message.body
+    assert "https://app.ejemplo.com/register/continue#pub_123" in message.body
+    assert not OutboundEmail.objects.filter(pk=email.pk).exists()
+    assert CODE not in caplog.text
+
+
+def test_a_failed_code_email_keeps_no_trace_of_the_code(caplog: Any) -> None:
+    caplog.set_level(logging.DEBUG)
+    email = _code_email()
+    FakeBackend.reset(smtplib.SMTPRecipientsRefused({"ana@example.com": (550, b"No such user")}))
+
+    delivery.deliver(email.pk)
+
+    failed = OutboundEmail.objects.get(pk=email.pk)
+    assert failed.status == OutboundEmail.Status.FAILED
+    assert (failed.masked_code, failed.code_nonce) == (None, "")
+    assert CODE not in failed.last_error
+    assert CODE not in caplog.text
+
+
+def test_a_code_email_keeps_its_mask_while_it_can_be_retried() -> None:
+    email = _code_email()
+    FakeBackend.reset(TimeoutError("slow"))
+
+    delivery.deliver(email.pk)
+
+    pending = OutboundEmail.objects.get(pk=email.pk)
+    assert pending.status == OutboundEmail.Status.PENDING
+    assert pending.masked_code == email.masked_code
+    assert pending.code_nonce == email.code_nonce

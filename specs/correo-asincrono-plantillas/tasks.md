@@ -230,12 +230,16 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   columna en claro" admite una probabilidad de 1 entre un millón de que la máscara valga 0 y el
   valor coincida con el código; no se fija el nonce para probar el camino real. [Cierto]
 
-- [ ] T-019 La entrega recupera el código y borra la máscara
+- [x] T-019 La entrega recupera el código y borra la máscara
   RF: RF-018 (D-06) | Depende de: T-015, T-018 | Archivos: 2
   Archivos: `delivery.py`, `tests/test_delivery.py`.
   Hecho cuando: el correo entregado contiene el código original; tras entregar, descartar o fallar,
   no queda máscara ni nonce; una fila `failed` no contiene el código; el código no aparece en
   ningún mensaje de registro (`caplog`) de la entrega ni del fallo; suite verde.
+  Decisiones: (1) El código y el enlace solo se añaden a los valores si la fila tiene máscara;
+  `context` se convierte a texto valor a valor. [Cierto] (2) Tras un error temporal la máscara se
+  conserva para el siguiente intento; solo se borra al entregar (la fila desaparece), al descartar
+  (T-020) o al fallar. [Cierto]
 
 - [ ] T-020 Descarte del código que ya no sirve
   RF: RF-015 (D-05) | Depende de: T-019 | Archivos: 2
