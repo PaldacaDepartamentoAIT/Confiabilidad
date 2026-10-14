@@ -259,7 +259,7 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   Hecho cuando: un correo encolado con 15 min de vigencia y entregado cuando quedan 6 min 10 s dice
   "6 minutos", no "15"; suite verde.
 
-- [ ] T-022 Comprobador de vigencia de `accounts`
+- [x] T-022 Comprobador de vigencia de `accounts`
   RF: RF-015 (D-05) | Depende de: T-020 | Archivos: 3
   Archivos: `apps/accounts/email_checks.py`, `apps/accounts/apps.py`,
   `apps/accounts/tests/test_email_checks.py` (en `backend/`).
@@ -268,6 +268,10 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   ya validó el código, si está caducado, si su `public_id` cambió (reemplazo) o si no existe; un
   `public_id` de registro no sirve como solicitud ni a la inversa; queda registrado al arrancar
   Django; suite verde.
+  Decisiones: (1) El registro de comprobadores vive en `delivery.py` (`register_code_check`); el
+  comprobador recibe `public_id` y el código recuperado y devuelve la caducidad o `None`. [Cierto]
+  (2) Un correo descartado se borra entero, código incluido, sin dejar rastro en el registro de
+  fallos: no es un fallo del proveedor. [Probable] Revertir: marcarlo como `failed`.
 
 - [ ] T-023 Proveedor por entorno y barrido en el planificador
   RF: RF-024 (D-02, D-14) | Depende de: T-013 | Archivos: 3
