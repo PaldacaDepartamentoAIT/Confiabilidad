@@ -220,11 +220,15 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   (3) `outbox` importa `User` solo para los tipos (`TYPE_CHECKING`), sin dependencia en tiempo de
   ejecución hacia `accounts` (D-05). [Cierto]
 
-- [ ] T-018 El código se guarda oculto en la bandeja
+- [x] T-018 El código se guarda oculto en la bandeja
   RF: RF-018 (D-06) | Depende de: T-011 y T-028 de `huellas-hmac-unificadas` | Archivos: 2
   Archivos: `outbox.py`, `tests/test_outbox.py`.
   Hecho cuando: un correo de código guarda `masked_code` y `code_nonce` (de `mask_code`) y ninguna
   columna, ni `context`, contiene el código en claro; los avisos no guardan máscara; suite verde.
+  Decisiones: (1) `enqueue` recibe `purpose`, `public_id` y `code`; el propósito y el identificador
+  sirven a T-020 para comprobar si el código sigue vigente. [Cierto] (2) El test de "ninguna
+  columna en claro" admite una probabilidad de 1 entre un millón de que la máscara valga 0 y el
+  valor coincida con el código; no se fija el nonce para probar el camino real. [Cierto]
 
 - [ ] T-019 La entrega recupera el código y borra la máscara
   RF: RF-018 (D-06) | Depende de: T-015, T-018 | Archivos: 2

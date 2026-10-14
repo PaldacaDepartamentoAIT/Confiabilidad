@@ -9,6 +9,7 @@ from django.db import transaction
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
+from apps.core import fingerprints
 from apps.emails import locales, rendering
 from apps.emails.models import AccountExistsNotice, OutboundEmail
 
@@ -28,14 +29,23 @@ def enqueue(
     locale: str,
     context: Mapping[str, str] | None = None,
     account: "User | None" = None,
+    purpose: str = "",
+    public_id: str = "",
+    code: str | None = None,
 ) -> OutboundEmail | None:
     if kind == ACCOUNT_EXISTS and not _account_exists_allowed(account):
         return None
+    # El código solo se guarda oculto con la máscara de su clave propia (RF-018).
+    masked_code, code_nonce = fingerprints.mask_code(code) if code is not None else (None, "")
     email = OutboundEmail.objects.create(
         kind=kind,
         recipient=recipient,
         locale=_language(kind, locale, account),
         context=dict(context or {}),
+        purpose=purpose,
+        public_id=public_id,
+        masked_code=masked_code,
+        code_nonce=code_nonce,
     )
     transaction.on_commit(lambda: _queue(email.pk))
     return email

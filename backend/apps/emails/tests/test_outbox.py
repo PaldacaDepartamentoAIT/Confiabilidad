@@ -7,6 +7,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps.accounts.tests.factories import make_user
+from apps.core import fingerprints
 from apps.emails import outbox
 from apps.emails.models import AccountExistsNotice, OutboundEmail
 
@@ -189,3 +190,36 @@ def test_an_account_exists_cap_reads_as_its_account_and_time(send_task: Any) -> 
     notice = AccountExistsNotice.objects.get(user=account)
 
     assert str(notice).startswith(f"{account.pk} @ ")
+
+
+CODE = "482915"
+
+
+def _code_email() -> OutboundEmail:
+    return _enqueue(
+        kind="registration_code",
+        locale="es",
+        purpose="registration",
+        public_id="pub_123",
+        code=CODE,
+    )
+
+
+def test_a_code_email_keeps_the_code_only_masked(send_task: Any) -> None:
+    email = OutboundEmail.objects.get(pk=_code_email().pk)
+
+    assert (email.purpose, email.public_id) == ("registration", "pub_123")
+    assert email.masked_code is not None
+    assert email.code_nonce
+    assert fingerprints.unmask_code(email.masked_code, email.code_nonce) == CODE
+    for field in OutboundEmail._meta.concrete_fields:
+        if field.name != "masked_code":
+            assert CODE not in str(getattr(email, field.name))
+    assert CODE not in str(email.context)
+
+
+def test_a_notice_keeps_no_mask(send_task: Any) -> None:
+    email = OutboundEmail.objects.get(pk=_enqueue(kind="password_changed").pk)
+
+    assert email.masked_code is None
+    assert email.code_nonce == ""
