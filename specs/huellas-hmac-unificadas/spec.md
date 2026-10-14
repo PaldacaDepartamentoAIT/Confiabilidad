@@ -1,5 +1,5 @@
 # Spec: huellas-hmac-unificadas
-Estado: borrador
+Estado: aprobada
 Aprobación: ligera
 
 ## Objetivo (por qué)
@@ -33,8 +33,9 @@ El sistema deberá asociar cada tipo de huella a su clave y a su política de ro
 - huella del correo en consentimientos: clave de consentimientos, que no rota.
 
 ### RF-003 Clave fuera de la base de datos (RNF-25)
-El sistema deberá obtener la clave de cada tipo de huella del almacén de secretos (la
-configuración del entorno) y nunca guardarla en la base de datos ni leerla de ella.
+El sistema deberá obtener la clave de cada tipo de huella, y la de la máscara (RF-011), del
+almacén de secretos (la configuración del entorno) y nunca guardarla en la base de datos ni leerla
+de ella.
 
 ### RF-004 Normalización única del correo
 Cuando una huella incluya un correo, el sistema deberá normalizarlo siempre de la misma forma:
@@ -209,4 +210,5 @@ recuperar el código con un error de configuración que nombre esa clave.
   cualquier paquete antepasado — RF: RF-008, RF-010 — Estado: impacto analizado
 - 2026-10-14 — Cambio por `correo-asincrono-plantillas` (D-06): el punto único calcula también la
   máscara reversible del código de los correos pendientes — RF: RF-001 modificado; RF-011 añadido;
-  objetivo, S-10, fuera de alcance y criterios ajustados — Estado: pendiente de clarificar
+  objetivo, S-10, fuera de alcance y criterios ajustados. Clarificado (C-01, C-02): RF-003
+  ajustado; RF-011 sin cambios — Estado: clarificado
