@@ -1,5 +1,6 @@
 import re
 from collections.abc import Mapping
+from datetime import timedelta
 from urllib.parse import urlsplit
 
 from django.conf import settings
@@ -99,3 +100,21 @@ def _is_application_address(address: str) -> bool:
     host = urlsplit(address).hostname
     application_host = urlsplit(str(settings.FRONTEND_BASE_URL)).hostname
     return host is not None and host == application_host
+
+
+# Frases del plazo por idioma: (un minuto, varios minutos, menos de un minuto) (D-08).
+_EXPIRY_PHRASES = {
+    "es": ("1 minuto", "{n} minutos", "menos de un minuto"),
+    "pt-BR": ("1 minuto", "{n} minutos", "menos de um minuto"),
+    "en": ("1 minute", "{n} minutes", "less than a minute"),
+}
+
+
+def expires_in(locale: str, remaining: timedelta) -> str:
+    one, many, under_one = _EXPIRY_PHRASES[locale]
+    minutes = int(remaining.total_seconds() // 60)
+    if minutes < 1:
+        return under_one
+    if minutes == 1:
+        return one
+    return many.format(n=minutes)

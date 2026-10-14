@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 import pytest
 from django.core.exceptions import ValidationError
 
@@ -167,3 +169,39 @@ def test_an_invalid_template_is_not_saved() -> None:
 
     template.refresh_from_db()
     assert template.body == stored
+
+
+@pytest.mark.parametrize(
+    ("remaining", "expected"),
+    [
+        (
+            timedelta(minutes=9, seconds=40),
+            {"es": "9 minutos", "pt-BR": "9 minutos", "en": "9 minutes"},
+        ),
+        (
+            timedelta(minutes=1, seconds=30),
+            {"es": "1 minuto", "pt-BR": "1 minuto", "en": "1 minute"},
+        ),
+        (
+            timedelta(seconds=59),
+            {"es": "menos de un minuto", "pt-BR": "menos de um minuto", "en": "less than a minute"},
+        ),
+        (
+            timedelta(0),
+            {"es": "menos de un minuto", "pt-BR": "menos de um minuto", "en": "less than a minute"},
+        ),
+        (timedelta(minutes=15), {"es": "15 minutos", "pt-BR": "15 minutos", "en": "15 minutes"}),
+    ],
+)
+def test_the_remaining_time_is_relative_and_rounded_down(
+    remaining: timedelta, expected: dict[str, str]
+) -> None:
+    for locale, phrase in expected.items():
+        assert rendering.expires_in(locale, remaining) == phrase
+
+
+def test_the_remaining_time_never_shows_a_clock_time() -> None:
+    for locale in ("es", "pt-BR", "en"):
+        phrase = rendering.expires_in(locale, timedelta(hours=2, minutes=3))
+        assert ":" not in phrase
+        assert phrase.startswith("123 ")

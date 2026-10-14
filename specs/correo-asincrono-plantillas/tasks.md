@@ -69,12 +69,14 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   (6) El test del guardado inválido está en `test_rendering.py` para respetar los tres archivos de
   la tarea. [Cierto]
 
-- [ ] T-005 Plazo relativo por idioma
+- [x] T-005 Plazo relativo por idioma
   RF: RF-014 (D-08) | Depende de: T-002 | Archivos: 2
   Archivos: `rendering.py`, `tests/test_rendering.py`.
   Hecho cuando: con 9 min 40 s restantes da "9 minutos", "9 minutos" y "9 minutes"; con 1 min 30 s,
   "1 minuto", "1 minuto" y "1 minute"; con 59 s, "menos de un minuto", "menos de um minuto" y "less
   than a minute"; ninguna salida contiene una hora ni una fecha; suite verde.
+  Decisiones: (1) Un plazo de cero o negativo también da "menos de un minuto"; la entrega descarta
+  antes el código caducado (T-020). [Probable] Revertir: lanzar un error si `remaining <= 0`.
 
 - [ ] T-006 Bloque fijo de reporte en los avisos de seguridad
   RF: RF-010 (D-08) | Depende de: T-002 | Archivos: 3
