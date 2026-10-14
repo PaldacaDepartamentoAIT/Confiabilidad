@@ -287,13 +287,16 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   (2) Un correo descartado se borra entero, código incluido, sin dejar rastro en el registro de
   fallos: no es un fallo del proveedor. [Probable] Revertir: marcarlo como `failed`.
 
-- [ ] T-024 Panel de plantillas
+- [x] T-024 Panel de plantillas
   RF: RF-020, RF-021, RF-022 (D-16) | Depende de: T-004, T-007 | Archivos: 2
   Archivos: `admin.py`, `tests/test_admin.py`.
   Hecho cuando: un miembro de «Soporte técnico» y un superusuario ven y editan asunto y cuerpo; un
   staff sin el grupo recibe 403; no hay botón ni vista para añadir ni borrar; guardar una plantilla
   inválida muestra cada problema y no cambia la fila; el historial se ve y no se puede revertir;
   suite verde.
+  Decisiones: (1) Tipo e idioma son de solo lectura en el formulario: solo se editan asunto y
+  cuerpo. [Cierto] (2) `is_support` se copia del criterio de `consents` en vez de importarlo de su
+  `admin.py`, para no acoplar las apps. [Probable] Revertir: moverlo a `apps/core`.
 
 - [ ] T-025 Panel de correos fallidos
   RF: RF-017 (D-12) | Depende de: T-015, T-024 | Archivos: 4
