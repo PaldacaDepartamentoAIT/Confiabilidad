@@ -241,13 +241,17 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   conserva para el siguiente intento; solo se borra al entregar (la fila desaparece), al descartar
   (T-020) o al fallar. [Cierto]
 
-- [ ] T-020 Descarte del código que ya no sirve
+- [x] T-020 Descarte del código que ya no sirve
   RF: RF-015 (D-05) | Depende de: T-019 | Archivos: 2
   Archivos: `delivery.py`, `tests/test_delivery.py`.
   Hecho cuando: con un comprobador registrado para el propósito que devuelve la caducidad, el
   correo se entrega; si devuelve nada (caducado, validado o reemplazado), la fila se borra sin
   enviar; tras un error temporal, se reintenta solo mientras el comprobador siga devolviendo una
   caducidad; un propósito sin comprobador registrado lanza un error de configuración; suite verde.
+  Decisiones: (1) El registro de comprobadores vive en `delivery.py` (`register_code_check`); el
+  comprobador recibe `public_id` y el código recuperado y devuelve la caducidad o `None`. [Cierto]
+  (2) Un correo descartado se borra entero, código incluido, sin dejar rastro en el registro de
+  fallos: no es un fallo del proveedor. [Probable] Revertir: marcarlo como `failed`.
 
 - [ ] T-021 Plazo calculado al entregar
   RF: RF-014 | Depende de: T-005, T-020 | Archivos: 2

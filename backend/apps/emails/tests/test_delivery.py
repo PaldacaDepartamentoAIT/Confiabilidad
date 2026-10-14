@@ -7,6 +7,7 @@ from unittest import mock
 
 import pytest
 from django.apps import apps as global_apps
+from django.core.exceptions import ImproperlyConfigured
 from django.utils import timezone
 
 from apps.core import fingerprints
@@ -26,6 +27,23 @@ def _environment(settings: Any) -> None:
     FakeBackend.reset()
     migration = importlib.import_module("apps.emails.migrations.0002_initial_templates")
     migration.create_initial_templates(global_apps, None)
+
+
+class _Checker:
+    def __init__(self) -> None:
+        self.expiry: Any = timezone.now() + timedelta(minutes=10)
+        self.calls: list[tuple[str, str]] = []
+
+    def __call__(self, public_id: str, code: str) -> Any:
+        self.calls.append((public_id, code))
+        return self.expiry
+
+
+@pytest.fixture(autouse=True)
+def checker() -> Any:
+    current = _Checker()
+    with mock.patch.dict(delivery._CODE_CHECKS, {"registration": current}, clear=True):
+        yield current
 
 
 @pytest.fixture
@@ -292,3 +310,57 @@ def test_a_code_email_keeps_its_mask_while_it_can_be_retried() -> None:
     assert pending.status == OutboundEmail.Status.PENDING
     assert pending.masked_code == email.masked_code
     assert pending.code_nonce == email.code_nonce
+
+
+def test_the_checker_receives_the_public_id_and_the_recovered_code(checker: Any) -> None:
+    delivery.deliver(_code_email().pk)
+
+    assert checker.calls == [("pub_123", CODE)]
+
+
+def test_a_code_that_no_longer_serves_is_discarded_without_sending(checker: Any) -> None:
+    checker.expiry = None
+    email = _code_email()
+
+    delivery.deliver(email.pk)
+
+    assert FakeBackend.sent == []
+    assert not OutboundEmail.objects.filter(pk=email.pk).exists()
+
+
+def test_a_code_email_is_retried_only_while_its_code_serves(checker: Any) -> None:
+    email = _code_email()
+    FakeBackend.reset(TimeoutError("slow"))
+    delivery.deliver(email.pk)
+    _due_now(email)
+    checker.expiry = None
+
+    delivery.deliver(email.pk)
+
+    assert FakeBackend.sent == []
+    assert not OutboundEmail.objects.filter(pk=email.pk).exists()
+
+
+def test_a_purpose_without_a_checker_is_a_configuration_error() -> None:
+    masked, nonce = fingerprints.mask_code(CODE)
+    email = _pending(
+        kind="password_reset_code",
+        purpose="password_reset",
+        public_id="pub_9",
+        masked_code=masked,
+        code_nonce=nonce,
+    )
+
+    with pytest.raises(ImproperlyConfigured, match="password_reset"):
+        delivery.deliver(email.pk)
+
+    assert FakeBackend.sent == []
+
+
+def test_registering_a_checker_makes_it_available() -> None:
+    def check(public_id: str, code: str) -> None:
+        return None
+
+    delivery.register_code_check("password_reset", check)
+
+    assert delivery._CODE_CHECKS["password_reset"] is check

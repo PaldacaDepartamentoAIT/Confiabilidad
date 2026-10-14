@@ -1,11 +1,14 @@
 import logging
-from datetime import timedelta
+from collections.abc import Callable
+from datetime import datetime, timedelta
 
 from celery import current_app
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from django.core.mail import EmailMessage
 from django.db import transaction
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from apps.core import fingerprints
 from apps.emails import rendering
@@ -14,6 +17,16 @@ from apps.emails.models import EmailTemplate, OutboundEmail
 from apps.emails.outbox import DELIVER_TASK
 
 logger = logging.getLogger(__name__)
+
+# Por propósito, cómo saber si el código de un correo sigue sirviendo: devuelve su caducidad o
+# nada si está caducado, validado o reemplazado. Lo registra `accounts` al arrancar (D-05).
+CodeCheck = Callable[[str, str], datetime | None]
+_CODE_CHECKS: dict[str, CodeCheck] = {}
+
+
+def register_code_check(purpose: str, check: CodeCheck) -> None:
+    _CODE_CHECKS[purpose] = check
+
 
 # Mientras dura la reserva, ningún otro intento toma la misma fila (D-04).
 LEASE = timedelta(minutes=5)
@@ -25,9 +38,17 @@ def deliver(email_id: int) -> None:
     email = _claim(email_id)
     if email is None:
         return
+    values = {key: str(value) for key, value in email.context.items()}
+    if email.masked_code is not None:
+        code = fingerprints.unmask_code(email.masked_code, email.code_nonce)
+        if _code_expiry(email, code) is None:
+            email.delete()
+            return
+        values["code"] = code
+        values["link"] = rendering.process_link(email.purpose, email.public_id)
     template = EmailTemplate.objects.get(kind=email.kind, locale=email.locale)
     subject, body = rendering.compose(
-        email.kind, email.locale, template.subject, template.body, _values(email)
+        email.kind, email.locale, template.subject, template.body, values
     )
     try:
         EmailMessage(subject, body, settings.DEFAULT_FROM_EMAIL, [email.recipient]).send()
@@ -97,12 +118,13 @@ def _window_is_over(email: OutboundEmail) -> bool:
     return timezone.now() >= email.created_at + window
 
 
-def _values(email: OutboundEmail) -> dict[str, str]:
-    values = {key: str(value) for key, value in email.context.items()}
-    if email.masked_code is not None:
-        values["code"] = fingerprints.unmask_code(email.masked_code, email.code_nonce)
-        values["link"] = rendering.process_link(email.purpose, email.public_id)
-    return values
+def _code_expiry(email: OutboundEmail, code: str) -> datetime | None:
+    check = _CODE_CHECKS.get(email.purpose)
+    if check is None:
+        raise ImproperlyConfigured(
+            _("No code check is registered for %(purpose)s.") % {"purpose": email.purpose}
+        )
+    return check(email.public_id, code)
 
 
 def _forget_code(email: OutboundEmail) -> None:
