@@ -5,7 +5,7 @@ from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest, HttpResponse
 from simple_history.admin import SimpleHistoryAdmin
 
-from apps.emails.models import EmailTemplate
+from apps.emails.models import EmailTemplate, FailedEmail
 
 SUPPORT_GROUP = "Soporte técnico"
 
@@ -50,3 +50,27 @@ class EmailTemplateAdmin(SimpleHistoryAdmin):  # type: ignore[misc]
             request, object_id, version_id, extra_context
         )
         return response
+
+
+@admin.register(FailedEmail)
+class FailedEmailAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
+    list_display = ("kind", "locale", "recipient", "created_at", "attempts", "last_error")
+    list_filter = ("kind", "locale")
+    search_fields = ("recipient",)
+    fields = ("kind", "locale", "recipient", "created_at", "attempts", "last_error")
+    readonly_fields = fields
+
+    def has_module_permission(self, request: HttpRequest) -> bool:
+        return is_support(request)
+
+    def has_view_permission(self, request: HttpRequest, obj: Any = None) -> bool:
+        return is_support(request)
+
+    def has_delete_permission(self, request: HttpRequest, obj: Any = None) -> bool:
+        return is_support(request)
+
+    def has_change_permission(self, request: HttpRequest, obj: Any = None) -> bool:
+        return False
+
+    def has_add_permission(self, request: HttpRequest) -> bool:
+        return False

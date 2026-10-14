@@ -298,13 +298,16 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   cuerpo. [Cierto] (2) `is_support` se copia del criterio de `consents` en vez de importarlo de su
   `admin.py`, para no acoplar las apps. [Probable] Revertir: moverlo a `apps/core`.
 
-- [ ] T-025 Panel de correos fallidos
+- [x] T-025 Panel de correos fallidos
   RF: RF-017 (D-12) | Depende de: T-015, T-024 | Archivos: 4
   Archivos: `admin.py`, `models.py`, `migrations/0001_initial.py`, `tests/test_admin.py`.
   Hecho cuando: el proxy `FailedEmail` lista solo las filas `failed` con tipo, idioma,
   destinatario, fecha, intentos y último error; soporte puede verlas y borrarlas, pero no
   editarlas ni crearlas; las filas `pending` no aparecen; suite verde.
   Excepción: el modelo proxy exige regenerar `0001_initial.py` con `makemigrations`.
+  Decisiones: (1) Tipo e idioma son de solo lectura en el formulario: solo se editan asunto y
+  cuerpo. [Cierto] (2) `is_support` se copia del criterio de `consents` en vez de importarlo de su
+  `admin.py`, para no acoplar las apps. [Probable] Revertir: moverlo a `apps/core`.
 
 - [ ] T-026 Permisos de «Soporte técnico»
   RF: RF-017, RF-020 (D-13) | Depende de: T-024, T-025 | Archivos: 2

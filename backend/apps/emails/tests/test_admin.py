@@ -10,7 +10,7 @@ from django.urls import reverse
 from apps.accounts.models import User
 from apps.accounts.tests.factories import make_user
 from apps.emails.admin import is_support
-from apps.emails.models import EmailTemplate
+from apps.emails.models import EmailTemplate, OutboundEmail
 
 pytestmark = pytest.mark.django_db
 
@@ -141,3 +141,59 @@ def test_a_support_member_without_staff_access_is_not_support() -> None:
     response = _client(user).get(_url("changelist"))
     assert response.status_code == 302
     assert "/login/" in response["Location"]
+
+
+def _outbound(status: str, recipient: str) -> OutboundEmail:
+    return OutboundEmail.objects.create(
+        kind="password_changed",
+        locale="es",
+        recipient=recipient,
+        status=status,
+        attempts=3,
+        last_error="SMTPRecipientsRefused: 550 No such user",
+    )
+
+
+def _failed_url(name: str, *args: object) -> str:
+    return reverse(f"admin:emails_failedemail_{name}", args=args)
+
+
+def test_only_failed_emails_are_listed_with_their_details(allowed_client: Client) -> None:
+    _outbound("failed", "fallo@example.com")
+    _outbound("pending", "espera@example.com")
+
+    content = allowed_client.get(_failed_url("changelist")).content.decode()
+
+    assert "fallo@example.com" in content
+    assert "espera@example.com" not in content
+    assert "550 No such user" in content
+
+
+def test_a_failed_email_can_be_viewed_and_deleted_but_not_edited(allowed_client: Client) -> None:
+    failed = _outbound("failed", "fallo@example.com")
+
+    page = allowed_client.get(_failed_url("change", failed.pk))
+    edit = allowed_client.post(_failed_url("change", failed.pk), {"recipient": "otro@example.com"})
+    added = allowed_client.get(_failed_url("add"))
+    deleted = allowed_client.post(_failed_url("delete", failed.pk), {"post": "yes"})
+
+    assert page.status_code == 200
+    assert edit.status_code == 403
+    assert added.status_code == 403
+    assert deleted.status_code == 302
+    assert not OutboundEmail.objects.filter(pk=failed.pk).exists()
+
+
+def test_a_pending_email_is_not_reachable_from_the_failed_list(allowed_client: Client) -> None:
+    pending = _outbound("pending", "espera@example.com")
+
+    response = allowed_client.get(_failed_url("change", pending.pk))
+
+    assert response.status_code == 302
+    assert OutboundEmail.objects.filter(pk=pending.pk).exists()
+
+
+def test_staff_outside_support_cannot_reach_the_failed_emails() -> None:
+    client = _client(make_user(is_staff=True))
+
+    assert client.get(_failed_url("changelist")).status_code == 403

@@ -100,6 +100,21 @@ class OutboundEmail(models.Model):
         return f"{self.kind} → {self.recipient}"
 
 
+class FailedEmailManager(models.Manager["FailedEmail"]):
+    def get_queryset(self) -> models.QuerySet["FailedEmail"]:
+        return super().get_queryset().filter(status=OutboundEmail.Status.FAILED)
+
+
+class FailedEmail(OutboundEmail):
+    # Vista del panel sobre los correos que agotaron sus intentos o se rechazaron (RF-017).
+    objects = FailedEmailManager()  # type: ignore[misc]
+
+    class Meta:
+        proxy = True
+        verbose_name = _("failed email")
+        verbose_name_plural = _("failed emails")
+
+
 class AccountExistsNotice(models.Model):
     # Hora del último aviso "ya tienes cuenta" encolado para la cuenta: es el tope de RF-007.
     user = models.OneToOneField(
