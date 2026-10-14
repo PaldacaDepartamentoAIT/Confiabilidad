@@ -143,7 +143,7 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   parte anterior al guion. (2) `LANGUAGE_CHOICES` vive aquí para que `accounts` lo use en T-009;
   `EmailTemplate.Locale` repite los mismos tres valores. [Cierto] Revertir: unificarlos.
 
-- [ ] T-012 Proveedor simulado y clasificación de errores
+- [x] T-012 Proveedor simulado y clasificación de errores
   RF: RF-026 (D-03, D-15) | Depende de: — | Archivos: 3
   Archivos: `errors.py`, `tests/backends.py`, `tests/test_errors.py`.
   Hecho cuando: `SMTPRecipientsRefused`, `SMTPSenderRefused` y `SMTPDataError` con código 5xx son
@@ -151,6 +151,9 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   `SMTPAuthenticationError`, `TimeoutError`, `OSError` y cualquier otra excepción son temporales;
   el backend simulado lanza en orden los errores que se le indican y guarda los mensajes que
   entrega; suite verde.
+  Decisiones: (1) Un rechazo de destinatarios es definitivo solo si todos los códigos son 5xx; con
+  uno solo 4xx, se reintenta. [Probable] Revertir: usar `any` en `classify`. (2) La autenticación
+  fallida (535) es temporal, como dice D-03; el tercer mutante lo confirma. [Cierto]
 
 - [ ] T-013 Entrega desde la cola y barrido periódico
   RF: RF-002, RF-011 (D-01) | Depende de: T-011, T-012 | Archivos: 3
