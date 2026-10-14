@@ -351,6 +351,16 @@ def test_complete_creates_the_account_and_deletes_the_registration() -> None:
     assert not PendingRegistration.objects.exists()
 
 
+@pytest.mark.parametrize("language", ["pt-BR", "en", "es"])
+def test_complete_keeps_the_language_of_the_registration(language: str) -> None:
+    public_id = _verified().public_id
+    PendingRegistration.objects.filter(public_id=public_id).update(language=language)
+
+    user = _complete(public_id).user
+
+    assert User.objects.get(pk=user.pk).language == language
+
+
 def test_completed_account_can_log_in_through_the_app() -> None:
     _complete(_verified().public_id)
 

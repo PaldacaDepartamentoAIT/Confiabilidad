@@ -123,7 +123,7 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   parte anterior al guion. (2) `LANGUAGE_CHOICES` vive aquí para que `accounts` lo use en T-009;
   `EmailTemplate.Locale` repite los mismos tres valores. [Cierto] Revertir: unificarlos.
 
-- [ ] T-010 La cuenta hereda el idioma al completar el registro
+- [x] T-010 La cuenta hereda el idioma al completar el registro
   RF: RF-012 | Depende de: T-009 | Archivos: 2
   Archivos: `apps/accounts/registration.py`, `apps/accounts/tests/test_registration_service.py`
   (en `backend/`).

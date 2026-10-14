@@ -125,6 +125,7 @@ def complete(*, public_id: str, password: str) -> Completed | CompleteRefusal:
             name=pending.name,
             birthdate=pending.birthdate,
             country=pending.country,
+            language=pending.language,
         )
         validate_password(password, user=user)
         user.set_password(password)
