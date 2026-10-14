@@ -4,6 +4,7 @@ from unittest import mock
 import pytest
 from django.db import transaction
 
+from apps.accounts.tests.factories import make_user
 from apps.emails import outbox
 from apps.emails.models import OutboundEmail
 
@@ -80,3 +81,33 @@ def test_a_queue_outage_leaves_the_email_pending(
 
 def test_an_outbound_email_reads_as_its_kind_and_recipient(send_task: Any) -> None:
     assert str(_enqueue()) == "password_changed → ana@example.com"
+
+
+@pytest.mark.parametrize(
+    ("requested", "stored"), [("pt-br", "pt-BR"), ("EN", "en"), ("fr", "es"), ("", "es")]
+)
+def test_a_code_email_uses_the_requested_language(
+    send_task: Any, requested: str, stored: str
+) -> None:
+    email = _enqueue(kind="registration_code", locale=requested)
+
+    assert OutboundEmail.objects.get(pk=email.pk).locale == stored
+
+
+@pytest.mark.parametrize("language", ["pt-BR", "en", "es"])
+def test_a_security_notice_uses_the_language_of_the_account(send_task: Any, language: str) -> None:
+    account = make_user(language=language)
+
+    email = _enqueue(
+        kind="password_changed", locale="fr" if language != "es" else "en", account=account
+    )
+
+    assert OutboundEmail.objects.get(pk=email.pk).locale == language
+
+
+def test_a_code_email_ignores_the_language_of_the_account(send_task: Any) -> None:
+    account = make_user(language="en")
+
+    email = _enqueue(kind="password_reset_code", locale="pt-BR", account=account)
+
+    assert OutboundEmail.objects.get(pk=email.pk).locale == "pt-BR"

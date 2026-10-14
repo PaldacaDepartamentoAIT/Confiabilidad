@@ -190,12 +190,18 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   fila `failed` conserva tipo, idioma, destinatario, fecha de encolado, intentos y último error, y
   no vuelve a encolarse en el barrido; suite verde.
 
-- [ ] T-016 Idioma de cada correo al encolar
+- [x] T-016 Idioma de cada correo al encolar
   RF: RF-013 | Depende de: T-008, T-011 | Archivos: 2
   Archivos: `outbox.py`, `tests/test_outbox.py`.
   Hecho cuando: un correo de código se encola en el idioma indicado por quien lo pide (normalizado
   con T-008); un aviso de seguridad, en el `language` de la cuenta aunque se indique otro; sin
   idioma válido, en `es`; suite verde.
+  Decisiones: (1) `enqueue` recibe la cuenta (`account`) en vez de una función aparte para los
+  avisos, para no cambiar la interfaz de T-011. Si se pasa con un aviso, manda su idioma; con un
+  correo de código se ignora. [Probable] Revertir: separar `enqueue_notice`. (2) Sin cuenta, un
+  aviso usa el idioma indicado; M-10 debe pasar siempre la cuenta en los avisos. [Probable]
+  (3) `outbox` importa `User` solo para los tipos (`TYPE_CHECKING`), sin dependencia en tiempo de
+  ejecución hacia `accounts` (D-05). [Cierto]
 
 - [ ] T-017 Tope del aviso "ya tienes cuenta"
   RF: RF-007 (D-11) | Depende de: T-011 | Archivos: 5
