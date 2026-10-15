@@ -94,7 +94,12 @@ def resolve_password_reset(public_id: str) -> None:
         if slot is None:
             return
         email, language = slot.email, str((slot.payload or {}).get("language"))
-        PhantomProcess.objects.filter(purpose=_PURPOSE, email=email).exclude(pk=slot.pk).delete()
+        same_email = PhantomProcess.objects.filter(purpose=_PURPOSE, email=email)
+        # Manda la petición más reciente (D-17 de procesos-pendientes).
+        if same_email.filter(pk__gt=slot.pk, payload__isnull=False).exists():
+            slot.delete()
+            return
+        same_email.filter(pk__lt=slot.pk).delete()
         user = User.objects.select_for_update().filter(email__iexact=email).first()
         if user is None or not user.is_active:
             slot.payload = None

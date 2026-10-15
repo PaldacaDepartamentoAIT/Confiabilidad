@@ -321,3 +321,22 @@ def test_the_task_issues_nothing_for_a_process_that_no_longer_takes_codes(
     assert OutboundEmail.objects.count() == emails
     assert not PasswordResetRequest.objects.exclude(code_hash="").exists()
     assert not PhantomProcess.objects.exclude(code_hash="").exists()
+
+
+@pytest.mark.parametrize("has_account", [False, True])
+def test_the_newest_request_wins_even_if_the_tasks_run_out_of_order(has_account: bool) -> None:
+    if has_account:
+        make_user(email=EMAIL)
+    older = password_reset.start(email=EMAIL).public_id
+    newer = password_reset.start(email=EMAIL).public_id
+
+    password_reset.resolve_password_reset(older)
+    password_reset.resolve_password_reset(newer)
+
+    assert [_verify(older), _verify(newer)] == ["not_found", "wrong_code"]
+    assert list(OutboundEmail.objects.values_list("public_id", flat=True)) == (
+        [newer] if has_account else []
+    )
+    assert list(PasswordResetRequest.objects.values_list("public_id", flat=True)) == (
+        [newer] if has_account else []
+    )

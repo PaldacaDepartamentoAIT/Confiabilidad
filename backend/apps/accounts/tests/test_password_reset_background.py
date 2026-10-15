@@ -145,6 +145,33 @@ def test_a_resolved_unknown_or_foreign_slot_is_left_alone(public_id: str) -> Non
     assert PhantomProcess.objects.count() == 2
 
 
+@pytest.mark.parametrize("has_account", [False, True])
+def test_an_older_slot_resolved_before_a_newer_one_does_nothing(has_account: bool) -> None:
+    if has_account:
+        make_user(email="eva@x.com")
+    _slot("older")
+    _slot("newer")
+
+    password_reset.resolve_password_reset("older")
+
+    assert list(PhantomProcess.objects.values_list("public_id", flat=True)) == ["newer"]
+    assert not PasswordResetRequest.objects.exists()
+    assert not OutboundEmail.objects.exists()
+
+
+def test_only_older_slots_of_the_email_are_removed() -> None:
+    make_user(email="eva@x.com")
+    _slot("older")
+    _slot("current")
+    newer_resolved = _slot("newer_resolved")
+    PhantomProcess.objects.filter(pk=newer_resolved.pk).update(payload=None)
+
+    password_reset.resolve_password_reset("current")
+
+    assert list(PhantomProcess.objects.values_list("public_id", flat=True)) == ["newer_resolved"]
+    assert PasswordResetRequest.objects.get().public_id == "current"
+
+
 def test_an_unsupported_language_falls_back_to_the_default() -> None:
     make_user(email="eva@x.com")
     _slot(language="fr")

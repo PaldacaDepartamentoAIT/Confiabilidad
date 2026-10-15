@@ -412,7 +412,7 @@ esquema, para que al final quede una sola migración (M-07).
   [Cierto] (2) `_create_or_replace` exige ahora el identificador y el idioma: ya solo la usa la
   resolución. [Cierto]
 
-- [ ] T-035 Corrección: manda la petición más reciente al resolver
+- [x] T-035 Corrección: manda la petición más reciente al resolver
   Tipo: corrección | Origen: validación de RF-003 y RF-017
   RF: RF-003, RF-017 (D-13) | Depende de: T-040 de `procesos-pendientes` | Archivos: 3
   Archivos: `password_reset.py`, `tests/test_password_reset_background.py`,
