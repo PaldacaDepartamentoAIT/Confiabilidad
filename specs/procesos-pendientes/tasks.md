@@ -1,5 +1,5 @@
 # Tareas: procesos-pendientes
-Estado: aprobado
+Estado: borrador
 
 Rutas relativas a `backend/apps/accounts/` salvo que se indique. "Suite verde" =
 `cd backend && pytest -q` + `mypy .` + `ruff check .` + `black --check .` sin errores. En cada
@@ -351,6 +351,59 @@ fallar sus tests.
   Hecho cuando: `.env.example` documenta `REGISTRATION_START_RETRY_MINUTES`; el resumen explica la
   plaza, el identificador sin registro detrás y el recorrido completo por consola leyendo el código
   en la salida del worker, con cada comando en su bloque.
+
+- [ ] T-039 Corrección: la tarea no resuelve una plaza pasada la ventana
+  Tipo: corrección | Origen: validación de RF-024
+  RF: RF-024 (D-15) | Depende de: — | Archivos: 2
+  Archivos: `tasks.py`, `tests/test_registration_background.py`.
+  Causa: `_resolve_or_retry` solo miraba la ventana tras un fallo; un reintento o una tarea atendida
+  tarde resolvía fuera de la ventana y enviaba el correo. Además, el tope de 3 reintentos de Celery
+  cortaba la cadena hacia los 105 s.
+  Hecho cuando: la tarea ejecutada sobre una plaza de hace 6 minutos, sin simular la resolución, no
+  crea registro pendiente ni encola correo, vacía el `payload` y deja «gave up» en el log, también en
+  un primer intento; las dos tareas de resolución no tienen tope de reintentos; los tests de reintento
+  dentro de la ventana siguen en verde; suite verde.
+
+- [ ] T-040 Corrección: manda la petición más reciente al resolver
+  Tipo: corrección | Origen: validación de RF-025 (y RF-003 de `cambio-contrasena`)
+  RF: RF-005, RF-025 (D-16, D-17) | Depende de: — | Archivos: 3
+  Archivos: `registration.py`, `tests/test_registration_background.py`,
+  `tests/test_phantom_equivalence.py`.
+  Causa: la resolución borraba todas las demás plazas del mismo correo, también las posteriores; con
+  dos peticiones resueltas en orden inverso, la antigua anulaba a la nueva.
+  Hecho cuando: con dos `start` del mismo correo y la primera resuelta antes que la segunda, la
+  primera responde «desconocido» y la segunda funciona, con cuenta y sin ella, y sale un solo correo,
+  el de la segunda; la resolución solo borra las plazas anteriores; suite verde.
+
+- [ ] T-041 Corrección: la plaza con cuenta queda como un registro recién emitido
+  Tipo: corrección | Origen: validación de RF-025
+  RF: RF-025 (D-16) | Depende de: T-040 | Archivos: 2
+  Archivos: `registration.py`, `tests/test_phantom_equivalence.py`.
+  Causa: con cuenta, la resolución solo vaciaba el `payload`: la plaza conservaba intentos, caducidad
+  y alta de `start`, y no heredaba el alta de la plaza vigente que reemplaza.
+  Hecho cuando: con plaza y con registro real dan el mismo resultado: 5 `verify` erróneos antes de
+  resolver y uno después (`wrong_code`); la resolución retrasada 4 minutos y `verify` a los 16
+  (`wrong_code`); `start` en t=0, `resend` en t=25 y `start` en t=50, con `verify` y `resend` en t=61
+  (`expired`); una plaza anterior caducada no transmite su alta; las consultas siguen siendo iguales;
+  suite verde.
+
+- [ ] T-042 Corrección: verificar, reenviar y completar bloquean primero la plaza
+  Tipo: corrección | Origen: revisión de la validación (RF-025; mismo fallo que RF-017 C de
+  `cambio-contrasena`)
+  RF: RF-025 (D-18) | Depende de: T-041 | Archivos: 2
+  Archivos: `registration.py`, `tests/test_phantom_equivalence.py`.
+  Causa: `_locked_process` consultaba el registro antes de bloquear la plaza; con la resolución en
+  curso, el caso sin cuenta respondía «desconocido».
+  Hecho cuando: un test con transacciones reales y dos hilos, con la resolución detenida dentro de su
+  transacción, da para `verify`, `resend` y `complete` los mismos resultados con cuenta y sin ella; las
+  consultas siguen siendo iguales; suite verde.
+
+- [ ] T-043 Resumen tras las correcciones
+  RF: — (CF-4) | Depende de: T-039…T-042 | Archivos: 1
+  Archivos: `specs/procesos-pendientes/resumen.md` (en la raíz).
+  Hecho cuando: el resumen explica que la ventana se comprueba en cada ejecución, que manda la
+  petición más reciente y que la plaza cuenta plazos e intentos como un registro real, y sus límites
+  conocidos reflejan lo que queda sin medir.
 
 ## RF sin tarea
 Ninguno.

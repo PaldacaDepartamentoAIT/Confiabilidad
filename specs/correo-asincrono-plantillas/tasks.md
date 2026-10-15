@@ -1,5 +1,5 @@
 # Tareas: correo-asincrono-plantillas
-Estado: aprobado
+Estado: borrador
 
 Rutas relativas a `backend/apps/emails/` salvo que se indique. "Suite verde" =
 `cd backend && pytest -q` + `mypy .` + `ruff check .` + `black --check .` sin errores. En cada
@@ -371,6 +371,39 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   MXroute, registros de Cloudflare, variables de entorno y su lugar en SOPS) para rehacerla o
   cambiar de proveedor; y un «Marco teórico» con SPF, DKIM y DMARC, la bandeja de salida, la
   máscara del código y la entrega al menos una vez; todos sus comandos son copiables.
+
+- [ ] T-032 Corrección: el historial conserva el texto inicial de cada plantilla
+  Tipo: corrección | Origen: validación de RF-020
+  RF: RF-020 | Depende de: — | Archivos: 3
+  Archivos: `migrations/0004_initial_template_history.py`, `tests/test_migrations.py`,
+  `tests/test_admin.py`.
+  Causa: `0002_initial_templates` crea las plantillas sin registro de historial; el primer cambio
+  desde el panel perdía el texto anterior.
+  Hecho cuando: tras migrar, cada una de las 21 plantillas tiene un registro de historial con su
+  texto inicial; tras editar una desde el panel, su historial muestra el texto anterior, el nuevo, el
+  autor y la fecha; aplicar la migración otra vez no duplica registros y deshacerla quita solo esos;
+  suite verde.
+
+- [ ] T-033 Corrección: rechazar dominios sueltos y otros esquemas en las plantillas
+  Tipo: corrección | Origen: validación de RF-021
+  RF: RF-021 | Depende de: — | Archivos: 2
+  Archivos: `rendering.py`, `tests/test_rendering.py`.
+  Causa: solo se detectaban direcciones con `http(s)://` o `www.`; `evil.com/login`,
+  `seguridad-app.com` o `ftp://evil.com/x` se guardaban y los clientes de correo los convierten en
+  enlace.
+  Hecho cuando: guardar una plantilla con `evil.com/login`, `seguridad-app.com`, `ftp://evil.com/x` o
+  `https:/evil.com` lanza `ValidationError` que nombra cada dirección; una dirección del dominio de
+  `FRONTEND_BASE_URL` se acepta; las 21 plantillas iniciales siguen siendo válidas; suite verde.
+
+- [ ] T-034 Documentación tras la validación
+  RF: — (CF-5) | Depende de: T-032, T-033, T-034 de `cambio-contrasena` | Archivos: 3
+  Archivos: `specs/correo-asincrono-plantillas/resumen.md`, `specs/correo-asincrono-plantillas/tasks.md`,
+  `specs/correo-asincrono-plantillas/spec.md` (rutas desde la raíz).
+  Hecho cuando: el resumen recoge el historial inicial, la validación de dominios sueltos y el idioma
+  del reenvío; en `tasks.md`, las decisiones copiadas de otra tarea (T-007, T-009, T-011, T-014,
+  T-017, T-022, T-023 y T-025) se sustituyen por las reales, reconstruidas del commit de cada tarea,
+  o por «sin decisiones fuera del plan»; el historial de la spec registra su aprobación del
+  2026-10-14.
 
 ## RF sin tarea
 - RF-008 (aviso de contraseña restablecida) y RF-019 (mismo trabajo exista o no la cuenta): sin
