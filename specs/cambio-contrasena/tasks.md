@@ -463,7 +463,7 @@ esquema, para que al final quede una sola migración (M-07).
   Hecho cuando: los recorridos y la comparación de consultas incluyen el identificador devuelto a una
   cuenta inactiva, con y sin solicitud previa, y dan lo mismo que la solicitud real; suite verde.
 
-- [ ] T-040 Resumen tras las correcciones
+- [x] T-040 Resumen tras las correcciones
   RF: — (CF-4) | Depende de: T-033…T-039 | Archivos: 1
   Archivos: `specs/cambio-contrasena/resumen.md` (en la raíz).
   Hecho cuando: el resumen explica el idioma del reenvío, la migración `0010`, que manda la petición

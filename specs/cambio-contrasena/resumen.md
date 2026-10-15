@@ -21,8 +21,18 @@ código. Todo se recorre desde consola con `manage.py password_reset`, sin front
     sin correo (RF-002…RF-004).
 
   Verificar, reenviar, completar y dejar caducar ese identificador da los mismos resultados, con
-  las mismas consultas, que una solicitud real cuyo código nunca se acierta. Reintentos, barrido y
-  ventana (`REGISTRATION_START_RETRY_MINUTES`) son los del registro.
+  las mismas consultas, que una solicitud real cuyo código nunca se acierta, también con una cuenta
+  inactiva. Desde las correcciones del 2026-10-15, también cuando la resolución se retrasa o cuando
+  alguien opera con el identificador mientras se resuelve:
+  - al resolverse, la plaza sin solicitud queda como una solicitud recién emitida (intentos a 0, y
+    código y vida contados desde la resolución);
+  - manda la petición más reciente: si una plaza antigua se resuelve después de otra más nueva del
+    mismo correo, la antigua se borra sin hacer nada;
+  - todas las operaciones bloquean primero la plaza, en el mismo orden que la resolución (plaza →
+    cuenta → solicitud).
+
+  Reintentos, barrido y ventana (`REGISTRATION_START_RETRY_MINUTES`) son los del registro: la
+  ventana se comprueba en cada ejecución.
 - **Mismas reglas de código que el registro**: 6 dígitos, 15 min de vigencia, 5 intentos, 15 min de
   gracia, 1 h de vida y rotación del secreto, con los mismos ajustes `REGISTRATION_*` (RF-005…RF-007,
   RF-012). El código del registro y el de la solicitud ya no comparten huella: cada una lleva su
@@ -36,7 +46,8 @@ código. Todo se recorre desde consola con `manage.py password_reset`, sin front
   todo; no guarda el correo ni otros datos de la cuenta. La purga la borra al caducar (RF-010).
 - **Reenvío en dos tiempos** (D-13 de `procesos-pendientes`): la respuesta anula el código vigente y
   pone los intentos a 0; la tarea `reissue_code` emite el nuevo y lo envía en el idioma de la
-  cuenta. Una plaza también recibe código nuevo, que nunca se envía.
+  petición, que la solicitud guarda desde la migración `0010` (D-17). Una plaza también recibe código
+  nuevo, que nunca se envía.
 - **Completar** (`complete`): fija la contraseña con la política del proyecto (evaluada con el correo
   y el nombre de la cuenta), marca el correo como verificado, borra los inicios de sesión fallidos
   que allauth llevaba para ese correo, encola el aviso «Tu contraseña se ha restablecido» en el
@@ -67,12 +78,16 @@ se detalla abajo.
   trabajo. A la API le queda devolver un mensaje neutro (anotado en `HUMAN_TODO.md`).
 - **Tiempo de respuesta igual por construcción, no medido**: los tests fijan las mismas consultas con
   plaza y con solicitud real, pero ninguno mide tiempos reales.
+- **Equivalencia probada en las secuencias conocidas, no en todas**: bloqueo, caducidad, reenvío,
+  repetición, resolución retrasada, peticiones desordenadas, operación simultánea y cuenta inactiva.
+  Una secuencia que nadie ha pensado podría distinguirlas todavía.
 - **«Caducada» confunde al titular legítimo** (S-13): quien cambió su contraseña por otra vía, o cuya
   cuenta se desactivó, ve «caducada» y no el motivo real. Es el precio de no revelar la cuenta.
 - Si se pierde el encolado de un reenvío, la solicitud se queda sin código válido hasta que se pida
   otro reenvío: `reissue_code` no tiene barrido. Sin el worker en marcha, no llega ningún código.
-- La concurrencia (dos peticiones a la vez para la misma cuenta) está protegida con bloqueos de
-  fila en un orden fijo (cuenta → solicitud), pero ningún test la ejerce con transacciones reales.
+- La concurrencia está protegida con bloqueos de fila en un orden fijo (plaza → cuenta →
+  solicitud). Un test con transacciones reales y dos hilos ejerce una operación simultánea a la
+  resolución; dos peticiones a la vez para la misma cuenta no se ejercen así.
 - El borrado del contador de inicios fallidos usa funciones internas de allauth; si una
   actualización las cambia, el test `test_completing_clears_the_failed_login_counter` falla.
 - Si Django vuelve a calcular el hash de una contraseña al iniciar sesión (por ejemplo, tras
@@ -101,7 +116,8 @@ códigos.
    ```bash
    docker compose -f docker/docker-compose.yml run --rm backend python manage.py migrate
    ```
-   Deberías ver, entre otras, `accounts.0009_phantom_answers_expired... OK`. Levanta el worker y el
+   Deberías ver, entre otras, `accounts.0009_phantom_answers_expired... OK` y
+   `accounts.0010_passwordresetrequest_language... OK`. Levanta el worker y el
    planificador de Celery:
    ```bash
    docker compose -f docker/docker-compose.yml up -d worker beat
