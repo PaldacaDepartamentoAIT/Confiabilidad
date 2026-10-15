@@ -388,7 +388,7 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   lleva la fecha de la instalación (`updated_at`) y el motivo «Initial text», que es lo que borra
   deshacer la migración. [Cierto]
 
-- [ ] T-033 Corrección: rechazar dominios sueltos y otros esquemas en las plantillas
+- [x] T-033 Corrección: rechazar dominios sueltos y otros esquemas en las plantillas
   Tipo: corrección | Origen: validación de RF-021
   RF: RF-021 | Depende de: — | Archivos: 2
   Archivos: `rendering.py`, `tests/test_rendering.py`.
@@ -398,6 +398,11 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   Hecho cuando: guardar una plantilla con `evil.com/login`, `seguridad-app.com`, `ftp://evil.com/x` o
   `https:/evil.com` lanza `ValidationError` que nombra cada dirección; una dirección del dominio de
   `FRONTEND_BASE_URL` se acepta; las 21 plantillas iniciales siguen siendo válidas; suite verde.
+  Decisiones: (1) También se rechaza el dominio de una dirección de correo ajena (`soporte@evil.com`):
+  los clientes la convierten en enlace `mailto:`. [Probable] (2) Un nombre con partes de una sola
+  letra (`S.A.`) no cuenta como dirección; uno con partes de dos o más letras sí (`EE.UU.`), y
+  soporte tendría que reescribirlo. [Probable] (3) Mutante equivalente: limitar lo que sigue al
+  dominio a `/`; solo cambia el texto citado en el error, no si se rechaza. [Cierto]
 
 - [ ] T-034 Documentación tras la validación
   RF: — (CF-5) | Depende de: T-032, T-033, T-034 de `cambio-contrasena` | Archivos: 3

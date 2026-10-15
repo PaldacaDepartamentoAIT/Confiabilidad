@@ -41,7 +41,13 @@ def process_link(purpose: str, public_id: str) -> str:
 CODE_KINDS = frozenset({"registration_code", "password_reset_code"})
 _CODE_VALUES = frozenset({"code", "link", "expires_in"})
 _ANY_BRACES = re.compile(r"\{\{(.*?)\}\}|\{%.*?%\}", re.S)
-_ADDRESS = re.compile(r"(?:https?://|www\.)[^\s<>\"')]+", re.I)
+# Cualquier cosa que un cliente de correo pueda convertir en enlace: una dirección con esquema
+# (también `ftp://` o `https:/`) o un dominio suelto, con o sin `www.` (RF-021).
+_ADDRESS = re.compile(
+    r"[a-z][a-z0-9+.-]*:/+[^\s<>\"')]+"
+    r"|(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}(?:[/:?#][^\s<>\"')]*)?",
+    re.I,
+)
 
 
 def allowed_values(kind: str) -> frozenset[str]:

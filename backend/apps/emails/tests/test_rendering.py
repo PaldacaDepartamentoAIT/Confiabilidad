@@ -127,20 +127,58 @@ def test_unsupported_template_syntax_is_rejected() -> None:
 
 @pytest.mark.usefixtures("_frontend")
 @pytest.mark.parametrize(
-    "address", ["https://otro.com/x", "http://app.ejemplo.com.evil.io", "www.otro.com"]
+    "address",
+    [
+        "https://otro.com/x",
+        "http://app.ejemplo.com.evil.io",
+        "www.otro.com",
+        "evil.com/login",
+        "seguridad-app.com",
+        "ftp://evil.com/x",
+        "https:/evil.com",
+        "HTTPS://EVIL.COM",
+        "ftp://app.ejemplo.com/x",
+        "soporte@evil.com",
+    ],
 )
 def test_a_link_to_another_domain_is_rejected(address: str) -> None:
     with pytest.raises(ValidationError) as error:
         rendering.validate_template("account_exists", "Aviso", f"Entra en {address} ahora")
 
-    assert address in _messages(error.value)
+    # De una dirección de correo se nombra su dominio, que es lo que el cliente convierte en enlace.
+    assert address.split("@")[-1] in _messages(error.value)
 
 
 @pytest.mark.usefixtures("_frontend")
-def test_a_link_to_the_application_domain_is_accepted() -> None:
-    rendering.validate_template(
-        "account_exists", "Aviso", "Entra en https://app.ejemplo.com/login, {{ name }}."
-    )
+@pytest.mark.parametrize(
+    "address",
+    [
+        "https://app.ejemplo.com/login",
+        "app.ejemplo.com/login",
+        "APP.EJEMPLO.COM",
+        "app.ejemplo.com:8000/x",
+        "soporte@app.ejemplo.com",
+    ],
+)
+def test_a_link_to_the_application_domain_is_accepted(address: str) -> None:
+    rendering.validate_template("account_exists", "Aviso", f"Entra en {address}, {{{{ name }}}}.")
+
+
+@pytest.mark.usefixtures("_frontend")
+def test_abbreviations_with_one_letter_parts_are_not_addresses() -> None:
+    rendering.validate_template("account_exists", "Aviso", "Confiabilidad S.A. y C.V., {{ name }}.")
+
+
+@pytest.mark.usefixtures("_frontend")
+def test_every_foreign_address_is_named_and_a_trailing_period_is_not_part_of_it() -> None:
+    with pytest.raises(ValidationError) as error:
+        rendering.validate_template(
+            "account_exists", "Aviso", "Visita evil.com. Luego otro.org/x, {{ name }}."
+        )
+
+    messages = _messages(error.value)
+    assert "evil.com" in messages and "evil.com." not in messages
+    assert "otro.org/x" in messages
 
 
 @pytest.mark.usefixtures("_frontend")
