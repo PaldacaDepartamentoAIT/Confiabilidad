@@ -8,6 +8,7 @@ from django.apps import apps as global_apps
 from django.core.management import call_command
 from django.core.management.base import CommandError
 
+from apps.accounts.tests.factories import make_user
 from apps.emails import delivery
 from apps.emails.models import OutboundEmail
 from apps.emails.tests.backends import FAKE_BACKEND, FakeBackend
@@ -95,4 +96,49 @@ def test_sample_account_exists_notices_are_not_capped(
             _emails("test", "--kind", "account_exists", "--locale", "es", "--to", "x@ejemplo.com")
 
     assert OutboundEmail.objects.filter(kind="account_exists").count() == 2
+    assert _environment.call_count == 2
+
+
+@pytest.mark.parametrize("kind", ["password_changed", "account_disabled", "sessions_closed"])
+def test_a_notice_without_its_own_action_is_queued_to_an_account(kind: str) -> None:
+    make_user(email="ana@ejemplo.com", name="Ana García", language="pt-BR")
+
+    output = _emails("notify", "--kind", kind, "--email", "ANA@ejemplo.com")
+
+    email = OutboundEmail.objects.get()
+    assert (email.kind, email.recipient, email.locale, email.context) == (
+        kind,
+        "ana@ejemplo.com",
+        "pt-BR",
+        {"name": "Ana García"},
+    )
+    assert f"queued: {email.pk}" in output
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
+        ["--kind", "account_exists", "--email", "ana@ejemplo.com"],
+        ["--kind", "registration_code", "--email", "ana@ejemplo.com"],
+        ["--kind", "password_changed", "--email", "nadie@ejemplo.com"],
+    ],
+)
+def test_notify_refuses_other_kinds_and_unknown_accounts(args: list[str]) -> None:
+    make_user(email="ana@ejemplo.com")
+
+    with pytest.raises(CommandError):
+        _emails("notify", *args)
+
+    assert not OutboundEmail.objects.exists()
+
+
+def test_dispatch_queues_the_due_emails_and_says_how_many(_environment: Any) -> None:
+    for _ in range(2):
+        OutboundEmail.objects.create(
+            kind="password_changed", locale="es", recipient="a@ejemplo.com"
+        )
+
+    output = _emails("dispatch")
+
+    assert "queued: 2" in output
     assert _environment.call_count == 2

@@ -336,13 +336,16 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   comprobación de vigencia. [Cierto] (3) Para encolar al confirmar se hizo pública
   `outbox.queue` (antes `_queue`), un cambio fuera de los archivos de la tarea. [Cierto]
 
-- [ ] T-028 Comandos `emails notify` y `emails dispatch`
+- [x] T-028 Comandos `emails notify` y `emails dispatch`
   RF: RF-009 | Depende de: T-016, T-027 | Archivos: 2
   Archivos: `management/commands/emails.py`, `tests/test_command.py`.
   Hecho cuando: `manage.py emails notify --kind account_disabled --email ana@ejemplo.com` encola el
   aviso en el idioma de la cuenta; también `password_changed` y `sessions_closed`; otro tipo o un
   correo sin cuenta da un error del comando; `manage.py emails dispatch` encola los pendientes
   vencidos y dice cuántos; suite verde.
+  Decisiones: (1) `notify` busca la cuenta sin distinguir mayúsculas ni espacios, como el resto
+  del proyecto, y pasa la cuenta a `enqueue`, que elige su idioma. [Cierto] (2) Solo admite los
+  tres avisos sin acción propia; los demás los provoca su operación (M-10). [Cierto]
 
 - [ ] T-029 Un correo sale por el worker real
   RF: RF-002 (CF-1) | Depende de: T-013 | Archivos: 1

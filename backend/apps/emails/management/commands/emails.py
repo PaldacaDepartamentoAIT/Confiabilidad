@@ -1,13 +1,14 @@
 from datetime import timedelta
 from typing import Any
 
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 from django.core.validators import validate_email
 from django.db import transaction
 from django.utils.translation import gettext as _
 
-from apps.emails import locales, outbox, rendering
+from apps.emails import delivery, locales, outbox, rendering
 from apps.emails.models import EmailTemplate, OutboundEmail
 
 SAMPLE_NAME = "Ana Ejemplo"
@@ -15,10 +16,12 @@ SAMPLE_CODE = "123456"
 SAMPLE_PUBLIC_ID = "sample"
 SAMPLE_LIFETIME = timedelta(minutes=15)
 _CODE_PURPOSES = {"registration_code": "registration", "password_reset_code": "password_reset"}
+# Avisos cuya acción aún no existe: se envían a mano a una cuenta (RF-009).
+NOTIFY_KINDS = ["password_changed", "account_disabled", "sessions_closed"]
 
 
 class Command(BaseCommand):
-    help = "Queue emails from the console: a sample of any kind and language."
+    help = "Queue emails from the console: a sample, a notice to an account, or the due ones."
 
     def add_arguments(self, parser: CommandParser) -> None:
         actions = parser.add_subparsers(dest="action", required=True)
@@ -26,6 +29,10 @@ class Command(BaseCommand):
         test.add_argument("--kind", required=True, choices=EmailTemplate.Kind.values)
         test.add_argument("--locale", required=True, choices=locales.SUPPORTED)
         test.add_argument("--to", required=True)
+        notify = actions.add_parser("notify", help="Queue a security notice to an account.")
+        notify.add_argument("--kind", required=True, choices=NOTIFY_KINDS)
+        notify.add_argument("--email", required=True)
+        actions.add_parser("dispatch", help="Queue every pending email that is due now.")
 
     def handle(self, *args: Any, **options: Any) -> None:
         getattr(self, f"_{options['action']}")(options)
@@ -50,3 +57,21 @@ class Command(BaseCommand):
         )
         transaction.on_commit(lambda: outbox.queue(email.pk))
         self.stdout.write(f"queued: {email.pk} → {recipient} ({kind}, {locale})")
+
+    def _notify(self, options: dict[str, Any]) -> None:
+        user_model = get_user_model()
+        account = user_model.objects.filter(email__iexact=options["email"].strip()).first()
+        if account is None:
+            raise CommandError(_("Unknown account: %(email)s") % {"email": options["email"]})
+        email = outbox.enqueue(
+            kind=options["kind"],
+            recipient=account.email,
+            locale=account.language,
+            context={"name": account.name},
+            account=account,
+        )
+        assert email is not None
+        self.stdout.write(f"queued: {email.pk} → {account.email} ({email.kind}, {email.locale})")
+
+    def _dispatch(self, options: dict[str, Any]) -> None:
+        self.stdout.write(f"queued: {delivery.dispatch_due()}")
