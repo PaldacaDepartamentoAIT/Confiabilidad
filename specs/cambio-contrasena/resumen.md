@@ -43,10 +43,10 @@ se detalla abajo.
 
 - **Sin límite de frecuencia** (S-05): pedir de nuevo o reenviar ponen los intentos a 0. En consola
   no hay riesgo; **la API no debe publicarse sin ese límite**, porque permitiría tomar cuentas
-  ajenas (anotado en `HUMAN_TODO.md`).
+  ajenas (anotado en `specs/cambio-contrasena/HUMAN_TODO.md`).
 - **"Sin cuenta elegible" es distinguible en el servicio** (RF-004): a propósito, porque en consola
   no se puede ocultar (el comando muestra el código). **La API debe neutralizarlo** con el mismo
-  mensaje y un tiempo de respuesta comparable (anotado en `HUMAN_TODO.md`).
+  mensaje y un tiempo de respuesta comparable (anotado en `specs/cambio-contrasena/HUMAN_TODO.md`).
 - La concurrencia (dos peticiones a la vez para la misma cuenta) está protegida con bloqueos de
   fila en un orden fijo (cuenta → solicitud), pero ningún test la ejerce con transacciones reales.
 - El borrado del contador de inicios fallidos usa funciones internas de allauth; si una
@@ -59,7 +59,7 @@ se detalla abajo.
 - En la sesión remota, la imagen de Docker se construyó con una copia del `Dockerfile` que añade el
   certificado del proxy de la sesión solo durante `pip install`. Con ella, `0006` se aplicó, los
   servicios arrancaron y la suite pasó dentro del contenedor. Falta construirla con el `Dockerfile`
-  real fuera de la sesión (anotado en `HUMAN_TODO.md`).
+  real fuera de la sesión (anotado en `specs/cambio-contrasena/HUMAN_TODO.md`).
 - Si se ejecuta la suite con el `worker` de Compose en marcha, `apps/core/tests/test_task_worker.py`
   falla: el worker comparte el broker y se lleva la tarea del test. Es previo a esta feature.
 
