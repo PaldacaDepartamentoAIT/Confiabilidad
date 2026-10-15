@@ -100,7 +100,7 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
   ```
 
 - [ ] **Migrar y comprobar Docker tras `correo-asincrono-plantillas`.** La rama añade la app
-  `emails` (migraciones `0001`, `0002` y `0003`) y la migración `0007_language` de `accounts`, sin
+  `emails` (migraciones `0001`, `0002`, `0003` y `0004`) y la migración `0007_language` de `accounts`, sin
   dependencias nuevas. En tu máquina:
   ```bash
   docker compose -f docker/docker-compose.yml build backend
@@ -109,7 +109,8 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
   docker compose -f docker/docker-compose.yml run --rm backend python manage.py migrate
   ```
   Deberías ver `emails.0001_initial... OK`, `emails.0002_initial_templates... OK`,
-  `emails.0003_support_permissions... OK` y `accounts.0007_language... OK`. Reinicia después el
+  `emails.0003_support_permissions... OK`, `emails.0004_initial_template_history... OK` y
+  `accounts.0007_language... OK`. Reinicia después el
   `worker` y el `beat` para que carguen la tarea de entrega y el barrido de cada 30 segundos.
 
 - [ ] **Migrar y reiniciar Celery tras los cambios del 2026-10-14** (features
