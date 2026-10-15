@@ -88,6 +88,23 @@ def test_an_edit_keeps_the_previous_text_its_author_and_date_in_the_history() ->
     assert first.history_date < second.history_date
 
 
+@pytest.mark.parametrize("address", ["https://[evil.com/x", "https://evil.com\\@app.ejemplo.com"])
+def test_a_malformed_or_disguised_address_is_a_template_problem_not_a_server_error(
+    allowed_client: Client, address: str
+) -> None:
+    template = EmailTemplate.objects.get(kind="password_changed", locale="es")
+    before = (template.subject, template.body)
+
+    response = allowed_client.post(
+        _url("change", template.pk), {"subject": "Aviso", "body": f"Entra en {address}"}
+    )
+
+    assert response.status_code == 200
+    assert "Links may only point to the application" in response.content.decode()
+    template.refresh_from_db()
+    assert (template.subject, template.body) == before
+
+
 def test_an_invalid_template_shows_every_problem_and_is_not_saved(allowed_client: Client) -> None:
     template = _template()
     before = (template.subject, template.body)

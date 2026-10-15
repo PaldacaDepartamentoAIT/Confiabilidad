@@ -302,3 +302,26 @@ def test_a_subject_with_line_breaks_is_rejected_with_the_other_problems(subject:
 @pytest.mark.usefixtures("_frontend")
 def test_the_body_still_admits_line_breaks() -> None:
     rendering.validate_template("account_exists", "Aviso", "Hola, {{ name }}:\r\n\nLínea dos.")
+
+
+@pytest.mark.usefixtures("_frontend")
+@pytest.mark.parametrize(
+    ("address", "named"),
+    [
+        ("https://evil.com\\@app.ejemplo.com/login", "https://evil.com\\@app.ejemplo.com/login"),
+        ("http://evil.com\\@app.ejemplo.com", "http://evil.com\\@app.ejemplo.com"),
+        ("https://evil.com＠app.ejemplo.com", "https://evil.com@app.ejemplo.com"),
+        ("https://evil.com@app.ejemplo.com/x", "https://evil.com@app.ejemplo.com/x"),
+        ("аррӏе.com", "аррӏе.com"),
+        ("пример.рф/login", "пример.рф/login"),
+        ("evil.рф", "evil.рф"),
+        ("evil。com/login", "evil.com/login"),
+        ("1.2.3.4/login", "1.2.3.4/login"),
+        ("https://[evil.com/x", "https://[evil.com/x"),
+    ],
+)
+def test_a_disguised_or_malformed_address_is_rejected_by_name(address: str, named: str) -> None:
+    with pytest.raises(ValidationError) as error:
+        rendering.validate_template("account_exists", "Aviso", f"Entra en {address} ahora")
+
+    assert named in _messages(error.value)

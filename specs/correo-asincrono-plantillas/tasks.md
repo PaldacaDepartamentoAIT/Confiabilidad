@@ -420,7 +420,7 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   indica, junto con los demás problemas; el cuerpo sigue admitiendo saltos de línea; las 21
   plantillas iniciales siguen siendo válidas; suite verde.
 
-- [ ] T-036 Corrección: los enlaces se juzgan como los abre el navegador
+- [x] T-036 Corrección: los enlaces se juzgan como los abre el navegador
   Tipo: corrección | Origen: 2.ª validación de RF-021
   RF: RF-021 (D-17) | Depende de: T-035 | Archivos: 3
   Archivos: `rendering.py`, `tests/test_rendering.py`, `tests/test_admin.py`.
@@ -433,6 +433,10 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   de la plantilla y en el panel da 200 con el problema y la fila sin cambios, nunca 500; las
   direcciones del dominio de `FRONTEND_BASE_URL` se siguen aceptando; las 21 plantillas iniciales
   siguen siendo válidas; suite verde.
+  Decisiones: (1) Toda dirección con usuario delante del dominio (`evil.com@app…`) se rechaza, también
+  hacia la aplicación: solo sirve para disfrazar el enlace; con eso, la barra invertida no necesita
+  tratamiento propio. [Cierto] (2) El error nombra la dirección ya normalizada (`evil.com/login` en vez
+  de `evil。com/login`). [Cierto]
 
 - [ ] T-037 Corrección: el error guardado de un intento nunca contiene el código
   Tipo: corrección | Origen: 2.ª validación de RF-018

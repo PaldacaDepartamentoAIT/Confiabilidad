@@ -1,4 +1,5 @@
 import re
+import unicodedata
 from collections.abc import Mapping
 from datetime import timedelta
 from urllib.parse import urlsplit
@@ -42,10 +43,12 @@ CODE_KINDS = frozenset({"registration_code", "password_reset_code"})
 _CODE_VALUES = frozenset({"code", "link", "expires_in"})
 _ANY_BRACES = re.compile(r"\{\{(.*?)\}\}|\{%.*?%\}", re.S)
 # Cualquier cosa que un cliente de correo pueda convertir en enlace: una dirección con esquema
-# (también `ftp://` o `https:/`) o un dominio suelto, con o sin `www.` (RF-021).
+# (también `ftp://` o `https:/`), un dominio suelto, también con letras no latinas, o una IP suelta
+# (RF-021, D-17).
 _ADDRESS = re.compile(
     r"[a-z][a-z0-9+.-]*:/+[^\s<>\"')]+"
-    r"|(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}(?:[/:?#][^\s<>\"')]*)?",
+    r"|(?:[^\W_](?:[\w-]*[^\W_])?\.)+[^\W\d_]{2,}(?:[/:?#][^\s<>\"')]*)?"
+    r"|\d{1,3}(?:\.\d{1,3}){3}(?:[/:?#][^\s<>\"')]*)?",
     re.I,
 )
 
@@ -92,7 +95,7 @@ def validate_template(kind: str, subject: str, body: str) -> None:
         problems.append(
             ValidationError(_("The subject cannot contain line breaks."), code="subject_newline")
         )
-    for address in _ADDRESS.findall(text):
+    for address in _ADDRESS.findall(_as_read(text)):
         if not _is_application_address(address):
             problems.append(
                 ValidationError(
@@ -105,10 +108,23 @@ def validate_template(kind: str, subject: str, body: str) -> None:
         raise ValidationError(problems)
 
 
+def _as_read(text: str) -> str:
+    # El texto como lo verá el cliente: `＠` es `@` y el punto ideográfico es un punto.
+    return unicodedata.normalize("NFKC", text).replace("\u3002", ".")
+
+
 def _is_application_address(address: str) -> bool:
     if not address.lower().startswith(("http://", "https://")):
         address = f"https://{address}"
-    host = urlsplit(address).hostname
+    try:
+        parts = urlsplit(address)
+        host = parts.hostname
+    except ValueError:
+        return False
+    # Un usuario delante del dominio (`evil.com@app…`, también `evil.com\@app…`, que el navegador
+    # abre en `evil.com`) solo sirve para disfrazar el enlace.
+    if "@" in parts.netloc:
+        return False
     application_host = urlsplit(str(settings.FRONTEND_BASE_URL)).hostname
     return host is not None and host == application_host
 
