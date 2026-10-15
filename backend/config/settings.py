@@ -201,6 +201,8 @@ REGISTRATION_SECRET_TRANSITION_MINUTES = env.int(
     "REGISTRATION_SECRET_TRANSITION_MINUTES", default=60
 )
 PWNED_PASSWORDS_TIMEOUT_SECONDS = env.float("PWNED_PASSWORDS_TIMEOUT_SECONDS", default=2.0)
+# Minutos durante los que se reintenta el trabajo de fuera de la respuesta de empezar un proceso.
+REGISTRATION_START_RETRY_MINUTES = env.int("REGISTRATION_START_RETRY_MINUTES", default=5)
 PWNED_PASSWORDS_ENABLED = env.bool("PWNED_PASSWORDS_ENABLED", default=True)
 
 # Correos: proveedor de envío por entorno (D-02). Sin EMAIL_BACKEND, el correo completo sale

@@ -241,7 +241,7 @@ fallar sus tests.
   huella vacía), como `PendingRegistration`. [Cierto] (2) `__str__` muestra propósito y
   `public_id`, no el correo. [Cierto]
 
-- [ ] T-031 Tiempo de reintento de empezar el registro
+- [x] T-031 Tiempo de reintento de empezar el registro
   RF: RF-019 (M-04) | Depende de: — | Archivos: 3
   Archivos: `conf.py`, `config/settings.py` (en `backend/`), `tests/test_registration_conf.py`.
   Hecho cuando: `conf.start_retry_window()` vale 5 min por defecto, sigue a

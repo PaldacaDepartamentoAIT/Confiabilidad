@@ -18,6 +18,7 @@ def test_defaults() -> None:
     assert conf.max_lifetime() == timedelta(hours=1)
     assert conf.pwned_timeout() == 2.0
     assert settings.REGISTRATION_SECRET_TRANSITION_MINUTES == 60
+    assert conf.start_retry_window() == timedelta(minutes=5)
 
 
 @override_settings(
@@ -26,6 +27,7 @@ def test_defaults() -> None:
     REGISTRATION_GRACE_MINUTES=5,
     REGISTRATION_MAX_LIFETIME_MINUTES=30,
     PWNED_PASSWORDS_TIMEOUT_SECONDS=0.5,
+    REGISTRATION_START_RETRY_MINUTES=2,
 )
 def test_values_follow_settings() -> None:
     assert conf.max_failed_attempts() == 3
@@ -33,6 +35,7 @@ def test_values_follow_settings() -> None:
     assert conf.grace_period() == timedelta(minutes=5)
     assert conf.max_lifetime() == timedelta(minutes=30)
     assert conf.pwned_timeout() == 0.5
+    assert conf.start_retry_window() == timedelta(minutes=2)
 
 
 BACKEND_DIR = Path(__file__).resolve().parents[3]
@@ -43,6 +46,7 @@ ENV_LIMITS = {
     "REGISTRATION_MAX_LIFETIME_MINUTES": "90",
     "REGISTRATION_SECRET_TRANSITION_MINUTES": "45",
     "PWNED_PASSWORDS_TIMEOUT_SECONDS": "0.75",
+    "REGISTRATION_START_RETRY_MINUTES": "8",
 }
 _READ_SETTINGS = (
     "import json, django\n"
@@ -67,6 +71,7 @@ def test_limits_are_read_from_environment_variables() -> None:
 
     assert json.loads(result.stdout.splitlines()[-1]) == {
         "PWNED_PASSWORDS_TIMEOUT_SECONDS": 0.75,
+        "REGISTRATION_START_RETRY_MINUTES": 8,
         "REGISTRATION_CODE_TTL_MINUTES": 11,
         "REGISTRATION_GRACE_MINUTES": 12,
         "REGISTRATION_MAX_FAILED_ATTEMPTS": 7,
