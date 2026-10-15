@@ -1,5 +1,5 @@
 # Tareas: procesos-pendientes
-Estado: aprobado
+Estado: borrador
 
 Rutas relativas a `backend/apps/accounts/` salvo que se indique. "Suite verde" =
 `cd backend && pytest -q` + `mypy .` + `ruff check .` + `black --check .` sin errores. En cada
@@ -218,6 +218,102 @@ fallar sus tests.
   `HTTPException`) escapan y romperían el registro.
   Hecho cuando: con el servicio simulado lanzando `http.client.IncompleteRead`, la contraseña se
   acepta y queda el aviso en el log; suite verde.
+
+- [ ] T-029 Modelo `PhantomProcess` y migración `0008`
+  RF: RF-025 (D-12, M-08, M-10) | Depende de: — | Archivos: 3
+  Archivos: `models.py`, `migrations/0008_phantomprocess.py`, `tests/test_phantom_model.py`.
+  Hecho cuando: `PhantomProcess` hereda los campos de `CodeProcess` y tiene `purpose`
+  (`registration` o `password_reset`), `email` normalizado y `payload` nulo; su `public_id` es
+  único en la base de datos; con `code_hash` vacío, `processes.check_code` da `WRONG_CODE` para
+  cualquier código, `LOCKED` tras 5 intentos fallidos, `CODE_EXPIRED` y caducidad igual que un
+  registro pendiente; `migrate` se aplica sobre la última de `main`; suite verde.
+
+- [ ] T-030 Validar los datos sin consultar cuentas
+  RF: RF-002, RF-024 (M-01) | Depende de: — | Archivos: 2
+  Archivos: `registration.py`, `tests/test_registration_service.py`.
+  Hecho cuando: `validate_registration_data` rechaza con un error por campo un nombre, una fecha,
+  un país o un formato de correo inválidos; un correo con cuenta, activa o no, no da error; no
+  hace ninguna consulta a la base de datos (`django_assert_num_queries(0)`); suite verde.
+
+- [ ] T-031 Tiempo de reintento de empezar el registro
+  RF: RF-019 (M-04) | Depende de: — | Archivos: 3
+  Archivos: `conf.py`, `config/settings.py` (en `backend/`), `tests/test_registration_conf.py`.
+  Hecho cuando: `conf.start_retry_window()` vale 5 min por defecto, sigue a
+  `REGISTRATION_START_RETRY_MINUTES` con `override_settings` y se lee de la variable de entorno;
+  suite verde.
+
+- [ ] T-032 Resolver una plaza fuera de la respuesta
+  RF: RF-004, RF-005, RF-006, RF-017, RF-025 (D-16, M-09) | Depende de: T-029 | Archivos: 2
+  Archivos: `registration.py`, `tests/test_registration_background.py`.
+  Hecho cuando, llamando a `resolve_registration(public_id)` sobre una plaza sin resolver:
+  - sin cuenta ni registro pendiente: crea el registro pendiente con los datos y el `public_id` de
+    la plaza, borra la plaza y deja en la bandeja el correo con el código (oculto) en el idioma de
+    la solicitud;
+  - con un registro pendiente vigente del mismo correo: le asigna el `public_id` de la plaza, código
+    nuevo, intentos a 0 y sin validar, conserva sus datos, borra la plaza y encola el correo;
+  - con cuenta activa: la plaza se queda con `payload` vacío y se encola un aviso "ya tienes
+    cuenta" a la cuenta; con cuenta inactiva, sin correo;
+  - borra antes los registros pendientes caducados y las demás plazas del mismo correo;
+  - una plaza ya resuelta o inexistente no hace nada; un choque de unicidad del correo se trata
+    como registro repetido;
+  - suite verde.
+
+- [ ] T-033 Tareas, reintentos y barrido de plazas sin resolver
+  RF: RF-019, RF-024 (D-15, M-09) | Depende de: T-031, T-032 | Archivos: 3
+  Archivos: `tasks.py`, `config/settings.py` (en `backend/`), `tests/test_registration_background.py`.
+  Hecho cuando: la tarea `apps.accounts.tasks.resolve_registration` llama a la resolución; si
+  falla, se reintenta con espera creciente mientras la plaza tenga menos de la ventana de T-031;
+  pasada la ventana, vacía el `payload`, deja la plaza como identificador sin registro y registra el
+  fallo en el log; `sweep_unresolved()` encola las plazas sin resolver dentro de la ventana y no
+  las demás; `CELERY_BEAT_SCHEDULE` lo ejecuta cada 60 s; suite verde.
+
+- [ ] T-034 Empezar el registro en la respuesta solo con el identificador
+  RF: RF-023, RF-024 (D-11, M-03, M-06) | Depende de: T-030, T-033 | Archivos: 7
+  Archivos: `registration.py`, `management/commands/registration.py`, `tests/factories.py`,
+  `tests/test_registration_service.py`, `tests/test_registration_command.py`,
+  `tests/test_email_checks.py`, `tests/test_password_reset_service.py`.
+  Hecho cuando: `start` con datos válidos crea la plaza con los datos, encola la resolución al
+  confirmar y devuelve solo el `public_id`, con el mismo tipo de resultado y el mismo número de
+  consultas con y sin cuenta; con datos inválidos, rechaza cada error sin mencionar la cuenta y sin
+  crear plaza; `manage.py registration start` admite `--language` y muestra solo el `public_id`,
+  igual con y sin cuenta; los tests que necesitan un registro real usan el ayudante
+  `make_pending` de `tests/factories.py`, que resuelve la plaza y devuelve su código del correo de
+  la bandeja; suite verde.
+  Excepción: cambiar lo que devuelve `start` rompe a la vez todos los tests que lo llaman
+  (`test_password_reset_command.py` incluido si lo usa); el ajuste es mecánico y no se puede repartir
+  sin dejar la suite en rojo entre tareas.
+
+- [ ] T-035 Verificar y completar buscando en las dos tablas
+  RF: RF-009, RF-010, RF-011, RF-012, RF-025 (D-12, D-14, CF-5) | Depende de: T-034 | Archivos: 2
+  Archivos: `registration.py`, `tests/test_phantom_equivalence.py`.
+  Hecho cuando: para un correo con cuenta, la misma secuencia de `verify` (con el bloqueo al quinto
+  intento), `complete` y caducidad da los mismos resultados con la plaza que con un registro real
+  cuyo código nunca se acierta; una solicitud nueva del mismo correo deja la plaza anterior como
+  desconocida, igual que a un registro real repetido; `verify` y `complete` hacen el mismo número
+  de consultas en los dos casos; suite verde.
+
+- [ ] T-036 Reenvío en dos tiempos
+  RF: RF-016, RF-023, RF-025 (D-13, M-09) | Depende de: T-035 | Archivos: 5
+  Archivos: `registration.py`, `tasks.py`, `management/commands/registration.py`,
+  `tests/test_phantom_equivalence.py`, `tests/test_registration_command.py`.
+  Hecho cuando: `resend` invalida en la respuesta el código vigente, pone los intentos a 0, encola
+  `reissue_code` y no devuelve el código, igual para plaza y registro real (mismo resultado y mismas
+  consultas); la tarea emite el código nuevo y, si es real, encola su correo; un código anterior ya
+  no se acepta; `manage.py registration resend` muestra solo el `public_id`; suite verde.
+  Excepción: el reenvío cambia a la vez el servicio, su tarea y el comando que lo muestra.
+
+- [ ] T-037 La purga borra también las plazas caducadas
+  RF: RF-013 | Depende de: T-029 | Archivos: 2
+  Archivos: `registration.py`, `tests/test_registration_service.py`.
+  Hecho cuando: `purge_expired` borra los registros pendientes y las plazas de registro caducados,
+  cuenta los dos, y no toca las plazas de cambio de contraseña ni las vigentes; suite verde.
+
+- [ ] T-038 Documentación del registro con correo
+  RF: — (CF-4) | Depende de: T-036, T-037 | Archivos: 2
+  Archivos: `backend/.env.example`, `specs/procesos-pendientes/resumen.md` (rutas desde la raíz).
+  Hecho cuando: `.env.example` documenta `REGISTRATION_START_RETRY_MINUTES`; el resumen explica la
+  plaza, el identificador sin registro detrás y el recorrido completo por consola leyendo el código
+  en la salida del worker, con cada comando en su bloque.
 
 ## RF sin tarea
 Ninguno.
