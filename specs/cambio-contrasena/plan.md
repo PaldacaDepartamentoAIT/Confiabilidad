@@ -1,5 +1,5 @@
 # Plan: cambio-contrasena
-Estado: aprobado
+Estado: borrador
 
 ## Módulos
 ### M-01 Base común de los procesos con código (`apps/accounts/models.py`)
@@ -72,6 +72,10 @@ que, antes de borrar la cuenta, deja en su lugar una plaza con el `public_id` y 
 solicitud que responde "caducada" (D-15).
 RF: RF-010
 
+### M-11 Migración `0010_passwordresetrequest_language`
+Responsabilidad: añadir a `PasswordResetRequest` el idioma de la petición (D-17).
+RF: RF-007
+
 ## Modelo de datos
 `accounts.CodeProcess` (abstracto, sin tabla), con los campos actuales de `PendingRegistration`:
 - `public_id` CharField(64), único en la tabla de cada proceso.
@@ -79,7 +83,8 @@ RF: RF-010
 - `code_expires_at` DateTimeField.
 - `failed_attempts` PositiveSmallIntegerField, por defecto 0.
 - `code_validated_at` DateTimeField, nulo mientras no se valide.
-- `created_at` DateTimeField al crear (en el reemplazo se reasigna a "ahora", RF-003).
+- `created_at` DateTimeField al crear (en el reemplazo se reasigna a "ahora", RF-003). Desde el
+  2026-10-15, "ahora" es el momento de la resolución, también para la plaza sin solicitud (D-13).
 
 `accounts.PasswordResetRequest(CodeProcess)`:
 - `user` OneToOneField(`User`, `on_delete=CASCADE`, `related_name="password_reset_request"`):
@@ -87,6 +92,9 @@ RF: RF-010
   (RF-001, CF-1), y borrado con la cuenta (RF-010).
 - `account_stamp` CharField(64): HMAC-SHA256 del correo en minúsculas y del hash de la contraseña
   de la cuenta en el momento de pedir o reemplazar la solicitud (D-04).
+- `language` CharField(5) con los tres idiomas (cambio del 2026-10-15): idioma de la petición que
+  creó o reemplazó la solicitud, tomado del `payload` de la plaza; lo usa el correo del reenvío
+  (D-17).
 
 `accounts.PhantomProcess` (de `procesos-pendientes`, M-08 de esa feature) se usa con
 `purpose = "password_reset"`: `email` es el correo pedido, haya o no cuenta, y `payload` guarda el
@@ -145,21 +153,26 @@ pedir otra. Un secreto rotado sin periodo de transición también las invalida, 
 
 ### D-05 Orden de bloqueo y concurrencia
 *Cambio del 2026-10-14:* el bloqueo de `start` se aplica ahora en `resolve_password_reset`, fuera de
-la respuesta.
+la respuesta. *Cambio del 2026-10-15 (validación):* todas las operaciones bloquean primero la plaza,
+como D-18 de `procesos-pendientes`.
 Elegida:
-- `start` bloquea primero la fila de la cuenta (`select_for_update` sobre `User`) y después la
-  solicitud; así dos peticiones simultáneas para la misma cuenta se ordenan y la segunda reemplaza
-  a la primera (RF-003). El alta va en un punto de guardado: si choca con la unicidad por una
-  escritura ajena al servicio, el `IntegrityError` se traduce en reemplazar la fila existente,
+- La resolución bloquea la plaza, después la fila de la cuenta (`select_for_update` sobre `User`) y
+  después la solicitud; así dos peticiones para la misma cuenta se ordenan y la más reciente
+  reemplaza a la anterior (RF-003). El alta va en un punto de guardado: si choca con la unicidad por
+  una escritura ajena al servicio, el `IntegrityError` se traduce en reemplazar la fila existente,
   nunca sale al llamante (lección de `procesos-pendientes`).
-- `verify` y `resend` bloquean solo la solicitud (no escriben en la cuenta).
-- `complete` lee la solicitud sin bloqueo para conocer la cuenta, bloquea la cuenta y después la
-  solicitud (mismo orden que `start`, sin interbloqueos), y comprueba que sigue siendo la misma
-  solicitud.
-Descartada: bloquear solo la solicitud en todas las operaciones.
-Motivo: `complete` escribe en la cuenta y en `EmailAddress`; con órdenes distintos en `start` y
-`complete`, Postgres abortaría una de las dos por interbloqueo. *Riesgo residual heredado:* como en
-`procesos-pendientes`, ningún test ejerce dos transacciones reales a la vez.
+- `verify`, `resend` y `reissue_code` bloquean primero la plaza por su `public_id` y después la
+  solicitud (no escriben en la cuenta).
+- `complete` bloquea primero la plaza, después lee la solicitud sin bloqueo para conocer la cuenta,
+  bloquea la cuenta y después la solicitud, y comprueba que sigue siendo la misma solicitud: el
+  mismo orden que la resolución (plaza → cuenta → solicitud), sin interbloqueos.
+Descartada: bloquear solo la solicitud en todas las operaciones, y consultar la solicitud antes que
+la plaza.
+Motivo: `complete` escribe en la cuenta y en `EmailAddress`; con órdenes distintos en la resolución
+y en `complete`, Postgres abortaría una de las dos por interbloqueo. Consultar la solicitud antes que
+la plaza daba "desconocida", solo con cuenta, si la resolución estaba en curso (RF-017). *Riesgo
+residual heredado:* hasta este cambio, ningún test ejercía dos transacciones reales a la vez; desde
+ahora lo hace el test de equivalencia simultánea.
 
 ### D-06 Resultados del servicio
 *Cambio del 2026-10-14:* `Started` ya solo lleva el `public_id`, `NoEligibleAccount` desaparece
@@ -227,13 +240,19 @@ Motivo: S-03 lo deja para el flujo; el test fija que, mientras tanto, las sesion
 inservibles, y avisará si una actualización de Django o allauth lo cambia.
 
 ### D-13 Plaza en la respuesta, como en el registro
+*Cambio del 2026-10-15 (validación):* la resolución aplica D-17 de `procesos-pendientes`, y la plaza
+sin solicitud queda como una solicitud recién emitida.
 Elegida: `start` valida el formato del correo, crea una `PhantomProcess` de propósito
 `password_reset` con un `public_id` nuevo y el idioma en `payload`, y encola
-`resolve_password_reset`. La resolución, con la plaza bloqueada, borra las demás plazas del mismo
-correo; si hay una cuenta activa con ese correo, crea o reemplaza su solicitud con el `public_id` de
-la plaza (RF-002, RF-003), borra la plaza y encola el correo con el código en el idioma de la
-petición. Si no, la plaza queda como identificador sin solicitud (RF-004, RF-017). Reintentos,
-barrido y reenvío en dos tiempos, como D-13 y D-15 de `procesos-pendientes`.
+`resolve_password_reset`. La resolución, con la plaza bloqueada, aplica D-17 de
+`procesos-pendientes`: si hay una plaza posterior sin resolver del mismo correo, se borra sin hacer
+nada; si no, borra las anteriores. Si hay una cuenta activa con ese correo, crea o reemplaza su
+solicitud con el `public_id` de la plaza y el idioma de la petición (RF-002, RF-003, D-17), borra la
+plaza y encola el correo con el código en ese idioma. Si no, la plaza queda como identificador sin
+solicitud, en el mismo estado que una solicitud recién emitida: intentos a 0, sin validar, código
+vigente desde la resolución y alta en la resolución, porque el reemplazo de una solicitud real
+también cuenta su vida de nuevo (RF-003, RF-004, RF-017). Reintentos (con la ventana comprobada en
+cada ejecución), barrido y reenvío en dos tiempos, como D-13 y D-15 de `procesos-pendientes`.
 Descartada: un diseño propio para el cambio de contraseña.
 Motivo: el mismo mecanismo, probado una sola vez, para las dos features (RF-016, RF-017).
 
@@ -262,6 +281,14 @@ fija la contraseña.
 Descartada: encolarlo después de confirmar.
 Motivo: la bandeja ya encola al confirmar (D-01 de `correo-asincrono-plantillas`); dentro de la
 transacción, si algo falla no queda ni la contraseña ni el aviso (RF-008 de esa feature).
+
+### D-17 Idioma del reenvío
+Elegida: `PasswordResetRequest` guarda el idioma de la petición que la creó o la reemplazó (M-11), y
+`reissue_code` envía el correo del reenvío en ese idioma.
+Descartada: el idioma de la cuenta, que contradice RF-013 de `correo-asincrono-plantillas` (el correo
+de código va en el idioma de la petición), y un parámetro de idioma en `resend`, que cambiaría la
+operación y el comando y que el registro no tiene.
+Motivo: el mismo criterio que el registro, que usa el idioma guardado en el registro pendiente.
 
 ## Estrategia de tests
 - Unitario (`test_codes.py`, ampliado): la huella depende del tipo de proceso y una huella de un tipo
@@ -294,7 +321,16 @@ transacción, si algo falla no queda ni la contraseña ni el aviso (RF-008 de es
     RF-016).
   - Equivalencia (`test_password_reset_equivalence.py`, CF-6): la misma secuencia de verificar,
     reenviar, completar y caducar da los mismos resultados con una plaza y con una solicitud real
-    cuyo código nunca se acierta, con el mismo número de consultas (RF-017).
+    cuyo código nunca se acierta, con el mismo número de consultas (RF-017). Desde el 2026-10-15
+    también: con un correo sin cuenta y con una cuenta inactiva (con y sin solicitud previa); con
+    intentos antes de resolver y con la resolución retrasada; con dos plazas resueltas en orden
+    inverso; y con una operación simultánea a la resolución detenida dentro de su transacción, con
+    transacciones reales y dos hilos (D-05, D-13).
+  - Ventana compartida (`test_password_reset_background.py`): cambiar
+    `REGISTRATION_START_RETRY_MINUTES` cambia también la ventana del cambio de contraseña, y la
+    tarea ejecutada fuera de la ventana no resuelve (RF-012, RF-016).
+  - Idioma del reenvío: el correo del reenvío sale en el idioma de la petición guardado en la
+    solicitud, no en el de la cuenta (D-17).
   - "Caducada" (`test_password_reset_service.py`): cuenta inactiva, reactivada, correo y contraseña
     cambiados, y la tumba tras borrar la cuenta hasta su caducidad natural (RF-008, RF-010, RF-014,
     RF-015).
@@ -307,21 +343,21 @@ transacción, si algo falla no queda ni la contraseña ni el aviso (RF-008 de es
 |---|---|---|
 | RF-001 | M-02, M-07 | modelo |
 | RF-002 | M-05, M-09 (D-13) | servicio + resolución |
-| RF-003 | M-05, M-09 (D-05, D-13) | resolución |
+| RF-003 | M-05, M-09 (D-05, D-13) | resolución + equivalencia |
 | RF-004 | M-05, M-09 (D-06, D-13) | resolución + comando |
 | RF-005 | M-01, M-03, M-04 | unitario + servicio |
 | RF-006 | M-01, M-05 | modelo + servicio |
-| RF-007 | M-04, M-05, M-09 | servicio + equivalencia |
+| RF-007 | M-04, M-05, M-09, M-11 (D-17) | servicio + equivalencia |
 | RF-008 | M-05 (D-14) | servicio |
 | RF-009 | M-05 (D-07, D-08, D-16) | servicio + integración allauth |
 | RF-010 | M-02, M-07, M-10 (D-15) | modelo + servicio |
 | RF-011 | M-05, M-06 | servicio + comando |
-| RF-012 | M-01, M-08 (D-10) | servicio |
+| RF-012 | M-01, M-08 (D-10) | servicio + resolución |
 | RF-013 | M-06 | comando |
 | RF-014 | M-03, M-05 (D-04, D-14) | unitario + servicio |
 | RF-015 | M-03, M-05 (D-04, D-14) | unitario + servicio |
 | RF-016 | M-05, M-09 (D-13) | servicio + resolución |
-| RF-017 | M-05, M-09, M-10 (D-13) | equivalencia |
+| RF-017 | M-05, M-09, M-10 (D-05, D-13) | equivalencia |
 
 ## RF sin cobertura
 Ninguno.

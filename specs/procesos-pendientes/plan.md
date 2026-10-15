@@ -1,5 +1,5 @@
 # Plan: procesos-pendientes
-Estado: aprobado
+Estado: borrador
 
 ## Módulos
 ### M-01 Modelo `PendingRegistration` (`apps/accounts/models.py`)
@@ -210,30 +210,65 @@ Motivo: el mismo número de consultas en los dos casos; un test lo fija con
 `django_assert_num_queries`.
 
 ### D-15 Reintentos del trabajo de fuera y barrido
-Elegida: `resolve_registration` reintenta con espera creciente mientras no pase
-`REGISTRATION_START_RETRY_MINUTES` desde el alta de la plaza; un barrido cada 60 s en el
-planificador vuelve a encolar las plazas sin resolver dentro de esa ventana. Pasada la ventana, la
-plaza se queda como identificador sin registro, se vacía su `payload` y el fallo se registra en el
-log del servidor.
-Descartada: solo los reintentos de Celery (si la cola estaba caída al confirmar, nadie reintenta).
-Motivo: cumple C-03 aunque la cola caiga, como la bandeja de correos.
+*Cambio del 2026-10-15 (validación):* la ventana se comprueba antes de resolver, en cada ejecución.
+Elegida: la tarea `resolve_registration` mira la ventana antes de resolver: si ya han pasado
+`REGISTRATION_START_RETRY_MINUTES` desde el alta de la plaza, no la resuelve, también en un primer
+intento que la cola atendió tarde. Dentro de la ventana, si falla, reintenta con espera creciente
+(15 s, 30 s y 60 s como máximo) sin el tope de 3 reintentos de Celery: la ventana es el único
+límite. Un barrido cada 60 s en el planificador vuelve a encolar las plazas sin resolver dentro de
+esa ventana. Pasada la ventana, la plaza se queda como identificador sin registro, se vacía su
+`payload`, no se envía correo y el fallo se registra en el log del servidor.
+Descartada: solo los reintentos de Celery (si la cola estaba caída al confirmar, nadie reintenta), y
+mirar la ventana solo después de un fallo (un reintento o una tarea atendida tarde resolvía fuera de
+la ventana y enviaba el correo).
+Motivo: cumple C-03 aunque la cola caiga, como la bandeja de correos, y RF-024 ("solo durante el
+tiempo configurado").
 
 ### D-16 Qué hace la resolución
+*Cambio del 2026-10-15 (validación):* pasos 1, 2 y 4 ajustados (D-17).
 Elegida: en una transacción, con la plaza bloqueada:
-1. Borra los registros pendientes caducados del mismo correo (RF-017) y las demás plazas del mismo
-   correo y propósito (RF-025).
-2. Si el correo tiene cuenta, la plaza queda como identificador sin registro. Si la cuenta está
-   activa, encola el aviso "ya tienes cuenta" (RF-006, con el tope de RF-007).
+1. Si hay una plaza posterior sin resolver del mismo correo y propósito, borra esta plaza y no hace
+   nada más: manda la petición más reciente (D-17). Si no, borra los registros pendientes caducados
+   del mismo correo (RF-017) y las plazas anteriores del mismo correo y propósito (RF-025).
+2. Si el correo tiene cuenta, la plaza queda como identificador sin registro, en el mismo estado en
+   que `issue_code` deja un registro real: intentos a 0, sin validar y con el código vigente desde la
+   resolución. Su alta es la de la plaza vigente anterior del mismo correo que reemplaza (leída antes
+   de borrarla), igual que un registro repetido conserva la suya (RF-005); si no la había, o estaba
+   caducada, el alta es la de la resolución, igual que un registro nuevo. Si la cuenta está activa,
+   encola el aviso "ya tienes cuenta" (RF-006, con el tope de RF-007).
 3. Si hay un registro pendiente vigente del mismo correo, le asigna el `public_id` de la plaza,
    emite un código nuevo con los intentos a 0 y sin validar, conservando sus datos (RF-005), y borra
    la plaza.
-4. Si no, crea el registro pendiente con los datos de la plaza y su `public_id`, y borra la plaza.
+4. Si no, crea el registro pendiente con los datos de la plaza y su `public_id`, con el alta de la
+   resolución, y borra la plaza.
 
 En los casos 3 y 4 encola el correo con el código en el idioma de la solicitud (RF-004). Un choque
 en la unicidad del correo se trata como el caso 3 (D-08).
 Descartada: decidir en la respuesta y diferir solo el correo (volvería a filtrar la cuenta por el
 tiempo).
-Motivo: todo lo que depende de la cuenta ocurre fuera de la respuesta (RF-024).
+Motivo: todo lo que depende de la cuenta ocurre fuera de la respuesta (RF-024). Desde el
+2026-10-15, además, la plaza con cuenta y el registro real cuentan intentos y plazos desde el mismo
+instante, aunque la resolución se retrase o el correo se repita (RF-025).
+
+### D-17 Manda la petición más reciente
+Elegida: entre las plazas del mismo correo y propósito, la más reciente es la de mayor `pk`. La
+resolución de una plaza borra solo las anteriores; si encuentra una posterior aún sin resolver, se
+borra a sí misma sin crear registro ni enviar correo, y la posterior hace el trabajo al resolverse.
+Descartada: borrar "las demás plazas" sin mirar el orden (con dos peticiones resueltas en orden
+inverso, la antigua anulaba a la nueva).
+Motivo: RF-005 y RF-025 piden que la petición nueva anule a la anterior, también cuando las tareas
+se ejecutan desordenadas (doble envío, reintentos, barrido).
+
+### D-18 Orden de bloqueo: primero la plaza
+Elegida: `verify`, `resend`, `complete` y `reissue_code` bloquean primero la plaza por su
+`public_id` y después consultan y bloquean el registro pendiente, el mismo orden que la resolución
+(plaza → registro). Si una resolución está convirtiendo la plaza, la operación espera a que confirme
+y después encuentra el registro ya creado.
+Descartada: consultar primero el registro pendiente. Con una resolución en curso, el registro aún no
+existía al consultarlo y la plaza ya estaba borrada al liberarse el bloqueo: "desconocido", solo en
+el caso sin cuenta.
+Motivo: RF-025 pide los mismos resultados también con operaciones simultáneas; las consultas siguen
+siendo las mismas en los dos casos (D-14).
 
 ## Estrategia de tests
 - Unitario (`test_codes.py`): formato del código y del `public_id`, la huella no contiene el
@@ -259,7 +294,14 @@ Motivo: todo lo que depende de la cuenta ocurre fuera de la respuesta (RF-024).
 - Equivalencia (`test_phantom_equivalence.py`, CF-5): la misma secuencia de verificar (con el
   bloqueo al quinto intento), reenviar, completar y caducar da los mismos resultados con una plaza y
   con un registro real cuyo código nunca se acierta; una solicitud nueva anula la plaza anterior
-  (RF-025). Mismo número de consultas en `verify`, `resend` y `complete` (D-14).
+  (RF-025). Mismo número de consultas en `verify`, `resend` y `complete` (D-14). Desde el
+  2026-10-15 también: intentos fallidos antes de resolver, resolución retrasada 4 min, repetición
+  con el paso del tiempo (`start`, `resend` y `start`, observando a los 61 min), dos plazas resueltas
+  en orden inverso (D-17) y una operación simultánea con la resolución detenida dentro de su
+  transacción, con transacciones reales y dos hilos (D-18).
+- Ventana (`test_registration_background.py`): la tarea ejecutada fuera de la ventana, sin simular
+  la resolución, no crea registro ni encola correo, vacía el `payload` y deja el fallo en el log
+  (D-15).
 - Login: la cuenta creada inicia sesión por app (cierra el ciclo con allauth).
 - Mutaciones en cada tarea, como en `usuario-personalizado`.
 
@@ -270,7 +312,7 @@ Motivo: todo lo que depende de la cuenta ocurre fuera de la respuesta (RF-024).
 | RF-002 | M-01 | modelo |
 | RF-003 | M-01, M-07, M-03 (D-08) | modelo (bulk) + servicio |
 | RF-004 | M-01, M-03 | modelo + servicio |
-| RF-005 | M-03 | servicio |
+| RF-005 | M-03, M-09 (D-16, D-17) | servicio + resolución |
 | RF-007 | M-02, M-07 | unitario + modelo |
 | RF-008 | M-02 (D-01) | unitario |
 | RF-009 | M-03 | servicio |
@@ -286,7 +328,7 @@ Motivo: todo lo que depende de la cuenta ocurre fuera de la respuesta (RF-024).
 | RF-022 | M-05 | contraseñas |
 | RF-023 | M-06 | comando |
 | RF-024 | M-01, M-03, M-08, M-09 (D-11, D-15, D-16) | servicio + resolución |
-| RF-025 | M-08, M-10, M-03 (D-12, D-14) | equivalencia |
+| RF-025 | M-08, M-10, M-03, M-09 (D-12, D-14, D-16, D-17, D-18) | equivalencia |
 
 ## RF sin cobertura
 Ninguno (RF-006, RF-014, RF-018 y RF-021 son obsoletos).
