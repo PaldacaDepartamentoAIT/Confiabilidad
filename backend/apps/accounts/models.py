@@ -254,3 +254,25 @@ class PasswordResetRequest(CodeProcess):
 
     def __str__(self) -> str:
         return self.user.email
+
+
+class PhantomProcess(CodeProcess):
+    # Plaza con identificador público que nunca acepta un código: se crea en la respuesta para que
+    # no se distinga si el correo tiene cuenta (D-11, D-12 de procesos-pendientes).
+    class Purpose(models.TextChoices):
+        REGISTRATION = "registration", _("Registration")
+        PASSWORD_RESET = "password_reset", _("Password reset")
+
+    purpose = models.CharField(max_length=20, choices=Purpose.choices)
+    email = models.EmailField()
+    payload = models.JSONField(null=True, blank=True)
+
+    objects = CodeProcessQuerySet["PhantomProcess"].as_manager()
+
+    def __str__(self) -> str:
+        return f"{self.purpose}:{self.public_id}"
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        self.email = self.email.strip().lower()
+        self.full_clean(exclude={"code_hash"}, validate_unique=False)
+        super().save(*args, **kwargs)

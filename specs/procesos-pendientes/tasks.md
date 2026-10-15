@@ -219,7 +219,7 @@ fallar sus tests.
   Hecho cuando: con el servicio simulado lanzando `http.client.IncompleteRead`, la contraseña se
   acepta y queda el aviso en el log; suite verde.
 
-- [ ] T-029 Modelo `PhantomProcess` y migración `0008`
+- [x] T-029 Modelo `PhantomProcess` y migración `0008`
   RF: RF-025 (D-12, M-08, M-10) | Depende de: — | Archivos: 3
   Archivos: `models.py`, `migrations/0008_phantomprocess.py`, `tests/test_phantom_model.py`.
   Hecho cuando: `PhantomProcess` hereda los campos de `CodeProcess` y tiene `purpose`
@@ -227,6 +227,9 @@ fallar sus tests.
   único en la base de datos; con `code_hash` vacío, `processes.check_code` da `WRONG_CODE` para
   cualquier código, `LOCKED` tras 5 intentos fallidos, `CODE_EXPIRED` y caducidad igual que un
   registro pendiente; `migrate` se aplica sobre la última de `main`; suite verde.
+  Decisiones: (1) `PhantomProcess.save()` normaliza el correo y valida con `full_clean` (salvo la
+  huella vacía), como `PendingRegistration`. [Cierto] (2) `__str__` muestra propósito y
+  `public_id`, no el correo. [Cierto]
 
 - [ ] T-030 Validar los datos sin consultar cuentas
   RF: RF-002, RF-024 (M-01) | Depende de: — | Archivos: 2
