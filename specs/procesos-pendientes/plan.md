@@ -1,5 +1,5 @@
 # Plan: procesos-pendientes
-Estado: borrador
+Estado: aprobado
 
 ## Módulos
 ### M-01 Modelo `PendingRegistration` (`apps/accounts/models.py`)

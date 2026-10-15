@@ -1,5 +1,5 @@
 # Spec: cambio-contrasena
-Estado: borrador
+Estado: aprobada
 Aprobación: ligera
 
 ## Objetivo (por qué)

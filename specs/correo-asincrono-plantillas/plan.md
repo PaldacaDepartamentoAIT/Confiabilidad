@@ -1,5 +1,5 @@
 # Plan: correo-asincrono-plantillas
-Estado: borrador
+Estado: aprobado
 
 ## Módulos
 ### M-01 App `apps/emails`: modelos y migraciones

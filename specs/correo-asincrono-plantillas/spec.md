@@ -1,5 +1,5 @@
 # Spec: correo-asincrono-plantillas
-Estado: borrador
+Estado: aprobada
 Aprobación: ligera
 
 ## Objetivo (por qué)
