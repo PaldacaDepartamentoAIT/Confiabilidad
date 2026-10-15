@@ -114,16 +114,42 @@ def test_every_verify_refusal_has_its_own_message(
     assert str(excinfo.value) == VERIFY_ERRORS[refusal]
 
 
-def test_resend_keeps_the_public_id_and_shows_a_new_code() -> None:
+def _resent(public_id: str) -> dict[str, str]:
+    # El código nuevo lo emite la tarea y llega por correo (D-13).
+    shown = _call("resend", public_id)
+    registration.reissue_code(public_id)
+    return {**shown, "code": code_sent_to(public_id)}
+
+
+def test_resend_shows_only_the_public_id() -> None:
     started = _started()
 
     shown = _call("resend", started["public_id"])
 
+    assert shown == {"public_id": started["public_id"]}
+
+
+def test_resend_then_the_new_code_arrives_by_email() -> None:
+    started = _started()
+
+    resent = _resent(started["public_id"])
+
     pending = PendingRegistration.objects.get()
-    assert shown["public_id"] == started["public_id"] == pending.public_id
+    assert resent["public_id"] == started["public_id"] == pending.public_id
     assert fingerprints.code_matches(
-        codes.Purpose.REGISTRATION, pending.public_id, shown["code"], pending.code_hash
+        codes.Purpose.REGISTRATION, pending.public_id, resent["code"], pending.code_hash
     )
+
+
+@pytest.mark.parametrize("is_active", [True, False])
+def test_resend_shows_the_same_with_or_without_an_account(is_active: bool) -> None:
+    make_user(email="ana@x.com", is_active=is_active)
+    with_account = _call(*START)["public_id"]
+    registration.resolve_registration(with_account)
+    without_account = _started(*[*START[:2], "bea@x.com", *START[3:]])["public_id"]
+
+    assert _call("resend", with_account) == {"public_id": with_account}
+    assert _call("resend", without_account) == {"public_id": without_account}
 
 
 def test_resend_reports_a_refusal() -> None:
@@ -227,7 +253,7 @@ def test_console_works_when_the_generator_first_yields_a_dash(
     monkeypatch.setattr("apps.accounts.codes.secrets.token_urlsafe", lambda _: next(values))
     public_id = _started()["public_id"]
 
-    resent = _call("resend", public_id)
+    resent = _resent(public_id)
     _call("verify", public_id, resent["code"])
     shown = _call("complete", public_id, "--password", GOOD_PASSWORD)
 

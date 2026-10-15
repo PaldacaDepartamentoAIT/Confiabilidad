@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 RESOLVE_TASK = "apps.accounts.tasks.resolve_registration"
+REISSUE_TASK = "apps.accounts.tasks.reissue_code"
 
 
 @dataclass(frozen=True)
@@ -62,16 +63,17 @@ def start(
     )
     with transaction.atomic():
         slot.save()
-        transaction.on_commit(lambda: _queue_resolution(slot.public_id))
+        transaction.on_commit(lambda: _queue(RESOLVE_TASK, [slot.public_id]))
     return Started(public_id=slot.public_id)
 
 
-def _queue_resolution(public_id: str) -> None:
-    # Si la cola no responde, el barrido de plazas la recoge (D-15).
+def _queue(task: str, args: list[str]) -> None:
+    # Si la cola no responde, la respuesta no cambia: el barrido recoge las plazas (D-15) y un
+    # reenvío perdido se repite pidiendo otro.
     try:
-        current_app.send_task(RESOLVE_TASK, args=[public_id])
+        current_app.send_task(task, args=args)
     except Exception:
-        logger.warning("Could not queue the start of a registration; the sweep will retry it.")
+        logger.warning("Could not queue %s; the process keeps waiting.", task)
 
 
 def _locked_process(public_id: str) -> PendingRegistration | PhantomProcess | None:
@@ -98,7 +100,6 @@ def verify(*, public_id: str, code: str) -> VerifyResult:
 @dataclass(frozen=True)
 class Resent:
     public_id: str
-    code: str
 
 
 class ResendRefusal(StrEnum):
@@ -108,18 +109,38 @@ class ResendRefusal(StrEnum):
 
 
 def resend(*, public_id: str) -> Resent | ResendRefusal:
+    # En la respuesta solo se anula el código vigente; el nuevo lo emite reissue_code (D-13).
     with transaction.atomic():
-        pending = (
-            PendingRegistration.objects.select_for_update().filter(public_id=public_id).first()
-        )
-        if pending is None:
+        process = _locked_process(public_id)
+        if process is None:
             return ResendRefusal.NOT_FOUND
-        if pending.is_expired:
+        if process.is_expired:
             return ResendRefusal.EXPIRED
-        if pending.code_validated_at is not None:
+        if process.code_validated_at is not None:
             return ResendRefusal.ALREADY_VERIFIED
-        code = processes.renew_code(pending, _PURPOSE)
-        return Resent(public_id=public_id, code=code)
+        # Sin save(): un registro real no admite la huella vacía en su validación.
+        type(process).objects.filter(pk=process.pk).update(code_hash="", failed_attempts=0)
+        transaction.on_commit(lambda: _queue(REISSUE_TASK, [_PURPOSE, public_id]))
+        return Resent(public_id=public_id)
+
+
+def reissue_code(public_id: str) -> None:
+    # La plaza recibe también un código nuevo, que nunca se envía (D-13).
+    with transaction.atomic():
+        process = _locked_process(public_id)
+        if process is None or process.is_expired or process.code_validated_at is not None:
+            return
+        code = processes.renew_code(process, _PURPOSE)
+        if isinstance(process, PendingRegistration):
+            outbox.enqueue(
+                kind="registration_code",
+                recipient=process.email,
+                locale=process.language,
+                context={"name": process.name},
+                purpose=_PURPOSE,
+                public_id=public_id,
+                code=code,
+            )
 
 
 @dataclass(frozen=True)

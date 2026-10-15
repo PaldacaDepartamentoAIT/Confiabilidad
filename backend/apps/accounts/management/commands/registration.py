@@ -9,7 +9,7 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
 
 from apps.accounts import registration
-from apps.accounts.management.console import format_validation_error, show_code
+from apps.accounts.management.console import format_validation_error
 from apps.emails import locales
 
 VERIFY_ERRORS = {
@@ -67,7 +67,9 @@ class Command(BaseCommand):
         verify = actions.add_parser("verify", help="Check the code of a registration.")
         verify.add_argument("public_id")
         verify.add_argument("code")
-        resend = actions.add_parser("resend", help="Issue a new code for a registration.")
+        resend = actions.add_parser(
+            "resend", help="Issue a new code for a registration; it arrives by email."
+        )
         resend.add_argument("public_id")
         complete = actions.add_parser(
             "complete", help="Create the account; asks for the password if not given."
@@ -103,7 +105,7 @@ class Command(BaseCommand):
         result = registration.resend(public_id=options["public_id"])
         if not isinstance(result, registration.Resent):
             raise CommandError(_(RESEND_ERRORS[result]))
-        show_code(self.stdout, result.public_id, result.code)
+        self.stdout.write(f"public_id: {result.public_id}")
 
     def _complete(self, options: dict[str, Any]) -> None:
         password = options["password"] or getpass.getpass(_("Password: "))

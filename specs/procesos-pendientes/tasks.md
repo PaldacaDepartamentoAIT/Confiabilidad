@@ -321,7 +321,7 @@ fallar sus tests.
   (3) El número de consultas se compara midiendo los dos casos en el mismo test, no con una cifra
   fija. [Cierto]
 
-- [ ] T-036 Reenvío en dos tiempos
+- [x] T-036 Reenvío en dos tiempos
   RF: RF-016, RF-023, RF-025 (D-13, M-09) | Depende de: T-035 | Archivos: 5
   Archivos: `registration.py`, `tasks.py`, `management/commands/registration.py`,
   `tests/test_phantom_equivalence.py`, `tests/test_registration_command.py`.
@@ -330,6 +330,12 @@ fallar sus tests.
   consultas); la tarea emite el código nuevo y, si es real, encola su correo; un código anterior ya
   no se acepta; `manage.py registration resend` muestra solo el `public_id`; suite verde.
   Excepción: el reenvío cambia a la vez el servicio, su tarea y el comando que lo muestra.
+  Decisiones: (1) También se ajusta `tests/test_registration_service.py`: sus tests de reenvío leían
+  el código de la respuesta; es el test del mismo módulo (M-03) y el cambio es mecánico. [Cierto]
+  (2) La anulación del código en la respuesta se hace con `update()`, sin `save()`: la validación de
+  un registro real no admite la huella vacía. [Cierto] (3) `reissue_code` no emite nada si el
+  proceso caducó, ya se validó o desapareció; tampoco reintenta: si la cola falla, el usuario pide
+  otro reenvío. [Probable] (4) El correo reenviado va en el idioma guardado del registro. [Probable]
 
 - [ ] T-037 La purga borra también las plazas caducadas
   RF: RF-013 | Depende de: T-029 | Archivos: 2

@@ -12,7 +12,12 @@ from django.utils import timezone
 
 from apps.accounts import codes, registration
 from apps.accounts.models import PendingRegistration, PhantomProcess, User
-from apps.accounts.tests.factories import StartedWithCode, make_pending, make_user
+from apps.accounts.tests.factories import (
+    StartedWithCode,
+    code_sent_to,
+    make_pending,
+    make_user,
+)
 from apps.core import fingerprints
 
 pytestmark = pytest.mark.django_db
@@ -341,10 +346,12 @@ def test_unknown_public_id_is_rejected() -> None:
     assert result == registration.VerifyResult.NOT_FOUND
 
 
-def _resend(public_id: str) -> registration.Resent:
+def _resend(public_id: str) -> StartedWithCode:
+    # El código nuevo lo emite la tarea y llega por correo (D-13).
     result = registration.resend(public_id=public_id)
-    assert isinstance(result, registration.Resent)
-    return result
+    assert result == registration.Resent(public_id=public_id)
+    registration.reissue_code(public_id)
+    return StartedWithCode(public_id=public_id, code=code_sent_to(public_id))
 
 
 def test_resend_keeps_the_public_id_and_replaces_the_code() -> None:

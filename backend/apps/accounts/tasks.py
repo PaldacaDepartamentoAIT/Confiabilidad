@@ -12,6 +12,9 @@ logger = logging.getLogger(__name__)
 RESOLVE_TASKS = {
     PhantomProcess.Purpose.REGISTRATION: "apps.accounts.tasks.resolve_registration",
 }
+REISSUE_FUNCTIONS = {
+    PhantomProcess.Purpose.REGISTRATION: registration.reissue_code,
+}
 _FIRST_WAIT_SECONDS = 15
 _MAX_WAIT_SECONDS = 60
 
@@ -25,6 +28,11 @@ def resolve_registration(self: Any, public_id: str) -> None:
             wait = min(_FIRST_WAIT_SECONDS * 2**self.request.retries, _MAX_WAIT_SECONDS)
             raise self.retry(exc=error, countdown=wait) from error
         _give_up(public_id, error)
+
+
+@shared_task(name="apps.accounts.tasks.reissue_code")  # type: ignore[untyped-decorator]
+def reissue_code(purpose: str, public_id: str) -> None:
+    REISSUE_FUNCTIONS[PhantomProcess.Purpose(purpose)](public_id)
 
 
 @shared_task(name="apps.accounts.tasks.sweep_unresolved")  # type: ignore[untyped-decorator]
