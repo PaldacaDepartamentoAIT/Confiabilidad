@@ -47,7 +47,26 @@ def _real() -> str:
     return started.public_id
 
 
-SOURCES = [pytest.param(_phantom, id="phantom"), pytest.param(_real, id="real")]
+def _inactive() -> str:
+    # Cuenta inactiva sin solicitud: la plaza queda como identificador sin solicitud detrás.
+    make_user(email=EMAIL, is_active=False)
+    return _phantom()
+
+
+def _inactive_with_request() -> str:
+    # Cuenta con una solicitud anterior que después se desactiva.
+    make_user(email=EMAIL)
+    make_reset_request(EMAIL)
+    User.objects.update(is_active=False)
+    return _phantom()
+
+
+PHANTOMS = [
+    pytest.param(_phantom, id="phantom"),
+    pytest.param(_inactive, id="inactive"),
+    pytest.param(_inactive_with_request, id="inactive-with-request"),
+]
+SOURCES = [*PHANTOMS, pytest.param(_real, id="real")]
 
 
 def _age(**minutes_ago: int) -> None:
@@ -165,13 +184,15 @@ def _queries(source: Callable[[], str], action: Callable[[str], Any]) -> int:
     return len(queries.captured_queries)
 
 
+@pytest.mark.parametrize("source", PHANTOMS)
 @pytest.mark.parametrize(
     "action", [_verify, _resend, _complete], ids=["verify", "resend", "complete"]
 )
 def test_each_step_does_the_same_queries_for_a_phantom_and_a_request(
-    action: Callable[[str], Any],
+    source: Callable[[], str], action: Callable[[str], Any]
 ) -> None:
-    phantom = _queries(_phantom, action)
+    phantom = _queries(source, action)
+    User.objects.all().delete()
     PhantomProcess.objects.all().delete()
 
     assert _queries(_real, action) == phantom

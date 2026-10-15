@@ -456,7 +456,7 @@ esquema, para que al final quede una sola migración (M-07).
   resolución fallando da `RETRY` en `tasks.resolve_password_reset`; la tarea ejecutada fuera de la
   ventana, sin simular la resolución, no crea solicitud ni encola correo; suite verde.
 
-- [ ] T-039 Corrección: la equivalencia también con la cuenta inactiva
+- [x] T-039 Corrección: la equivalencia también con la cuenta inactiva
   Tipo: corrección | Origen: validación de RF-017 (CF-6)
   RF: RF-017 | Depende de: T-037 | Archivos: 1
   Archivos: `tests/test_password_reset_equivalence.py`.
