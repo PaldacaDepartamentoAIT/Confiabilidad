@@ -1,10 +1,13 @@
+from collections.abc import Iterator
 from datetime import timedelta
 from typing import Any
+from unittest import mock
 
 import pytest
+from celery.exceptions import Retry
 from django.utils import timezone
 
-from apps.accounts import codes, conf, password_reset
+from apps.accounts import codes, conf, password_reset, tasks
 from apps.accounts.models import PasswordResetRequest, PhantomProcess, User
 from apps.accounts.tests.factories import make_user
 from apps.core import fingerprints
@@ -148,3 +151,75 @@ def test_an_unsupported_language_falls_back_to_the_default() -> None:
     password_reset.resolve_password_reset("slot_1")
 
     assert OutboundEmail.objects.get().locale == "es"
+
+
+def _age(slot: PhantomProcess, minutes: int) -> None:
+    PhantomProcess.objects.filter(pk=slot.pk).update(
+        created_at=timezone.now() - timedelta(minutes=minutes)
+    )
+
+
+def _broken(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        password_reset, "resolve_password_reset", mock.Mock(side_effect=OSError("db"))
+    )
+
+
+def test_the_task_resolves_the_slot() -> None:
+    make_user(email="eva@x.com")
+    _slot()
+
+    result = tasks.resolve_password_reset.apply(args=["slot_1"])
+
+    assert result.successful()
+    assert PasswordResetRequest.objects.filter(public_id="slot_1").exists()
+
+
+def test_a_failure_within_the_window_is_retried(monkeypatch: pytest.MonkeyPatch) -> None:
+    # En `apply()` Celery reintenta al momento; aquí basta con saber que pide el reintento.
+    retry = mock.Mock(side_effect=Retry())
+    monkeypatch.setattr(tasks.resolve_password_reset, "retry", retry)
+    slot = _slot()
+    _age(slot, 4)
+    _broken(monkeypatch)
+
+    result = tasks.resolve_password_reset.apply(args=["slot_1"])
+
+    assert result.state == "RETRY"
+    assert retry.call_args.kwargs["countdown"] == 15
+    assert PhantomProcess.objects.get(public_id="slot_1").payload is not None
+
+
+def test_a_failure_after_the_window_leaves_the_slot_without_request_and_logs_it(
+    monkeypatch: pytest.MonkeyPatch, caplog: Any
+) -> None:
+    slot = _slot()
+    _age(slot, 6)
+    _broken(monkeypatch)
+
+    result = tasks.resolve_password_reset.apply(args=["slot_1"])
+
+    assert result.successful()
+    assert PhantomProcess.objects.get(public_id="slot_1").payload is None
+    assert "gave up" in caplog.text
+
+
+@pytest.fixture
+def send_task() -> Iterator[mock.Mock]:
+    with mock.patch("apps.accounts.tasks.current_app.send_task") as patched:
+        yield patched
+
+
+def test_the_sweep_also_queues_unresolved_password_reset_slots(send_task: mock.Mock) -> None:
+    _slot("reset_slot")
+    _slot("registration_slot", email="bea@x.com", purpose="registration", name="Bea")
+    tombstone = _slot("tombstone", email="")
+    PhantomProcess.objects.filter(pk=tombstone.pk).update(payload=None, answers_expired=True)
+
+    assert tasks.sweep_unresolved() == 2
+
+    assert sorted(call.args[0] for call in send_task.call_args_list) == [
+        "apps.accounts.tasks.resolve_password_reset",
+        "apps.accounts.tasks.resolve_registration",
+    ]
+    send_task.assert_any_call("apps.accounts.tasks.resolve_password_reset", args=["reset_slot"])

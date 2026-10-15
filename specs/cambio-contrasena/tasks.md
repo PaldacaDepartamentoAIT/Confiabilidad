@@ -302,13 +302,16 @@ esquema, para que al final quede una sola migración (M-07).
   idioma por defecto si no es uno de los tres. [Cierto] (3) El correo con el código no se ata a la
   cuenta en la bandeja, igual que el del registro. [Probable]
 
-- [ ] T-026 Tarea y barrido del cambio de contraseña
+- [x] T-026 Tarea y barrido del cambio de contraseña
   RF: RF-016 (D-13, M-09) | Depende de: T-025 y T-033 de `procesos-pendientes` | Archivos: 2
   Archivos: `tasks.py`, `tests/test_password_reset_background.py`.
   Hecho cuando: la tarea `apps.accounts.tasks.resolve_password_reset` llama a la resolución y se
   reintenta dentro de la ventana compartida (`REGISTRATION_START_RETRY_MINUTES`); pasada la ventana,
   la plaza queda sin solicitud y el fallo en el log; `sweep_unresolved()` también encola las plazas
   `password_reset` sin resolver; suite verde.
+  Decisiones: (1) Las dos tareas de resolución comparten `_resolve_or_retry` (misma espera creciente,
+  misma ventana y mismo abandono). [Cierto] (2) El barrido no toca las tumbas: ya tienen el `payload`
+  vacío. [Cierto]
 
 - [ ] T-027 Pedir el cambio en la respuesta solo con el identificador
   RF: RF-002, RF-004, RF-013, RF-016 (D-06, D-13, M-05, M-06) | Depende de: T-026 | Archivos: 6

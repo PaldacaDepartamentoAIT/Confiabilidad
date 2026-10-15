@@ -1,16 +1,18 @@
 import logging
+from collections.abc import Callable
 from typing import Any
 
 from celery import current_app, shared_task
 from django.utils import timezone
 
-from apps.accounts import conf, registration
+from apps.accounts import conf, password_reset, registration
 from apps.accounts.models import PhantomProcess
 
 logger = logging.getLogger(__name__)
 
 RESOLVE_TASKS = {
     PhantomProcess.Purpose.REGISTRATION: "apps.accounts.tasks.resolve_registration",
+    PhantomProcess.Purpose.PASSWORD_RESET: "apps.accounts.tasks.resolve_password_reset",
 }
 REISSUE_FUNCTIONS = {
     PhantomProcess.Purpose.REGISTRATION: registration.reissue_code,
@@ -21,12 +23,21 @@ _MAX_WAIT_SECONDS = 60
 
 @shared_task(bind=True, name="apps.accounts.tasks.resolve_registration")  # type: ignore[untyped-decorator]
 def resolve_registration(self: Any, public_id: str) -> None:
+    _resolve_or_retry(self, registration.resolve_registration, public_id)
+
+
+@shared_task(bind=True, name="apps.accounts.tasks.resolve_password_reset")  # type: ignore[untyped-decorator]
+def resolve_password_reset(self: Any, public_id: str) -> None:
+    _resolve_or_retry(self, password_reset.resolve_password_reset, public_id)
+
+
+def _resolve_or_retry(task: Any, resolve: Callable[[str], None], public_id: str) -> None:
     try:
-        registration.resolve_registration(public_id)
+        resolve(public_id)
     except Exception as error:
         if _within_window(public_id):
-            wait = min(_FIRST_WAIT_SECONDS * 2**self.request.retries, _MAX_WAIT_SECONDS)
-            raise self.retry(exc=error, countdown=wait) from error
+            wait = min(_FIRST_WAIT_SECONDS * 2**task.request.retries, _MAX_WAIT_SECONDS)
+            raise task.retry(exc=error, countdown=wait) from error
         _give_up(public_id, error)
 
 
