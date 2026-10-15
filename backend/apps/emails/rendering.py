@@ -87,6 +87,11 @@ def validate_template(kind: str, subject: str, body: str) -> None:
                 params={"name": name},
             )
         )
+    if "\n" in subject or "\r" in subject:
+        # Una cabecera con saltos de línea hace fallar el envío de todos estos correos (RF-021).
+        problems.append(
+            ValidationError(_("The subject cannot contain line breaks."), code="subject_newline")
+        )
     for address in _ADDRESS.findall(text):
         if not _is_application_address(address):
             problems.append(

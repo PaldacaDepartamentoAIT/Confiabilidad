@@ -287,3 +287,18 @@ def test_the_report_blocks_differ_by_language() -> None:
     blocks = {rendering.report_block(locale) for locale in ("es", "pt-BR", "en")}
 
     assert len(blocks) == 3
+
+
+@pytest.mark.usefixtures("_frontend")
+@pytest.mark.parametrize("subject", ["Aviso\nX-Extra: 1", "Aviso\r\nX-Extra: 1", "Aviso\r"])
+def test_a_subject_with_line_breaks_is_rejected_with_the_other_problems(subject: str) -> None:
+    with pytest.raises(ValidationError) as error:
+        rendering.validate_template("account_exists", subject, "{{ foo }}")
+
+    codes = {problem.code for problem in error.value.error_list}
+    assert {"subject_newline", "template_value_not_allowed"} <= codes
+
+
+@pytest.mark.usefixtures("_frontend")
+def test_the_body_still_admits_line_breaks() -> None:
+    rendering.validate_template("account_exists", "Aviso", "Hola, {{ name }}:\r\n\nLínea dos.")

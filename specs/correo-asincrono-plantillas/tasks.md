@@ -412,7 +412,7 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   o por «sin decisiones fuera del plan»; el historial de la spec registra su aprobación del
   2026-10-14.
 
-- [ ] T-035 Corrección: el asunto de una plantilla no admite saltos de línea
+- [x] T-035 Corrección: el asunto de una plantilla no admite saltos de línea
   Tipo: corrección | Origen: 2.ª validación de RF-018 (cambio de RF-021)
   RF: RF-021 (D-07) | Depende de: — | Archivos: 2
   Archivos: `rendering.py`, `tests/test_rendering.py`.
