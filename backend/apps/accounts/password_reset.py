@@ -220,8 +220,10 @@ def complete(*, public_id: str, password: str) -> Completed | CompleteRefusal:
 
 
 def purge_expired() -> int:
-    _total, by_model = PasswordResetRequest.objects.expired().delete()
-    return by_model.get(PasswordResetRequest._meta.label, 0)
+    requests, _by_model = PasswordResetRequest.objects.expired().delete()
+    # Las tumbas también se borran al llegar su caducidad natural (D-15).
+    slots, _by_model = PhantomProcess.objects.expired().filter(purpose=_PURPOSE).delete()
+    return requests + slots
 
 
 def _owner_id(public_id: str) -> int | None:

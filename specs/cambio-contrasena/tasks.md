@@ -379,7 +379,7 @@ esquema, para que al final quede una sola migración (M-07).
   Decisiones: (1) El aviso se encola tras fijar la contraseña y antes de borrar la solicitud; un test
   hace fallar ese borrado y comprueba que no quedan ni el aviso ni la contraseña nueva. [Cierto]
 
-- [ ] T-031 La purga borra también las plazas de cambio de contraseña
+- [x] T-031 La purga borra también las plazas de cambio de contraseña
   RF: RF-011 | Depende de: T-024 | Archivos: 2
   Archivos: `password_reset.py`, `tests/test_password_reset_service.py`.
   Hecho cuando: `purge_expired` borra las solicitudes y las plazas `password_reset` caducadas

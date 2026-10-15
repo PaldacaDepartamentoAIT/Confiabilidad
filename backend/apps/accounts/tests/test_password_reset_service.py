@@ -593,6 +593,42 @@ def test_complete_is_not_found_if_the_request_changed_before_locking(
     assert _account().check_password(DEFAULT_PASSWORD)
 
 
+def _aged_slot(email: str, purpose: str = "password_reset", **minutes_ago: int) -> str:
+    slot = PhantomProcess(
+        purpose=purpose,
+        email=email,
+        public_id=f"slot-{email}",
+        code_hash="",
+        code_expires_at=timezone.now() + timedelta(minutes=15),
+    )
+    slot.save()
+    PhantomProcess.objects.filter(pk=slot.pk).update(
+        **{field: timezone.now() - timedelta(minutes=m) for field, m in minutes_ago.items()}
+    )
+    return slot.public_id
+
+
+def test_purge_also_deletes_the_expired_password_reset_slots_and_tombstones() -> None:
+    fresh = _aged_slot("a@x.com")
+    in_grace = _aged_slot("b@x.com", code_expires_at=10)
+    _aged_slot("c@x.com", code_expires_at=16)
+    _aged_slot("d@x.com", created_at=61)
+    registration_slot = _aged_slot("e@x.com", purpose="registration", created_at=61)
+    make_user(email="f@x.com")
+    tombstone = _started("f@x.com").public_id
+    User.objects.filter(email="f@x.com").delete()
+    PhantomProcess.objects.filter(public_id=tombstone).update(
+        created_at=timezone.now() - timedelta(minutes=61)
+    )
+
+    assert password_reset.purge_expired() == 3
+    assert set(PhantomProcess.objects.values_list("public_id", flat=True)) == {
+        fresh,
+        in_grace,
+        registration_slot,
+    }
+
+
 def test_purge_deletes_only_expired_requests_and_no_pending_registrations() -> None:
     for email in ("alive@x.com", "grace@x.com", "lifetime@x.com"):
         make_user(email=email)
