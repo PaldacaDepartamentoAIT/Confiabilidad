@@ -5,6 +5,7 @@ from unittest import mock
 
 import pytest
 from django.db import connection
+from django.db.models import F
 from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 
@@ -300,3 +301,109 @@ def test_the_newest_request_wins_even_if_the_tasks_run_out_of_order(has_account:
     assert list(OutboundEmail.objects.values_list("public_id", flat=True)) == (
         [""] if has_account else [newer]
     )
+
+
+def _pass(minutes: int) -> None:
+    # Simula el paso del tiempo moviendo hacia atrás todas las fechas guardadas (D-07).
+    shift = timedelta(minutes=minutes)
+    for model in (PendingRegistration, PhantomProcess):
+        model.objects.update(
+            created_at=F("created_at") - shift, code_expires_at=F("code_expires_at") - shift
+        )
+
+
+def _start(has_account: bool) -> str:
+    if has_account and not User.objects.exists():
+        make_user(email=EMAIL)
+    return registration.start(email=EMAIL, **DEFAULT_PROFILE).public_id
+
+
+def _attempts_before_resolving(has_account: bool) -> list[object]:
+    public_id = _start(has_account)
+    before = [_verify(public_id) for _ in range(5)]
+    registration.resolve_registration(public_id)
+    return [*before, _verify(public_id)]
+
+
+def _delayed_resolution(has_account: bool) -> list[object]:
+    public_id = _start(has_account)
+    _pass(4)
+    registration.resolve_registration(public_id)
+    _pass(12)
+    return [_verify(public_id)]
+
+
+def _repeated_with_time_passing(has_account: bool) -> list[object]:
+    first = _start(has_account)
+    registration.resolve_registration(first)
+    _pass(25)
+    _resend(first)
+    registration.reissue_code(first)
+    _pass(25)
+    second = _start(has_account)
+    registration.resolve_registration(second)
+    _pass(11)
+    return [_verify(second), _resend(second)]
+
+
+def _repeated_after_the_first_expired(has_account: bool) -> list[object]:
+    first = _start(has_account)
+    registration.resolve_registration(first)
+    _pass(70)
+    second = _start(has_account)
+    registration.resolve_registration(second)
+    _pass(10)
+    return [_verify(second)]
+
+
+def _keep_alive(public_id: str, every: int, times: int) -> None:
+    # Reenvía el código cada pocos minutos para que solo la vida máxima pueda caducar el proceso.
+    for _ in range(times):
+        _pass(every)
+        _resend(public_id)
+        registration.reissue_code(public_id)
+
+
+def _delayed_resolution_then_lifetime(has_account: bool) -> list[object]:
+    public_id = _start(has_account)
+    _pass(4)
+    registration.resolve_registration(public_id)
+    _keep_alive(public_id, every=12, times=4)
+    _pass(10)
+    return [_verify(public_id)]
+
+
+def _unresolved_older_request_then_lifetime(has_account: bool) -> list[object]:
+    _start(has_account)
+    _pass(20)
+    second = _start(has_account)
+    registration.resolve_registration(second)
+    _keep_alive(second, every=10, times=4)
+    _pass(5)
+    return [_verify(second)]
+
+
+TIMED: list[tuple[Callable[[bool], list[object]], list[object]]] = [
+    (_delayed_resolution_then_lifetime, ["wrong_code"]),
+    (_unresolved_older_request_then_lifetime, ["wrong_code"]),
+    (_attempts_before_resolving, [*["wrong_code"] * 5, "wrong_code"]),
+    (_delayed_resolution, ["wrong_code"]),
+    (_repeated_with_time_passing, ["expired", registration.ResendRefusal.EXPIRED]),
+    (_repeated_after_the_first_expired, ["wrong_code"]),
+]
+
+
+@pytest.mark.parametrize("has_account", [False, True], ids=["real", "phantom"])
+@pytest.mark.parametrize(
+    ("sequence", "expected"),
+    [
+        pytest.param(sequence, expected, id=sequence.__name__.strip("_"))
+        for sequence, expected in TIMED
+    ],
+)
+def test_a_phantom_counts_attempts_and_time_like_a_registration(
+    has_account: bool,
+    sequence: Callable[[bool], list[object]],
+    expected: list[object],
+) -> None:
+    assert sequence(has_account) == expected

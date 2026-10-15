@@ -382,7 +382,7 @@ fallar sus tests.
   resuelta no puede convivir con una anterior pendiente, porque al resolverse la habría borrado.
   [Cierto] (2) Las plazas anteriores se borran estén o no resueltas. [Cierto]
 
-- [ ] T-041 Corrección: la plaza con cuenta queda como un registro recién emitido
+- [x] T-041 Corrección: la plaza con cuenta queda como un registro recién emitido
   Tipo: corrección | Origen: validación de RF-025
   RF: RF-025 (D-16) | Depende de: T-040 | Archivos: 2
   Archivos: `registration.py`, `tests/test_phantom_equivalence.py`.
@@ -393,6 +393,10 @@ fallar sus tests.
   (`wrong_code`); `start` en t=0, `resend` en t=25 y `start` en t=50, con `verify` y `resend` en t=61
   (`expired`); una plaza anterior caducada no transmite su alta; las consultas siguen siendo iguales;
   suite verde.
+  Decisiones: (1) Solo una plaza anterior **ya resuelta** y vigente transmite su alta: una sin
+  resolver equivale a no tener registro todavía. [Cierto] (2) El paso del tiempo se simula moviendo
+  hacia atrás todas las fechas guardadas a la vez (D-07). [Cierto] (3) Mutante equivalente: no poner
+  `code_validated_at` a nulo; una plaza nunca llega validada a la resolución. [Cierto]
 
 - [ ] T-042 Corrección: verificar, reenviar y completar bloquean primero la plaza
   Tipo: corrección | Origen: revisión de la validación (RF-025; mismo fallo que RF-017 C de

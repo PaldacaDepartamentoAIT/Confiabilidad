@@ -198,12 +198,12 @@ def resolve_registration(public_id: str) -> None:
         if same_email.filter(pk__gt=slot.pk, payload__isnull=False).exists():
             slot.delete()
             return
+        previous = same_email.filter(pk__lt=slot.pk, payload__isnull=True).order_by("-pk").first()
         same_email.filter(pk__lt=slot.pk).delete()
         PendingRegistration.objects.expired().filter(email__iexact=email).delete()
         account = User.objects.filter(email__iexact=email).first()
         if account is not None:
-            slot.payload = None
-            slot.save(update_fields=["payload"])
+            _leave_as_issued(slot, previous)
             if account.is_active:
                 outbox.enqueue(
                     kind="account_exists",
@@ -224,6 +224,28 @@ def resolve_registration(public_id: str) -> None:
             public_id=public_id,
             code=code,
         )
+
+
+def _leave_as_issued(slot: PhantomProcess, previous: PhantomProcess | None) -> None:
+    # Queda como un registro recién emitido (D-16): intentos y plazos desde la resolución, y el alta
+    # de la plaza vigente que reemplaza, como un registro repetido conserva la suya (RF-005).
+    slot.payload = None
+    slot.failed_attempts = 0
+    slot.code_validated_at = None
+    slot.code_expires_at = timezone.now() + conf.code_ttl()
+    if previous is not None and not previous.is_expired:
+        slot.created_at = previous.created_at
+    else:
+        slot.created_at = timezone.now()
+    slot.save(
+        update_fields=[
+            "payload",
+            "failed_attempts",
+            "code_validated_at",
+            "code_expires_at",
+            "created_at",
+        ]
+    )
 
 
 def _register_or_repeat(
