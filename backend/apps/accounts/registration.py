@@ -74,16 +74,25 @@ def _queue_resolution(public_id: str) -> None:
         logger.warning("Could not queue the start of a registration; the sweep will retry it.")
 
 
+def _locked_process(public_id: str) -> PendingRegistration | PhantomProcess | None:
+    # Consulta las dos tablas siempre, para hacer el mismo trabajo con plaza o sin ella (D-14).
+    pending = PendingRegistration.objects.select_for_update().filter(public_id=public_id).first()
+    slot = (
+        PhantomProcess.objects.select_for_update()
+        .filter(public_id=public_id, purpose=_PURPOSE)
+        .first()
+    )
+    return pending or slot
+
+
 def verify(*, public_id: str, code: str) -> VerifyResult:
     with transaction.atomic():
-        pending = (
-            PendingRegistration.objects.select_for_update().filter(public_id=public_id).first()
-        )
-        if pending is None:
+        process = _locked_process(public_id)
+        if process is None:
             return VerifyResult.NOT_FOUND
-        if pending.is_expired:
+        if process.is_expired:
             return VerifyResult.EXPIRED
-        return processes.check_code(pending, _PURPOSE, code)
+        return processes.check_code(process, _PURPOSE, code)
 
 
 @dataclass(frozen=True)
@@ -127,14 +136,12 @@ class CompleteRefusal(StrEnum):
 
 def complete(*, public_id: str, password: str) -> Completed | CompleteRefusal:
     with transaction.atomic():
-        pending = (
-            PendingRegistration.objects.select_for_update().filter(public_id=public_id).first()
-        )
+        pending = _locked_process(public_id)
         if pending is None:
             return CompleteRefusal.NOT_FOUND
         if pending.is_expired:
             return CompleteRefusal.EXPIRED
-        if pending.code_validated_at is None:
+        if pending.code_validated_at is None or isinstance(pending, PhantomProcess):
             return CompleteRefusal.CODE_NOT_VERIFIED
         if User.objects.filter(email__iexact=pending.email).exists():
             pending.delete()

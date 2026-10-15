@@ -307,7 +307,7 @@ fallar sus tests.
   (4) Si la cola no responde al confirmar, `start` responde igual y deja un aviso en el log; el
   barrido de T-033 recoge la plaza (D-15). [Cierto]
 
-- [ ] T-035 Verificar y completar buscando en las dos tablas
+- [x] T-035 Verificar y completar buscando en las dos tablas
   RF: RF-009, RF-010, RF-011, RF-012, RF-025 (D-12, D-14, CF-5) | Depende de: T-034 | Archivos: 2
   Archivos: `registration.py`, `tests/test_phantom_equivalence.py`.
   Hecho cuando: para un correo con cuenta, la misma secuencia de `verify` (con el bloqueo al quinto
@@ -315,6 +315,11 @@ fallar sus tests.
   cuyo código nunca se acierta; una solicitud nueva del mismo correo deja la plaza anterior como
   desconocida, igual que a un registro real repetido; `verify` y `complete` hacen el mismo número
   de consultas en los dos casos; suite verde.
+  Decisiones: (1) `complete` rechaza una plaza con `CODE_NOT_VERIFIED` aunque estuviera marcada como
+  validada: no tiene datos detrás con los que crear la cuenta; un test lo fija. [Cierto] (2) La plaza
+  solo se busca con el propósito del registro: la de otro propósito responde «desconocido». [Cierto]
+  (3) El número de consultas se compara midiendo los dos casos en el mismo test, no con una cifra
+  fija. [Cierto]
 
 - [ ] T-036 Reenvío en dos tiempos
   RF: RF-016, RF-023, RF-025 (D-13, M-09) | Depende de: T-035 | Archivos: 5
