@@ -126,8 +126,9 @@ Secretos:
   instalaciones locales, decisiones de infraestructura) se anota como checklist en vez de
   dejarla solo en la conversación:
   - si es necesaria para completar una feature, en `specs/<feature>/HUMAN_TODO.md` (se crea con la
-    primera acción; una acción que nace en una feature va en la suya aunque afecte a otra, y la
-    otra la referencia sin duplicarla);
+    primera acción). Si se resuelve cambiando otra feature, va en la de esa otra, y la feature
+    donde nació la referencia sin duplicarla; si la necesitan varias, va en la primera que la
+    necesitó y las demás la referencian;
   - si no pertenece a ninguna spec (por ejemplo, una rama `chore/` sin feature), en el
     `HUMAN_TODO.md` de la raíz.
 - Respetar los límites de carpetas: no compartir código entre backend y frontend
