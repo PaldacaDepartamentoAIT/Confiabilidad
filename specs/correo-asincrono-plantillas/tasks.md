@@ -347,11 +347,14 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   del proyecto, y pasa la cuenta a `enqueue`, que elige su idioma. [Cierto] (2) Solo admite los
   tres avisos sin acción propia; los demás los provoca su operación (M-10). [Cierto]
 
-- [ ] T-029 Un correo sale por el worker real
+- [x] T-029 Un correo sale por el worker real
   RF: RF-002 (CF-1) | Depende de: T-013 | Archivos: 1
   Archivos: `tests/test_worker.py`.
   Hecho cuando: con el worker de Celery real del fixture de `core` y el backend en memoria, un aviso
   encolado y confirmado acaba entregado y su fila borrada; suite verde.
+  Decisiones: (1) El fixture del worker real se copia del de `core` en el propio archivo, porque los
+  fixtures de `apps/core/tests/conftest.py` no llegan a `apps/emails`. [Cierto] (2) El test pasa sin
+  código nuevo (la entrega es de T-013); un mutante que renombra la tarea lo hace fallar. [Cierto]
 
 - [ ] T-030 Documentación operativa
   RF: — (CF-4) | Depende de: T-023 | Archivos: 1
