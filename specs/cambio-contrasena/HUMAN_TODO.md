@@ -18,6 +18,8 @@ contraseña, se comparte con `procesos-pendientes` y su entrada está en
   contenedor (703 tests). Falta construirla con el `Dockerfile` real, sin proxy. En tu máquina:
   ```bash
   docker compose -f docker/docker-compose.yml build backend
+  ```
+  ```bash
   docker compose -f docker/docker-compose.yml run --rm backend python manage.py migrate
   ```
   Deberías ver `accounts.0006_passwordresetrequest... OK`.
