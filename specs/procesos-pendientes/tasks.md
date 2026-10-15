@@ -352,7 +352,7 @@ fallar sus tests.
   plaza, el identificador sin registro detrás y el recorrido completo por consola leyendo el código
   en la salida del worker, con cada comando en su bloque.
 
-- [ ] T-039 Corrección: la tarea no resuelve una plaza pasada la ventana
+- [x] T-039 Corrección: la tarea no resuelve una plaza pasada la ventana
   Tipo: corrección | Origen: validación de RF-024
   RF: RF-024 (D-15) | Depende de: — | Archivos: 2
   Archivos: `tasks.py`, `tests/test_registration_background.py`.
@@ -363,6 +363,10 @@ fallar sus tests.
   crea registro pendiente ni encola correo, vacía el `payload` y deja «gave up» en el log, también en
   un primer intento; las dos tareas de resolución no tienen tope de reintentos; los tests de reintento
   dentro de la ventana siguen en verde; suite verde.
+  Decisiones: (1) Una ejecución sobre una plaza inexistente o ya resuelta no hace nada ni deja «gave
+  up» en el log. [Cierto] (2) Si la ventana acaba durante un intento que falla, se abandona sin
+  reintentar. [Cierto] (3) El cambio en `tasks.py` también rige el cambio de contraseña, que comparte
+  `_resolve_or_retry`. [Cierto]
 
 - [ ] T-040 Corrección: manda la petición más reciente al resolver
   Tipo: corrección | Origen: validación de RF-025 (y RF-003 de `cambio-contrasena`)

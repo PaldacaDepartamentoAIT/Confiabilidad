@@ -22,17 +22,22 @@ _FIRST_WAIT_SECONDS = 15
 _MAX_WAIT_SECONDS = 60
 
 
-@shared_task(bind=True, name="apps.accounts.tasks.resolve_registration")  # type: ignore[untyped-decorator]
+# Sin tope de reintentos de Celery: el único límite es la ventana (D-15).
+@shared_task(bind=True, max_retries=None, name="apps.accounts.tasks.resolve_registration")  # type: ignore[untyped-decorator]
 def resolve_registration(self: Any, public_id: str) -> None:
     _resolve_or_retry(self, registration.resolve_registration, public_id)
 
 
-@shared_task(bind=True, name="apps.accounts.tasks.resolve_password_reset")  # type: ignore[untyped-decorator]
+@shared_task(bind=True, max_retries=None, name="apps.accounts.tasks.resolve_password_reset")  # type: ignore[untyped-decorator]
 def resolve_password_reset(self: Any, public_id: str) -> None:
     _resolve_or_retry(self, password_reset.resolve_password_reset, public_id)
 
 
 def _resolve_or_retry(task: Any, resolve: Callable[[str], None], public_id: str) -> None:
+    # La ventana se mira antes de resolver: un reintento o una tarea atendida tarde no resuelve.
+    if _unresolved_after_window(public_id):
+        _give_up(public_id, None)
+        return
     try:
         resolve(public_id)
     except Exception as error:
@@ -61,6 +66,11 @@ def sweep_unresolved() -> int:
     for slot in unresolved.filter(created_at__lte=limit):
         _give_up(slot.public_id, None)
     return queued
+
+
+def _unresolved_after_window(public_id: str) -> bool:
+    slot = PhantomProcess.objects.filter(public_id=public_id, payload__isnull=False).first()
+    return slot is not None and timezone.now() >= slot.created_at + conf.start_retry_window()
 
 
 def _within_window(public_id: str) -> bool:

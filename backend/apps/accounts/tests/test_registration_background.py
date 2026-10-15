@@ -241,6 +241,66 @@ def test_a_failure_after_the_window_leaves_a_phantom_and_logs_it(
     assert "gave up" in caplog.text
 
 
+@pytest.mark.parametrize("retries", [0, 2], ids=["first-attempt", "retry"])
+def test_an_execution_after_the_window_does_not_resolve_and_logs_it(
+    retries: int, caplog: Any
+) -> None:
+    slot = _slot()
+    _age(slot, 6)
+
+    result = tasks.resolve_registration.apply(args=["slot_1"], retries=retries)
+
+    assert result.successful()
+    assert not PendingRegistration.objects.exists()
+    assert not OutboundEmail.objects.exists()
+    assert PhantomProcess.objects.get(public_id="slot_1").payload is None
+    assert "gave up" in caplog.text
+
+
+def test_a_failure_when_the_window_ends_during_the_attempt_gives_up(
+    monkeypatch: pytest.MonkeyPatch, caplog: Any
+) -> None:
+    slot = _slot()
+
+    def fail_late(public_id: str) -> None:
+        _age(slot, 6)
+        raise OSError("db")
+
+    monkeypatch.setattr(registration, "resolve_registration", fail_late)
+
+    assert tasks.resolve_registration.apply(args=["slot_1"]).successful()
+    assert PhantomProcess.objects.get(public_id="slot_1").payload is None
+    assert "gave up: OSError('db')" in caplog.text
+
+
+def test_an_execution_within_the_window_still_resolves() -> None:
+    slot = _slot()
+    _age(slot, 4)
+
+    tasks.resolve_registration.apply(args=["slot_1"])
+
+    assert PendingRegistration.objects.filter(public_id="slot_1").exists()
+
+
+@pytest.mark.parametrize("public_id", ["unknown", "resolved"])
+def test_an_execution_for_a_missing_or_resolved_slot_does_nothing(
+    public_id: str, caplog: Any
+) -> None:
+    slot = _slot("resolved")
+    PhantomProcess.objects.filter(pk=slot.pk).update(payload=None)
+    _age(slot, 6)
+
+    assert tasks.resolve_registration.apply(args=[public_id]).successful()
+
+    assert "gave up" not in caplog.text
+    assert not OutboundEmail.objects.exists()
+
+
+def test_the_resolution_tasks_retry_with_no_limit_but_the_window() -> None:
+    assert tasks.resolve_registration.max_retries is None
+    assert tasks.resolve_password_reset.max_retries is None
+
+
 @override_settings(REGISTRATION_START_RETRY_MINUTES=10)
 def test_the_window_follows_the_settings(monkeypatch: pytest.MonkeyPatch, retry: mock.Mock) -> None:
     slot = _slot()
