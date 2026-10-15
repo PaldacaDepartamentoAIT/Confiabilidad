@@ -248,7 +248,7 @@ fallar sus tests.
   `REGISTRATION_START_RETRY_MINUTES` con `override_settings` y se lee de la variable de entorno;
   suite verde.
 
-- [ ] T-032 Resolver una plaza fuera de la respuesta
+- [x] T-032 Resolver una plaza fuera de la respuesta
   RF: RF-004, RF-005, RF-006, RF-008, RF-017, RF-025 (D-16, M-09) | Depende de: T-029 | Archivos: 2
   Archivos: `registration.py`, `tests/test_registration_background.py`.
   Hecho cuando, llamando a `resolve_registration(public_id)` sobre una plaza sin resolver:
@@ -263,6 +263,12 @@ fallar sus tests.
   - una plaza ya resuelta o inexistente no hace nada; un choque de unicidad del correo se trata
     como registro repetido;
   - suite verde.
+  Decisiones: (1) `processes.issue_code` acepta un `public_id` opcional para emitir el código con el
+  identificador de la plaza; cambio fuera de los archivos de la tarea, en el módulo común. [Cierto]
+  (2) El correo del registro repetido va en el idioma de la solicitud nueva, con el nombre guardado
+  (RF-005 conserva los datos; RF-013 de correo pide el idioma de la petición). [Probable]
+  (3) Si la cuenta aparece entre la comprobación y el alta, `save()` lanza `ValidationError` y la
+  tarea de T-033 reintenta, que ya ve la cuenta. [Probable]
 
 - [ ] T-033 Tareas, reintentos y barrido de plazas sin resolver
   RF: RF-019, RF-024 (D-15, M-09) | Depende de: T-031, T-032 | Archivos: 3

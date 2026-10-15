@@ -8,9 +8,10 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 
 from apps.accounts import codes, processes
-from apps.accounts.models import PendingRegistration, User
+from apps.accounts.models import PendingRegistration, PhantomProcess, User
 from apps.accounts.processes import VerifyResult as VerifyResult
 from apps.accounts.validators import normalize_country, normalize_name
+from apps.emails import outbox
 
 _PURPOSE = codes.Purpose.REGISTRATION
 
@@ -148,6 +149,72 @@ def complete(*, public_id: str, password: str) -> Completed | CompleteRefusal:
         EmailAddress.objects.create(user=user, email=user.email, verified=True, primary=True)
         pending.delete()
         return Completed(user=user)
+
+
+def resolve_registration(public_id: str) -> None:
+    # Todo lo que depende de que el correo tenga cuenta, fuera de la respuesta (D-16).
+    with transaction.atomic():
+        slot = (
+            PhantomProcess.objects.select_for_update()
+            .filter(public_id=public_id, purpose=_PURPOSE, payload__isnull=False)
+            .first()
+        )
+        if slot is None:
+            return
+        email, data = slot.email, dict(slot.payload or {})
+        PhantomProcess.objects.filter(purpose=_PURPOSE, email=email).exclude(pk=slot.pk).delete()
+        PendingRegistration.objects.expired().filter(email__iexact=email).delete()
+        account = User.objects.filter(email__iexact=email).first()
+        if account is not None:
+            slot.payload = None
+            slot.save(update_fields=["payload"])
+            if account.is_active:
+                outbox.enqueue(
+                    kind="account_exists",
+                    recipient=account.email,
+                    locale=account.language,
+                    context={"name": account.name},
+                    account=account,
+                )
+            return
+        slot.delete()
+        pending, code = _register_or_repeat(public_id, email, data)
+        outbox.enqueue(
+            kind="registration_code",
+            recipient=pending.email,
+            locale=str(data["language"]),
+            context={"name": pending.name},
+            purpose=_PURPOSE,
+            public_id=public_id,
+            code=code,
+        )
+
+
+def _register_or_repeat(
+    public_id: str, email: str, data: dict[str, object]
+) -> tuple[PendingRegistration, str]:
+    existing = PendingRegistration.objects.filter(email__iexact=email).select_for_update().first()
+    if existing is None:
+        pending = PendingRegistration(
+            email=email,
+            name=str(data["name"]),
+            birthdate=date.fromisoformat(str(data["birthdate"])),
+            country=str(data["country"]),
+            language=str(data["language"]),
+        )
+        code = processes.issue_code(pending, _PURPOSE, public_id)
+        try:
+            with transaction.atomic():
+                pending.save()
+            return pending, code
+        except IntegrityError:
+            existing = (
+                PendingRegistration.objects.select_for_update().filter(email__iexact=email).get()
+            )
+    # Registro repetido (RF-005): conserva los datos y toma el identificador de la plaza.
+    code = processes.issue_code(existing, _PURPOSE, public_id)
+    existing.save(update_fields=processes.ISSUED_FIELDS)
+    return existing, code
 
 
 def purge_expired() -> int:
