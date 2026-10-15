@@ -1,5 +1,5 @@
 # Tareas: cambio-contrasena
-Estado: aprobado
+Estado: borrador
 
 Rutas relativas a `backend/apps/accounts/` salvo que se indique. "Suite verde" =
 `cd backend && pytest -q` + `mypy .` + `ruff check .` + `black --check .` sin errores. En cada
@@ -272,6 +272,93 @@ esquema, para que al final quede una sola migración (M-07).
   dirección principal, `complete` devuelve `Completed`, la dirección queda verificada y no principal
   y la otra sigue siendo la principal; ese mutante muere ejecutando el archivo completo; la suite
   completa sigue en verde.
+
+- [ ] T-024 Tumba que responde "caducada" al borrar la cuenta
+  RF: RF-010 (D-15, M-10) | Depende de: T-029 de `procesos-pendientes` | Archivos: 3
+  Archivos: `models.py`, `migrations/0009_phantom_answers_expired.py`,
+  `tests/test_password_reset_model.py`.
+  Hecho cuando: `PhantomProcess` tiene `answers_expired` (falso por defecto); al borrar una cuenta con
+  solicitud, también en un borrado masivo, queda una plaza `password_reset` con su `public_id`,
+  `code_expires_at`, `created_at` y `answers_expired = True`, y la solicitud se borra; una cuenta sin
+  solicitud no deja plaza; suite verde.
+
+- [ ] T-025 Resolver la petición fuera de la respuesta
+  RF: RF-002, RF-003, RF-004, RF-016, RF-017 (D-13, M-09) | Depende de: T-029 de
+  `procesos-pendientes` | Archivos: 2
+  Archivos: `password_reset.py`, `tests/test_password_reset_background.py`.
+  Hecho cuando, llamando a `resolve_password_reset(public_id)` sobre una plaza sin resolver: con una
+  cuenta activa crea la solicitud con el `public_id` de la plaza (o reemplaza la que tenga, con vida y
+  huella de la cuenta nuevas), borra la plaza y deja en la bandeja el correo con el código oculto en
+  el idioma de la petición; sin cuenta o con la cuenta inactiva, la plaza queda con `payload` vacío y
+  sin correo; borra antes las demás plazas `password_reset` del mismo correo; una plaza ya resuelta o
+  inexistente no hace nada; suite verde.
+
+- [ ] T-026 Tarea y barrido del cambio de contraseña
+  RF: RF-016 (D-13, M-09) | Depende de: T-025 y T-033 de `procesos-pendientes` | Archivos: 2
+  Archivos: `tasks.py`, `tests/test_password_reset_background.py`.
+  Hecho cuando: la tarea `apps.accounts.tasks.resolve_password_reset` llama a la resolución y se
+  reintenta dentro de la ventana compartida (`REGISTRATION_START_RETRY_MINUTES`); pasada la ventana,
+  la plaza queda sin solicitud y el fallo en el log; `sweep_unresolved()` también encola las plazas
+  `password_reset` sin resolver; suite verde.
+
+- [ ] T-027 Pedir el cambio en la respuesta solo con el identificador
+  RF: RF-002, RF-004, RF-013, RF-016 (D-06, D-13, M-05, M-06) | Depende de: T-026 | Archivos: 6
+  Archivos: `password_reset.py`, `management/commands/password_reset.py`, `tests/factories.py`,
+  `tests/test_password_reset_service.py`, `tests/test_password_reset_command.py`,
+  `tests/test_password_reset_sessions.py`.
+  Hecho cuando: `start` con un correo de formato válido crea la plaza, encola la resolución al
+  confirmar y devuelve solo el `public_id`, con el mismo resultado y el mismo número de consultas haya
+  o no cuenta elegible; con un formato inválido, lo rechaza sin crear plaza; `manage.py
+  password_reset start` admite `--language` y muestra solo el `public_id`, igual con y sin cuenta; los
+  tests que necesitan una solicitud real usan el ayudante `make_reset_request` de
+  `tests/factories.py`; suite verde.
+  Excepción: cambiar lo que devuelve `start` rompe a la vez los tests que lo llaman; el ajuste es
+  mecánico y no se puede repartir sin dejar la suite en rojo.
+
+- [ ] T-028 Verificar y completar en las dos tablas, con "caducada"
+  RF: RF-005, RF-008, RF-010, RF-014, RF-015, RF-017 (D-14, CF-6) | Depende de: T-024, T-027 |
+  Archivos: 4
+  Archivos: `password_reset.py`, `management/commands/password_reset.py`,
+  `tests/test_password_reset_equivalence.py`, `tests/test_password_reset_service.py`.
+  Hecho cuando: para un correo sin cuenta, la misma secuencia de `verify` (con el bloqueo al quinto
+  intento), `complete` y caducidad da los mismos resultados con la plaza que con una solicitud real
+  cuyo código nunca se acierta, con el mismo número de consultas; con la cuenta inactiva, con el
+  correo o la contraseña cambiados, o tras borrar la cuenta, `verify` y `complete` responden igual que
+  una solicitud caducada, y la reactivación vuelve a admitirlas; un identificador de registro, real o
+  plaza, no sirve aquí; el comando ya no tiene mensajes de cuenta inactiva o cambiada; suite verde.
+  Excepción: quitar `AccountRefusal` cambia a la vez el servicio, el comando que la muestra y los tests
+  que la esperaban.
+
+- [ ] T-029 Reenvío en dos tiempos
+  RF: RF-007, RF-013, RF-017 (D-13) | Depende de: T-028 y T-036 de `procesos-pendientes` |
+  Archivos: 4
+  Archivos: `password_reset.py`, `management/commands/password_reset.py`,
+  `tests/test_password_reset_equivalence.py`, `tests/test_password_reset_command.py`.
+  Hecho cuando: `resend` invalida el código vigente, pone los intentos a 0 y encola `reissue_code`,
+  sin devolver el código y con el mismo resultado y consultas para plaza y solicitud real; la tarea
+  emite el código y, si es real, encola su correo; `manage.py password_reset resend` muestra solo el
+  `public_id`; suite verde.
+  Excepción: el reenvío cambia a la vez el servicio, el comando que lo muestra y sus tests.
+
+- [ ] T-030 Aviso de contraseña restablecida al completar
+  RF: RF-009 (D-16) | Depende de: T-028 | Archivos: 2
+  Archivos: `password_reset.py`, `tests/test_password_reset_service.py`.
+  Hecho cuando: completar deja en la bandeja un `password_reset_done` a la cuenta, en su idioma y con
+  su nombre; si la transacción falla (por ejemplo, contraseña inválida), no queda ningún aviso; suite
+  verde.
+
+- [ ] T-031 La purga borra también las plazas de cambio de contraseña
+  RF: RF-011 | Depende de: T-024 | Archivos: 2
+  Archivos: `password_reset.py`, `tests/test_password_reset_service.py`.
+  Hecho cuando: `purge_expired` borra las solicitudes y las plazas `password_reset` caducadas
+  (tumbas incluidas), las cuenta, y no toca las plazas de registro ni las vigentes; suite verde.
+
+- [ ] T-032 Documentación del cambio de contraseña con correo
+  RF: — (CF-4, CF-5) | Depende de: T-029, T-030, T-031 | Archivos: 2
+  Archivos: `specs/cambio-contrasena/resumen.md`, `HUMAN_TODO.md` (rutas desde la raíz).
+  Hecho cuando: el resumen explica la plaza, "caducada" en vez de los rechazos propios, la tumba y el
+  recorrido por consola leyendo el código en la salida del worker; la entrada de `HUMAN_TODO.md`
+  "Neutralizar 'sin cuenta elegible'" pasa a pedir solo el mensaje neutro de la API.
 
 ## RF sin tarea
 Ninguno.
