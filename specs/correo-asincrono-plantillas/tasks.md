@@ -448,7 +448,7 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   código, `last_error` y el log lo llevan sustituido por `[code]`; el resto del error se conserva;
   ninguna columna de la fila contiene el código tras el fallo; suite verde.
 
-- [ ] T-038 Resumen tras la 2.ª validación
+- [x] T-038 Resumen tras la 2.ª validación
   RF: — (CF-5) | Depende de: T-035…T-037 | Archivos: 1
   Archivos: `specs/correo-asincrono-plantillas/resumen.md` (en la raíz).
   Hecho cuando: el resumen describe la validación de enlaces tal como queda (sin afirmar que cubre

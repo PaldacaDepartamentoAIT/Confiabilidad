@@ -17,11 +17,19 @@ desde el panel de administración, sin frontend ni API.
 - **Plantillas editables en el panel** (`/admin/`, *Email templates*), solo por superusuarios y por el
   grupo «Soporte técnico» (migración `0003`). Usan `{{ name }}` y, en los correos con código,
   `{{ code }}`, `{{ link }}` y `{{ expires_in }}`, que son obligatorios. Al guardar se
-  rechazan las variables que no admite su tipo, cualquier otra sintaxis de plantilla y cualquier
-  dirección que un cliente de correo pueda convertir en enlace hacia un dominio que no es el de la
-  aplicación: con esquema (`https://`, `ftp://`), con `www.`, un dominio suelto (`evil.com/login`) o
-  el dominio de una dirección de correo. Un nombre con partes de una sola letra (`S.A.`) no cuenta
-  como dirección. Cada cambio queda en el historial con el texto anterior, el autor y la fecha;
+  rechazan las variables que no admite su tipo, cualquier otra sintaxis de plantilla, un asunto con
+  saltos de línea y las direcciones hacia un dominio que no es el de la aplicación, juzgadas como
+  las abriría el navegador:
+  - con esquema (`https://`, `ftp://`, `https:/`), con `www.` o como dominio suelto
+    (`evil.com/login`), también con letras no latinas (`пример.рф`) o con el punto `。`;
+  - IP sueltas (`1.2.3.4/login`) y el dominio de una dirección de correo (`soporte@evil.com`);
+  - cualquier dirección con un usuario delante del dominio (`evil.com@app…`, `evil.com\@app…`,
+    `evil.com＠app…`), aunque lleve a la aplicación, porque solo sirve para disfrazar el enlace;
+  - una dirección que no se puede analizar (`https://[evil.com`) se rechaza como problema de la
+    plantilla, sin error del servidor.
+
+  Un nombre con partes de una sola letra (`S.A.`) no cuenta como dirección; uno con partes de dos
+  letras (`EE.UU.`) sí, y hay que reescribirlo. Cada cambio queda en el historial con el texto anterior, el autor y la fecha;
   desde la migración `0004`, también el primer cambio de cada plantilla instalada, porque el texto
   inicial queda registrado al instalarla. Las plantillas no se pueden crear ni borrar.
 - **Bloque fijo de reporte** en todos los avisos («Si no fuiste tú, escríbenos a…»), que añade el
@@ -46,7 +54,8 @@ desde el panel de administración, sin frontend ni API.
   emails*) hasta que soporte los borra; los entregados se borran.
 - **El código nunca se guarda en claro**: en la bandeja va oculto con una máscara HMAC
   (`EMAIL_CODE_SECRET`) y se recupera solo al entregar. Si el código ya no sirve (se validó, se
-  reemplazó o caducó), el correo se descarta sin enviarse. Un fallido no conserva ni la máscara.
+  reemplazó o caducó), el correo se descarta sin enviarse. Un fallido no conserva ni la máscara, y
+  si el error del proveedor cita el código, se guarda sustituido por `[code]`.
 - **Tope del aviso «ya tienes cuenta»**: como mucho uno por cuenta cada
   `EMAIL_ACCOUNT_EXISTS_WINDOW_MINUTES` (60 min).
 - **Proveedor por configuración**: sin `EMAIL_BACKEND`, los correos completos salen por la consola
@@ -215,6 +224,10 @@ Requisitos: Docker y `main` actualizado. En el VPS sigue *Actualizar* y *Migraci
    Deberías ver todos los tests en verde y `Required test coverage of 80% reached`.
 
 ### Límites conocidos
+- **La detección de enlaces cubre los disfraces conocidos, no todos**: se probaron los que
+  encontraron dos validaciones independientes (barra invertida, `＠`, dominios no latinos, `。`, IP
+  sueltas, direcciones mal formadas). Un cliente de correo con reglas propias de autoenlace podría
+  convertir en enlace un texto que la validación no reconoce.
 - **Sin envío real probado**: en la sesión remota no hay salida SMTP; la entrega real con MXroute
   y el `PASS` de SPF, DKIM y DMARC se comprueban con los pasos 5 y 8b de `HUMAN_TODO.md`.
 - **Los pasos con Docker de esta sección no se ejecutaron en la sesión remota** (Docker Hub
