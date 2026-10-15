@@ -17,7 +17,13 @@ Deberías ver cada acción pendiente con su archivo y su línea.
 
 ## Pendiente
 
-Nada pendiente.
+- [ ] **Borrar la rama remota `claude/youthful-archimedes-lu4un5`.** Se renombró a
+  `refactor/human-todo-por-spec`, pero el entorno remoto no puede borrar ramas en GitHub (el
+  remoto corta la conexión). Las dos apuntaban al mismo commit al renombrarla, así que no se pierde
+  nada. Desde tu máquina:
+  ```bash
+  git push origin --delete claude/youthful-archimedes-lu4un5
+  ```
 
 ## Hecho
 
