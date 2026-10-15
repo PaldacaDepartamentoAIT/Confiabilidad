@@ -1,16 +1,18 @@
 from datetime import date, timedelta
 from typing import Any
+from unittest import mock
 
 import pytest
 from allauth.account.models import EmailAddress
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError
+from django.db import IntegrityError, connection
 from django.test import Client, override_settings
+from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 
 from apps.accounts import codes, registration
-from apps.accounts.models import PendingRegistration, User
-from apps.accounts.tests.factories import make_user
+from apps.accounts.models import PendingRegistration, PhantomProcess, User
+from apps.accounts.tests.factories import StartedWithCode, make_pending, make_user
 from apps.core import fingerprints
 
 pytestmark = pytest.mark.django_db
@@ -18,13 +20,92 @@ pytestmark = pytest.mark.django_db
 DATA: dict[str, Any] = {"name": "Ana García", "birthdate": date(1990, 5, 10), "country": "ES"}
 
 
-def _start(email: str = "ana@x.com", **overrides: Any) -> registration.Started:
-    result = registration.start(email=email, **{**DATA, **overrides})
+def _start(email: str = "ana@x.com", **overrides: Any) -> StartedWithCode:
+    return make_pending(email, **{**DATA, **overrides})
+
+
+def test_start_leaves_a_slot_with_the_data_and_returns_only_the_public_id() -> None:
+    before = timezone.now()
+    result = registration.start(
+        email=" Ana@X.com ",
+        name=" Ana García ",
+        birthdate=date(1990, 5, 10),
+        country="es",
+        language="pt_br",
+    )
+
+    assert result == registration.Started(public_id=result.public_id)
+    slot = PhantomProcess.objects.get()
+    assert (slot.public_id, slot.purpose, slot.email, slot.code_hash) == (
+        result.public_id,
+        PhantomProcess.Purpose.REGISTRATION,
+        "ana@x.com",
+        "",
+    )
+    assert slot.payload == {
+        "name": "Ana García",
+        "birthdate": "1990-05-10",
+        "country": "ES",
+        "language": "pt-BR",
+    }
+    assert (
+        before + timedelta(minutes=15)
+        <= slot.code_expires_at
+        <= timezone.now() + timedelta(minutes=15)
+    )
+    assert not PendingRegistration.objects.exists()
+
+
+def test_start_without_language_uses_the_default_one() -> None:
+    registration.start(email="ana@x.com", **DATA)
+
+    payload = PhantomProcess.objects.get().payload
+    assert payload is not None and payload["language"] == "es"
+
+
+def test_start_queues_the_resolution_once_committed(
+    django_capture_on_commit_callbacks: Any,
+) -> None:
+    with mock.patch("celery.current_app.send_task") as send_task:
+        with django_capture_on_commit_callbacks() as callbacks:
+            result = registration.start(email="ana@x.com", **DATA)
+        send_task.assert_not_called()
+        for callback in callbacks:
+            callback()
+
+    send_task.assert_called_once_with(
+        "apps.accounts.tasks.resolve_registration", args=[result.public_id]
+    )
+
+
+def test_start_succeeds_and_warns_when_the_queue_is_down(
+    django_capture_on_commit_callbacks: Any, caplog: pytest.LogCaptureFixture
+) -> None:
+    with mock.patch("celery.current_app.send_task", side_effect=ConnectionError("down")):
+        with django_capture_on_commit_callbacks(execute=True):
+            result = registration.start(email="ana@x.com", **DATA)
+
+    assert PhantomProcess.objects.get().public_id == result.public_id
+    assert any(record.levelname == "WARNING" for record in caplog.records)
+
+
+def _start_queries(email: str) -> list[str]:
+    with CaptureQueriesContext(connection) as queries:
+        result = registration.start(email=email, **DATA)
     assert isinstance(result, registration.Started)
-    return result
+    return [query["sql"].split(" ")[0] for query in queries.captured_queries]
 
 
-def test_start_stores_the_registration_and_returns_the_code_once() -> None:
+@pytest.mark.parametrize("is_active", [True, False])
+def test_start_does_the_same_work_whether_or_not_the_email_has_an_account(
+    is_active: bool,
+) -> None:
+    make_user(email="ana@x.com", is_active=is_active)
+
+    assert _start_queries("ANA@x.com") == _start_queries("bea@x.com")
+
+
+def test_resolved_registration_stores_the_code_only_as_a_hash() -> None:
     before = timezone.now()
     result = _start(" Ana@X.com ")
 
@@ -56,13 +137,17 @@ def test_code_lifetime_follows_settings() -> None:
 
 
 @pytest.mark.parametrize("is_active", [True, False])
-def test_start_with_account_returns_account_exists_and_stores_nothing(is_active: bool) -> None:
+def test_start_with_account_returns_a_public_id_and_stores_no_registration(
+    is_active: bool,
+) -> None:
     make_user(email="ana@x.com", is_active=is_active)
 
     result = registration.start(email="ANA@x.com", **DATA)
+    registration.resolve_registration(result.public_id)
 
-    assert result == registration.AccountExists()
+    assert isinstance(result, registration.Started)
     assert not PendingRegistration.objects.exists()
+    assert PhantomProcess.objects.get().public_id == result.public_id
 
 
 @pytest.mark.parametrize("has_account", [False, True])
@@ -76,7 +161,7 @@ def test_invalid_data_is_rejected_whether_or_not_the_email_has_an_account(
         registration.start(email="ana@x.com", **{**DATA, "country": "XX"})
 
     assert set(excinfo.value.error_dict) == {"country"}
-    assert not PendingRegistration.objects.exists()
+    assert not PhantomProcess.objects.exists()
 
 
 def test_malformed_email_is_rejected() -> None:
@@ -84,7 +169,7 @@ def test_malformed_email_is_rejected() -> None:
         registration.start(email="not-an-email", **DATA)
 
     assert set(excinfo.value.error_dict) == {"email"}
-    assert not PendingRegistration.objects.exists()
+    assert not PhantomProcess.objects.exists()
 
 
 def test_start_deletes_only_the_expired_registration_of_the_same_email() -> None:
@@ -137,13 +222,17 @@ def test_repeat_with_invalid_data_is_rejected_and_changes_nothing() -> None:
 
     assert set(excinfo.value.error_dict) == {"country"}
     assert PendingRegistration.objects.get().public_id == first.public_id
+    assert not PhantomProcess.objects.exists()
 
 
-def test_repeat_after_the_email_got_an_account_returns_account_exists() -> None:
+def test_repeat_after_the_email_got_an_account_keeps_the_first_registration() -> None:
     first = _start()
     make_user(email="ana@x.com")
 
-    assert registration.start(email="ana@x.com", **DATA) == registration.AccountExists()
+    again = registration.start(email="ana@x.com", **DATA)
+    registration.resolve_registration(again.public_id)
+
+    assert isinstance(again, registration.Started)
     assert PendingRegistration.objects.get().public_id == first.public_id
 
 
@@ -154,7 +243,7 @@ def test_conflict_not_caused_by_the_email_is_not_treated_as_a_repeat(
     monkeypatch.setattr("apps.accounts.registration.codes.generate_public_id", lambda: taken)
 
     with pytest.raises(IntegrityError):
-        registration.start(email="ana@x.com", **DATA)
+        make_pending("ana@x.com", **DATA)
 
     assert not PendingRegistration.objects.filter(email="ana@x.com").exists()
 
@@ -323,7 +412,7 @@ def test_resend_with_unknown_public_id_is_refused() -> None:
 GOOD_PASSWORD = "Kq7#mZ2!vR9p"
 
 
-def _verified(email: str = "ana@x.com") -> registration.Started:
+def _verified(email: str = "ana@x.com") -> StartedWithCode:
     started = _start(email)
     assert registration.verify(public_id=started.public_id, code=started.code) == "verified"
     return started

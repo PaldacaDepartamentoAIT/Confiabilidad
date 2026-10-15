@@ -10,7 +10,7 @@ from django.utils import timezone
 
 from apps.accounts import codes, password_reset, registration
 from apps.accounts.models import PasswordResetRequest, PendingRegistration, User
-from apps.accounts.tests.factories import DEFAULT_PASSWORD, make_user
+from apps.accounts.tests.factories import DEFAULT_PASSWORD, make_pending, make_user
 from apps.core import fingerprints
 
 pytestmark = pytest.mark.django_db
@@ -209,10 +209,7 @@ def test_verify_rejects_any_code_once_validated(user: User) -> None:
 
 
 def test_unknown_or_registration_public_ids_are_not_found(user: User) -> None:
-    pending = registration.start(
-        email="new@x.com", name="Nuevo", birthdate=date(1990, 1, 1), country="ES"
-    )
-    assert isinstance(pending, registration.Started)
+    pending = make_pending("new@x.com", name="Nuevo", birthdate=date(1990, 1, 1))
 
     assert password_reset.verify(public_id=pending.public_id, code=pending.code) == (
         VerifyResult.NOT_FOUND
@@ -467,10 +464,7 @@ def test_purge_deletes_only_expired_requests_and_no_pending_registrations() -> N
     PasswordResetRequest.objects.filter(user__email="lifetime@x.com").update(
         created_at=now - timedelta(minutes=61)
     )
-    pending = registration.start(
-        email="new@x.com", name="Nuevo", birthdate=date(1990, 1, 1), country="ES"
-    )
-    assert isinstance(pending, registration.Started)
+    make_pending("new@x.com", name="Nuevo", birthdate=date(1990, 1, 1))
     PendingRegistration.objects.update(created_at=now - timedelta(minutes=61))
 
     assert password_reset.purge_expired() == 2
@@ -537,10 +531,7 @@ def test_complete_is_all_or_nothing(user: User, monkeypatch: pytest.MonkeyPatch)
 
 def test_public_ids_do_not_cross_between_processes(user: User) -> None:
     reset = _validated()
-    pending = registration.start(
-        email="new@x.com", name="Nuevo", birthdate=date(1990, 1, 1), country="ES"
-    )
-    assert isinstance(pending, registration.Started)
+    pending = make_pending("new@x.com", name="Nuevo", birthdate=date(1990, 1, 1))
     assert registration.verify(public_id=pending.public_id, code=pending.code) == (
         VerifyResult.VERIFIED
     )

@@ -7,7 +7,7 @@ from django.core.management.base import CommandError
 from django.test import Client
 from django.utils import timezone
 
-from apps.accounts import codes, password_reset, registration
+from apps.accounts import codes, password_reset
 from apps.accounts.management.commands.password_reset import (
     ACCOUNT_ERRORS,
     COMPLETE_ERRORS,
@@ -15,7 +15,7 @@ from apps.accounts.management.commands.password_reset import (
     VERIFY_ERRORS,
 )
 from apps.accounts.models import PasswordResetRequest, PendingRegistration, User
-from apps.accounts.tests.factories import DEFAULT_PASSWORD, make_user
+from apps.accounts.tests.factories import DEFAULT_PASSWORD, make_pending, make_user
 from apps.core import fingerprints
 
 pytestmark = pytest.mark.django_db
@@ -201,10 +201,7 @@ def test_console_journey_sets_a_password_that_logs_in() -> None:
 def test_purge_does_not_delete_pending_registrations() -> None:
     _call("start", "--email", EMAIL)
     PasswordResetRequest.objects.update(created_at=timezone.now() - timedelta(hours=2))
-    pending = registration.start(
-        email="new@x.com", name="Nuevo", birthdate=date(1990, 1, 1), country="ES"
-    )
-    assert isinstance(pending, registration.Started)
+    pending = make_pending("new@x.com", name="Nuevo", birthdate=date(1990, 1, 1))
     PendingRegistration.objects.update(created_at=timezone.now() - timedelta(hours=2))
 
     assert _call("purge") == {"deleted": "1"}

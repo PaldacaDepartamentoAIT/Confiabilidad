@@ -285,7 +285,7 @@ fallar sus tests.
   (3) Si la cuenta aparece entre la comprobación y el alta, `save()` lanza `ValidationError` y la
   tarea de T-033 reintenta, que ya ve la cuenta. [Probable]
 
-- [ ] T-034 Empezar el registro en la respuesta solo con el identificador
+- [x] T-034 Empezar el registro en la respuesta solo con el identificador
   RF: RF-023, RF-024 (D-11, M-03, M-06) | Depende de: T-030, T-033 | Archivos: 7
   Archivos: `registration.py`, `management/commands/registration.py`, `tests/factories.py`,
   `tests/test_registration_service.py`, `tests/test_registration_command.py`,
@@ -300,6 +300,12 @@ fallar sus tests.
   Excepción: cambiar lo que devuelve `start` rompe a la vez todos los tests que lo llaman
   (`test_password_reset_command.py` incluido si lo usa); el ajuste es mecánico y no se puede repartir
   sin dejar la suite en rojo entre tareas.
+  Decisiones: (1) También se ajusta `tests/test_password_reset_command.py`, cubierto por la
+  Excepción. [Cierto] (2) `manage.py registration start` ya no muestra el código: en desarrollo se
+  lee en la salida del backend de consola cuando el worker resuelve la plaza. [Cierto] (3) El test de
+  «mismo trabajo» compara la secuencia de sentencias SQL de `start`, no solo su número. [Cierto]
+  (4) Si la cola no responde al confirmar, `start` responde igual y deja un aviso en el log; el
+  barrido de T-033 recoge la plaza (D-15). [Cierto]
 
 - [ ] T-035 Verificar y completar buscando en las dos tablas
   RF: RF-009, RF-010, RF-011, RF-012, RF-025 (D-12, D-14, CF-5) | Depende de: T-034 | Archivos: 2

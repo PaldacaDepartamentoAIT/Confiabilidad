@@ -1,26 +1,18 @@
-from datetime import date, timedelta
+from datetime import timedelta
 
 import pytest
 from django.utils import timezone
 
 from apps.accounts import email_checks, password_reset, registration
 from apps.accounts.models import PasswordResetRequest, PendingRegistration
-from apps.accounts.tests.factories import make_user
+from apps.accounts.tests.factories import StartedWithCode, make_pending, make_user
 from apps.emails import delivery
 
 pytestmark = pytest.mark.django_db
 
 
-def _start_registration() -> registration.Started | registration.AccountExists:
-    return registration.start(
-        email="ana@x.com", name="Ana", birthdate=date(1990, 5, 10), country="ES"
-    )
-
-
-def _registration() -> registration.Started:
-    started = _start_registration()
-    assert isinstance(started, registration.Started)
-    return started
+def _registration() -> StartedWithCode:
+    return make_pending()
 
 
 def _reset() -> password_reset.Started:
@@ -72,8 +64,7 @@ def test_an_expired_code_does_not_serve() -> None:
 
 def test_a_replaced_code_does_not_serve() -> None:
     first = _registration()
-    again = _start_registration()
-    assert isinstance(again, registration.Started)
+    again = _registration()
 
     assert email_checks.registration_code_expiry(first.public_id, first.code) is None
     assert email_checks.registration_code_expiry(again.public_id, again.code) is not None

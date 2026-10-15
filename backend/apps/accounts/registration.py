@@ -1,30 +1,30 @@
+import logging
 from dataclasses import dataclass
 from datetime import date
 from enum import StrEnum
 
 from allauth.account.models import EmailAddress
+from celery import current_app
 from django.contrib.auth.password_validation import validate_password
-from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
+from django.utils import timezone
 
-from apps.accounts import codes, processes
+from apps.accounts import codes, conf, processes
 from apps.accounts.models import PendingRegistration, PhantomProcess, User
 from apps.accounts.processes import VerifyResult as VerifyResult
 from apps.accounts.validators import normalize_country, normalize_name
-from apps.emails import outbox
+from apps.emails import locales, outbox
 
 _PURPOSE = codes.Purpose.REGISTRATION
+logger = logging.getLogger(__name__)
+
+
+RESOLVE_TASK = "apps.accounts.tasks.resolve_registration"
 
 
 @dataclass(frozen=True)
 class Started:
     public_id: str
-    code: str
-
-
-@dataclass(frozen=True)
-class AccountExists:
-    pass
 
 
 def validate_registration_data(*, email: str, name: str, birthdate: date, country: str) -> None:
@@ -41,34 +41,37 @@ def validate_registration_data(*, email: str, name: str, birthdate: date, countr
     )
 
 
-def start(*, email: str, name: str, birthdate: date, country: str) -> Started | AccountExists:
-    pending = PendingRegistration(email=email, name=name, birthdate=birthdate, country=country)
-    code = processes.issue_code(pending, _PURPOSE)
+def start(
+    *, email: str, name: str, birthdate: date, country: str, language: str = locales.DEFAULT
+) -> Started:
+    # La respuesta hace el mismo trabajo tenga o no cuenta el correo: valida los datos y deja una
+    # plaza que se resuelve fuera de la respuesta (D-11).
+    validate_registration_data(email=email, name=name, birthdate=birthdate, country=country)
+    slot = PhantomProcess(
+        purpose=_PURPOSE,
+        email=email,
+        public_id=codes.generate_public_id(),
+        code_hash="",
+        code_expires_at=timezone.now() + conf.code_ttl(),
+        payload={
+            "name": normalize_name(name),
+            "birthdate": birthdate.isoformat(),
+            "country": normalize_country(country),
+            "language": locales.normalize(language),
+        },
+    )
     with transaction.atomic():
-        PendingRegistration.objects.expired().filter(email__iexact=email.strip()).delete()
-        try:
-            with transaction.atomic():
-                pending.save()
-        except ValidationError as error:
-            if _is_account_conflict(error):
-                return AccountExists()
-            raise
-        except IntegrityError:
-            existing = (
-                PendingRegistration.objects.select_for_update()
-                .filter(email__iexact=pending.email)
-                .first()
-            )
-            if existing is None:
-                raise
-            return _reissue(existing)
-    return Started(public_id=pending.public_id, code=code)
+        slot.save()
+        transaction.on_commit(lambda: _queue_resolution(slot.public_id))
+    return Started(public_id=slot.public_id)
 
 
-def _reissue(pending: PendingRegistration) -> Started:
-    code = processes.issue_code(pending, _PURPOSE)
-    pending.save(update_fields=processes.ISSUED_FIELDS)
-    return Started(public_id=pending.public_id, code=code)
+def _queue_resolution(public_id: str) -> None:
+    # Si la cola no responde, el barrido de plazas la recoge (D-15).
+    try:
+        current_app.send_task(RESOLVE_TASK, args=[public_id])
+    except Exception:
+        logger.warning("Could not queue the start of a registration; the sweep will retry it.")
 
 
 def verify(*, public_id: str, code: str) -> VerifyResult:
@@ -209,8 +212,10 @@ def _register_or_repeat(
             return pending, code
         except IntegrityError:
             existing = (
-                PendingRegistration.objects.select_for_update().filter(email__iexact=email).get()
+                PendingRegistration.objects.select_for_update().filter(email__iexact=email).first()
             )
+            if existing is None:
+                raise
     # Registro repetido (RF-005): conserva los datos y toma el identificador de la plaza.
     code = processes.issue_code(existing, _PURPOSE, public_id)
     existing.save(update_fields=processes.ISSUED_FIELDS)
@@ -220,8 +225,3 @@ def _register_or_repeat(
 def purge_expired() -> int:
     _total, by_model = PendingRegistration.objects.expired().delete()
     return by_model.get(PendingRegistration._meta.label, 0)
-
-
-def _is_account_conflict(error: ValidationError) -> bool:
-    errors = error.error_dict
-    return set(errors) == {"email"} and all(e.code == "email_has_account" for e in errors["email"])

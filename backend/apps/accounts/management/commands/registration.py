@@ -10,6 +10,7 @@ from django.utils.translation import gettext_noop
 
 from apps.accounts import registration
 from apps.accounts.management.console import format_validation_error, show_code
+from apps.emails import locales
 
 VERIFY_ERRORS = {
     registration.VerifyResult.WRONG_CODE: gettext_noop("Wrong code."),
@@ -57,11 +58,12 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser: CommandParser) -> None:
         actions = parser.add_subparsers(dest="action", required=True)
-        start = actions.add_parser("start", help="Start a registration and show its code.")
+        start = actions.add_parser("start", help="Start a registration; the code arrives by email.")
         start.add_argument("--email", required=True)
         start.add_argument("--name", required=True)
         start.add_argument("--birthdate", required=True, type=_birthdate)
         start.add_argument("--country", required=True)
+        start.add_argument("--language", default=locales.DEFAULT, choices=locales.SUPPORTED)
         verify = actions.add_parser("verify", help="Check the code of a registration.")
         verify.add_argument("public_id")
         verify.add_argument("code")
@@ -84,12 +86,12 @@ class Command(BaseCommand):
                 name=options["name"],
                 birthdate=options["birthdate"],
                 country=options["country"],
+                language=options["language"],
             )
         except ValidationError as error:
             raise CommandError(format_validation_error(error)) from error
-        if isinstance(result, registration.AccountExists):
-            raise CommandError(_("An account with this email already exists."))
-        show_code(self.stdout, result.public_id, result.code)
+        # Lo mismo tenga o no cuenta el correo: el código llega por correo (RF-023).
+        self.stdout.write(f"public_id: {result.public_id}")
 
     def _verify(self, options: dict[str, Any]) -> None:
         result = registration.verify(public_id=options["public_id"], code=options["code"])
