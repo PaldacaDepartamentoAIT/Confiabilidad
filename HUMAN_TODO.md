@@ -112,6 +112,21 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
   `emails.0003_support_permissions... OK` y `accounts.0007_language... OK`. Reinicia después el
   `worker` y el `beat` para que carguen la tarea de entrega y el barrido de cada 30 segundos.
 
+- [ ] **Migrar y reiniciar Celery tras los cambios del 2026-10-14** (features
+  `procesos-pendientes` y `cambio-contrasena`). Añaden las migraciones `0008_phantomprocess` y
+  `0009_phantom_answers_expired` de `accounts` y tres tareas nuevas (`resolve_password_reset`,
+  `reissue_code` y el barrido `sweep_unresolved`), sin dependencias nuevas. En tu máquina:
+  ```bash
+  docker compose -f docker/docker-compose.yml run --rm backend python manage.py migrate
+  ```
+  Deberías ver `accounts.0008_phantomprocess... OK` y `accounts.0009_phantom_answers_expired... OK`.
+  Reinicia el worker y el beat para que carguen las tareas y el barrido de cada 60 segundos:
+  ```bash
+  docker compose -f docker/docker-compose.yml restart worker beat
+  ```
+  Desde ahora, **sin worker en marcha no llega ningún código** de registro ni de cambio de
+  contraseña: los comandos ya no lo muestran.
+
 - [ ] **Comprobar que el entorno Docker sigue levantando tras `huellas-hmac-unificadas`.** En la
   sesión remota no se pudo construir la imagen del backend (Docker Hub devolvió
   `429 Too Many Requests` y `pip` falló dentro de la construcción). La feature no cambia
