@@ -81,6 +81,10 @@ se detalla abajo.
 - **Equivalencia probada en las secuencias conocidas, no en todas**: bloqueo, caducidad, reenvío,
   repetición, resolución retrasada, peticiones desordenadas, operación simultánea y cuenta inactiva.
   Una secuencia que nadie ha pensado podría distinguirlas todavía.
+- **La rotación del secreto puede delatar la cuenta** (S-14, riesgo aceptado): rotar el secreto de los
+  códigos sin transición suficiente, o que Django vuelva a calcular el hash de la contraseña al
+  iniciar sesión, deja las solicitudes reales en curso como «caducadas» y las plazas sin cuenta no.
+  `HUMAN_TODO.md` describe cómo rotar sin provocarlo.
 - **«Caducada» confunde al titular legítimo** (S-13): quien cambió su contraseña por otra vía, o cuya
   cuenta se desactivó, ve «caducada» y no el motivo real. Es el precio de no revelar la cuenta.
 - Si se pierde el encolado de un reenvío, la solicitud se queda sin código válido hasta que se pida

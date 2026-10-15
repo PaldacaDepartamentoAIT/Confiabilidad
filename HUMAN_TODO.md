@@ -115,13 +115,14 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
 
 - [ ] **Migrar y reiniciar Celery tras los cambios del 2026-10-14** (features
   `procesos-pendientes` y `cambio-contrasena`). Añaden las migraciones `0008_phantomprocess`,
-  `0009_phantom_answers_expired` y `0010_passwordresetrequest_language` de `accounts` y tres tareas nuevas (`resolve_password_reset`,
+  `0009_phantom_answers_expired`, `0010_passwordresetrequest_language` y
+  `0011_phantomprocess_resolved_at` de `accounts` y tres tareas nuevas (`resolve_password_reset`,
   `reissue_code` y el barrido `sweep_unresolved`), sin dependencias nuevas. En tu máquina:
   ```bash
   docker compose -f docker/docker-compose.yml run --rm backend python manage.py migrate
   ```
   Deberías ver `accounts.0008_phantomprocess... OK`, `accounts.0009_phantom_answers_expired... OK` y
-  `accounts.0010_passwordresetrequest_language... OK`.
+  `accounts.0010_passwordresetrequest_language... OK` y `accounts.0011_phantomprocess_resolved_at... OK`.
   Reinicia el worker y el beat para que carguen las tareas y el barrido de cada 60 segundos:
   ```bash
   docker compose -f docker/docker-compose.yml restart worker beat
@@ -207,6 +208,17 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
   cambio en `REGISTRATION_CODE_SECRET_ROTATED_AT` (ISO 8601 con zona, p. ej.
   `2026-10-06T10:00:00+00:00`). El anterior vale durante `REGISTRATION_SECRET_TRANSITION_MINUTES`
   (60 por defecto); después puedes borrar las dos variables de rotación.
+  Al rotar, respeta siempre estas tres condiciones (S-14 de `cambio-contrasena`):
+  - `REGISTRATION_CODE_SECRET_PREVIOUS` definido con el valor anterior, también en una rotación de
+    emergencia;
+  - `REGISTRATION_SECRET_TRANSITION_MINUTES` igual o mayor que `REGISTRATION_MAX_LIFETIME_MINUTES`
+    (60 y 60 por defecto);
+  - `REGISTRATION_CODE_SECRET_ROTATED_AT` con la hora real en que el nuevo secreto entra en
+    producción, no la hora en que lo generaste.
+
+  Si no, las solicitudes de cambio de contraseña en curso pasan a responder «caducada» y las plazas
+  de correos sin cuenta no. Quien vigile varios identificadores a la vez podría deducir qué correos
+  tienen cuenta.
 
 - [ ] **Migrar y comprobar Docker tras `consentimientos`.** La feature `consentimientos`, ya fusionada en
   `main`, añade la

@@ -470,7 +470,7 @@ esquema, para que al final quede una sola migración (M-07).
   más reciente y que la plaza cuenta plazos e intentos como una solicitud real, con el paso de
   migrar en «Cómo probarlo».
 
-- [ ] T-041 Procedimiento de rotación y riesgo aceptado de la huella de la cuenta
+- [x] T-041 Procedimiento de rotación y riesgo aceptado de la huella de la cuenta
   RF: — (S-14) | Depende de: — | Archivos: 2
   Archivos: `HUMAN_TODO.md`, `specs/cambio-contrasena/resumen.md` (rutas desde la raíz).
   Hecho cuando: la entrada de `REGISTRATION_CODE_SECRET` en `HUMAN_TODO.md` pide rotar siempre con
