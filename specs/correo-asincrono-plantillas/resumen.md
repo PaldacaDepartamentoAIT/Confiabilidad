@@ -1,5 +1,5 @@
 # Resumen — correo-asincrono-plantillas
-Estado: implementada, pendiente de validar · Última actualización: 2026-10-15
+Estado: correcciones tras la validación implementadas, pendiente de validar de nuevo · Última actualización: 2026-10-15
 
 ## Qué se hizo
 La aplicación envía sus correos desde una **bandeja de salida** en la base de datos, fuera de la
@@ -17,12 +17,18 @@ desde el panel de administración, sin frontend ni API.
 - **Plantillas editables en el panel** (`/admin/`, *Email templates*), solo por superusuarios y por el
   grupo «Soporte técnico» (migración `0003`). Usan `{{ name }}` y, en los correos con código,
   `{{ code }}`, `{{ link }}` y `{{ expires_in }}`, que son obligatorios. Al guardar se
-  rechazan las variables que no admite su tipo, cualquier otra sintaxis de plantilla y los enlaces a
-  dominios que no son el de la aplicación. Cada cambio queda en el historial. Las plantillas no se
-  pueden crear ni borrar.
+  rechazan las variables que no admite su tipo, cualquier otra sintaxis de plantilla y cualquier
+  dirección que un cliente de correo pueda convertir en enlace hacia un dominio que no es el de la
+  aplicación: con esquema (`https://`, `ftp://`), con `www.`, un dominio suelto (`evil.com/login`) o
+  el dominio de una dirección de correo. Un nombre con partes de una sola letra (`S.A.`) no cuenta
+  como dirección. Cada cambio queda en el historial con el texto anterior, el autor y la fecha;
+  desde la migración `0004`, también el primer cambio de cada plantilla instalada, porque el texto
+  inicial queda registrado al instalarla. Las plantillas no se pueden crear ni borrar.
 - **Bloque fijo de reporte** en todos los avisos («Si no fuiste tú, escríbenos a…»), que añade el
   sistema con `EMAIL_SUPPORT_ADDRESS` y que el panel no permite tocar.
 - **Idioma**: el de la petición en los correos con código y el guardado en la cuenta en los avisos.
+  El reenvío de un código usa el idioma de la petición que lo empezó, guardado en el registro
+  pendiente o en la solicitud de cambio de contraseña (migración `0010` de `accounts`).
   Un idioma no admitido cae en español. Cuentas y registros guardan su idioma (migración `0007` de
   `accounts`).
 - **Plazo relativo**: «vence en 14 minutos», calculado al entregar y redondeado hacia abajo; por
@@ -128,8 +134,8 @@ Requisitos: Docker y `main` actualizado. En el VPS sigue *Actualizar* y *Migraci
    ```bash
    docker compose -f docker/docker-compose.yml run --rm backend python manage.py migrate
    ```
-   Deberías ver, entre otras, `emails.0001_initial... OK`, `emails.0002_initial_templates... OK` y
-   `emails.0003_support_permissions... OK`. Levanta el worker y el planificador:
+   Deberías ver, entre otras, `emails.0001_initial... OK`, `emails.0002_initial_templates... OK`,
+   `emails.0003_support_permissions... OK` y `emails.0004_initial_template_history... OK`. Levanta el worker y el planificador:
    ```bash
    docker compose -f docker/docker-compose.yml up -d worker beat
    ```
@@ -196,9 +202,9 @@ Requisitos: Docker y `main` actualizado. En el VPS sigue *Actualizar* y *Migraci
    docker compose -f docker/docker-compose.yml up -d backend
    ```
    Abre `http://localhost:8000/admin/`, entra en *Email templates* y edita una. Si escribes
-   `{{ telefono }}` o un enlace a otro dominio, el panel rechaza el cambio con el motivo. Un
-   cambio válido queda en *History*, y el siguiente `emails test` de ese tipo e idioma ya sale con el
-   texto nuevo.
+   `{{ telefono }}` o un dominio ajeno como `evil.com/login`, el panel rechaza el cambio y nombra
+   cada problema. Un cambio válido queda en *History* junto al texto inicial, y el siguiente
+   `emails test` de ese tipo e idioma ya sale con el texto nuevo.
 7. Ejecuta la suite completa con el worker parado (comparte el broker con los tests):
    ```bash
    docker compose -f docker/docker-compose.yml stop worker

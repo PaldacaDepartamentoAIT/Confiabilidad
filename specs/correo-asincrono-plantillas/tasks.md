@@ -95,11 +95,10 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   Archivos: `migrations/0002_initial_templates.py`, `tests/test_migrations.py`.
   Hecho cuando: tras `migrate` existen las 21 plantillas (7 tipos × 3 idiomas), todas pasan la
   validación de T-004; deshacer la migración las borra; suite verde. Los textos se revisan en el PR.
-  Decisiones: (1) Textos del bloque: «Si no fuiste tú, escríbenos a <soporte> y restablece tu
-  contraseña cuanto antes» y sus equivalentes en pt-BR y en; se revisan en el PR (S-17). [Probable]
-  Revertir: cambiar `_REPORT_BLOCKS`. (2) `EMAIL_SUPPORT_ADDRESS` vale por defecto
-  `soporte@localhost`, que en producción debe definirse (T-030). [Cierto] (3) `compose()` reúne
-  sustitución y bloque para que la entrega (T-013) tenga una sola llamada. [Cierto]
+  Decisiones (reconstruidas el 2026-10-15 del commit `dac0684`; la versión anterior copiaba
+  las de otra tarea): (1) Los 21 textos iniciales son una propuesta propia en los tres idiomas, que se
+  revisa en el PR (S-17). [Cierto] (2) `create_initial_templates` es idempotente y no pisa una
+  plantilla ya editada; deshacer la migración las borra todas. [Cierto]
 
 - [x] T-008 Idiomas admitidos y normalización
   RF: RF-013 (D-10) | Depende de: — | Archivos: 2
@@ -118,10 +117,10 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   Hecho cuando: `User` y `PendingRegistration` tienen `language` con los tres idiomas y `es` por
   defecto; una cuenta creada antes de la migración queda en `es`; un idioma no admitido falla la
   validación; el cambio de idioma de una cuenta queda en su historial; suite verde.
-  Decisiones: (1) Una variante regional distinta de pt-BR (`es-MX`, `pt-PT`) cae en el idioma por
-  defecto, no en su idioma base: la spec solo admite los tres. [Probable] Revertir: mapear la
-  parte anterior al guion. (2) `LANGUAGE_CHOICES` vive aquí para que `accounts` lo use en T-009;
-  `EmailTemplate.Locale` repite los mismos tres valores. [Cierto] Revertir: unificarlos.
+  Decisiones (reconstruidas el 2026-10-15 del commit `dc3efb7`; la versión anterior copiaba
+  las de otra tarea): (1) `language` también se añade al historial de `User`, para que el cambio de
+  idioma quede registrado. [Cierto] (2) Los modelos de `accounts` toman los idiomas y el idioma por
+  defecto de `apps.emails.locales`. [Cierto]
 
 - [x] T-010 La cuenta hereda el idioma al completar el registro
   RF: RF-012 | Depende de: T-009 | Archivos: 2
@@ -138,10 +137,10 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   encola nada; si encolar lanza un error de conexión, la operación termina bien y la fila queda
   `pending`; suite verde.
   Excepción: `0001_initial.py` se regenera con `makemigrations` y no se edita a mano.
-  Decisiones: (1) Una variante regional distinta de pt-BR (`es-MX`, `pt-PT`) cae en el idioma por
-  defecto, no en su idioma base: la spec solo admite los tres. [Probable] Revertir: mapear la
-  parte anterior al guion. (2) `LANGUAGE_CHOICES` vive aquí para que `accounts` lo use en T-009;
-  `EmailTemplate.Locale` repite los mismos tres valores. [Cierto] Revertir: unificarlos.
+  Decisiones (reconstruidas el 2026-10-15 del commit `10655fc`; la versión anterior copiaba
+  las de otra tarea): (1) La bandeja lleva un índice por estado y siguiente intento, que es lo que
+  consulta el barrido. [Cierto] (2) Si encolar falla, se deja un aviso en el log y la fila queda
+  pendiente para el barrido (D-01). [Cierto]
 
 - [x] T-012 Proveedor simulado y clasificación de errores
   RF: RF-026 (D-03, D-15) | Depende de: — | Archivos: 3
@@ -177,11 +176,11 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   entrega y se borra; un aviso con más de `EMAIL_NOTICE_RETRY_HOURS` (24 por defecto) desde su
   encolado deja de reintentarse y pasa a `failed`; una fila reservada por otro intento no se envía
   dos veces; suite verde.
-  Decisiones: (1) Las tareas llevan su nombre explícito (`apps.emails.tasks.deliver`) para que no
-  dependa del módulo desde el que Celery las descubre. [Cierto] (2) La reserva del intento (D-04)
-  entra ya aquí: `deliver` solo toma una fila pendiente y vencida, y la aparta 5 minutos. [Cierto]
-  (3) La plantilla se lee al entregar, no al encolar: un cambio de soporte vale para los correos
-  pendientes. [Probable] Revertir: guardar asunto y cuerpo en la fila al encolar.
+  Decisiones (reconstruidas el 2026-10-15 del commit `876f3c0`; la versión anterior copiaba
+  las de otra tarea): (1) Hasta T-015, cualquier excepción del envío cuenta como fallo temporal del
+  intento. [Cierto] (2) El último error se guarda como «tipo: mensaje». [Cierto] (3) Los correos con
+  código no tienen ventana de reintento propia: su límite es la vigencia del código (T-020).
+  [Cierto]
 
 - [x] T-015 Fallo definitivo y registro de fallos
   RF: RF-017, RF-026 (D-12) | Depende de: T-014 | Archivos: 2
@@ -213,12 +212,11 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   borrar la cuenta borra su marca; suite verde.
   Excepción: `0001_initial.py` se regenera con `makemigrations` y la ventana necesita su ajuste en
   `settings.py`; los tres archivos restantes son el comportamiento y su test.
-  Decisiones: (1) `enqueue` recibe la cuenta (`account`) en vez de una función aparte para los
-  avisos, para no cambiar la interfaz de T-011. Si se pasa con un aviso, manda su idioma; con un
-  correo de código se ignora. [Probable] Revertir: separar `enqueue_notice`. (2) Sin cuenta, un
-  aviso usa el idioma indicado; M-10 debe pasar siempre la cuenta en los avisos. [Probable]
-  (3) `outbox` importa `User` solo para los tipos (`TYPE_CHECKING`), sin dependencia en tiempo de
-  ejecución hacia `accounts` (D-05). [Cierto]
+  Decisiones (reconstruidas el 2026-10-15 del commit `1996a96`; la versión anterior copiaba
+  las de otra tarea): (1) El tope se guarda en `AccountExistsNotice`, una fila por cuenta con la hora
+  del último aviso, bloqueada con `select_for_update` para que dos avisos a la vez no pasen los dos.
+  [Cierto] (2) Pedir un aviso «ya tienes cuenta» sin cuenta es un error de programación
+  (`ValueError`). [Cierto] (3) Un aviso frenado por el tope devuelve `None`, sin error. [Cierto]
 
 - [x] T-018 El código se guarda oculto en la bandeja
   RF: RF-018 (D-06) | Depende de: T-011 y T-028 de `huellas-hmac-unificadas` | Archivos: 2
@@ -268,10 +266,10 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   ya validó el código, si está caducado, si su `public_id` cambió (reemplazo) o si no existe; un
   `public_id` de registro no sirve como solicitud ni a la inversa; queda registrado al arrancar
   Django; suite verde.
-  Decisiones: (1) El registro de comprobadores vive en `delivery.py` (`register_code_check`); el
-  comprobador recibe `public_id` y el código recuperado y devuelve la caducidad o `None`. [Cierto]
-  (2) Un correo descartado se borra entero, código incluido, sin dejar rastro en el registro de
-  fallos: no es un fallo del proveedor. [Probable] Revertir: marcarlo como `failed`.
+  Decisiones (reconstruidas el 2026-10-15 del commit `923bfc8`; la versión anterior copiaba
+  las de otra tarea): (1) Los comprobadores se registran en `AccountsConfig.ready`, para que `emails`
+  no importe `accounts` (D-05). [Cierto] (2) Un código vencido sirve para completar durante la
+  gracia, pero no para el correo: el comprobador exige que el código siga vigente. [Cierto]
 
 - [x] T-023 Proveedor por entorno y barrido en el planificador
   RF: RF-024 (D-02, D-14) | Depende de: T-013 | Archivos: 3
@@ -282,10 +280,10 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   backend SMTP con esos valores; sin `EMAIL_BACKEND` definido, usa el de consola;
   `CELERY_BEAT_SCHEDULE` incluye `dispatch_due` cada 30 s; `.env.example` documenta todas las
   variables de la feature comentadas; suite verde.
-  Decisiones: (1) El registro de comprobadores vive en `delivery.py` (`register_code_check`); el
-  comprobador recibe `public_id` y el código recuperado y devuelve la caducidad o `None`. [Cierto]
-  (2) Un correo descartado se borra entero, código incluido, sin dejar rastro en el registro de
-  fallos: no es un fallo del proveedor. [Probable] Revertir: marcarlo como `failed`.
+  Decisiones (reconstruidas el 2026-10-15 del commit `d7b28bf`; la versión anterior copiaba
+  las de otra tarea): (1) Por defecto, SSL en el puerto 465; STARTTLS en 587 se elige por variables.
+  [Cierto] (2) Sin `EMAIL_BACKEND`, los correos salen completos por la consola del worker.
+  [Cierto]
 
 - [x] T-024 Panel de plantillas
   RF: RF-020, RF-021, RF-022 (D-16) | Depende de: T-004, T-007 | Archivos: 2
@@ -305,9 +303,9 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   destinatario, fecha, intentos y último error; soporte puede verlas y borrarlas, pero no
   editarlas ni crearlas; las filas `pending` no aparecen; suite verde.
   Excepción: el modelo proxy exige regenerar `0001_initial.py` con `makemigrations`.
-  Decisiones: (1) Tipo e idioma son de solo lectura en el formulario: solo se editan asunto y
-  cuerpo. [Cierto] (2) `is_support` se copia del criterio de `consents` en vez de importarlo de su
-  `admin.py`, para no acoplar las apps. [Probable] Revertir: moverlo a `apps/core`.
+  Decisiones (reconstruidas el 2026-10-15 del commit `0f6fa7e`; la versión anterior copiaba
+  las de otra tarea): (1) En el panel, los fallidos se buscan por destinatario y se filtran por tipo
+  e idioma. [Cierto] (2) Todos sus campos son de solo lectura. [Cierto]
 
 - [x] T-026 Permisos de «Soporte técnico»
   RF: RF-017, RF-020 (D-13) | Depende de: T-024, T-025 | Archivos: 2
@@ -404,7 +402,7 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   soporte tendría que reescribirlo. [Probable] (3) Mutante equivalente: limitar lo que sigue al
   dominio a `/`; solo cambia el texto citado en el error, no si se rechaza. [Cierto]
 
-- [ ] T-034 Documentación tras la validación
+- [x] T-034 Documentación tras la validación
   RF: — (CF-5) | Depende de: T-032, T-033, T-034 de `cambio-contrasena` | Archivos: 3
   Archivos: `specs/correo-asincrono-plantillas/resumen.md`, `specs/correo-asincrono-plantillas/tasks.md`,
   `specs/correo-asincrono-plantillas/spec.md` (rutas desde la raíz).

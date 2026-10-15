@@ -246,3 +246,5 @@ superado o servidor no disponible), que se reintentan según RF-015 y RF-016, de
   RF-014, RF-015, RF-016, RF-017, RF-018, RF-019 y RF-024 ajustados; RF-026 añadido; S-05, S-07,
   S-08, S-11, S-14 y S-15 ajustados; S-16…S-18 añadidos; CF-4 y CF-5 ajustados; CF-6 añadido —
   Estado: clarificado
+- 2026-10-14 — Aprobación por el usuario (commit `b49760d`; entrada añadida el 2026-10-15, tras la
+  validación) — Estado: aprobada
