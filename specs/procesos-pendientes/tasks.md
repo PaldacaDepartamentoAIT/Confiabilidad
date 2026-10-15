@@ -368,7 +368,7 @@ fallar sus tests.
   reintentar. [Cierto] (3) El cambio en `tasks.py` también rige el cambio de contraseña, que comparte
   `_resolve_or_retry`. [Cierto]
 
-- [ ] T-040 Corrección: manda la petición más reciente al resolver
+- [x] T-040 Corrección: manda la petición más reciente al resolver
   Tipo: corrección | Origen: validación de RF-025 (y RF-003 de `cambio-contrasena`)
   RF: RF-005, RF-025 (D-16, D-17) | Depende de: — | Archivos: 3
   Archivos: `registration.py`, `tests/test_registration_background.py`,
@@ -378,6 +378,9 @@ fallar sus tests.
   Hecho cuando: con dos `start` del mismo correo y la primera resuelta antes que la segunda, la
   primera responde «desconocido» y la segunda funciona, con cuenta y sin ella, y sale un solo correo,
   el de la segunda; la resolución solo borra las plazas anteriores; suite verde.
+  Decisiones: (1) Solo una plaza posterior **sin resolver** detiene la resolución; una posterior ya
+  resuelta no puede convivir con una anterior pendiente, porque al resolverse la habría borrado.
+  [Cierto] (2) Las plazas anteriores se borran estén o no resueltas. [Cierto]
 
 - [ ] T-041 Corrección: la plaza con cuenta queda como un registro recién emitido
   Tipo: corrección | Origen: validación de RF-025

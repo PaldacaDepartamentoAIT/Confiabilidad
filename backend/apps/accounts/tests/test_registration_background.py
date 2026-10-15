@@ -196,6 +196,34 @@ def _age(slot: PhantomProcess, minutes: int) -> None:
     )
 
 
+@pytest.mark.parametrize("has_account", [False, True])
+def test_an_older_slot_resolved_before_a_newer_one_does_nothing(has_account: bool) -> None:
+    if has_account:
+        make_user(email="ana@x.com")
+    _slot("older")
+    _slot("newer")
+
+    registration.resolve_registration("older")
+
+    assert list(PhantomProcess.objects.values_list("public_id", flat=True)) == ["newer"]
+    assert not PendingRegistration.objects.exists()
+    assert not OutboundEmail.objects.exists()
+
+
+def test_only_older_slots_of_the_email_are_removed() -> None:
+    _slot("older")
+    resolved_later = _slot("resolved_later")
+    _slot("current")
+    PhantomProcess.objects.filter(pk=resolved_later.pk).update(payload=None)
+    newer_resolved = _slot("newer_resolved")
+    PhantomProcess.objects.filter(pk=newer_resolved.pk).update(payload=None)
+
+    registration.resolve_registration("current")
+
+    assert list(PhantomProcess.objects.values_list("public_id", flat=True)) == ["newer_resolved"]
+    assert PendingRegistration.objects.get().public_id == "current"
+
+
 def test_the_task_resolves_the_slot() -> None:
     _slot()
 

@@ -284,3 +284,19 @@ def test_the_task_issues_nothing_for_a_process_that_no_longer_takes_codes(
 
     assert OutboundEmail.objects.count() == emails
     assert not PendingRegistration.objects.exclude(code_hash="").exists()
+
+
+@pytest.mark.parametrize("has_account", [False, True])
+def test_the_newest_request_wins_even_if_the_tasks_run_out_of_order(has_account: bool) -> None:
+    if has_account:
+        make_user(email=EMAIL)
+    older = registration.start(email=EMAIL, **DEFAULT_PROFILE).public_id
+    newer = registration.start(email=EMAIL, **DEFAULT_PROFILE).public_id
+
+    registration.resolve_registration(older)
+    registration.resolve_registration(newer)
+
+    assert [_verify(older), _verify(newer)] == ["not_found", "wrong_code"]
+    assert list(OutboundEmail.objects.values_list("public_id", flat=True)) == (
+        [""] if has_account else [newer]
+    )

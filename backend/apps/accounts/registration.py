@@ -193,7 +193,12 @@ def resolve_registration(public_id: str) -> None:
         if slot is None:
             return
         email, data = slot.email, dict(slot.payload or {})
-        PhantomProcess.objects.filter(purpose=_PURPOSE, email=email).exclude(pk=slot.pk).delete()
+        same_email = PhantomProcess.objects.filter(purpose=_PURPOSE, email=email)
+        # Manda la petición más reciente: con una posterior sin resolver, esta no hace nada (D-17).
+        if same_email.filter(pk__gt=slot.pk, payload__isnull=False).exists():
+            slot.delete()
+            return
+        same_email.filter(pk__lt=slot.pk).delete()
         PendingRegistration.objects.expired().filter(email__iexact=email).delete()
         account = User.objects.filter(email__iexact=email).first()
         if account is not None:
