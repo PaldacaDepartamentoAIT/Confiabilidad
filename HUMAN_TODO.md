@@ -121,7 +121,7 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
   ```bash
   docker compose -f docker/docker-compose.yml run --rm backend python manage.py migrate
   ```
-  Deberías ver `accounts.0008_phantomprocess... OK`, `accounts.0009_phantom_answers_expired... OK` y
+  Deberías ver `accounts.0008_phantomprocess... OK`, `accounts.0009_phantom_answers_expired... OK`,
   `accounts.0010_passwordresetrequest_language... OK` y `accounts.0011_phantomprocess_resolved_at... OK`.
   Reinicia el worker y el beat para que carguen las tareas y el barrido de cada 60 segundos:
   ```bash
