@@ -434,7 +434,7 @@ esquema, para que al final quede una sola migración (M-07).
   Decisiones: (1) Mutante equivalente: no poner `code_validated_at` a nulo; una plaza nunca llega
   validada a la resolución. [Cierto]
 
-- [ ] T-037 Corrección: verificar, reenviar y completar bloquean primero la plaza
+- [x] T-037 Corrección: verificar, reenviar y completar bloquean primero la plaza
   Tipo: corrección | Origen: validación de RF-017
   RF: RF-017 (D-05) | Depende de: T-036 | Archivos: 2
   Archivos: `password_reset.py`, `tests/test_password_reset_equivalence.py`.
@@ -443,6 +443,10 @@ esquema, para que al final quede una sola migración (M-07).
   Hecho cuando: un test con transacciones reales y dos hilos, con la resolución detenida dentro de su
   transacción, da `wrong_code`, `resent` y `code_not_verified` con cuenta y sin ella; el orden de
   `complete` es plaza → cuenta → solicitud; las consultas siguen siendo iguales; suite verde.
+  Decisiones: (1) Sin cuenta, la resolución no encola correo; el test la detiene al dejar la plaza
+  como recién emitida, todavía dentro de su transacción. Se ejecutó tres veces seguidas sin fallos.
+  [Probable] (2) `complete` lee el dueño de la solicitud dentro de la transacción, después de
+  bloquear la plaza. [Cierto]
 
 - [ ] T-038 Corrección: la ventana compartida rige el cambio de contraseña
   Tipo: corrección | Origen: validación de RF-012

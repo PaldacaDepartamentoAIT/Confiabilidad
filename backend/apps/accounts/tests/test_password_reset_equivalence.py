@@ -1,3 +1,5 @@
+import threading
+import time
 from collections.abc import Callable
 from datetime import timedelta
 from typing import Any
@@ -18,6 +20,7 @@ from apps.accounts.tests.factories import (
     make_reset_request,
     make_user,
 )
+from apps.emails import outbox
 from apps.emails.models import OutboundEmail
 
 pytestmark = pytest.mark.django_db
@@ -408,3 +411,67 @@ def test_a_phantom_counts_attempts_and_time_like_a_request(
     expected: list[object],
 ) -> None:
     assert sequence(has_account) == expected
+
+
+CONCURRENT: dict[str, tuple[Callable[[str], object], object]] = {
+    "verify": (_verify, "wrong_code"),
+    "resend": (_resend, "resent"),
+    "complete": (_complete, CompleteRefusal.CODE_NOT_VERIFIED),
+}
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.parametrize("has_account", [True, False], ids=["real", "phantom"])
+@pytest.mark.parametrize("action", list(CONCURRENT))
+def test_an_operation_during_the_resolution_answers_like_after_it(
+    has_account: bool, action: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # La resolución se detiene dentro de su transacción mientras otra conexión opera con el mismo
+    # identificador (D-05). Sin cuenta no encola correo: se detiene al guardar la plaza.
+    monkeypatch.setattr("celery.current_app.send_task", mock.Mock())
+    if has_account:
+        make_user(email=EMAIL)
+    public_id = password_reset.start(email=EMAIL).public_id
+    paused, release = threading.Event(), threading.Event()
+
+    def pause_then(real: Callable[..., Any]) -> Callable[..., Any]:
+        def paused_call(*args: Any, **kwargs: Any) -> Any:
+            paused.set()
+            release.wait(10)
+            return real(*args, **kwargs)
+
+        return paused_call
+
+    if has_account:
+        monkeypatch.setattr(outbox, "enqueue", pause_then(outbox.enqueue))
+    else:
+        monkeypatch.setattr(
+            password_reset, "_leave_as_issued", pause_then(password_reset._leave_as_issued)
+        )
+    operation, expected = CONCURRENT[action]
+    results: dict[str, object] = {}
+
+    def in_own_connection(name: str, work: Callable[[], object]) -> Callable[[], None]:
+        def run() -> None:
+            try:
+                results[name] = work()
+            finally:
+                connection.close()
+
+        return run
+
+    resolver = threading.Thread(
+        target=in_own_connection(
+            "resolve", lambda: password_reset.resolve_password_reset(public_id)
+        )
+    )
+    resolver.start()
+    assert paused.wait(10)
+    other = threading.Thread(target=in_own_connection(action, lambda: operation(public_id)))
+    other.start()
+    time.sleep(0.5)
+    release.set()
+    resolver.join(10)
+    other.join(10)
+
+    assert results == {"resolve": None, action: expected}

@@ -204,10 +204,12 @@ class CompleteRefusal(StrEnum):
 
 
 def complete(*, public_id: str, password: str) -> Completed | CompleteRefusal:
-    user_id = _owner_id(public_id)
     with transaction.atomic():
-        # Cuenta antes que solicitud, el mismo orden que en la resolución, para no interbloquearse.
-        # Sin solicitud se bloquea una cuenta inexistente: las mismas consultas (D-14).
+        # Plaza, cuenta y solicitud, el mismo orden que la resolución, para no interbloquearse ni
+        # leer la solicitud antes de que la resolución la confirme (D-05). Sin solicitud se bloquea
+        # una cuenta inexistente: las mismas consultas (D-14).
+        slot = _locked_slot(public_id)
+        user_id = _owner_id(public_id)
         locked_user = User.objects.select_for_update().filter(pk=user_id or 0).first()
         request = (
             PasswordResetRequest.objects.select_for_update(of=("self",))
@@ -215,7 +217,6 @@ def complete(*, public_id: str, password: str) -> Completed | CompleteRefusal:
             .filter(public_id=public_id, user=locked_user)
             .first()
         )
-        slot = _locked_slot(public_id)
         process = request or slot
         if process is None:
             return CompleteRefusal.NOT_FOUND
@@ -293,8 +294,10 @@ def _locked_by_public_id(public_id: str) -> PasswordResetRequest | None:
 
 
 def _locked_process(public_id: str) -> PasswordResetRequest | PhantomProcess | None:
-    # Consulta las dos tablas siempre, para hacer el mismo trabajo con plaza o sin ella (D-14).
-    request, slot = _locked_by_public_id(public_id), _locked_slot(public_id)
+    # Consulta las dos tablas siempre, para hacer el mismo trabajo con plaza o sin ella (D-14), y
+    # primero la plaza, en el orden de la resolución: si la está convirtiendo, se espera (D-05).
+    slot = _locked_slot(public_id)
+    request = _locked_by_public_id(public_id)
     return request or slot
 
 
