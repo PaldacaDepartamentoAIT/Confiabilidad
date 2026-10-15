@@ -441,7 +441,7 @@ fallar sus tests.
   resuelto en t=0, `start` abandonado en t=10, tercer `start` resuelto en t=20, reenvíos cada 10 min
   y `verify` y `resend` en t=62; suite verde.
 
-- [ ] T-046 Resumen tras la 2.ª validación
+- [x] T-046 Resumen tras la 2.ª validación
   RF: — (CF-4) | Depende de: T-045 | Archivos: 1
   Archivos: `specs/procesos-pendientes/resumen.md` (en la raíz).
   Hecho cuando: el resumen dice que solo una plaza resuelta transmite su alta y nombra la migración

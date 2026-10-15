@@ -24,8 +24,9 @@ mismo servicio (`apps/accounts/registration.py`).
   del 2026-10-15, también cuando la resolución se retrasa, cuando se repite el correo con el paso del
   tiempo o cuando alguien opera con el identificador mientras se resuelve:
   - al resolverse, la plaza con cuenta queda como un registro recién emitido (intentos a 0 y código
-    vigente desde la resolución) y conserva el alta de la plaza vigente que reemplaza, igual que un
-    registro repetido conserva la suya;
+    vigente desde la resolución) y conserva el alta de la plaza vigente y ya resuelta que
+    reemplaza, igual que un registro repetido conserva la suya; una plaza abandonada, que no llegó
+    a resolverse, no transmite su alta (migración `0011`);
   - manda la petición más reciente: si una plaza antigua se resuelve después de otra más nueva del
     mismo correo, la antigua se borra sin hacer nada;
   - verificar, reenviar y completar bloquean primero la plaza, en el mismo orden que la resolución.
@@ -104,7 +105,8 @@ proveedor de correo configurado, los correos salen por la consola del worker: ah
    ```bash
    docker compose -f docker/docker-compose.yml run --rm backend python manage.py migrate
    ```
-   Deberías ver, entre otras, `accounts.0008_phantomprocess... OK`. Levanta el worker y el
+   Deberías ver, entre otras, `accounts.0008_phantomprocess... OK` y
+   `accounts.0011_phantomprocess_resolved_at... OK`. Levanta el worker y el
    planificador de Celery:
    ```bash
    docker compose -f docker/docker-compose.yml up -d worker beat
