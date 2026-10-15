@@ -1,3 +1,5 @@
+import threading
+import time
 from collections.abc import Callable
 from datetime import timedelta
 from typing import Any
@@ -12,6 +14,7 @@ from django.utils import timezone
 from apps.accounts import registration, tasks
 from apps.accounts.models import PendingRegistration, PhantomProcess, User
 from apps.accounts.tests.factories import DEFAULT_PROFILE, code_sent_to, make_pending, make_user
+from apps.emails import outbox
 from apps.emails.models import OutboundEmail
 
 pytestmark = pytest.mark.django_db
@@ -407,3 +410,58 @@ def test_a_phantom_counts_attempts_and_time_like_a_registration(
     expected: list[object],
 ) -> None:
     assert sequence(has_account) == expected
+
+
+CONCURRENT: dict[str, tuple[Callable[[str], object], object]] = {
+    "verify": (_verify, "wrong_code"),
+    "resend": (_resend, "resent"),
+    "complete": (_complete, registration.CompleteRefusal.CODE_NOT_VERIFIED),
+}
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.parametrize("has_account", [False, True], ids=["real", "phantom"])
+@pytest.mark.parametrize("action", list(CONCURRENT))
+def test_an_operation_during_the_resolution_answers_like_after_it(
+    has_account: bool, action: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # La resolución se detiene dentro de su transacción, justo antes de encolar su correo, mientras
+    # otra conexión opera con el mismo identificador (D-18).
+    monkeypatch.setattr("celery.current_app.send_task", mock.Mock())
+    if has_account:
+        make_user(email=EMAIL)
+    public_id = registration.start(email=EMAIL, **DEFAULT_PROFILE).public_id
+    paused, release = threading.Event(), threading.Event()
+    real_enqueue = outbox.enqueue
+
+    def paused_enqueue(**kwargs: Any) -> Any:
+        paused.set()
+        release.wait(10)
+        return real_enqueue(**kwargs)
+
+    monkeypatch.setattr(outbox, "enqueue", paused_enqueue)
+    operation, expected = CONCURRENT[action]
+    results: dict[str, object] = {}
+
+    def in_own_connection(name: str, work: Callable[[], object]) -> Callable[[], None]:
+        def run() -> None:
+            try:
+                results[name] = work()
+            finally:
+                connection.close()
+
+        return run
+
+    resolver = threading.Thread(
+        target=in_own_connection("resolve", lambda: registration.resolve_registration(public_id))
+    )
+    resolver.start()
+    assert paused.wait(10)
+    other = threading.Thread(target=in_own_connection(action, lambda: operation(public_id)))
+    other.start()
+    time.sleep(0.5)
+    release.set()
+    resolver.join(10)
+    other.join(10)
+
+    assert results == {"resolve": None, action: expected}

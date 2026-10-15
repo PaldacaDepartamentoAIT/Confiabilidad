@@ -77,13 +77,14 @@ def _queue(task: str, args: list[str]) -> None:
 
 
 def _locked_process(public_id: str) -> PendingRegistration | PhantomProcess | None:
-    # Consulta las dos tablas siempre, para hacer el mismo trabajo con plaza o sin ella (D-14).
-    pending = PendingRegistration.objects.select_for_update().filter(public_id=public_id).first()
+    # Consulta las dos tablas siempre, para hacer el mismo trabajo con plaza o sin ella (D-14), y
+    # primero la plaza, en el orden de la resolución: si la está convirtiendo, se espera (D-18).
     slot = (
         PhantomProcess.objects.select_for_update()
         .filter(public_id=public_id, purpose=_PURPOSE)
         .first()
     )
+    pending = PendingRegistration.objects.select_for_update().filter(public_id=public_id).first()
     return pending or slot
 
 

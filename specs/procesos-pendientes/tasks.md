@@ -398,7 +398,7 @@ fallar sus tests.
   hacia atrás todas las fechas guardadas a la vez (D-07). [Cierto] (3) Mutante equivalente: no poner
   `code_validated_at` a nulo; una plaza nunca llega validada a la resolución. [Cierto]
 
-- [ ] T-042 Corrección: verificar, reenviar y completar bloquean primero la plaza
+- [x] T-042 Corrección: verificar, reenviar y completar bloquean primero la plaza
   Tipo: corrección | Origen: revisión de la validación (RF-025; mismo fallo que RF-017 C de
   `cambio-contrasena`)
   RF: RF-025 (D-18) | Depende de: T-041 | Archivos: 2
@@ -408,6 +408,10 @@ fallar sus tests.
   Hecho cuando: un test con transacciones reales y dos hilos, con la resolución detenida dentro de su
   transacción, da para `verify`, `resend` y `complete` los mismos resultados con cuenta y sin ella; las
   consultas siguen siendo iguales; suite verde.
+  Decisiones: (1) El test detiene la resolución justo antes de encolar su correo, todavía dentro de su
+  transacción, y espera 0,5 s para que la otra conexión quede bloqueada; se ejecutó tres veces seguidas
+  sin fallos. [Probable] (2) `reissue_code` usa el mismo `_locked_process`, así que hereda el orden.
+  [Cierto]
 
 - [ ] T-043 Resumen tras las correcciones
   RF: — (CF-4) | Depende de: T-039…T-042 | Archivos: 1
