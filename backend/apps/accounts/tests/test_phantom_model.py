@@ -2,7 +2,8 @@ from datetime import timedelta
 
 import pytest
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError, connection, transaction
+from django.db.migrations.executor import MigrationExecutor
 from django.utils import timezone
 
 from apps.accounts import codes, conf, processes
@@ -101,3 +102,29 @@ def test_a_phantom_locks_and_expires_like_any_process() -> None:
 
 def test_a_phantom_reads_as_its_purpose_and_public_id() -> None:
     assert str(_phantom()) == "registration:ph_1"
+
+
+def test_a_slot_has_no_resolution_time_until_it_is_resolved() -> None:
+    slot = _phantom()
+
+    assert PhantomProcess.objects.get(pk=slot.pk).resolved_at is None
+    now = timezone.now()
+    PhantomProcess.objects.filter(pk=slot.pk).update(resolved_at=now)
+    assert PhantomProcess.objects.get(pk=slot.pk).resolved_at == now
+
+
+@pytest.mark.django_db(transaction=True)
+def test_existing_slots_have_no_resolution_time_after_migrating() -> None:
+    before = [("accounts", "0010_passwordresetrequest_language")]
+    after = [("accounts", "0011_phantomprocess_resolved_at")]
+    _phantom()
+    MigrationExecutor(connection).migrate(before)
+    try:
+        executor = MigrationExecutor(connection)
+        executor.migrate(after)
+        model = executor.loader.project_state(after).apps.get_model("accounts", "PhantomProcess")
+        assert list(model.objects.values_list("resolved_at", flat=True)) == [None]
+    finally:
+        MigrationExecutor(connection).migrate(
+            MigrationExecutor(connection).loader.graph.leaf_nodes()
+        )

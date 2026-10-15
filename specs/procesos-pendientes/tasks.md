@@ -420,7 +420,7 @@ fallar sus tests.
   petición más reciente y que la plaza cuenta plazos e intentos como un registro real, y sus límites
   conocidos reflejan lo que queda sin medir.
 
-- [ ] T-044 Corrección: la plaza guarda cuándo se resolvió
+- [x] T-044 Corrección: la plaza guarda cuándo se resolvió
   Tipo: corrección | Origen: 2.ª validación de RF-025
   RF: RF-025 (D-16, M-11) | Depende de: — | Archivos: 3
   Archivos: `models.py`, `migrations/0011_phantomprocess_resolved_at.py`,

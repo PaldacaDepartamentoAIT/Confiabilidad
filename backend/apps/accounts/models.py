@@ -272,6 +272,8 @@ class PhantomProcess(CodeProcess):
     email = models.EmailField(blank=True)
     payload = models.JSONField(null=True, blank=True)
     answers_expired = models.BooleanField(default=False)
+    # Lo anota la resolución del registro; vacío en una plaza sin resolver o abandonada (D-16).
+    resolved_at = models.DateTimeField(null=True, blank=True)
 
     objects = CodeProcessQuerySet["PhantomProcess"].as_manager()
 
