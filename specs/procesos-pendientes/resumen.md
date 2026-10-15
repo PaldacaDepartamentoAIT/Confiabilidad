@@ -20,10 +20,20 @@ mismo servicio (`apps/accounts/registration.py`).
     activa, se encola el aviso "ya tienes cuenta".
 
   Verificar, reenviar, completar y dejar caducar ese identificador da los mismos resultados, con
-  las mismas consultas, que un registro real cuyo código nunca se acierta. Si la tarea falla, se
-  reintenta durante `REGISTRATION_START_RETRY_MINUTES` (5 min); un barrido cada 60 s recoge las
-  plazas cuyo encolado se perdió; pasada la ventana, la plaza queda sin registro y el fallo va al
-  log.
+  las mismas consultas, que un registro real cuyo código nunca se acierta. Desde las correcciones
+  del 2026-10-15, también cuando la resolución se retrasa, cuando se repite el correo con el paso del
+  tiempo o cuando alguien opera con el identificador mientras se resuelve:
+  - al resolverse, la plaza con cuenta queda como un registro recién emitido (intentos a 0 y código
+    vigente desde la resolución) y conserva el alta de la plaza vigente que reemplaza, igual que un
+    registro repetido conserva la suya;
+  - manda la petición más reciente: si una plaza antigua se resuelve después de otra más nueva del
+    mismo correo, la antigua se borra sin hacer nada;
+  - verificar, reenviar y completar bloquean primero la plaza, en el mismo orden que la resolución.
+
+  Si la tarea falla, se reintenta durante `REGISTRATION_START_RETRY_MINUTES` (5 min), sin otro
+  tope; la ventana se comprueba en cada ejecución, así que un reintento o una tarea que la cola
+  atiende tarde no resuelve fuera de ella. Un barrido cada 60 s recoge las plazas cuyo encolado se
+  perdió; pasada la ventana, la plaza queda sin registro, no se envía correo y el fallo va al log.
 - **Código de 6 dígitos** vigente 15 min. Solo se guarda su huella (HMAC con un secreto del
   servidor y atada al `public_id`); el código en claro solo viaja en el correo (RF-007, RF-008). El
   secreto se puede rotar sin invalidar los códigos en curso (RF-015).
@@ -57,8 +67,9 @@ contra el servicio real y `makemessages` sin ejecutar. Se detallan abajo.
   verdad.
 - `--password` deja la contraseña en el historial de la consola; sin él, `complete` la pide sin
   eco (D-09).
-- La concurrencia (dos verificaciones o dos altas a la vez) está protegida con bloqueos de fila,
-  pero ningún test la ejerce con transacciones reales.
+- La concurrencia está protegida con bloqueos de fila. Un test con transacciones reales y dos hilos
+  ejerce una operación simultánea a la resolución; el resto de combinaciones (dos verificaciones o
+  dos altas a la vez) no se ejerce así.
 - Si otra vía crea la cuenta justo entre la comprobación y el alta en `complete`, sale un
   `IntegrityError` sin traducir y el registro pendiente se conserva, en vez de borrarse, hasta el
   siguiente intento; la base de datos impide el duplicado igualmente. Hay que traducirlo antes de
@@ -70,6 +81,12 @@ contra el servicio real y `makemessages` sin ejecutar. Se detallan abajo.
 - **Tiempo de respuesta igual por construcción, no medido**: `start`, `verify`, `resend` y
   `complete` hacen las mismas consultas con plaza o con registro real (los tests lo fijan), pero
   ningún test mide tiempos reales.
+- **Equivalencia probada en las secuencias conocidas, no en todas**: los tests comparan plaza y
+  registro real en los recorridos de bloqueo, caducidad, reenvío, repetición, resolución retrasada,
+  peticiones desordenadas y operación simultánea. Una secuencia que nadie ha pensado podría
+  distinguirlos todavía.
+- Si la cola tarda más de `REGISTRATION_START_RETRY_MINUTES` en atender la tarea, el registro no
+  llega a crearse y no se envía correo: hay que volver a empezar.
 - Si se pierde el encolado de un reenvío, el proceso se queda sin código válido hasta que se pida
   otro reenvío: `reissue_code` no tiene barrido.
 - Sin el worker de Celery en marcha, ningún registro recibe su código.

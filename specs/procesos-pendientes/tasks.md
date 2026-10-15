@@ -413,7 +413,7 @@ fallar sus tests.
   sin fallos. [Probable] (2) `reissue_code` usa el mismo `_locked_process`, así que hereda el orden.
   [Cierto]
 
-- [ ] T-043 Resumen tras las correcciones
+- [x] T-043 Resumen tras las correcciones
   RF: — (CF-4) | Depende de: T-039…T-042 | Archivos: 1
   Archivos: `specs/procesos-pendientes/resumen.md` (en la raíz).
   Hecho cuando: el resumen explica que la ventana se comprueba en cada ejecución, que manda la
