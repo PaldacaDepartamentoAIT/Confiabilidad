@@ -386,7 +386,47 @@ def _unresolved_older_request_then_lifetime(has_account: bool) -> list[object]:
     return [_verify(second)]
 
 
+def _resend_every(public_id: str, minutes: int, times: int) -> list[object]:
+    results = []
+    for _ in range(times):
+        _pass(minutes)
+        results.append(_resend(public_id))
+        registration.reissue_code(public_id)
+    return results
+
+
+def _abandoned_request_then_a_new_one(has_account: bool) -> list[object]:
+    _start(has_account)
+    _pass(6)
+    tasks.sweep_unresolved()
+    _pass(4)
+    second = _start(has_account)
+    registration.resolve_registration(second)
+    kept_alive = _resend_every(second, minutes=12, times=4)
+    _pass(4)
+    return [*kept_alive, _verify(second)]
+
+
+def _resolved_then_abandoned_then_a_third(has_account: bool) -> list[object]:
+    registration.resolve_registration(_start(has_account))
+    _pass(10)
+    _start(has_account)
+    _pass(6)
+    tasks.sweep_unresolved()
+    _pass(4)
+    third = _start(has_account)
+    registration.resolve_registration(third)
+    kept_alive = _resend_every(third, minutes=10, times=4)
+    _pass(2)
+    return [*kept_alive, _verify(third), _resend(third)]
+
+
 TIMED: list[tuple[Callable[[bool], list[object]], list[object]]] = [
+    (_abandoned_request_then_a_new_one, [*["resent"] * 4, "wrong_code"]),
+    (
+        _resolved_then_abandoned_then_a_third,
+        [*["resent"] * 3, *[registration.ResendRefusal.EXPIRED] * 2, "expired"],
+    ),
     (_delayed_resolution_then_lifetime, ["wrong_code"]),
     (_unresolved_older_request_then_lifetime, ["wrong_code"]),
     (_attempts_before_resolving, [*["wrong_code"] * 5, "wrong_code"]),

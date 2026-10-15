@@ -224,6 +224,20 @@ def test_only_older_slots_of_the_email_are_removed() -> None:
     assert PendingRegistration.objects.get().public_id == "current"
 
 
+def test_the_resolution_notes_when_it_resolved_and_giving_up_does_not() -> None:
+    make_user(email="ana@x.com")
+    _slot("resolved")
+    abandoned = _slot("abandoned", email="bea@x.com")
+    _age(abandoned, 6)
+
+    registration.resolve_registration("resolved")
+    tasks.resolve_registration.apply(args=["abandoned"])
+
+    resolved_at = dict(PhantomProcess.objects.values_list("public_id", "resolved_at"))
+    assert resolved_at["resolved"] is not None
+    assert resolved_at["abandoned"] is None
+
+
 def test_the_task_resolves_the_slot() -> None:
     _slot()
 

@@ -428,7 +428,7 @@ fallar sus tests.
   Hecho cuando: `PhantomProcess` tiene `resolved_at` nulo, vacío por defecto; las plazas existentes
   quedan con él vacío tras migrar; no hay migraciones pendientes; suite verde.
 
-- [ ] T-045 Corrección: solo una plaza resuelta transmite su alta
+- [x] T-045 Corrección: solo una plaza resuelta transmite su alta
   Tipo: corrección | Origen: 2.ª validación de RF-025
   RF: RF-025 (D-15, D-16) | Depende de: T-044 | Archivos: 3
   Archivos: `registration.py`, `tests/test_phantom_equivalence.py`,

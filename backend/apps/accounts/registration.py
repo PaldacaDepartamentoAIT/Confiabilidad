@@ -199,7 +199,10 @@ def resolve_registration(public_id: str) -> None:
         if same_email.filter(pk__gt=slot.pk, payload__isnull=False).exists():
             slot.delete()
             return
-        previous = same_email.filter(pk__lt=slot.pk, payload__isnull=True).order_by("-pk").first()
+        # Solo una plaza resuelta transmite su alta: una abandonada no dejó registro (D-16).
+        previous = (
+            same_email.filter(pk__lt=slot.pk, resolved_at__isnull=False).order_by("-pk").first()
+        )
         same_email.filter(pk__lt=slot.pk).delete()
         PendingRegistration.objects.expired().filter(email__iexact=email).delete()
         account = User.objects.filter(email__iexact=email).first()
@@ -234,6 +237,7 @@ def _leave_as_issued(slot: PhantomProcess, previous: PhantomProcess | None) -> N
     slot.failed_attempts = 0
     slot.code_validated_at = None
     slot.code_expires_at = timezone.now() + conf.code_ttl()
+    slot.resolved_at = timezone.now()
     if previous is not None and not previous.is_expired:
         slot.created_at = previous.created_at
     else:
@@ -241,6 +245,7 @@ def _leave_as_issued(slot: PhantomProcess, previous: PhantomProcess | None) -> N
     slot.save(
         update_fields=[
             "payload",
+            "resolved_at",
             "failed_attempts",
             "code_validated_at",
             "code_expires_at",
