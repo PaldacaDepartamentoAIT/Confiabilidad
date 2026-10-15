@@ -5,7 +5,12 @@ from django.utils import timezone
 
 from apps.accounts import email_checks, password_reset, registration
 from apps.accounts.models import PasswordResetRequest, PendingRegistration
-from apps.accounts.tests.factories import StartedWithCode, make_pending, make_user
+from apps.accounts.tests.factories import (
+    StartedWithCode,
+    make_pending,
+    make_reset_request,
+    make_user,
+)
 from apps.emails import delivery
 
 pytestmark = pytest.mark.django_db
@@ -15,11 +20,9 @@ def _registration() -> StartedWithCode:
     return make_pending()
 
 
-def _reset() -> password_reset.Started:
+def _reset() -> StartedWithCode:
     make_user(email="eva@x.com")
-    started = password_reset.start(email="eva@x.com")
-    assert isinstance(started, password_reset.Started)
-    return started
+    return make_reset_request("eva@x.com")
 
 
 def _other(code: str) -> str:

@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 from enum import StrEnum
 
@@ -5,40 +6,60 @@ from allauth.account import app_settings as allauth_account_settings
 from allauth.account.adapter import get_adapter
 from allauth.account.models import EmailAddress
 from allauth.core.internal import ratelimit as allauth_ratelimit
+from celery import current_app
 from django.contrib.auth.password_validation import validate_password
 from django.core.cache import cache
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 from django.db import IntegrityError, transaction
 from django.http import HttpRequest
 from django.utils import timezone
 
-from apps.accounts import codes, processes
+from apps.accounts import codes, conf, processes
 from apps.accounts.models import PasswordResetRequest, PhantomProcess, User
 from apps.accounts.processes import VerifyResult as VerifyResult
 from apps.core import fingerprints
-from apps.emails import outbox
+from apps.emails import locales, outbox
 
 _PURPOSE = codes.Purpose.PASSWORD_RESET
 _REPLACED_FIELDS = [*processes.ISSUED_FIELDS, "created_at", "account_stamp"]
+RESOLVE_TASK = "apps.accounts.tasks.resolve_password_reset"
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
 class Started:
     public_id: str
-    code: str
 
 
-@dataclass(frozen=True)
-class NoEligibleAccount:
-    pass
-
-
-def start(*, email: str) -> Started | NoEligibleAccount:
+def start(*, email: str, language: str = locales.DEFAULT) -> Started:
+    # Solo se valida el formato del correo; si tiene cuenta se decide fuera de la respuesta (D-13).
+    email = email.strip()
+    try:
+        validate_email(email)
+    except ValidationError as error:
+        raise ValidationError({"email": error.error_list}) from error
+    slot = PhantomProcess(
+        purpose=_PURPOSE,
+        email=email,
+        public_id=codes.generate_public_id(),
+        code_hash="",
+        code_expires_at=timezone.now() + conf.code_ttl(),
+        payload={"language": locales.normalize(language)},
+    )
     with transaction.atomic():
-        user = User.objects.select_for_update().filter(email__iexact=email.strip()).first()
-        if user is None or not user.is_active:
-            return NoEligibleAccount()
-        request, code = _create_or_replace(user)
-        return Started(public_id=request.public_id, code=code)
+        slot.save()
+        transaction.on_commit(lambda: _queue(RESOLVE_TASK, [slot.public_id]))
+    return Started(public_id=slot.public_id)
+
+
+def _queue(task: str, args: list[str]) -> None:
+    # Si la cola no responde, la respuesta no cambia: el barrido recoge las plazas (D-15 de
+    # procesos-pendientes).
+    try:
+        current_app.send_task(task, args=args)
+    except Exception:
+        logger.warning("Could not queue %s; the process keeps waiting.", task)
 
 
 def _create_or_replace(

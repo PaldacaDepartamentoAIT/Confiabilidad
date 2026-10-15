@@ -13,7 +13,7 @@ from django.test import Client
 
 from apps.accounts import password_reset
 from apps.accounts.models import User
-from apps.accounts.tests.factories import DEFAULT_PASSWORD, make_user
+from apps.accounts.tests.factories import DEFAULT_PASSWORD, make_reset_request, make_user
 
 pytestmark = pytest.mark.django_db
 
@@ -43,8 +43,7 @@ def _app_login(client: Client, email: str, password: str) -> Any:
 
 
 def _validated(user: User) -> str:
-    started = password_reset.start(email=user.email)
-    assert isinstance(started, password_reset.Started)
+    started = make_reset_request(user.email)
     assert password_reset.verify(public_id=started.public_id, code=started.code) == (
         password_reset.VerifyResult.VERIFIED
     )

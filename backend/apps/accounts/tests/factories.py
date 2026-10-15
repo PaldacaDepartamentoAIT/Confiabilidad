@@ -3,7 +3,7 @@ from datetime import date
 from itertools import count
 from typing import Any
 
-from apps.accounts import registration
+from apps.accounts import password_reset, registration
 from apps.accounts.models import PhantomProcess, User
 from apps.core import fingerprints
 from apps.emails.models import OutboundEmail
@@ -38,6 +38,8 @@ def code_sent_to(public_id: str) -> str:
     slot = PhantomProcess.objects.filter(public_id=public_id, payload__isnull=False).first()
     if slot is not None and slot.purpose == PhantomProcess.Purpose.REGISTRATION:
         registration.resolve_registration(public_id)
+    elif slot is not None:
+        password_reset.resolve_password_reset(public_id)
     email = (
         OutboundEmail.objects.filter(public_id=public_id, masked_code__isnull=False)
         .order_by("-pk")
@@ -50,4 +52,9 @@ def code_sent_to(public_id: str) -> str:
 def make_pending(email: str = "ana@x.com", **data: Any) -> StartedWithCode:
     fields: dict[str, Any] = {**DEFAULT_PROFILE, **data}
     started = registration.start(email=email, **fields)
+    return StartedWithCode(public_id=started.public_id, code=code_sent_to(started.public_id))
+
+
+def make_reset_request(email: str, **options: Any) -> StartedWithCode:
+    started = password_reset.start(email=email, **options)
     return StartedWithCode(public_id=started.public_id, code=code_sent_to(started.public_id))

@@ -1,16 +1,24 @@
 from datetime import date, timedelta
 from typing import Any
+from unittest import mock
 
 import pytest
 from allauth.account.models import EmailAddress
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError
+from django.db import IntegrityError, connection
 from django.test import override_settings
+from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 
 from apps.accounts import codes, password_reset, registration
-from apps.accounts.models import PasswordResetRequest, PendingRegistration, User
-from apps.accounts.tests.factories import DEFAULT_PASSWORD, make_pending, make_user
+from apps.accounts.models import PasswordResetRequest, PendingRegistration, PhantomProcess, User
+from apps.accounts.tests.factories import (
+    DEFAULT_PASSWORD,
+    StartedWithCode,
+    make_pending,
+    make_reset_request,
+    make_user,
+)
 from apps.core import fingerprints
 
 pytestmark = pytest.mark.django_db
@@ -28,10 +36,8 @@ def _stored() -> PasswordResetRequest:
     return PasswordResetRequest.objects.get()
 
 
-def _started(email: str = EMAIL) -> password_reset.Started:
-    result = password_reset.start(email=email)
-    assert isinstance(result, password_reset.Started)
-    return result
+def _started(email: str = EMAIL) -> StartedWithCode:
+    return make_reset_request(email)
 
 
 def _age(**minutes: int) -> None:
@@ -39,6 +45,84 @@ def _age(**minutes: int) -> None:
     PasswordResetRequest.objects.update(
         **{field: now - timedelta(minutes=value) for field, value in minutes.items()}
     )
+
+
+def test_start_leaves_a_slot_and_returns_only_the_public_id(user: User) -> None:
+    before = timezone.now()
+    result = password_reset.start(email="  ANA@X.com ", language="pt_br")
+
+    assert result == password_reset.Started(public_id=result.public_id)
+    slot = PhantomProcess.objects.get()
+    assert (slot.public_id, slot.purpose, slot.email, slot.code_hash, slot.payload) == (
+        result.public_id,
+        "password_reset",
+        "ana@x.com",
+        "",
+        {"language": "pt-BR"},
+    )
+    assert (
+        before + timedelta(minutes=15)
+        <= slot.code_expires_at
+        <= timezone.now() + timedelta(minutes=15)
+    )
+    assert not PasswordResetRequest.objects.exists()
+
+
+def test_start_without_language_uses_the_default_one() -> None:
+    password_reset.start(email=EMAIL)
+
+    assert PhantomProcess.objects.get().payload == {"language": "es"}
+
+
+@pytest.mark.parametrize("email", ["not-an-email", "", "ana@"])
+def test_a_malformed_email_is_rejected_without_a_slot(email: str) -> None:
+    with pytest.raises(ValidationError) as excinfo:
+        password_reset.start(email=email)
+
+    assert set(excinfo.value.error_dict) == {"email"}
+    assert not PhantomProcess.objects.exists()
+
+
+def test_start_queues_the_resolution_once_committed(
+    django_capture_on_commit_callbacks: Any,
+) -> None:
+    with mock.patch("celery.current_app.send_task") as send_task:
+        with django_capture_on_commit_callbacks() as callbacks:
+            result = password_reset.start(email=EMAIL)
+        send_task.assert_not_called()
+        for callback in callbacks:
+            callback()
+
+    send_task.assert_called_once_with(
+        "apps.accounts.tasks.resolve_password_reset", args=[result.public_id]
+    )
+
+
+def test_start_answers_and_warns_when_the_queue_is_down(
+    django_capture_on_commit_callbacks: Any, caplog: pytest.LogCaptureFixture
+) -> None:
+    with mock.patch("celery.current_app.send_task", side_effect=ConnectionError("down")):
+        with django_capture_on_commit_callbacks(execute=True):
+            result = password_reset.start(email=EMAIL)
+
+    assert PhantomProcess.objects.get().public_id == result.public_id
+    assert any(record.levelname == "WARNING" for record in caplog.records)
+
+
+def _start_queries(email: str) -> list[str]:
+    with CaptureQueriesContext(connection) as queries:
+        result = password_reset.start(email=email)
+    assert isinstance(result, password_reset.Started)
+    return [query["sql"].split(" ")[0] for query in queries.captured_queries]
+
+
+@pytest.mark.parametrize("is_active", [True, False])
+def test_start_does_the_same_work_whether_or_not_there_is_an_eligible_account(
+    is_active: bool,
+) -> None:
+    make_user(email=EMAIL, is_active=is_active)
+
+    assert _start_queries(EMAIL) == _start_queries("nadie@x.com")
 
 
 def test_start_creates_a_request_with_a_code(user: User) -> None:
@@ -90,11 +174,15 @@ def test_repeating_replaces_an_expired_request(user: User) -> None:
     assert not stored.is_expired
 
 
-def test_unknown_email_has_no_eligible_account() -> None:
+def test_unknown_email_gets_a_public_id_and_no_request() -> None:
     make_user(email="other@x.com")
 
-    assert password_reset.start(email=EMAIL) == password_reset.NoEligibleAccount()
+    result = password_reset.start(email=EMAIL)
+    password_reset.resolve_password_reset(result.public_id)
+
+    assert isinstance(result, password_reset.Started)
     assert not PasswordResetRequest.objects.exists()
+    assert PhantomProcess.objects.get().public_id == result.public_id
 
 
 def test_inactive_account_gets_the_same_result_and_keeps_its_request(user: User) -> None:
@@ -102,7 +190,10 @@ def test_inactive_account_gets_the_same_result_and_keeps_its_request(user: User)
     before = _stored()
     User.objects.filter(pk=user.pk).update(is_active=False)
 
-    assert password_reset.start(email=EMAIL) == password_reset.NoEligibleAccount()
+    again = password_reset.start(email=EMAIL)
+    password_reset.resolve_password_reset(again.public_id)
+
+    assert isinstance(again, password_reset.Started)
 
     after = _stored()
     assert (after.public_id, after.code_hash, after.created_at) == (
@@ -139,7 +230,7 @@ def test_other_integrity_errors_are_not_hidden(user: User, monkeypatch: pytest.M
     monkeypatch.setattr("apps.accounts.processes.codes.generate_public_id", lambda: taken)
 
     with pytest.raises(IntegrityError):
-        password_reset.start(email=EMAIL)
+        make_reset_request(EMAIL)
 
     assert not PasswordResetRequest.objects.filter(user=user).exists()
 
@@ -300,7 +391,7 @@ GOOD_PASSWORD = "Kq7#mZ2!vR9p"
 CompleteRefusal = password_reset.CompleteRefusal
 
 
-def _validated() -> password_reset.Started:
+def _validated() -> StartedWithCode:
     started = _started()
     assert password_reset.verify(public_id=started.public_id, code=started.code) == (
         VerifyResult.VERIFIED

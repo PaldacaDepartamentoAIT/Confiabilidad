@@ -313,7 +313,7 @@ esquema, para que al final quede una sola migración (M-07).
   misma ventana y mismo abandono). [Cierto] (2) El barrido no toca las tumbas: ya tienen el `payload`
   vacío. [Cierto]
 
-- [ ] T-027 Pedir el cambio en la respuesta solo con el identificador
+- [x] T-027 Pedir el cambio en la respuesta solo con el identificador
   RF: RF-002, RF-004, RF-013, RF-016 (D-06, D-13, M-05, M-06) | Depende de: T-026 | Archivos: 6
   Archivos: `password_reset.py`, `management/commands/password_reset.py`, `tests/factories.py`,
   `tests/test_password_reset_service.py`, `tests/test_password_reset_command.py`,
@@ -326,6 +326,12 @@ esquema, para que al final quede una sola migración (M-07).
   `tests/factories.py`; suite verde.
   Excepción: cambiar lo que devuelve `start` rompe a la vez los tests que lo llaman; el ajuste es
   mecánico y no se puede repartir sin dejar la suite en rojo.
+  Decisiones: (1) También se ajusta `tests/test_email_checks.py`, que llamaba a `start`; cubierto por
+  la Excepción. [Cierto] (2) El formato del correo se valida con el validador de Django y el error
+  va en el campo `email`; el comando lo muestra como `email: …`. [Cierto] (3) `password_reset.py`
+  tiene su propio `_queue`, igual al del registro, para no tocar `processes.py`, fuera de los
+  archivos de la tarea. [Probable] (4) `code_sent_to` de `tests/factories.py` resuelve también las
+  plazas de cambio de contraseña. [Cierto]
 
 - [ ] T-028 Verificar y completar en las dos tablas, con "caducada"
   RF: RF-005, RF-008, RF-010, RF-014, RF-015, RF-017 (D-14, CF-6) | Depende de: T-024, T-027 |
