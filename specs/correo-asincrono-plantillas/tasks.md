@@ -363,7 +363,7 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   entrada para definir `EMAIL_CODE_SECRET` en producción; el comando de T-027 para enviar un correo
   real de prueba va en su propio bloque.
 
-- [ ] T-031 Resumen de la feature
+- [x] T-031 Resumen de la feature
   RF: — (CF-5) | Depende de: T-030 y las tareas de M-10 en `procesos-pendientes` y `cambio-contrasena` | Archivos: 1
   Archivos: `specs/correo-asincrono-plantillas/resumen.md` (en la raíz).
   Hecho cuando: explica qué se hizo; cómo provocar desde consola cada tipo de correo y ver un fallo
