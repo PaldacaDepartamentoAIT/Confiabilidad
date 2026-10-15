@@ -1,10 +1,14 @@
-from datetime import date
+from datetime import date, timedelta
 from typing import Any
+from unittest import mock
 
 import pytest
+from celery.exceptions import Retry
+from django.conf import settings
+from django.test import override_settings
 from django.utils import timezone
 
-from apps.accounts import codes, conf, registration
+from apps.accounts import codes, conf, registration, tasks
 from apps.accounts.models import PendingRegistration, PhantomProcess
 from apps.accounts.tests.factories import make_user
 from apps.core import fingerprints
@@ -178,3 +182,95 @@ def test_a_unique_email_collision_is_treated_as_a_repeated_registration(
     pending.refresh_from_db()
     assert pending.public_id == "slot_1"
     assert OutboundEmail.objects.count() == 1
+
+
+@pytest.fixture
+def send_task() -> Any:
+    with mock.patch("celery.current_app.send_task") as patched:
+        yield patched
+
+
+def _age(slot: PhantomProcess, minutes: int) -> None:
+    PhantomProcess.objects.filter(pk=slot.pk).update(
+        created_at=timezone.now() - timedelta(minutes=minutes)
+    )
+
+
+def test_the_task_resolves_the_slot() -> None:
+    _slot()
+
+    result = tasks.resolve_registration.apply(args=["slot_1"])
+
+    assert result.successful()
+    assert PendingRegistration.objects.filter(public_id="slot_1").exists()
+
+
+@pytest.fixture
+def retry(monkeypatch: pytest.MonkeyPatch) -> mock.Mock:
+    # En `apply()` Celery reintenta al momento; aquí basta con saber que pide el reintento.
+    patched = mock.Mock(side_effect=Retry())
+    monkeypatch.setattr(tasks.resolve_registration, "retry", patched)
+    return patched
+
+
+def test_a_failure_within_the_window_is_retried(
+    monkeypatch: pytest.MonkeyPatch, retry: mock.Mock
+) -> None:
+    _slot()
+    monkeypatch.setattr(registration, "resolve_registration", mock.Mock(side_effect=OSError("db")))
+
+    result = tasks.resolve_registration.apply(args=["slot_1"])
+
+    assert result.state == "RETRY"
+    assert retry.call_args.kwargs["countdown"] == 15
+    assert PhantomProcess.objects.get(public_id="slot_1").payload is not None
+
+
+def test_a_failure_after_the_window_leaves_a_phantom_and_logs_it(
+    monkeypatch: pytest.MonkeyPatch, caplog: Any
+) -> None:
+    slot = _slot()
+    _age(slot, 6)
+    monkeypatch.setattr(registration, "resolve_registration", mock.Mock(side_effect=OSError("db")))
+
+    result = tasks.resolve_registration.apply(args=["slot_1"])
+
+    assert result.successful()
+    assert PhantomProcess.objects.get(public_id="slot_1").payload is None
+    assert "slot_1" not in caplog.text
+    assert "gave up" in caplog.text
+
+
+@override_settings(REGISTRATION_START_RETRY_MINUTES=10)
+def test_the_window_follows_the_settings(monkeypatch: pytest.MonkeyPatch, retry: mock.Mock) -> None:
+    slot = _slot()
+    _age(slot, 6)
+    monkeypatch.setattr(registration, "resolve_registration", mock.Mock(side_effect=OSError("db")))
+
+    assert tasks.resolve_registration.apply(args=["slot_1"]).state == "RETRY"
+
+
+def test_the_sweep_queues_unresolved_slots_within_the_window_and_gives_up_on_the_rest(
+    send_task: Any,
+) -> None:
+    _slot("fresh")
+    stale = _slot("stale", email="vieja@x.com")
+    _age(stale, 6)
+    resolved = _slot("done", email="hecha@x.com")
+    PhantomProcess.objects.filter(pk=resolved.pk).update(payload=None)
+
+    queued = tasks.sweep_unresolved()
+
+    assert queued == 1
+    send_task.assert_called_once_with("apps.accounts.tasks.resolve_registration", args=["fresh"])
+    assert PhantomProcess.objects.get(public_id="stale").payload is None
+
+
+def test_the_sweep_runs_every_minute() -> None:
+    entries = [
+        entry
+        for entry in settings.CELERY_BEAT_SCHEDULE.values()
+        if entry["task"] == "apps.accounts.tasks.sweep_unresolved"
+    ]
+
+    assert [entry["schedule"] for entry in entries] == [60.0]

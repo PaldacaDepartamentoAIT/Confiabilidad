@@ -220,6 +220,7 @@ DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="no-responder@localhost")
 # Barrido de la bandeja de salida: encola los correos pendientes con el intento vencido (D-14).
 CELERY_BEAT_SCHEDULE = {
     "emails-dispatch-due": {"task": "apps.emails.tasks.dispatch_due", "schedule": 30.0},
+    "accounts-sweep-unresolved": {"task": "apps.accounts.tasks.sweep_unresolved", "schedule": 60.0},
 }
 
 # Correos: dirección del frontend a la que llevan los enlaces de los correos (D-09).

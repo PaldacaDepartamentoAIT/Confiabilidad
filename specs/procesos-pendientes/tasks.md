@@ -270,7 +270,7 @@ fallar sus tests.
   (3) Si la cuenta aparece entre la comprobación y el alta, `save()` lanza `ValidationError` y la
   tarea de T-033 reintenta, que ya ve la cuenta. [Probable]
 
-- [ ] T-033 Tareas, reintentos y barrido de plazas sin resolver
+- [x] T-033 Tareas, reintentos y barrido de plazas sin resolver
   RF: RF-019, RF-024 (D-15, M-09) | Depende de: T-031, T-032 | Archivos: 3
   Archivos: `tasks.py`, `config/settings.py` (en `backend/`), `tests/test_registration_background.py`.
   Hecho cuando: la tarea `apps.accounts.tasks.resolve_registration` llama a la resolución; si
@@ -278,6 +278,12 @@ fallar sus tests.
   pasada la ventana, vacía el `payload`, deja la plaza como identificador sin registro y registra el
   fallo en el log; `sweep_unresolved()` encola las plazas sin resolver dentro de la ventana y no
   las demás; `CELERY_BEAT_SCHEDULE` lo ejecuta cada 60 s; suite verde.
+  Decisiones: (1) `processes.issue_code` acepta un `public_id` opcional para emitir el código con el
+  identificador de la plaza; cambio fuera de los archivos de la tarea, en el módulo común. [Cierto]
+  (2) El correo del registro repetido va en el idioma de la solicitud nueva, con el nombre guardado
+  (RF-005 conserva los datos; RF-013 de correo pide el idioma de la petición). [Probable]
+  (3) Si la cuenta aparece entre la comprobación y el alta, `save()` lanza `ValidationError` y la
+  tarea de T-033 reintenta, que ya ve la cuenta. [Probable]
 
 - [ ] T-034 Empezar el registro en la respuesta solo con el identificador
   RF: RF-023, RF-024 (D-11, M-03, M-06) | Depende de: T-030, T-033 | Archivos: 7
