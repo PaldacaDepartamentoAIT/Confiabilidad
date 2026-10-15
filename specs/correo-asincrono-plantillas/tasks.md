@@ -372,7 +372,7 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   cambiar de proveedor; y un «Marco teórico» con SPF, DKIM y DMARC, la bandeja de salida, la
   máscara del código y la entrega al menos una vez; todos sus comandos son copiables.
 
-- [ ] T-032 Corrección: el historial conserva el texto inicial de cada plantilla
+- [x] T-032 Corrección: el historial conserva el texto inicial de cada plantilla
   Tipo: corrección | Origen: validación de RF-020
   RF: RF-020 | Depende de: — | Archivos: 3
   Archivos: `migrations/0004_initial_template_history.py`, `tests/test_migrations.py`,
@@ -383,6 +383,10 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   texto inicial; tras editar una desde el panel, su historial muestra el texto anterior, el nuevo, el
   autor y la fecha; aplicar la migración otra vez no duplica registros y deshacerla quita solo esos;
   suite verde.
+  Decisiones: (1) Una plantilla que ya tiene historial (editada antes de esta migración) no recibe
+  el registro inicial: su texto original ya no se puede recuperar. [Cierto] (2) El registro inicial
+  lleva la fecha de la instalación (`updated_at`) y el motivo «Initial text», que es lo que borra
+  deshacer la migración. [Cierto]
 
 - [ ] T-033 Corrección: rechazar dominios sueltos y otros esquemas en las plantillas
   Tipo: corrección | Origen: validación de RF-021

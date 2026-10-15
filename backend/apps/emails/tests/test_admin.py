@@ -22,6 +22,8 @@ def _templates(settings: Any) -> None:
     settings.FRONTEND_BASE_URL = "https://app.ejemplo.com"
     migration = importlib.import_module("apps.emails.migrations.0002_initial_templates")
     migration.create_initial_templates(global_apps, None)
+    history = importlib.import_module("apps.emails.migrations.0004_initial_template_history")
+    history.record_initial_history(global_apps, None)
 
 
 def _client(user: User) -> Client:
@@ -69,6 +71,21 @@ def test_support_and_superusers_edit_subject_and_body(allowed_client: Client) ->
     template.refresh_from_db()
     assert (template.subject, template.body) == ("Nuevo asunto", body)
     assert (template.kind, template.locale) == ("registration_code", "es")
+
+
+def test_an_edit_keeps_the_previous_text_its_author_and_date_in_the_history() -> None:
+    support = _support_member()
+    template = _template()
+    previous = (template.subject, template.body)
+    body = "Código {{ code }}, vence en {{ expires_in }}: {{ link }}"
+
+    _client(support).post(_url("change", template.pk), {"subject": "Nuevo asunto", "body": body})
+
+    first, second = template.history.order_by("history_id")
+    assert (first.history_type, first.subject, first.body) == ("+", *previous)
+    assert (second.history_type, second.subject, second.body) == ("~", "Nuevo asunto", body)
+    assert second.history_user == support
+    assert first.history_date < second.history_date
 
 
 def test_an_invalid_template_shows_every_problem_and_is_not_saved(allowed_client: Client) -> None:

@@ -12,6 +12,8 @@ from apps.emails import rendering
 from apps.emails.models import EmailTemplate
 
 INITIAL = ("emails", "0002_initial_templates")
+BEFORE_HISTORY = ("emails", "0003_support_permissions")
+HISTORY = ("emails", "0004_initial_template_history")
 SCHEMA_ONLY = ("emails", "0001_initial")
 
 
@@ -124,3 +126,56 @@ def test_rolling_back_removes_only_the_email_permissions(before_permissions: Non
 
     assert _group_permissions() == consents_permissions
     assert ("consents", "view_userterms") in consents_permissions
+
+
+def _history() -> list[tuple[int, str, str, str, str]]:
+    return list(
+        EmailTemplate.history.order_by("id", "history_id").values_list(
+            "id", "history_type", "subject", "body", "history_change_reason"
+        )
+    )
+
+
+def test_every_initial_template_gets_its_text_in_the_history(schema_only: None) -> None:
+    _migrate(HISTORY)
+
+    expected = [
+        (template.pk, "+", template.subject, template.body, "Initial text")
+        for template in EmailTemplate.objects.order_by("id")
+    ]
+    assert len(expected) == 21
+    assert _history() == expected
+
+
+def test_recording_the_initial_history_again_adds_nothing(schema_only: None) -> None:
+    _migrate(HISTORY)
+    before = _history()
+    migration = importlib.import_module("apps.emails.migrations.0004_initial_template_history")
+
+    migration.record_initial_history(global_apps, None)
+
+    assert _history() == before
+
+
+def test_a_template_with_history_keeps_it_untouched(schema_only: None) -> None:
+    _migrate(BEFORE_HISTORY)
+    template = EmailTemplate.objects.get(kind="password_changed", locale="en")
+    template.body = "Edited, {{ name }}."
+    template.save()
+
+    _migrate(HISTORY)
+
+    assert list(
+        EmailTemplate.history.filter(id=template.pk).values_list("history_type", "body")
+    ) == [("~", "Edited, {{ name }}.")]
+
+
+def test_rolling_back_removes_only_the_initial_history(schema_only: None) -> None:
+    _migrate(HISTORY)
+    template = EmailTemplate.objects.get(kind="password_changed", locale="en")
+    template.body = "Edited, {{ name }}."
+    template.save()
+
+    _migrate(BEFORE_HISTORY)
+
+    assert list(EmailTemplate.history.values_list("id", "history_type")) == [(template.pk, "~")]
