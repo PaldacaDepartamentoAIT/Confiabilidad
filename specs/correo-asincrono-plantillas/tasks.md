@@ -356,7 +356,7 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   fixtures de `apps/core/tests/conftest.py` no llegan a `apps/emails`. [Cierto] (2) El test pasa sin
   código nuevo (la entrega es de T-013); un mutante que renombra la tarea lo hace fallar. [Cierto]
 
-- [ ] T-030 Documentación operativa
+- [x] T-030 Documentación operativa
   RF: — (CF-4) | Depende de: T-023 | Archivos: 1
   Archivos: `HUMAN_TODO.md` (en la raíz).
   Hecho cuando: la guía de MXroute nombra las variables reales de T-023 en su paso de SOPS; hay una

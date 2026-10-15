@@ -60,13 +60,57 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
   7. **Confirma la política con MXroute.** Pregunta a su soporte si permiten correo transaccional
      automático de una aplicación (códigos y avisos de seguridad) y cuál es hoy el límite de
      envío por hora (su documentación indica 400 por dirección).
-  8. **Guarda las credenciales SMTP cifradas.** Cuando el plan de la feature fije los nombres de
-     las variables, añade el usuario y la contraseña del buzón al archivo cifrado:
+  8. **Guarda la configuración SMTP en producción, con las credenciales cifradas.** Abre el
+     archivo cifrado:
      ```bash
      sops secrets/prod.enc.yaml
      ```
+     Añade estas variables (las dos últimas son secretas y solo deben vivir ahí):
+     `EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend`, `EMAIL_HOST=<SERVIDOR_MXROUTE>`,
+     `EMAIL_PORT=465`, `EMAIL_USE_SSL=true`, `EMAIL_USE_TLS=false`,
+     `DEFAULT_FROM_EMAIL=no-responder@notificaciones.<TU_DOMINIO>`,
+     `EMAIL_SUPPORT_ADDRESS=<CORREO_DE_SOPORTE>`, `FRONTEND_BASE_URL=<URL_DEL_FRONTEND>`,
+     `EMAIL_HOST_USER=no-responder@notificaciones.<TU_DOMINIO>` y
+     `EMAIL_HOST_PASSWORD=<CONTRASEÑA_DEL_BUZÓN>`. `<CORREO_DE_SOPORTE>` es el buzón donde quieres
+     recibir los reportes de «no fui yo», y `<URL_DEL_FRONTEND>` la dirección pública de la web
+     (por ejemplo, `https://app.<TU_DOMINIO>`). Si prefieres STARTTLS, usa `EMAIL_PORT=587`,
+     `EMAIL_USE_SSL=false` y `EMAIL_USE_TLS=true`.
+  8b. **Envía un correo real de prueba** cuando el backend, el worker y el beat estén desplegados
+     con esa configuración. Dentro del contenedor del backend:
+     ```bash
+     python manage.py emails test --kind password_changed --locale es --to <TU_CORREO>
+     ```
+     Deberías ver `queued: <ID> → <TU_CORREO>` y, en un minuto como mucho, el correo en tu bandeja
+     con `SPF: PASS`, `DKIM: PASS` y `DMARC: PASS` en *Mostrar original*. Si no llega, el panel de
+     administración muestra el error en *Failed emails*.
   9. **Migra a un proveedor transaccional** antes de que el volumen real se acerque al límite por
      hora de MXroute; solo cambiarán las variables de entorno.
+
+- [ ] **Definir `EMAIL_CODE_SECRET` en producción, cifrado con SOPS, y no rotarlo** (features
+  `huellas-hmac-unificadas` y `correo-asincrono-plantillas`). Oculta el código de los correos que
+  esperan en la bandeja. Sin definir vale `email-code:` + `DJANGO_SECRET_KEY`, así que rotar esa
+  clave descartaría los correos de código pendientes. Genera uno propio:
+  ```bash
+  python -c "import secrets; print(secrets.token_urlsafe(48))"
+  ```
+  Añade el valor que imprime como `EMAIL_CODE_SECRET` en el archivo cifrado; debe ser distinto de
+  `REGISTRATION_CODE_SECRET`:
+  ```bash
+  sops secrets/prod.enc.yaml
+  ```
+
+- [ ] **Migrar y comprobar Docker tras `correo-asincrono-plantillas`.** La rama añade la app
+  `emails` (migraciones `0001`, `0002` y `0003`) y la migración `0007_language` de `accounts`, sin
+  dependencias nuevas. En tu máquina:
+  ```bash
+  docker compose -f docker/docker-compose.yml build backend
+  ```
+  ```bash
+  docker compose -f docker/docker-compose.yml run --rm backend python manage.py migrate
+  ```
+  Deberías ver `emails.0001_initial... OK`, `emails.0002_initial_templates... OK`,
+  `emails.0003_support_permissions... OK` y `accounts.0007_language... OK`. Reinicia después el
+  `worker` y el `beat` para que carguen la tarea de entrega y el barrido de cada 30 segundos.
 
 - [ ] **Comprobar que el entorno Docker sigue levantando tras `huellas-hmac-unificadas`.** En la
   sesión remota no se pudo construir la imagen del backend (Docker Hub devolvió
