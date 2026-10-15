@@ -64,6 +64,7 @@ def test_an_active_account_gets_a_request_with_the_slot_id_and_the_code_email() 
 
     request = PasswordResetRequest.objects.get()
     assert (request.user, request.public_id, request.failed_attempts) == (user, "slot_1", 0)
+    assert request.language == "pt-BR"
     assert request.code_validated_at is None
     assert fingerprints.account_stamp_matches(request.account_stamp, user.email, user.password)
     assert not PhantomProcess.objects.exists()
@@ -82,12 +83,12 @@ def test_an_active_account_gets_a_request_with_the_slot_id_and_the_code_email() 
 def test_a_previous_request_is_replaced_with_a_new_life_and_stamp() -> None:
     user = make_user(email="eva@x.com")
     old = _old_request(user)
-    _slot()
+    _slot(language="en")
 
     password_reset.resolve_password_reset("slot_1")
 
     request = PasswordResetRequest.objects.get()
-    assert request.pk == old.pk
+    assert (request.pk, request.language) == (old.pk, "en")
     assert (request.public_id, request.failed_attempts, request.code_validated_at) == (
         "slot_1",
         0,
@@ -151,6 +152,7 @@ def test_an_unsupported_language_falls_back_to_the_default() -> None:
     password_reset.resolve_password_reset("slot_1")
 
     assert OutboundEmail.objects.get().locale == "es"
+    assert PasswordResetRequest.objects.get().language == "es"
 
 
 def _age(slot: PhantomProcess, minutes: int) -> None:

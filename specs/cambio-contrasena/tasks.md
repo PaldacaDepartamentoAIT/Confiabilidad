@@ -400,7 +400,7 @@ esquema, para que al final quede una sola migración (M-07).
   Hecho cuando: `PasswordResetRequest` tiene `language` con los tres idiomas y `es` por defecto; las
   solicitudes existentes quedan en `es` tras migrar; no hay migraciones pendientes; suite verde.
 
-- [ ] T-034 Corrección: el reenvío sale en el idioma de la petición
+- [x] T-034 Corrección: el reenvío sale en el idioma de la petición
   Tipo: corrección | Origen: validación de RF-013 de `correo-asincrono-plantillas`
   RF: RF-007 (D-17) | Depende de: T-033 | Archivos: 3
   Archivos: `password_reset.py`, `tests/test_password_reset_background.py`,
@@ -408,6 +408,9 @@ esquema, para que al final quede una sola migración (M-07).
   Causa: `reissue_code` usaba el idioma de la cuenta.
   Hecho cuando: crear y reemplazar la solicitud guarda el idioma de la petición; con la cuenta en `es`
   y la petición en `pt-BR`, el correo del reenvío sale en `pt-BR`; suite verde.
+  Decisiones: (1) El idioma se normaliza al guardarlo en la solicitud; uno no admitido queda en `es`.
+  [Cierto] (2) `_create_or_replace` exige ahora el identificador y el idioma: ya solo la usa la
+  resolución. [Cierto]
 
 - [ ] T-035 Corrección: manda la petición más reciente al resolver
   Tipo: corrección | Origen: validación de RF-003 y RF-017

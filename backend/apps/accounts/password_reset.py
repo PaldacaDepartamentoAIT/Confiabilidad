@@ -22,7 +22,7 @@ from apps.core import fingerprints
 from apps.emails import locales, outbox
 
 _PURPOSE = codes.Purpose.PASSWORD_RESET
-_REPLACED_FIELDS = [*processes.ISSUED_FIELDS, "created_at", "account_stamp"]
+_REPLACED_FIELDS = [*processes.ISSUED_FIELDS, "created_at", "account_stamp", "language"]
 RESOLVE_TASK = "apps.accounts.tasks.resolve_password_reset"
 REISSUE_TASK = "apps.accounts.tasks.reissue_code"
 logger = logging.getLogger(__name__)
@@ -64,12 +64,12 @@ def _queue(task: str, args: list[str]) -> None:
 
 
 def _create_or_replace(
-    user: User, public_id: str | None = None
+    user: User, public_id: str, language: str
 ) -> tuple[PasswordResetRequest, str]:
     request = _locked_request(user)
     if request is None:
         request = PasswordResetRequest(user=user)
-        code = _issue(request, public_id)
+        code = _issue(request, public_id, language)
         try:
             with transaction.atomic():
                 request.save()
@@ -78,7 +78,7 @@ def _create_or_replace(
             request = _locked_request(user)
             if request is None:
                 raise
-    code = _issue(request, public_id)
+    code = _issue(request, public_id, language)
     request.save(update_fields=_REPLACED_FIELDS)
     return request, code
 
@@ -101,7 +101,7 @@ def resolve_password_reset(public_id: str) -> None:
             slot.save(update_fields=["payload"])
             return
         slot.delete()
-        _request, code = _create_or_replace(user, public_id)
+        _request, code = _create_or_replace(user, public_id, language)
         outbox.enqueue(
             kind="password_reset_code",
             recipient=user.email,
@@ -161,7 +161,7 @@ def reissue_code(public_id: str) -> None:
             outbox.enqueue(
                 kind="password_reset_code",
                 recipient=process.user.email,
-                locale=process.user.language,
+                locale=process.language,
                 context={"name": process.user.name},
                 purpose=_PURPOSE,
                 public_id=public_id,
@@ -300,8 +300,9 @@ def _locked_request(user: User) -> PasswordResetRequest | None:
     return PasswordResetRequest.objects.select_for_update().filter(user=user).first()
 
 
-def _issue(request: PasswordResetRequest, public_id: str | None = None) -> str:
+def _issue(request: PasswordResetRequest, public_id: str, language: str) -> str:
     code = processes.issue_code(request, _PURPOSE, public_id)
     request.created_at = timezone.now()
+    request.language = locales.normalize(language)
     request.account_stamp = fingerprints.account_stamp(request.user.email, request.user.password)
     return code

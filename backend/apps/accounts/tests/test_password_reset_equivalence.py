@@ -267,9 +267,9 @@ def test_the_previous_code_stops_serving_as_soon_as_a_resend_is_asked() -> None:
     assert password_reset.verify(public_id=started.public_id, code=new_code) == "verified"
 
 
-def test_the_task_emails_a_new_code_for_a_real_request() -> None:
-    public_id = _real()
-    User.objects.update(language="en", name="Eva Titular")
+def test_the_task_emails_a_new_code_for_a_real_request_in_the_request_language() -> None:
+    make_user(email=EMAIL, language="es", name="Eva Titular")
+    public_id = make_reset_request(EMAIL, language="en").public_id
     password_reset.resend(public_id=public_id)
 
     tasks.reissue_code.apply(args=["password_reset", public_id])
