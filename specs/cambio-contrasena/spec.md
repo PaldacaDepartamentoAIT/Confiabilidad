@@ -1,5 +1,5 @@
 # Spec: cambio-contrasena
-Estado: aprobada
+Estado: borrador
 Aprobación: ligera
 
 ## Objetivo (por qué)
@@ -203,6 +203,12 @@ anula el identificador sin solicitud anterior, igual que RF-003 con una solicitu
   2026-10-14). *Riesgo aceptado:* quien tenga el identificador puede notar que caducó antes de
   tiempo, o que revive al reactivarse la cuenta, y deducir así que el correo tenía cuenta. Solo
   ocurre si el titular o soporte actúan sobre la cuenta durante la vida de la solicitud.
+- S-14 *Riesgo aceptado (2.ª validación, 2026-10-15):* rotar el secreto de los códigos sin
+  transición suficiente, o que Django vuelva a calcular el hash de la contraseña al iniciar sesión,
+  hace que una solicitud real en curso responda como caducada y una plaza sin cuenta no (RF-017).
+  Solo ocurre en esos eventos del servidor; `HUMAN_TODO.md` describe cómo rotar sin provocarlo
+  (secreto anterior siempre definido, transición de al menos la vida máxima de una solicitud y la
+  hora de la rotación anotada al desplegar).
 
 ## Fuera de alcance
 - API, pantallas y mensaje neutro (S-01). El envío de correos es de `correo-asincrono-plantillas`.
@@ -258,3 +264,5 @@ anula el identificador sin solicitud anterior, igual que RF-003 con una solicitu
   RF-009, RF-012 y RF-013 modificados; RF-016 y RF-017 añadidos; secuencia, S-01, S-06, fuera de
   alcance, CF-4 y CF-5 ajustados; CF-6 añadido. Clarificado (C-01, C-02): RF-005, RF-008,
   RF-010, RF-014 y RF-015 ajustados; S-13 añadido — Estado: impacto analizado
+- 2026-10-15 — Cambio tras la 2.ª validación: riesgo de la rotación del secreto aceptado — RF:
+  ninguno modificado; S-14 añadido. Clarificado sin dudas nuevas — Estado: impacto analizado

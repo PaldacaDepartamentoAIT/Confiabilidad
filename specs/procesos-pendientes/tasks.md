@@ -1,5 +1,5 @@
 # Tareas: procesos-pendientes
-Estado: aprobado
+Estado: borrador
 
 Rutas relativas a `backend/apps/accounts/` salvo que se indique. "Suite verde" =
 `cd backend && pytest -q` + `mypy .` + `ruff check .` + `black --check .` sin errores. En cada
@@ -419,6 +419,33 @@ fallar sus tests.
   Hecho cuando: el resumen explica que la ventana se comprueba en cada ejecución, que manda la
   petición más reciente y que la plaza cuenta plazos e intentos como un registro real, y sus límites
   conocidos reflejan lo que queda sin medir.
+
+- [ ] T-044 Corrección: la plaza guarda cuándo se resolvió
+  Tipo: corrección | Origen: 2.ª validación de RF-025
+  RF: RF-025 (D-16, M-11) | Depende de: — | Archivos: 3
+  Archivos: `models.py`, `migrations/0011_phantomprocess_resolved_at.py`,
+  `tests/test_phantom_model.py`.
+  Hecho cuando: `PhantomProcess` tiene `resolved_at` nulo, vacío por defecto; las plazas existentes
+  quedan con él vacío tras migrar; no hay migraciones pendientes; suite verde.
+
+- [ ] T-045 Corrección: solo una plaza resuelta transmite su alta
+  Tipo: corrección | Origen: 2.ª validación de RF-025
+  RF: RF-025 (D-15, D-16) | Depende de: T-044 | Archivos: 3
+  Archivos: `registration.py`, `tests/test_phantom_equivalence.py`,
+  `tests/test_registration_background.py`.
+  Causa: una plaza abandonada (`payload` vacío sin resolverse) se trataba como una plaza con cuenta
+  resuelta y transmitía su alta a la petición siguiente.
+  Hecho cuando: la resolución con cuenta anota `resolved_at` y abandonar una plaza no lo anota; con
+  plaza y con registro real dan el mismo resultado: `start` sin encolar, abandono por el barrido a
+  los 6 min, `start` nuevo en t=10 resuelto, reenvíos cada 12 min y `verify` en t=62; y `start`
+  resuelto en t=0, `start` abandonado en t=10, tercer `start` resuelto en t=20, reenvíos cada 10 min
+  y `verify` y `resend` en t=62; suite verde.
+
+- [ ] T-046 Resumen tras la 2.ª validación
+  RF: — (CF-4) | Depende de: T-045 | Archivos: 1
+  Archivos: `specs/procesos-pendientes/resumen.md` (en la raíz).
+  Hecho cuando: el resumen dice que solo una plaza resuelta transmite su alta y nombra la migración
+  `0011` en «Cómo probarlo».
 
 ## RF sin tarea
 Ninguno.

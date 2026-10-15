@@ -1,5 +1,5 @@
 # Plan: procesos-pendientes
-Estado: aprobado
+Estado: borrador
 
 ## Módulos
 ### M-01 Modelo `PendingRegistration` (`apps/accounts/models.py`)
@@ -67,6 +67,10 @@ RF: RF-004, RF-005, RF-016, RF-017, RF-019, RF-024, RF-025
 Responsabilidad: crear la tabla de `PhantomProcess` con la unicidad de `public_id`.
 RF: RF-025 (CF-1)
 
+### M-11 Migración `0011_phantomprocess_resolved_at`
+Responsabilidad: añadir a `PhantomProcess` el momento de su resolución (D-16).
+RF: RF-025
+
 ## Modelo de datos
 `accounts.PendingRegistration`:
 - `email` EmailField + `UniqueConstraint(Lower("email"))` (como `User`).
@@ -88,6 +92,9 @@ código, intentos, validación y fecha de alta:
 - `payload` JSONField nulo: nombre, fecha, país e idioma de la solicitud mientras M-09 no la
   resuelve; se vacía al resolverla o al agotar los reintentos (D-15).
 - `code_hash` vacío: ninguna huella coincide con él, así que ningún código se acepta (D-12).
+- `resolved_at` DateTimeField nulo (cambio del 2026-10-15): momento en que la resolución del
+  registro dejó la plaza como identificador sin registro detrás. Vacío en una plaza sin resolver o
+  abandonada al agotar la ventana (D-15, D-16).
 
 Sin historial; se purga con los registros pendientes caducados (RF-013).
 
@@ -217,7 +224,8 @@ intento que la cola atendió tarde. Dentro de la ventana, si falla, reintenta co
 (15 s, 30 s y 60 s como máximo) sin el tope de 3 reintentos de Celery: la ventana es el único
 límite. Un barrido cada 60 s en el planificador vuelve a encolar las plazas sin resolver dentro de
 esa ventana. Pasada la ventana, la plaza se queda como identificador sin registro, se vacía su
-`payload`, no se envía correo y el fallo se registra en el log del servidor.
+`payload`, no se envía correo y el fallo se registra en el log del servidor. Una plaza abandonada
+queda con `resolved_at` vacío.
 Descartada: solo los reintentos de Celery (si la cola estaba caída al confirmar, nadie reintenta), y
 mirar la ventana solo después de un fallo (un reintento o una tarea atendida tarde resolvía fuera de
 la ventana y enviaba el correo).
@@ -232,9 +240,11 @@ Elegida: en una transacción, con la plaza bloqueada:
    del mismo correo (RF-017) y las plazas anteriores del mismo correo y propósito (RF-025).
 2. Si el correo tiene cuenta, la plaza queda como identificador sin registro, en el mismo estado en
    que `issue_code` deja un registro real: intentos a 0, sin validar y con el código vigente desde la
-   resolución. Su alta es la de la plaza vigente anterior del mismo correo que reemplaza (leída antes
-   de borrarla), igual que un registro repetido conserva la suya (RF-005); si no la había, o estaba
-   caducada, el alta es la de la resolución, igual que un registro nuevo. Si la cuenta está activa,
+   resolución. Su alta es la de la plaza anterior del mismo correo, **resuelta** (con `resolved_at`)
+   y vigente, que reemplaza (leída antes de borrarla), igual que un registro repetido conserva la
+   suya (RF-005); si no la había, estaba caducada o fue abandonada, el alta es la de la resolución,
+   igual que un registro nuevo: una plaza abandonada no dejó registro en el caso sin cuenta. La
+   resolución anota `resolved_at`. Si la cuenta está activa,
    encola el aviso "ya tienes cuenta" (RF-006, con el tope de RF-007).
 3. Si hay un registro pendiente vigente del mismo correo, le asigna el `public_id` de la plaza,
    emite un código nuevo con los intentos a 0 y sin validar, conservando sus datos (RF-005), y borra
@@ -298,7 +308,9 @@ siendo las mismas en los dos casos (D-14).
   2026-10-15 también: intentos fallidos antes de resolver, resolución retrasada 4 min, repetición
   con el paso del tiempo (`start`, `resend` y `start`, observando a los 61 min), dos plazas resueltas
   en orden inverso (D-17) y una operación simultánea con la resolución detenida dentro de su
-  transacción, con transacciones reales y dos hilos (D-18).
+  transacción, con transacciones reales y dos hilos (D-18). Desde la 2.ª validación también: una
+  plaza abandonada (por la cola caída al confirmar o por una tarea atendida tarde) seguida de una
+  petición nueva, y un registro resuelto seguido de una petición abandonada y de una tercera (D-16).
 - Ventana (`test_registration_background.py`): la tarea ejecutada fuera de la ventana, sin simular
   la resolución, no crea registro ni encola correo, vacía el `payload` y deja el fallo en el log
   (D-15).
@@ -328,7 +340,7 @@ siendo las mismas en los dos casos (D-14).
 | RF-022 | M-05 | contraseñas |
 | RF-023 | M-06 | comando |
 | RF-024 | M-01, M-03, M-08, M-09 (D-11, D-15, D-16) | servicio + resolución |
-| RF-025 | M-08, M-10, M-03, M-09 (D-12, D-14, D-16, D-17, D-18) | equivalencia |
+| RF-025 | M-08, M-10, M-11, M-03, M-09 (D-12, D-14, D-16, D-17, D-18) | equivalencia |
 
 ## RF sin cobertura
 Ninguno (RF-006, RF-014, RF-018 y RF-021 son obsoletos).

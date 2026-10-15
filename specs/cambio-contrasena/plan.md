@@ -1,5 +1,5 @@
 # Plan: cambio-contrasena
-Estado: aprobado
+Estado: borrador
 
 ## Módulos
 ### M-01 Base común de los procesos con código (`apps/accounts/models.py`)
@@ -150,6 +150,9 @@ de tokens de restablecimiento de Django. *Limitación conocida:* Django recalcul
 contraseña al iniciar sesión si cambian los parámetros del algoritmo (por ejemplo, al actualizar
 Django). Eso invalida una solicitud en curso aunque la contraseña no haya cambiado; el coste es
 pedir otra. Un secreto rotado sin periodo de transición también las invalida, como a los códigos.
+*Cambio del 2026-10-15 (2.ª validación):* esas dos invalidaciones distinguen una solicitud real de
+una plaza (RF-017). Se aceptan como riesgo residual (S-14) en vez de firmar la huella con una clave
+que no rote: esa clave sería un secreto más y el recálculo del hash seguiría distinguiendo.
 
 ### D-05 Orden de bloqueo y concurrencia
 *Cambio del 2026-10-14:* el bloqueo de `start` se aplica ahora en `resolve_password_reset`, fuera de
@@ -371,3 +374,5 @@ Ninguno.
   a esta feature.
 - *Resuelto el 2026-10-14:* el tiempo de respuesta de `start` ya no depende de la cuenta (D-13).
   Queda pendiente para la API solo el mensaje neutro (S-01).
+- Rotar el secreto de los códigos sin transición, o el recálculo del hash de la contraseña, deja
+  una solicitud real como caducada y una plaza no (S-14, D-04).

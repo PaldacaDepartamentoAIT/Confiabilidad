@@ -1,5 +1,5 @@
 # Tareas: correo-asincrono-plantillas
-Estado: aprobado
+Estado: borrador
 
 Rutas relativas a `backend/apps/emails/` salvo que se indique. "Suite verde" =
 `cd backend && pytest -q` + `mypy .` + `ruff check .` + `black --check .` sin errores. En cada
@@ -411,6 +411,44 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   T-017, T-022, T-023 y T-025) se sustituyen por las reales, reconstruidas del commit de cada tarea,
   o por «sin decisiones fuera del plan»; el historial de la spec registra su aprobación del
   2026-10-14.
+
+- [ ] T-035 Corrección: el asunto de una plantilla no admite saltos de línea
+  Tipo: corrección | Origen: 2.ª validación de RF-018 (cambio de RF-021)
+  RF: RF-021 (D-07) | Depende de: — | Archivos: 2
+  Archivos: `rendering.py`, `tests/test_rendering.py`.
+  Hecho cuando: guardar una plantilla cuyo asunto contiene `\n` o `\r` lanza `ValidationError` que lo
+  indica, junto con los demás problemas; el cuerpo sigue admitiendo saltos de línea; las 21
+  plantillas iniciales siguen siendo válidas; suite verde.
+
+- [ ] T-036 Corrección: los enlaces se juzgan como los abre el navegador
+  Tipo: corrección | Origen: 2.ª validación de RF-021
+  RF: RF-021 (D-17) | Depende de: T-035 | Archivos: 3
+  Archivos: `rendering.py`, `tests/test_rendering.py`, `tests/test_admin.py`.
+  Causa: el dominio se tomaba con `urlsplit`, que no trata `\` como `/` ni normaliza `＠`; no se
+  reconocían dominios no latinos, el punto `。` ni las IP sueltas; y una dirección mal formada daba un
+  500 en el panel.
+  Hecho cuando: `https://evil.com\@app.ejemplo.com/login`, `http://evil.com\@app.ejemplo.com`,
+  `https://evil.com＠app.ejemplo.com`, `аррӏе.com`, `пример.рф/login`, `evil.рф`, `evil。com/login` y
+  `1.2.3.4/login` se rechazan nombrando cada dirección; `https://[evil.com/x` se rechaza como problema
+  de la plantilla y en el panel da 200 con el problema y la fila sin cambios, nunca 500; las
+  direcciones del dominio de `FRONTEND_BASE_URL` se siguen aceptando; las 21 plantillas iniciales
+  siguen siendo válidas; suite verde.
+
+- [ ] T-037 Corrección: el error guardado de un intento nunca contiene el código
+  Tipo: corrección | Origen: 2.ª validación de RF-018
+  RF: RF-018 (D-18) | Depende de: — | Archivos: 2
+  Archivos: `delivery.py`, `tests/test_delivery.py`.
+  Causa: se guardaba el texto del error tal cual, y algunos errores citan el mensaje preparado con el
+  código.
+  Hecho cuando: si el envío lanza, temporal o definitivamente, un error cuyo texto contiene el
+  código, `last_error` y el log lo llevan sustituido por `[code]`; el resto del error se conserva;
+  ninguna columna de la fila contiene el código tras el fallo; suite verde.
+
+- [ ] T-038 Resumen tras la 2.ª validación
+  RF: — (CF-5) | Depende de: T-035…T-037 | Archivos: 1
+  Archivos: `specs/correo-asincrono-plantillas/resumen.md` (en la raíz).
+  Hecho cuando: el resumen describe la validación de enlaces tal como queda (sin afirmar que cubre
+  «cualquier dirección»), la regla del asunto y que el error guardado no lleva el código.
 
 ## RF sin tarea
 - RF-008 (aviso de contraseña restablecida) y RF-019 (mismo trabajo exista o no la cuenta): sin

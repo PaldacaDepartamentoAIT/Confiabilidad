@@ -1,5 +1,5 @@
 # Tareas: cambio-contrasena
-Estado: aprobado
+Estado: borrador
 
 Rutas relativas a `backend/apps/accounts/` salvo que se indique. "Suite verde" =
 `cd backend && pytest -q` + `mypy .` + `ruff check .` + `black --check .` sin errores. En cada
@@ -469,6 +469,14 @@ esquema, para que al final quede una sola migración (M-07).
   Hecho cuando: el resumen explica el idioma del reenvío, la migración `0010`, que manda la petición
   más reciente y que la plaza cuenta plazos e intentos como una solicitud real, con el paso de
   migrar en «Cómo probarlo».
+
+- [ ] T-041 Procedimiento de rotación y riesgo aceptado de la huella de la cuenta
+  RF: — (S-14) | Depende de: — | Archivos: 2
+  Archivos: `HUMAN_TODO.md`, `specs/cambio-contrasena/resumen.md` (rutas desde la raíz).
+  Hecho cuando: la entrada de `REGISTRATION_CODE_SECRET` en `HUMAN_TODO.md` pide rotar siempre con
+  `REGISTRATION_CODE_SECRET_PREVIOUS` definido, con `REGISTRATION_SECRET_TRANSITION_MINUTES` de al
+  menos `REGISTRATION_MAX_LIFETIME_MINUTES` y con `REGISTRATION_CODE_SECRET_ROTATED_AT` anotado en el
+  momento real del despliegue, y explica por qué; el resumen recoge S-14 en sus límites conocidos.
 
 ## RF sin tarea
 Ninguno.

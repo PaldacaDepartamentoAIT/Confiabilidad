@@ -1,5 +1,5 @@
 # Spec: correo-asincrono-plantillas
-Estado: aprobada
+Estado: borrador
 Aprobación: ligera
 
 ## Objetivo (por qué)
@@ -129,9 +129,9 @@ historial de cada cambio: quién, cuándo y el texto anterior.
 
 ### RF-021 Validación de las plantillas
 Si al guardar una plantilla falta alguno de los datos obligatorios de su tipo (el código, el enlace
-y el plazo en los correos de código), aparece un dato que su tipo no admite o contiene un enlace a
-un dominio distinto del de la aplicación configurado, entonces el sistema deberá rechazarla
-indicando cada problema y conservar la versión anterior.
+y el plazo en los correos de código), aparece un dato que su tipo no admite, contiene un enlace a
+un dominio distinto del de la aplicación configurado o su asunto contiene un salto de línea,
+entonces el sistema deberá rechazarla indicando cada problema y conservar la versión anterior.
 
 ### RF-022 Plantillas iniciales y completas
 El sistema deberá incluir desde su instalación un texto para cada tipo de correo en los tres
@@ -248,3 +248,6 @@ superado o servidor no disponible), que se reintentan según RF-015 y RF-016, de
   Estado: clarificado
 - 2026-10-14 — Aprobación por el usuario (commit `b49760d`; entrada añadida el 2026-10-15, tras la
   validación) — Estado: aprobada
+- 2026-10-15 — Cambio tras la 2.ª validación: el asunto no admite saltos de línea — RF: RF-021
+  modificado. Clarificado sin dudas nuevas: un salto de línea es `\n` o `\r`, los que una cabecera
+  de correo no admite; el cuerpo los sigue admitiendo — Estado: impacto analizado

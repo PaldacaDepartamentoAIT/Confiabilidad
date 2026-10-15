@@ -1,5 +1,5 @@
 # Plan: correo-asincrono-plantillas
-Estado: aprobado
+Estado: borrador
 
 ## Módulos
 ### M-01 App `apps/emails`: modelos y migraciones
@@ -150,7 +150,8 @@ admitidas y obligatorias. Una variable desconocida o una obligatoria ausente imp
 Descartada: el motor de plantillas de Django y `str.format`.
 Motivo: desde el panel, el motor de Django permite etiquetas, filtros y acceso a atributos, y
 `str.format` permite recorrer atributos (`{user.__class__}`). La lista blanca solo deja insertar
-texto.
+texto. *Cambio del 2026-10-15:* el asunto tampoco admite saltos de línea (`\n`, `\r`): una cabecera
+con ellos hace fallar el envío de todos los correos de ese tipo e idioma (RF-021).
 
 ### D-08 Textos fijos por idioma en el código
 Elegida: el bloque de reporte de RF-010 y las frases del plazo ("9 minutos", "1 minuto", "menos de
@@ -210,6 +211,25 @@ panel sin añadir ni borrar, y `delete()` del modelo y del queryset que lo recha
 Descartada: confiar solo en el panel.
 Motivo: RF-022 exige impedir el borrado por cualquier vía de la aplicación.
 
+### D-17 Enlaces de las plantillas tal como los abre el navegador
+Elegida (cambio del 2026-10-15, tras la validación): se detectan las direcciones con esquema, con
+`www.`, los dominios sueltos (también con letras no latinas y con el punto ideográfico `。`, que
+cuenta como `.`), las IP sueltas y el dominio de una dirección de correo. El dominio de cada una se
+obtiene como lo haría un navegador: se normaliza el texto (NFKC, que convierte `＠` en `@`), `\`
+cuenta como `/` en `http(s)`, y una dirección que no se puede analizar se rechaza como problema de
+la plantilla, nunca como error del servidor.
+Descartada: analizar la dirección con `urlsplit` tal cual, que separa el dominio de forma distinta
+que el navegador (`https://evil.com\@app.ejemplo.com` pasaba y abre `evil.com`) y lanza errores no
+controlados con ciertos caracteres.
+Motivo: RF-021 pide rechazar los enlaces a otros dominios tal como los abrirá quien lea el correo.
+
+### D-18 El error guardado de un intento nunca lleva el código
+Elegida: antes de guardar el último error en la fila o de escribirlo en el log, el código del
+correo se sustituye por el marcador `[code]`.
+Descartada: guardar solo el tipo de error, que deja a soporte sin el diagnóstico del proveedor.
+Motivo: RF-018; algunos errores citan el mensaje ya preparado (`BadHeaderError` cita el asunto) o
+un rechazo SMTP lo repite.
+
 ## Estrategia de tests
 - Unitario (`test_rendering.py`, `test_errors.py` y, en `apps/core/tests/test_fingerprints.py`, la
   máscara): variables y validación por tipo, enlaces de otro dominio, bloque fijo en los tres
@@ -229,6 +249,10 @@ Motivo: RF-022 exige impedir el borrado por cualquier vía de la aplicación.
   RF-012, RF-020, RF-022; CF-3).
 - Panel (`test_admin.py`): solo soporte y superusuarios, edición con validación, sin añadir ni
   borrar, fallidos visibles y borrables (RF-017, RF-020, RF-021, RF-022).
+- Desde el 2026-10-15: asunto con saltos de línea, direcciones disfrazadas (barra invertida, `＠`,
+  dominios no latinos, `。`, IP sueltas) y direcciones mal formadas que dan un error de la plantilla
+  y no un 500 (RF-021, D-17); un error del proveedor que cita el código no lo deja en la fila ni en
+  el log (RF-018, D-18).
 - Comando (`test_command.py`): `test`, `notify` y `dispatch` (RF-009, RF-025).
 - `apps/accounts`: comprobador de vigencia y copia del idioma al completar (RF-012, RF-015).
 - Los RF de M-10 (RF-004, RF-005, RF-006, RF-008, RF-019) se prueban en las suites de
