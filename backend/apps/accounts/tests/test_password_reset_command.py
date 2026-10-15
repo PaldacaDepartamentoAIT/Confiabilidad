@@ -9,7 +9,6 @@ from django.utils import timezone
 
 from apps.accounts import codes, password_reset
 from apps.accounts.management.commands.password_reset import (
-    ACCOUNT_ERRORS,
     COMPLETE_ERRORS,
     RESEND_ERRORS,
     VERIFY_ERRORS,
@@ -103,10 +102,7 @@ def test_verify_confirms_the_right_code_and_rejects_a_wrong_one() -> None:
     assert out.getvalue().splitlines() == [f"public_id: {started['public_id']}", "Code verified."]
 
 
-VERIFY_REFUSALS = [
-    *[refusal for refusal in password_reset.VerifyResult if refusal != "verified"],
-    *password_reset.AccountRefusal,
-]
+VERIFY_REFUSALS = [refusal for refusal in password_reset.VerifyResult if refusal != "verified"]
 
 
 @pytest.mark.parametrize("refusal", VERIFY_REFUSALS)
@@ -115,7 +111,7 @@ def test_every_verify_refusal_has_its_own_message(
 ) -> None:
     monkeypatch.setattr(f"{COMMAND}.password_reset.verify", lambda **kwargs: refusal)
 
-    assert _error("verify", "any-id", "123456") == {**VERIFY_ERRORS, **ACCOUNT_ERRORS}[refusal]
+    assert _error("verify", "any-id", "123456") == VERIFY_ERRORS[refusal]
 
 
 def test_resend_keeps_the_public_id_and_shows_a_new_code() -> None:
@@ -130,13 +126,13 @@ def test_resend_keeps_the_public_id_and_shows_a_new_code() -> None:
     )
 
 
-@pytest.mark.parametrize("refusal", [*password_reset.ResendRefusal, *password_reset.AccountRefusal])
+@pytest.mark.parametrize("refusal", list(password_reset.ResendRefusal))
 def test_every_resend_refusal_has_its_own_message(
     monkeypatch: pytest.MonkeyPatch, refusal: str
 ) -> None:
     monkeypatch.setattr(f"{COMMAND}.password_reset.resend", lambda **kwargs: refusal)
 
-    assert _error("resend", "any-id") == {**RESEND_ERRORS, **ACCOUNT_ERRORS}[refusal]
+    assert _error("resend", "any-id") == RESEND_ERRORS[refusal]
 
 
 def test_complete_with_password_shows_the_account() -> None:
@@ -175,9 +171,7 @@ def test_complete_reports_every_broken_password_rule() -> None:
     assert PasswordResetRequest.objects.exists()
 
 
-@pytest.mark.parametrize(
-    "refusal", [*password_reset.CompleteRefusal, *password_reset.AccountRefusal]
-)
+@pytest.mark.parametrize("refusal", list(password_reset.CompleteRefusal))
 def test_every_complete_refusal_has_its_own_message(
     monkeypatch: pytest.MonkeyPatch, refusal: str
 ) -> None:
@@ -185,12 +179,17 @@ def test_every_complete_refusal_has_its_own_message(
 
     message = _error("complete", "any-id", "--password", GOOD_PASSWORD)
 
-    assert message == {**COMPLETE_ERRORS, **ACCOUNT_ERRORS}[refusal]
+    assert message == COMPLETE_ERRORS[refusal]
+
+
+def test_no_message_mentions_the_account() -> None:
+    for errors in (VERIFY_ERRORS, RESEND_ERRORS, COMPLETE_ERRORS):
+        assert not [message for message in errors.values() if "account" in message.lower()]
 
 
 def test_refusal_messages_are_distinct() -> None:
     for errors in (VERIFY_ERRORS, RESEND_ERRORS, COMPLETE_ERRORS):
-        messages = [*errors.values(), *ACCOUNT_ERRORS.values()]
+        messages = list(errors.values())
         assert len(set(messages)) == len(messages)
 
 

@@ -112,22 +112,16 @@ def resolve_password_reset(public_id: str) -> None:
         )
 
 
-class AccountRefusal(StrEnum):
-    INACTIVE = "inactive"
-    ACCOUNT_CHANGED = "account_changed"
-
-
-def verify(*, public_id: str, code: str) -> VerifyResult | AccountRefusal:
+def verify(*, public_id: str, code: str) -> VerifyResult:
     with transaction.atomic():
-        request = _locked_by_public_id(public_id)
-        if request is None:
+        # Consulta las dos tablas siempre, para hacer el mismo trabajo con plaza o sin ella (D-14).
+        request, slot = _locked_by_public_id(public_id), _locked_slot(public_id)
+        process = request or slot
+        if process is None:
             return VerifyResult.NOT_FOUND
-        if request.is_expired:
+        if _answers_expired(process):
             return VerifyResult.EXPIRED
-        refusal = _account_refusal(request)
-        if refusal is not None:
-            return refusal
-        return processes.check_code(request, _PURPOSE, code)
+        return processes.check_code(process, _PURPOSE, code)
 
 
 @dataclass(frozen=True)
@@ -142,16 +136,13 @@ class ResendRefusal(StrEnum):
     NOT_FOUND = "not_found"
 
 
-def resend(*, public_id: str) -> Resent | ResendRefusal | AccountRefusal:
+def resend(*, public_id: str) -> Resent | ResendRefusal:
     with transaction.atomic():
         request = _locked_by_public_id(public_id)
         if request is None:
             return ResendRefusal.NOT_FOUND
-        if request.is_expired:
+        if _answers_expired(request):
             return ResendRefusal.EXPIRED
-        refusal = _account_refusal(request)
-        if refusal is not None:
-            return refusal
         if request.code_validated_at is not None:
             return ResendRefusal.ALREADY_VERIFIED
         return Resent(public_id=public_id, code=processes.renew_code(request, _PURPOSE))
@@ -168,32 +159,32 @@ class CompleteRefusal(StrEnum):
     CODE_NOT_VERIFIED = "code_not_verified"
 
 
-def complete(*, public_id: str, password: str) -> Completed | CompleteRefusal | AccountRefusal:
+def complete(*, public_id: str, password: str) -> Completed | CompleteRefusal:
     user_id = _owner_id(public_id)
-    if user_id is None:
-        return CompleteRefusal.NOT_FOUND
     with transaction.atomic():
-        # Cuenta antes que solicitud, el mismo orden que en start, para no interbloquearse.
-        user = User.objects.select_for_update().filter(pk=user_id).first()
+        # Cuenta antes que solicitud, el mismo orden que en la resolución, para no interbloquearse.
+        # Sin solicitud se bloquea una cuenta inexistente: las mismas consultas (D-14).
+        locked_user = User.objects.select_for_update().filter(pk=user_id or 0).first()
         request = (
-            PasswordResetRequest.objects.select_for_update()
-            .filter(public_id=public_id, user=user)
+            PasswordResetRequest.objects.select_for_update(of=("self",))
+            .select_related("user")
+            .filter(public_id=public_id, user=locked_user)
             .first()
         )
-        if user is None or request is None:
+        slot = _locked_slot(public_id)
+        process = request or slot
+        if process is None:
             return CompleteRefusal.NOT_FOUND
-        if request.is_expired:
+        if _answers_expired(process):
             return CompleteRefusal.EXPIRED
-        refusal = _account_refusal(request)
-        if refusal is not None:
-            return refusal
-        if request.code_validated_at is None:
+        if process.code_validated_at is None or not isinstance(process, PasswordResetRequest):
             return CompleteRefusal.CODE_NOT_VERIFIED
+        user = process.user
         validate_password(password, user=user)
         user.set_password(password)
         user.save(update_fields=["password"])
         _mark_email_verified(user)
-        request.delete()
+        process.delete()
         email = user.email
         transaction.on_commit(lambda: _clear_failed_logins(email))
         return Completed(user=user)
@@ -247,13 +238,25 @@ def _locked_by_public_id(public_id: str) -> PasswordResetRequest | None:
     )
 
 
-def _account_refusal(request: PasswordResetRequest) -> AccountRefusal | None:
-    user = request.user
-    if not user.is_active:
-        return AccountRefusal.INACTIVE
-    if not fingerprints.account_stamp_matches(request.account_stamp, user.email, user.password):
-        return AccountRefusal.ACCOUNT_CHANGED
-    return None
+def _locked_slot(public_id: str) -> PhantomProcess | None:
+    return (
+        PhantomProcess.objects.select_for_update()
+        .filter(public_id=public_id, purpose=_PURPOSE)
+        .first()
+    )
+
+
+def _answers_expired(process: PasswordResetRequest | PhantomProcess) -> bool:
+    # Cuenta inactiva o cambiada y tumba de una cuenta borrada responden como una solicitud
+    # caducada: una plaza nunca da otros rechazos (D-14, D-15).
+    if process.is_expired:
+        return True
+    if isinstance(process, PhantomProcess):
+        return process.answers_expired
+    user = process.user
+    return not user.is_active or not fingerprints.account_stamp_matches(
+        process.account_stamp, user.email, user.password
+    )
 
 
 def _locked_request(user: User) -> PasswordResetRequest | None:

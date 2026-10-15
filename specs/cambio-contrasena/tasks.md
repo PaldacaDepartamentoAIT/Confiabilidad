@@ -333,7 +333,7 @@ esquema, para que al final quede una sola migración (M-07).
   archivos de la tarea. [Probable] (4) `code_sent_to` de `tests/factories.py` resuelve también las
   plazas de cambio de contraseña. [Cierto]
 
-- [ ] T-028 Verificar y completar en las dos tablas, con "caducada"
+- [x] T-028 Verificar y completar en las dos tablas, con "caducada"
   RF: RF-005, RF-008, RF-010, RF-014, RF-015, RF-017 (D-14, CF-6) | Depende de: T-024, T-027 |
   Archivos: 4
   Archivos: `password_reset.py`, `management/commands/password_reset.py`,
@@ -346,6 +346,11 @@ esquema, para que al final quede una sola migración (M-07).
   plaza, no sirve aquí; el comando ya no tiene mensajes de cuenta inactiva o cambiada; suite verde.
   Excepción: quitar `AccountRefusal` cambia a la vez el servicio, el comando que la muestra y los tests
   que la esperaban.
+  Decisiones: (1) Al quitar `AccountRefusal`, `resend` también responde «caducada» con la cuenta
+  inactiva o cambiada; sigue buscando solo en las solicitudes hasta T-029. [Cierto] (2) `complete`
+  sin solicitud bloquea una cuenta inexistente (`pk=0`) para hacer las mismas consultas que con ella.
+  [Cierto] (3) `complete` nunca completa una plaza, aunque estuviera marcada como validada. [Cierto]
+  (4) Se añade un test que comprueba que ningún mensaje del comando menciona la cuenta. [Cierto]
 
 - [ ] T-029 Reenvío en dos tiempos
   RF: RF-007, RF-013, RF-017 (D-13) | Depende de: T-028 y T-036 de `procesos-pendientes` |

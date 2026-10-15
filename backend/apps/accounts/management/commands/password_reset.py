@@ -38,12 +38,6 @@ COMPLETE_ERRORS: dict[str, str] = {
         "Verify the code before completing."
     ),
 }
-ACCOUNT_ERRORS: dict[str, str] = {
-    password_reset.AccountRefusal.INACTIVE: gettext_noop("The account is inactive."),
-    password_reset.AccountRefusal.ACCOUNT_CHANGED: gettext_noop(
-        "The account's email or password changed after the request; start again."
-    ),
-}
 
 
 class Command(BaseCommand):
@@ -82,13 +76,13 @@ class Command(BaseCommand):
     def _verify(self, options: dict[str, Any]) -> None:
         result = password_reset.verify(public_id=options["public_id"], code=options["code"])
         if result != password_reset.VerifyResult.VERIFIED:
-            raise CommandError(_({**VERIFY_ERRORS, **ACCOUNT_ERRORS}[result]))
+            raise CommandError(_(VERIFY_ERRORS[result]))
         self.stdout.write(f"public_id: {options['public_id']}\n" + _("Code verified."))
 
     def _resend(self, options: dict[str, Any]) -> None:
         result = password_reset.resend(public_id=options["public_id"])
         if not isinstance(result, password_reset.Resent):
-            raise CommandError(_({**RESEND_ERRORS, **ACCOUNT_ERRORS}[result]))
+            raise CommandError(_(RESEND_ERRORS[result]))
         show_code(self.stdout, result.public_id, result.code)
 
     def _complete(self, options: dict[str, Any]) -> None:
@@ -98,7 +92,7 @@ class Command(BaseCommand):
         except ValidationError as error:
             raise CommandError(format_validation_error(error)) from error
         if not isinstance(result, password_reset.Completed):
-            raise CommandError(_({**COMPLETE_ERRORS, **ACCOUNT_ERRORS}[result]))
+            raise CommandError(_(COMPLETE_ERRORS[result]))
         self.stdout.write(f"public_id: {options['public_id']}\naccount: {result.user.email}")
 
     def _purge(self, options: dict[str, Any]) -> None:

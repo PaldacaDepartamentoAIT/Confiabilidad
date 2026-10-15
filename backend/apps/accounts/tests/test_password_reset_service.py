@@ -236,7 +236,7 @@ def test_other_integrity_errors_are_not_hidden(user: User, monkeypatch: pytest.M
 
 
 VerifyResult = password_reset.VerifyResult
-AccountRefusal = password_reset.AccountRefusal
+EXPIRED = "expired"
 ResendRefusal = password_reset.ResendRefusal
 
 
@@ -339,24 +339,17 @@ def _change_password(user: User) -> None:
     user.save()
 
 
-@pytest.mark.parametrize(
-    ("change", "refusal"),
-    [
-        (_deactivate, AccountRefusal.INACTIVE),
-        (_change_email, AccountRefusal.ACCOUNT_CHANGED),
-        (_change_password, AccountRefusal.ACCOUNT_CHANGED),
-    ],
-)
-def test_account_changes_block_verify_and_resend_without_touching_the_request(
-    user: User, change: Any, refusal: AccountRefusal
+@pytest.mark.parametrize("change", [_deactivate, _change_email, _change_password])
+def test_account_changes_answer_expired_to_verify_and_resend_without_touching_the_request(
+    user: User, change: Any
 ) -> None:
     started = _started()
     change(user)
     before = _stored()
 
-    assert password_reset.verify(public_id=started.public_id, code=started.code) == refusal
-    assert password_reset.verify(public_id=started.public_id, code=_wrong(started.code)) == refusal
-    assert password_reset.resend(public_id=started.public_id) == refusal
+    assert password_reset.verify(public_id=started.public_id, code=started.code) == EXPIRED
+    assert password_reset.verify(public_id=started.public_id, code=_wrong(started.code)) == EXPIRED
+    assert password_reset.resend(public_id=started.public_id) == EXPIRED
 
     after = _stored()
     assert (after.code_hash, after.failed_attempts, after.code_validated_at) == (
@@ -369,7 +362,7 @@ def test_account_changes_block_verify_and_resend_without_touching_the_request(
 def test_reactivated_account_can_use_its_request_again(user: User) -> None:
     started = _started()
     _deactivate(user)
-    assert password_reset.resend(public_id=started.public_id) == AccountRefusal.INACTIVE
+    assert password_reset.resend(public_id=started.public_id) == EXPIRED
 
     User.objects.filter(pk=user.pk).update(is_active=True)
 
@@ -511,20 +504,13 @@ def test_complete_of_an_unknown_request_is_not_found(user: User) -> None:
     )
 
 
-@pytest.mark.parametrize(
-    ("change", "refusal"),
-    [
-        (_deactivate, AccountRefusal.INACTIVE),
-        (_change_email, AccountRefusal.ACCOUNT_CHANGED),
-        (_change_password, AccountRefusal.ACCOUNT_CHANGED),
-    ],
-)
-def test_account_changes_block_complete(user: User, change: Any, refusal: AccountRefusal) -> None:
+@pytest.mark.parametrize("change", [_deactivate, _change_email, _change_password])
+def test_account_changes_answer_expired_to_complete(user: User, change: Any) -> None:
     started = _validated()
     change(user)
     password_before = User.objects.get(pk=user.pk).password
 
-    assert password_reset.complete(public_id=started.public_id, password=GOOD_PASSWORD) == refusal
+    assert password_reset.complete(public_id=started.public_id, password=GOOD_PASSWORD) == EXPIRED
 
     assert User.objects.get(pk=user.pk).password == password_before
     assert _stored().public_id == started.public_id
@@ -664,9 +650,7 @@ def test_secret_transition_follows_the_shared_setting(user: User) -> None:
         started = _started()
 
     with _rotated(20):
-        assert password_reset.verify(public_id=started.public_id, code=started.code) == (
-            AccountRefusal.ACCOUNT_CHANGED
-        )
+        assert password_reset.verify(public_id=started.public_id, code=started.code) == EXPIRED
     assert _stored().code_validated_at is None
 
     with _rotated(120):
@@ -679,10 +663,8 @@ def test_reactivated_account_can_resend_and_complete_again(user: User) -> None:
     started = _started()
     user.is_active = False
     user.save()
-    assert password_reset.resend(public_id=started.public_id) == AccountRefusal.INACTIVE
-    assert password_reset.complete(public_id=started.public_id, password=GOOD_PASSWORD) == (
-        AccountRefusal.INACTIVE
-    )
+    assert password_reset.resend(public_id=started.public_id) == EXPIRED
+    assert password_reset.complete(public_id=started.public_id, password=GOOD_PASSWORD) == EXPIRED
 
     user.is_active = True
     user.save()
