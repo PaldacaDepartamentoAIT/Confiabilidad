@@ -5,6 +5,7 @@ from unittest import mock
 
 import pytest
 from celery.exceptions import Retry
+from django.test import override_settings
 from django.utils import timezone
 
 from apps.accounts import codes, conf, password_reset, tasks
@@ -252,3 +253,29 @@ def test_the_sweep_also_queues_unresolved_password_reset_slots(send_task: mock.M
         "apps.accounts.tasks.resolve_registration",
     ]
     send_task.assert_any_call("apps.accounts.tasks.resolve_password_reset", args=["reset_slot"])
+
+
+@override_settings(REGISTRATION_START_RETRY_MINUTES=10)
+def test_the_shared_window_setting_also_rules_the_password_reset(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    retry = mock.Mock(side_effect=Retry())
+    monkeypatch.setattr(tasks.resolve_password_reset, "retry", retry)
+    slot = _slot()
+    _age(slot, 6)
+    _broken(monkeypatch)
+
+    assert tasks.resolve_password_reset.apply(args=["slot_1"]).state == "RETRY"
+
+
+def test_an_execution_after_the_window_does_not_resolve(caplog: Any) -> None:
+    make_user(email="eva@x.com")
+    slot = _slot()
+    _age(slot, 6)
+
+    assert tasks.resolve_password_reset.apply(args=["slot_1"]).successful()
+
+    assert not PasswordResetRequest.objects.exists()
+    assert not OutboundEmail.objects.exists()
+    assert PhantomProcess.objects.get(public_id="slot_1").payload is None
+    assert "gave up" in caplog.text

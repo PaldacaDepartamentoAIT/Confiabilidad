@@ -448,7 +448,7 @@ esquema, para que al final quede una sola migración (M-07).
   [Probable] (2) `complete` lee el dueño de la solicitud dentro de la transacción, después de
   bloquear la plaza. [Cierto]
 
-- [ ] T-038 Corrección: la ventana compartida rige el cambio de contraseña
+- [x] T-038 Corrección: la ventana compartida rige el cambio de contraseña
   Tipo: corrección | Origen: validación de RF-012
   RF: RF-012, RF-016 | Depende de: T-039 de `procesos-pendientes` | Archivos: 1
   Archivos: `tests/test_password_reset_background.py`.
