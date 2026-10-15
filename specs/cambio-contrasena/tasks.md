@@ -422,7 +422,7 @@ esquema, para que al final quede una sola migración (M-07).
   primera responde «desconocida» y la segunda funciona, con cuenta y sin ella; con cuenta, la
   solicitud y el único correo son los de la segunda; suite verde.
 
-- [ ] T-036 Corrección: la plaza sin solicitud queda como una solicitud recién emitida
+- [x] T-036 Corrección: la plaza sin solicitud queda como una solicitud recién emitida
   Tipo: corrección | Origen: validación de RF-017
   RF: RF-017 (D-13) | Depende de: T-035 | Archivos: 2
   Archivos: `password_reset.py`, `tests/test_password_reset_equivalence.py`.
@@ -431,6 +431,8 @@ esquema, para que al final quede una sola migración (M-07).
   Hecho cuando: con plaza y con solicitud real dan el mismo resultado: intentos fallidos antes de
   resolver y después, y la resolución retrasada 4 minutos con `verify` a los 16 y a los 31; las
   consultas siguen siendo iguales; suite verde.
+  Decisiones: (1) Mutante equivalente: no poner `code_validated_at` a nulo; una plaza nunca llega
+  validada a la resolución. [Cierto]
 
 - [ ] T-037 Corrección: verificar, reenviar y completar bloquean primero la plaza
   Tipo: corrección | Origen: validación de RF-017

@@ -5,6 +5,7 @@ from unittest import mock
 
 import pytest
 from django.db import connection
+from django.db.models import F
 from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 
@@ -340,3 +341,70 @@ def test_the_newest_request_wins_even_if_the_tasks_run_out_of_order(has_account:
     assert list(PasswordResetRequest.objects.values_list("public_id", flat=True)) == (
         [newer] if has_account else []
     )
+
+
+def _pass(minutes: int) -> None:
+    # Simula el paso del tiempo moviendo hacia atrás todas las fechas guardadas (D-11).
+    shift = timedelta(minutes=minutes)
+    for model in (PasswordResetRequest, PhantomProcess):
+        model.objects.update(
+            created_at=F("created_at") - shift, code_expires_at=F("code_expires_at") - shift
+        )
+
+
+def _start(has_account: bool) -> str:
+    if has_account and not User.objects.exists():
+        make_user(email=EMAIL)
+    return password_reset.start(email=EMAIL).public_id
+
+
+def _attempts_before_resolving(has_account: bool) -> list[object]:
+    public_id = _start(has_account)
+    before = [_verify(public_id) for _ in range(3)]
+    password_reset.resolve_password_reset(public_id)
+    return [*before, *(_verify(public_id) for _ in range(3))]
+
+
+def _delayed_resolution(has_account: bool) -> list[object]:
+    public_id = _start(has_account)
+    _pass(4)
+    password_reset.resolve_password_reset(public_id)
+    _pass(12)
+    at_16 = _verify(public_id)
+    _pass(15)
+    return [at_16, _verify(public_id)]
+
+
+def _delayed_resolution_then_lifetime(has_account: bool) -> list[object]:
+    public_id = _start(has_account)
+    _pass(4)
+    password_reset.resolve_password_reset(public_id)
+    for _ in range(4):
+        _pass(12)
+        _resend(public_id)
+        password_reset.reissue_code(public_id)
+    _pass(10)
+    return [_verify(public_id)]
+
+
+TIMED: list[tuple[Callable[[bool], list[object]], list[object]]] = [
+    (_attempts_before_resolving, ["wrong_code"] * 6),
+    (_delayed_resolution, ["wrong_code", "code_expired"]),
+    (_delayed_resolution_then_lifetime, ["wrong_code"]),
+]
+
+
+@pytest.mark.parametrize("has_account", [True, False], ids=["real", "phantom"])
+@pytest.mark.parametrize(
+    ("sequence", "expected"),
+    [
+        pytest.param(sequence, expected, id=sequence.__name__.strip("_"))
+        for sequence, expected in TIMED
+    ],
+)
+def test_a_phantom_counts_attempts_and_time_like_a_request(
+    has_account: bool,
+    sequence: Callable[[bool], list[object]],
+    expected: list[object],
+) -> None:
+    assert sequence(has_account) == expected

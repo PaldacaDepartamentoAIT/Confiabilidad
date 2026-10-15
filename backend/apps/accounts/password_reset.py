@@ -54,6 +54,25 @@ def start(*, email: str, language: str = locales.DEFAULT) -> Started:
     return Started(public_id=slot.public_id)
 
 
+def _leave_as_issued(slot: PhantomProcess) -> None:
+    # Queda como una solicitud recién emitida (D-13): intentos, plazos y vida desde la resolución.
+    now = timezone.now()
+    slot.payload = None
+    slot.failed_attempts = 0
+    slot.code_validated_at = None
+    slot.code_expires_at = now + conf.code_ttl()
+    slot.created_at = now
+    slot.save(
+        update_fields=[
+            "payload",
+            "failed_attempts",
+            "code_validated_at",
+            "code_expires_at",
+            "created_at",
+        ]
+    )
+
+
 def _queue(task: str, args: list[str]) -> None:
     # Si la cola no responde, la respuesta no cambia: el barrido recoge las plazas (D-15 de
     # procesos-pendientes).
@@ -102,8 +121,7 @@ def resolve_password_reset(public_id: str) -> None:
         same_email.filter(pk__lt=slot.pk).delete()
         user = User.objects.select_for_update().filter(email__iexact=email).first()
         if user is None or not user.is_active:
-            slot.payload = None
-            slot.save(update_fields=["payload"])
+            _leave_as_issued(slot)
             return
         slot.delete()
         _request, code = _create_or_replace(user, public_id, language)
