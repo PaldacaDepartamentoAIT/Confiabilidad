@@ -21,6 +21,7 @@ from apps.accounts.tests.factories import (
     make_user,
 )
 from apps.core import fingerprints
+from apps.emails.models import OutboundEmail
 
 pytestmark = pytest.mark.django_db
 
@@ -503,6 +504,61 @@ def test_complete_after_code_expiry_within_the_grace_period(user: User) -> None:
     result = password_reset.complete(public_id=started.public_id, password=GOOD_PASSWORD)
 
     assert isinstance(result, password_reset.Completed)
+
+
+def _notices() -> list[tuple[str, str, str, dict[str, str]]]:
+    return [
+        (email.kind, email.recipient, email.locale, email.context)
+        for email in OutboundEmail.objects.filter(kind="password_reset_done")
+    ]
+
+
+@pytest.mark.parametrize("language", ["pt-BR", "en"])
+def test_complete_leaves_the_password_reset_notice_in_the_account_language(
+    user: User, language: str
+) -> None:
+    User.objects.filter(pk=user.pk).update(language=language)
+    started = _validated()
+
+    result = password_reset.complete(public_id=started.public_id, password=GOOD_PASSWORD)
+
+    assert isinstance(result, password_reset.Completed)
+    assert _notices() == [("password_reset_done", EMAIL, language, {"name": "Ana García"})]
+
+
+def test_a_failed_complete_leaves_no_notice(user: User) -> None:
+    started = _validated()
+
+    with pytest.raises(ValidationError):
+        password_reset.complete(public_id=started.public_id, password="12345678")
+
+    assert _notices() == []
+
+
+def test_a_failure_after_queuing_the_notice_rolls_it_back(
+    user: User, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    started = _validated()
+
+    def broken_delete(*args: Any, **kwargs: Any) -> None:
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(PasswordResetRequest, "delete", broken_delete)
+
+    with pytest.raises(RuntimeError):
+        password_reset.complete(public_id=started.public_id, password=GOOD_PASSWORD)
+
+    assert _notices() == []
+    assert _account().check_password(DEFAULT_PASSWORD)
+
+
+def test_a_refused_complete_leaves_no_notice(user: User) -> None:
+    started = _started()
+
+    assert password_reset.complete(public_id=started.public_id, password=GOOD_PASSWORD) == (
+        CompleteRefusal.CODE_NOT_VERIFIED
+    )
+    assert _notices() == []
 
 
 def test_complete_of_an_unknown_request_is_not_found(user: User) -> None:

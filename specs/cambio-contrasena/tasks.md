@@ -370,12 +370,14 @@ esquema, para que al final quede una sola migración (M-07).
   nada si el proceso responde «caducada» (también con la cuenta inactiva, cambiada o borrada) o ya se
   validó. [Cierto]
 
-- [ ] T-030 Aviso de contraseña restablecida al completar
+- [x] T-030 Aviso de contraseña restablecida al completar
   RF: RF-009 (D-16) | Depende de: T-028 | Archivos: 2
   Archivos: `password_reset.py`, `tests/test_password_reset_service.py`.
   Hecho cuando: completar deja en la bandeja un `password_reset_done` a la cuenta, en su idioma y con
   su nombre; si la transacción falla (por ejemplo, contraseña inválida), no queda ningún aviso; suite
   verde.
+  Decisiones: (1) El aviso se encola tras fijar la contraseña y antes de borrar la solicitud; un test
+  hace fallar ese borrado y comprueba que no quedan ni el aviso ni la contraseña nueva. [Cierto]
 
 - [ ] T-031 La purga borra también las plazas de cambio de contraseña
   RF: RF-011 | Depende de: T-024 | Archivos: 2

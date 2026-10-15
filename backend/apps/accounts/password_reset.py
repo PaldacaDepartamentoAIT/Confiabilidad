@@ -205,6 +205,14 @@ def complete(*, public_id: str, password: str) -> Completed | CompleteRefusal:
         user.set_password(password)
         user.save(update_fields=["password"])
         _mark_email_verified(user)
+        # En la misma transacción: si algo falla, no queda ni la contraseña ni el aviso (D-16).
+        outbox.enqueue(
+            kind="password_reset_done",
+            recipient=user.email,
+            locale=user.language,
+            context={"name": user.name},
+            account=user,
+        )
         process.delete()
         email = user.email
         transaction.on_commit(lambda: _clear_failed_logins(email))
