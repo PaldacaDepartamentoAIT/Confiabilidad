@@ -1,5 +1,5 @@
 # Tareas: correo-asincrono-plantillas
-Estado: borrador
+Estado: aprobado
 
 Rutas relativas a `backend/apps/emails/` salvo que se indique. "Suite verde" =
 `cd backend && pytest -q` + `mypy .` + `ruff check .` + `black --check .` sin errores. En cada

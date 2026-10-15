@@ -1,5 +1,5 @@
 # Tareas: cambio-contrasena
-Estado: borrador
+Estado: aprobado
 
 Rutas relativas a `backend/apps/accounts/` salvo que se indique. "Suite verde" =
 `cd backend && pytest -q` + `mypy .` + `ruff check .` + `black --check .` sin errores. En cada
