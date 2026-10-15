@@ -1,5 +1,5 @@
 # Resumen — cambio-contrasena
-Estado: cerrada con riesgo residual aceptado (tras la 3.ª validación) · Última actualización: 2026-10-13
+Estado: cambio del 2026-10-14 implementado, pendiente de validar · Última actualización: 2026-10-15
 
 ## Qué se hizo
 Quien olvidó su contraseña puede fijar una nueva demostrando acceso al correo de su cuenta con un
@@ -9,26 +9,45 @@ código. Todo se recorre desde consola con `manage.py password_reset`, sin front
 - **Solicitud de cambio de contraseña** (`PasswordResetRequest`, migración `0006`): una por cuenta,
   garantizada por la base de datos, y se borra con la cuenta (RF-001, RF-010). No guarda `used_at`
   (S-02): se borra al completarse o al purgarse.
-- **Pedir el cambio** (`start --email`): con una cuenta activa crea la solicitud o la reemplaza
-  (identificador público y código nuevos, intentos a 0, sin validar, vida contada de nuevo). Sin
-  cuenta o con la cuenta inactiva, el resultado es el mismo, "sin cuenta elegible", y no se toca
-  nada (RF-002…RF-004).
+- **Pedir el cambio sin revelar si el correo tiene cuenta** (cambio del 2026-10-14, RF-016,
+  RF-017). La respuesta de `start --email` solo valida el formato del correo, deja una **plaza**
+  (`PhantomProcess` de propósito `password_reset`, la misma de `procesos-pendientes`) y devuelve su
+  `public_id`, tenga o no cuenta el correo. Fuera de la respuesta, la tarea
+  `resolve_password_reset` decide:
+  - con una cuenta activa, crea la solicitud con ese `public_id` o reemplaza la que tuviera
+    (código nuevo, intentos a 0, sin validar, vida contada de nuevo) y encola el correo con el
+    código en el idioma de la petición (`--language`);
+  - sin cuenta o con la cuenta inactiva, la plaza queda como identificador sin solicitud detrás,
+    sin correo (RF-002…RF-004).
+
+  Verificar, reenviar, completar y dejar caducar ese identificador da los mismos resultados, con
+  las mismas consultas, que una solicitud real cuyo código nunca se acierta. Reintentos, barrido y
+  ventana (`REGISTRATION_START_RETRY_MINUTES`) son los del registro.
 - **Mismas reglas de código que el registro**: 6 dígitos, 15 min de vigencia, 5 intentos, 15 min de
   gracia, 1 h de vida y rotación del secreto, con los mismos ajustes `REGISTRATION_*` (RF-005…RF-007,
   RF-012). El código del registro y el de la solicitud ya no comparten huella: cada una lleva su
   tipo de proceso (D-01).
-- **La solicitud deja de servir** si la cuenta se desactiva (vuelve a servir si se reactiva antes de
-  caducar) o si, después de pedirla, cambian el correo o la contraseña de la cuenta (RF-008,
-  RF-014, RF-015).
+- **«Caducada» en vez de rechazos propios** (D-14): si la cuenta se desactiva o si, después de
+  pedirla, cambian su correo o su contraseña, `verify`, `resend` y `complete` responden lo mismo que
+  con una solicitud caducada, sin modificarla. Si la cuenta se reactiva antes de que caduque, vuelve
+  a servir (RF-008, RF-014, RF-015). Los mensajes del comando ya no mencionan la cuenta.
+- **Tumba al borrar la cuenta** (D-15, migración `0009`): antes de borrar una cuenta con solicitud,
+  queda en su lugar una plaza con el mismo `public_id` y las mismas fechas que responde «caducada» a
+  todo; no guarda el correo ni otros datos de la cuenta. La purga la borra al caducar (RF-010).
+- **Reenvío en dos tiempos** (D-13 de `procesos-pendientes`): la respuesta anula el código vigente y
+  pone los intentos a 0; la tarea `reissue_code` emite el nuevo y lo envía en el idioma de la
+  cuenta. Una plaza también recibe código nuevo, que nunca se envía.
 - **Completar** (`complete`): fija la contraseña con la política del proyecto (evaluada con el correo
   y el nombre de la cuenta), marca el correo como verificado, borra los inicios de sesión fallidos
-  que allauth llevaba para ese correo y borra la solicitud, todo o nada (RF-009). La contraseña
-  actual se acepta si cumple la política.
+  que allauth llevaba para ese correo, encola el aviso «Tu contraseña se ha restablecido» en el
+  idioma de la cuenta y borra la solicitud, todo o nada (RF-009, D-16). La contraseña actual se
+  acepta si cumple la política.
 - **Sesiones abiertas**: tras completar, las sesiones del navegador y los tokens de la app dejan de
   autenticar (401), porque Django ata cada sesión al hash de la contraseña. No se borran: siguen
   guardadas en Redis hasta caducar, inservibles. Borrarlas es del flujo (S-03).
-- **Limpieza**: `password_reset purge` borra las solicitudes caducadas; `registration purge` sigue
-  borrando solo registros pendientes (RF-011).
+- **Limpieza**: `password_reset purge` borra las solicitudes y las plazas de cambio de contraseña
+  caducadas, tumbas incluidas, y cuenta todas; `registration purge` solo borra lo del registro
+  (RF-011).
 - **Reutilización**: el registro y el cambio de contraseña comparten la base del modelo
   (`CodeProcess`), las operaciones del código (`processes.py`) y las utilidades de consola
   (`management/console.py`). El comportamiento del registro no cambió; su suite sigue en verde.
@@ -44,9 +63,14 @@ se detalla abajo.
 - **Sin límite de frecuencia** (S-05): pedir de nuevo o reenviar ponen los intentos a 0. En consola
   no hay riesgo; **la API no debe publicarse sin ese límite**, porque permitiría tomar cuentas
   ajenas (anotado en `HUMAN_TODO.md`).
-- **"Sin cuenta elegible" es distinguible en el servicio** (RF-004): a propósito, porque en consola
-  no se puede ocultar (el comando muestra el código). **La API debe neutralizarlo** con el mismo
-  mensaje y un tiempo de respuesta comparable (anotado en `HUMAN_TODO.md`).
+- **El servicio ya no distingue «sin cuenta elegible»**: la respuesta es la misma y hace el mismo
+  trabajo. A la API le queda devolver un mensaje neutro (anotado en `HUMAN_TODO.md`).
+- **Tiempo de respuesta igual por construcción, no medido**: los tests fijan las mismas consultas con
+  plaza y con solicitud real, pero ninguno mide tiempos reales.
+- **«Caducada» confunde al titular legítimo** (S-13): quien cambió su contraseña por otra vía, o cuya
+  cuenta se desactivó, ve «caducada» y no el motivo real. Es el precio de no revelar la cuenta.
+- Si se pierde el encolado de un reenvío, la solicitud se queda sin código válido hasta que se pida
+  otro reenvío: `reissue_code` no tiene barrido. Sin el worker en marcha, no llega ningún código.
 - La concurrencia (dos peticiones a la vez para la misma cuenta) está protegida con bloqueos de
   fila en un orden fijo (cuenta → solicitud), pero ningún test la ejerce con transacciones reales.
 - El borrado del contador de inicios fallidos usa funciones internas de allauth; si una
@@ -64,9 +88,10 @@ se detalla abajo.
   falla: el worker comparte el broker y se lleva la tarea del test. Es previo a esta feature.
 
 ## Cómo probarlo
-Requisitos: Docker y la rama `feat/cambio-contrasena` (o `main` actualizado, cuando se fusione).
-En el VPS sigue *Actualizar* y *Migraciones* de la sección *Entorno remoto* del README. Todos los
-comandos se ejecutan desde la raíz del repositorio.
+Requisitos: Docker y `main` actualizado. En el VPS sigue *Actualizar* y *Migraciones* de la sección
+*Entorno remoto* del README. Todos los comandos se ejecutan desde la raíz del repositorio. Sin
+proveedor de correo configurado, los correos salen por la consola del worker: ahí se leen los
+códigos.
 
 1. Levanta la base de datos y Redis:
    ```bash
@@ -76,14 +101,23 @@ comandos se ejecutan desde la raíz del repositorio.
    ```bash
    docker compose -f docker/docker-compose.yml run --rm backend python manage.py migrate
    ```
-   Deberías ver `accounts.0006_passwordresetrequest... OK`.
+   Deberías ver, entre otras, `accounts.0009_phantom_answers_expired... OK`. Levanta el worker y el
+   planificador de Celery:
+   ```bash
+   docker compose -f docker/docker-compose.yml up -d worker beat
+   ```
 
 2. Crea una cuenta con el registro (si ya tienes una, salta al paso 3):
    ```bash
    docker compose -f docker/docker-compose.yml run --rm backend python manage.py registration start --email Eva@Example.com --name "Eva Pérez" --birthdate 1991-03-04 --country es
    ```
-   Deberías ver dos líneas, `public_id: …` y `code: …`. En el comando siguiente,
-   `<PUBLIC_ID_REGISTRO>` y `<CODE_REGISTRO>` son esos dos valores:
+   Deberías ver `public_id: …`; en los comandos siguientes, `<PUBLIC_ID_REGISTRO>` es ese valor. Lee
+   el código en la salida del worker:
+   ```bash
+   docker compose -f docker/docker-compose.yml logs worker --tail 60
+   ```
+   Deberías ver el correo «Confirma tu correo para crear tu cuenta» con un código de 6 dígitos; en
+   el comando siguiente, `<CODE_REGISTRO>` es ese código:
    ```bash
    docker compose -f docker/docker-compose.yml run --rm backend python manage.py registration verify <PUBLIC_ID_REGISTRO> <CODE_REGISTRO>
    ```
@@ -97,14 +131,19 @@ comandos se ejecutan desde la raíz del repositorio.
    ```bash
    docker compose -f docker/docker-compose.yml run --rm backend python manage.py password_reset start --email nadie@example.com
    ```
-   Deberías ver `No active account with this email.`.
+   Deberías ver solo `public_id: …`, igual que con una cuenta. En el comando siguiente,
+   `<OTHER_ID>` es ese valor:
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py password_reset verify <OTHER_ID> 000000
+   ```
+   Deberías ver `Wrong code.`, como en una solicitud real; nunca llega correo a ese identificador.
 
 4. Pide el cambio para la cuenta (las mayúsculas y los espacios dan igual):
    ```bash
-   docker compose -f docker/docker-compose.yml run --rm backend python manage.py password_reset start --email " EVA@example.com "
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py password_reset start --email " EVA@example.com " --language es
    ```
-   Deberías ver `public_id: …` y `code: …`. En los pasos siguientes, `<PUBLIC_ID>` es ese
-   `public_id`.
+   Deberías ver `public_id: …`. En los pasos siguientes, `<PUBLIC_ID>` es ese valor. Repite el
+   comando de `logs` del paso 2: llega «Tu código para restablecer la contraseña».
 
 5. Prueba un código erróneo con el `<PUBLIC_ID>` del paso 4:
    ```bash
@@ -116,8 +155,8 @@ comandos se ejecutan desde la raíz del repositorio.
    ```bash
    docker compose -f docker/docker-compose.yml run --rm backend python manage.py password_reset resend <PUBLIC_ID>
    ```
-   Deberías ver el mismo `public_id` y otro `code`. En el paso siguiente, `<CODE>` es ese código
-   nuevo.
+   Deberías ver solo el mismo `public_id`. Repite el comando de `logs` del paso 2: el correo más
+   reciente trae otro código. En el paso siguiente, `<CODE>` es ese código nuevo.
 
 7. Verifica el código nuevo:
    ```bash
@@ -134,7 +173,8 @@ comandos se ejecutan desde la raíz del repositorio.
    ```bash
    docker compose -f docker/docker-compose.yml run --rm backend python manage.py password_reset complete <PUBLIC_ID>
    ```
-   Deberías ver `account: eva@example.com`.
+   Deberías ver `account: eva@example.com`. En los `logs` del worker aparece el aviso «Tu contraseña
+   se ha restablecido».
 
 9. Comprueba que la nueva contraseña inicia sesión. `<NUEVA_CONTRASEÑA>` es la que escribiste en el
    paso 8:
@@ -143,13 +183,13 @@ comandos se ejecutan desde la raíz del repositorio.
    ```
    Deberías ver `200`.
 
-10. Comprueba que una solicitud deja de servir si la contraseña cambia por otra vía. Pide una
+10. Comprueba que una solicitud responde «caducada» si la contraseña cambia por otra vía. Pide una
     solicitud nueva:
     ```bash
     docker compose -f docker/docker-compose.yml run --rm backend python manage.py password_reset start --email eva@example.com
     ```
-    Anota el `public_id` y el `code` que muestra. Cambia la contraseña desde la consola de Django
-    (te la pedirá dos veces):
+    Anota el `public_id` y lee su código en los `logs` del worker. Cambia la contraseña desde la
+    consola de Django (te la pedirá dos veces):
     ```bash
     docker compose -f docker/docker-compose.yml run --rm backend python manage.py changepassword eva@example.com
     ```
@@ -157,15 +197,15 @@ comandos se ejecutan desde la raíz del repositorio.
     ```bash
     docker compose -f docker/docker-compose.yml run --rm backend python manage.py password_reset verify <PUBLIC_ID> <CODE>
     ```
-    Deberías ver `The account's email or password changed after the request; start again.`.
+    Deberías ver `The password reset request has expired; start again.`.
 
-11. Purga las solicitudes caducadas:
+11. Purga lo caducado:
     ```bash
     docker compose -f docker/docker-compose.yml run --rm backend python manage.py password_reset purge
     ```
-    Deberías ver `deleted: N`, con el número de solicitudes borradas.
+    Deberías ver `deleted: N`, que suma solicitudes y plazas.
 
-12. Para el `worker` de Compose si está en marcha (comparte el broker con los tests y hace fallar
+12. Para el `worker` de Compose (comparte el broker con los tests y hace fallar
     `apps/core/tests/test_task_worker.py`):
     ```bash
     docker compose -f docker/docker-compose.yml stop worker
@@ -180,12 +220,23 @@ comandos se ejecutan desde la raíz del repositorio.
 ### Enumeración de cuentas y "sin cuenta elegible"
 Si un sistema responde distinto según exista o no una cuenta con un correo, cualquiera puede
 averiguar qué correos están registrados probando una lista. Por eso el flujo dice siempre "Si
-existe una cuenta, recibirás un código". El servicio de esta feature sí distingue
-(`NoEligibleAccount`) porque solo lo usa la consola, que ya tiene acceso a todo y además muestra el
-código, así que no hay nada que ocultar. La protección se traslada a la API: debe responder igual
-**en el mensaje y en el tiempo**. El tiempo importa: con cuenta, el servidor escribe en la base de
-datos y calcula una huella; sin cuenta, no. Si una respuesta tarda sistemáticamente más, delata la
-cuenta igual que un mensaje distinto.
+existe una cuenta, recibirás un código". Debe responder igual **en el mensaje y en el tiempo**: si
+con cuenta el servidor escribe la solicitud y calcula la huella y sin cuenta no, la respuesta que
+tarda más delata la cuenta. Desde el cambio del 2026-10-14, la respuesta solo guarda una plaza en
+los dos casos y el trabajo que depende de la cuenta se hace después, en el worker.
+
+### Plaza, identificador sin solicitud y tumba
+La plaza es una fila con un `public_id` que se guarda para toda petición válida. Si el correo tiene
+una cuenta activa, se convierte en la solicitud real; si no, queda como identificador «vacío» que no
+acepta ningún código pero cuenta intentos, se bloquea y caduca como uno real. La tumba es una plaza
+que ocupa el lugar de la solicitud de una cuenta borrada y responde «caducada» a todo: así,
+desaparecer la cuenta no se nota en las respuestas.
+
+### Por qué «caducada» y no el motivo real
+Una plaza nunca puede responder «la cuenta está inactiva» o «la cuenta cambió», porque no hay
+cuenta detrás. Si una solicitud real sí lo respondiera, esa respuesta delataría que el correo tenía
+cuenta. Por eso todos esos casos responden lo mismo que una solicitud caducada, que es una
+respuesta que cualquier identificador puede dar.
 
 ### Separación de dominio en una huella
 Una huella HMAC demuestra que alguien conocía un dato (el código) en un contexto concreto (el

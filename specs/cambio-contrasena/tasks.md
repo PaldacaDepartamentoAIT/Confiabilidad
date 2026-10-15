@@ -385,7 +385,7 @@ esquema, para que al final quede una sola migración (M-07).
   Hecho cuando: `purge_expired` borra las solicitudes y las plazas `password_reset` caducadas
   (tumbas incluidas), las cuenta, y no toca las plazas de registro ni las vigentes; suite verde.
 
-- [ ] T-032 Documentación del cambio de contraseña con correo
+- [x] T-032 Documentación del cambio de contraseña con correo
   RF: — (CF-4, CF-5) | Depende de: T-029, T-030, T-031 | Archivos: 2
   Archivos: `specs/cambio-contrasena/resumen.md`, `HUMAN_TODO.md` (rutas desde la raíz).
   Hecho cuando: el resumen explica la plaza, "caducada" en vez de los rechazos propios, la tumba y el
