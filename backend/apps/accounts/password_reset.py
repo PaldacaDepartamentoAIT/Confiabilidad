@@ -12,9 +12,10 @@ from django.http import HttpRequest
 from django.utils import timezone
 
 from apps.accounts import codes, processes
-from apps.accounts.models import PasswordResetRequest, User
+from apps.accounts.models import PasswordResetRequest, PhantomProcess, User
 from apps.accounts.processes import VerifyResult as VerifyResult
 from apps.core import fingerprints
+from apps.emails import outbox
 
 _PURPOSE = codes.Purpose.PASSWORD_RESET
 _REPLACED_FIELDS = [*processes.ISSUED_FIELDS, "created_at", "account_stamp"]
@@ -36,21 +37,58 @@ def start(*, email: str) -> Started | NoEligibleAccount:
         user = User.objects.select_for_update().filter(email__iexact=email.strip()).first()
         if user is None or not user.is_active:
             return NoEligibleAccount()
-        request = _locked_request(user)
-        if request is None:
-            request = PasswordResetRequest(user=user)
-            code = _issue(request)
-            try:
-                with transaction.atomic():
-                    request.save()
-                return Started(public_id=request.public_id, code=code)
-            except IntegrityError:
-                request = _locked_request(user)
-                if request is None:
-                    raise
-        code = _issue(request)
-        request.save(update_fields=_REPLACED_FIELDS)
+        request, code = _create_or_replace(user)
         return Started(public_id=request.public_id, code=code)
+
+
+def _create_or_replace(
+    user: User, public_id: str | None = None
+) -> tuple[PasswordResetRequest, str]:
+    request = _locked_request(user)
+    if request is None:
+        request = PasswordResetRequest(user=user)
+        code = _issue(request, public_id)
+        try:
+            with transaction.atomic():
+                request.save()
+            return request, code
+        except IntegrityError:
+            request = _locked_request(user)
+            if request is None:
+                raise
+    code = _issue(request, public_id)
+    request.save(update_fields=_REPLACED_FIELDS)
+    return request, code
+
+
+def resolve_password_reset(public_id: str) -> None:
+    # Todo lo que depende de que el correo tenga cuenta, fuera de la respuesta (D-13).
+    with transaction.atomic():
+        slot = (
+            PhantomProcess.objects.select_for_update()
+            .filter(public_id=public_id, purpose=_PURPOSE, payload__isnull=False)
+            .first()
+        )
+        if slot is None:
+            return
+        email, language = slot.email, str((slot.payload or {}).get("language"))
+        PhantomProcess.objects.filter(purpose=_PURPOSE, email=email).exclude(pk=slot.pk).delete()
+        user = User.objects.select_for_update().filter(email__iexact=email).first()
+        if user is None or not user.is_active:
+            slot.payload = None
+            slot.save(update_fields=["payload"])
+            return
+        slot.delete()
+        _request, code = _create_or_replace(user, public_id)
+        outbox.enqueue(
+            kind="password_reset_code",
+            recipient=user.email,
+            locale=language,
+            context={"name": user.name},
+            purpose=_PURPOSE,
+            public_id=public_id,
+            code=code,
+        )
 
 
 class AccountRefusal(StrEnum):
@@ -201,8 +239,8 @@ def _locked_request(user: User) -> PasswordResetRequest | None:
     return PasswordResetRequest.objects.select_for_update().filter(user=user).first()
 
 
-def _issue(request: PasswordResetRequest) -> str:
-    code = processes.issue_code(request, _PURPOSE)
+def _issue(request: PasswordResetRequest, public_id: str | None = None) -> str:
+    code = processes.issue_code(request, _PURPOSE, public_id)
     request.created_at = timezone.now()
     request.account_stamp = fingerprints.account_stamp(request.user.email, request.user.password)
     return code

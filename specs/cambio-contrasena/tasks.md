@@ -287,7 +287,7 @@ esquema, para que al final quede una sola migración (M-07).
   borra al caducar. [Probable] (3) El receptor vive en `models.py`; `created_at` se copia con un
   `update()` posterior porque `auto_now_add` lo pisa al guardar. [Cierto]
 
-- [ ] T-025 Resolver la petición fuera de la respuesta
+- [x] T-025 Resolver la petición fuera de la respuesta
   RF: RF-002, RF-003, RF-004, RF-016, RF-017 (D-13, M-09) | Depende de: T-029 de
   `procesos-pendientes` | Archivos: 2
   Archivos: `password_reset.py`, `tests/test_password_reset_background.py`.
@@ -297,6 +297,10 @@ esquema, para que al final quede una sola migración (M-07).
   el idioma de la petición; sin cuenta o con la cuenta inactiva, la plaza queda con `payload` vacío y
   sin correo; borra antes las demás plazas `password_reset` del mismo correo; una plaza ya resuelta o
   inexistente no hace nada; suite verde.
+  Decisiones: (1) `start` y la resolución comparten `_create_or_replace`, que emite el código con el
+  `public_id` que se le pase. [Cierto] (2) El idioma se pasa tal cual a la bandeja, que ya cae en el
+  idioma por defecto si no es uno de los tres. [Cierto] (3) El correo con el código no se ata a la
+  cuenta en la bandeja, igual que el del registro. [Probable]
 
 - [ ] T-026 Tarea y barrido del cambio de contraseña
   RF: RF-016 (D-13, M-09) | Depende de: T-025 y T-033 de `procesos-pendientes` | Archivos: 2
