@@ -243,7 +243,7 @@ fallar sus tests.
   suite verde.
 
 - [ ] T-032 Resolver una plaza fuera de la respuesta
-  RF: RF-004, RF-005, RF-006, RF-017, RF-025 (D-16, M-09) | Depende de: T-029 | Archivos: 2
+  RF: RF-004, RF-005, RF-006, RF-008, RF-017, RF-025 (D-16, M-09) | Depende de: T-029 | Archivos: 2
   Archivos: `registration.py`, `tests/test_registration_background.py`.
   Hecho cuando, llamando a `resolve_registration(public_id)` sobre una plaza sin resolver:
   - sin cuenta ni registro pendiente: crea el registro pendiente con los datos y el `public_id` de
