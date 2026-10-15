@@ -345,7 +345,7 @@ fallar sus tests.
   Decisiones: (1) Se purgan también las plazas caducadas que aún no se habían resuelto: pasada la vida
   máxima ya no se resolverán. [Probable]
 
-- [ ] T-038 Documentación del registro con correo
+- [x] T-038 Documentación del registro con correo
   RF: — (CF-4) | Depende de: T-036, T-037 | Archivos: 2
   Archivos: `backend/.env.example`, `specs/procesos-pendientes/resumen.md` (rutas desde la raíz).
   Hecho cuando: `.env.example` documenta `REGISTRATION_START_RETRY_MINUTES`; el resumen explica la
