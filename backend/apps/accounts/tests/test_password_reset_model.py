@@ -1,7 +1,9 @@
 from datetime import timedelta
 
 import pytest
-from django.db import IntegrityError, transaction
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError, connection, transaction
+from django.db.migrations.executor import MigrationExecutor
 from django.utils import timezone
 
 from apps.accounts.models import PasswordResetRequest, PhantomProcess, User
@@ -38,6 +40,40 @@ def test_all_fields_are_stored() -> None:
     assert (stored.failed_attempts, stored.code_validated_at) == (0, None)
     assert stored.created_at is not None
     assert user.password_reset_request == stored
+
+
+def test_the_request_language_defaults_to_spanish_and_admits_the_three_languages() -> None:
+    request = _request(make_user())
+    request.save()
+
+    assert PasswordResetRequest.objects.get(pk=request.pk).language == "es"
+    for language in ("es", "pt-BR", "en"):
+        request.language = language
+        request.full_clean()
+    request.language = "fr"
+    with pytest.raises(ValidationError):
+        request.full_clean()
+
+
+@pytest.mark.django_db(transaction=True)
+def test_existing_requests_get_spanish_when_migrating() -> None:
+    before, after = [("accounts", "0009_phantom_answers_expired")], [
+        ("accounts", "0010_passwordresetrequest_language")
+    ]
+    _request(make_user()).save()
+    executor = MigrationExecutor(connection)
+    executor.migrate(before)
+    try:
+        executor = MigrationExecutor(connection)
+        executor.migrate(after)
+        old_model = executor.loader.project_state(after).apps.get_model(
+            "accounts", "PasswordResetRequest"
+        )
+        assert list(old_model.objects.values_list("language", flat=True)) == ["es"]
+    finally:
+        MigrationExecutor(connection).migrate(
+            MigrationExecutor(connection).loader.graph.leaf_nodes()
+        )
 
 
 def test_one_request_per_account_even_in_bulk_create() -> None:

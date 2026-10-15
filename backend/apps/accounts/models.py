@@ -251,6 +251,8 @@ class PasswordResetRequest(CodeProcess):
         User, on_delete=models.CASCADE, related_name="password_reset_request"
     )
     account_stamp = models.CharField(max_length=64)
+    # Idioma de la petición que la creó o reemplazó; lo usa el correo del reenvío (D-17).
+    language = models.CharField(max_length=5, choices=LANGUAGE_CHOICES, default=DEFAULT_LANGUAGE)
 
     objects = CodeProcessQuerySet["PasswordResetRequest"].as_manager()
 

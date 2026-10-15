@@ -392,7 +392,7 @@ esquema, para que al final quede una sola migración (M-07).
   recorrido por consola leyendo el código en la salida del worker; la entrada de `HUMAN_TODO.md`
   "Neutralizar 'sin cuenta elegible'" pasa a pedir solo el mensaje neutro de la API.
 
-- [ ] T-033 Corrección: la solicitud guarda el idioma de la petición
+- [x] T-033 Corrección: la solicitud guarda el idioma de la petición
   Tipo: corrección | Origen: validación de RF-013 de `correo-asincrono-plantillas`
   RF: RF-007 (D-17, M-11) | Depende de: — | Archivos: 3
   Archivos: `models.py`, `migrations/0010_passwordresetrequest_language.py`,
