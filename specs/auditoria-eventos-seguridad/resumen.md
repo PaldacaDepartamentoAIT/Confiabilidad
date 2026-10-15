@@ -59,7 +59,7 @@ de borrar es el comando de purga de eventos de más de un año.
 - **Configuración nueva**: `AUDIT_HASH_SECRET` (obligatoria sin `DEBUG`), `TRUSTED_PROXY_IPS` (vacía por defecto),
   `ACCOUNT_ADAPTER` y el middleware `apps.audit.middleware.CurrentRequestMiddleware`. Las acciones
   humanas pendientes (clave en producción, IP del proxy, `.env` local y migraciones) están en
-  `HUMAN_TODO.md`.
+  `specs/auditoria-eventos-seguridad/HUMAN_TODO.md`.
 
 ### Límites conocidos (riesgos residuales aceptados)
 - **Perfil y deshabilitación sin emisor** (RF-010): los receptores y las señales existen, pero hoy
@@ -98,11 +98,11 @@ de borrar es el comando de purga de eventos de más de un año.
   y el «hasta» inclusivo (RF-013), y la huella de sesión del flujo `app` (RF-003, RF-009) no tienen
   test; la validación los confirmó con sondas.
 - **Docker** (P-02): la construcción de la imagen no se pudo verificar en la sesión remota (Docker Hub
-  devolvió 429); está en `HUMAN_TODO.md`.
+  devolvió 429); está en `specs/auditoria-eventos-seguridad/HUMAN_TODO.md`.
 
 ## Cómo probarlo
 Todo se hace sin frontend, desde la raíz del repositorio. Docker Compose activa `DJANGO_DEBUG`, así que
-funciona sin `backend/.env`; para usar tu propia clave de desarrollo, mira `HUMAN_TODO.md`. Los pasos
+funciona sin `backend/.env`; para usar tu propia clave de desarrollo, mira `specs/auditoria-eventos-seguridad/HUMAN_TODO.md`. Los pasos
 van en orden: algunos usan valores que obtienes en un paso anterior.
 
 ### Tests automáticos
