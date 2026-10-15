@@ -47,11 +47,11 @@ def enqueue(
         masked_code=masked_code,
         code_nonce=code_nonce,
     )
-    transaction.on_commit(lambda: _queue(email.pk))
+    transaction.on_commit(lambda: queue(email.pk))
     return email
 
 
-def _queue(email_id: int) -> None:
+def queue(email_id: int) -> None:
     # Si la cola no responde, el correo queda pendiente y lo recoge el barrido periódico (D-01).
     try:
         current_app.send_task(DELIVER_TASK, args=[email_id])

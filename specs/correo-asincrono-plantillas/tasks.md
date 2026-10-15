@@ -321,7 +321,7 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   (2) La migración crea el grupo si no existe (`get_or_create`) y depende de `consents.0002` para
   que, cuando exista, sea el mismo. Revertir quita solo estos cuatro permisos. [Cierto]
 
-- [ ] T-027 Comando `emails test`
+- [x] T-027 Comando `emails test`
   RF: RF-025 | Depende de: T-013, T-016 | Archivos: 4
   Archivos: `management/__init__.py`, `management/commands/__init__.py`,
   `management/commands/emails.py`, `tests/test_command.py`.
@@ -329,6 +329,12 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   deja una fila `pending` con datos de ejemplo y la muestra; un tipo o idioma desconocido da un
   error del comando; suite verde.
   Excepción: los dos `__init__.py` son el esqueleto obligatorio de los comandos de Django.
+  Decisiones: (1) Las pruebas crean su fila directamente y se encolan al confirmar: no son de
+  ninguna cuenta, así que no llevan el tope de RF-007 ni el idioma de una cuenta. [Cierto] Revertir:
+  pasar por `outbox.enqueue` con una cuenta de ejemplo. (2) Los correos de código de prueba llevan
+  en `context` un código de ejemplo (`123456`, no secreto), su enlace y "15 minutos", sin máscara ni
+  comprobación de vigencia. [Cierto] (3) Para encolar al confirmar se hizo pública
+  `outbox.queue` (antes `_queue`), un cambio fuera de los archivos de la tarea. [Cierto]
 
 - [ ] T-028 Comandos `emails notify` y `emails dispatch`
   RF: RF-009 | Depende de: T-016, T-027 | Archivos: 2
