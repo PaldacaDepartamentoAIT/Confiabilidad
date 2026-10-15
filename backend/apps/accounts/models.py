@@ -10,6 +10,8 @@ from django.contrib.auth.models import (
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.functions import Lower
+from django.db.models.signals import pre_delete
+from django.dispatch import receiver
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
@@ -264,8 +266,10 @@ class PhantomProcess(CodeProcess):
         PASSWORD_RESET = "password_reset", _("Password reset")
 
     purpose = models.CharField(max_length=20, choices=Purpose.choices)
-    email = models.EmailField()
+    # Vacío solo en la tumba de una cuenta borrada, que no conserva su correo (D-15).
+    email = models.EmailField(blank=True)
     payload = models.JSONField(null=True, blank=True)
+    answers_expired = models.BooleanField(default=False)
 
     objects = CodeProcessQuerySet["PhantomProcess"].as_manager()
 
@@ -276,3 +280,22 @@ class PhantomProcess(CodeProcess):
         self.email = self.email.strip().lower()
         self.full_clean(exclude={"code_hash"}, validate_unique=False)
         super().save(*args, **kwargs)
+
+
+@receiver(pre_delete, sender=User)
+def _leave_password_reset_tombstone(sender: type[User], instance: User, **kwargs: Any) -> None:
+    # La solicitud se borra en cascada; en su lugar queda una plaza que responde "caducada" con su
+    # identificador hasta su caducidad natural (D-15 de cambio-contrasena).
+    request = PasswordResetRequest.objects.filter(user=instance).first()
+    if request is None:
+        return
+    tombstone = PhantomProcess(
+        purpose=PhantomProcess.Purpose.PASSWORD_RESET,
+        email="",
+        public_id=request.public_id,
+        code_hash="",
+        code_expires_at=request.code_expires_at,
+        answers_expired=True,
+    )
+    tombstone.save()
+    PhantomProcess.objects.filter(pk=tombstone.pk).update(created_at=request.created_at)

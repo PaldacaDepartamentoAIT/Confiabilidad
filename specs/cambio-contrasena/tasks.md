@@ -273,7 +273,7 @@ esquema, para que al final quede una sola migración (M-07).
   y la otra sigue siendo la principal; ese mutante muere ejecutando el archivo completo; la suite
   completa sigue en verde.
 
-- [ ] T-024 Tumba que responde "caducada" al borrar la cuenta
+- [x] T-024 Tumba que responde "caducada" al borrar la cuenta
   RF: RF-010 (D-15, M-10) | Depende de: T-029 de `procesos-pendientes` | Archivos: 3
   Archivos: `models.py`, `migrations/0009_phantom_answers_expired.py`,
   `tests/test_password_reset_model.py`.
@@ -281,6 +281,11 @@ esquema, para que al final quede una sola migración (M-07).
   solicitud, también en un borrado masivo, queda una plaza `password_reset` con su `public_id`,
   `code_expires_at`, `created_at` y `answers_expired = True`, y la solicitud se borra; una cuenta sin
   solicitud no deja plaza; suite verde.
+  Decisiones: (1) La tumba no guarda el correo de la cuenta borrada (D-15: sin datos de la cuenta);
+  para eso `PhantomProcess.email` pasa a admitir vacío en la migración `0009`. [Probable] (2) Una
+  solicitud nueva del mismo correo no reemplaza la tumba: sin correo no se puede asociar; la purga la
+  borra al caducar. [Probable] (3) El receptor vive en `models.py`; `created_at` se copia con un
+  `update()` posterior porque `auto_now_add` lo pisa al guardar. [Cierto]
 
 - [ ] T-025 Resolver la petición fuera de la respuesta
   RF: RF-002, RF-003, RF-004, RF-016, RF-017 (D-13, M-09) | Depende de: T-029 de
