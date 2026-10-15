@@ -55,7 +55,7 @@ def deliver(email_id: int) -> None:
     try:
         EmailMessage(subject, body, settings.DEFAULT_FROM_EMAIL, [email.recipient]).send()
     except Exception as error:
-        _record_failure(email, error)
+        _record_failure(email, error, values.get("code"))
         return
     email.delete()
 
@@ -88,9 +88,11 @@ def _claim(email_id: int) -> OutboundEmail | None:
         return email
 
 
-def _record_failure(email: OutboundEmail, error: BaseException) -> None:
+def _record_failure(email: OutboundEmail, error: BaseException, code: str | None = None) -> None:
     email.attempts += 1
-    email.last_error = f"{type(error).__name__}: {error}"
+    detail = f"{type(error).__name__}: {error}"
+    # Algunos errores citan el mensaje ya preparado: el código nunca se guarda en claro (D-18).
+    email.last_error = detail.replace(code, "[code]") if code else detail
     if classify(error) is Failure.PERMANENT or _window_is_over(email):
         email.status = OutboundEmail.Status.FAILED
         _forget_code(email)

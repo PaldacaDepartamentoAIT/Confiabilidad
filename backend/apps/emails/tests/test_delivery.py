@@ -300,6 +300,34 @@ def test_a_failed_code_email_keeps_no_trace_of_the_code(caplog: Any) -> None:
     assert CODE not in caplog.text
 
 
+@pytest.mark.parametrize(
+    ("error", "status"),
+    [
+        pytest.param(TimeoutError(f"echo: subject with {CODE}"), "pending", id="temporary"),
+        pytest.param(
+            smtplib.SMTPDataError(554, f"rejected message with {CODE} inside".encode()),
+            "failed",
+            id="permanent",
+        ),
+    ],
+)
+def test_an_error_that_quotes_the_code_is_stored_without_it(
+    error: BaseException, status: str, caplog: Any
+) -> None:
+    caplog.set_level(logging.DEBUG)
+    email = _code_email()
+    FakeBackend.reset(error)
+
+    delivery.deliver(email.pk)
+
+    stored = OutboundEmail.objects.filter(pk=email.pk).values().get()
+    assert stored["status"] == status
+    assert "[code]" in stored["last_error"]
+    assert type(error).__name__ in stored["last_error"]
+    assert CODE not in " ".join(str(value) for value in stored.values())
+    assert CODE not in caplog.text
+
+
 def test_a_code_email_keeps_its_mask_while_it_can_be_retried() -> None:
     email = _code_email()
     FakeBackend.reset(TimeoutError("slow"))

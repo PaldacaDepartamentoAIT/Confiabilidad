@@ -438,7 +438,7 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   tratamiento propio. [Cierto] (2) El error nombra la dirección ya normalizada (`evil.com/login` en vez
   de `evil。com/login`). [Cierto]
 
-- [ ] T-037 Corrección: el error guardado de un intento nunca contiene el código
+- [x] T-037 Corrección: el error guardado de un intento nunca contiene el código
   Tipo: corrección | Origen: 2.ª validación de RF-018
   RF: RF-018 (D-18) | Depende de: — | Archivos: 2
   Archivos: `delivery.py`, `tests/test_delivery.py`.
