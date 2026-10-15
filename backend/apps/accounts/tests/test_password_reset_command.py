@@ -114,16 +114,38 @@ def test_every_verify_refusal_has_its_own_message(
     assert _error("verify", "any-id", "123456") == VERIFY_ERRORS[refusal]
 
 
-def test_resend_keeps_the_public_id_and_shows_a_new_code() -> None:
+def _resent(public_id: str) -> dict[str, str]:
+    # El código nuevo lo emite la tarea y llega por correo (D-13).
+    shown = _call("resend", public_id)
+    password_reset.reissue_code(public_id)
+    return {**shown, "code": code_sent_to(public_id)}
+
+
+def test_resend_shows_only_the_public_id() -> None:
     started = _started()
 
-    resent = _call("resend", started["public_id"])
+    assert _call("resend", started["public_id"]) == {"public_id": started["public_id"]}
+
+
+def test_resend_then_the_new_code_arrives_by_email() -> None:
+    started = _started()
+
+    resent = _resent(started["public_id"])
 
     stored = PasswordResetRequest.objects.get()
     assert resent["public_id"] == started["public_id"]
     assert fingerprints.code_matches(
         codes.Purpose.PASSWORD_RESET, stored.public_id, resent["code"], stored.code_hash
     )
+
+
+def test_resend_shows_the_same_with_or_without_an_account() -> None:
+    with_account = _started()["public_id"]
+    without_account = _call("start", "--email", "nadie@x.com")["public_id"]
+    password_reset.resolve_password_reset(without_account)
+
+    assert _call("resend", with_account) == {"public_id": with_account}
+    assert _call("resend", without_account) == {"public_id": without_account}
 
 
 @pytest.mark.parametrize("refusal", list(password_reset.ResendRefusal))
@@ -207,7 +229,7 @@ def test_purge_shows_how_many_were_deleted() -> None:
 
 def test_console_journey_sets_a_password_that_logs_in() -> None:
     started = _started()
-    resent = _call("resend", started["public_id"])
+    resent = _resent(started["public_id"])
     _call("verify", started["public_id"], resent["code"])
 
     _call("complete", started["public_id"], "--password", GOOD_PASSWORD)

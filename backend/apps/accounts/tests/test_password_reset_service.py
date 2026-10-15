@@ -15,6 +15,7 @@ from apps.accounts.models import PasswordResetRequest, PendingRegistration, Phan
 from apps.accounts.tests.factories import (
     DEFAULT_PASSWORD,
     StartedWithCode,
+    code_sent_to,
     make_pending,
     make_reset_request,
     make_user,
@@ -240,6 +241,13 @@ EXPIRED = "expired"
 ResendRefusal = password_reset.ResendRefusal
 
 
+def _resend(public_id: str) -> StartedWithCode:
+    # El código nuevo lo emite la tarea y llega por correo (D-13).
+    assert password_reset.resend(public_id=public_id) == password_reset.Resent(public_id=public_id)
+    password_reset.reissue_code(public_id)
+    return StartedWithCode(public_id=public_id, code=code_sent_to(public_id))
+
+
 def _wrong(code: str) -> str:
     return "000000" if code != "000000" else "111111"
 
@@ -313,9 +321,8 @@ def test_resend_keeps_the_public_id_with_a_new_code(user: User) -> None:
     started = _started()
     PasswordResetRequest.objects.update(failed_attempts=5)
 
-    resent = password_reset.resend(public_id=started.public_id)
+    resent = _resend(started.public_id)
 
-    assert isinstance(resent, password_reset.Resent)
     stored = _stored()
     assert resent.public_id == stored.public_id == started.public_id
     assert fingerprints.code_matches(PURPOSE, started.public_id, resent.code, stored.code_hash)
@@ -669,8 +676,7 @@ def test_reactivated_account_can_resend_and_complete_again(user: User) -> None:
     user.is_active = True
     user.save()
 
-    resent = password_reset.resend(public_id=started.public_id)
-    assert isinstance(resent, password_reset.Resent)
+    resent = _resend(started.public_id)
     assert resent.public_id == started.public_id
     assert password_reset.verify(public_id=started.public_id, code=resent.code) == (
         VerifyResult.VERIFIED
@@ -686,9 +692,8 @@ def test_resend_does_not_extend_the_request_lifetime(user: User) -> None:
     _age(created_at=50)
     created_at = _stored().created_at
 
-    resent = password_reset.resend(public_id=started.public_id)
+    resent = _resend(started.public_id)
 
-    assert isinstance(resent, password_reset.Resent)
     assert _stored().created_at == created_at
     _age(created_at=61)
     assert password_reset.verify(public_id=started.public_id, code=resent.code) == (
@@ -707,9 +712,8 @@ def test_resend_works_while_the_code_is_expired_but_the_request_is_alive(user: U
     _age(code_expires_at=5)
     assert not _stored().is_expired
 
-    resent = password_reset.resend(public_id=started.public_id)
+    resent = _resend(started.public_id)
 
-    assert isinstance(resent, password_reset.Resent)
     stored = _stored()
     assert resent.public_id == stored.public_id == started.public_id
     assert stored.failed_attempts == 0

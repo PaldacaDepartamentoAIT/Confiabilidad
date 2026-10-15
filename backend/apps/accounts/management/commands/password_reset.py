@@ -7,7 +7,7 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
 
 from apps.accounts import password_reset
-from apps.accounts.management.console import format_validation_error, show_code
+from apps.accounts.management.console import format_validation_error
 from apps.emails import locales
 
 EXPIRED = gettext_noop("The password reset request has expired; start again.")
@@ -53,7 +53,9 @@ class Command(BaseCommand):
         verify = actions.add_parser("verify", help="Check the code of a request.")
         verify.add_argument("public_id")
         verify.add_argument("code")
-        resend = actions.add_parser("resend", help="Issue a new code for a request.")
+        resend = actions.add_parser(
+            "resend", help="Issue a new code for a request; it arrives by email."
+        )
         resend.add_argument("public_id")
         complete = actions.add_parser(
             "complete", help="Set the new password; asks for it if not given."
@@ -83,7 +85,7 @@ class Command(BaseCommand):
         result = password_reset.resend(public_id=options["public_id"])
         if not isinstance(result, password_reset.Resent):
             raise CommandError(_(RESEND_ERRORS[result]))
-        show_code(self.stdout, result.public_id, result.code)
+        self.stdout.write(f"public_id: {result.public_id}")
 
     def _complete(self, options: dict[str, Any]) -> None:
         password = options["password"] or getpass.getpass(_("Password: "))

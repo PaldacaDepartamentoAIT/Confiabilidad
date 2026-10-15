@@ -7,6 +7,7 @@ from apps.accounts import email_checks, password_reset, registration
 from apps.accounts.models import PasswordResetRequest, PendingRegistration
 from apps.accounts.tests.factories import (
     StartedWithCode,
+    code_sent_to,
     make_pending,
     make_reset_request,
     make_user,
@@ -75,8 +76,9 @@ def test_a_replaced_code_does_not_serve() -> None:
 
 def test_a_resent_code_replaces_the_previous_one() -> None:
     started = _reset()
-    resent = password_reset.resend(public_id=started.public_id)
-    assert isinstance(resent, password_reset.Resent)
+    password_reset.resend(public_id=started.public_id)
+    password_reset.reissue_code(started.public_id)
+    resent = StartedWithCode(public_id=started.public_id, code=code_sent_to(started.public_id))
 
     assert email_checks.password_reset_code_expiry(started.public_id, started.code) is None
     assert email_checks.password_reset_code_expiry(resent.public_id, resent.code) is not None

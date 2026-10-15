@@ -24,6 +24,7 @@ from apps.emails import locales, outbox
 _PURPOSE = codes.Purpose.PASSWORD_RESET
 _REPLACED_FIELDS = [*processes.ISSUED_FIELDS, "created_at", "account_stamp"]
 RESOLVE_TASK = "apps.accounts.tasks.resolve_password_reset"
+REISSUE_TASK = "apps.accounts.tasks.reissue_code"
 logger = logging.getLogger(__name__)
 
 
@@ -114,9 +115,7 @@ def resolve_password_reset(public_id: str) -> None:
 
 def verify(*, public_id: str, code: str) -> VerifyResult:
     with transaction.atomic():
-        # Consulta las dos tablas siempre, para hacer el mismo trabajo con plaza o sin ella (D-14).
-        request, slot = _locked_by_public_id(public_id), _locked_slot(public_id)
-        process = request or slot
+        process = _locked_process(public_id)
         if process is None:
             return VerifyResult.NOT_FOUND
         if _answers_expired(process):
@@ -127,7 +126,6 @@ def verify(*, public_id: str, code: str) -> VerifyResult:
 @dataclass(frozen=True)
 class Resent:
     public_id: str
-    code: str
 
 
 class ResendRefusal(StrEnum):
@@ -137,15 +135,38 @@ class ResendRefusal(StrEnum):
 
 
 def resend(*, public_id: str) -> Resent | ResendRefusal:
+    # En la respuesta solo se anula el código vigente; el nuevo lo emite reissue_code (D-13).
     with transaction.atomic():
-        request = _locked_by_public_id(public_id)
-        if request is None:
+        process = _locked_process(public_id)
+        if process is None:
             return ResendRefusal.NOT_FOUND
-        if _answers_expired(request):
+        if _answers_expired(process):
             return ResendRefusal.EXPIRED
-        if request.code_validated_at is not None:
+        if process.code_validated_at is not None:
             return ResendRefusal.ALREADY_VERIFIED
-        return Resent(public_id=public_id, code=processes.renew_code(request, _PURPOSE))
+        # Sin save(): una solicitud real no admite la huella vacía en su validación.
+        type(process).objects.filter(pk=process.pk).update(code_hash="", failed_attempts=0)
+        transaction.on_commit(lambda: _queue(REISSUE_TASK, [_PURPOSE, public_id]))
+        return Resent(public_id=public_id)
+
+
+def reissue_code(public_id: str) -> None:
+    # La plaza recibe también un código nuevo, que nunca se envía (D-13).
+    with transaction.atomic():
+        process = _locked_process(public_id)
+        if process is None or _answers_expired(process) or process.code_validated_at is not None:
+            return
+        code = processes.renew_code(process, _PURPOSE)
+        if isinstance(process, PasswordResetRequest):
+            outbox.enqueue(
+                kind="password_reset_code",
+                recipient=process.user.email,
+                locale=process.user.language,
+                context={"name": process.user.name},
+                purpose=_PURPOSE,
+                public_id=public_id,
+                code=code,
+            )
 
 
 @dataclass(frozen=True)
@@ -236,6 +257,12 @@ def _locked_by_public_id(public_id: str) -> PasswordResetRequest | None:
         .filter(public_id=public_id)
         .first()
     )
+
+
+def _locked_process(public_id: str) -> PasswordResetRequest | PhantomProcess | None:
+    # Consulta las dos tablas siempre, para hacer el mismo trabajo con plaza o sin ella (D-14).
+    request, slot = _locked_by_public_id(public_id), _locked_slot(public_id)
+    return request or slot
 
 
 def _locked_slot(public_id: str) -> PhantomProcess | None:

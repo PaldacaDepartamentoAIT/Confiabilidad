@@ -16,6 +16,7 @@ RESOLVE_TASKS = {
 }
 REISSUE_FUNCTIONS = {
     PhantomProcess.Purpose.REGISTRATION: registration.reissue_code,
+    PhantomProcess.Purpose.PASSWORD_RESET: password_reset.reissue_code,
 }
 _FIRST_WAIT_SECONDS = 15
 _MAX_WAIT_SECONDS = 60

@@ -352,7 +352,7 @@ esquema, para que al final quede una sola migración (M-07).
   [Cierto] (3) `complete` nunca completa una plaza, aunque estuviera marcada como validada. [Cierto]
   (4) Se añade un test que comprueba que ningún mensaje del comando menciona la cuenta. [Cierto]
 
-- [ ] T-029 Reenvío en dos tiempos
+- [x] T-029 Reenvío en dos tiempos
   RF: RF-007, RF-013, RF-017 (D-13) | Depende de: T-028 y T-036 de `procesos-pendientes` |
   Archivos: 4
   Archivos: `password_reset.py`, `management/commands/password_reset.py`,
@@ -362,6 +362,13 @@ esquema, para que al final quede una sola migración (M-07).
   emite el código y, si es real, encola su correo; `manage.py password_reset resend` muestra solo el
   `public_id`; suite verde.
   Excepción: el reenvío cambia a la vez el servicio, el comando que lo muestra y sus tests.
+  Decisiones: (1) Fuera de los archivos de la tarea, y dentro de su módulo M-09: `tasks.py` añade el
+  propósito `password_reset` a `reissue_code`; los tests de reenvío de `test_password_reset_service.py`
+  y `test_email_checks.py` leen el código del correo; se borra `show_code` de
+  `management/console.py`, que ya no usa nadie. [Cierto] (2) El correo reenviado va en el idioma de la
+  cuenta: la solicitud no guarda el idioma de la petición. [Probable] (3) `reissue_code` no emite
+  nada si el proceso responde «caducada» (también con la cuenta inactiva, cambiada o borrada) o ya se
+  validó. [Cierto]
 
 - [ ] T-030 Aviso de contraseña restablecida al completar
   RF: RF-009 (D-16) | Depende de: T-028 | Archivos: 2
