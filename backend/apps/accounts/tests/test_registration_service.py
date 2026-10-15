@@ -539,3 +539,36 @@ def test_expired_registration_is_replaced_even_with_spaces_around_the_email() ->
     pending = PendingRegistration.objects.get()
     assert (pending.public_id, pending.name) == (new.public_id, "Bea Ruiz")
     assert not pending.is_expired
+
+
+def _validate(**overrides: Any) -> None:
+    registration.validate_registration_data(**{"email": "nueva@x.com", **DATA, **overrides})
+
+
+def test_valid_data_passes_the_validation_without_queries(
+    django_assert_num_queries: Any,
+) -> None:
+    with django_assert_num_queries(0):
+        _validate()
+
+
+@pytest.mark.parametrize("is_active", [True, False])
+def test_an_email_with_an_account_is_not_a_data_error(
+    is_active: bool, django_assert_num_queries: Any
+) -> None:
+    make_user(email="ana@x.com", is_active=is_active)
+
+    with django_assert_num_queries(0):
+        _validate(email=" Ana@X.com ")
+
+
+def test_every_invalid_field_is_reported_at_once() -> None:
+    with pytest.raises(ValidationError) as error:
+        _validate(email="no-es-correo", name="", birthdate=date(2030, 1, 1), country="ZZ")
+
+    assert set(error.value.error_dict) == {"email", "name", "birthdate", "country"}
+    assert all(e.code != "email_has_account" for e in error.value.error_dict["email"])
+
+
+def test_the_data_is_normalized_before_it_is_validated() -> None:
+    _validate(email="  Nueva@X.com ", name="  Ana García ", country=" es ")

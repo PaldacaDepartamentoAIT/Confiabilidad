@@ -10,6 +10,7 @@ from django.db import IntegrityError, transaction
 from apps.accounts import codes, processes
 from apps.accounts.models import PendingRegistration, User
 from apps.accounts.processes import VerifyResult as VerifyResult
+from apps.accounts.validators import normalize_country, normalize_name
 
 _PURPOSE = codes.Purpose.REGISTRATION
 
@@ -23,6 +24,20 @@ class Started:
 @dataclass(frozen=True)
 class AccountExists:
     pass
+
+
+def validate_registration_data(*, email: str, name: str, birthdate: date, country: str) -> None:
+    # Solo las reglas que no consultan la base de datos: que el correo tenga cuenta nunca se
+    # indica en la respuesta (RF-024).
+    pending = PendingRegistration(email=email, name=name, birthdate=birthdate, country=country)
+    pending.email = pending.email.strip().lower()
+    pending.name = normalize_name(pending.name)
+    pending.country = normalize_country(pending.country)
+    pending.full_clean(
+        exclude=["public_id", "code_hash", "code_expires_at"],
+        validate_unique=False,
+        validate_constraints=False,
+    )
 
 
 def start(*, email: str, name: str, birthdate: date, country: str) -> Started | AccountExists:

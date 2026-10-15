@@ -231,12 +231,15 @@ fallar sus tests.
   huella vacía), como `PendingRegistration`. [Cierto] (2) `__str__` muestra propósito y
   `public_id`, no el correo. [Cierto]
 
-- [ ] T-030 Validar los datos sin consultar cuentas
+- [x] T-030 Validar los datos sin consultar cuentas
   RF: RF-002, RF-024 (M-01) | Depende de: — | Archivos: 2
   Archivos: `registration.py`, `tests/test_registration_service.py`.
   Hecho cuando: `validate_registration_data` rechaza con un error por campo un nombre, una fecha,
   un país o un formato de correo inválidos; un correo con cuenta, activa o no, no da error; no
   hace ninguna consulta a la base de datos (`django_assert_num_queries(0)`); suite verde.
+  Decisiones: (1) `PhantomProcess.save()` normaliza el correo y valida con `full_clean` (salvo la
+  huella vacía), como `PendingRegistration`. [Cierto] (2) `__str__` muestra propósito y
+  `public_id`, no el correo. [Cierto]
 
 - [ ] T-031 Tiempo de reintento de empezar el registro
   RF: RF-019 (M-04) | Depende de: — | Archivos: 3
