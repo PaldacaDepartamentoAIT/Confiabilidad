@@ -309,12 +309,17 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   cuerpo. [Cierto] (2) `is_support` se copia del criterio de `consents` en vez de importarlo de su
   `admin.py`, para no acoplar las apps. [Probable] Revertir: moverlo a `apps/core`.
 
-- [ ] T-026 Permisos de «Soporte técnico»
+- [x] T-026 Permisos de «Soporte técnico»
   RF: RF-017, RF-020 (D-13) | Depende de: T-024, T-025 | Archivos: 2
   Archivos: `migrations/0003_support_permissions.py`, `tests/test_migrations.py`.
   Hecho cuando: tras `migrate` sobre una base vacía, el grupo «Soporte técnico» tiene ver y cambiar
   plantillas y ver y borrar correos fallidos, además de sus permisos de `consents`; deshacer la
   migración quita solo esos permisos; suite verde.
+  Decisiones: (1) Con la conformidad del usuario (opción a), el test de `consents` que exigía que
+  el grupo tuviera solo permisos de `consents` compara ahora solo esos permisos: RF-019 de
+  `consentimientos` no exige exclusividad. [Cierto] Revertir: usar un grupo propio para correos.
+  (2) La migración crea el grupo si no existe (`get_or_create`) y depende de `consents.0002` para
+  que, cuando exista, sea el mismo. Revertir quita solo estos cuatro permisos. [Cierto]
 
 - [ ] T-027 Comando `emails test`
   RF: RF-025 | Depende de: T-013, T-016 | Archivos: 4

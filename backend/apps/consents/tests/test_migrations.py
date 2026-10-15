@@ -25,12 +25,11 @@ def _migrate(target: tuple[str, str]) -> None:
 @pytest.mark.django_db
 def test_support_group_has_the_acceptance_and_consent_permissions() -> None:
     group = Group.objects.get(name=SUPPORT_GROUP)
+    # El grupo también lleva los permisos de otras apps, como el panel de correos (D-13 de
+    # correo-asincrono-plantillas); aquí solo cuentan los de consentimientos.
+    consents_permissions = group.permissions.filter(content_type__app_label="consents")
 
-    codenames = set(group.permissions.values_list("codename", flat=True))
-    app_labels = set(group.permissions.values_list("content_type__app_label", flat=True))
-
-    assert codenames == SUPPORT_PERMISSIONS
-    assert app_labels == {"consents"}
+    assert set(consents_permissions.values_list("codename", flat=True)) == SUPPORT_PERMISSIONS
 
 
 @pytest.fixture
