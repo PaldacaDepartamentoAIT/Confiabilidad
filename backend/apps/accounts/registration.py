@@ -251,5 +251,6 @@ def _register_or_repeat(
 
 
 def purge_expired() -> int:
-    _total, by_model = PendingRegistration.objects.expired().delete()
-    return by_model.get(PendingRegistration._meta.label, 0)
+    pending, _by_model = PendingRegistration.objects.expired().delete()
+    slots, _by_model = PhantomProcess.objects.expired().filter(purpose=_PURPOSE).delete()
+    return pending + slots

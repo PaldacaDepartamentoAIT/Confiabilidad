@@ -579,6 +579,34 @@ def test_purge_deletes_only_expired_registrations_and_counts_them() -> None:
     }
 
 
+def _aged_slot(email: str, purpose: str = "registration", **minutes_ago: int) -> str:
+    make_user(email=email)
+    public_id = registration.start(email=email, **DATA).public_id
+    registration.resolve_registration(public_id)
+    PhantomProcess.objects.filter(public_id=public_id).update(
+        purpose=purpose,
+        **{field: timezone.now() - timedelta(minutes=m) for field, m in minutes_ago.items()},
+    )
+    return public_id
+
+
+def test_purge_also_deletes_the_expired_registration_slots_and_counts_them() -> None:
+    fresh = _aged_slot("a@x.com")
+    in_grace = _aged_slot("b@x.com", code_expires_at=10)
+    _aged_slot("c@x.com", code_expires_at=16)
+    _aged_slot("d@x.com", created_at=61)
+    reset_slot = _aged_slot("e@x.com", purpose="password_reset", created_at=61)
+    _aged("f@x.com", created_at=61)
+
+    assert registration.purge_expired() == 3
+    assert set(PhantomProcess.objects.values_list("public_id", flat=True)) == {
+        fresh,
+        in_grace,
+        reset_slot,
+    }
+    assert not PendingRegistration.objects.exists()
+
+
 def test_purge_with_nothing_expired_returns_zero() -> None:
     _start()
 

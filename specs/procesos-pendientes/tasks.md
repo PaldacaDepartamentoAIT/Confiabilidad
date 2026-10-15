@@ -337,11 +337,13 @@ fallar sus tests.
   proceso caducó, ya se validó o desapareció; tampoco reintenta: si la cola falla, el usuario pide
   otro reenvío. [Probable] (4) El correo reenviado va en el idioma guardado del registro. [Probable]
 
-- [ ] T-037 La purga borra también las plazas caducadas
+- [x] T-037 La purga borra también las plazas caducadas
   RF: RF-013 | Depende de: T-029 | Archivos: 2
   Archivos: `registration.py`, `tests/test_registration_service.py`.
   Hecho cuando: `purge_expired` borra los registros pendientes y las plazas de registro caducados,
   cuenta los dos, y no toca las plazas de cambio de contraseña ni las vigentes; suite verde.
+  Decisiones: (1) Se purgan también las plazas caducadas que aún no se habían resuelto: pasada la vida
+  máxima ya no se resolverán. [Probable]
 
 - [ ] T-038 Documentación del registro con correo
   RF: — (CF-4) | Depende de: T-036, T-037 | Archivos: 2
