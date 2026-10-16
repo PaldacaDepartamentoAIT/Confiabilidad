@@ -108,15 +108,31 @@ def validate_template(kind: str, subject: str, body: str) -> None:
         raise ValidationError(problems)
 
 
-_INVISIBLE = frozenset({"Cf", "Mn", "Me"})
+# Los únicos signos que el navegador descarta en un dominio; cualquier otro (un subrayado, una
+# raya encima) sigue en él y lo convierte en otro dominio en punycode.
+_IGNORED_MARKS = frozenset(
+    chr(point)
+    for first, last in (
+        (0x034F, 0x034F),
+        (0x180B, 0x180D),
+        (0x180F, 0x180F),
+        (0xFE00, 0xFE0F),
+        (0xE0100, 0xE01EF),
+    )
+    for point in range(first, last + 1)
+)
 
 
 def _as_read(text: str) -> str:
-    # El texto como lo verá el cliente: `＠` es `@`, el punto ideográfico es un punto y los
-    # caracteres invisibles que el navegador descarta (de formato, como el guion blando, y signos
-    # sueltos sin anchura, como los selectores de variación) no cuentan. NFKC ya une las tildes.
+    # El texto como lo verá el cliente: `＠` es `@`, el punto ideográfico es un punto y no cuentan
+    # los caracteres de formato, como el guion blando, ni los selectores de variación. NFKC ya une
+    # las tildes.
     normalized = unicodedata.normalize("NFKC", text).replace("\u3002", ".")
-    return "".join(char for char in normalized if unicodedata.category(char) not in _INVISIBLE)
+    return "".join(
+        char
+        for char in normalized
+        if char not in _IGNORED_MARKS and unicodedata.category(char) != "Cf"
+    )
 
 
 def _is_application_address(address: str) -> bool:

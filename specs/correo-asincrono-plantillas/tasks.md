@@ -478,7 +478,7 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   decisión equivocada, corregida en T-041; descartar categorías enteras aceptaba dominios que el
   navegador abre en punycode. NFKC une antes las tildes, así que los acentos no se pierden.
 
-- [ ] T-041 Corrección: solo se descartan los signos que el navegador ignora
+- [x] T-041 Corrección: solo se descartan los signos que el navegador ignora
   Tipo: corrección | Origen: 5.ª validación de RF-021 (regresión de T-040)
   RF: RF-021 (D-17) | Depende de: — | Archivos: 2
   Archivos: `rendering.py`, `tests/test_rendering.py`.
@@ -488,6 +488,10 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   Hecho cuando: `app.ejemplo\u0332.com/login`, `https://app.ejemplo\u0305.com/login`,
   `app.ejemplo\u20dd.com/login` y `app.ejemplo\uff9e.com/login` se rechazan; los tests de T-040
   siguen pasando; el mutante que vuelve a descartar todo Mn muere; suite verde.
+  Decisiones: (1) Se siguen descartando todos los caracteres de formato (`Cf`): los que el navegador
+  no ignora (como U+200D o U+200E) dejan el dominio inválido y no abren otro, así que descartarlos
+  solo hace la comprobación más estricta con dominios ajenos. [Probable] (2) La lista de signos
+  ignorados es explícita, con sus extremos cubiertos por tests, en vez de una categoría. [Cierto]
 
 ## RF sin tarea
 - RF-008 (aviso de contraseña restablecida) y RF-019 (mismo trabajo exista o no la cuenta): sin

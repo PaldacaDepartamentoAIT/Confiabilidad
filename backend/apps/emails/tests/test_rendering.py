@@ -344,7 +344,10 @@ def test_an_invisible_character_does_not_break_an_application_address() -> None:
 
 
 @pytest.mark.usefixtures("_frontend")
-@pytest.mark.parametrize("hidden", ["\u034f", "\ufe0f", "\u180b", "\U000e0100"])
+@pytest.mark.parametrize(
+    "hidden",
+    ["\u034f", "\u180b", "\u180d", "\u180f", "\ufe00", "\ufe0f", "\U000e0100", "\U000e01ef"],
+)
 @pytest.mark.parametrize("shape", ["Entra en evil{}.com/login", "Escribe a soporte@evil{}.com"])
 def test_an_invisible_mark_does_not_hide_a_domain(hidden: str, shape: str) -> None:
     with pytest.raises(ValidationError) as error:
@@ -358,6 +361,23 @@ def test_an_invisible_mark_does_not_break_an_application_address() -> None:
     rendering.validate_template(
         "account_exists", "Aviso", "Entra en app.ejemplo\u034f.com/login, {{ name }}."
     )
+
+
+@pytest.mark.usefixtures("_frontend")
+@pytest.mark.parametrize(
+    "address",
+    [
+        "app.ejemplo\u0332.com/login",
+        "https://app.ejemplo\u0305.com/login",
+        "app.ejemplo\u20dd.com/login",
+        "app.ejemplo\uff9e.com/login",
+    ],
+)
+def test_a_visible_mark_on_the_application_domain_makes_it_another_domain(address: str) -> None:
+    with pytest.raises(ValidationError):
+        rendering.validate_template(
+            "account_exists", "Aviso", f"Entra en {address}, {{{{ name }}}}."
+        )
 
 
 @pytest.mark.usefixtures("_frontend")
