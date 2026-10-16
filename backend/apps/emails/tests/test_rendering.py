@@ -1,3 +1,4 @@
+import time
 from datetime import timedelta
 
 import pytest
@@ -401,6 +402,65 @@ def test_a_visible_mark_on_the_application_domain_makes_it_another_domain(addres
 def test_a_combining_mark_is_part_of_the_domain_it_is_written_in(text: str) -> None:
     with pytest.raises(ValidationError):
         rendering.validate_template("account_exists", "Aviso", f"{text}, {{{{ name }}}}.")
+
+
+@pytest.mark.usefixtures("_frontend")
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Entra en evil\u2603.com/login",
+        "Escribe a soporte@evil\U0001f600.com",
+        "Entra en evil\u00a9.com/login",
+        "Entra en evil\u0140.com/login",
+        "Entra en \U0002ebf0\U0002ebf1.com/login",
+        "Entra en \U0001f600app.ejemplo.com/login",
+        "Entra en -evil.com/login",
+        "Visita evil.com.x",
+    ],
+)
+def test_anything_but_spaces_and_punctuation_is_part_of_the_domain(text: str) -> None:
+    with pytest.raises(ValidationError):
+        rendering.validate_template("account_exists", "Aviso", f"{text}, {{{{ name }}}}.")
+
+
+@pytest.mark.usefixtures("_frontend")
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Entra en «app.ejemplo.com/login»",
+        "¿Has entrado en app.ejemplo.com?",
+        "Visita col·legi i al·lot",
+        "Hola \U0001f600 qué tal. Bien",
+        "Ya está la versión 2.10 del servicio",
+        "Entra en\u00a0app.ejemplo.com/login",
+        "Entra en [app.ejemplo.com/login]",
+        "Enlaces: {app.ejemplo.com/login}",
+    ],
+)
+def test_punctuation_and_spaces_around_words_are_not_part_of_a_domain(text: str) -> None:
+    rendering.validate_template("account_exists", "Aviso", f"{text}, {{{{ name }}}}.")
+
+
+@pytest.mark.usefixtures("_frontend")
+def test_an_address_found_in_both_readings_is_named_once() -> None:
+    with pytest.raises(ValidationError) as error:
+        rendering.validate_template("account_exists", "Aviso", "Visita evil.com, {{ name }}.")
+
+    assert len(error.value.messages) == 1
+
+
+@pytest.mark.usefixtures("_frontend")
+@pytest.mark.parametrize(
+    "word",
+    ["a" * 20000, "a-" * 10000, "a." * 10000, "a-." * 7000],
+    ids=["letters", "hyphens", "dots", "hyphens-and-dots"],
+)
+def test_a_long_word_is_validated_quickly(word: str) -> None:
+    started = time.monotonic()
+
+    rendering.validate_template("account_exists", "Aviso", f"Hola {word} {{{{ name }}}}")
+
+    assert time.monotonic() - started < 1
 
 
 @pytest.mark.usefixtures("_frontend")

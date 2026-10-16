@@ -515,7 +515,7 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   Nota: la decisión (1) queda sustituida en T-043; la lista de signos con rangos fuera del plano
   básico hacía la validación unas 35 veces más lenta con palabras largas.
 
-- [ ] T-043 Corrección: un dominio se forma con todo lo que no separa palabras
+- [x] T-043 Corrección: un dominio se forma con todo lo que no separa palabras
   Tipo: corrección | Origen: 7.ª validación de RF-021 (hueco desde el inicio y regresión de T-042)
   RF: RF-021 (D-17) | Depende de: T-042 | Archivos: 2
   Archivos: `rendering.py`, `tests/test_rendering.py`.
@@ -531,6 +531,12 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   20 000 letras seguidas, otro de 10 000 `a-` y otro de 10 000 `a.` se validan en menos de 1 s cada
   uno; los tests de T-040, T-041 y T-042 siguen pasando; mueren los mutantes que quitan la lectura
   sin normalizar y el comienzo de palabra; suite verde.
+  Decisiones: (1) Fuera del plano básico todo cuenta como parte de un dominio, también la
+  puntuación: es más estricto y mantiene la clase rápida. [Cierto] (2) Los caracteres de control no
+  se tratan como separadores: así un dominio que los lleva se rechaza, más estricto y más simple.
+  [Cierto] (3) Se añaden casos fuera del «Hecho cuando» para matar mutantes: `Ya está la versión
+  2.10 del servicio`, un espacio de no separación, corchetes y llaves junto al enlace de la app,
+  `a-.` repetido y que una dirección hallada en las dos lecturas se nombre una sola vez. [Cierto]
 
 ## RF sin tarea
 - RF-008 (aviso de contraseña restablecida) y RF-019 (mismo trabajo exista o no la cuenta): sin

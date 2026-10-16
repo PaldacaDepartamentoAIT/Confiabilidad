@@ -42,18 +42,23 @@ def process_link(purpose: str, public_id: str) -> str:
 CODE_KINDS = frozenset({"registration_code", "password_reset_code"})
 _CODE_VALUES = frozenset({"code", "link", "expires_in"})
 _ANY_BRACES = re.compile(r"\{\{(.*?)\}\}|\{%.*?%\}", re.S)
-# `\w` no incluye los signos combinantes, y uno visible forma parte del dominio en el que está:
-# sin ellos, `evil\u0332.com` no se vería como dominio. Fuera de los dos primeros planos solo hay
-# selectores de variación, que se descartan antes.
-_MARKS = "".join(
-    chr(point) for point in range(0x20000) if unicodedata.category(chr(point)).startswith("M")
+# Lo único que separa un dominio del texto: espacios, signos de puntuación y, en ASCII, todo lo que
+# no es letra ni cifra. Lo demás (letras, signos combinantes, símbolos, emojis
+# o caracteres que esta versión de Python aún no conoce) forma parte del dominio, como en los
+# clientes de correo y el navegador. Fuera del plano básico todo cuenta como dominio: es más
+# estricto y la clase sigue siendo rápida.
+_SEPARATORS = re.escape(
+    "".join(
+        chr(point) for point in range(0x80, 0x10000) if unicodedata.category(chr(point))[0] in "ZP"
+    )
 )
+_LABEL = rf"[^\x00-\x2f\x3a-\x40\x5b-\x60\x7b-\x7f{_SEPARATORS}]"
 # Cualquier cosa que un cliente de correo pueda convertir en enlace: una dirección con esquema
-# (también `ftp://` o `https:/`), un dominio suelto, también con letras no latinas, o una IP suelta
-# (RF-021, D-17).
+# (también `ftp://` o `https:/`), un dominio suelto o una IP suelta (RF-021, D-17). Cada una empieza
+# donde empieza su palabra, así el análisis no repite el texto y no se vuelve lento.
 _ADDRESS = re.compile(
-    r"[a-z][a-z0-9+.-]*:/+[^\s<>\"')]+"
-    rf"|(?:[^\W_](?:[\w{_MARKS}-]*(?:[^\W_]|[{_MARKS}]))?\.)+(?:[^\W\d_]|[{_MARKS}]){{2,}}"
+    r"(?<![a-z0-9+.-])[a-z][a-z0-9+.-]*:/+[^\s<>\"')]+"
+    rf"|(?<!{_LABEL})(?<!-)(?<!{_LABEL}\.)(?<!-\.)(?:(?:{_LABEL}|-)+\.)+(?:(?!\d){_LABEL}){{2,}}"
     r"(?:[/:?#][^\s<>\"')]*)?"
     r"|\d{1,3}(?:\.\d{1,3}){3}(?:[/:?#][^\s<>\"')]*)?",
     re.I,
@@ -102,7 +107,10 @@ def validate_template(kind: str, subject: str, body: str) -> None:
         problems.append(
             ValidationError(_("The subject cannot contain line breaks."), code="subject_newline")
         )
-    for address in _ADDRESS.findall(_as_read(text)):
+    # Tal como está escrito (`ŀ` es una letra) y como lo lee el cliente (`＠` es `@`).
+    for address in dict.fromkeys(
+        _ADDRESS.findall(_as_read(text)) + _ADDRESS.findall(_without_ignored(text))
+    ):
         if not _is_application_address(address):
             problems.append(
                 ValidationError(
@@ -130,16 +138,17 @@ _IGNORED_MARKS = frozenset(
 )
 
 
-def _as_read(text: str) -> str:
-    # El texto como lo verá el cliente: `＠` es `@`, el punto ideográfico es un punto y no cuentan
-    # los caracteres de formato, como el guion blando, ni los selectores de variación. NFKC ya une
-    # las tildes.
-    normalized = unicodedata.normalize("NFKC", text).replace("\u3002", ".")
+def _without_ignored(text: str) -> str:
+    # No cuentan los caracteres de formato, como el guion blando, ni los selectores de variación.
     return "".join(
-        char
-        for char in normalized
-        if char not in _IGNORED_MARKS and unicodedata.category(char) != "Cf"
+        char for char in text if char not in _IGNORED_MARKS and unicodedata.category(char) != "Cf"
     )
+
+
+def _as_read(text: str) -> str:
+    # El texto como lo verá el cliente: `＠` es `@` y el punto ideográfico es un punto. NFKC ya une
+    # las tildes.
+    return _without_ignored(unicodedata.normalize("NFKC", text).replace("\u3002", "."))
 
 
 def _is_application_address(address: str) -> bool:
