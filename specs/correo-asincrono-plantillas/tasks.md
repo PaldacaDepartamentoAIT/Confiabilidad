@@ -492,6 +492,22 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   no ignora (como U+200D o U+200E) dejan el dominio inválido y no abren otro, así que descartarlos
   solo hace la comprobación más estricta con dominios ajenos. [Probable] (2) La lista de signos
   ignorados es explícita, con sus extremos cubiertos por tests, en vez de una categoría. [Cierto]
+  Nota: la lista no es completa respecto a UTS #46 (faltan U+115F, U+1160, U+17B4, U+17B5, U+3164
+  y U+FFA0); desde T-042 esos signos cuentan como visibles y el dominio que los lleva se rechaza.
+
+- [ ] T-042 Corrección: los signos combinantes cuentan como parte de un dominio
+  Tipo: corrección | Origen: 6.ª validación de RF-021 (regresión de T-041)
+  RF: RF-021 (D-17) | Depende de: T-041 | Archivos: 2
+  Archivos: `rendering.py`, `tests/test_rendering.py`.
+  Causa: las etiquetas de `_ADDRESS` usan `\w`, que no incluye los signos combinantes (Mn, Mc,
+  Me); desde T-041 un signo visible corta la etiqueta y el dominio ajeno desaparece del análisis
+  (`evil\u0332.com/login`, `soporte@evil\u0332.com`, `สวัสดี.com/login`).
+  Hecho cuando: se rechazan `Entra en evil\u0332.com/login`, `Escribe a soporte@evil\u0332.com`,
+  `Entra en สวัสดี.com/login`, `Entra en evil\u20dd.com/login`, `Entra en evil\u17b4.com/login`,
+  `Entra en हिंदी.com/login`, `Entra en evil\u0332.app.ejemplo.com/login`,
+  `Entra en evil.c\u0332om/login`, `Entra en app.ejemplo.com\u0332/login` y
+  `Entra en app.ejemplo\u17b4.com/login`; los tests de T-040 y T-041 siguen pasando; muere el
+  mutante que quita los signos de las etiquetas; suite verde.
 
 ## RF sin tarea
 - RF-008 (aviso de contraseña restablecida) y RF-019 (mismo trabajo exista o no la cuenta): sin
