@@ -1,5 +1,5 @@
 # Plan: registro-api
-Estado: borrador
+Estado: aprobado
 
 Base de código: el `main` con `correo-asincrono-plantillas` fusionada (S-17, CF-6). Las rutas y
 funciones de `apps/accounts/registration.py`, `PhantomProcess`, `apps/emails/locales.py` y
