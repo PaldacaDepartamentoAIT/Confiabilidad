@@ -537,6 +537,8 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   [Cierto] (3) Se añaden casos fuera del «Hecho cuando» para matar mutantes: `Ya está la versión
   2.10 del servicio`, un espacio de no separación, corchetes y llaves junto al enlace de la app,
   `a-.` repetido y que una dirección hallada en las dos lecturas se nombre una sola vez. [Cierto]
+  Nota: la decisión (2) se apartaba de D-17, que cuenta los caracteres de control como
+  separadores, y dejaba que U+0085 escondiera un dominio tras un enlace; se corrige en T-046.
 
 - [x] T-044 Corrección: la ruta de un enlace de la app no esconde otra dirección
   Tipo: corrección | Origen: 8.ª validación de RF-021 (hueco desde la primera versión de la regla)
@@ -573,6 +575,35 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   desde la posición siguiente, y continuar desde el cierre en vez de tras él, porque en esas
   posiciones no puede empezar otra apertura. [Cierto] (3) La prueba de orden fija los bloques que
   daba la expresión anterior, incluido `{%} y {% if %}`. [Cierto]
+
+- [ ] T-046 Corrección: tras el dominio de la app solo cabe un puerto
+  Tipo: corrección | Origen: 9.ª validación de RF-021 (hueco desde la primera versión de la regla y
+  desviación de T-043)
+  RF: RF-021 (D-17) | Depende de: T-044 | Archivos: 2
+  Archivos: `rendering.py`, `tests/test_rendering.py`.
+  Causa: solo se compara el nombre del dominio y se revisan la ruta, la consulta y el fragmento, no
+  lo que va tras `:` (`app.ejemplo.com:evil.com`); U+0085 corta la ruta pero cuenta como parte de
+  un dominio, así que el que sigue no se ve; no se detectan las direcciones que empiezan por `//`;
+  y el punto final de `https://app.ejemplo.com.` se toma como parte del dominio.
+  Hecho cuando: se rechazan `Entra en app.ejemplo.com:evil.com/x ahora`,
+  `Entra en app.ejemplo.com::evil.com/x ahora`, `Escribe a soporte@app.ejemplo.com:evil.com`,
+  `Entra en https://app.ejemplo.com:443:evil.com/x`, `Entra en app.ejemplo.com:www.evil.com ahora`,
+  `Entra en https://app.ejemplo.com/login\u0085evil.com/x ahora`,
+  `Entra en https://app.ejemplo.com\u0085evil.com/login`, `Entra en //93.184.216/x ahora` y
+  `Entra en https://app.ejemplo.com/login{//93.184.216/x`; se aceptan
+  `Entra en https://app.ejemplo.com:443/login`, `Visita https://app.ejemplo.com.` y
+  `Entra en //app.ejemplo.com/login`; `"/" * 100000` y `"a//" * 33000` se validan en menos de 1 s;
+  los tests de T-040 a T-045 siguen pasando; mueren los mutantes que quitan la comprobación del
+  puerto, el U+0085 como separador, la detección de `//` y el signo final; suite verde.
+
+- [ ] T-047 Test: una apertura sin cierre seguida de un bloque del otro tipo
+  Tipo: test | Origen: 9.ª validación de RF-021 (mutantes de T-045)
+  RF: RF-021 | Depende de: T-045 | Archivos: 1
+  Archivos: `tests/test_rendering.py`.
+  Causa: ningún test cubre una apertura sin cierre seguida de un bloque del otro tipo; sobreviven
+  los mutantes que cortan la búsqueda (`break`) o la retoman dos caracteres después.
+  Hecho cuando: `{{ a {% b %}` nombra `{% b %}` y `{{% x %}` nombra `{% x %}`, como la expresión
+  anterior; mueren esos dos mutantes; suite verde.
 
 ## RF sin tarea
 - RF-008 (aviso de contraseña restablecida) y RF-019 (mismo trabajo exista o no la cuenta): sin

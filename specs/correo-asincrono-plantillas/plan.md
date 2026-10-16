@@ -222,7 +222,11 @@ tal como está escrito y normalizado con NFKC (que convierte `＠` en `@` y `ŀ`
 además como `ss`, como en el navegador), y basta con que una de las dos lecturas encuentre otro
 dominio para rechazar la plantilla. Una dirección de la aplicación cuya ruta, consulta o fragmento
 contiene otra dirección también se rechaza: los clientes de correo cortan el enlace en caracteres
-como `{` o `»` y enlazan lo que sigue. Cada dirección
+como `{` o `»` y enlazan lo que sigue. En una dirección de la aplicación, tras el dominio solo puede
+ir un puerto (`app.ejemplo.com:443`): cualquier otra cosa tras `:` (`app.ejemplo.com:evil.com`) o
+un usuario delante se rechaza. También se detectan las direcciones que empiezan por `//`, y un signo
+final (`.`, `,`, `;`, `:`, `!`, `?`) no forma parte de una dirección con esquema ni de una que
+empieza por `//`. Cada dirección
 empieza donde empieza su palabra, para que el tiempo de análisis crezca en proporción al texto. El
 dominio de cada una se obtiene como lo haría un navegador: `\` cuenta como `/` en `http(s)`, y una
 dirección que no se puede analizar se rechaza como problema de la plantilla, nunca como error del
