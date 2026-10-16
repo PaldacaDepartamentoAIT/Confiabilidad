@@ -7,16 +7,16 @@ funciones de `apps/accounts/registration.py`, `PhantomProcess`, `apps/emails/loc
 
 ## Dependencias previas a implementar
 - `sdd-cambio` en `procesos-pendientes` (S-03, CF-6): el registro pendiente guarda el documento de
-  términos aceptado y completar el registro registra su aceptación (M-08).
-- `sdd-cambio` en `huellas-hmac-unificadas` (D-08): un tipo de huella nuevo, la del límite de
-  frecuencia, en el punto único de cálculo (M-07).
+  términos aceptado y completar el registro registra su aceptación (M-07). Es el único cambio en
+  otra feature: el resto usa funciones públicas existentes o reorganiza código sin cambiar su
+  comportamiento.
 
 ## Módulos
 ### M-01 Vistas y rutas de la API (`apps/accounts/api/views.py`, `apps/accounts/api/urls.py`, `config/urls.py`)
 Responsabilidad: `POST /api/browser/v1/registration` (cliente web, con CSRF) y
 `POST /api/app/v1/registration` (cliente de aplicación, sin CSRF), las dos con la misma vista (D-01,
 D-02). La vista, sin autenticación y sin mirar la sesión (S-14), hace en este orden (D-12): límite
-por IP (M-06) → validación (M-02) → límite por correo e IP (M-06) → `registration.start` (M-08) →
+por IP (M-06) → validación (M-02) → límite por correo e IP (M-06) → `registration.start` (M-07) →
 respuesta. Respuestas (D-03, D-04):
 - `202` `{"public_id": "<PUBLIC_ID>", "message": "<mensaje neutro>"}`;
 - `400` `{"errors": {"<campo>": [{"code": "<código>", "message": "<texto>"}]}}`;
@@ -29,7 +29,7 @@ Responsabilidad: serializador con `name`, `birthdate` (ISO `AAAA-MM-DD`), `email
 `terms` (`{"version", "locale", "accepted"}`) y `language` (opcional). Valida todos los campos y
 devuelve todos los errores de cada uno (D-13): nombre, fecha y país con los validadores de la
 cuenta (M-03); correo con el validador de M-03; términos con la marca `accepted` y
-`consents.services.current_document_shown` (M-08). Los errores del propio serializador (campo
+`consents.services.current_document_shown` (M-07). Los errores del propio serializador (campo
 ausente, nulo, vacío o de tipo incorrecto) salen con su código de DRF (`required`, `null`,
 `blank`, `invalid`). No consulta cuentas ni registros pendientes (RF-024 de `procesos-pendientes`).
 RF: RF-002, RF-003, RF-004
@@ -58,7 +58,8 @@ RF: RF-013
 ### M-06 Límite de frecuencia (`apps/accounts/throttling.py`, `apps/accounts/conf.py`)
 Responsabilidad: `check_ip(ip)` y `check_email_ip(email, ip)`. Cada una devuelve «permitido» y
 apunta la solicitud, o «superado» con los segundos de espera sin apuntar nada (RF-010, S-06). Usa un
-registro deslizante de marcas de tiempo en la caché de Redis (D-07) con claves HMAC (M-07, D-08):
+registro deslizante de marcas de tiempo en la caché de Redis (D-07), con claves formadas por la
+huella del correo que ya calcula `consent_email_fingerprint` y la IP (D-08):
 - correo e IP: como mucho 1 solicitud en `REGISTRATION_RATE_EMAIL_IP_INTERVAL_SECONDS` (60) y
   `REGISTRATION_RATE_EMAIL_IP_PER_HOUR` (5) en la última hora;
 - IP: `REGISTRATION_RATE_IP_PER_HOUR` (20) en la última hora.
@@ -66,13 +67,7 @@ La espera es lo que falta para que la marca más antigua que bloquea salga de su
 actual se inyecta para los tests.
 RF: RF-010, RF-011, RF-012
 
-### M-07 Huella del límite de frecuencia (`apps/core/fingerprints.py`)
-Responsabilidad: `rate_limit_fingerprint(scope, *parts)`, calculada con la clave de códigos vigente
-(sin la anterior: el recuento solo dura una hora) y el correo normalizado (RF-004 de
-`huellas-hmac-unificadas`). Sujeto a su `sdd-cambio`.
-RF: RF-010, RF-011
-
-### M-08 Términos en el registro (`apps/accounts/models.py`, `apps/accounts/registration.py`, migración `0012`, `apps/consents/services.py`)
+### M-07 Términos en el registro (`apps/accounts/models.py`, `apps/accounts/registration.py`, migración `0012`, `apps/consents/services.py`)
 Responsabilidad, sujeta al `sdd-cambio` de `procesos-pendientes`:
 - `PendingRegistration` gana `terms_version` y `terms_locale`, vacíos en los registros anteriores
   (D-10);
@@ -86,7 +81,7 @@ Responsabilidad, sujeta al `sdd-cambio` de `procesos-pendientes`:
   (`current_document_shown`) para que M-02 la use sin duplicar la regla.
 RF: RF-004, RF-006, RF-007, RF-009
 
-### M-09 Configuración y documentación (`config/settings.py`, `backend/.env.example`, `resumen.md`, `HUMAN_TODO.md`)
+### M-08 Configuración y documentación (`config/settings.py`, `backend/.env.example`, `resumen.md`, `HUMAN_TODO.md`)
 Responsabilidad: los tres límites en `settings.py` y `.env.example`; `resumen.md` con las llamadas
 `curl` de cada caso, de los dos clientes, de los errores y de los límites (CF-5); y en el
 `HUMAN_TODO.md` de `cambio-contrasena`, marcar que el límite de frecuencia del formulario de registro
@@ -99,9 +94,10 @@ RF: RF-012 (CF-5)
   C-13).
 - `accounts.PhantomProcess.payload` (JSON, sin migración): añade `terms_version` y `terms_locale`.
 - Caché `default` (Redis), sin tablas:
-  - `registration-rate:email-ip:<huella>` → lista de marcas de tiempo, caduca a la hora;
-  - `registration-rate:ip:<huella>` → ídem.
-- Sin cambios en `consents` salvo la función pública de M-08.
+  - `registration-rate:email-ip:<huella del correo>:<IP>` → lista de marcas de tiempo, caduca a
+    la hora;
+  - `registration-rate:ip:<IP>` → ídem.
+- Sin cambios en `consents` salvo la función pública de M-07.
 
 ## Decisiones
 ### D-01 Dos rutas, una por cliente
@@ -153,12 +149,15 @@ válidas (S-06) ni combinar dos ventanas en una clave; una tabla daría exactitu
 costa de una migración y una purga para datos que solo viven una hora. Si se vacía la caché, los
 límites se reinician: es aceptable para un freno.
 
-### D-08 Claves del límite con HMAC
-Elegida: claves `rate_limit_fingerprint` (M-07) del correo normalizado y de la IP.
-Descartada: el correo y la IP en claro en la clave de Redis.
-Motivo: evita guardar correos e IP legibles fuera de la base de datos, y `huellas-hmac-unificadas`
-(RF-010) prohíbe calcular hashes fuera del punto único. *Coste:* un `sdd-cambio` en esa feature para
-añadir el tipo.
+### D-08 Claves del límite con la huella del correo existente e IP en claro
+Elegida: la huella del correo de `consent_email_fingerprint` (punto único de
+`huellas-hmac-unificadas`, ya pública) y la IP tal cual.
+Descartada: un tipo de huella propio del límite (exige un `sdd-cambio` en `huellas-hmac-unificadas`)
+y el correo en claro en la clave de Redis.
+Motivo: el correo no queda legible fuera de la base de datos y no se calcula ningún hash fuera del
+punto único (RF-010 de esa feature), sin tocar otra spec. *Coste:* la IP queda en claro en Redis una
+hora como mucho (ya consta en los registros del proxy), y la clave del límite coincide con la huella
+que guardan las aceptaciones de términos; las dos son internas del servidor.
 
 ### D-09 Carreras entre solicitudes simultáneas aceptadas
 Elegida: leer, comprobar y escribir la lista sin bloqueo.
@@ -236,18 +235,18 @@ panel, fuera del alcance.
 ## Trazabilidad
 | RF | Módulo(s) | Nivel de test |
 |---|---|---|
-| RF-001 | M-01, M-02, M-08 | integración API |
+| RF-001 | M-01, M-02, M-07 | integración API |
 | RF-002 | M-02, M-03, M-04 | unitario, integración API |
 | RF-003 | M-02, M-03 | unitario, integración API |
-| RF-004 | M-02, M-08 | integración API |
+| RF-004 | M-02, M-07 | integración API |
 | RF-005 | M-01, M-04 | integración API (CF-2) |
-| RF-006 | M-01, M-08 | integración registro |
-| RF-007 | M-01, M-08 | integración registro |
+| RF-006 | M-01, M-07 | integración registro |
+| RF-007 | M-01, M-07 | integración registro |
 | RF-008 | M-01 | integración registro (CF-3) |
-| RF-009 | M-08 | integración registro |
-| RF-010 | M-06, M-07, M-01 | unitario, integración API |
-| RF-011 | M-06, M-07, M-01 | unitario, integración API |
-| RF-012 | M-06, M-09 | unitario |
+| RF-009 | M-07 | integración registro |
+| RF-010 | M-06, M-01 | unitario, integración API |
+| RF-011 | M-06, M-01 | unitario, integración API |
+| RF-012 | M-06, M-08 | unitario |
 | RF-013 | M-04, M-05 | unitario, integración API |
 | RF-014 | M-01 | integración API |
 
