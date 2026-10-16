@@ -447,7 +447,7 @@ fallar sus tests.
   Hecho cuando: el resumen dice que solo una plaza resuelta transmite su alta y nombra la migración
   `0011` en «Cómo probarlo».
 
-- [ ] T-047 Corrección: la resolución compara el correo de las plazas igual que el de cuentas y registros
+- [x] T-047 Corrección: la resolución compara el correo de las plazas igual que el de cuentas y registros
   Tipo: corrección | Origen: 3.ª validación de RF-025
   RF: RF-025, RF-005 (D-16, D-17) | Depende de: — | Archivos: 2
   Archivos: `registration.py`, `tests/test_phantom_equivalence.py`.

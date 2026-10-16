@@ -194,7 +194,8 @@ def resolve_registration(public_id: str) -> None:
         if slot is None:
             return
         email, data = slot.email, dict(slot.payload or {})
-        same_email = PhantomProcess.objects.filter(purpose=_PURPOSE, email=email)
+        # El mismo criterio que la cuenta y el registro pendiente: Postgres pliega `ı`→`I`, `ſ`→`S`.
+        same_email = PhantomProcess.objects.filter(purpose=_PURPOSE, email__iexact=email)
         # Manda la petición más reciente: con una posterior sin resolver, esta no hace nada (D-17).
         if same_email.filter(pk__gt=slot.pk, payload__isnull=False).exists():
             slot.delete()
