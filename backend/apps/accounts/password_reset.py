@@ -113,7 +113,8 @@ def resolve_password_reset(public_id: str) -> None:
         if slot is None:
             return
         email, language = slot.email, str((slot.payload or {}).get("language"))
-        same_email = PhantomProcess.objects.filter(purpose=_PURPOSE, email=email)
+        # El mismo criterio que la cuenta: Postgres pliega `ı`→`I` y `ſ`→`S` (D-13).
+        same_email = PhantomProcess.objects.filter(purpose=_PURPOSE, email__iexact=email)
         # Manda la petición más reciente (D-17 de procesos-pendientes).
         if same_email.filter(pk__gt=slot.pk, payload__isnull=False).exists():
             slot.delete()

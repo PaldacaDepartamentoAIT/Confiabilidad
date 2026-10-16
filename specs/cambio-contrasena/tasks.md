@@ -478,7 +478,7 @@ esquema, para que al final quede una sola migración (M-07).
   menos `REGISTRATION_MAX_LIFETIME_MINUTES` y con `REGISTRATION_CODE_SECRET_ROTATED_AT` anotado en el
   momento real del despliegue, y explica por qué; el resumen recoge S-14 en sus límites conocidos.
 
-- [ ] T-042 Corrección: el mismo correo se compara igual al buscar la cuenta y al anular plazas
+- [x] T-042 Corrección: el mismo correo se compara igual al buscar la cuenta y al anular plazas
   Tipo: corrección | Origen: 3.ª validación de RF-017
   RF: RF-017, RF-003 | Depende de: — | Archivos: 2
   Archivos: `password_reset.py`, `tests/test_password_reset_equivalence.py`.

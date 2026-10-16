@@ -496,3 +496,25 @@ def test_an_operation_during_the_resolution_answers_like_after_it(
     other.join(10)
 
     assert results == {"resolve": None, action: expected}
+
+
+@pytest.mark.parametrize("has_account", [True, False], ids=["real", "phantom"])
+@pytest.mark.parametrize(
+    ("first", "second", "account"),
+    [
+        ("ſam@x.com", "sam@x.com", "sam@x.com"),
+        ("sam@x.com", "ſam@x.com", "sam@x.com"),
+        ("ana@gmaıl.com", "ana@gmail.com", "ana@gmail.com"),
+    ],
+)
+def test_a_unicode_variant_of_the_email_counts_as_the_same_request(
+    has_account: bool, first: str, second: str, account: str
+) -> None:
+    if has_account:
+        make_user(email=account)
+    older = password_reset.start(email=first).public_id
+    password_reset.resolve_password_reset(older)
+    newer = password_reset.start(email=second).public_id
+    password_reset.resolve_password_reset(newer)
+
+    assert [_verify(older), _verify(newer)] == ["not_found", "wrong_code"]
