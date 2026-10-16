@@ -212,15 +212,23 @@ Descartada: confiar solo en el panel.
 Motivo: RF-022 exige impedir el borrado por cualquier vía de la aplicación.
 
 ### D-17 Enlaces de las plantillas tal como los abre el navegador
-Elegida (cambio del 2026-10-15, tras la validación): se detectan las direcciones con esquema, con
-`www.`, los dominios sueltos (también con letras no latinas y con el punto ideográfico `。`, que
-cuenta como `.`), las IP sueltas y el dominio de una dirección de correo. El dominio de cada una se
-obtiene como lo haría un navegador: se normaliza el texto (NFKC, que convierte `＠` en `@`), `\`
-cuenta como `/` en `http(s)`, y una dirección que no se puede analizar se rechaza como problema de
-la plantilla, nunca como error del servidor.
+Elegida (cambio del 2026-10-15, tras la validación; ampliado el 2026-10-16): se detectan las
+direcciones con esquema, con `www.`, los dominios sueltos, las IP sueltas y el dominio de una
+dirección de correo. Un dominio suelto se forma con todo lo que no sea un espacio, un signo de
+puntuación o un carácter de control (letras de cualquier escritura, signos combinantes, símbolos,
+emojis y caracteres que la versión de Unicode de Python aún no conoce), como hacen los clientes de
+correo al convertir texto en enlace; el punto ideográfico `。` cuenta como `.`. El texto se analiza
+tal como está escrito y normalizado con NFKC (que convierte `＠` en `@` y `ŀ` en `l·`), y basta con
+que una de las dos lecturas encuentre otro dominio para rechazar la plantilla. Cada dirección
+empieza donde empieza su palabra, para que el tiempo de análisis crezca en proporción al texto. El
+dominio de cada una se obtiene como lo haría un navegador: `\` cuenta como `/` en `http(s)`, y una
+dirección que no se puede analizar se rechaza como problema de la plantilla, nunca como error del
+servidor.
 Descartada: analizar la dirección con `urlsplit` tal cual, que separa el dominio de forma distinta
 que el navegador (`https://evil.com\@app.ejemplo.com` pasaba y abre `evil.com`) y lanza errores no
-controlados con ciertos caracteres.
+controlados con ciertos caracteres. Descartada también: enumerar qué caracteres pueden formar un
+dominio (`\w` más los signos combinantes), que deja fuera símbolos, emojis y letras nuevas que el
+navegador acepta y, con muchos rangos de caracteres, vuelve lenta la validación.
 Motivo: RF-021 pide rechazar los enlaces a otros dominios tal como los abrirá quien lea el correo.
 
 ### D-18 El error guardado de un intento nunca lleva el código
