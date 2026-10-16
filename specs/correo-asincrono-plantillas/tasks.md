@@ -511,7 +511,26 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   Decisiones: (1) La clase de signos se calcula al importar con `unicodedata` en los dos primeros
   planos (unos 10 ms); fuera de ellos solo hay selectores de variación, que se descartan antes.
   [Cierto] (2) Se añaden dos casos fuera del «Hecho cuando» para matar mutantes: un signo en medio
-  de la etiqueta (`x̲app.ejemplo.com`) y uno del plano 1 (`evil\U00011001.com`). [Cierto]
+  de la etiqueta (`x\u0332app.ejemplo.com`) y uno del plano 1 (`evil\U00011001.com`). [Cierto]
+  Nota: la decisión (1) queda sustituida en T-043; la lista de signos con rangos fuera del plano
+  básico hacía la validación unas 35 veces más lenta con palabras largas.
+
+- [ ] T-043 Corrección: un dominio se forma con todo lo que no separa palabras
+  Tipo: corrección | Origen: 7.ª validación de RF-021 (hueco desde el inicio y regresión de T-042)
+  RF: RF-021 (D-17) | Depende de: T-042 | Archivos: 2
+  Archivos: `rendering.py`, `tests/test_rendering.py`.
+  Causa: las etiquetas de `_ADDRESS` solo admiten `\w`, signos combinantes y `-`; cualquier otro
+  carácter (un símbolo, un emoji, una letra que Python aún no conoce o el `·` que NFKC saca de `ŀ`)
+  corta la etiqueta y el dominio ajeno desaparece del análisis. Además, desde T-042 la clase de
+  signos con rangos fuera del plano básico hace la validación unas 35 veces más lenta.
+  Hecho cuando: se rechazan `Entra en evil\u2603.com/login`, `Escribe a soporte@evil\U0001F600.com`,
+  `Entra en evil\u00a9.com/login`, `Entra en evil\u0140.com/login`,
+  `Entra en \U0002EBF0\U0002EBF1.com/login`, `Entra en \U0001F600app.ejemplo.com/login`,
+  `Entra en -evil.com/login` y `Visita evil.com.x`; se aceptan `«app.ejemplo.com/login»`,
+  `¿Has entrado en app.ejemplo.com?`, `col·legi i al·lot` y `Hola 😀 qué tal. Bien`; un texto de
+  20 000 letras seguidas, otro de 10 000 `a-` y otro de 10 000 `a.` se validan en menos de 1 s cada
+  uno; los tests de T-040, T-041 y T-042 siguen pasando; mueren los mutantes que quitan la lectura
+  sin normalizar y el comienzo de palabra; suite verde.
 
 ## RF sin tarea
 - RF-008 (aviso de contraseña restablecida) y RF-019 (mismo trabajo exista o no la cuenta): sin
