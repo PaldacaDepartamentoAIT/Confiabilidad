@@ -474,8 +474,20 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   Hecho cuando: con cada uno de U+034F, U+FE0F, U+180B y U+E0100 entre `evil` y `.com`, sin esquema
   y en una dirección de correo, la validación rechaza nombrando `evil.com`; `app.ejemplo\u034f.com`
   sigue aceptándose; el mutante que vuelve a quitar solo `Cf` muere; suite verde.
-  Decisiones: (1) Se descartan también los signos de encierro (`Me`), de la misma familia; NFKC une
-  antes las tildes, así que los acentos del texto no se pierden. [Cierto]
+  Decisiones: (1) ~~Se descartan también los signos de encierro (`Me`), de la misma familia~~:
+  decisión equivocada, corregida en T-041; descartar categorías enteras aceptaba dominios que el
+  navegador abre en punycode. NFKC une antes las tildes, así que los acentos no se pierden.
+
+- [ ] T-041 Corrección: solo se descartan los signos que el navegador ignora
+  Tipo: corrección | Origen: 5.ª validación de RF-021 (regresión de T-040)
+  RF: RF-021 (D-17) | Depende de: — | Archivos: 2
+  Archivos: `rendering.py`, `tests/test_rendering.py`.
+  Causa: `_as_read` descarta todo Mn y Me; el navegador solo ignora U+034F, U+180B–U+180D, U+180F,
+  U+FE00–U+FE0F y U+E0100–U+E01EF y conserva el resto en punycode, así que
+  `app.ejemplo\u0332.com/login` se acepta y abre `app.xn--ejemplo-6re.com`.
+  Hecho cuando: `app.ejemplo\u0332.com/login`, `https://app.ejemplo\u0305.com/login`,
+  `app.ejemplo\u20dd.com/login` y `app.ejemplo\uff9e.com/login` se rechazan; los tests de T-040
+  siguen pasando; el mutante que vuelve a descartar todo Mn muere; suite verde.
 
 ## RF sin tarea
 - RF-008 (aviso de contraseña restablecida) y RF-019 (mismo trabajo exista o no la cuenta): sin
