@@ -109,8 +109,10 @@ def validate_template(kind: str, subject: str, body: str) -> None:
 
 
 def _as_read(text: str) -> str:
-    # El texto como lo verá el cliente: `＠` es `@` y el punto ideográfico es un punto.
-    return unicodedata.normalize("NFKC", text).replace("\u3002", ".")
+    # El texto como lo verá el cliente: `＠` es `@`, el punto ideográfico es un punto y los
+    # caracteres de formato invisibles (guion blando, espacio de ancho cero) no cuentan.
+    normalized = unicodedata.normalize("NFKC", text).replace("\u3002", ".")
+    return "".join(char for char in normalized if unicodedata.category(char) != "Cf")
 
 
 def _is_application_address(address: str) -> bool:

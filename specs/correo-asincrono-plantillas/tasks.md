@@ -454,7 +454,7 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   Hecho cuando: el resumen describe la validación de enlaces tal como queda (sin afirmar que cubre
   «cualquier dirección»), la regla del asunto y que el error guardado no lleva el código.
 
-- [ ] T-039 Corrección: los caracteres invisibles no ocultan un dominio
+- [x] T-039 Corrección: los caracteres invisibles no ocultan un dominio
   Tipo: corrección | Origen: 3.ª validación de RF-021 (F2)
   RF: RF-021 (D-17) | Depende de: — | Archivos: 2
   Archivos: `rendering.py`, `tests/test_rendering.py`.

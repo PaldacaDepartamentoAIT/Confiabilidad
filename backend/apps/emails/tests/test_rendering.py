@@ -325,3 +325,19 @@ def test_a_disguised_or_malformed_address_is_rejected_by_name(address: str, name
         rendering.validate_template("account_exists", "Aviso", f"Entra en {address} ahora")
 
     assert named in _messages(error.value)
+
+
+@pytest.mark.usefixtures("_frontend")
+@pytest.mark.parametrize("hidden", ["\u00ad", "\u200b", "\u2060"])
+def test_an_invisible_character_does_not_hide_a_domain(hidden: str) -> None:
+    with pytest.raises(ValidationError) as error:
+        rendering.validate_template("account_exists", "Aviso", f"Entra en evil{hidden}.com/login")
+
+    assert "evil.com/login" in _messages(error.value)
+
+
+@pytest.mark.usefixtures("_frontend")
+def test_an_invisible_character_does_not_break_an_application_address() -> None:
+    rendering.validate_template(
+        "account_exists", "Aviso", "Entra en app.ejemplo\u200b.com/login, {{ name }}."
+    )
