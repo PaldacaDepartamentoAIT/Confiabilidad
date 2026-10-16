@@ -487,7 +487,7 @@ esquema, para que al final quede una sola migración (M-07).
   orden inverso, y con `ana@gmaıl.com` → `ana@gmail.com`, da `["not_found", "wrong_code"]` en los
   dos casos; el mutante que vuelve a la igualdad exacta muere; suite verde.
 
-- [ ] T-043 Corrección: la rotación del secreto cubre la web y el worker
+- [x] T-043 Corrección: la rotación del secreto cubre la web y el worker
   Tipo: corrección | Origen: 3.ª validación de S-14
   RF: — (S-14) | Depende de: — | Archivos: 2
   Archivos: `HUMAN_TODO.md`, `specs/cambio-contrasena/resumen.md` (rutas desde la raíz).

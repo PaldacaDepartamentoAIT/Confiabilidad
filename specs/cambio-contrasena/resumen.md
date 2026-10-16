@@ -84,7 +84,9 @@ se detalla abajo.
 - **La rotación del secreto puede delatar la cuenta** (S-14, riesgo aceptado): rotar el secreto de los
   códigos sin transición suficiente, o que Django vuelva a calcular el hash de la contraseña al
   iniciar sesión, deja las solicitudes reales en curso como «caducadas» y las plazas sin cuenta no.
-  `HUMAN_TODO.md` describe cómo rotar sin provocarlo.
+  `HUMAN_TODO.md` describe cómo rotar sin provocarlo: la web y el worker reciben el secreto nuevo a
+  la vez (nunca el worker antes que la web) y la transición cubre la vida máxima más el tiempo del
+  despliegue.
 - **«Caducada» confunde al titular legítimo** (S-13): quien cambió su contraseña por otra vía, o cuya
   cuenta se desactivó, ve «caducada» y no el motivo real. Es el precio de no revelar la cuenta.
 - Si se pierde el encolado de un reenvío, la solicitud se queda sin código válido hasta que se pida

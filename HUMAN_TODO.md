@@ -208,13 +208,18 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
   cambio en `REGISTRATION_CODE_SECRET_ROTATED_AT` (ISO 8601 con zona, p. ej.
   `2026-10-06T10:00:00+00:00`). El anterior vale durante `REGISTRATION_SECRET_TRANSITION_MINUTES`
   (60 por defecto); después puedes borrar las dos variables de rotación.
-  Al rotar, respeta siempre estas tres condiciones (S-14 de `cambio-contrasena`):
+  Al rotar, respeta siempre estas condiciones (S-14 de `cambio-contrasena`):
   - `REGISTRATION_CODE_SECRET_PREVIOUS` definido con el valor anterior, también en una rotación de
     emergencia;
-  - `REGISTRATION_SECRET_TRANSITION_MINUTES` igual o mayor que `REGISTRATION_MAX_LIFETIME_MINUTES`
-    (60 y 60 por defecto);
-  - `REGISTRATION_CODE_SECRET_ROTATED_AT` con la hora real en que el nuevo secreto entra en
-    producción, no la hora en que lo generaste.
+  - la web y el worker de Celery reciben el secreto nuevo en el mismo despliegue y se reinician a la
+    vez (un solo `docker compose up -d` con los dos servicios); si no puede ser a la vez, primero la
+    web y después el worker, nunca al revés: el worker firma la huella de la cuenta al resolver y la
+    web la comprueba, y una web que aún no conoce el secreto nuevo no acepta lo que firma el worker;
+  - `REGISTRATION_CODE_SECRET_ROTATED_AT` con la hora del despliegue, justo antes de reiniciar el
+    primer servicio (no puede ser una hora futura: el arranque lo rechaza);
+  - `REGISTRATION_SECRET_TRANSITION_MINUTES` de al menos `REGISTRATION_MAX_LIFETIME_MINUTES` más el
+    tiempo hasta que el último servicio usa el secreto nuevo; por ejemplo, 70 con la vida de 60 por
+    defecto y unos minutos de despliegue.
 
   Si no, las solicitudes de cambio de contraseña en curso pasan a responder «caducada» y las plazas
   de correos sin cuenta no. Quien vigile varios identificadores a la vez podría deducir qué correos
