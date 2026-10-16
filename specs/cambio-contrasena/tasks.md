@@ -498,5 +498,16 @@ esquema, para que al final quede una sola migración (M-07).
   el primero y la transición en al menos la vida máxima más el tiempo hasta que el último proceso usa
   el secreto nuevo; explica el porqué, y el resumen lo recoge en sus límites conocidos.
 
+- [ ] T-044 Corrección: el procedimiento de rotación dice qué pasa con una hora futura
+  Tipo: corrección | Origen: 4.ª validación de S-14 (T-043)
+  RF: — (S-14) | Depende de: — | Archivos: 1
+  Archivos: `HUMAN_TODO.md`.
+  Causa: afirma que el arranque rechaza un `REGISTRATION_CODE_SECRET_ROTATED_AT` futuro; no lo
+  hace: cada comprobación de código falla con error del servidor hasta esa hora, y en el cambio de
+  contraseña reenviar y completar distinguen la solicitud real de la plaza.
+  Hecho cuando: la entrada dice lo que ocurre de verdad con una hora futura, pide comprobar la zona
+  horaria (hora UTC con `+00:00`, o la local con su desfase) y pone el comando de despliegue completo
+  en su propio bloque.
+
 ## RF sin tarea
 Ninguno.

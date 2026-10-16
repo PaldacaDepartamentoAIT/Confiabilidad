@@ -464,6 +464,17 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   nombrando `evil.com/login`; las direcciones de la aplicación y las 21 plantillas iniciales siguen
   válidas; suite verde.
 
+- [ ] T-040 Corrección: los signos invisibles de categoría Mn no ocultan un dominio
+  Tipo: corrección | Origen: 4.ª validación de RF-021 (F6)
+  RF: RF-021 (D-17) | Depende de: — | Archivos: 2
+  Archivos: `rendering.py`, `tests/test_rendering.py`.
+  Causa: `_as_read` solo quita `Cf`; U+034F, U+180B–U+180D, U+180F, U+FE00–U+FE0F y
+  U+E0100–U+E01EF (Mn, ignorados por el navegador) cortan la etiqueta y `evil\u034f.com/login` o
+  `soporte@evil\ufe00.com` pasan, aunque el navegador abre `evil.com`.
+  Hecho cuando: con cada uno de U+034F, U+FE0F, U+180B y U+E0100 entre `evil` y `.com`, sin esquema
+  y en una dirección de correo, la validación rechaza nombrando `evil.com`; `app.ejemplo\u034f.com`
+  sigue aceptándose; el mutante que vuelve a quitar solo `Cf` muere; suite verde.
+
 ## RF sin tarea
 - RF-008 (aviso de contraseña restablecida) y RF-019 (mismo trabajo exista o no la cuenta): sin
   tarea en esta feature. Los implementan las tareas de M-10 en `procesos-pendientes` y
