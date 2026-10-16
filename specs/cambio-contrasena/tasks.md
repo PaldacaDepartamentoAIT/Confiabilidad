@@ -498,7 +498,7 @@ esquema, para que al final quede una sola migración (M-07).
   el primero y la transición en al menos la vida máxima más el tiempo hasta que el último proceso usa
   el secreto nuevo; explica el porqué, y el resumen lo recoge en sus límites conocidos.
 
-- [ ] T-044 Corrección: el procedimiento de rotación dice qué pasa con una hora futura
+- [x] T-044 Corrección: el procedimiento de rotación dice qué pasa con una hora futura
   Tipo: corrección | Origen: 4.ª validación de S-14 (T-043)
   RF: — (S-14) | Depende de: — | Archivos: 1
   Archivos: `HUMAN_TODO.md`.

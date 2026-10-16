@@ -211,12 +211,17 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
   Al rotar, respeta siempre estas condiciones (S-14 de `cambio-contrasena`):
   - `REGISTRATION_CODE_SECRET_PREVIOUS` definido con el valor anterior, también en una rotación de
     emergencia;
-  - la web y el worker de Celery reciben el secreto nuevo en el mismo despliegue y se reinician a la
-    vez (un solo `docker compose up -d` con los dos servicios); si no puede ser a la vez, primero la
-    web y después el worker, nunca al revés: el worker firma la huella de la cuenta al resolver y la
-    web la comprueba, y una web que aún no conoce el secreto nuevo no acepta lo que firma el worker;
-  - `REGISTRATION_CODE_SECRET_ROTATED_AT` con la hora del despliegue, justo antes de reiniciar el
-    primer servicio (no puede ser una hora futura: el arranque lo rechaza);
+  - la web y el worker de Celery reciben el secreto nuevo en el mismo despliegue, primero la web y
+    después el worker, nunca al revés: el worker firma la huella de la cuenta al resolver y la web la
+    comprueba, y una web que aún no conoce el secreto nuevo no acepta lo que firma el worker. Un solo
+    `up -d` de los dos servicios no garantiza ese orden, porque no dependen uno del otro;
+  - `REGISTRATION_CODE_SECRET_ROTATED_AT` con la hora del despliegue, justo antes de reiniciar la
+    web, en UTC con `+00:00` o en hora local con su desfase (en la España peninsular, `+01:00` en
+    invierno y `+02:00` en verano). **Nunca una hora futura:** el arranque no lo comprueba, y hasta
+    que llegue esa hora cada comprobación de código falla con un error del servidor; además, en el
+    cambio de contraseña, reenviar y completar responden distinto a una solicitud real que a una plaza
+    sin cuenta, y eso delata qué correos tienen cuenta. Escribir la hora local con `+00:00` es el error
+    más fácil de cometer;
   - `REGISTRATION_SECRET_TRANSITION_MINUTES` de al menos `REGISTRATION_MAX_LIFETIME_MINUTES` más el
     tiempo hasta que el último servicio usa el secreto nuevo; por ejemplo, 70 con la vida de 60 por
     defecto y unos minutos de despliegue.
@@ -224,6 +229,16 @@ anotan aquí para que no se pierdan. Marca `[x]` cuando completes cada una.
   Si no, las solicitudes de cambio de contraseña en curso pasan a responder «caducada» y las plazas
   de correos sin cuenta no. Quien vigile varios identificadores a la vez podría deducir qué correos
   tienen cuenta.
+
+  En tu máquina, tras poner los valores nuevos, reinicia primero la web:
+  ```bash
+  docker compose -f docker/docker-compose.yml up -d backend
+  ```
+  Y después el worker y el planificador:
+  ```bash
+  docker compose -f docker/docker-compose.yml up -d worker beat
+  ```
+  En el VPS sigue *Actualizar* en la sección *Entorno remoto* del README, en el mismo orden.
 
 - [ ] **Migrar y comprobar Docker tras `consentimientos`.** La feature `consentimientos`, ya fusionada en
   `main`, añade la
