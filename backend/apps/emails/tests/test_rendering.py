@@ -464,5 +464,33 @@ def test_a_long_word_is_validated_quickly(word: str) -> None:
 
 
 @pytest.mark.usefixtures("_frontend")
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Entra en https://app.ejemplo.com/login{www.evil.com/x ahora",
+        "Entra en app.ejemplo.com/login{www.evil.com/x ahora",
+        "Entra en https://app.ejemplo.com/login\ufeffwww.evil.com/x ahora",
+        "Entra en https://app.ejemplo.com/login\u00bbwww.evil.com/x",
+        "Entra en https://app.ejemplo.com/login?a{www.evil.com/x",
+        "Entra en https://app.ejemplo.com/login#a{www.evil.com/x",
+        "Entra en www.1evil.\u1e9e/login ahora",
+        "Escribe a soporte@evil.\u1e9e",
+    ],
+)
+def test_an_address_hidden_after_an_application_link_is_rejected(text: str) -> None:
+    with pytest.raises(ValidationError):
+        rendering.validate_template("account_exists", "Aviso", f"{text}, {{{{ name }}}}.")
+
+
+@pytest.mark.usefixtures("_frontend")
+@pytest.mark.parametrize(
+    "address",
+    ["https://app.ejemplo.com/login?next=/cuenta", "https://app.ejemplo.com/registro#abc_123"],
+)
+def test_an_application_link_with_query_or_fragment_is_accepted(address: str) -> None:
+    rendering.validate_template("account_exists", "Aviso", f"Entra en {address} {{{{ name }}}}")
+
+
+@pytest.mark.usefixtures("_frontend")
 def test_accents_are_kept_when_looking_for_addresses() -> None:
     rendering.validate_template("account_exists", "Aviso", "Café y pingüino, {{ name }}.")

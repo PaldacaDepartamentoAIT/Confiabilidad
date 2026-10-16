@@ -538,7 +538,7 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   2.10 del servicio`, un espacio de no separación, corchetes y llaves junto al enlace de la app,
   `a-.` repetido y que una dirección hallada en las dos lecturas se nombre una sola vez. [Cierto]
 
-- [ ] T-044 Corrección: la ruta de un enlace de la app no esconde otra dirección
+- [x] T-044 Corrección: la ruta de un enlace de la app no esconde otra dirección
   Tipo: corrección | Origen: 8.ª validación de RF-021 (hueco desde la primera versión de la regla)
   RF: RF-021 (D-17) | Depende de: T-043 | Archivos: 2
   Archivos: `rendering.py`, `tests/test_rendering.py`.
@@ -553,6 +553,10 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   y `Escribe a soporte@evil.\u1e9e`; se siguen aceptando `https://app.ejemplo.com/login?next=/cuenta`
   y `https://app.ejemplo.com/registro#abc_123`; los tests de T-040 a T-043 siguen pasando; mueren
   los mutantes que quitan el análisis del resto y la conversión de `ẞ`; suite verde.
+  Decisiones: (1) Se rechaza la dirección de la app cuyo resto contiene cualquier dirección, también
+  otra de la app (`?next=app.ejemplo.com`) o un nombre de archivo (`manual.pdf`): analizarla otra
+  vez sería recursivo y estos enlaces no se usan en las plantillas. [Probable] (2) Se añaden casos
+  con la dirección oculta en la consulta y en el fragmento para matar mutantes. [Cierto]
 
 - [ ] T-045 Corrección: la sintaxis de plantilla se revisa en tiempo lineal
   Tipo: corrección | Origen: 8.ª validación de RF-021 (desde la primera versión de la regla)

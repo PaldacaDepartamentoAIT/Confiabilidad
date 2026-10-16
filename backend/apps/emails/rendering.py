@@ -146,9 +146,10 @@ def _without_ignored(text: str) -> str:
 
 
 def _as_read(text: str) -> str:
-    # El texto como lo verá el cliente: `＠` es `@` y el punto ideográfico es un punto. NFKC ya une
-    # las tildes.
-    return _without_ignored(unicodedata.normalize("NFKC", text).replace("\u3002", "."))
+    # El texto como lo verá el cliente: `＠` es `@`, el punto ideográfico es un punto y `ẞ`, que
+    # NFKC deja igual, es `ss` en el navegador. NFKC ya une las tildes.
+    normalized = unicodedata.normalize("NFKC", text).replace("\u3002", ".").replace("\u1e9e", "ss")
+    return _without_ignored(normalized)
 
 
 def _is_application_address(address: str) -> bool:
@@ -164,7 +165,9 @@ def _is_application_address(address: str) -> bool:
     if "@" in parts.netloc:
         return False
     application_host = urlsplit(str(settings.FRONTEND_BASE_URL)).hostname
-    return host is not None and host == application_host
+    # Los clientes cortan el enlace en caracteres como `{` o `»` y enlazan lo que sigue.
+    rest = f"{parts.path}?{parts.query}#{parts.fragment}"
+    return host is not None and host == application_host and not _ADDRESS.search(rest)
 
 
 # Frases del plazo por idioma: (un minuto, varios minutos, menos de un minuto) (D-08).
