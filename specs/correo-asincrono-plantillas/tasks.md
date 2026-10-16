@@ -602,7 +602,7 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   lineal (mutante equivalente). [Cierto] (3) Se añade `Visita //app.ejemplo.com.` para matar el
   mutante del signo final en `//`. [Cierto]
 
-- [ ] T-047 Test: una apertura sin cierre seguida de un bloque del otro tipo
+- [x] T-047 Test: una apertura sin cierre seguida de un bloque del otro tipo
   Tipo: test | Origen: 9.ª validación de RF-021 (mutantes de T-045)
   RF: RF-021 | Depende de: T-045 | Archivos: 1
   Archivos: `tests/test_rendering.py`.
@@ -610,6 +610,8 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   los mutantes que cortan la búsqueda (`break`) o la retoman dos caracteres después.
   Hecho cuando: `{{ a {% b %}` nombra `{% b %}` y `{{% x %}` nombra `{% x %}`, como la expresión
   anterior; mueren esos dos mutantes; suite verde.
+  Decisiones: (1) Los bloques esperados son los que da la expresión anterior para esos textos.
+  [Cierto]
 
 ## RF sin tarea
 - RF-008 (aviso de contraseña restablecida) y RF-019 (mismo trabajo exista o no la cuenta): sin

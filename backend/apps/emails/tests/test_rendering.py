@@ -510,6 +510,17 @@ def test_each_unsupported_block_is_named_in_order_up_to_its_first_closing() -> N
 
 
 @pytest.mark.usefixtures("_frontend")
+@pytest.mark.parametrize(("body", "block"), [("{{ a {% b %}", "{% b %}"), ("{{% x %}", "{% x %}")])
+def test_an_opening_without_closing_does_not_hide_a_block_of_the_other_kind(
+    body: str, block: str
+) -> None:
+    with pytest.raises(ValidationError) as error:
+        rendering.validate_template("account_exists", "Aviso", body)
+
+    assert error.value.messages == [f"Unsupported template syntax: {block}"]
+
+
+@pytest.mark.usefixtures("_frontend")
 @pytest.mark.parametrize(
     "body",
     ["{{" * 50000, "{%" * 50000, "{{ a" * 25000, "}}{{" * 25000],
