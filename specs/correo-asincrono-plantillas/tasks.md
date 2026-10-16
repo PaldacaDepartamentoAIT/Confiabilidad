@@ -576,7 +576,7 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   posiciones no puede empezar otra apertura. [Cierto] (3) La prueba de orden fija los bloques que
   daba la expresión anterior, incluido `{%} y {% if %}`. [Cierto]
 
-- [ ] T-046 Corrección: tras el dominio de la app solo cabe un puerto
+- [x] T-046 Corrección: tras el dominio de la app solo cabe un puerto
   Tipo: corrección | Origen: 9.ª validación de RF-021 (hueco desde la primera versión de la regla y
   desviación de T-043)
   RF: RF-021 (D-17) | Depende de: T-044 | Archivos: 2
@@ -595,6 +595,12 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   `Entra en //app.ejemplo.com/login`; `"/" * 100000` y `"a//" * 33000` se validan en menos de 1 s;
   los tests de T-040 a T-045 siguen pasando; mueren los mutantes que quitan la comprobación del
   puerto, el U+0085 como separador, la detección de `//` y el signo final; suite verde.
+  Decisiones: (1) La dirección de la app se acepta solo si lo que va entre `//` y la ruta es
+  exactamente el dominio, con un puerto como mucho; esto sustituye la comprobación aparte del `@`.
+  [Cierto] (2) La búsqueda de `//` no lleva comienzo de palabra: una coincidencia llega hasta el final
+  de su palabra y `findall` no vuelve a buscar dentro de ella, así que el análisis sigue siendo
+  lineal (mutante equivalente). [Cierto] (3) Se añade `Visita //app.ejemplo.com.` para matar el
+  mutante del signo final en `//`. [Cierto]
 
 - [ ] T-047 Test: una apertura sin cierre seguida de un bloque del otro tipo
   Tipo: test | Origen: 9.ª validación de RF-021 (mutantes de T-045)

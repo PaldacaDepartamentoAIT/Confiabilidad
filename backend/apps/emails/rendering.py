@@ -48,7 +48,9 @@ _CODE_VALUES = frozenset({"code", "link", "expires_in"})
 # estricto y la clase sigue siendo rápida.
 _SEPARATORS = re.escape(
     "".join(
-        chr(point) for point in range(0x80, 0x10000) if unicodedata.category(chr(point))[0] in "ZP"
+        chr(point)
+        for point in range(0x80, 0x10000)
+        if unicodedata.category(chr(point))[0] in "ZP" or unicodedata.category(chr(point)) == "Cc"
     )
 )
 _LABEL = rf"[^\x00-\x2f\x3a-\x40\x5b-\x60\x7b-\x7f{_SEPARATORS}]"
@@ -56,7 +58,8 @@ _LABEL = rf"[^\x00-\x2f\x3a-\x40\x5b-\x60\x7b-\x7f{_SEPARATORS}]"
 # (también `ftp://` o `https:/`), un dominio suelto o una IP suelta (RF-021, D-17). Cada una empieza
 # donde empieza su palabra, así el análisis no repite el texto y no se vuelve lento.
 _ADDRESS = re.compile(
-    r"(?<![a-z0-9+.-])[a-z][a-z0-9+.-]*:/+[^\s<>\"')]+"
+    r"(?<![a-z0-9+.-])[a-z][a-z0-9+.-]*:/+[^\s<>\"')]+(?<![.,;:!?])"
+    r"|//[^\s<>\"')]+(?<![.,;:!?])"
     rf"|(?<!{_LABEL})(?<!-)(?<!{_LABEL}\.)(?<!-\.)(?:(?:{_LABEL}|-)+\.)+(?:(?!\d){_LABEL}){{2,}}"
     r"(?:[/:?#][^\s<>\"')]*)?"
     r"|\d{1,3}(?:\.\d{1,3}){3}(?:[/:?#][^\s<>\"')]*)?",
@@ -180,21 +183,22 @@ def _as_read(text: str) -> str:
 
 
 def _is_application_address(address: str) -> bool:
-    if not address.lower().startswith(("http://", "https://")):
+    if address.startswith("//"):
+        address = f"https:{address}"
+    elif not address.lower().startswith(("http://", "https://")):
         address = f"https://{address}"
     try:
         parts = urlsplit(address)
-        host = parts.hostname
     except ValueError:
         return False
-    # Un usuario delante del dominio (`evil.com@app…`, también `evil.com\@app…`, que el navegador
-    # abre en `evil.com`) solo sirve para disfrazar el enlace.
-    if "@" in parts.netloc:
-        return False
-    application_host = urlsplit(str(settings.FRONTEND_BASE_URL)).hostname
+    application_host = urlsplit(str(settings.FRONTEND_BASE_URL)).hostname or ""
+    # Solo el dominio, como mucho con un puerto: un usuario delante (`evil.com@app…`, también
+    # `evil.com\@app…`, que el navegador abre en `evil.com`) o algo más tras `:` (`app…:evil.com`)
+    # solo sirven para disfrazar otro enlace.
+    netloc = re.fullmatch(rf"{re.escape(application_host)}(?::\d*)?", parts.netloc, re.I)
     # Los clientes cortan el enlace en caracteres como `{` o `»` y enlazan lo que sigue.
     rest = f"{parts.path}?{parts.query}#{parts.fragment}"
-    return host is not None and host == application_host and not _ADDRESS.search(rest)
+    return netloc is not None and not _ADDRESS.search(rest)
 
 
 # Frases del plazo por idioma: (un minuto, varios minutos, menos de un minuto) (D-08).

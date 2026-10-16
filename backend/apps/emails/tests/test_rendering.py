@@ -525,5 +525,50 @@ def test_template_syntax_is_checked_quickly(body: str) -> None:
 
 
 @pytest.mark.usefixtures("_frontend")
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Entra en app.ejemplo.com:evil.com/x ahora",
+        "Entra en app.ejemplo.com::evil.com/x ahora",
+        "Escribe a soporte@app.ejemplo.com:evil.com",
+        "Entra en https://app.ejemplo.com:443:evil.com/x",
+        "Entra en app.ejemplo.com:www.evil.com ahora",
+        "Entra en https://app.ejemplo.com/login\u0085evil.com/x ahora",
+        "Entra en https://app.ejemplo.com\u0085evil.com/login",
+        "Entra en //93.184.216/x ahora",
+        "Entra en https://app.ejemplo.com/login{//93.184.216/x",
+    ],
+)
+def test_only_a_port_may_follow_the_application_domain(text: str) -> None:
+    with pytest.raises(ValidationError):
+        rendering.validate_template("account_exists", "Aviso", f"{text}, {{{{ name }}}}.")
+
+
+@pytest.mark.usefixtures("_frontend")
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Entra en https://app.ejemplo.com:443/login",
+        "Visita https://app.ejemplo.com.",
+        "Entra en //app.ejemplo.com/login",
+        "Visita //app.ejemplo.com.",
+    ],
+)
+def test_a_port_a_final_sign_or_a_relative_scheme_keep_the_application_link(text: str) -> None:
+    rendering.validate_template("account_exists", "Aviso", f"{text} {{{{ name }}}}")
+
+
+@pytest.mark.usefixtures("_frontend")
+@pytest.mark.parametrize("body", ["/" * 100000, "a//" * 33000], ids=["slashes", "double-slashes"])
+def test_many_slashes_are_validated_quickly(body: str) -> None:
+    started = time.monotonic()
+
+    with contextlib.suppress(ValidationError):
+        rendering.validate_template("account_exists", "Aviso", body)
+
+    assert time.monotonic() - started < 1
+
+
+@pytest.mark.usefixtures("_frontend")
 def test_accents_are_kept_when_looking_for_addresses() -> None:
     rendering.validate_template("account_exists", "Aviso", "Café y pingüino, {{ name }}.")
