@@ -1,5 +1,5 @@
 # Spec: registro-api
-Estado: borrador
+Estado: aprobada
 Aprobación: ligera
 
 ## Objetivo (por qué)
@@ -229,3 +229,4 @@ solo limitan a los navegadores, y sus únicas defensas son los límites de RF-01
 - 2026-10-16 — Creación (feature nueva) — RF: RF-001…RF-014 — Estado: pendiente de clarificar
 - 2026-10-16 — Clarificación (C-01…C-13) — RF: RF-001, RF-004, RF-005, RF-009, RF-010, RF-011,
   RF-013 y RF-014 ajustados; S-05, S-06 y S-12 ajustados; S-16…S-22 añadidos — Estado: clarificado
+- 2026-10-16 — Aprobación por el usuario — Estado: aprobada
