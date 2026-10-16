@@ -108,11 +108,15 @@ def validate_template(kind: str, subject: str, body: str) -> None:
         raise ValidationError(problems)
 
 
+_INVISIBLE = frozenset({"Cf", "Mn", "Me"})
+
+
 def _as_read(text: str) -> str:
     # El texto como lo verá el cliente: `＠` es `@`, el punto ideográfico es un punto y los
-    # caracteres de formato invisibles (guion blando, espacio de ancho cero) no cuentan.
+    # caracteres invisibles que el navegador descarta (de formato, como el guion blando, y signos
+    # sueltos sin anchura, como los selectores de variación) no cuentan. NFKC ya une las tildes.
     normalized = unicodedata.normalize("NFKC", text).replace("\u3002", ".")
-    return "".join(char for char in normalized if unicodedata.category(char) != "Cf")
+    return "".join(char for char in normalized if unicodedata.category(char) not in _INVISIBLE)
 
 
 def _is_application_address(address: str) -> bool:

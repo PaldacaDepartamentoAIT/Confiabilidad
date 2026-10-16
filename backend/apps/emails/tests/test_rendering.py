@@ -341,3 +341,25 @@ def test_an_invisible_character_does_not_break_an_application_address() -> None:
     rendering.validate_template(
         "account_exists", "Aviso", "Entra en app.ejemplo\u200b.com/login, {{ name }}."
     )
+
+
+@pytest.mark.usefixtures("_frontend")
+@pytest.mark.parametrize("hidden", ["\u034f", "\ufe0f", "\u180b", "\U000e0100"])
+@pytest.mark.parametrize("shape", ["Entra en evil{}.com/login", "Escribe a soporte@evil{}.com"])
+def test_an_invisible_mark_does_not_hide_a_domain(hidden: str, shape: str) -> None:
+    with pytest.raises(ValidationError) as error:
+        rendering.validate_template("account_exists", "Aviso", shape.format(hidden))
+
+    assert "evil.com" in _messages(error.value)
+
+
+@pytest.mark.usefixtures("_frontend")
+def test_an_invisible_mark_does_not_break_an_application_address() -> None:
+    rendering.validate_template(
+        "account_exists", "Aviso", "Entra en app.ejemplo\u034f.com/login, {{ name }}."
+    )
+
+
+@pytest.mark.usefixtures("_frontend")
+def test_accents_are_kept_when_looking_for_addresses() -> None:
+    rendering.validate_template("account_exists", "Aviso", "Café y pingüino, {{ name }}.")
