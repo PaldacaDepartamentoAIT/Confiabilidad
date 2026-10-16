@@ -381,5 +381,28 @@ def test_a_visible_mark_on_the_application_domain_makes_it_another_domain(addres
 
 
 @pytest.mark.usefixtures("_frontend")
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Entra en evil\u0332.com/login",
+        "Escribe a soporte@evil\u0332.com",
+        "Entra en สวัสดี.com/login",
+        "Entra en evil\u20dd.com/login",
+        "Entra en evil\u17b4.com/login",
+        "Entra en हिंदी.com/login",
+        "Entra en evil\u0332.app.ejemplo.com/login",
+        "Entra en evil.c\u0332om/login",
+        "Entra en app.ejemplo.com\u0332/login",
+        "Entra en app.ejemplo\u17b4.com/login",
+        "Entra en x\u0332app.ejemplo.com/login",
+        "Entra en evil\U00011001.com/login",
+    ],
+)
+def test_a_combining_mark_is_part_of_the_domain_it_is_written_in(text: str) -> None:
+    with pytest.raises(ValidationError):
+        rendering.validate_template("account_exists", "Aviso", f"{text}, {{{{ name }}}}.")
+
+
+@pytest.mark.usefixtures("_frontend")
 def test_accents_are_kept_when_looking_for_addresses() -> None:
     rendering.validate_template("account_exists", "Aviso", "Café y pingüino, {{ name }}.")

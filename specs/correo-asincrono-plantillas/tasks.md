@@ -495,7 +495,7 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   Nota: la lista no es completa respecto a UTS #46 (faltan U+115F, U+1160, U+17B4, U+17B5, U+3164
   y U+FFA0); desde T-042 esos signos cuentan como visibles y el dominio que los lleva se rechaza.
 
-- [ ] T-042 Corrección: los signos combinantes cuentan como parte de un dominio
+- [x] T-042 Corrección: los signos combinantes cuentan como parte de un dominio
   Tipo: corrección | Origen: 6.ª validación de RF-021 (regresión de T-041)
   RF: RF-021 (D-17) | Depende de: T-041 | Archivos: 2
   Archivos: `rendering.py`, `tests/test_rendering.py`.
@@ -508,6 +508,10 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   `Entra en evil.c\u0332om/login`, `Entra en app.ejemplo.com\u0332/login` y
   `Entra en app.ejemplo\u17b4.com/login`; los tests de T-040 y T-041 siguen pasando; muere el
   mutante que quita los signos de las etiquetas; suite verde.
+  Decisiones: (1) La clase de signos se calcula al importar con `unicodedata` en los dos primeros
+  planos (unos 10 ms); fuera de ellos solo hay selectores de variación, que se descartan antes.
+  [Cierto] (2) Se añaden dos casos fuera del «Hecho cuando» para matar mutantes: un signo en medio
+  de la etiqueta (`x̲app.ejemplo.com`) y uno del plano 1 (`evil\U00011001.com`). [Cierto]
 
 ## RF sin tarea
 - RF-008 (aviso de contraseña restablecida) y RF-019 (mismo trabajo exista o no la cuenta): sin

@@ -42,12 +42,19 @@ def process_link(purpose: str, public_id: str) -> str:
 CODE_KINDS = frozenset({"registration_code", "password_reset_code"})
 _CODE_VALUES = frozenset({"code", "link", "expires_in"})
 _ANY_BRACES = re.compile(r"\{\{(.*?)\}\}|\{%.*?%\}", re.S)
+# `\w` no incluye los signos combinantes, y uno visible forma parte del dominio en el que está:
+# sin ellos, `evil\u0332.com` no se vería como dominio. Fuera de los dos primeros planos solo hay
+# selectores de variación, que se descartan antes.
+_MARKS = "".join(
+    chr(point) for point in range(0x20000) if unicodedata.category(chr(point)).startswith("M")
+)
 # Cualquier cosa que un cliente de correo pueda convertir en enlace: una dirección con esquema
 # (también `ftp://` o `https:/`), un dominio suelto, también con letras no latinas, o una IP suelta
 # (RF-021, D-17).
 _ADDRESS = re.compile(
     r"[a-z][a-z0-9+.-]*:/+[^\s<>\"')]+"
-    r"|(?:[^\W_](?:[\w-]*[^\W_])?\.)+[^\W\d_]{2,}(?:[/:?#][^\s<>\"')]*)?"
+    rf"|(?:[^\W_](?:[\w{_MARKS}-]*(?:[^\W_]|[{_MARKS}]))?\.)+(?:[^\W\d_]|[{_MARKS}]){{2,}}"
+    r"(?:[/:?#][^\s<>\"')]*)?"
     r"|\d{1,3}(?:\.\d{1,3}){3}(?:[/:?#][^\s<>\"')]*)?",
     re.I,
 )
