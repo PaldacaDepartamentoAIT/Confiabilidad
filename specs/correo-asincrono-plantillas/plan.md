@@ -218,8 +218,11 @@ dirección de correo. Un dominio suelto se forma con todo lo que no sea un espac
 puntuación o un carácter de control (letras de cualquier escritura, signos combinantes, símbolos,
 emojis y caracteres que la versión de Unicode de Python aún no conoce), como hacen los clientes de
 correo al convertir texto en enlace; el punto ideográfico `。` cuenta como `.`. El texto se analiza
-tal como está escrito y normalizado con NFKC (que convierte `＠` en `@` y `ŀ` en `l·`), y basta con
-que una de las dos lecturas encuentre otro dominio para rechazar la plantilla. Cada dirección
+tal como está escrito y normalizado con NFKC (que convierte `＠` en `@` y `ŀ` en `l·`; `ẞ` cuenta
+además como `ss`, como en el navegador), y basta con que una de las dos lecturas encuentre otro
+dominio para rechazar la plantilla. Una dirección de la aplicación cuya ruta, consulta o fragmento
+contiene otra dirección también se rechaza: los clientes de correo cortan el enlace en caracteres
+como `{` o `»` y enlazan lo que sigue. Cada dirección
 empieza donde empieza su palabra, para que el tiempo de análisis crezca en proporción al texto. El
 dominio de cada una se obtiene como lo haría un navegador: `\` cuenta como `/` en `http(s)`, y una
 dirección que no se puede analizar se rechaza como problema de la plantilla, nunca como error del

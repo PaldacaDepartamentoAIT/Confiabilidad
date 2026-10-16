@@ -538,6 +538,32 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   2.10 del servicio`, un espacio de no separación, corchetes y llaves junto al enlace de la app,
   `a-.` repetido y que una dirección hallada en las dos lecturas se nombre una sola vez. [Cierto]
 
+- [ ] T-044 Corrección: la ruta de un enlace de la app no esconde otra dirección
+  Tipo: corrección | Origen: 8.ª validación de RF-021 (hueco desde la primera versión de la regla)
+  RF: RF-021 (D-17) | Depende de: T-043 | Archivos: 2
+  Archivos: `rendering.py`, `tests/test_rendering.py`.
+  Causa: la ruta de una dirección solo se corta en un espacio o en `<>"')`, así que lo que va detrás
+  (`{www.evil.com`, o `www.evil.com` tras un U+FEFF que se descarta) no se analiza, aunque los
+  clientes de correo cortan ahí el enlace y crean otro. Además, `ẞ` cuenta como un solo carácter en
+  el dominio de primer nivel, pero el navegador la convierte en `ss`.
+  Hecho cuando: se rechazan `Entra en https://app.ejemplo.com/login{www.evil.com/x ahora`,
+  `Entra en app.ejemplo.com/login{www.evil.com/x ahora`,
+  `Entra en https://app.ejemplo.com/login\ufeffwww.evil.com/x ahora`,
+  `Entra en https://app.ejemplo.com/login\u00bbwww.evil.com/x`, `Entra en www.1evil.\u1e9e/login ahora`
+  y `Escribe a soporte@evil.\u1e9e`; se siguen aceptando `https://app.ejemplo.com/login?next=/cuenta`
+  y `https://app.ejemplo.com/registro#abc_123`; los tests de T-040 a T-043 siguen pasando; mueren
+  los mutantes que quitan el análisis del resto y la conversión de `ẞ`; suite verde.
+
+- [ ] T-045 Corrección: la sintaxis de plantilla se revisa en tiempo lineal
+  Tipo: corrección | Origen: 8.ª validación de RF-021 (desde la primera versión de la regla)
+  RF: RF-021 | Depende de: — | Archivos: 2
+  Archivos: `rendering.py`, `tests/test_rendering.py`.
+  Causa: `_ANY_BRACES` busca el cierre de cada `{{` o `{%` hasta el final del texto; sin cierres, el
+  tiempo crece con el cuadrado de la longitud (`"{{" * 50000` tarda 47 s).
+  Hecho cuando: `"{{" * 50000`, `"{%" * 50000`, `"{{ a" * 25000` y `"}}{{" * 25000` se validan en
+  menos de 1 s cada uno; los tests de sintaxis existentes siguen pasando (mismos bloques, en el mismo
+  orden); suite verde.
+
 ## RF sin tarea
 - RF-008 (aviso de contraseña restablecida) y RF-019 (mismo trabajo exista o no la cuenta): sin
   tarea en esta feature. Los implementan las tareas de M-10 en `procesos-pendientes` y
