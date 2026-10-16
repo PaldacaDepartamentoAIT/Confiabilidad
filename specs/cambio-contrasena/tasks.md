@@ -478,5 +478,25 @@ esquema, para que al final quede una sola migración (M-07).
   menos `REGISTRATION_MAX_LIFETIME_MINUTES` y con `REGISTRATION_CODE_SECRET_ROTATED_AT` anotado en el
   momento real del despliegue, y explica por qué; el resumen recoge S-14 en sus límites conocidos.
 
+- [ ] T-042 Corrección: el mismo correo se compara igual al buscar la cuenta y al anular plazas
+  Tipo: corrección | Origen: 3.ª validación de RF-017
+  RF: RF-017, RF-003 | Depende de: — | Archivos: 2
+  Archivos: `password_reset.py`, `tests/test_password_reset_equivalence.py`.
+  Causa: la misma que T-047 de `procesos-pendientes`, en `resolve_password_reset`.
+  Hecho cuando: con y sin cuenta (`sam@x.com`), pedir con `ſam@x.com` y después con `sam@x.com`, en
+  orden inverso, y con `ana@gmaıl.com` → `ana@gmail.com`, da `["not_found", "wrong_code"]` en los
+  dos casos; el mutante que vuelve a la igualdad exacta muere; suite verde.
+
+- [ ] T-043 Corrección: la rotación del secreto cubre la web y el worker
+  Tipo: corrección | Origen: 3.ª validación de S-14
+  RF: — (S-14) | Depende de: — | Archivos: 2
+  Archivos: `HUMAN_TODO.md`, `specs/cambio-contrasena/resumen.md` (rutas desde la raíz).
+  Causa: la huella de la cuenta la firma el worker y la comprueba la web; el procedimiento no
+  menciona el worker ni deja margen para el desfase entre reinicios.
+  Hecho cuando: la entrada de `REGISTRATION_CODE_SECRET` pide reiniciar la web y el worker con el
+  secreto nuevo a la vez, nunca el worker antes que la web; fija `ROTATED_AT` a la hora en que arranca
+  el primero y la transición en al menos la vida máxima más el tiempo hasta que el último proceso usa
+  el secreto nuevo; explica el porqué, y el resumen lo recoge en sus límites conocidos.
+
 ## RF sin tarea
 Ninguno.

@@ -454,6 +454,16 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   Hecho cuando: el resumen describe la validación de enlaces tal como queda (sin afirmar que cubre
   «cualquier dirección»), la regla del asunto y que el error guardado no lleva el código.
 
+- [ ] T-039 Corrección: los caracteres invisibles no ocultan un dominio
+  Tipo: corrección | Origen: 3.ª validación de RF-021 (F2)
+  RF: RF-021 (D-17) | Depende de: — | Archivos: 2
+  Archivos: `rendering.py`, `tests/test_rendering.py`.
+  Causa: el texto se normalizaba sin quitar los caracteres de formato invisibles (categoría Cf, como
+  U+00AD y U+200B), que cortan el dominio para la validación pero el navegador descarta.
+  Hecho cuando: `evil\u00ad.com/login` (con U+00AD) y `evil\u200b.com/login` (con U+200B) se rechazan
+  nombrando `evil.com/login`; las direcciones de la aplicación y las 21 plantillas iniciales siguen
+  válidas; suite verde.
+
 ## RF sin tarea
 - RF-008 (aviso de contraseña restablecida) y RF-019 (mismo trabajo exista o no la cuenta): sin
   tarea en esta feature. Los implementan las tareas de M-10 en `procesos-pendientes` y
