@@ -41,7 +41,6 @@ def process_link(purpose: str, public_id: str) -> str:
 
 CODE_KINDS = frozenset({"registration_code", "password_reset_code"})
 _CODE_VALUES = frozenset({"code", "link", "expires_in"})
-_ANY_BRACES = re.compile(r"\{\{(.*?)\}\}|\{%.*?%\}", re.S)
 # Lo único que separa un dominio del texto: espacios, signos de puntuación y, en ASCII, todo lo que
 # no es letra ni cifra. Lo demás (letras, signos combinantes, símbolos, emojis
 # o caracteres que esta versión de Python aún no conoce) forma parte del dominio, como en los
@@ -73,17 +72,45 @@ def required_values(kind: str) -> frozenset[str]:
     return _CODE_VALUES if kind in CODE_KINDS else frozenset()
 
 
+_CLOSINGS = {"{{": "}}", "{%": "%}"}
+_OPENINGS = {
+    ("{{", "{%"): re.compile(r"\{[{%]"),
+    ("{{",): re.compile(r"\{\{"),
+    ("{%",): re.compile(r"\{%"),
+}
+
+
+def _brace_blocks(text: str) -> list[str]:
+    # Cada `{{ … }}` o `{% … %}`, de izquierda a derecha y hasta su primer cierre. Si una apertura
+    # ya no tiene cierre detrás, tampoco lo tendrán las siguientes: así el texto se recorre una vez.
+    blocks: list[str] = []
+    openings = tuple(_CLOSINGS)
+    position = 0
+    while openings:
+        found = _OPENINGS[openings].search(text, position)
+        if found is None:
+            break
+        end = text.find(_CLOSINGS[found.group()], found.start() + 2)
+        if end == -1:
+            openings = tuple(opening for opening in openings if opening != found.group())
+            position = found.start()
+        else:
+            blocks.append(text[found.start() : end + 2])
+            position = end + 2
+    return blocks
+
+
 def validate_template(kind: str, subject: str, body: str) -> None:
     text = f"{subject}\n{body}"
     used = placeholders(text)
     problems: list[ValidationError] = []
-    for match in _ANY_BRACES.finditer(text):
-        if not _PLACEHOLDER.fullmatch(match.group(0)):
+    for block in _brace_blocks(text):
+        if not _PLACEHOLDER.fullmatch(block):
             problems.append(
                 ValidationError(
                     _("Unsupported template syntax: %(syntax)s"),
                     code="template_syntax",
-                    params={"syntax": match.group(0)},
+                    params={"syntax": block},
                 )
             )
     for name in sorted(used - allowed_values(kind)):

@@ -558,7 +558,7 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   vez sería recursivo y estos enlaces no se usan en las plantillas. [Probable] (2) Se añaden casos
   con la dirección oculta en la consulta y en el fragmento para matar mutantes. [Cierto]
 
-- [ ] T-045 Corrección: la sintaxis de plantilla se revisa en tiempo lineal
+- [x] T-045 Corrección: la sintaxis de plantilla se revisa en tiempo lineal
   Tipo: corrección | Origen: 8.ª validación de RF-021 (desde la primera versión de la regla)
   RF: RF-021 | Depende de: — | Archivos: 2
   Archivos: `rendering.py`, `tests/test_rendering.py`.
@@ -567,6 +567,12 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   Hecho cuando: `"{{" * 50000`, `"{%" * 50000`, `"{{ a" * 25000` y `"}}{{" * 25000` se validan en
   menos de 1 s cada uno; los tests de sintaxis existentes siguen pasando (mismos bloques, en el mismo
   orden); suite verde.
+  Decisiones: (1) Se busca la siguiente apertura con una expresión que no recorre más allá de ella
+  y el cierre con `str.find`; si una apertura no tiene cierre, se deja de buscar ese tipo. [Cierto]
+  (2) Mutantes equivalentes, anotados y no matados: seguir buscando desde la apertura agotada o
+  desde la posición siguiente, y continuar desde el cierre en vez de tras él, porque en esas
+  posiciones no puede empezar otra apertura. [Cierto] (3) La prueba de orden fija los bloques que
+  daba la expresión anterior, incluido `{%} y {% if %}`. [Cierto]
 
 ## RF sin tarea
 - RF-008 (aviso de contraseña restablecida) y RF-019 (mismo trabajo exista o no la cuenta): sin

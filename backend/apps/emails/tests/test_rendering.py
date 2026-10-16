@@ -1,3 +1,4 @@
+import contextlib
 import time
 from datetime import timedelta
 
@@ -489,6 +490,38 @@ def test_an_address_hidden_after_an_application_link_is_rejected(text: str) -> N
 )
 def test_an_application_link_with_query_or_fragment_is_accepted(address: str) -> None:
     rendering.validate_template("account_exists", "Aviso", f"Entra en {address} {{{{ name }}}}")
+
+
+@pytest.mark.usefixtures("_frontend")
+def test_each_unsupported_block_is_named_in_order_up_to_its_first_closing() -> None:
+    with pytest.raises(ValidationError) as error:
+        rendering.validate_template(
+            "account_exists",
+            "Aviso",
+            "{{ a.b }} y {{% x }} y {%} y {% if %}}} y {{{ name }}}} y {% sin cierre {{ name }}",
+        )
+
+    assert error.value.messages == [
+        "Unsupported template syntax: {{ a.b }}",
+        "Unsupported template syntax: {{% x }}",
+        "Unsupported template syntax: {%} y {% if %}",
+        "Unsupported template syntax: {{{ name }}",
+    ]
+
+
+@pytest.mark.usefixtures("_frontend")
+@pytest.mark.parametrize(
+    "body",
+    ["{{" * 50000, "{%" * 50000, "{{ a" * 25000, "}}{{" * 25000],
+    ids=["openings", "tag-openings", "unclosed-values", "closed-blocks"],
+)
+def test_template_syntax_is_checked_quickly(body: str) -> None:
+    started = time.monotonic()
+
+    with contextlib.suppress(ValidationError):
+        rendering.validate_template("account_exists", "Aviso", body)
+
+    assert time.monotonic() - started < 1
 
 
 @pytest.mark.usefixtures("_frontend")
