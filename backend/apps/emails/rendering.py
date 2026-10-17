@@ -194,8 +194,8 @@ def _is_application_address(address: str) -> bool:
     application_host = urlsplit(str(settings.FRONTEND_BASE_URL)).hostname or ""
     # Solo el dominio, como mucho con un puerto: un usuario delante (`evil.com@app…`, también
     # `evil.com\@app…`, que el navegador abre en `evil.com`) o algo más tras `:` (`app…:evil.com`)
-    # solo sirven para disfrazar otro enlace.
-    netloc = re.fullmatch(rf"{re.escape(application_host)}(?::\d*)?", parts.netloc, re.I)
+    # solo sirven para disfrazar otro enlace. Sin `re.ASCII`, la `i` también aceptaría `ı` e `İ`.
+    netloc = re.fullmatch(rf"{re.escape(application_host)}(?::\d*)?", parts.netloc, re.I | re.ASCII)
     # Los clientes cortan el enlace en caracteres como `{` o `»` y enlazan lo que sigue.
     rest = f"{parts.path}?{parts.query}#{parts.fragment}"
     return netloc is not None and not _ADDRESS.search(rest)

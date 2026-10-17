@@ -580,6 +580,47 @@ def test_many_slashes_are_validated_quickly(body: str) -> None:
     assert time.monotonic() - started < 1
 
 
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Entra en https://app.conf\u0131abilidad.com/login ahora",
+        "Entra en app.conf\u0130abilidad.com/login ahora",
+        "Escribe a soporte@app.conf\u0131abilidad.com",
+    ],
+)
+def test_a_lookalike_letter_does_not_pass_for_the_application_domain(
+    settings: object, text: str
+) -> None:
+    settings.FRONTEND_BASE_URL = "https://app.confiabilidad.com"  # type: ignore[attr-defined]
+
+    with pytest.raises(ValidationError):
+        rendering.validate_template("account_exists", "Aviso", f"{text} {{{{ name }}}}")
+
+
+def test_the_application_domain_in_capitals_is_accepted(settings: object) -> None:
+    settings.FRONTEND_BASE_URL = "https://app.confiabilidad.com"  # type: ignore[attr-defined]
+
+    rendering.validate_template(
+        "account_exists", "Aviso", "Entra en https://APP.CONFIABILIDAD.COM:443/login {{ name }}"
+    )
+
+
+@pytest.mark.usefixtures("_frontend")
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Entra en app.ejemplo.com: verás tu panel",
+        "Entra en https://app.ejemplo.com:/login",
+        "Visita https://app.ejemplo.com;",
+        "Visita https://app.ejemplo.com:",
+        "Visita https://app.ejemplo.com!",
+        "Visita https://app.ejemplo.com?",
+    ],
+)
+def test_an_empty_port_or_a_final_sign_keep_the_application_link(text: str) -> None:
+    rendering.validate_template("account_exists", "Aviso", f"{text} {{{{ name }}}}")
+
+
 @pytest.mark.usefixtures("_frontend")
 def test_accents_are_kept_when_looking_for_addresses() -> None:
     rendering.validate_template("account_exists", "Aviso", "Café y pingüino, {{ name }}.")

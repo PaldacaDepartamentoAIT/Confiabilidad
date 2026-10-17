@@ -613,7 +613,7 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   Decisiones: (1) Los bloques esperados son los que da la expresión anterior para esos textos.
   [Cierto]
 
-- [ ] T-048 Corrección: el dominio de la app se compara letra a letra en ASCII
+- [x] T-048 Corrección: el dominio de la app se compara letra a letra en ASCII
   Tipo: corrección | Origen: 10.ª validación de RF-021 (regresión de T-046)
   RF: RF-021 (D-17) | Depende de: T-046 | Archivos: 2
   Archivos: `rendering.py`, `tests/test_rendering.py`.
@@ -628,6 +628,8 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   `Visita https://app.ejemplo.com` seguido de `;`, `:`, `!` o `?`; los tests de T-040 a T-047 siguen
   pasando; mueren los mutantes que quitan `re.ASCII`, cambian `\d*` por `\d+` y reducen el signo
   final a `.`; suite verde.
+  Decisiones: (1) Los tests del homógrafo cambian el dominio de la app solo en ellos
+  (`app.confiabilidad.com`), porque el de los demás tests no tiene `i`. [Cierto]
 
 ## RF sin tarea
 - RF-008 (aviso de contraseña restablecida) y RF-019 (mismo trabajo exista o no la cuenta): sin
