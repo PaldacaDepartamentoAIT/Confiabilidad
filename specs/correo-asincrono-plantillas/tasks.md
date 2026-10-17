@@ -613,6 +613,22 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   Decisiones: (1) Los bloques esperados son los que da la expresión anterior para esos textos.
   [Cierto]
 
+- [ ] T-048 Corrección: el dominio de la app se compara letra a letra en ASCII
+  Tipo: corrección | Origen: 10.ª validación de RF-021 (regresión de T-046)
+  RF: RF-021 (D-17) | Depende de: T-046 | Archivos: 2
+  Archivos: `rendering.py`, `tests/test_rendering.py`.
+  Causa: la comparación del dominio usa `re.I` sin `re.ASCII`, y Python hace que la `i` del patrón
+  coincida con `ı` (U+0131) e `İ` (U+0130); con un dominio de la app que tenga `i`, se acepta un
+  homógrafo que el navegador abre en otro dominio registrable.
+  Hecho cuando: con `FRONTEND_BASE_URL` `https://app.confiabilidad.com` se rechazan
+  `Entra en https://app.conf\u0131abilidad.com/login ahora`,
+  `Entra en app.conf\u0130abilidad.com/login ahora` y `Escribe a soporte@app.conf\u0131abilidad.com`,
+  y se acepta `Entra en https://APP.CONFIABILIDAD.COM:443/login`; se aceptan
+  `Entra en app.ejemplo.com: verás tu panel`, `Entra en https://app.ejemplo.com:/login` y
+  `Visita https://app.ejemplo.com` seguido de `;`, `:`, `!` o `?`; los tests de T-040 a T-047 siguen
+  pasando; mueren los mutantes que quitan `re.ASCII`, cambian `\d*` por `\d+` y reducen el signo
+  final a `.`; suite verde.
+
 ## RF sin tarea
 - RF-008 (aviso de contraseña restablecida) y RF-019 (mismo trabajo exista o no la cuenta): sin
   tarea en esta feature. Los implementan las tareas de M-10 en `procesos-pendientes` y
