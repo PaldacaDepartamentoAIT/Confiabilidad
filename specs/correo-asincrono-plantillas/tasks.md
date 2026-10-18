@@ -657,7 +657,7 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   (`evil​.com`) se nombra dos veces, una por lectura (`evil.com/login` y
   `evil​.com/login`). [Cierto]
 
-- [ ] T-050 Test: dominio literal, signo final tras `//` y esquema `http`
+- [x] T-050 Test: dominio literal, signo final tras `//` y esquema `http`
   Tipo: test | Origen: 11.ª validación de RF-021 (mutantes) | RF: RF-021 | Depende de: T-048
   Archivos: 1 — `tests/test_rendering.py`.
   Causa: sobreviven los mutantes que quitan `re.escape` del dominio de la app, reducen a `.` el signo

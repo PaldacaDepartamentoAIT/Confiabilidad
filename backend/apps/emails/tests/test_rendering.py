@@ -650,5 +650,28 @@ def test_an_invisible_character_outside_an_address_is_accepted() -> None:
 
 
 @pytest.mark.usefixtures("_frontend")
+def test_a_similar_domain_does_not_pass_for_the_application() -> None:
+    with pytest.raises(ValidationError):
+        rendering.validate_template(
+            "account_exists", "Aviso", "Entra en https://app-ejemplo.com/login {{ name }}"
+        )
+
+
+@pytest.mark.usefixtures("_frontend")
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Visita //app.ejemplo.com;",
+        "Visita //app.ejemplo.com!",
+        "Visita //app.ejemplo.com?",
+        "Visita //app.ejemplo.com:",
+        "Entra en http://app.ejemplo.com/x",
+    ],
+)
+def test_a_relative_or_plain_http_application_link_is_accepted(text: str) -> None:
+    rendering.validate_template("account_exists", "Aviso", f"{text} {{{{ name }}}}")
+
+
+@pytest.mark.usefixtures("_frontend")
 def test_accents_are_kept_when_looking_for_addresses() -> None:
     rendering.validate_template("account_exists", "Aviso", "Café y pingüino, {{ name }}.")
