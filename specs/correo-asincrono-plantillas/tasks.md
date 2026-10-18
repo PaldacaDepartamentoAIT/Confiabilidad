@@ -477,6 +477,8 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   Decisiones: (1) ~~Se descartan también los signos de encierro (`Me`), de la misma familia~~:
   decisión equivocada, corregida en T-041; descartar categorías enteras aceptaba dominios que el
   navegador abre en punycode. NFKC une antes las tildes, así que los acentos no se pierden.
+  Nota: desde T-049, `app.ejemplo\u034f.com` se rechaza: algunos clientes cortan el enlace en el
+  signo invisible y enlazan lo que sigue.
 
 - [x] T-041 Corrección: solo se descartan los signos que el navegador ignora
   Tipo: corrección | Origen: 5.ª validación de RF-021 (regresión de T-040)
@@ -494,6 +496,8 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   ignorados es explícita, con sus extremos cubiertos por tests, en vez de una categoría. [Cierto]
   Nota: la lista no es completa respecto a UTS #46 (faltan U+115F, U+1160, U+17B4, U+17B5, U+3164
   y U+FFA0); desde T-042 esos signos cuentan como visibles y el dominio que los lleva se rechaza.
+  Nota: la decisión (1) es equivocada para los clientes de correo, que cortan el enlace en esos
+  caracteres en vez de ignorarlos; se corrige en T-049.
 
 - [x] T-042 Corrección: los signos combinantes cuentan como parte de un dominio
   Tipo: corrección | Origen: 6.ª validación de RF-021 (regresión de T-041)
@@ -630,6 +634,32 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   final a `.`; suite verde.
   Decisiones: (1) Los tests del homógrafo cambian el dominio de la app solo en ellos
   (`app.confiabilidad.com`), porque el de los demás tests no tiene `i`. [Cierto]
+
+- [ ] T-049 Corrección: un carácter invisible dentro de un enlace lo hace ajeno
+  Tipo: corrección | Origen: 11.ª validación de RF-021 (regresión de T-040 y decisión (1) de T-041)
+  RF: RF-021 (D-17) | Depende de: T-048 | Archivos: 2
+  Archivos: `rendering.py`, `tests/test_rendering.py`.
+  Causa: la lectura tal como está escrito descarta los caracteres de formato y los signos que el
+  navegador ignora, así que `app.confia\ufe0fbilidad.com` se acepta como de la app, pero linkifyjs y
+  Autolinker cortan el enlace en ese carácter y enlazan `bilidad.com`.
+  Hecho cuando: con `FRONTEND_BASE_URL` `https://app.confiabilidad.com` se rechazan
+  `Entra en app.confia\ufe0fbilidad.com/login ahora`, `Entra en app.confia\u034fbilidad.com/login ahora`,
+  `Escribe a soporte@app.confia\u180bbilidad.com`, `Entra en app.confia\u00adbilidad.com/login ahora`,
+  `Entra en https://app.confia\u200bbilidad.com/login ahora`,
+  `Escribe a soporte@app.confia\u2060bilidad.com` y
+  `Entra en https://app.confiabilidad.co\u00adm/login ahora`; los tests de T-040 y T-041 que aceptaban
+  `app.ejemplo\u034f.com/login` y `app.ejemplo\u200b.com/login` pasan a exigir que se rechacen;
+  `Hola\u200b mundo` se sigue aceptando; el resto de tests de T-040 a T-048 siguen pasando; muere el
+  mutante que vuelve a descartar los invisibles en la lectura literal; suite verde.
+
+- [ ] T-050 Test: dominio literal, signo final tras `//` y esquema `http`
+  Tipo: test | Origen: 11.ª validación de RF-021 (mutantes) | RF: RF-021 | Depende de: T-048
+  Archivos: 1 — `tests/test_rendering.py`.
+  Causa: sobreviven los mutantes que quitan `re.escape` del dominio de la app, reducen a `.` el signo
+  final de las direcciones con `//` y aceptan solo `https://`.
+  Hecho cuando: se rechaza `Entra en https://app-ejemplo.com/login`; se aceptan
+  `Visita //app.ejemplo.com` seguido de `;`, `!`, `?` o `:` y `Entra en http://app.ejemplo.com/x`;
+  mueren esos tres mutantes; suite verde.
 
 ## RF sin tarea
 - RF-008 (aviso de contraseña restablecida) y RF-019 (mismo trabajo exista o no la cuenta): sin

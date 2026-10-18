@@ -220,7 +220,11 @@ emojis y caracteres que la versión de Unicode de Python aún no conoce), como h
 correo al convertir texto en enlace; el punto ideográfico `。` cuenta como `.`. El texto se analiza
 tal como está escrito y normalizado con NFKC (que convierte `＠` en `@` y `ŀ` en `l·`; `ẞ` cuenta
 además como `ss`, como en el navegador), y basta con que una de las dos lecturas encuentre otro
-dominio para rechazar la plantilla. Una dirección de la aplicación cuya ruta, consulta o fragmento
+dominio para rechazar la plantilla. La lectura tal como está escrito conserva los caracteres
+invisibles (de formato y los signos que el navegador ignora): un enlace que los lleve dentro se
+rechaza aunque sea el de la aplicación, porque algunos clientes cortan ahí el enlace y enlazan lo
+que sigue; la lectura normalizada los descarta, para que no oculten un dominio ajeno. Una dirección
+de la aplicación cuya ruta, consulta o fragmento
 contiene otra dirección también se rechaza: los clientes de correo cortan el enlace en caracteres
 como `{` o `»` y enlazan lo que sigue. En una dirección de la aplicación, tras el dominio solo puede
 ir un puerto (`app.ejemplo.com:443`): cualquier otra cosa tras `:` (`app.ejemplo.com:evil.com`) o
