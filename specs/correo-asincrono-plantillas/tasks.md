@@ -635,7 +635,7 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   Decisiones: (1) Los tests del homógrafo cambian el dominio de la app solo en ellos
   (`app.confiabilidad.com`), porque el de los demás tests no tiene `i`. [Cierto]
 
-- [ ] T-049 Corrección: un carácter invisible dentro de un enlace lo hace ajeno
+- [x] T-049 Corrección: un carácter invisible dentro de un enlace lo hace ajeno
   Tipo: corrección | Origen: 11.ª validación de RF-021 (regresión de T-040 y decisión (1) de T-041)
   RF: RF-021 (D-17) | Depende de: T-048 | Archivos: 2
   Archivos: `rendering.py`, `tests/test_rendering.py`.
@@ -651,6 +651,11 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   `app.ejemplo\u034f.com/login` y `app.ejemplo\u200b.com/login` pasan a exigir que se rechacen;
   `Hola\u200b mundo` se sigue aceptando; el resto de tests de T-040 a T-048 siguen pasando; muere el
   mutante que vuelve a descartar los invisibles en la lectura literal; suite verde.
+  Decisiones: (1) Basta con no descartar nada en la lectura literal: en ella un carácter invisible
+  forma parte del dominio, así que el enlace deja de ser el de la app; la lectura normalizada sigue
+  descartándolos y nombra el dominio que ocultaban. [Cierto] (2) Un dominio ajeno con un invisible
+  (`evil​.com`) se nombra dos veces, una por lectura (`evil.com/login` y
+  `evil​.com/login`). [Cierto]
 
 - [ ] T-050 Test: dominio literal, signo final tras `//` y esquema `http`
   Tipo: test | Origen: 11.ª validación de RF-021 (mutantes) | RF: RF-021 | Depende de: T-048

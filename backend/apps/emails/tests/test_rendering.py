@@ -339,10 +339,11 @@ def test_an_invisible_character_does_not_hide_a_domain(hidden: str) -> None:
 
 
 @pytest.mark.usefixtures("_frontend")
-def test_an_invisible_character_does_not_break_an_application_address() -> None:
-    rendering.validate_template(
-        "account_exists", "Aviso", "Entra en app.ejemplo\u200b.com/login, {{ name }}."
-    )
+def test_an_invisible_character_inside_an_application_address_makes_it_foreign() -> None:
+    with pytest.raises(ValidationError):
+        rendering.validate_template(
+            "account_exists", "Aviso", "Entra en app.ejemplo\u200b.com/login, {{ name }}."
+        )
 
 
 @pytest.mark.usefixtures("_frontend")
@@ -359,10 +360,11 @@ def test_an_invisible_mark_does_not_hide_a_domain(hidden: str, shape: str) -> No
 
 
 @pytest.mark.usefixtures("_frontend")
-def test_an_invisible_mark_does_not_break_an_application_address() -> None:
-    rendering.validate_template(
-        "account_exists", "Aviso", "Entra en app.ejemplo\u034f.com/login, {{ name }}."
-    )
+def test_an_invisible_mark_inside_an_application_address_makes_it_foreign() -> None:
+    with pytest.raises(ValidationError):
+        rendering.validate_template(
+            "account_exists", "Aviso", "Entra en app.ejemplo\u034f.com/login, {{ name }}."
+        )
 
 
 @pytest.mark.usefixtures("_frontend")
@@ -619,6 +621,32 @@ def test_the_application_domain_in_capitals_is_accepted(settings: object) -> Non
 )
 def test_an_empty_port_or_a_final_sign_keep_the_application_link(text: str) -> None:
     rendering.validate_template("account_exists", "Aviso", f"{text} {{{{ name }}}}")
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Entra en app.confia\ufe0fbilidad.com/login ahora",
+        "Entra en app.confia\u034fbilidad.com/login ahora",
+        "Escribe a soporte@app.confia\u180bbilidad.com",
+        "Entra en app.confia\u00adbilidad.com/login ahora",
+        "Entra en https://app.confia\u200bbilidad.com/login ahora",
+        "Escribe a soporte@app.confia\u2060bilidad.com",
+        "Entra en https://app.confiabilidad.co\u00adm/login ahora",
+    ],
+)
+def test_an_invisible_character_in_the_application_domain_is_rejected(
+    settings: object, text: str
+) -> None:
+    settings.FRONTEND_BASE_URL = "https://app.confiabilidad.com"  # type: ignore[attr-defined]
+
+    with pytest.raises(ValidationError):
+        rendering.validate_template("account_exists", "Aviso", f"{text} {{{{ name }}}}")
+
+
+@pytest.mark.usefixtures("_frontend")
+def test_an_invisible_character_outside_an_address_is_accepted() -> None:
+    rendering.validate_template("account_exists", "Aviso", "Hola\u200b mundo, {{ name }}.")
 
 
 @pytest.mark.usefixtures("_frontend")

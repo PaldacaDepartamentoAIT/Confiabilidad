@@ -137,10 +137,9 @@ def validate_template(kind: str, subject: str, body: str) -> None:
         problems.append(
             ValidationError(_("The subject cannot contain line breaks."), code="subject_newline")
         )
-    # Tal como está escrito (`ŀ` es una letra) y como lo lee el cliente (`＠` es `@`).
-    for address in dict.fromkeys(
-        _ADDRESS.findall(_as_read(text)) + _ADDRESS.findall(_without_ignored(text))
-    ):
+    # Tal como está escrito (`ŀ` es una letra y un carácter invisible sigue dentro del enlace, donde
+    # algunos clientes lo cortan) y como lo lee el cliente (`＠` es `@`).
+    for address in dict.fromkeys(_ADDRESS.findall(_as_read(text)) + _ADDRESS.findall(text)):
         if not _is_application_address(address):
             problems.append(
                 ValidationError(
