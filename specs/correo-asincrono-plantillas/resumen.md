@@ -1,5 +1,5 @@
 # Resumen — correo-asincrono-plantillas
-Estado: correcciones tras la validación implementadas, pendiente de validar de nuevo · Última actualización: 2026-10-15
+Estado: cerrada con riesgo residual aceptado · Última actualización: 2026-10-18
 
 ## Qué se hizo
 La aplicación envía sus correos desde una **bandeja de salida** en la base de datos, fuera de la
@@ -20,11 +20,17 @@ desde el panel de administración, sin frontend ni API.
   rechazan las variables que no admite su tipo, cualquier otra sintaxis de plantilla, un asunto con
   saltos de línea y las direcciones hacia un dominio que no es el de la aplicación, juzgadas como
   las abriría el navegador:
-  - con esquema (`https://`, `ftp://`, `https:/`), con `www.` o como dominio suelto
-    (`evil.com/login`), también con letras no latinas (`пример.рф`) o con el punto `。`;
-  - IP sueltas (`1.2.3.4/login`) y el dominio de una dirección de correo (`soporte@evil.com`);
+  - con esquema (`https://`, `ftp://`, `https:/`), con `//`, con `www.` o como dominio suelto
+    (`evil.com/login`), también con letras no latinas (`пример.рф`), símbolos o emojis
+    (`evil☃.com`), signos combinantes (`evil̲.com`) o con el punto `。`;
+  - IP sueltas (`1.2.3.4/login`, `//93.184.216/x`) y el dominio de una dirección de correo
+    (`soporte@evil.com`);
   - cualquier dirección con un usuario delante del dominio (`evil.com@app…`, `evil.com\@app…`,
-    `evil.com＠app…`), aunque lleve a la aplicación, porque solo sirve para disfrazar el enlace;
+    `evil.com＠app…`) o con algo distinto de un puerto tras él (`app…:evil.com`), aunque lleve a la
+    aplicación, porque solo sirve para disfrazar el enlace;
+  - un enlace de la aplicación con otra dirección escondida en la ruta, la consulta o el fragmento
+    (`app…/login{www.evil.com`), con un carácter invisible dentro (guion blando, espacio de ancho
+    cero, selectores de variación) o con una letra parecida (`ı` en lugar de `i`);
   - una dirección que no se puede analizar (`https://[evil.com`) se rechaza como problema de la
     plantilla, sin error del servidor.
 
@@ -224,10 +230,37 @@ Requisitos: Docker y `main` actualizado. En el VPS sigue *Actualizar* y *Migraci
    Deberías ver todos los tests en verde y `Required test coverage of 80% reached`.
 
 ### Límites conocidos
-- **La detección de enlaces cubre los disfraces conocidos, no todos**: se probaron los que
-  encontraron dos validaciones independientes (barra invertida, `＠`, dominios no latinos, `。`, IP
-  sueltas, direcciones mal formadas). Un cliente de correo con reglas propias de autoenlace podría
-  convertir en enlace un texto que la validación no reconoce.
+Riesgos residuales aceptados al cerrar (2026-10-18), tras doce validaciones independientes; la última
+dio CUMPLIDA CON OBSERVACIONES, solo con hallazgos de gravedad muy baja. Se detallan abajo.
+
+- **La detección de enlaces cubre lo que prueban tres autoenlazadores (linkify-it, linkifyjs,
+  Autolinker) y el analizador de URL del navegador, no todos los clientes**: la última validación
+  barrió todos los caracteres en cada posición del dominio con seis dominios de aplicación distintos
+  sin encontrar un enlace aceptado que abra un host de un tercero. Gmail, Outlook o Thunderbird
+  pueden tener reglas propias. Quedan aceptados:
+  - `)@`, `'@`, `"@`, `>@` o U+0085 + `@` delante de una IP numérica o de un nombre sin punto;
+  - signos de adorno o puntuación que IDNA2008 no admite en un dominio registrable (`evil❨.com`,
+    `テスト・.com`, `evil_.com`) y `evil.\tcom`: algún autoenlazador los enlaza, pero nadie puede
+    registrar ese dominio;
+  - un fallo de Autolinker 4.0.0, que quita la primera letra tras `/`: con un dominio de aplicación
+    sin subdominio, `/confiabilidad.es/login` lo enlaza como `onfiabilidad.es`.
+- **Rechazos de más** (nunca aceptan un enlace ajeno): abreviaturas sin espacio tras el punto
+  (`Sr.García`, `1.er`, `EE.UU`), un símbolo o un emoji pegado a un punto, `//` pegado a una palabra
+  (`//comentario`), un enlace de la aplicación con algo con forma de dirección en la ruta
+  (`/manual.pdf`) o con un carácter invisible dentro o pegado, y `K` (Kelvin) o `ſ` en su dominio.
+  Un dominio ajeno con un carácter invisible se nombra dos veces en el error.
+- **Plantillas enormes**: el coste es lineal; un cuerpo de 100 000 caracteres que NFKC multiplica
+  (`ﷺ`) tarda casi 1 s, y muchos bloques de sintaxis inválidos dan un error por bloque.
+- **El código, en base64, dentro de `last_error`**: el código se sustituye por `[code]`, pero no su
+  versión en base64 si un proveedor la citara así.
+- **Idioma del reenvío tras repetir un registro**: puede salir en el idioma de la petición anterior.
+- **Un correo de código que ya no sirve se descarta sin aviso**.
+- **Variantes IDNA del correo de una cuenta**: dos formas del mismo dominio internacional cuentan
+  como direcciones distintas (origen en la spec).
+- **Huecos de mutantes casi equivalentes**: desde T-049 el mutante que descarta todos los signos
+  combinantes en la lectura normalizada ya no muere (los casos que lo mataban los rechaza ya la
+  lectura literal), y sobrevive el que limita los separadores de control a U+0085. Ninguno acepta
+  un enlace a un host ajeno.
 - **Sin envío real probado**: en la sesión remota no hay salida SMTP; la entrega real con MXroute
   y el `PASS` de SPF, DKIM y DMARC se comprueban con los pasos 5 y 8b de `HUMAN_TODO.md`.
 - **Los pasos con Docker de esta sección no se ejecutaron en la sesión remota** (Docker Hub
@@ -279,3 +312,11 @@ entregarlos.
 Aunque dos respuestas digan lo mismo, si una tarda más porque escribe un correo y la otra no, el
 tiempo delata qué correos tienen cuenta. Por eso todo lo que depende de la cuenta, incluido el
 correo, se hace fuera de la respuesta.
+
+### Autoenlazado y homógrafos
+Un cliente de correo convierte en enlace el texto que parece una dirección, con sus propias reglas:
+dónde empieza, dónde corta (`{`, `»`, un carácter invisible) y qué caracteres admite. Por eso la
+validación no basta con leer el texto como lo haría el navegador: tiene que rechazar cualquier
+texto que *algún* cliente pueda cortar o unir de otra forma. Un homógrafo es un dominio que se ve
+igual que otro con letras distintas (`ı` turca en lugar de `i`, o un signo invisible en medio): el
+destinatario cree pulsar el enlace de la aplicación y abre un dominio que registró un tercero.

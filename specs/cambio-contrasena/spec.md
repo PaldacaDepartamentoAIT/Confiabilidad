@@ -266,3 +266,7 @@ anula el identificador sin solicitud anterior, igual que RF-003 con una solicitu
   RF-010, RF-014 y RF-015 ajustados; S-13 añadido — Estado: impacto analizado
 - 2026-10-15 — Cambio tras la 2.ª validación: riesgo de la rotación del secreto aceptado — RF:
   ninguno modificado; S-14 añadido. Clarificado sin dudas nuevas — Estado: impacto analizado
+- 2026-10-18 — Validación del cambio del 2026-10-14: cerrada con riesgo residual aceptado (cinco
+  validaciones independientes de la equivalencia entre plaza y solicitud real; correcciones hasta
+  T-044). Riesgos aceptados: S-13 («caducada» en lugar del motivo real) y S-14 (rotación del
+  secreto sin transición suficiente) — RF: ninguno modificado

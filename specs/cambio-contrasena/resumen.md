@@ -1,5 +1,5 @@
 # Resumen — cambio-contrasena
-Estado: cambio del 2026-10-14 implementado, pendiente de validar · Última actualización: 2026-10-15
+Estado: cerrada con riesgo residual aceptado · Última actualización: 2026-10-18
 
 ## Qué se hizo
 Quien olvidó su contraseña puede fijar una nueva demostrando acceso al correo de su cuenta con un
@@ -87,6 +87,8 @@ se detalla abajo.
   `HUMAN_TODO.md` describe cómo rotar sin provocarlo: la web y el worker reciben el secreto nuevo a
   la vez (nunca el worker antes que la web) y la transición cubre la vida máxima más el tiempo del
   despliegue.
+- **Cierre del cambio del 2026-10-14** (2026-10-18): tras cinco validaciones independientes de la
+  equivalencia entre plaza y solicitud real, quedan aceptados S-13 y S-14, descritos aquí.
 - **«Caducada» confunde al titular legítimo** (S-13): quien cambió su contraseña por otra vía, o cuya
   cuenta se desactivó, ve «caducada» y no el motivo real. Es el precio de no revelar la cuenta.
 - Si se pierde el encolado de un reenvío, la solicitud se queda sin código válido hasta que se pida

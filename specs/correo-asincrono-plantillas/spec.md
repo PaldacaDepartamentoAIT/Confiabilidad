@@ -251,3 +251,11 @@ superado o servidor no disponible), que se reintentan según RF-015 y RF-016, de
 - 2026-10-15 — Cambio tras la 2.ª validación: el asunto no admite saltos de línea — RF: RF-021
   modificado. Clarificado sin dudas nuevas: un salto de línea es `\n` o `\r`, los que una cabecera
   de correo no admite; el cuerpo los sigue admitiendo — Estado: impacto analizado
+- 2026-10-18 — Validación: cerrada con riesgo residual aceptado (doce validaciones independientes de
+  la regla de enlaces de RF-021; la última, CUMPLIDA CON OBSERVACIONES con hallazgos de gravedad
+  muy baja; correcciones T-039…T-050). Riesgos aceptados: `)@` y similares delante de una IP o un
+  nombre sin punto; signos que IDNA2008 no admite en un dominio registrable; el fallo de
+  Autolinker tras `/`; rechazos de más (abreviaturas, `//` pegado, invisibles junto al enlace de la
+  app); plantillas enormes con coste lineal; el código en base64 en `last_error`; el idioma del
+  reenvío tras repetir un registro; el descarte sin aviso de un correo de código que ya no sirve;
+  variantes IDNA del correo de una cuenta; dos mutantes casi equivalentes — RF: ninguno modificado

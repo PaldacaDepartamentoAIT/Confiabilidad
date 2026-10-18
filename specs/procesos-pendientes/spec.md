@@ -248,3 +248,8 @@ igual que RF-005 con un registro real.
   Estado: impacto analizado
 - 2026-10-15 — Modo de aprobación: pasa de fuerte (sin línea `Aprobación:`) a ligero, a petición
   explícita del usuario — RF: ninguno
+- 2026-10-18 — Validación del cambio del 2026-10-14: cerrada con riesgo residual aceptado (cuatro
+  validaciones independientes de la equivalencia entre plaza y registro real; correcciones hasta
+  T-047). Riesgos aceptados: una cuenta creada por otra vía mientras hay un registro pendiente
+  vigente, o borrada entre dos peticiones, puede distinguir la plaza del registro real — RF:
+  ninguno modificado

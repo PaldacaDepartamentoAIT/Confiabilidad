@@ -1,5 +1,5 @@
 # Resumen — procesos-pendientes
-Estado: cambio del 2026-10-14 implementado, pendiente de validar · Última actualización: 2026-10-15
+Estado: cerrada con riesgo residual aceptado · Última actualización: 2026-10-18
 
 ## Qué se hizo
 El registro pasa por un **registro pendiente**: la cuenta no existe hasta que se demuestra el
@@ -91,6 +91,10 @@ contra el servicio real y `makemessages` sin ejecutar. Se detallan abajo.
 - Si se pierde el encolado de un reenvío, el proceso se queda sin código válido hasta que se pida
   otro reenvío: `reissue_code` no tiene barrido.
 - Sin el worker de Celery en marcha, ningún registro recibe su código.
+- **Cuenta creada o borrada por otra vía mientras alguien sigue el proceso** (riesgo aceptado al
+  cerrar el 2026-10-18): si un operador crea la cuenta mientras hay un registro pendiente vigente, o
+  el titular la borra entre dos peticiones, en menos de una hora, la plaza y el registro real pueden
+  responder distinto.
 
 ## Cómo probarlo
 Requisitos: Docker y `main` actualizado. En el VPS sigue *Actualizar* y *Migraciones* de la sección

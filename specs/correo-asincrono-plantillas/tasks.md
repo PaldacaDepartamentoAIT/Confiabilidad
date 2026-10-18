@@ -498,6 +498,8 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   y U+FFA0); desde T-042 esos signos cuentan como visibles y el dominio que los lleva se rechaza.
   Nota: la decisión (1) es equivocada para los clientes de correo, que cortan el enlace en esos
   caracteres en vez de ignorarlos; se corrige en T-049.
+  Nota de cierre: desde T-049, el mutante que descarta todo Mn ya no muere (la lectura literal
+  rechaza los casos que lo mataban); aceptado como riesgo residual al cerrar.
 
 - [x] T-042 Corrección: los signos combinantes cuentan como parte de un dominio
   Tipo: corrección | Origen: 6.ª validación de RF-021 (regresión de T-041)
