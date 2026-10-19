@@ -60,7 +60,7 @@ ni API (RF-016). La API futura usará el mismo servicio (`apps/consents/services
   y si la persona vuelve a registrarse con el mismo correo puede tener dos activos con la misma
   huella, uno sin usuario (S-11).
 - **El secreto de la huella no puede rotar** (S-09): sin definirlo, se usa `DJANGO_SECRET_KEY`, y
-  rotar esa clave rompería todas las huellas. Anotado en `HUMAN_TODO.md`.
+  rotar esa clave rompería todas las huellas. Anotado en `specs/consentimientos/HUMAN_TODO.md`.
 - La inmutabilidad y la coherencia de la exigencia no se garantizan en cargas masivas ni en SQL
   directo (S-10); las unicidades sí.
 - **La inmutabilidad protege los documentos que ya forman la versión, no impide añadirle uno**: si

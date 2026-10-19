@@ -55,7 +55,7 @@ Secretos:
   o en excepciones) se escriben en inglés, marcados para traducción con `gettext_lazy`.
 - Estructura y código limpios: cada carpeta (backend / frontend / desktop) es
   independiente y no invade a las demás.
-- Comandos para ejecutar: en cualquier texto (resúmenes, `HUMAN_TODO.md`, `README.md`,
+- Comandos para ejecutar: en cualquier texto (resúmenes, archivos `HUMAN_TODO.md`, `README.md`,
   descripciones de PR y mensajes al usuario), cada comando que alguien deba ejecutar va en su
   propio bloque de código (```` ```bash ````), separado del texto, completo y listo para copiar y
   pegar.
@@ -102,7 +102,8 @@ Secretos:
   sin relación entre sí; sepáralos en commits distintos.
 - Al trabajar desde la versión web (sesión remota), cada commit se sube al remoto justo
   después de hacerlo (`git push -u origin <rama>`): el entorno es efímero y lo que no se
-  sube se pierde al cerrarse la sesión. Si el push falla, se anota en `HUMAN_TODO.md`.
+  sube se pierde al cerrarse la sesión. Si el push falla, se anota en el `HUMAN_TODO.md` de la spec activa
+  (o en el de la raíz si el trabajo no pertenece a ninguna spec).
 
 ## Reglas
 - Lee `specs/constitution.md` y la spec activa antes de tocar código.
@@ -122,8 +123,14 @@ Secretos:
   WebSocket deben poder dispararse desde CLI para su verificación.
 - No añadir dependencias nuevas ni servicios sin preguntar.
 - Cualquier acción que requiera intervención humana (credenciales, claves, binarios,
-  instalaciones locales, decisiones de infraestructura) se anota como checklist en
-  `HUMAN_TODO.md` en vez de dejarla solo en la conversación.
+  instalaciones locales, decisiones de infraestructura) se anota como checklist en vez de
+  dejarla solo en la conversación:
+  - si es necesaria para completar una feature, en `specs/<feature>/HUMAN_TODO.md` (se crea con la
+    primera acción). Si se resuelve cambiando otra feature, va en la de esa otra, y la feature
+    donde nació la referencia sin duplicarla; si la necesitan varias, va en la primera que la
+    necesitó y las demás la referencian;
+  - si no pertenece a ninguna spec (por ejemplo, una rama `chore/` sin feature), en el
+    `HUMAN_TODO.md` de la raíz.
 - Respetar los límites de carpetas: no compartir código entre backend y frontend
   salvo por la API (DRF/WebSocket).
 - Al terminar una feature, crea `specs/<feature>/resumen.md` con **qué se hizo** y **cómo un
@@ -148,7 +155,7 @@ Secretos:
     con su análisis de impacto, y toda tarea nueva, sea por un bug, un mutante o la validación).
     Todo lo demás es automático: `sdd-implementar` encadena las tareas sin pedir aprobación de cada
     diff, y al terminarlas se lanza `sdd-validar`. Los textos que se escriben sin Aceptar/Rechazar
-    (`resumen.md`, `HUMAN_TODO.md`, las marcas y decisiones de `tasks.md`, la entrada de validación)
+    (`resumen.md`, el `HUMAN_TODO.md` de la feature, las marcas y decisiones de `tasks.md`, la entrada de validación)
     se listan en el informe final. El código se revisa en el PR, que solo se abre si el usuario lo
     confirma. Paradas obligatorias (detente y pregunta; resuelta la parada, la cadena sigue en modo
     ligero sin volver a preguntar):
@@ -183,7 +190,8 @@ Secretos:
 - Verificar que el entorno Docker sigue levantando sin errores.
 
 ### Rutas
-- `HUMAN_TODO.md`: acciones pendientes que requieren intervención humana
+- `HUMAN_TODO.md`: acciones que requieren intervención humana y no pertenecen a ninguna spec
+- `specs/<feature>/HUMAN_TODO.md`: acciones que requieren intervención humana para completar la feature
 - `specs/constitution.md`: principios del proyecto
 - `specs/<feature>/spec.md`: requisitos de la feature
 - `specs/<feature>/plan.md`: diseño técnico

@@ -147,3 +147,21 @@ def mask_code(code: str) -> tuple[int, str]:
 
 def unmask_code(masked: int, nonce: str) -> str:
     return f"{(masked - _mask(nonce)) % _CODE_SPACE:06d}"
+
+
+_AUDIT_KEYS = _KeyPolicy(lambda: _audit_key(), lambda: None)
+
+
+def _audit_key() -> str:
+    key = str(settings.AUDIT_HASH_SECRET)
+    if not key.strip():
+        raise ImproperlyConfigured(_("AUDIT_HASH_SECRET must not be empty."))
+    return key
+
+
+def audit_email_fingerprint(email: str) -> str:
+    return _sign(_AUDIT_KEYS.current(), f"audit_email:{_normalize_email(email)}")
+
+
+def audit_session_fingerprint(session_key: str) -> str:
+    return _sign(_AUDIT_KEYS.current(), f"audit_session:{session_key}")

@@ -33,7 +33,10 @@ INSTALLED_APPS = [
     "apps.accounts",
     "apps.consents",
     "apps.emails",
+    "apps.audit",
 ]
+
+TRUSTED_PROXY_IPS: list[str] = env.list("TRUSTED_PROXY_IPS", default=[])
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -47,6 +50,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
     "simple_history.middleware.HistoryRequestMiddleware",
+    "apps.audit.middleware.CurrentRequestMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -142,6 +146,7 @@ ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
 ACCOUNT_EMAIL_VERIFICATION = "none"
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_RATE_LIMITS: dict[str, object] = {}
+ACCOUNT_ADAPTER = "apps.audit.adapters.AuditAccountAdapter"
 HEADLESS_ONLY = True
 
 # CORS: solo el cliente de escritorio Tauri (la web es mismo origen). Orígenes por entorno.
@@ -241,3 +246,9 @@ CONSENT_EMAIL_HASH_SECRET = env("CONSENT_EMAIL_HASH_SECRET", default=SECRET_KEY)
 # Correos: clave de la máscara del código de los correos pendientes, distinta de la de códigos
 # (RF-011 de huellas-hmac-unificadas). No rota: al cambiarla se descartan los correos pendientes.
 EMAIL_CODE_SECRET = env("EMAIL_CODE_SECRET", default=f"email-code:{SECRET_KEY}")
+
+# En desarrollo hay un valor fijo para que Docker arranque sin .env; sin DEBUG, audit.E001 exige la
+# clave (D-05, P-02).
+AUDIT_HASH_SECRET = env("AUDIT_HASH_SECRET", default="") or (
+    "dev-audit-secret-change-me" if DEBUG else ""
+)

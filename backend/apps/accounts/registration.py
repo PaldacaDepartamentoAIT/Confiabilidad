@@ -9,7 +9,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
-from apps.accounts import codes, conf, processes
+from apps.accounts import codes, conf, processes, signals
 from apps.accounts.models import PendingRegistration, PhantomProcess, User
 from apps.accounts.processes import VerifyResult as VerifyResult
 from apps.accounts.validators import normalize_country, normalize_name
@@ -64,6 +64,11 @@ def start(
     with transaction.atomic():
         slot.save()
         transaction.on_commit(lambda: _queue(RESOLVE_TASK, [slot.public_id]))
+    # Auditoría en la petición, igual con plaza o con registro real (D-14): una fila por petición.
+    signals.pending_registration_requested.send(
+        sender=PendingRegistration, email=email, success=True
+    )
+    signals.registration_code_sent.send(sender=PendingRegistration, email=email, success=True)
     return Started(public_id=slot.public_id)
 
 
@@ -94,8 +99,17 @@ def verify(*, public_id: str, code: str) -> VerifyResult:
         if process is None:
             return VerifyResult.NOT_FOUND
         if process.is_expired:
+            signals.registration_code_verified.send(
+                sender=PendingRegistration, email=process.email, success=False
+            )
             return VerifyResult.EXPIRED
-        return processes.check_code(process, _PURPOSE, code)
+        result = processes.check_code(process, _PURPOSE, code)
+        signals.registration_code_verified.send(
+            sender=PendingRegistration,
+            email=process.email,
+            success=result is VerifyResult.VERIFIED,
+        )
+        return result
 
 
 @dataclass(frozen=True)
@@ -122,6 +136,9 @@ def resend(*, public_id: str) -> Resent | ResendRefusal:
         # Sin save(): un registro real no admite la huella vacía en su validación.
         type(process).objects.filter(pk=process.pk).update(code_hash="", failed_attempts=0)
         transaction.on_commit(lambda: _queue(REISSUE_TASK, [_PURPOSE, public_id]))
+        signals.registration_code_sent.send(
+            sender=PendingRegistration, email=process.email, success=True
+        )
         return Resent(public_id=public_id)
 
 
@@ -180,6 +197,7 @@ def complete(*, public_id: str, password: str) -> Completed | CompleteRefusal:
         user.save()
         EmailAddress.objects.create(user=user, email=user.email, verified=True, primary=True)
         pending.delete()
+        signals.account_created.send(sender=User, email=user.email, success=True)
         return Completed(user=user)
 
 
@@ -208,6 +226,9 @@ def resolve_registration(public_id: str) -> None:
         PendingRegistration.objects.expired().filter(email__iexact=email).delete()
         account = User.objects.filter(email__iexact=email).first()
         if account is not None:
+            signals.pending_registration_requested.send(
+                sender=PendingRegistration, email=email, success=False
+            )
             _leave_as_issued(slot, previous)
             if account.is_active:
                 outbox.enqueue(

@@ -73,9 +73,9 @@ se detalla abajo.
 
 - **Sin límite de frecuencia** (S-05): pedir de nuevo o reenviar ponen los intentos a 0. En consola
   no hay riesgo; **la API no debe publicarse sin ese límite**, porque permitiría tomar cuentas
-  ajenas (anotado en `HUMAN_TODO.md`).
+  ajenas (anotado en `specs/cambio-contrasena/HUMAN_TODO.md`).
 - **El servicio ya no distingue «sin cuenta elegible»**: la respuesta es la misma y hace el mismo
-  trabajo. A la API le queda devolver un mensaje neutro (anotado en `HUMAN_TODO.md`).
+  trabajo. A la API le queda devolver un mensaje neutro (anotado en `specs/cambio-contrasena/HUMAN_TODO.md`).
 - **Tiempo de respuesta igual por construcción, no medido**: los tests fijan las mismas consultas con
   plaza y con solicitud real, pero ninguno mide tiempos reales.
 - **Equivalencia probada en las secuencias conocidas, no en todas**: bloqueo, caducidad, reenvío,
@@ -84,7 +84,7 @@ se detalla abajo.
 - **La rotación del secreto puede delatar la cuenta** (S-14, riesgo aceptado): rotar el secreto de los
   códigos sin transición suficiente, o que Django vuelva a calcular el hash de la contraseña al
   iniciar sesión, deja las solicitudes reales en curso como «caducadas» y las plazas sin cuenta no.
-  `HUMAN_TODO.md` describe cómo rotar sin provocarlo: la web y el worker reciben el secreto nuevo a
+  `specs/cambio-contrasena/HUMAN_TODO.md` describe cómo rotar sin provocarlo: la web y el worker reciben el secreto nuevo a
   la vez (nunca el worker antes que la web) y la transición cubre la vida máxima más el tiempo del
   despliegue.
 - **Cierre del cambio del 2026-10-14** (2026-10-18): tras cinco validaciones independientes de la
@@ -106,7 +106,7 @@ se detalla abajo.
 - En la sesión remota, la imagen de Docker se construyó con una copia del `Dockerfile` que añade el
   certificado del proxy de la sesión solo durante `pip install`. Con ella, `0006` se aplicó, los
   servicios arrancaron y la suite pasó dentro del contenedor. Falta construirla con el `Dockerfile`
-  real fuera de la sesión (anotado en `HUMAN_TODO.md`).
+  real fuera de la sesión (anotado en `specs/cambio-contrasena/HUMAN_TODO.md`).
 - Si se ejecuta la suite con el `worker` de Compose en marcha, `apps/core/tests/test_task_worker.py`
   falla: el worker comparte el broker y se lleva la tarea del test. Es previo a esta feature.
 

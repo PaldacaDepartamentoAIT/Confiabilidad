@@ -72,7 +72,7 @@ desde el panel de administración, sin frontend ni API.
 
 ## Configuración del envío
 Esta sección recoge todo lo necesario para rehacer la configuración o cambiar de proveedor. Los
-pasos con su comprobación están también en `HUMAN_TODO.md` (*Preparar el envío de correo con
+pasos con su comprobación están también en `specs/correo-asincrono-plantillas/HUMAN_TODO.md` (*Preparar el envío de correo con
 MXroute y Cloudflare*). `<TU_DOMINIO>` es tu dominio en Cloudflare, y `<SERVIDOR_MXROUTE>` y
 `<SERVIDOR_MXROUTE_RELAY>` son los dos servidores MX (prioridad 10 y 20) del correo de bienvenida de
 MXroute.
@@ -262,7 +262,7 @@ dio CUMPLIDA CON OBSERVACIONES, solo con hallazgos de gravedad muy baja. Se deta
   lectura literal), y sobrevive el que limita los separadores de control a U+0085. Ninguno acepta
   un enlace a un host ajeno.
 - **Sin envío real probado**: en la sesión remota no hay salida SMTP; la entrega real con MXroute
-  y el `PASS` de SPF, DKIM y DMARC se comprueban con los pasos 5 y 8b de `HUMAN_TODO.md`.
+  y el `PASS` de SPF, DKIM y DMARC se comprueban con los pasos 5 y 8b de `specs/correo-asincrono-plantillas/HUMAN_TODO.md`.
 - **Los pasos con Docker de esta sección no se ejecutaron en la sesión remota** (Docker Hub
   respondió `429 Too Many Requests`); la suite sí pasó fuera de Docker.
 - **Entrega al menos una vez**: si el worker se cae justo después de que el proveedor acepte el

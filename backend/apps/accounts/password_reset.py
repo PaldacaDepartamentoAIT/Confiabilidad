@@ -15,7 +15,7 @@ from django.db import IntegrityError, transaction
 from django.http import HttpRequest
 from django.utils import timezone
 
-from apps.accounts import codes, conf, processes
+from apps.accounts import codes, conf, processes, signals
 from apps.accounts.models import PasswordResetRequest, PhantomProcess, User
 from apps.accounts.processes import VerifyResult as VerifyResult
 from apps.core import fingerprints
@@ -51,6 +51,8 @@ def start(*, email: str, language: str = locales.DEFAULT) -> Started:
     with transaction.atomic():
         slot.save()
         transaction.on_commit(lambda: _queue(RESOLVE_TASK, [slot.public_id]))
+    # Auditoría en la petición, igual con plaza o con solicitud real (D-14).
+    signals.password_reset_code_sent.send(sender=PasswordResetRequest, email=email, success=True)
     return Started(public_id=slot.public_id)
 
 
@@ -143,8 +145,17 @@ def verify(*, public_id: str, code: str) -> VerifyResult:
         if process is None:
             return VerifyResult.NOT_FOUND
         if _answers_expired(process):
+            signals.password_reset_code_verified.send(
+                sender=PasswordResetRequest, email=_audit_email(process), success=False
+            )
             return VerifyResult.EXPIRED
-        return processes.check_code(process, _PURPOSE, code)
+        result = processes.check_code(process, _PURPOSE, code)
+        signals.password_reset_code_verified.send(
+            sender=PasswordResetRequest,
+            email=_audit_email(process),
+            success=result is VerifyResult.VERIFIED,
+        )
+        return result
 
 
 @dataclass(frozen=True)
@@ -171,6 +182,9 @@ def resend(*, public_id: str) -> Resent | ResendRefusal:
         # Sin save(): una solicitud real no admite la huella vacía en su validación.
         type(process).objects.filter(pk=process.pk).update(code_hash="", failed_attempts=0)
         transaction.on_commit(lambda: _queue(REISSUE_TASK, [_PURPOSE, public_id]))
+        signals.password_reset_code_sent.send(
+            sender=PasswordResetRequest, email=_audit_email(process), success=True
+        )
         return Resent(public_id=public_id)
 
 
@@ -241,6 +255,7 @@ def complete(*, public_id: str, password: str) -> Completed | CompleteRefusal:
         process.delete()
         email = user.email
         transaction.on_commit(lambda: _clear_failed_logins(email))
+        signals.password_reset_completed.send(sender=User, email=email, success=True)
         return Completed(user=user)
 
 
@@ -249,6 +264,10 @@ def purge_expired() -> int:
     # Las tumbas también se borran al llegar su caducidad natural (D-15).
     slots, _by_model = PhantomProcess.objects.expired().filter(purpose=_PURPOSE).delete()
     return requests + slots
+
+
+def _audit_email(process: PasswordResetRequest | PhantomProcess) -> str:
+    return process.user.email if isinstance(process, PasswordResetRequest) else process.email
 
 
 def _owner_id(public_id: str) -> int | None:
