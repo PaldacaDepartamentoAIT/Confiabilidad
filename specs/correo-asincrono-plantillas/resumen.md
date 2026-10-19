@@ -205,7 +205,7 @@ Requisitos: Docker y `main` actualizado. En el VPS sigue *Actualizar* y *Migraci
    En menos de un minuto, el barrido lo vuelve a encolar y el aviso aparece en la salida del worker.
    El mismo comportamiento lo fijan los tests con el proveedor simulado:
    ```bash
-   docker compose -f docker/docker-compose.yml run --rm backend pytest -q apps/emails/tests/test_delivery.py -k "temporary or permanent or notice"
+   docker compose -f docker/docker-compose.yml run --rm backend pytest -q --no-cov apps/emails/tests/test_delivery.py -k "temporary or permanent or notice"
    ```
    Deberías ver todos esos tests en verde.
 6. Edita una plantilla en el panel. Crea un superusuario si no tienes uno:
