@@ -13,13 +13,18 @@ fuera de él.
 Una huella no se descifra: solo se recalcula a partir del valor original y se compara con la
 guardada.
 
+Desde el 2026-10-14, el punto único también calcula la máscara con la que
+`correo-asincrono-plantillas` oculta el código de un correo pendiente (RF-011). La máscara no es una
+huella: con su clave se deshace.
+
 Cumple RNF-25 (*Las claves hash no deben estar en la base de datos*): «Se debe usar un HMAC con
 una clave en el almacén de secretos, nunca en la base de datos» (ver S-01).
 
 ## Requisitos funcionales
 ### RF-001 Punto único de cálculo
-El sistema deberá calcular toda huella con clave de correos, códigos y sellos de cuenta mediante
-un único punto de cálculo compartido.
+El sistema deberá calcular toda huella con clave de correos, códigos y sellos de cuenta, y la
+máscara del código de los correos pendientes (RF-011), mediante un único punto de cálculo
+compartido.
 
 ### RF-002 Clave y política de rotación por tipo de huella
 El sistema deberá asociar cada tipo de huella a su clave y a su política de rotación:
@@ -28,8 +33,9 @@ El sistema deberá asociar cada tipo de huella a su clave y a su política de ro
 - huella del correo en consentimientos: clave de consentimientos, que no rota.
 
 ### RF-003 Clave fuera de la base de datos (RNF-25)
-El sistema deberá obtener la clave de cada tipo de huella del almacén de secretos (la
-configuración del entorno) y nunca guardarla en la base de datos ni leerla de ella.
+El sistema deberá obtener la clave de cada tipo de huella, y la de la máscara (RF-011), del
+almacén de secretos (la configuración del entorno) y nunca guardarla en la base de datos ni leerla
+de ella.
 
 ### RF-004 Normalización única del correo
 Cuando una huella incluya un correo, el sistema deberá normalizarlo siempre de la misma forma:
@@ -99,6 +105,14 @@ declaradas o fuera de la tabla (S-07), funciones prohibidas que llegan reexporta
 permitido y utilidades que calculan un hash por dentro (S-08), y las utilidades de contraseñas del
 framework, que no calculan huellas con clave.
 
+### RF-011 Máscara del código de un correo pendiente
+Cuando se oculte el código de 6 dígitos de un correo pendiente, el sistema deberá combinarlo con una
+máscara calculada con la clave de la máscara y un valor aleatorio propio de ese correo, que no se
+repite, de modo que solo pueda recuperarse con esa clave y ese valor. La clave de la máscara es
+propia, distinta de la de códigos, y no rota. Si la clave de la máscara está vacía, solo contiene
+espacios o coincide con la clave de códigos, entonces el sistema deberá rechazar ocultar y
+recuperar el código con un error de configuración que nombre esa clave.
+
 ## Supuestos
 - S-01 RNF-25 procede de un documento de requisitos externo al repositorio. La spec lo cita con
   su texto literal y no se crea la categoría `RNF` en las convenciones del proyecto.
@@ -132,6 +146,11 @@ framework, que no calculan huellas con clave.
   con el momento real de la rotación o uno anterior, nunca con una rotación programada.
   *Riesgo:* un servidor con el reloj atrasado respecto a esa fecha rechaza todas las
   comprobaciones de huellas de código hasta alcanzarla (RF-008, C-12).
+- S-10 Sin definir, la clave de la máscara vale `email-code:` seguido de `DJANGO_SECRET_KEY` (D-06
+  de `correo-asincrono-plantillas`), así que es distinta de la de códigos aunque no se defina
+  ninguna. No rota: si cambia, los correos de código pendientes recuperan un código que no coincide
+  con su huella y se descartan; la persona puede reenviar. La integridad de la máscara la da esa
+  comprobación de la huella, no la máscara.
 
 ## Fuera de alcance
 - Los hashes que no son huellas con clave: la comprobación de contraseñas filtradas (excepción de
@@ -141,7 +160,8 @@ framework, que no calculan huellas con clave.
   como referencia independiente.
 - Cambiar de dónde salen las claves, sus valores por defecto o hacerlas obligatorias (S-04).
 - Rotar la clave de consentimientos (S-05).
-- Recuperar un correo o un código a partir de su huella: no es posible por diseño.
+- Recuperar un correo o un código a partir de su huella: no es posible por diseño. La máscara de
+  RF-011 no es una huella.
 - Cambiar el formato de cualquier huella existente o migrar huellas guardadas (RF-005).
 - Añadir la categoría `RNF` a las convenciones del proyecto (S-01).
 - Detectar módulos de hash cargados de forma dinámica a partir de su nombre en texto (RF-010, S-06).
@@ -162,6 +182,8 @@ framework, que no calculan huellas con clave.
 - Suite completa, tipos y lint en verde, y cobertura de líneas ≥ 80%.
 - Los resúmenes de las features afectadas reflejan el nuevo punto único de cálculo, y existe
   `specs/huellas-hmac-unificadas/resumen.md`.
+- Un test comprueba que un código ocultado se recupera con la misma clave y el mismo valor, que dos
+  correos no comparten valor aleatorio y que cada clave mal configurada de RF-011 da su error.
 
 ## Historial de cambios
 - 2026-10-09 — Creación de la spec — RF: RF-001…RF-010 — Estado: clarificado
@@ -186,3 +208,7 @@ framework, que no calculan huellas con clave.
 - 2026-10-13 — Clarificación C-11…C-14: cookies firmadas por cualquier acceso, fecha futura sin
   margen (S-09), funciones de hash en base de datos desde cualquier submódulo y acceso desde
   cualquier paquete antepasado — RF: RF-008, RF-010 — Estado: impacto analizado
+- 2026-10-14 — Cambio por `correo-asincrono-plantillas` (D-06): el punto único calcula también la
+  máscara reversible del código de los correos pendientes — RF: RF-001 modificado; RF-011 añadido;
+  objetivo, S-10, fuera de alcance y criterios ajustados. Clarificado (C-01, C-02): RF-003
+  ajustado; RF-011 sin cambios — Estado: impacto analizado

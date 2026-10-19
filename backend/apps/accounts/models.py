@@ -10,6 +10,8 @@ from django.contrib.auth.models import (
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.functions import Lower
+from django.db.models.signals import pre_delete
+from django.dispatch import receiver
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
@@ -24,6 +26,8 @@ from apps.accounts.validators import (
     validate_country,
     validate_name,
 )
+from apps.emails.locales import DEFAULT as DEFAULT_LANGUAGE
+from apps.emails.locales import LANGUAGE_CHOICES
 
 
 class UserManager(BaseUserManager["User"]):
@@ -80,6 +84,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     name = models.CharField(max_length=NAME_MAX_LENGTH)
     birthdate = models.DateField()
     country = models.CharField(max_length=2)
+    language = models.CharField(max_length=5, choices=LANGUAGE_CHOICES, default=DEFAULT_LANGUAGE)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)
@@ -190,6 +195,7 @@ class PendingRegistration(CodeProcess):
     name = models.CharField(max_length=NAME_MAX_LENGTH)
     birthdate = models.DateField()
     country = models.CharField(max_length=2)
+    language = models.CharField(max_length=5, choices=LANGUAGE_CHOICES, default=DEFAULT_LANGUAGE)
 
     objects = CodeProcessQuerySet["PendingRegistration"].as_manager()
 
@@ -245,8 +251,55 @@ class PasswordResetRequest(CodeProcess):
         User, on_delete=models.CASCADE, related_name="password_reset_request"
     )
     account_stamp = models.CharField(max_length=64)
+    # Idioma de la petición que la creó o reemplazó; lo usa el correo del reenvío (D-17).
+    language = models.CharField(max_length=5, choices=LANGUAGE_CHOICES, default=DEFAULT_LANGUAGE)
 
     objects = CodeProcessQuerySet["PasswordResetRequest"].as_manager()
 
     def __str__(self) -> str:
         return self.user.email
+
+
+class PhantomProcess(CodeProcess):
+    # Plaza con identificador público que nunca acepta un código: se crea en la respuesta para que
+    # no se distinga si el correo tiene cuenta (D-11, D-12 de procesos-pendientes).
+    class Purpose(models.TextChoices):
+        REGISTRATION = "registration", _("Registration")
+        PASSWORD_RESET = "password_reset", _("Password reset")
+
+    purpose = models.CharField(max_length=20, choices=Purpose.choices)
+    # Vacío solo en la tumba de una cuenta borrada, que no conserva su correo (D-15).
+    email = models.EmailField(blank=True)
+    payload = models.JSONField(null=True, blank=True)
+    answers_expired = models.BooleanField(default=False)
+    # Lo anota la resolución del registro; vacío en una plaza sin resolver o abandonada (D-16).
+    resolved_at = models.DateTimeField(null=True, blank=True)
+
+    objects = CodeProcessQuerySet["PhantomProcess"].as_manager()
+
+    def __str__(self) -> str:
+        return f"{self.purpose}:{self.public_id}"
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        self.email = self.email.strip().lower()
+        self.full_clean(exclude={"code_hash"}, validate_unique=False)
+        super().save(*args, **kwargs)
+
+
+@receiver(pre_delete, sender=User)
+def _leave_password_reset_tombstone(sender: type[User], instance: User, **kwargs: Any) -> None:
+    # La solicitud se borra en cascada; en su lugar queda una plaza que responde "caducada" con su
+    # identificador hasta su caducidad natural (D-15 de cambio-contrasena).
+    request = PasswordResetRequest.objects.filter(user=instance).first()
+    if request is None:
+        return
+    tombstone = PhantomProcess(
+        purpose=PhantomProcess.Purpose.PASSWORD_RESET,
+        email="",
+        public_id=request.public_id,
+        code_hash="",
+        code_expires_at=request.code_expires_at,
+        answers_expired=True,
+    )
+    tombstone.save()
+    PhantomProcess.objects.filter(pk=tombstone.pk).update(created_at=request.created_at)

@@ -1,5 +1,5 @@
 # Resumen — huellas-hmac-unificadas
-Estado: pendiente de validación · Última actualización: 2026-10-13
+Estado: pendiente de validación · Última actualización: 2026-10-14
 
 ## Qué se hizo
 Todas las huellas con clave del backend se calculan y se comprueban ahora en un único módulo,
@@ -54,6 +54,17 @@ alguien vuelve a calcular un hash fuera de ese módulo (RF-010).
 - **Lo que desaparece:** las funciones de huella de `apps/accounts/codes.py` (que conserva
   `Purpose`, `generate_code` y `generate_public_id`), las lecturas de claves de
   `apps/accounts/conf.py`, y `apps/consents/hashing.py` y `apps/consents/conf.py`.
+
+### Máscara del código de los correos pendientes (cambio del 2026-10-14)
+El punto único ofrece también `mask_code(code)` y `unmask_code(masked, nonce)` (RF-011), que usa
+`correo-asincrono-plantillas` para guardar el código de un correo que espera a salir sin dejarlo en
+claro en la base de datos. A diferencia de una huella, la máscara **sí se deshace**, con su clave:
+- **Clave:** `EMAIL_CODE_SECRET`, propia y distinta de `REGISTRATION_CODE_SECRET`. Sin definir,
+  vale `email-code:` seguido de `DJANGO_SECRET_KEY`. Vacía, de solo espacios o igual a la de
+  códigos, es un error de configuración que la nombra, al ocultar y al recuperar.
+- **No rota:** si cambia, los correos de código pendientes recuperan un código que no coincide con
+  su huella y se descartan; la persona puede pedir otro reenvío.
+- **No consulta la base de datos**, igual que las huellas (RF-003).
 
 ### Límites conocidos
 - El guardián no ve imports dinámicos (`importlib.import_module("hashlib")`, `__import__`) (S-06).
@@ -143,6 +154,14 @@ correo, un código) con una clave secreta y produce un resumen de longitud fija 
 sacar el dato. Para saber si una huella corresponde a un correo, se vuelve a calcular la huella de
 ese correo con la misma clave y se comparan. Por eso el módulo ofrece dos operaciones por tipo:
 **calcular** y **comprobar**. No existe "descifrar", ni puede existir.
+
+### Una máscara no es una huella
+Para reintentar un correo hay que tener el código, y la huella no lo devuelve. La máscara suma al
+código un número de 6 dígitos que solo se puede calcular con la clave: el HMAC de un valor
+aleatorio propio de ese correo (el *nonce*), reducido a 6 dígitos. Para recuperarlo se resta el
+mismo número. Sin la clave, el valor guardado no dice nada del código, siempre que el nonce no se
+repita; por eso es aleatorio de 128 bits. La máscara no protege contra cambios del valor guardado:
+eso lo hace la huella del código, que se comprueba antes de enviar el correo.
 
 ### Por qué una sola función
 Si dos partes del código calculan la "misma" huella de forma distinta (una quita espacios y la

@@ -44,6 +44,23 @@ cuando completes cada una y muévela a *Hecho* con la fecha.
   rechazarse con "appeared in a data breach". Si sale el aviso "Pwned Passwords check skipped",
   no hay salida al servicio.
 
+- [ ] **Migrar y reiniciar Celery tras los cambios del 2026-10-14** (features
+  `procesos-pendientes` y `cambio-contrasena`). Añaden las migraciones `0008_phantomprocess`,
+  `0009_phantom_answers_expired`, `0010_passwordresetrequest_language` y
+  `0011_phantomprocess_resolved_at` de `accounts` y tres tareas nuevas (`resolve_password_reset`,
+  `reissue_code` y el barrido `sweep_unresolved`), sin dependencias nuevas. En tu máquina:
+  ```bash
+  docker compose -f docker/docker-compose.yml run --rm backend python manage.py migrate
+  ```
+  Deberías ver `accounts.0008_phantomprocess... OK`, `accounts.0009_phantom_answers_expired... OK`,
+  `accounts.0010_passwordresetrequest_language... OK` y `accounts.0011_phantomprocess_resolved_at... OK`.
+  Reinicia el worker y el beat para que carguen las tareas y el barrido de cada 60 segundos:
+  ```bash
+  docker compose -f docker/docker-compose.yml restart worker beat
+  ```
+  Desde ahora, **sin worker en marcha no llega ningún código** de registro ni de cambio de
+  contraseña: los comandos ya no lo muestran.
+
 ## Hecho
 
 <!-- Mueve aquí las tareas completadas, con fecha. -->

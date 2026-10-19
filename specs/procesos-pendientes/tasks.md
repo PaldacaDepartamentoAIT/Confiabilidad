@@ -219,5 +219,244 @@ fallar sus tests.
   Hecho cuando: con el servicio simulado lanzando `http.client.IncompleteRead`, la contraseña se
   acepta y queda el aviso en el log; suite verde.
 
+- [x] T-029 Modelo `PhantomProcess` y migración `0008`
+  RF: RF-025 (D-12, M-08, M-10) | Depende de: — | Archivos: 3
+  Archivos: `models.py`, `migrations/0008_phantomprocess.py`, `tests/test_phantom_model.py`.
+  Hecho cuando: `PhantomProcess` hereda los campos de `CodeProcess` y tiene `purpose`
+  (`registration` o `password_reset`), `email` normalizado y `payload` nulo; su `public_id` es
+  único en la base de datos; con `code_hash` vacío, `processes.check_code` da `WRONG_CODE` para
+  cualquier código, `LOCKED` tras 5 intentos fallidos, `CODE_EXPIRED` y caducidad igual que un
+  registro pendiente; `migrate` se aplica sobre la última de `main`; suite verde.
+  Decisiones: (1) `PhantomProcess.save()` normaliza el correo y valida con `full_clean` (salvo la
+  huella vacía), como `PendingRegistration`. [Cierto] (2) `__str__` muestra propósito y
+  `public_id`, no el correo. [Cierto]
+
+- [x] T-030 Validar los datos sin consultar cuentas
+  RF: RF-002, RF-024 (M-01) | Depende de: — | Archivos: 2
+  Archivos: `registration.py`, `tests/test_registration_service.py`.
+  Hecho cuando: `validate_registration_data` rechaza con un error por campo un nombre, una fecha,
+  un país o un formato de correo inválidos; un correo con cuenta, activa o no, no da error; no
+  hace ninguna consulta a la base de datos (`django_assert_num_queries(0)`); suite verde.
+  Decisiones: (1) `PhantomProcess.save()` normaliza el correo y valida con `full_clean` (salvo la
+  huella vacía), como `PendingRegistration`. [Cierto] (2) `__str__` muestra propósito y
+  `public_id`, no el correo. [Cierto]
+
+- [x] T-031 Tiempo de reintento de empezar el registro
+  RF: RF-019 (M-04) | Depende de: — | Archivos: 3
+  Archivos: `conf.py`, `config/settings.py` (en `backend/`), `tests/test_registration_conf.py`.
+  Hecho cuando: `conf.start_retry_window()` vale 5 min por defecto, sigue a
+  `REGISTRATION_START_RETRY_MINUTES` con `override_settings` y se lee de la variable de entorno;
+  suite verde.
+
+- [x] T-032 Resolver una plaza fuera de la respuesta
+  RF: RF-004, RF-005, RF-006, RF-008, RF-017, RF-025 (D-16, M-09) | Depende de: T-029 | Archivos: 2
+  Archivos: `registration.py`, `tests/test_registration_background.py`.
+  Hecho cuando, llamando a `resolve_registration(public_id)` sobre una plaza sin resolver:
+  - sin cuenta ni registro pendiente: crea el registro pendiente con los datos y el `public_id` de
+    la plaza, borra la plaza y deja en la bandeja el correo con el código (oculto) en el idioma de
+    la solicitud;
+  - con un registro pendiente vigente del mismo correo: le asigna el `public_id` de la plaza, código
+    nuevo, intentos a 0 y sin validar, conserva sus datos, borra la plaza y encola el correo;
+  - con cuenta activa: la plaza se queda con `payload` vacío y se encola un aviso "ya tienes
+    cuenta" a la cuenta; con cuenta inactiva, sin correo;
+  - borra antes los registros pendientes caducados y las demás plazas del mismo correo;
+  - una plaza ya resuelta o inexistente no hace nada; un choque de unicidad del correo se trata
+    como registro repetido;
+  - suite verde.
+  Decisiones: (1) `processes.issue_code` acepta un `public_id` opcional para emitir el código con el
+  identificador de la plaza; cambio fuera de los archivos de la tarea, en el módulo común. [Cierto]
+  (2) El correo del registro repetido va en el idioma de la solicitud nueva, con el nombre guardado
+  (RF-005 conserva los datos; RF-013 de correo pide el idioma de la petición). [Probable]
+  (3) Si la cuenta aparece entre la comprobación y el alta, `save()` lanza `ValidationError` y la
+  tarea de T-033 reintenta, que ya ve la cuenta. [Probable]
+
+- [x] T-033 Tareas, reintentos y barrido de plazas sin resolver
+  RF: RF-019, RF-024 (D-15, M-09) | Depende de: T-031, T-032 | Archivos: 3
+  Archivos: `tasks.py`, `config/settings.py` (en `backend/`), `tests/test_registration_background.py`.
+  Hecho cuando: la tarea `apps.accounts.tasks.resolve_registration` llama a la resolución; si
+  falla, se reintenta con espera creciente mientras la plaza tenga menos de la ventana de T-031;
+  pasada la ventana, vacía el `payload`, deja la plaza como identificador sin registro y registra el
+  fallo en el log; `sweep_unresolved()` encola las plazas sin resolver dentro de la ventana y no
+  las demás; `CELERY_BEAT_SCHEDULE` lo ejecuta cada 60 s; suite verde.
+  Decisiones: (1) `processes.issue_code` acepta un `public_id` opcional para emitir el código con el
+  identificador de la plaza; cambio fuera de los archivos de la tarea, en el módulo común. [Cierto]
+  (2) El correo del registro repetido va en el idioma de la solicitud nueva, con el nombre guardado
+  (RF-005 conserva los datos; RF-013 de correo pide el idioma de la petición). [Probable]
+  (3) Si la cuenta aparece entre la comprobación y el alta, `save()` lanza `ValidationError` y la
+  tarea de T-033 reintenta, que ya ve la cuenta. [Probable]
+
+- [x] T-034 Empezar el registro en la respuesta solo con el identificador
+  RF: RF-023, RF-024 (D-11, M-03, M-06) | Depende de: T-030, T-033 | Archivos: 7
+  Archivos: `registration.py`, `management/commands/registration.py`, `tests/factories.py`,
+  `tests/test_registration_service.py`, `tests/test_registration_command.py`,
+  `tests/test_email_checks.py`, `tests/test_password_reset_service.py`.
+  Hecho cuando: `start` con datos válidos crea la plaza con los datos, encola la resolución al
+  confirmar y devuelve solo el `public_id`, con el mismo tipo de resultado y el mismo número de
+  consultas con y sin cuenta; con datos inválidos, rechaza cada error sin mencionar la cuenta y sin
+  crear plaza; `manage.py registration start` admite `--language` y muestra solo el `public_id`,
+  igual con y sin cuenta; los tests que necesitan un registro real usan el ayudante
+  `make_pending` de `tests/factories.py`, que resuelve la plaza y devuelve su código del correo de
+  la bandeja; suite verde.
+  Excepción: cambiar lo que devuelve `start` rompe a la vez todos los tests que lo llaman
+  (`test_password_reset_command.py` incluido si lo usa); el ajuste es mecánico y no se puede repartir
+  sin dejar la suite en rojo entre tareas.
+  Decisiones: (1) También se ajusta `tests/test_password_reset_command.py`, cubierto por la
+  Excepción. [Cierto] (2) `manage.py registration start` ya no muestra el código: en desarrollo se
+  lee en la salida del backend de consola cuando el worker resuelve la plaza. [Cierto] (3) El test de
+  «mismo trabajo» compara la secuencia de sentencias SQL de `start`, no solo su número. [Cierto]
+  (4) Si la cola no responde al confirmar, `start` responde igual y deja un aviso en el log; el
+  barrido de T-033 recoge la plaza (D-15). [Cierto]
+
+- [x] T-035 Verificar y completar buscando en las dos tablas
+  RF: RF-009, RF-010, RF-011, RF-012, RF-025 (D-12, D-14, CF-5) | Depende de: T-034 | Archivos: 2
+  Archivos: `registration.py`, `tests/test_phantom_equivalence.py`.
+  Hecho cuando: para un correo con cuenta, la misma secuencia de `verify` (con el bloqueo al quinto
+  intento), `complete` y caducidad da los mismos resultados con la plaza que con un registro real
+  cuyo código nunca se acierta; una solicitud nueva del mismo correo deja la plaza anterior como
+  desconocida, igual que a un registro real repetido; `verify` y `complete` hacen el mismo número
+  de consultas en los dos casos; suite verde.
+  Decisiones: (1) `complete` rechaza una plaza con `CODE_NOT_VERIFIED` aunque estuviera marcada como
+  validada: no tiene datos detrás con los que crear la cuenta; un test lo fija. [Cierto] (2) La plaza
+  solo se busca con el propósito del registro: la de otro propósito responde «desconocido». [Cierto]
+  (3) El número de consultas se compara midiendo los dos casos en el mismo test, no con una cifra
+  fija. [Cierto]
+
+- [x] T-036 Reenvío en dos tiempos
+  RF: RF-016, RF-023, RF-025 (D-13, M-09) | Depende de: T-035 | Archivos: 5
+  Archivos: `registration.py`, `tasks.py`, `management/commands/registration.py`,
+  `tests/test_phantom_equivalence.py`, `tests/test_registration_command.py`.
+  Hecho cuando: `resend` invalida en la respuesta el código vigente, pone los intentos a 0, encola
+  `reissue_code` y no devuelve el código, igual para plaza y registro real (mismo resultado y mismas
+  consultas); la tarea emite el código nuevo y, si es real, encola su correo; un código anterior ya
+  no se acepta; `manage.py registration resend` muestra solo el `public_id`; suite verde.
+  Excepción: el reenvío cambia a la vez el servicio, su tarea y el comando que lo muestra.
+  Decisiones: (1) También se ajusta `tests/test_registration_service.py`: sus tests de reenvío leían
+  el código de la respuesta; es el test del mismo módulo (M-03) y el cambio es mecánico. [Cierto]
+  (2) La anulación del código en la respuesta se hace con `update()`, sin `save()`: la validación de
+  un registro real no admite la huella vacía. [Cierto] (3) `reissue_code` no emite nada si el
+  proceso caducó, ya se validó o desapareció; tampoco reintenta: si la cola falla, el usuario pide
+  otro reenvío. [Probable] (4) El correo reenviado va en el idioma guardado del registro. [Probable]
+
+- [x] T-037 La purga borra también las plazas caducadas
+  RF: RF-013 | Depende de: T-029 | Archivos: 2
+  Archivos: `registration.py`, `tests/test_registration_service.py`.
+  Hecho cuando: `purge_expired` borra los registros pendientes y las plazas de registro caducados,
+  cuenta los dos, y no toca las plazas de cambio de contraseña ni las vigentes; suite verde.
+  Decisiones: (1) Se purgan también las plazas caducadas que aún no se habían resuelto: pasada la vida
+  máxima ya no se resolverán. [Probable]
+
+- [x] T-038 Documentación del registro con correo
+  RF: — (CF-4) | Depende de: T-036, T-037 | Archivos: 2
+  Archivos: `backend/.env.example`, `specs/procesos-pendientes/resumen.md` (rutas desde la raíz).
+  Hecho cuando: `.env.example` documenta `REGISTRATION_START_RETRY_MINUTES`; el resumen explica la
+  plaza, el identificador sin registro detrás y el recorrido completo por consola leyendo el código
+  en la salida del worker, con cada comando en su bloque.
+
+- [x] T-039 Corrección: la tarea no resuelve una plaza pasada la ventana
+  Tipo: corrección | Origen: validación de RF-024
+  RF: RF-024 (D-15) | Depende de: — | Archivos: 2
+  Archivos: `tasks.py`, `tests/test_registration_background.py`.
+  Causa: `_resolve_or_retry` solo miraba la ventana tras un fallo; un reintento o una tarea atendida
+  tarde resolvía fuera de la ventana y enviaba el correo. Además, el tope de 3 reintentos de Celery
+  cortaba la cadena hacia los 105 s.
+  Hecho cuando: la tarea ejecutada sobre una plaza de hace 6 minutos, sin simular la resolución, no
+  crea registro pendiente ni encola correo, vacía el `payload` y deja «gave up» en el log, también en
+  un primer intento; las dos tareas de resolución no tienen tope de reintentos; los tests de reintento
+  dentro de la ventana siguen en verde; suite verde.
+  Decisiones: (1) Una ejecución sobre una plaza inexistente o ya resuelta no hace nada ni deja «gave
+  up» en el log. [Cierto] (2) Si la ventana acaba durante un intento que falla, se abandona sin
+  reintentar. [Cierto] (3) El cambio en `tasks.py` también rige el cambio de contraseña, que comparte
+  `_resolve_or_retry`. [Cierto]
+
+- [x] T-040 Corrección: manda la petición más reciente al resolver
+  Tipo: corrección | Origen: validación de RF-025 (y RF-003 de `cambio-contrasena`)
+  RF: RF-005, RF-025 (D-16, D-17) | Depende de: — | Archivos: 3
+  Archivos: `registration.py`, `tests/test_registration_background.py`,
+  `tests/test_phantom_equivalence.py`.
+  Causa: la resolución borraba todas las demás plazas del mismo correo, también las posteriores; con
+  dos peticiones resueltas en orden inverso, la antigua anulaba a la nueva.
+  Hecho cuando: con dos `start` del mismo correo y la primera resuelta antes que la segunda, la
+  primera responde «desconocido» y la segunda funciona, con cuenta y sin ella, y sale un solo correo,
+  el de la segunda; la resolución solo borra las plazas anteriores; suite verde.
+  Decisiones: (1) Solo una plaza posterior **sin resolver** detiene la resolución; una posterior ya
+  resuelta no puede convivir con una anterior pendiente, porque al resolverse la habría borrado.
+  [Cierto] (2) Las plazas anteriores se borran estén o no resueltas. [Cierto]
+
+- [x] T-041 Corrección: la plaza con cuenta queda como un registro recién emitido
+  Tipo: corrección | Origen: validación de RF-025
+  RF: RF-025 (D-16) | Depende de: T-040 | Archivos: 2
+  Archivos: `registration.py`, `tests/test_phantom_equivalence.py`.
+  Causa: con cuenta, la resolución solo vaciaba el `payload`: la plaza conservaba intentos, caducidad
+  y alta de `start`, y no heredaba el alta de la plaza vigente que reemplaza.
+  Hecho cuando: con plaza y con registro real dan el mismo resultado: 5 `verify` erróneos antes de
+  resolver y uno después (`wrong_code`); la resolución retrasada 4 minutos y `verify` a los 16
+  (`wrong_code`); `start` en t=0, `resend` en t=25 y `start` en t=50, con `verify` y `resend` en t=61
+  (`expired`); una plaza anterior caducada no transmite su alta; las consultas siguen siendo iguales;
+  suite verde.
+  Decisiones: (1) Solo una plaza anterior **ya resuelta** y vigente transmite su alta: una sin
+  resolver equivale a no tener registro todavía. [Cierto] (2) El paso del tiempo se simula moviendo
+  hacia atrás todas las fechas guardadas a la vez (D-07). [Cierto] (3) Mutante equivalente: no poner
+  `code_validated_at` a nulo; una plaza nunca llega validada a la resolución. [Cierto]
+
+- [x] T-042 Corrección: verificar, reenviar y completar bloquean primero la plaza
+  Tipo: corrección | Origen: revisión de la validación (RF-025; mismo fallo que RF-017 C de
+  `cambio-contrasena`)
+  RF: RF-025 (D-18) | Depende de: T-041 | Archivos: 2
+  Archivos: `registration.py`, `tests/test_phantom_equivalence.py`.
+  Causa: `_locked_process` consultaba el registro antes de bloquear la plaza; con la resolución en
+  curso, el caso sin cuenta respondía «desconocido».
+  Hecho cuando: un test con transacciones reales y dos hilos, con la resolución detenida dentro de su
+  transacción, da para `verify`, `resend` y `complete` los mismos resultados con cuenta y sin ella; las
+  consultas siguen siendo iguales; suite verde.
+  Decisiones: (1) El test detiene la resolución justo antes de encolar su correo, todavía dentro de su
+  transacción, y espera 0,5 s para que la otra conexión quede bloqueada; se ejecutó tres veces seguidas
+  sin fallos. [Probable] (2) `reissue_code` usa el mismo `_locked_process`, así que hereda el orden.
+  [Cierto]
+
+- [x] T-043 Resumen tras las correcciones
+  RF: — (CF-4) | Depende de: T-039…T-042 | Archivos: 1
+  Archivos: `specs/procesos-pendientes/resumen.md` (en la raíz).
+  Hecho cuando: el resumen explica que la ventana se comprueba en cada ejecución, que manda la
+  petición más reciente y que la plaza cuenta plazos e intentos como un registro real, y sus límites
+  conocidos reflejan lo que queda sin medir.
+
+- [x] T-044 Corrección: la plaza guarda cuándo se resolvió
+  Tipo: corrección | Origen: 2.ª validación de RF-025
+  RF: RF-025 (D-16, M-11) | Depende de: — | Archivos: 3
+  Archivos: `models.py`, `migrations/0011_phantomprocess_resolved_at.py`,
+  `tests/test_phantom_model.py`.
+  Hecho cuando: `PhantomProcess` tiene `resolved_at` nulo, vacío por defecto; las plazas existentes
+  quedan con él vacío tras migrar; no hay migraciones pendientes; suite verde.
+
+- [x] T-045 Corrección: solo una plaza resuelta transmite su alta
+  Tipo: corrección | Origen: 2.ª validación de RF-025
+  RF: RF-025 (D-15, D-16) | Depende de: T-044 | Archivos: 3
+  Archivos: `registration.py`, `tests/test_phantom_equivalence.py`,
+  `tests/test_registration_background.py`.
+  Causa: una plaza abandonada (`payload` vacío sin resolverse) se trataba como una plaza con cuenta
+  resuelta y transmitía su alta a la petición siguiente.
+  Hecho cuando: la resolución con cuenta anota `resolved_at` y abandonar una plaza no lo anota; con
+  plaza y con registro real dan el mismo resultado: `start` sin encolar, abandono por el barrido a
+  los 6 min, `start` nuevo en t=10 resuelto, reenvíos cada 12 min y `verify` en t=62; y `start`
+  resuelto en t=0, `start` abandonado en t=10, tercer `start` resuelto en t=20, reenvíos cada 10 min
+  y `verify` y `resend` en t=62; suite verde.
+
+- [x] T-046 Resumen tras la 2.ª validación
+  RF: — (CF-4) | Depende de: T-045 | Archivos: 1
+  Archivos: `specs/procesos-pendientes/resumen.md` (en la raíz).
+  Hecho cuando: el resumen dice que solo una plaza resuelta transmite su alta y nombra la migración
+  `0011` en «Cómo probarlo».
+
+- [x] T-047 Corrección: la resolución compara el correo de las plazas igual que el de cuentas y registros
+  Tipo: corrección | Origen: 3.ª validación de RF-025
+  RF: RF-025, RF-005 (D-16, D-17) | Depende de: — | Archivos: 2
+  Archivos: `registration.py`, `tests/test_phantom_equivalence.py`.
+  Causa: las plazas del mismo correo se buscaban con igualdad exacta (minúsculas de Python) y la
+  cuenta y el registro pendiente con `email__iexact` (mayúsculas de Postgres, que pliega `ı`→`I` y
+  `ſ`→`S`).
+  Hecho cuando: con y sin cuenta, `start("isabel@x.com")` resuelto y después `start("ısabel@x.com")`
+  resuelto dan `verify` del primero `not_found` y del segundo `wrong_code`; lo mismo con
+  `ana@sx.com` y `ana@ſx.com`; el mutante que vuelve a la igualdad exacta muere; suite verde.
+
 ## RF sin tarea
 Ninguno.

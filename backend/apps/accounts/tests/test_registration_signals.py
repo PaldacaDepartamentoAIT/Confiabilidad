@@ -6,6 +6,7 @@ import pytest
 
 from apps.accounts import registration, signals
 from apps.accounts.models import User
+from apps.accounts.tests.factories import StartedWithCode, make_pending
 
 pytestmark = pytest.mark.django_db
 
@@ -35,10 +36,8 @@ def captured() -> Generator[dict[str, list[dict[str, Any]]], None, None]:
         getattr(signals, name).disconnect(receiver)
 
 
-def _start() -> registration.Started:
-    result = registration.start(email=EMAIL, name="Ana", birthdate=date(1990, 1, 1), country="ES")
-    assert isinstance(result, registration.Started)
-    return result
+def _start() -> StartedWithCode:
+    return make_pending(EMAIL, name="Ana", birthdate=date(1990, 1, 1), country="ES")
 
 
 def test_start_emits_pending_request_and_code_sent(
@@ -49,13 +48,17 @@ def test_start_emits_pending_request_and_code_sent(
     assert captured["registration_code_sent"] == [{"email": EMAIL, "success": True}]
 
 
-def test_start_for_existing_account_emits_refused_request(
+def test_start_for_existing_account_is_refused_later_in_the_background(
     captured: dict[str, list[dict[str, Any]]],
 ) -> None:
     User.objects.create_user(EMAIL, PASSWORD, name="Ana", birthdate=date(1990, 1, 1), country="ES")
-    result = registration.start(email=EMAIL, name="Ana", birthdate=date(1990, 1, 1), country="ES")
-    assert isinstance(result, registration.AccountExists)
-    assert captured["pending_registration_requested"] == [{"email": EMAIL, "success": False}]
+    started = registration.start(email=EMAIL, name="Ana", birthdate=date(1990, 1, 1), country="ES")
+    assert captured["pending_registration_requested"] == [{"email": EMAIL, "success": True}]
+    registration.resolve_registration(started.public_id)
+    assert captured["pending_registration_requested"] == [
+        {"email": EMAIL, "success": True},
+        {"email": EMAIL, "success": False},
+    ]
 
 
 def test_resend_emits_code_sent(captured: dict[str, list[dict[str, Any]]]) -> None:

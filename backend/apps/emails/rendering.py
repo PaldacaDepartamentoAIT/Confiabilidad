@@ -1,0 +1,240 @@
+import re
+import unicodedata
+from collections.abc import Mapping
+from datetime import timedelta
+from urllib.parse import urlsplit
+
+from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
+
+# Solo variables simples: sin atributos, filtros ni etiquetas que alguien pueda usar desde el panel.
+_PLACEHOLDER = re.compile(r"\{\{\s*(\w+)\s*\}\}")
+
+
+def placeholders(text: str) -> set[str]:
+    return set(_PLACEHOLDER.findall(text))
+
+
+def render_text(text: str, values: Mapping[str, str]) -> str:
+    def _replace(match: re.Match[str]) -> str:
+        name = match.group(1)
+        return values[name] if name in values else match.group(0)
+
+    return _PLACEHOLDER.sub(_replace, text)
+
+
+# El identificador va en el fragmento: no viaja al servidor ni queda en registros (D-09).
+_PROCESS_PATHS = {
+    "registration": "/register/continue",
+    "password_reset": "/password-reset/continue",
+}
+
+
+def process_link(purpose: str, public_id: str) -> str:
+    path = _PROCESS_PATHS.get(purpose)
+    if path is None:
+        raise ValueError(_("Unknown process purpose: %(purpose)s") % {"purpose": purpose})
+    base = str(settings.FRONTEND_BASE_URL).rstrip("/")
+    return f"{base}{path}#{public_id}"
+
+
+CODE_KINDS = frozenset({"registration_code", "password_reset_code"})
+_CODE_VALUES = frozenset({"code", "link", "expires_in"})
+# Lo único que separa un dominio del texto: espacios, signos de puntuación y, en ASCII, todo lo que
+# no es letra ni cifra. Lo demás (letras, signos combinantes, símbolos, emojis
+# o caracteres que esta versión de Python aún no conoce) forma parte del dominio, como en los
+# clientes de correo y el navegador. Fuera del plano básico todo cuenta como dominio: es más
+# estricto y la clase sigue siendo rápida.
+_SEPARATORS = re.escape(
+    "".join(
+        chr(point)
+        for point in range(0x80, 0x10000)
+        if unicodedata.category(chr(point))[0] in "ZP" or unicodedata.category(chr(point)) == "Cc"
+    )
+)
+_LABEL = rf"[^\x00-\x2f\x3a-\x40\x5b-\x60\x7b-\x7f{_SEPARATORS}]"
+# Cualquier cosa que un cliente de correo pueda convertir en enlace: una dirección con esquema
+# (también `ftp://` o `https:/`), un dominio suelto o una IP suelta (RF-021, D-17). Cada una empieza
+# donde empieza su palabra, así el análisis no repite el texto y no se vuelve lento.
+_ADDRESS = re.compile(
+    r"(?<![a-z0-9+.-])[a-z][a-z0-9+.-]*:/+[^\s<>\"')]+(?<![.,;:!?])"
+    r"|//[^\s<>\"')]+(?<![.,;:!?])"
+    rf"|(?<!{_LABEL})(?<!-)(?<!{_LABEL}\.)(?<!-\.)(?:(?:{_LABEL}|-)+\.)+(?:(?!\d){_LABEL}){{2,}}"
+    r"(?:[/:?#][^\s<>\"')]*)?"
+    r"|\d{1,3}(?:\.\d{1,3}){3}(?:[/:?#][^\s<>\"')]*)?",
+    re.I,
+)
+
+
+def allowed_values(kind: str) -> frozenset[str]:
+    return frozenset({"name"}) | (_CODE_VALUES if kind in CODE_KINDS else frozenset())
+
+
+def required_values(kind: str) -> frozenset[str]:
+    return _CODE_VALUES if kind in CODE_KINDS else frozenset()
+
+
+_CLOSINGS = {"{{": "}}", "{%": "%}"}
+_OPENINGS = {
+    ("{{", "{%"): re.compile(r"\{[{%]"),
+    ("{{",): re.compile(r"\{\{"),
+    ("{%",): re.compile(r"\{%"),
+}
+
+
+def _brace_blocks(text: str) -> list[str]:
+    # Cada `{{ … }}` o `{% … %}`, de izquierda a derecha y hasta su primer cierre. Si una apertura
+    # ya no tiene cierre detrás, tampoco lo tendrán las siguientes: así el texto se recorre una vez.
+    blocks: list[str] = []
+    openings = tuple(_CLOSINGS)
+    position = 0
+    while openings:
+        found = _OPENINGS[openings].search(text, position)
+        if found is None:
+            break
+        end = text.find(_CLOSINGS[found.group()], found.start() + 2)
+        if end == -1:
+            openings = tuple(opening for opening in openings if opening != found.group())
+            position = found.start()
+        else:
+            blocks.append(text[found.start() : end + 2])
+            position = end + 2
+    return blocks
+
+
+def validate_template(kind: str, subject: str, body: str) -> None:
+    text = f"{subject}\n{body}"
+    used = placeholders(text)
+    problems: list[ValidationError] = []
+    for block in _brace_blocks(text):
+        if not _PLACEHOLDER.fullmatch(block):
+            problems.append(
+                ValidationError(
+                    _("Unsupported template syntax: %(syntax)s"),
+                    code="template_syntax",
+                    params={"syntax": block},
+                )
+            )
+    for name in sorted(used - allowed_values(kind)):
+        problems.append(
+            ValidationError(
+                _("This kind of email does not accept {{ %(name)s }}."),
+                code="template_value_not_allowed",
+                params={"name": name},
+            )
+        )
+    for name in sorted(required_values(kind) - used):
+        problems.append(
+            ValidationError(
+                _("This kind of email requires {{ %(name)s }}."),
+                code="template_value_missing",
+                params={"name": name},
+            )
+        )
+    if "\n" in subject or "\r" in subject:
+        # Una cabecera con saltos de línea hace fallar el envío de todos estos correos (RF-021).
+        problems.append(
+            ValidationError(_("The subject cannot contain line breaks."), code="subject_newline")
+        )
+    # Tal como está escrito (`ŀ` es una letra y un carácter invisible sigue dentro del enlace, donde
+    # algunos clientes lo cortan) y como lo lee el cliente (`＠` es `@`).
+    for address in dict.fromkeys(_ADDRESS.findall(_as_read(text)) + _ADDRESS.findall(text)):
+        if not _is_application_address(address):
+            problems.append(
+                ValidationError(
+                    _("Links may only point to the application: %(address)s"),
+                    code="template_foreign_link",
+                    params={"address": address},
+                )
+            )
+    if problems:
+        raise ValidationError(problems)
+
+
+# Los únicos signos que el navegador descarta en un dominio; cualquier otro (un subrayado, una
+# raya encima) sigue en él y lo convierte en otro dominio en punycode.
+_IGNORED_MARKS = frozenset(
+    chr(point)
+    for first, last in (
+        (0x034F, 0x034F),
+        (0x180B, 0x180D),
+        (0x180F, 0x180F),
+        (0xFE00, 0xFE0F),
+        (0xE0100, 0xE01EF),
+    )
+    for point in range(first, last + 1)
+)
+
+
+def _without_ignored(text: str) -> str:
+    # No cuentan los caracteres de formato, como el guion blando, ni los selectores de variación.
+    return "".join(
+        char for char in text if char not in _IGNORED_MARKS and unicodedata.category(char) != "Cf"
+    )
+
+
+def _as_read(text: str) -> str:
+    # El texto como lo verá el cliente: `＠` es `@`, el punto ideográfico es un punto y `ẞ`, que
+    # NFKC deja igual, es `ss` en el navegador. NFKC ya une las tildes.
+    normalized = unicodedata.normalize("NFKC", text).replace("\u3002", ".").replace("\u1e9e", "ss")
+    return _without_ignored(normalized)
+
+
+def _is_application_address(address: str) -> bool:
+    if address.startswith("//"):
+        address = f"https:{address}"
+    elif not address.lower().startswith(("http://", "https://")):
+        address = f"https://{address}"
+    try:
+        parts = urlsplit(address)
+    except ValueError:
+        return False
+    application_host = urlsplit(str(settings.FRONTEND_BASE_URL)).hostname or ""
+    # Solo el dominio, como mucho con un puerto: un usuario delante (`evil.com@app…`, también
+    # `evil.com\@app…`, que el navegador abre en `evil.com`) o algo más tras `:` (`app…:evil.com`)
+    # solo sirven para disfrazar otro enlace. Sin `re.ASCII`, la `i` también aceptaría `ı` e `İ`.
+    netloc = re.fullmatch(rf"{re.escape(application_host)}(?::\d*)?", parts.netloc, re.I | re.ASCII)
+    # Los clientes cortan el enlace en caracteres como `{` o `»` y enlazan lo que sigue.
+    rest = f"{parts.path}?{parts.query}#{parts.fragment}"
+    return netloc is not None and not _ADDRESS.search(rest)
+
+
+# Frases del plazo por idioma: (un minuto, varios minutos, menos de un minuto) (D-08).
+_EXPIRY_PHRASES = {
+    "es": ("1 minuto", "{n} minutos", "menos de un minuto"),
+    "pt-BR": ("1 minuto", "{n} minutos", "menos de um minuto"),
+    "en": ("1 minute", "{n} minutes", "less than a minute"),
+}
+
+
+def expires_in(locale: str, remaining: timedelta) -> str:
+    one, many, under_one = _EXPIRY_PHRASES[locale]
+    minutes = int(remaining.total_seconds() // 60)
+    if minutes < 1:
+        return under_one
+    if minutes == 1:
+        return one
+    return many.format(n=minutes)
+
+
+# Bloque fijo de los avisos de seguridad: lo añade el sistema y no se edita en el panel (RF-010).
+_REPORT_BLOCKS = {
+    "es": "Si no fuiste tú, escríbenos a {support} y restablece tu contraseña cuanto antes.",
+    "pt-BR": "Se não foi você, escreva para {support} e redefina sua senha o quanto antes.",
+    "en": "If this wasn't you, write to {support} and reset your password as soon as possible.",
+}
+
+
+def report_block(locale: str) -> str:
+    support = str(settings.EMAIL_SUPPORT_ADDRESS)
+    return "\n\n" + _REPORT_BLOCKS[locale].format(support=support)
+
+
+def compose(
+    kind: str, locale: str, subject: str, body: str, values: Mapping[str, str]
+) -> tuple[str, str]:
+    rendered_body = render_text(body, values)
+    if kind not in CODE_KINDS:
+        rendered_body += report_block(locale)
+    return render_text(subject, values), rendered_body

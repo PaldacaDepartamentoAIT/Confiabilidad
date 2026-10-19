@@ -43,13 +43,10 @@ contraseña, se comparte con `procesos-pendientes` y su entrada está en
   para acertar un código y **tomar la cuenta ajena**. En consola no hay riesgo; decide el límite
   (por correo y por IP, para pedir y para reenviar) al especificar la API. Es bloqueante.
 
-- [ ] **Neutralizar "sin cuenta elegible" en la API de cambio de contraseña** (feature
-  `cambio-contrasena`, S-01, RF-004). El servicio `password_reset.start` responde
-  `NoEligibleAccount` cuando el correo no tiene cuenta o la cuenta está inactiva. La API debe
-  devolver exactamente el mismo mensaje que con una cuenta válida ("Si existe una cuenta,
-  recibirás un código") y con un tiempo de respuesta comparable (con cuenta se escribe en la base
-  de datos y se calcula la huella; sin cuenta, no), o revelará qué correos están registrados. Es
-  bloqueante.
+- [ ] **Mensaje neutro en la API de cambio de contraseña** (feature `cambio-contrasena`, S-01,
+  RF-004). El servicio ya responde lo mismo, con el mismo trabajo, tenga o no cuenta el correo
+  (cambio del 2026-10-14). A la API solo le queda devolver siempre el mismo mensaje ("Si existe una
+  cuenta, recibirás un código") y no añadir trabajo que dependa de la cuenta en la respuesta.
 
 ## Hecho
 

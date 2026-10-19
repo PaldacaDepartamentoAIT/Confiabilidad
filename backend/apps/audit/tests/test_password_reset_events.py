@@ -11,7 +11,11 @@ from django.utils import timezone
 from apps.accounts import conf, password_reset, signals
 from apps.accounts.models import PasswordResetRequest, User
 from apps.accounts.processes import VerifyResult
-from apps.accounts.tests.factories import make_user
+from apps.accounts.tests.factories import (
+    StartedWithCode,
+    make_reset_request,
+    make_user,
+)
 from apps.audit.middleware import CurrentRequestMiddleware
 from apps.audit.models import EventType, SecurityEvent
 from apps.core.fingerprints import audit_email_fingerprint
@@ -68,8 +72,7 @@ def test_reset_code_expired_within_grace_is_recorded_as_failed_verification(
     audit_key: None,
 ) -> None:
     make_user(email=EMAIL, name="Ana García")
-    started = password_reset.start(email=EMAIL)
-    assert isinstance(started, password_reset.Started)
+    started = make_reset_request(EMAIL)
     PasswordResetRequest.objects.update(code_expires_at=timezone.now() - timedelta(minutes=1))
 
     result = password_reset.verify(public_id=started.public_id, code=started.code)
@@ -82,8 +85,7 @@ def test_reset_code_expired_within_grace_is_recorded_as_failed_verification(
 
 def test_reset_rejected_for_weak_password_leaves_no_reset_or_failure_row(audit_key: None) -> None:
     make_user(email=EMAIL, name="Ana García")
-    started = password_reset.start(email=EMAIL)
-    assert isinstance(started, password_reset.Started)
+    started = make_reset_request(EMAIL)
     assert password_reset.verify(public_id=started.public_id, code=started.code) == (
         password_reset.VerifyResult.VERIFIED
     )
@@ -95,11 +97,9 @@ def test_reset_rejected_for_weak_password_leaves_no_reset_or_failure_row(audit_k
     assert not SecurityEvent.objects.filter(success=False).exists()
 
 
-def _started_reset() -> password_reset.Started:
+def _started_reset() -> StartedWithCode:
     make_user(email=EMAIL, name="Ana García")
-    started = password_reset.start(email=EMAIL)
-    assert isinstance(started, password_reset.Started)
-    return started
+    return make_reset_request(EMAIL)
 
 
 def _wrong(code: str) -> str:
@@ -156,24 +156,17 @@ def _change_password(user: User) -> None:
     user.save()
 
 
-@pytest.mark.parametrize(
-    ("change", "refusal"),
-    [
-        (_deactivate, password_reset.AccountRefusal.INACTIVE),
-        (_change_email, password_reset.AccountRefusal.ACCOUNT_CHANGED),
-        (_change_password, password_reset.AccountRefusal.ACCOUNT_CHANGED),
-    ],
-)
-def test_account_refusal_leaves_no_verification_row(
-    audit_key: None, change: Callable[[User], None], refusal: password_reset.AccountRefusal
+@pytest.mark.parametrize("change", [_deactivate, _change_email, _change_password])
+def test_account_change_is_answered_as_expired_and_recorded_as_failed(
+    audit_key: None, change: Callable[[User], None]
 ) -> None:
     started = _started_reset()
     change(User.objects.get(email=EMAIL))
 
     result = password_reset.verify(public_id=started.public_id, code=started.code)
 
-    assert result is refusal
-    assert _verifications() == []
+    assert result is VerifyResult.EXPIRED
+    assert _verifications() == [False]
 
 
 @pytest.mark.parametrize("change", [_deactivate, _change_email, _change_password])

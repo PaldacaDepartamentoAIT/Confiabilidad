@@ -1,5 +1,6 @@
 # Spec: procesos-pendientes (registro pendiente)
 Estado: aprobada
+Aprobación: ligera
 
 ## Objetivo (por qué)
 El registro exige demostrar acceso al correo con un código antes de crear la cuenta. Esta feature
@@ -11,8 +12,9 @@ Los diagramas aportados por el usuario son la referencia:
 
 ## Secuencia del registro
 1. La persona rellena el formulario y lo envía.
-2. Sus datos se guardan en un registro pendiente con su identificador público y se emite un
-   código (RF-001, RF-002, RF-007, RF-008).
+2. Si los datos son válidos, la persona recibe al momento un identificador público. Fuera de la
+   respuesta, sus datos se guardan en un registro pendiente con ese identificador y se emite un
+   código, que le llega por correo (RF-001, RF-002, RF-007, RF-008, RF-024).
 3. La persona introduce el código, que queda validado (RF-009).
 4. La persona introduce su contraseña.
 5. Se crea la cuenta con los datos del registro pendiente y la contraseña, y se borra el registro
@@ -54,7 +56,10 @@ del correo o de la cuenta, y único entre los procesos de su tipo.
 ### RF-008 Código
 Cuando se emita un código, el sistema deberá generar uno de 6 dígitos, vigente 15 minutos por
 defecto (RF-019), entregarlo una sola vez para su envío y guardar solo una huella que no permita
-recuperarlo sin un secreto del servidor, aunque se disponga de la base de datos.
+recuperarlo sin un secreto del servidor, aunque se disponga de la base de datos. Mientras su
+correo esté pendiente de entrega, el código podrá guardarse además cifrado con una clave propia,
+que se borra al entregarse, descartarse o fallar de forma definitiva el correo (RF-018 de
+`correo-asincrono-plantillas`).
 
 ### RF-009 Verificación del código
 Cuando se presente un código para un proceso, el sistema deberá aceptarlo solo si coincide, no ha
@@ -93,8 +98,9 @@ secreto anterior.
 
 ### RF-016 Reenvío del código
 Cuando se reenvíe el código de un proceso vigente sin el código validado, el sistema deberá
-conservar su identificador público, emitir un código nuevo y poner los intentos a 0. Si el proceso
-ya tiene el código validado, entonces el sistema deberá rechazar el reenvío.
+conservar su identificador público, poner los intentos a 0 y responder de inmediato, y emitir el
+código nuevo, con su correo, fuera de la respuesta. Si el proceso ya tiene el código validado,
+entonces el sistema deberá rechazar el reenvío.
 
 ### RF-017 Registros pendientes caducados del mismo correo
 Cuando se cree un registro pendiente, el sistema deberá borrar antes cualquier registro pendiente
@@ -106,8 +112,9 @@ Movido a la feature de cambio de contraseña (S-11).
 ### RF-019 Límites configurables
 El sistema deberá permitir ajustar por configuración, sin cambiar el código, el máximo de
 intentos fallidos, la vigencia del código, la gracia tras caducar el código, la vida máxima del
-proceso, el periodo de transición del secreto (RF-015) y el tiempo máximo de espera del servicio de
-contraseñas filtradas (RF-022).
+proceso, el periodo de transición del secreto (RF-015), el tiempo máximo de espera del servicio de
+contraseñas filtradas (RF-022) y el tiempo durante el que se reintenta el trabajo de empezar el
+registro (RF-024; 5 minutos por defecto).
 
 ### RF-020 Completar el registro
 Cuando se complete un registro pendiente con el código validado y una contraseña, el sistema
@@ -134,12 +141,35 @@ del servidor.
 ### RF-023 Ejecución desde consola
 El sistema deberá permitir recorrer desde consola cada paso del registro, sin frontend ni API:
 iniciarlo con sus datos, presentar el código, reenviarlo y completarlo con una contraseña. Cada
-paso deberá mostrar el identificador público y, cuando se emita un código, el propio código.
+paso deberá mostrar el identificador público y el resultado de la operación, igual para un correo
+con cuenta que sin ella (RF-024, RF-025); nunca el código.
+
+### RF-024 Empezar el registro
+Cuando se solicite un registro con datos válidos (RF-002), el sistema deberá devolver de inmediato
+un identificador público nuevo, con el mismo formato tenga o no cuenta el correo, y hacer fuera de
+la respuesta todo el trabajo que depende de ello: comprobar cuentas y registros pendientes (RF-004,
+RF-005, RF-017), crear o reemplazar el registro pendiente con ese identificador y emitir el código.
+Si el nombre, la fecha de nacimiento, el país o el formato del correo no son válidos, entonces el
+sistema deberá rechazarlos en la propia respuesta, indicando cada error. Que el correo pertenezca a
+una cuenta o tenga un registro pendiente nunca se indicará en la respuesta. Si el trabajo de fuera
+de la respuesta falla, entonces el sistema deberá reintentarlo solo durante el tiempo configurado
+(RF-019). Si sigue fallando, el identificador se comportará como uno sin registro detrás (RF-025),
+sin enviar correo, y el fallo quedará en el registro de eventos del servidor.
+
+### RF-025 Identificador sin registro detrás
+Si el correo de una solicitud de registro pertenece a una cuenta (RF-004), entonces el
+identificador devuelto no tendrá registro pendiente detrás. Verificarlo, reenviarlo, completarlo y
+dejarlo caducar deberá dar los mismos resultados, en el mismo orden y con los mismos plazos, que un
+registro pendiente real cuyo código nunca se acierta, incluido el bloqueo por intentos (RF-010). El
+trabajo que distinga uno de otro (emitir el código y enviar el correo) se hará fuera de la
+respuesta. Una solicitud nueva con el mismo correo anula el identificador sin registro anterior,
+igual que RF-005 con un registro real.
 
 ## Supuestos
-- S-01 Esta feature no incluye API, pantallas, envío de correos, mensajes neutros, redirecciones
-  (ni el identificador sin proceso detrás para cuentas existentes), el aviso "ya tienes cuenta",
-  el límite de frecuencia del reenvío ni el cierre de sesiones. La API será la feature siguiente y
+- S-01 Esta feature no incluye API, pantallas, mensajes neutros, redirecciones, el límite de
+  frecuencia del reenvío ni el cierre de sesiones. El envío de correos, incluido el aviso "ya tienes
+  cuenta", es de `correo-asincrono-plantillas`; el identificador sin registro detrás se añadió el
+  2026-10-14 (RF-025). La API será la feature siguiente y
   reutilizará las mismas operaciones que usan los comandos de RF-023, para que el frontend las
   consuma sin rehacer reglas.
 - S-02 Los diagramas del usuario (ER, flujo de registro y flujo de cambio de contraseña, recibidos
@@ -148,7 +178,8 @@ paso deberá mostrar el identificador público y, cuando se emita un código, el
   consentimientos, junto con su tabla de términos.
 - S-04 La gracia de 15 minutos tras caducar el código (diagrama de registro) permite completar el
   registro tras validar el código y cerrar la ventana.
-- S-05 Crear la cuenta se hace aquí (RF-020). Enviar los avisos por correo es del flujo (S-01).
+- S-05 Crear la cuenta se hace aquí (RF-020). Los correos de código y el aviso "ya tienes cuenta"
+  los envía `correo-asincrono-plantillas`.
 - S-06 Repetir el registro con un correo que tiene un registro pendiente cambia su identificador
   público y anula la validación del código (RF-005; confirmado por el usuario en C-01). *Por qué:*
   si el identificador existente se entregara a quien repite el formulario, un tercero podría fijar
@@ -161,8 +192,10 @@ paso deberá mostrar el identificador público y, cuando se emita un código, el
 - S-09 El usuario aprobó (2026-10-01) usar el servicio público Have I Been Pwned para RF-022. Es
   una dependencia externa, y si no responde se acepta la contraseña (fallo abierto). *Riesgo:*
   mientras el servicio no esté disponible, pueden pasar contraseñas filtradas.
-- S-10 Los comandos de RF-023 muestran el código en claro porque sustituyen al correo. Solo los
-  puede ejecutar quien tiene acceso de consola al servidor, que ya tiene acceso a todo.
+- S-10 Los comandos de RF-023 ya no muestran el código (cambio del 2026-10-14). *Por qué:* la API
+  reutilizará las mismas operaciones (S-01), y una operación que devolviera el código, o si el
+  correo tiene cuenta, lo filtraría a la API. En desarrollo, el código se lee en el correo que
+  muestra el proveedor local en la salida del worker.
 - S-11 El cambio de contraseña será una feature aparte que reutilizará las reglas de esta
   (RF-007…RF-011, RF-015, RF-016, RF-019, RF-022) con estas decisiones ya tomadas: una solicitud
   por cuenta, que se reemplaza al pedir otra (pregunta 4 y C-08); borrado al completar o caducar;
@@ -171,7 +204,7 @@ paso deberá mostrar el identificador público y, cuando se emita un código, el
   solicitud (antes RF-021); cerrar sesiones y avisar por correo, en su flujo.
 
 ## Fuera de alcance
-- API, pantallas y envío de correos (ver S-01).
+- API y pantallas (ver S-01). El envío de correos es de `correo-asincrono-plantillas`.
 - Cambio de contraseña (ver S-11).
 - Términos, marketing y el resto de tablas del diagrama ER (MarketingConsent, Terms, UserTerms,
   UserSession, SecurityEvent).
@@ -186,8 +219,11 @@ paso deberá mostrar el identificador público y, cuando se emita un código, el
   `mypy`/`ruff`/`black` están limpios.
 - CF-3 Los diagramas están guardados en `specs/procesos-pendientes/diagramas/` y enlazados desde
   la spec.
-- CF-4 El registro se puede recorrer de principio a fin solo con los comandos de RF-023, y los
-  pasos están documentados en `resumen.md`.
+- CF-4 El registro se puede recorrer de principio a fin con los comandos de RF-023 y el código
+  leído del correo que muestra el proveedor local, y los pasos están documentados en `resumen.md`.
+- CF-5 Un test demuestra que, para un correo con cuenta, verificar, reenviar, completar y dejar
+  caducar el identificador devuelto da los mismos resultados que un registro pendiente real cuyo
+  código nunca se acierta (RF-025).
 
 ## Historial de cambios
 - 2026-10-01 — Creación (feature nueva) — RF: RF-001…RF-014 — Estado: pendiente de clarificar
@@ -205,3 +241,15 @@ paso deberá mostrar el identificador público y, cuando se emita un código, el
   cuenta entre la comprobación y el alta en `complete`, sale un `IntegrityError` sin traducir y el
   registro pendiente se conserva en vez de borrarse (RF-012) hasta el siguiente intento; (3) Have I
   Been Pwned nunca probado contra el servicio real; (4) `makemessages` no ejecutado.
+- 2026-10-14 — Cambio por `correo-asincrono-plantillas` (S-07, S-08): empezar el registro devuelve
+  siempre un identificador y la consola deja de mostrar el código — RF: RF-008 y RF-023
+  modificados; RF-024 y RF-025 añadidos; secuencia, S-01, S-05, S-10, fuera de alcance y CF-4
+  ajustados; CF-5 añadido. Clarificado (C-01…C-04): RF-016, RF-019, RF-024 y RF-025 ajustados —
+  Estado: impacto analizado
+- 2026-10-15 — Modo de aprobación: pasa de fuerte (sin línea `Aprobación:`) a ligero, a petición
+  explícita del usuario — RF: ninguno
+- 2026-10-18 — Validación del cambio del 2026-10-14: cerrada con riesgo residual aceptado (cuatro
+  validaciones independientes de la equivalencia entre plaza y registro real; correcciones hasta
+  T-047). Riesgos aceptados: una cuenta creada por otra vía mientras hay un registro pendiente
+  vigente, o borrada entre dos peticiones, puede distinguir la plaza del registro real — RF:
+  ninguno modificado

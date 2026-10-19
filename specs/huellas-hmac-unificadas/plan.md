@@ -13,17 +13,23 @@ tipo de huella que compone su mensaje y llama a esas primitivas:
   `"password_reset_account:{correo normalizado}:{password_hash}"`, clave de códigos.
 - `consent_email_fingerprint(email)` / `consent_email_matches(...)`: mensaje
   `"{correo normalizado}"`, clave de consentimientos.
+- `mask_code(code)` → (`masked`, `nonce`) / `unmask_code(masked, nonce)` → `code`: `nonce` =
+  `secrets.token_hex(16)`; máscara = entero de HMAC(clave de la máscara,
+  `"email_code_mask:{nonce}"`) mod 10⁶; `masked` = (código + máscara) mod 10⁶, y `unmask_code`
+  resta la máscara y devuelve los 6 dígitos con ceros a la izquierda. Clave de la máscara (RF-011).
 
 `purpose` se recibe como `str` (los valores de `codes.Purpose`, que es un `StrEnum`) para que
 `core` no dependa de `accounts`.
-RF: RF-001, RF-004, RF-005, RF-006
+RF: RF-001, RF-004, RF-005, RF-006, RF-011
 
 ### M-02 Claves y política por tipo (`apps/core/fingerprints.py`)
 Responsabilidad: leer de `settings` (que las toma del entorno; en producción, de SOPS) la clave
 de cada tipo y aplicar su política. Clave de códigos: `REGISTRATION_CODE_SECRET`, con
 `REGISTRATION_CODE_SECRET_PREVIOUS`, `REGISTRATION_CODE_SECRET_ROTATED_AT` y
 `REGISTRATION_SECRET_TRANSITION_MINUTES`. Clave de consentimientos: `CONSENT_EMAIL_HASH_SECRET`,
-sin clave anterior. Los nombres de los ajustes y sus valores por defecto no cambian (S-04). Los
+sin clave anterior. Clave de la máscara: `EMAIL_CODE_SECRET`, sin clave anterior; sin definir, vale
+`"email-code:"` + `SECRET_KEY` (S-10). Es error de configuración que esté vacía, que sea de solo
+espacios o que coincida con `REGISTRATION_CODE_SECRET`, al ocultar y al recuperar. Los nombres de los ajustes y sus valores por defecto no cambian (S-04). Los
 errores de configuración (`ImproperlyConfigured`, mensajes en inglés con `gettext_lazy` que
 nombran el ajuste) son: clave actual vacía o de solo espacios, clave anterior de solo espacios
 (haya o no fecha de rotación) y clave anterior igual a la actual, al calcular y al comprobar;
@@ -33,7 +39,7 @@ a `timezone.now()` sin margen (S-09), en toda comprobación, aunque la clave act
 clave anterior vacía (`""`), o una válida sin fecha de rotación, se ignora.
 Sustituye a `code_secret`, `previous_code_secret`, `secret_rotated_at` y `secret_transition` de
 `apps/accounts/conf.py` y a `apps/consents/conf.py`.
-RF: RF-002, RF-003, RF-007, RF-008
+RF: RF-002, RF-003, RF-007, RF-008, RF-011
 
 ### M-03 Adaptación de los usos (`apps/accounts/processes.py`, `apps/accounts/password_reset.py`, `apps/consents/models.py`)
 Responsabilidad: llamar a M-01 en lugar de a `apps/accounts/codes.py` (huellas) y a
@@ -96,7 +102,7 @@ Elegida: conservar los nombres de los ajustes y sus valores por defecto.
 Descartada: renombrarlos a un esquema común (`FINGERPRINT_CODES_SECRET`…).
 Motivo: un cambio de nombre obliga a tocar `.env`, SOPS y el VPS, y si se olvida en producción se
 cae al valor por defecto y las huellas guardadas dejan de coincidir. Además, está fuera de
-alcance (S-04).
+alcance (S-04). `EMAIL_CODE_SECRET` es un ajuste nuevo (2026-10-14), no un cambio de nombre.
 
 ### D-04 Normalización del correo
 Elegida: una única función privada (sin espacios a los lados y en minúsculas), usada por el sello
@@ -163,7 +169,10 @@ cadena solo marca el uso real del elemento vigilado (C-14).
   `apps/accounts/tests/test_codes.py`, `apps/consents/tests/test_hashing.py`,
   `apps/consents/tests/test_conf.py` y la parte de secretos de
   `apps/accounts/tests/test_registration_conf.py` se reescriben o se mueven aquí, sin perder
-  ningún RF de sus features (C-05).
+  ningún RF de sus features (C-05). Máscara: vector fijo de `mask_code` con nonce fijado; ida y
+  vuelta para 000000, 123456 y 999999; dos llamadas dan nonces distintos; otra clave no recupera el
+  código; errores de clave vacía, de espacios e igual a la de códigos; sin consultas a la base de
+  datos (RF-003, RF-011).
 - **Guardián (`apps/core/tests/test_fingerprint_guard.py`)**: el test sobre el código real
   (RF-010), más casos con fuentes sintéticas en `tmp_path` (import directo, `from … import …
   as`, cada módulo prohibido entero, `import django` e `import django.core` seguidos de
@@ -195,6 +204,7 @@ cadena solo marca el uso real del elemento vigilado (C-14).
 | RF-008 | M-02 | Unitario |
 | RF-009 | — | OBSOLETO |
 | RF-010 | M-04 (D-05, D-08, D-09) | Guardián (código real + fuentes sintéticas + requirements sintéticos) |
+| RF-011 | M-01, M-02 | Unitario |
 
 ## RF sin cobertura
 Ninguno. RF-009 está obsoleto y no se diseña.

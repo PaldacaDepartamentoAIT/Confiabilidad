@@ -11,7 +11,11 @@ from django.utils import timezone
 from apps.accounts import conf, registration, signals
 from apps.accounts.models import PendingRegistration
 from apps.accounts.processes import VerifyResult
-from apps.accounts.tests.factories import make_user
+from apps.accounts.tests.factories import (
+    StartedWithCode,
+    make_pending,
+    make_user,
+)
 from apps.audit.middleware import CurrentRequestMiddleware, current_request
 from apps.audit.models import EventType, SecurityEvent
 from apps.core.fingerprints import audit_email_fingerprint
@@ -80,10 +84,7 @@ def test_registration_signals_map_to_their_event_type(
 
 
 def test_code_expired_within_grace_is_recorded_as_failed_verification(audit_key: None) -> None:
-    started = registration.start(
-        email=EMAIL, name="Ana García", birthdate=date(1990, 1, 1), country="ES"
-    )
-    assert isinstance(started, registration.Started)
+    started = make_pending(EMAIL, name="Ana García", birthdate=date(1990, 1, 1), country="ES")
     PendingRegistration.objects.update(code_expires_at=timezone.now() - timedelta(minutes=1))
 
     result = registration.verify(public_id=started.public_id, code=started.code)
@@ -94,11 +95,8 @@ def test_code_expired_within_grace_is_recorded_as_failed_verification(audit_key:
     assert event.user_email_hash == audit_email_fingerprint(EMAIL)
 
 
-def _started_registration() -> registration.Started:
-    started = registration.start(
-        email=EMAIL, name="Ana García", birthdate=date(1990, 1, 1), country="ES"
-    )
-    assert isinstance(started, registration.Started)
+def _started_registration() -> StartedWithCode:
+    started = make_pending(EMAIL, name="Ana García", birthdate=date(1990, 1, 1), country="ES")
     return started
 
 
@@ -143,7 +141,7 @@ def test_unknown_registration_leaves_no_verification_row(audit_key: None) -> Non
     assert _verifications() == []
 
 
-def _verified_registration() -> registration.Started:
+def _verified_registration() -> StartedWithCode:
     started = _started_registration()
     assert registration.verify(public_id=started.public_id, code=started.code) is (
         VerifyResult.VERIFIED

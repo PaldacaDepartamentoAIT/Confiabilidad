@@ -21,3 +21,7 @@ def max_lifetime() -> timedelta:
 
 def pwned_timeout() -> float:
     return float(settings.PWNED_PASSWORDS_TIMEOUT_SECONDS)
+
+
+def start_retry_window() -> timedelta:
+    return timedelta(minutes=settings.REGISTRATION_START_RETRY_MINUTES)
