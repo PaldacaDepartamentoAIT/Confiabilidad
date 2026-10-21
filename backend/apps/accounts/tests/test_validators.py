@@ -3,6 +3,7 @@ from datetime import date
 import pytest
 from django.core.exceptions import ValidationError
 
+from apps.accounts.registration import validate_registration_data
 from apps.accounts.validators import (
     PLACEHOLDER_COUNTRY,
     minimum_age_date,
@@ -11,6 +12,7 @@ from apps.accounts.validators import (
     validate_birthdate,
     validate_country,
     validate_name,
+    validate_registration_email,
 )
 
 
@@ -88,3 +90,34 @@ def test_non_iso_countries_are_rejected(country: str) -> None:
 
 def test_placeholder_country_is_kept_while_unchanged() -> None:
     validate_country(PLACEHOLDER_COUNTRY, stored_value=PLACEHOLDER_COUNTRY)
+
+
+@pytest.mark.parametrize(
+    "email", ["ana@example.com", "ana+etiqueta@example.com", "ana@españa.es", "Ana@Sub.Example.Org"]
+)
+def test_registration_email_with_dotted_domain_is_accepted(email: str) -> None:
+    validate_registration_email(email)
+
+
+@pytest.mark.parametrize(
+    ("email", "code"),
+    [
+        ("ana@localhost", "email_domain_without_dot"),
+        ("ana@intranet", "email_domain_without_dot"),
+        ("ana@[192.0.2.1]", "email_ip_domain"),
+        ("ana@[IPv6:2001:db8::1]", "email_ip_domain"),
+        ("ana", "invalid"),
+        ("ana@", "invalid"),
+        ("@example.com", "invalid"),
+    ],
+)
+def test_registration_email_without_real_domain_is_rejected(email: str, code: str) -> None:
+    with pytest.raises(ValidationError) as excinfo:
+        validate_registration_email(email)
+    assert excinfo.value.code == code
+
+
+def test_account_rules_still_accept_a_domain_without_dot() -> None:
+    validate_registration_data(
+        email="ana@localhost", name="Ana", birthdate=date(1990, 1, 1), country="ES"
+    )

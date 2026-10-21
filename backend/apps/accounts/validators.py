@@ -4,6 +4,7 @@ from itertools import pairwise
 
 import pycountry
 from django.core.exceptions import ValidationError
+from django.core.validators import EmailValidator
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
@@ -14,6 +15,21 @@ PLACEHOLDER_COUNTRY = "ZZ"
 _ISO_ALPHA_2 = frozenset(country.alpha_2 for country in pycountry.countries)
 # Separadores de línea y de párrafo de Unicode: también son "saltos de línea".
 _LINE_BREAK_CATEGORIES = {"Cc", "Zl", "Zp"}
+
+
+_email_format = EmailValidator()
+
+
+def validate_registration_email(value: str) -> None:
+    # Más estricto que la cuenta: un dominio sin punto o una IP nunca recibirá el código (S-08).
+    user, _sep, domain = value.rpartition("@")
+    if user and domain.startswith("["):
+        raise ValidationError(_("Email domain cannot be an IP address."), code="email_ip_domain")
+    if user and domain and "." not in domain:
+        raise ValidationError(
+            _("Email domain must contain a dot."), code="email_domain_without_dot"
+        )
+    _email_format(value)
 
 
 def normalize_name(value: str) -> str:

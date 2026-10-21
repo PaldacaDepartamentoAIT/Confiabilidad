@@ -10,7 +10,7 @@ Ninguna tarea empieza antes de que `correo-asincrono-plantillas` esté fusionada
 CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cambio` de
 `procesos-pendientes` que guarda los términos en el registro pendiente (S-03).
 
-- [ ] T-001 Validador del correo del registro
+- [x] T-001 Validador del correo del registro
   RF: RF-003 (D-14) | Depende de: — | Archivos: 2
   Archivos: `validators.py`, `tests/test_validators.py`.
   Hecho cuando: `validate_registration_email` acepta `ana@example.com`, `ana+etiqueta@example.com`
@@ -18,6 +18,11 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   (`email_domain_without_dot`), `ana@[192.0.2.1]` (`email_ip_domain`) y un formato inválido
   (`invalid`); el validador del modelo no cambia (un `PendingRegistration` con `ana@localhost`
   sigue pasando `full_clean`); suite verde.
+  Decisiones: el dominio sin punto y la IP se comprueban antes del formato de Django, que ya
+  rechaza `ana@intranet` como `invalid` y les quitaría su código propio — [Cierto] — revertir:
+  llamar primero a `EmailValidator`. La comprobación del modelo se prueba con
+  `validate_registration_data`, que ejecuta las mismas reglas de la cuenta sin base de datos —
+  [Cierto] — revertir: un `full_clean` sobre un `PendingRegistration`.
 
 - [ ] T-002 Todos los errores del nombre a la vez
   RF: RF-002 (D-13) | Depende de: — | Archivos: 2
