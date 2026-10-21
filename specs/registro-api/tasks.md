@@ -36,13 +36,17 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   siempre la lista. El nombre vacío sigue siendo un error único, porque excluye los demás —
   [Cierto] — revertir: acumularlo también.
 
-- [ ] T-003 Idioma de la solicitud
+- [x] T-003 Idioma de la solicitud
   RF: RF-013 (D-06) | Depende de: — | Archivos: 3
   Archivos: `api/__init__.py`, `api/language.py`, `tests/test_registration_api_language.py`.
   Hecho cuando: `request_language` devuelve `pt-BR` para el campo `pt_BR` o `pt-br`; con el campo
   ausente o inválido usa `Accept-Language` por idioma base y en su orden de preferencia
   (`pt-PT` → `pt-BR`, `es-MX` → `es`, `en-GB` → `en`, `fr, en;q=0.8` → `en`); sin campo válido ni
   cabecera reconocible devuelve `es`; suite verde.
+  Decisiones: el campo admite las mismas variantes de escritura que `locales.normalize`, pero con su
+  propia tabla, porque `normalize` convierte lo desconocido en `es` y no deja pasar a la cabecera —
+  [Cierto] — revertir: añadir a `locales` una función que devuelva `None`. Una cabecera ilegible
+  se trata como ausente (Django devuelve una lista vacía) — [Cierto] — revertir: no aplica.
 
 - [ ] T-004 Catálogo de textos por idioma
   RF: RF-013, RF-002, RF-005 (D-05; CF-7) | Depende de: T-001, T-003 | Archivos: 2
