@@ -10,5 +10,6 @@ def health(_request: HttpRequest) -> JsonResponse:
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/health/", health, name="health"),
+    path("api/", include("apps.accounts.api.urls")),
     path("_allauth/", include("allauth.headless.urls")),
 ]

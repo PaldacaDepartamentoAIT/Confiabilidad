@@ -150,7 +150,7 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   atomicidad se prueba con un fallo al borrar el registro pendiente, que ocurre después de la
   aceptación — [Cierto] — revertir: no aplica.
 
-- [ ] T-012 Vista y rutas de la API
+- [x] T-012 Vista y rutas de la API
   RF: RF-001, RF-002, RF-005, RF-013, RF-014 (M-01, D-01…D-04, D-12) | Depende de: T-003, T-004, T-006, T-010 | Archivos: 4
   Archivos: `api/views.py`, `api/urls.py`, `backend/config/urls.py`,
   `tests/test_registration_api.py`.
@@ -163,6 +163,13 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   cambia la respuesta (S-14); suite verde.
   Excepción: la ruta no se puede probar sin la vista, su `urls.py` y el `include` en
   `config/urls.py`; separar el `include` dejaría una tarea sin comportamiento observable.
+  Decisiones: el CSRF de la ruta web se exige con `CSRFCheck` de DRF en `initial()` de una subclase
+  de la vista, no con `csrf_protect`, porque `csrf_protect` no actúa sobre una vista marcada como
+  exenta (todas las de DRF lo están); el efecto es el de D-02 — [Cierto] — revertir: no aplica. El
+  `403` es el de DRF (`{"detail": …}`), no la página de Django — [Probable] — revertir: devolver
+  la respuesta de `process_view`. Un código de error que no esté en el catálogo provoca un error 500
+  en vez de un texto genérico: los tests garantizan que todos los que emite el serializador están
+  (T-006) — [Probable] — revertir: texto de `invalid` como respaldo en `_render`.
 
 - [ ] T-013 Límites en la vista
   RF: RF-010, RF-011 (M-01, D-12) | Depende de: T-008, T-012 | Archivos: 2
