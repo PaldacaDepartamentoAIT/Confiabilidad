@@ -4,8 +4,8 @@ Estado: cerrada con riesgo residual aceptado · Última actualización: 2026-10-
 ## Qué se hizo
 El registro pasa por un **registro pendiente**: la cuenta no existe hasta que se demuestra el
 acceso al correo con un código y se fija una contraseña. Todo se puede recorrer desde consola con
-`manage.py registration`, sin frontend ni API (RF-023). La API será la feature siguiente y usará el
-mismo servicio (`apps/accounts/registration.py`).
+`manage.py registration`, sin frontend ni API (RF-023). La API del primer paso, el formulario, es
+`registro-api`, y usa el mismo servicio (`apps/accounts/registration.py`).
 
 - **Registro pendiente** (`PendingRegistration`, migración `0005`): correo, nombre, fecha de
   nacimiento y país, validados con las mismas reglas que la cuenta; un solo registro por correo sin
@@ -48,6 +48,14 @@ mismo servicio (`apps/accounts/registration.py`).
   nuevos y anula la validación, para que nadie se apropie de un registro ajeno (RF-005, S-06).
 - **Completar**: crea la cuenta con el correo verificado y borra el registro, todo o nada; si el
   correo consiguió cuenta entretanto, rechaza y borra el registro (RF-012, RF-020).
+- **Términos aceptados** (cambio del 2026-10-21, pedido por `registro-api`; RF-001, RF-005, RF-020,
+  RF-024). El registro pendiente guarda el documento de términos aceptado en el formulario
+  (`terms_version` y `terms_locale`, migración `0012`). Al completar, si ese documento sigue siendo
+  de la versión vigente, la aceptación se registra en la misma operación que crea la cuenta, con la
+  fecha de compleción. Si ya no es vigente, o el registro no tiene documento, la cuenta se crea sin
+  aceptación y figura con los términos sin aceptar. Esto pasa con todo registro empezado desde
+  consola (`registration start` no pide documento) o antes del cambio. Un registro repetido conserva
+  el documento del primero, igual que el resto de sus datos.
 - **Política de contraseñas** de todo el proyecto: 12 caracteres o más, no parecida al correo ni
   al nombre, no común y no filtrada según Have I Been Pwned, consultado sin enviar la contraseña.
   Si el servicio no responde, se acepta y se registra un aviso (RF-022, S-09).

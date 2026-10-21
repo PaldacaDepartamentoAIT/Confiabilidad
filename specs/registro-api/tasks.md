@@ -200,13 +200,16 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   que los del reenvío, la verificación y el restablecimiento siguen pendientes (S-15); cada comando
   de `resumen.md` se ha ejecutado contra el entorno Docker y da lo que el texto dice.
 
-- [ ] T-016 Resumen de procesos-pendientes tras el cambio de términos
+- [x] T-016 Resumen de procesos-pendientes tras el cambio de términos
   RF: RF-009 | Depende de: T-011 | Archivos: 1
   Archivos: `specs/procesos-pendientes/resumen.md`.
   Hecho cuando: el resumen explica que el registro pendiente guarda el documento de términos
   aceptado, que completar el registro registra su aceptación si sigue vigente, y que un registro
   empezado desde consola o antes del cambio se completa sin aceptación; los comandos que cite se
   han ejecutado y dan lo que el texto dice.
+  Decisiones: el resumen no añade comandos nuevos (los pasos de consola no cambian, porque
+  `registration start` no pide documento), así que no hay salidas nuevas que comprobar — [Cierto] —
+  revertir: añadir un paso que complete un registro con documento desde la API de `registro-api`.
 
 ## RF sin tarea
 Ninguno.
