@@ -211,5 +211,15 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   `registration start` no pide documento), así que no hay salidas nuevas que comprobar — [Cierto] —
   revertir: añadir un paso que complete un registro con documento desde la API de `registro-api`.
 
+- [ ] T-017 Corrección: comprobar el límite por IP sin apuntar
+  Tipo: corrección | Origen: bug detectado al preparar T-013
+  RF: RF-011 (S-06, D-12) | Depende de: T-008 | Archivos: 2
+  Archivos: `throttling.py`, `tests/test_registration_throttling.py`.
+  Causa: `check_ip` apunta la solicitud al comprobarla, y la vista solo sabe si debe contar después
+  de validar y de pasar el límite por correo e IP.
+  Hecho cuando: `check_ip(ip, record=False)` devuelve el veredicto sin apuntar nada y
+  `record_ip(ip)` apunta una solicitud; con `record=True` (por defecto) el comportamiento es el de
+  T-008; comprobar sin apuntar 100 veces no consume el cupo; suite verde.
+
 ## RF sin tarea
 Ninguno.
