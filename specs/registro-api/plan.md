@@ -36,7 +36,8 @@ RF: RF-002, RF-003, RF-004
 
 ### M-03 Validadores (`apps/accounts/validators.py`)
 Responsabilidad: `validate_registration_email`, que exige el formato del validador de correo de
-Django, un dominio con al menos un punto y que no sea una IP entre corchetes (D-14); y que
+Django, un dominio con al menos un punto y que no sea una dirección IP, con o sin corchetes
+(`ana@[192.0.2.1]`, `ana@192.0.2.1`, `ana@[IPv6:2001:db8::1]`) (D-14); y que
 `validate_name` lance todos los errores que se cumplan a la vez, no solo el primero (D-13). El
 modelo sigue rechazando igual: solo cambia cuántos errores informa.
 RF: RF-002, RF-003
@@ -195,6 +196,8 @@ obliga a corregir y reenviar dos veces.
 
 ### D-14 Correo estricto solo en la API
 Elegida: `validate_registration_email` en el serializador; el modelo sigue con el validador actual.
+Un dominio que sea una dirección IP, con o sin corchetes, se rechaza con `email_ip_domain`
+(ajuste tras la 1.ª validación, 2026-10-21).
 Descartada: endurecer el validador del modelo.
 Motivo: S-08 limita la regla a la API; cambiar el modelo afectaría a las cuentas de consola y del
 panel, fuera del alcance.
