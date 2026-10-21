@@ -48,7 +48,7 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   [Cierto] — revertir: añadir a `locales` una función que devuelva `None`. Una cabecera ilegible
   se trata como ausente (Django devuelve una lista vacía) — [Cierto] — revertir: no aplica.
 
-- [ ] T-004 Catálogo de textos por idioma
+- [x] T-004 Catálogo de textos por idioma
   RF: RF-013, RF-002, RF-005 (D-05; CF-7) | Depende de: T-001, T-003 | Archivos: 2
   Archivos: `api/messages.py`, `tests/test_registration_api_messages.py`.
   Hecho cuando: el catálogo tiene texto en `es`, `pt-BR` y `en` para el mensaje neutro (S-13), el
@@ -59,6 +59,11 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   `wrong_kind`, `no_current_version` y `not_current_document`; un test falla si algún código no
   tiene texto en alguno de los tres idiomas; los parámetros (`%(max)d`, `%(years)d`, `%(days)d`) se
   sustituyen en los tres; suite verde.
+  Decisiones: `invalid` tiene un texto genérico y textos propios para el correo y la fecha
+  (`FIELD_ERRORS`), porque «el valor no es válido» no dice qué corregir en esos dos campos —
+  [Probable] — revertir: quitar `FIELD_ERRORS`. `null` usa el mismo texto que `required` —
+  [Probable] — revertir: darle uno propio. Los 21 textos y sus traducciones se revisan en el PR,
+  como S-17 de `correo-asincrono-plantillas` — [Cierto] — revertir: no aplica.
 
 - [ ] T-005 Documento mostrado como función pública de `consents`
   RF: RF-004 (M-07, refactor) | Depende de: — | Archivos: 2
