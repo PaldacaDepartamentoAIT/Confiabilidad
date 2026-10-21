@@ -1,5 +1,5 @@
 # Spec: procesos-pendientes (registro pendiente)
-Estado: aprobada
+Estado: borrador
 Aprobación: ligera
 
 ## Objetivo (por qué)
@@ -24,7 +24,8 @@ Los diagramas aportados por el usuario son la referencia:
 ### RF-001 Registro pendiente
 El sistema deberá guardar, para cada registro pendiente, el correo, el nombre completo, la fecha de
 nacimiento, el país, un identificador público, la huella del código vigente, su caducidad, el
-número de intentos fallidos, si el código ya se validó (y cuándo) y la fecha de alta.
+número de intentos fallidos, si el código ya se validó (y cuándo), la fecha de alta y, si se
+indicó al empezarlo, el documento de términos aceptado (su versión y su idioma).
 
 ### RF-002 Datos del registro pendiente válidos
 Cuando se guarde un registro pendiente, el sistema deberá normalizar y validar correo, nombre,
@@ -42,7 +43,8 @@ existente (activa o no), entonces el sistema no deberá guardar el registro pend
 
 ### RF-005 Registro repetido
 Cuando se solicite un registro para un correo que ya tiene un registro pendiente vigente, el
-sistema deberá conservar los datos existentes, descartar los nuevos, asignar un identificador
+sistema deberá conservar los datos existentes, incluido el documento de términos aceptado,
+descartar los nuevos, asignar un identificador
 público nuevo, emitir un código nuevo, poner los intentos a 0 y anular la validación del código
 (S-06).
 
@@ -120,7 +122,11 @@ registro (RF-024; 5 minutos por defecto).
 Cuando se complete un registro pendiente con el código validado y una contraseña, el sistema
 deberá, en una sola operación, crear la cuenta con el correo, el nombre, la fecha de nacimiento y
 el país guardados, la contraseña indicada y el correo marcado como verificado, y borrar el
-registro pendiente. Si la contraseña no cumple la política de RF-022, entonces deberá rechazarlo
+registro pendiente. Si el registro pendiente tiene un documento de términos aceptado que pertenece
+a la versión vigente, entonces el sistema deberá registrar en esa misma operación su aceptación
+(RF-006 de `consentimientos`), con la fecha de compleción; si no lo tiene o ya no es de la versión
+vigente, deberá crear la cuenta sin registrar ninguna aceptación. Si la contraseña no cumple la
+política de RF-022, entonces deberá rechazarlo
 indicando cada regla incumplida y conservar el registro pendiente.
 
 ### RF-021 OBSOLETO — Completar el cambio de contraseña
@@ -145,7 +151,8 @@ paso deberá mostrar el identificador público y el resultado de la operación, 
 con cuenta que sin ella (RF-024, RF-025); nunca el código.
 
 ### RF-024 Empezar el registro
-Cuando se solicite un registro con datos válidos (RF-002), el sistema deberá devolver de inmediato
+Cuando se solicite un registro con datos válidos (RF-002) y, opcionalmente, el documento de
+términos aceptado, el sistema deberá devolver de inmediato
 un identificador público nuevo, con el mismo formato tenga o no cuenta el correo, y hacer fuera de
 la respuesta todo el trabajo que depende de ello: comprobar cuentas y registros pendientes (RF-004,
 RF-005, RF-017), crear o reemplazar el registro pendiente con ese identificador y emitir el código.
@@ -174,8 +181,11 @@ igual que RF-005 con un registro real.
   consuma sin rehacer reglas.
 - S-02 Los diagramas del usuario (ER, flujo de registro y flujo de cambio de contraseña, recibidos
   el 2026-10-01) son la referencia y se guardan en `specs/procesos-pendientes/diagramas/`.
-- S-03 Términos y marketing (`terms_version`, `marketing_opt_in`) se añadirán en la feature de
-  consentimientos, junto con su tabla de términos.
+- S-03 Términos y marketing se gestionan en la feature de consentimientos. El registro pendiente
+  guarda el documento de términos aceptado en el formulario y su aceptación se registra al
+  completar el registro (cambio del 2026-10-21, pedido por `registro-api`, S-03 y RF-009). Los
+  registros empezados desde consola o antes de este cambio no tienen documento y se completan sin
+  aceptación (S-12 y C-13 de `registro-api`).
 - S-04 La gracia de 15 minutos tras caducar el código (diagrama de registro) permite completar el
   registro tras validar el código y cerrar la ventana.
 - S-05 Crear la cuenta se hace aquí (RF-020). Los correos de código y el aviso "ya tienes cuenta"
@@ -253,3 +263,6 @@ igual que RF-005 con un registro real.
   T-047). Riesgos aceptados: una cuenta creada por otra vía mientras hay un registro pendiente
   vigente, o borrada entre dos peticiones, puede distinguir la plaza del registro real — RF:
   ninguno modificado
+- 2026-10-21 — Cambio por `registro-api` (S-03, RF-009): el registro pendiente guarda el documento
+  de términos aceptado y completar el registro registra su aceptación — RF: RF-001, RF-005, RF-020
+  y RF-024 modificados; S-03 ajustado — Estado: pendiente de clarificar
