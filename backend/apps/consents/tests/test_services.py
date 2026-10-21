@@ -483,3 +483,31 @@ def test_without_flagged_versions_any_version_in_force_is_valid() -> None:
     UserTerms(user=user, terms=Terms.objects.get(version="1", locale="es")).save()
 
     assert _terms_state(user) == services.TermsState.ACCEPTED
+
+
+def test_current_document_shown_returns_the_document_in_force() -> None:
+    documents = publish_version(version="3")
+    shown = services.current_document_shown(Terms.Kind.TERMS, version="3", locale="en")
+    assert shown == documents["en"]
+
+
+def test_current_document_shown_rejects_each_mismatch_with_its_code() -> None:
+    with pytest.raises(ValidationError) as missing:
+        services.current_document_shown(Terms.Kind.TERMS, version="9", locale="es")
+    assert _error_code(missing) == "document_not_found"
+
+    publish_version(kind=Terms.Kind.MARKETING, version="m1")
+    with pytest.raises(ValidationError) as wrong_kind:
+        services.current_document_shown(Terms.Kind.TERMS, version="m1", locale="es")
+    assert _error_code(wrong_kind) == "wrong_kind"
+
+    make_document(version="draft", locale="es")
+    with pytest.raises(ValidationError) as no_current:
+        services.current_document_shown(Terms.Kind.TERMS, version="draft", locale="es")
+    assert _error_code(no_current) == "no_current_version"
+
+    publish_version(version="old", published_at=timezone.now() - 3 * DAY)
+    publish_version(version="new")
+    with pytest.raises(ValidationError) as outdated:
+        services.current_document_shown(Terms.Kind.TERMS, version="old", locale="es")
+    assert _error_code(outdated) == "not_current_document"

@@ -65,7 +65,7 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   [Probable] — revertir: darle uno propio. Los 21 textos y sus traducciones se revisan en el PR,
   como S-17 de `correo-asincrono-plantillas` — [Cierto] — revertir: no aplica.
 
-- [ ] T-005 Documento mostrado como función pública de `consents`
+- [x] T-005 Documento mostrado como función pública de `consents`
   RF: RF-004 (M-07, refactor) | Depende de: — | Archivos: 2
   Archivos: `backend/apps/consents/services.py`, `backend/apps/consents/tests/test_services.py`.
   Hecho cuando: `current_document_shown(kind, version=, locale=)` es pública, `accept_terms` y
