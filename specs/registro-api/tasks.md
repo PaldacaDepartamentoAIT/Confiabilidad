@@ -182,7 +182,7 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   `400` o justo antes de empezar el registro; así una solicitud rechazada por el límite de correo e
   IP no consume el cupo de la IP (T-017) — [Cierto] — revertir: apuntar en la primera comprobación.
 
-- [ ] T-014 Respuesta neutra en los tres casos
+- [x] T-014 Respuesta neutra en los tres casos
   RF: RF-005, RF-008, RF-010 (CF-2, CF-3) | Depende de: T-012, T-013 | Archivos: 1
   Archivos: `tests/test_registration_api_neutrality.py`.
   Hecho cuando: para un correo nuevo, uno con registro pendiente vigente, uno con cuenta activa y
@@ -190,6 +190,10 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   cuerpo salvo el valor de `public_id` (mismo formato), las mismas cabeceras y las mismas cookies; lo
   mismo para las respuestas `429` del límite por correo e IP; tras resolver la plaza del correo con
   cuenta, su `public_id` no corresponde a ningún registro pendiente (CF-3); suite verde.
+  Decisiones: la tarea solo añade tests, que pasan desde el principio porque la neutralidad ya está
+  construida; su fallo se comprobó con dos mutantes en la vista (una cabecera que delata la cuenta y
+  un `429` distinto con registro pendiente) — [Cierto] — revertir: no aplica. Cada ruta usa una IP
+  propia para que el límite por IP no interfiera entre casos — [Cierto] — revertir: no aplica.
 
 - [ ] T-015 Configuración de ejemplo, resumen y acciones humanas
   RF: RF-012 (M-08; CF-5) | Depende de: T-014 | Archivos: 3
