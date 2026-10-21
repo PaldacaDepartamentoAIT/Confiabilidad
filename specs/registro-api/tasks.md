@@ -123,7 +123,7 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   `terms_locale`, vacíos por defecto en los registros existentes (C-13);
   `makemigrations accounts --check --dry-run` no detecta cambios; suite verde.
 
-- [ ] T-010 Empezar el registro con el documento
+- [x] T-010 Empezar el registro con el documento
   RF: RF-006, RF-007, RF-008 (M-07; S-11) | Depende de: T-009 | Archivos: 2
   Archivos: `registration.py`, `tests/test_registration_service.py`.
   Hecho cuando: `start` recibe `terms_version` y `terms_locale` y los guarda en el `payload` de la
@@ -132,6 +132,9 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   solicitud traiga otros (RF-007); con un correo con cuenta, no hay registro pendiente con ese
   `public_id` (CF-3) y el aviso se encola solo si la cuenta está activa (RF-008); los comandos de
   consola de RF-023 de `procesos-pendientes` siguen funcionando sin documento; suite verde.
+  Decisiones: el `payload` de la plaza solo lleva `terms_version` y `terms_locale` cuando se indica
+  un documento, para no cambiar la plaza de los registros de consola — [Cierto] — revertir:
+  guardarlos siempre, vacíos si no hay documento.
 
 - [ ] T-011 Aceptación de los términos al completar
   RF: RF-009 (M-07, D-11; S-12) | Depende de: T-005, T-010 | Archivos: 2

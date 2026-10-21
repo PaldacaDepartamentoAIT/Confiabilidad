@@ -19,6 +19,7 @@ from apps.accounts.tests.factories import (
     make_user,
 )
 from apps.core import fingerprints
+from apps.emails.models import OutboundEmail
 
 pytestmark = pytest.mark.django_db
 
@@ -696,3 +697,53 @@ def test_every_invalid_field_is_reported_at_once() -> None:
 
 def test_the_data_is_normalized_before_it_is_validated() -> None:
     _validate(email="  Nueva@X.com ", name="  Ana García ", country=" es ")
+
+
+TERMS: dict[str, Any] = {"terms_version": "v2", "terms_locale": "pt-BR"}
+
+
+def test_start_keeps_the_accepted_terms_document_in_the_slot() -> None:
+    registration.start(email="ana@x.com", **DATA, **TERMS)
+
+    payload = PhantomProcess.objects.get().payload
+    assert payload is not None
+    assert (payload["terms_version"], payload["terms_locale"]) == ("v2", "pt-BR")
+
+
+def test_new_registration_stores_the_accepted_terms_document_and_sends_the_code() -> None:
+    started = _start("ana@x.com", **TERMS)
+
+    pending = PendingRegistration.objects.get()
+    assert (pending.public_id, pending.terms_version, pending.terms_locale) == (
+        started.public_id,
+        "v2",
+        "pt-BR",
+    )
+
+
+def test_registration_started_without_terms_document_stores_it_empty() -> None:
+    _start("ana@x.com")
+
+    pending = PendingRegistration.objects.get()
+    assert (pending.terms_version, pending.terms_locale) == ("", "")
+
+
+def test_repeat_keeps_the_terms_document_of_the_first_registration() -> None:
+    _start("ana@x.com", **TERMS)
+
+    _start("ANA@x.com", terms_version="v3", terms_locale="en")
+
+    pending = PendingRegistration.objects.get()
+    assert (pending.terms_version, pending.terms_locale) == ("v2", "pt-BR")
+
+
+@pytest.mark.parametrize("is_active", [True, False])
+def test_start_with_terms_and_an_account_stores_no_registration(is_active: bool) -> None:
+    make_user(email="ana@x.com", is_active=is_active)
+
+    result = registration.start(email="ana@x.com", **DATA, **TERMS)
+    registration.resolve_registration(result.public_id)
+
+    assert not PendingRegistration.objects.filter(public_id=result.public_id).exists()
+    notices = OutboundEmail.objects.filter(kind="account_exists", recipient="ana@x.com")
+    assert notices.count() == (1 if is_active else 0)
