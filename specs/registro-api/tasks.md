@@ -171,13 +171,16 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   en vez de un texto genérico: los tests garantizan que todos los que emite el serializador están
   (T-006) — [Probable] — revertir: texto de `invalid` como respaldo en `_render`.
 
-- [ ] T-013 Límites en la vista
+- [x] T-013 Límites en la vista
   RF: RF-010, RF-011 (M-01, D-12) | Depende de: T-008, T-012 | Archivos: 2
   Archivos: `api/views.py`, `tests/test_registration_api_limits.py`.
   Hecho cuando: superado el límite por IP, la vista responde `429` con `retry_after` y la cabecera
   `Retry-After` sin validar (un cuerpo inválido también recibe `429`); superado el de correo e IP,
   responde `429` tras validar; una solicitud inválida cuenta para la IP pero no para el correo; una
   rechazada por CSRF o por un límite no cuenta; en ningún `429` se llama a `start`; suite verde.
+  Decisiones: la IP se comprueba sin apuntar antes de validar y se apunta después, al responder
+  `400` o justo antes de empezar el registro; así una solicitud rechazada por el límite de correo e
+  IP no consume el cupo de la IP (T-017) — [Cierto] — revertir: apuntar en la primera comprobación.
 
 - [ ] T-014 Respuesta neutra en los tres casos
   RF: RF-005, RF-008, RF-010 (CF-2, CF-3) | Depende de: T-012, T-013 | Archivos: 1

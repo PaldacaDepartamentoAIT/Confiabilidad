@@ -9,7 +9,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts import registration
+from apps.accounts import registration, throttling
 from apps.accounts.api import messages
 from apps.accounts.api.language import request_language
 from apps.accounts.api.serializers import RegistrationSerializer
@@ -28,13 +28,23 @@ class AppRegistrationView(APIView):
         language = request_language(
             field if isinstance(field, str) else None, request.headers.get("Accept-Language")
         )
+        # Orden de D-12; solo cuenta lo que no rechaza ningún límite (S-06).
+        ip = str(request.META.get("REMOTE_ADDR", ""))
+        verdict = throttling.check_ip(ip, record=False)
+        if not verdict.allowed:
+            return _limited(verdict, language)
         serializer = RegistrationSerializer(data=request.data)
         if not serializer.is_valid():
+            throttling.record_ip(ip)
             return Response(
                 {"errors": _render(serializer.errors, language)},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         data = serializer.validated_data
+        verdict = throttling.check_email_ip(data["email"], ip)
+        if not verdict.allowed:
+            return _limited(verdict, language)
+        throttling.record_ip(ip)
         started = registration.start(
             email=data["email"],
             name=data["name"],
@@ -62,6 +72,17 @@ def _enforce_csrf(request: HttpRequest) -> None:
     check.process_request(request)
     if check.process_view(request, lambda _request: HttpResponse(), (), {}) is not None:
         raise exceptions.PermissionDenied(_("CSRF verification failed."))
+
+
+def _limited(verdict: throttling.Verdict, language: str) -> Response:
+    return Response(
+        {
+            "message": messages.rate_limited_text(language, seconds=verdict.retry_after),
+            "retry_after": verdict.retry_after,
+        },
+        status=status.HTTP_429_TOO_MANY_REQUESTS,
+        headers={"Retry-After": str(verdict.retry_after)},
+    )
 
 
 def _render(errors: Any, language: str) -> dict[str, list[dict[str, str]]]:
