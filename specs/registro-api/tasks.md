@@ -136,7 +136,7 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   un documento, para no cambiar la plaza de los registros de consola — [Cierto] — revertir:
   guardarlos siempre, vacíos si no hay documento.
 
-- [ ] T-011 Aceptación de los términos al completar
+- [x] T-011 Aceptación de los términos al completar
   RF: RF-009 (M-07, D-11; S-12) | Depende de: T-005, T-010 | Archivos: 2
   Archivos: `registration.py`, `tests/test_registration_service.py`.
   Hecho cuando: completar un registro con un documento vigente crea la cuenta y una aceptación de
@@ -144,6 +144,11 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   falla, no queda aceptación); con un documento que dejó de ser vigente, borrado, o sin documento
   guardado, la cuenta se crea sin aceptación; antes de completar no existe ninguna aceptación nueva
   para ese correo, y las de una cuenta borrada con el mismo correo no cambian; suite verde.
+  Decisiones: se omite la aceptación ante cualquier `ValidationError` de `accept_terms` (documento
+  inexistente, de otro tipo o no vigente), no solo ante «no vigente», porque todos significan que el
+  documento guardado ya no se puede aceptar — [Probable] — revertir: filtrar por `error.code`. La
+  atomicidad se prueba con un fallo al borrar el registro pendiente, que ocurre después de la
+  aceptación — [Cierto] — revertir: no aplica.
 
 - [ ] T-012 Vista y rutas de la API
   RF: RF-001, RF-002, RF-005, RF-013, RF-014 (M-01, D-01…D-04, D-12) | Depende de: T-003, T-004, T-006, T-010 | Archivos: 4

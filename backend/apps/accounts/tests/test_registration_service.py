@@ -18,6 +18,9 @@ from apps.accounts.tests.factories import (
     make_pending,
     make_user,
 )
+from apps.consents import services as consents
+from apps.consents.models import UserTerms
+from apps.consents.tests.factories import publish_version
 from apps.core import fingerprints
 from apps.emails.models import OutboundEmail
 
@@ -747,3 +750,87 @@ def test_start_with_terms_and_an_account_stores_no_registration(is_active: bool)
     assert not PendingRegistration.objects.filter(public_id=result.public_id).exists()
     notices = OutboundEmail.objects.filter(kind="account_exists", recipient="ana@x.com")
     assert notices.count() == (1 if is_active else 0)
+
+
+def _verified_with_terms(version: str, locale: str = "es") -> StartedWithCode:
+    started = _start("ana@x.com", terms_version=version, terms_locale=locale)
+    assert registration.verify(public_id=started.public_id, code=started.code) == "verified"
+    return started
+
+
+def test_complete_accepts_the_stored_terms_document_with_the_completion_date() -> None:
+    documents = publish_version(version="v2")
+    started = _verified_with_terms("v2", "pt-BR")
+    assert not UserTerms.objects.exists()
+    before = timezone.now()
+
+    user = _complete(started.public_id).user
+
+    acceptance = UserTerms.objects.get()
+    assert (acceptance.user, acceptance.terms) == (user, documents["pt-BR"])
+    assert acceptance.terms_accepted_at >= before
+
+
+def test_complete_with_terms_no_longer_in_force_creates_the_account_without_acceptance() -> None:
+    publish_version(version="old", published_at=timezone.now() - timedelta(days=3))
+    started = _verified_with_terms("old")
+    publish_version(version="new")
+
+    _complete(started.public_id)
+
+    assert User.objects.filter(email="ana@x.com").exists()
+    assert not UserTerms.objects.exists()
+
+
+def test_complete_with_a_deleted_terms_document_creates_the_account_without_acceptance() -> None:
+    documents = publish_version(version="v2")
+    started = _verified_with_terms("v2")
+    documents["es"].delete()
+
+    _complete(started.public_id)
+
+    assert User.objects.filter(email="ana@x.com").exists()
+    assert not UserTerms.objects.exists()
+
+
+def test_complete_without_stored_terms_creates_the_account_without_acceptance() -> None:
+    publish_version(version="v2")
+    started = _verified()
+
+    _complete(started.public_id)
+
+    assert User.objects.filter(email="ana@x.com").exists()
+    assert not UserTerms.objects.exists()
+
+
+def test_acceptance_of_a_deleted_account_with_the_same_email_is_kept() -> None:
+    publish_version(version="v2")
+    old_user = make_user(email="ana@x.com")
+    old = consents.accept_terms(old_user, version="v2", locale="es")
+    old_user.delete()
+    started = _verified_with_terms("v2")
+    assert UserTerms.objects.count() == 1
+
+    user = _complete(started.public_id).user
+
+    old.refresh_from_db()
+    assert old.user is None
+    assert UserTerms.objects.filter(user=user).count() == 1
+
+
+def test_failure_after_the_acceptance_leaves_neither_account_nor_acceptance(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    publish_version(version="v2")
+    started = _verified_with_terms("v2")
+
+    def broken_delete(self: PendingRegistration, *args: Any, **kwargs: Any) -> None:
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(PendingRegistration, "delete", broken_delete)
+
+    with pytest.raises(RuntimeError):
+        registration.complete(public_id=started.public_id, password=GOOD_PASSWORD)
+
+    assert not User.objects.exists()
+    assert not UserTerms.objects.exists()
