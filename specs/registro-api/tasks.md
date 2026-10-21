@@ -195,7 +195,7 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   un `429` distinto con registro pendiente) — [Cierto] — revertir: no aplica. Cada ruta usa una IP
   propia para que el límite por IP no interfiera entre casos — [Cierto] — revertir: no aplica.
 
-- [ ] T-015 Configuración de ejemplo, resumen y acciones humanas
+- [x] T-015 Configuración de ejemplo, resumen y acciones humanas
   RF: RF-012 (M-08; CF-5) | Depende de: T-014 | Archivos: 3
   Archivos: `backend/.env.example`, `specs/registro-api/resumen.md`,
   `specs/cambio-contrasena/HUMAN_TODO.md`.
@@ -206,6 +206,11 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   `HUMAN_TODO.md` de `cambio-contrasena` indica que el límite del formulario de registro ya existe y
   que los del reenvío, la verificación y el restablecimiento siguen pendientes (S-15); cada comando
   de `resumen.md` se ha ejecutado contra el entorno Docker y da lo que el texto dice.
+  Decisiones: la imagen del backend no se pudo construir (Docker Hub, `429 Too Many Requests`), así
+  que los comandos se ejecutaron con el mismo código fuera del contenedor, sobre el Postgres y el
+  Redis de Docker; repetirlos en Docker queda en el `HUMAN_TODO.md` de la feature — [Cierto] —
+  revertir: no aplica. El ejemplo del paso 10 pide la contraseña sin mostrarla, como el resumen de
+  `procesos-pendientes` — [Cierto] — revertir: pasarla con `--password`.
 
 - [x] T-016 Resumen de procesos-pendientes tras el cambio de términos
   RF: RF-009 | Depende de: T-011 | Archivos: 1
