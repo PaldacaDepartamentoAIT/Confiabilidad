@@ -101,7 +101,7 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   entorno con esos valores por defecto y `conf.py` los expone; con `settings` cambiados, `conf.py`
   devuelve los nuevos; suite verde.
 
-- [ ] T-008 Límite de frecuencia por correo e IP y por IP
+- [x] T-008 Límite de frecuencia por correo e IP y por IP
   RF: RF-010, RF-011, RF-012 (M-06, D-07, D-08, D-09) | Depende de: T-007 | Archivos: 2
   Archivos: `throttling.py`, `tests/test_registration_throttling.py`.
   Hecho cuando, con la hora inyectada: una segunda solicitud con el mismo correo e IP antes de 60 s
@@ -110,6 +110,10 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   una hora; las rechazadas no se apuntan (la ventana se libera sola, S-06); `Ana@X.com ` y
   `ana@x.com` cuentan juntas; la clave de caché usa `consent_email_fingerprint` y no contiene el
   correo; con los límites cambiados por `settings` se aplican los nuevos; suite verde.
+  Decisiones: una marca sale de la ventana cuando cumple exactamente una hora, y la espera se
+  redondea hacia arriba a segundos enteros (nunca «espera 0 segundos») — [Cierto] — revertir:
+  `>=` en el filtro y `round`. La hora es la del reloj del servidor (`time.time()`), inyectable en
+  los tests — [Cierto] — revertir: no aplica.
 
 - [ ] T-009 Documento de términos en el registro pendiente
   RF: RF-009 (M-07, D-10) | Depende de: — | Archivos: 3
