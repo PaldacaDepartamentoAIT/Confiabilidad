@@ -93,7 +93,7 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   prueba de que no se consultan cuentas ni registros comprueba que ninguna consulta toca tablas
   `accounts_`, en vez de contar consultas — [Cierto] — revertir: `django_assert_num_queries`.
 
-- [ ] T-007 Límites configurables
+- [x] T-007 Límites configurables
   RF: RF-012 (M-06) | Depende de: — | Archivos: 3
   Archivos: `conf.py`, `backend/config/settings.py`, `tests/test_registration_conf.py`.
   Hecho cuando: `REGISTRATION_RATE_EMAIL_IP_INTERVAL_SECONDS` (60),

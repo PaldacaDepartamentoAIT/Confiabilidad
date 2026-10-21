@@ -25,3 +25,15 @@ def pwned_timeout() -> float:
 
 def start_retry_window() -> timedelta:
     return timedelta(minutes=settings.REGISTRATION_START_RETRY_MINUTES)
+
+
+def rate_email_ip_interval() -> timedelta:
+    return timedelta(seconds=settings.REGISTRATION_RATE_EMAIL_IP_INTERVAL_SECONDS)
+
+
+def rate_email_ip_per_hour() -> int:
+    return int(settings.REGISTRATION_RATE_EMAIL_IP_PER_HOUR)
+
+
+def rate_ip_per_hour() -> int:
+    return int(settings.REGISTRATION_RATE_IP_PER_HOUR)

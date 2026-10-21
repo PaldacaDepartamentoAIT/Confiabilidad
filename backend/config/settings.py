@@ -208,6 +208,12 @@ REGISTRATION_SECRET_TRANSITION_MINUTES = env.int(
 PWNED_PASSWORDS_TIMEOUT_SECONDS = env.float("PWNED_PASSWORDS_TIMEOUT_SECONDS", default=2.0)
 # Minutos durante los que se reintenta el trabajo de fuera de la respuesta de empezar un proceso.
 REGISTRATION_START_RETRY_MINUTES = env.int("REGISTRATION_START_RETRY_MINUTES", default=5)
+# Límite de frecuencia del formulario de registro (RF-010 y RF-011 de registro-api).
+REGISTRATION_RATE_EMAIL_IP_INTERVAL_SECONDS = env.int(
+    "REGISTRATION_RATE_EMAIL_IP_INTERVAL_SECONDS", default=60
+)
+REGISTRATION_RATE_EMAIL_IP_PER_HOUR = env.int("REGISTRATION_RATE_EMAIL_IP_PER_HOUR", default=5)
+REGISTRATION_RATE_IP_PER_HOUR = env.int("REGISTRATION_RATE_IP_PER_HOUR", default=20)
 PWNED_PASSWORDS_ENABLED = env.bool("PWNED_PASSWORDS_ENABLED", default=True)
 
 # Correos: proveedor de envío por entorno (D-02). Sin EMAIL_BACKEND, el correo completo sale

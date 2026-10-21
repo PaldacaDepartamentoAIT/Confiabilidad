@@ -19,6 +19,9 @@ def test_defaults() -> None:
     assert conf.pwned_timeout() == 2.0
     assert settings.REGISTRATION_SECRET_TRANSITION_MINUTES == 60
     assert conf.start_retry_window() == timedelta(minutes=5)
+    assert conf.rate_email_ip_interval() == timedelta(seconds=60)
+    assert conf.rate_email_ip_per_hour() == 5
+    assert conf.rate_ip_per_hour() == 20
 
 
 @override_settings(
@@ -28,6 +31,9 @@ def test_defaults() -> None:
     REGISTRATION_MAX_LIFETIME_MINUTES=30,
     PWNED_PASSWORDS_TIMEOUT_SECONDS=0.5,
     REGISTRATION_START_RETRY_MINUTES=2,
+    REGISTRATION_RATE_EMAIL_IP_INTERVAL_SECONDS=30,
+    REGISTRATION_RATE_EMAIL_IP_PER_HOUR=3,
+    REGISTRATION_RATE_IP_PER_HOUR=100,
 )
 def test_values_follow_settings() -> None:
     assert conf.max_failed_attempts() == 3
@@ -36,6 +42,9 @@ def test_values_follow_settings() -> None:
     assert conf.max_lifetime() == timedelta(minutes=30)
     assert conf.pwned_timeout() == 0.5
     assert conf.start_retry_window() == timedelta(minutes=2)
+    assert conf.rate_email_ip_interval() == timedelta(seconds=30)
+    assert conf.rate_email_ip_per_hour() == 3
+    assert conf.rate_ip_per_hour() == 100
 
 
 BACKEND_DIR = Path(__file__).resolve().parents[3]
@@ -47,6 +56,9 @@ ENV_LIMITS = {
     "REGISTRATION_SECRET_TRANSITION_MINUTES": "45",
     "PWNED_PASSWORDS_TIMEOUT_SECONDS": "0.75",
     "REGISTRATION_START_RETRY_MINUTES": "8",
+    "REGISTRATION_RATE_EMAIL_IP_INTERVAL_SECONDS": "90",
+    "REGISTRATION_RATE_EMAIL_IP_PER_HOUR": "4",
+    "REGISTRATION_RATE_IP_PER_HOUR": "50",
 }
 _READ_SETTINGS = (
     "import json, django\n"
@@ -77,4 +89,7 @@ def test_limits_are_read_from_environment_variables() -> None:
         "REGISTRATION_MAX_FAILED_ATTEMPTS": 7,
         "REGISTRATION_MAX_LIFETIME_MINUTES": 90,
         "REGISTRATION_SECRET_TRANSITION_MINUTES": 45,
+        "REGISTRATION_RATE_EMAIL_IP_INTERVAL_SECONDS": 90,
+        "REGISTRATION_RATE_EMAIL_IP_PER_HOUR": 4,
+        "REGISTRATION_RATE_IP_PER_HOUR": 50,
     }
