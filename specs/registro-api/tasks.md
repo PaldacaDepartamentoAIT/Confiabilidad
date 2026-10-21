@@ -115,7 +115,7 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   `>=` en el filtro y `round`. La hora es la del reloj del servidor (`time.time()`), inyectable en
   los tests — [Cierto] — revertir: no aplica.
 
-- [ ] T-009 Documento de términos en el registro pendiente
+- [x] T-009 Documento de términos en el registro pendiente
   RF: RF-009 (M-07, D-10) | Depende de: — | Archivos: 3
   Archivos: `models.py`, `migrations/0012_pendingregistration_terms.py`,
   `tests/test_pending_registration_model.py`.

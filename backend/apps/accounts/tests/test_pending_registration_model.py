@@ -172,3 +172,21 @@ def test_locked_at_max_failed_attempts() -> None:
 def test_lock_follows_settings() -> None:
     assert not _saved("a@x.com", failed_attempts=2).is_locked
     assert _saved("b@x.com", failed_attempts=3).is_locked
+
+
+def test_accepted_terms_document_is_stored() -> None:
+    pending = _pending()
+    pending.terms_version = "v2"
+    pending.terms_locale = "pt-BR"
+    pending.save()
+
+    stored = PendingRegistration.objects.get(pk=pending.pk)
+    assert (stored.terms_version, stored.terms_locale) == ("v2", "pt-BR")
+
+
+def test_registration_without_terms_document_keeps_it_empty() -> None:
+    pending = _pending()
+    pending.save()
+
+    stored = PendingRegistration.objects.get(pk=pending.pk)
+    assert (stored.terms_version, stored.terms_locale) == ("", "")

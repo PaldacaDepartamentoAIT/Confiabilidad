@@ -196,6 +196,9 @@ class PendingRegistration(CodeProcess):
     birthdate = models.DateField()
     country = models.CharField(max_length=2)
     language = models.CharField(max_length=5, choices=LANGUAGE_CHOICES, default=DEFAULT_LANGUAGE)
+    # Documento de términos aceptado en el formulario; vacío si se empezó desde consola (D-10).
+    terms_version = models.CharField(max_length=20, blank=True, default="")
+    terms_locale = models.CharField(max_length=5, blank=True, default="")
 
     objects = CodeProcessQuerySet["PendingRegistration"].as_manager()
 
