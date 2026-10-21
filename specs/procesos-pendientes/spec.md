@@ -1,5 +1,5 @@
 # Spec: procesos-pendientes (registro pendiente)
-Estado: borrador
+Estado: aprobada
 Aprobación: ligera
 
 ## Objetivo (por qué)
@@ -265,4 +265,5 @@ igual que RF-005 con un registro real.
   ninguno modificado
 - 2026-10-21 — Cambio por `registro-api` (S-03, RF-009): el registro pendiente guarda el documento
   de términos aceptado y completar el registro registra su aceptación — RF: RF-001, RF-005, RF-020
-  y RF-024 modificados; S-03 ajustado — Estado: pendiente de clarificar
+  y RF-024 modificados; S-03 ajustado. Clarificado sin hallazgos; impacto: sin cambios en el plan,
+  lo implementan T-009…T-011 y T-016 de `registro-api` — Estado: impacto analizado
