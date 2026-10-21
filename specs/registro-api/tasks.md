@@ -73,7 +73,7 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   (`document_not_found`, `wrong_kind`, `no_current_version`, `not_current_document`), y los tests
   existentes de `consents` siguen en verde sin cambiar lo que afirman; suite verde.
 
-- [ ] T-006 Serializador del formulario
+- [x] T-006 Serializador del formulario
   RF: RF-002, RF-003, RF-004 (M-02, D-13) | Depende de: T-001, T-002, T-004, T-005 | Archivos: 2
   Archivos: `api/serializers.py`, `tests/test_registration_api_serializer.py`.
   Hecho cuando: con datos válidos devuelve los datos normalizados y el documento; cada campo
@@ -84,6 +84,14 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   la solicitud se acepta (S-21); el serializador no consulta cuentas ni registros pendientes (test
   con `django_assert_num_queries` que solo admite las consultas de términos); todos los códigos que
   emite están en el catálogo de T-004; suite verde.
+  Decisiones: `terms` es un `JSONField` validado a mano, y no un serializador anidado, para que sus
+  errores salgan en una lista plana bajo `terms` («error en el campo de términos», RF-004) —
+  [Cierto] — revertir: serializador anidado y aplanar en la vista. Un documento sin `version` o sin
+  `locale` da `required` bajo `terms`, el código de «no indica el documento» — [Probable] —
+  revertir: un código propio en el catálogo. La marca solo vale con el booleano `true` de JSON
+  (`"true"` y `1` no cuentan) — [Probable] — revertir: aceptar los valores verdaderos de DRF. La
+  prueba de que no se consultan cuentas ni registros comprueba que ninguna consulta toca tablas
+  `accounts_`, en vez de contar consultas — [Cierto] — revertir: `django_assert_num_queries`.
 
 - [ ] T-007 Límites configurables
   RF: RF-012 (M-06) | Depende de: — | Archivos: 3

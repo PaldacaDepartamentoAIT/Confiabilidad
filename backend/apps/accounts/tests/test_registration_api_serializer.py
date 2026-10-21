@@ -1,0 +1,169 @@
+from datetime import date, timedelta
+from typing import Any
+
+import pytest
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
+from django.utils import timezone
+
+from apps.accounts.api import messages
+from apps.accounts.api.serializers import RegistrationSerializer
+from apps.consents.models import Terms
+from apps.consents.tests.factories import make_document, publish_version
+
+pytestmark = pytest.mark.django_db
+
+
+def _data(**overrides: Any) -> dict[str, Any]:
+    data: dict[str, Any] = {
+        "name": "  Ana García ",
+        "birthdate": "1990-05-17",
+        "email": " ana@example.com ",
+        "country": "es",
+        "terms": {"version": "1", "locale": "es", "accepted": True},
+    }
+    data.update(overrides)
+    return data
+
+
+def _codes(serializer: RegistrationSerializer) -> dict[str, list[str]]:
+    assert not serializer.is_valid()
+    return {field: [error.code for error in errors] for field, errors in serializer.errors.items()}
+
+
+@pytest.fixture
+def terms() -> dict[str, Terms]:
+    return publish_version(version="1")
+
+
+def test_valid_form_returns_normalized_data_and_document(terms: dict[str, Terms]) -> None:
+    serializer = RegistrationSerializer(data=_data(language="pt_BR"))
+    assert serializer.is_valid(), serializer.errors
+    assert serializer.validated_data == {
+        "name": "Ana García",
+        "birthdate": date(1990, 5, 17),
+        "email": "ana@example.com",
+        "country": "ES",
+        "terms": {"version": "1", "locale": "es"},
+        "language": "pt_BR",
+    }
+
+
+def test_language_is_optional(terms: dict[str, Terms]) -> None:
+    serializer = RegistrationSerializer(data=_data())
+    assert serializer.is_valid(), serializer.errors
+    assert serializer.validated_data["language"] is None
+
+
+@pytest.mark.parametrize("field", ["name", "birthdate", "email", "country", "terms"])
+def test_missing_field_is_required(terms: dict[str, Terms], field: str) -> None:
+    data = _data()
+    del data[field]
+    assert _codes(RegistrationSerializer(data=data)) == {field: ["required"]}
+
+
+@pytest.mark.parametrize("field", ["name", "birthdate", "email", "country", "terms"])
+def test_null_field_is_rejected(terms: dict[str, Terms], field: str) -> None:
+    assert _codes(RegistrationSerializer(data=_data(**{field: None}))) == {field: ["null"]}
+
+
+@pytest.mark.parametrize(
+    ("overrides", "expected"),
+    [
+        ({"name": "   "}, {"name": ["blank"]}),
+        (
+            {"name": "Ana\tGarcía  " + "a" * 150},
+            {"name": ["name_too_long", "name_control_char", "name_consecutive_spaces"]},
+        ),
+        ({"birthdate": "17/05/1990"}, {"birthdate": ["invalid"]}),
+        (
+            {"birthdate": (timezone.localdate() + timedelta(days=1)).isoformat()},
+            {"birthdate": ["birthdate_in_future"]},
+        ),
+        (
+            {"birthdate": (timezone.localdate() - timedelta(days=365 * 18)).isoformat()},
+            {"birthdate": ["birthdate_under_minimum_age"]},
+        ),
+        ({"country": "XX"}, {"country": ["country_invalid"]}),
+        ({"email": "ana"}, {"email": ["invalid"]}),
+        ({"email": "ana@localhost"}, {"email": ["email_domain_without_dot"]}),
+        ({"email": "ana@[192.0.2.1]"}, {"email": ["email_ip_domain"]}),
+        ({"terms": "1"}, {"terms": ["invalid"]}),
+    ],
+)
+def test_invalid_field_reports_its_codes(
+    terms: dict[str, Terms], overrides: dict[str, Any], expected: dict[str, list[str]]
+) -> None:
+    assert _codes(RegistrationSerializer(data=_data(**overrides))) == expected
+
+
+def test_every_invalid_field_is_reported_at_once(terms: dict[str, Terms]) -> None:
+    data = _data(name="", birthdate="x", email="ana@localhost", country="XX", terms={})
+    codes = _codes(RegistrationSerializer(data=data))
+    assert set(codes) == {"name", "birthdate", "email", "country", "terms"}
+
+
+@pytest.mark.parametrize("accepted", [None, False, "true", 1])
+def test_terms_without_explicit_acceptance_are_rejected(
+    terms: dict[str, Terms], accepted: object
+) -> None:
+    document: dict[str, object] = {"version": "1", "locale": "es"}
+    if accepted is not None:
+        document["accepted"] = accepted
+    assert _codes(RegistrationSerializer(data=_data(terms=document))) == {
+        "terms": ["terms_not_accepted"]
+    }
+
+
+@pytest.mark.parametrize("document", [{"accepted": True}, {"version": "1", "accepted": True}])
+def test_terms_without_document_are_required(
+    terms: dict[str, Terms], document: dict[str, object]
+) -> None:
+    assert _codes(RegistrationSerializer(data=_data(terms=document))) == {"terms": ["required"]}
+
+
+def test_missing_acceptance_and_document_are_both_reported(terms: dict[str, Terms]) -> None:
+    assert _codes(RegistrationSerializer(data=_data(terms={"accepted": False}))) == {
+        "terms": ["terms_not_accepted", "required"]
+    }
+
+
+def test_each_document_mismatch_has_its_code() -> None:
+    def terms_codes(version: str) -> list[str]:
+        document = {"version": version, "locale": "es", "accepted": True}
+        return _codes(RegistrationSerializer(data=_data(terms=document)))["terms"]
+
+    assert terms_codes("9") == ["document_not_found"]
+    publish_version(kind=Terms.Kind.MARKETING, version="m1")
+    assert terms_codes("m1") == ["wrong_kind"]
+    make_document(version="draft", locale="es")
+    assert terms_codes("draft") == ["no_current_version"]
+    publish_version(version="old", published_at=timezone.now() - timedelta(days=3))
+    publish_version(version="new")
+    assert terms_codes("old") == ["not_current_document"]
+
+
+def test_document_in_another_language_is_accepted(terms: dict[str, Terms]) -> None:
+    document = {"version": "1", "locale": "en", "accepted": True}
+    serializer = RegistrationSerializer(data=_data(terms=document, language="pt-BR"))
+    assert serializer.is_valid(), serializer.errors
+    assert serializer.validated_data["terms"] == {"version": "1", "locale": "en"}
+
+
+def test_validation_does_not_look_at_accounts_or_pending_registrations(
+    terms: dict[str, Terms],
+) -> None:
+    with CaptureQueriesContext(connection) as queries:
+        assert RegistrationSerializer(data=_data()).is_valid()
+    tables = " ".join(query["sql"] for query in queries.captured_queries)
+    assert "accounts_" not in tables
+
+
+def test_every_emitted_code_is_in_the_catalog() -> None:
+    publish_version(version="1")
+    data = _data(name="", birthdate="x", email="ana@[1.2.3.4]", country="XX", terms={})
+    del data["name"]
+    serializer = RegistrationSerializer(data=data)
+    assert not serializer.is_valid()
+    emitted = {error.code for errors in serializer.errors.values() for error in errors}
+    assert emitted <= set(messages.ERRORS)
