@@ -25,8 +25,8 @@ class VerifyResult(StrEnum):
     NOT_FOUND = "not_found"
 
 
-def issue_code(process: CodeProcess, purpose: codes.Purpose) -> str:
-    process.public_id = codes.generate_public_id()
+def issue_code(process: CodeProcess, purpose: codes.Purpose, public_id: str | None = None) -> str:
+    process.public_id = public_id or codes.generate_public_id()
     process.failed_attempts = 0
     process.code_validated_at = None
     return _set_new_code(process, purpose)

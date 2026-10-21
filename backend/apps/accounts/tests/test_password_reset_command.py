@@ -7,15 +7,14 @@ from django.core.management.base import CommandError
 from django.test import Client
 from django.utils import timezone
 
-from apps.accounts import codes, password_reset, registration
+from apps.accounts import codes, password_reset
 from apps.accounts.management.commands.password_reset import (
-    ACCOUNT_ERRORS,
     COMPLETE_ERRORS,
     RESEND_ERRORS,
     VERIFY_ERRORS,
 )
-from apps.accounts.models import PasswordResetRequest, PendingRegistration, User
-from apps.accounts.tests.factories import DEFAULT_PASSWORD, make_user
+from apps.accounts.models import PasswordResetRequest, PendingRegistration, PhantomProcess, User
+from apps.accounts.tests.factories import DEFAULT_PASSWORD, code_sent_to, make_pending, make_user
 from apps.core import fingerprints
 
 pytestmark = pytest.mark.django_db
@@ -36,12 +35,18 @@ def _call(*args: str) -> dict[str, str]:
     return dict(line.split(": ", 1) for line in out.getvalue().splitlines() if ": " in line)
 
 
+def _started(email: str = EMAIL) -> dict[str, str]:
+    # El código llega por correo: el test lo lee de la bandeja tras resolver la plaza.
+    shown = _call("start", "--email", email)
+    return {**shown, "code": code_sent_to(shown["public_id"])}
+
+
 def _wrong(code: str) -> str:
     return "000000" if code != "000000" else "111111"
 
 
 def _verified() -> str:
-    started = _call("start", "--email", EMAIL)
+    started = _started()
     _call("verify", started["public_id"], started["code"])
     return started["public_id"]
 
@@ -52,26 +57,43 @@ def _error(*args: str) -> str:
     return str(excinfo.value)
 
 
-def test_start_shows_the_public_id_and_the_code() -> None:
-    shown = _call("start", "--email", " Ana@X.com ")
+def test_start_shows_only_the_public_id() -> None:
+    shown = _call("start", "--email", " Ana@X.com ", "--language", "en")
+
+    slot = PhantomProcess.objects.get()
+    assert shown == {"public_id": slot.public_id}
+    assert slot.payload == {"language": "en"}
+
+
+def test_start_then_the_code_arrives_by_email() -> None:
+    started = _started(" Ana@X.com ")
 
     stored = PasswordResetRequest.objects.get()
-    assert shown["public_id"] == stored.public_id
+    assert started["public_id"] == stored.public_id
     assert fingerprints.code_matches(
-        codes.Purpose.PASSWORD_RESET, stored.public_id, shown["code"], stored.code_hash
+        codes.Purpose.PASSWORD_RESET, stored.public_id, started["code"], stored.code_hash
     )
 
 
-@pytest.mark.parametrize("email", ["nobody@x.com", "inactive@x.com"])
-def test_start_without_an_eligible_account_says_so(email: str) -> None:
+def test_start_shows_the_same_with_or_without_an_eligible_account() -> None:
     make_user(email="inactive@x.com", is_active=False)
 
-    assert _error("start", "--email", email) == "No active account with this email."
-    assert not PasswordResetRequest.objects.exists()
+    shown = [_call("start", "--email", email) for email in (EMAIL, "inactive@x.com", "no@x.com")]
+
+    assert [set(output) for output in shown] == [{"public_id"}] * 3
+
+
+def test_start_rejects_a_malformed_email() -> None:
+    assert _error("start", "--email", "not-an-email").startswith("email: ")
+
+
+def test_start_rejects_an_unsupported_language() -> None:
+    with pytest.raises(CommandError):
+        _call("start", "--email", EMAIL, "--language", "fr")
 
 
 def test_verify_confirms_the_right_code_and_rejects_a_wrong_one() -> None:
-    started = _call("start", "--email", EMAIL)
+    started = _started()
 
     assert _error("verify", started["public_id"], _wrong(started["code"])) == "Wrong code."
 
@@ -80,10 +102,7 @@ def test_verify_confirms_the_right_code_and_rejects_a_wrong_one() -> None:
     assert out.getvalue().splitlines() == [f"public_id: {started['public_id']}", "Code verified."]
 
 
-VERIFY_REFUSALS = [
-    *[refusal for refusal in password_reset.VerifyResult if refusal != "verified"],
-    *password_reset.AccountRefusal,
-]
+VERIFY_REFUSALS = [refusal for refusal in password_reset.VerifyResult if refusal != "verified"]
 
 
 @pytest.mark.parametrize("refusal", VERIFY_REFUSALS)
@@ -92,13 +111,26 @@ def test_every_verify_refusal_has_its_own_message(
 ) -> None:
     monkeypatch.setattr(f"{COMMAND}.password_reset.verify", lambda **kwargs: refusal)
 
-    assert _error("verify", "any-id", "123456") == {**VERIFY_ERRORS, **ACCOUNT_ERRORS}[refusal]
+    assert _error("verify", "any-id", "123456") == VERIFY_ERRORS[refusal]
 
 
-def test_resend_keeps_the_public_id_and_shows_a_new_code() -> None:
-    started = _call("start", "--email", EMAIL)
+def _resent(public_id: str) -> dict[str, str]:
+    # El código nuevo lo emite la tarea y llega por correo (D-13).
+    shown = _call("resend", public_id)
+    password_reset.reissue_code(public_id)
+    return {**shown, "code": code_sent_to(public_id)}
 
-    resent = _call("resend", started["public_id"])
+
+def test_resend_shows_only_the_public_id() -> None:
+    started = _started()
+
+    assert _call("resend", started["public_id"]) == {"public_id": started["public_id"]}
+
+
+def test_resend_then_the_new_code_arrives_by_email() -> None:
+    started = _started()
+
+    resent = _resent(started["public_id"])
 
     stored = PasswordResetRequest.objects.get()
     assert resent["public_id"] == started["public_id"]
@@ -107,13 +139,22 @@ def test_resend_keeps_the_public_id_and_shows_a_new_code() -> None:
     )
 
 
-@pytest.mark.parametrize("refusal", [*password_reset.ResendRefusal, *password_reset.AccountRefusal])
+def test_resend_shows_the_same_with_or_without_an_account() -> None:
+    with_account = _started()["public_id"]
+    without_account = _call("start", "--email", "nadie@x.com")["public_id"]
+    password_reset.resolve_password_reset(without_account)
+
+    assert _call("resend", with_account) == {"public_id": with_account}
+    assert _call("resend", without_account) == {"public_id": without_account}
+
+
+@pytest.mark.parametrize("refusal", list(password_reset.ResendRefusal))
 def test_every_resend_refusal_has_its_own_message(
     monkeypatch: pytest.MonkeyPatch, refusal: str
 ) -> None:
     monkeypatch.setattr(f"{COMMAND}.password_reset.resend", lambda **kwargs: refusal)
 
-    assert _error("resend", "any-id") == {**RESEND_ERRORS, **ACCOUNT_ERRORS}[refusal]
+    assert _error("resend", "any-id") == RESEND_ERRORS[refusal]
 
 
 def test_complete_with_password_shows_the_account() -> None:
@@ -152,9 +193,7 @@ def test_complete_reports_every_broken_password_rule() -> None:
     assert PasswordResetRequest.objects.exists()
 
 
-@pytest.mark.parametrize(
-    "refusal", [*password_reset.CompleteRefusal, *password_reset.AccountRefusal]
-)
+@pytest.mark.parametrize("refusal", list(password_reset.CompleteRefusal))
 def test_every_complete_refusal_has_its_own_message(
     monkeypatch: pytest.MonkeyPatch, refusal: str
 ) -> None:
@@ -162,19 +201,24 @@ def test_every_complete_refusal_has_its_own_message(
 
     message = _error("complete", "any-id", "--password", GOOD_PASSWORD)
 
-    assert message == {**COMPLETE_ERRORS, **ACCOUNT_ERRORS}[refusal]
+    assert message == COMPLETE_ERRORS[refusal]
+
+
+def test_no_message_mentions_the_account() -> None:
+    for errors in (VERIFY_ERRORS, RESEND_ERRORS, COMPLETE_ERRORS):
+        assert not [message for message in errors.values() if "account" in message.lower()]
 
 
 def test_refusal_messages_are_distinct() -> None:
     for errors in (VERIFY_ERRORS, RESEND_ERRORS, COMPLETE_ERRORS):
-        messages = [*errors.values(), *ACCOUNT_ERRORS.values()]
+        messages = list(errors.values())
         assert len(set(messages)) == len(messages)
 
 
 def test_purge_shows_how_many_were_deleted() -> None:
     make_user(email="bea@x.com")
-    _call("start", "--email", EMAIL)
-    _call("start", "--email", "bea@x.com")
+    _started()
+    _started("bea@x.com")
     PasswordResetRequest.objects.filter(user__email="bea@x.com").update(
         created_at=timezone.now() - timedelta(hours=2)
     )
@@ -184,8 +228,8 @@ def test_purge_shows_how_many_were_deleted() -> None:
 
 
 def test_console_journey_sets_a_password_that_logs_in() -> None:
-    started = _call("start", "--email", EMAIL)
-    resent = _call("resend", started["public_id"])
+    started = _started()
+    resent = _resent(started["public_id"])
     _call("verify", started["public_id"], resent["code"])
 
     _call("complete", started["public_id"], "--password", GOOD_PASSWORD)
@@ -199,12 +243,9 @@ def test_console_journey_sets_a_password_that_logs_in() -> None:
 
 
 def test_purge_does_not_delete_pending_registrations() -> None:
-    _call("start", "--email", EMAIL)
+    _started()
     PasswordResetRequest.objects.update(created_at=timezone.now() - timedelta(hours=2))
-    pending = registration.start(
-        email="new@x.com", name="Nuevo", birthdate=date(1990, 1, 1), country="ES"
-    )
-    assert isinstance(pending, registration.Started)
+    pending = make_pending("new@x.com", name="Nuevo", birthdate=date(1990, 1, 1))
     PendingRegistration.objects.update(created_at=timezone.now() - timedelta(hours=2))
 
     assert _call("purge") == {"deleted": "1"}

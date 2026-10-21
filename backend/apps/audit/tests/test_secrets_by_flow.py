@@ -8,6 +8,7 @@ from django.test import Client, RequestFactory
 
 from apps.accounts import password_reset, registration
 from apps.accounts.models import User
+from apps.accounts.tests.factories import make_pending, make_reset_request
 from apps.audit.models import SecurityEvent
 
 pytestmark = pytest.mark.django_db
@@ -82,16 +83,14 @@ def test_logout_stores_no_secret(user: User) -> None:
 
 
 def test_registration_stores_no_secret(audit_key: None) -> None:
-    started = registration.start(email=EMAIL, name="Ana", birthdate=date(1990, 1, 1), country="ES")
-    assert isinstance(started, registration.Started)
+    started = make_pending(EMAIL, name="Ana", birthdate=date(1990, 1, 1), country="ES")
     registration.verify(public_id=started.public_id, code=started.code)
     registration.complete(public_id=started.public_id, password=PASSWORD)
     _assert_no_secret([PASSWORD, started.code, started.public_id])
 
 
 def test_password_reset_stores_no_secret(user: User) -> None:
-    started = password_reset.start(email=EMAIL)
-    assert isinstance(started, password_reset.Started)
+    started = make_reset_request(EMAIL)
     password_reset.verify(public_id=started.public_id, code=started.code)
     password_reset.complete(public_id=started.public_id, password=NEW_PASSWORD)
     _assert_no_secret([NEW_PASSWORD, started.code, started.public_id])

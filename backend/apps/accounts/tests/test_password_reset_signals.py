@@ -6,6 +6,7 @@ import pytest
 
 from apps.accounts import password_reset, signals
 from apps.accounts.models import User
+from apps.accounts.tests.factories import StartedWithCode, make_reset_request
 
 pytestmark = pytest.mark.django_db
 
@@ -42,10 +43,8 @@ def user() -> User:
     )
 
 
-def _start() -> password_reset.Started:
-    result = password_reset.start(email=EMAIL)
-    assert isinstance(result, password_reset.Started)
-    return result
+def _start() -> StartedWithCode:
+    return make_reset_request(EMAIL)
 
 
 def test_start_emits_code_sent(user: User, captured: dict[str, list[dict[str, Any]]]) -> None:
@@ -53,9 +52,11 @@ def test_start_emits_code_sent(user: User, captured: dict[str, list[dict[str, An
     assert captured["password_reset_code_sent"] == [{"email": EMAIL, "success": True}]
 
 
-def test_start_for_unknown_email_emits_nothing(captured: dict[str, list[dict[str, Any]]]) -> None:
+def test_start_for_unknown_email_emits_the_same_event(
+    captured: dict[str, list[dict[str, Any]]],
+) -> None:
     password_reset.start(email="nadie@x.com")
-    assert captured["password_reset_code_sent"] == []
+    assert captured["password_reset_code_sent"] == [{"email": "nadie@x.com", "success": True}]
 
 
 def test_resend_emits_code_sent(user: User, captured: dict[str, list[dict[str, Any]]]) -> None:

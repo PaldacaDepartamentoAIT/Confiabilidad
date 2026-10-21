@@ -9,8 +9,8 @@ from django.utils import timezone
 
 from apps.accounts import codes, registration
 from apps.accounts.management.commands.registration import COMPLETE_ERRORS, VERIFY_ERRORS
-from apps.accounts.models import PendingRegistration, User
-from apps.accounts.tests.factories import make_user
+from apps.accounts.models import PendingRegistration, PhantomProcess, User
+from apps.accounts.tests.factories import code_sent_to, make_user
 from apps.core import fingerprints
 
 pytestmark = pytest.mark.django_db
@@ -34,26 +34,37 @@ def _call(*args: str) -> dict[str, str]:
     return dict(line.split(": ", 1) for line in out.getvalue().splitlines() if ": " in line)
 
 
+def _started(*args: str) -> dict[str, str]:
+    # El código llega por correo: el test lo lee de la bandeja tras resolver la plaza.
+    shown = _call(*(args or START))
+    return {**shown, "code": code_sent_to(shown["public_id"])}
+
+
 def _wrong(code: str) -> str:
     return "000000" if code != "000000" else "111111"
 
 
-def test_start_shows_the_public_id_and_the_code() -> None:
-    shown = _call(*START)
+def test_start_shows_only_the_public_id() -> None:
+    shown = _call(*START, "--language", "en")
 
-    pending = PendingRegistration.objects.get()
-    assert shown["public_id"] == pending.public_id
-    assert fingerprints.code_matches(
-        codes.Purpose.REGISTRATION, pending.public_id, shown["code"], pending.code_hash
-    )
+    slot = PhantomProcess.objects.get()
+    assert shown == {"public_id": slot.public_id}
+    assert slot.payload is not None and slot.payload["language"] == "en"
 
 
-def test_start_with_an_account_reports_it_and_stores_nothing() -> None:
-    make_user(email="ana@x.com")
+def test_start_rejects_an_unsupported_language() -> None:
+    with pytest.raises(CommandError):
+        _call(*START, "--language", "fr")
 
-    with pytest.raises(CommandError, match="already exists"):
-        _call(*START)
-    assert not PendingRegistration.objects.exists()
+
+@pytest.mark.parametrize("is_active", [True, False])
+def test_start_shows_the_same_with_or_without_an_account(is_active: bool) -> None:
+    make_user(email="ana@x.com", is_active=is_active)
+
+    with_account = _call(*START)
+    without_account = _call(*[*START[:2], "bea@x.com", *START[3:]])
+
+    assert set(with_account) == set(without_account) == {"public_id"}
 
 
 def test_start_reports_every_invalid_field() -> None:
@@ -73,7 +84,7 @@ def test_start_rejects_a_malformed_birthdate() -> None:
 
 
 def test_verify_confirms_the_right_code() -> None:
-    started = _call(*START)
+    started = _started()
 
     shown = _call("verify", started["public_id"], started["code"])
 
@@ -82,7 +93,7 @@ def test_verify_confirms_the_right_code() -> None:
 
 
 def test_verify_reports_a_wrong_code() -> None:
-    started = _call(*START)
+    started = _started()
 
     with pytest.raises(CommandError, match="Wrong code"):
         _call("verify", started["public_id"], _wrong(started["code"]))
@@ -103,16 +114,42 @@ def test_every_verify_refusal_has_its_own_message(
     assert str(excinfo.value) == VERIFY_ERRORS[refusal]
 
 
-def test_resend_keeps_the_public_id_and_shows_a_new_code() -> None:
-    started = _call(*START)
+def _resent(public_id: str) -> dict[str, str]:
+    # El código nuevo lo emite la tarea y llega por correo (D-13).
+    shown = _call("resend", public_id)
+    registration.reissue_code(public_id)
+    return {**shown, "code": code_sent_to(public_id)}
+
+
+def test_resend_shows_only_the_public_id() -> None:
+    started = _started()
 
     shown = _call("resend", started["public_id"])
 
+    assert shown == {"public_id": started["public_id"]}
+
+
+def test_resend_then_the_new_code_arrives_by_email() -> None:
+    started = _started()
+
+    resent = _resent(started["public_id"])
+
     pending = PendingRegistration.objects.get()
-    assert shown["public_id"] == started["public_id"] == pending.public_id
+    assert resent["public_id"] == started["public_id"] == pending.public_id
     assert fingerprints.code_matches(
-        codes.Purpose.REGISTRATION, pending.public_id, shown["code"], pending.code_hash
+        codes.Purpose.REGISTRATION, pending.public_id, resent["code"], pending.code_hash
     )
+
+
+@pytest.mark.parametrize("is_active", [True, False])
+def test_resend_shows_the_same_with_or_without_an_account(is_active: bool) -> None:
+    make_user(email="ana@x.com", is_active=is_active)
+    with_account = _call(*START)["public_id"]
+    registration.resolve_registration(with_account)
+    without_account = _started(*[*START[:2], "bea@x.com", *START[3:]])["public_id"]
+
+    assert _call("resend", with_account) == {"public_id": with_account}
+    assert _call("resend", without_account) == {"public_id": without_account}
 
 
 def test_resend_reports_a_refusal() -> None:
@@ -129,7 +166,7 @@ GOOD_PASSWORD = "Kq7#mZ2!vR9p"
 
 
 def _verified() -> str:
-    started = _call(*START)
+    started = _started()
     _call("verify", started["public_id"], started["code"])
     return started["public_id"]
 
@@ -188,8 +225,8 @@ def test_every_complete_refusal_has_its_own_message(
 
 
 def test_purge_shows_how_many_were_deleted() -> None:
-    _call(*START)
-    _call(*[*START[:2], "bea@x.com", *START[3:]])
+    _started()
+    _started(*[*START[:2], "bea@x.com", *START[3:]])
     PendingRegistration.objects.filter(email="bea@x.com").update(
         created_at=timezone.now() - timedelta(hours=2)
     )
@@ -214,9 +251,9 @@ def test_console_works_when_the_generator_first_yields_a_dash(
 ) -> None:
     values = iter(["-AbC_dashed-public-id", "XyZ_clean-public-id"])
     monkeypatch.setattr("apps.accounts.codes.secrets.token_urlsafe", lambda _: next(values))
-    public_id = _call(*START)["public_id"]
+    public_id = _started()["public_id"]
 
-    resent = _call("resend", public_id)
+    resent = _resent(public_id)
     _call("verify", public_id, resent["code"])
     shown = _call("complete", public_id, "--password", GOOD_PASSWORD)
 

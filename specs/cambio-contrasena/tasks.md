@@ -273,5 +273,241 @@ esquema, para que al final quede una sola migración (M-07).
   y la otra sigue siendo la principal; ese mutante muere ejecutando el archivo completo; la suite
   completa sigue en verde.
 
+- [x] T-024 Tumba que responde "caducada" al borrar la cuenta
+  RF: RF-010 (D-15, M-10) | Depende de: T-029 de `procesos-pendientes` | Archivos: 3
+  Archivos: `models.py`, `migrations/0009_phantom_answers_expired.py`,
+  `tests/test_password_reset_model.py`.
+  Hecho cuando: `PhantomProcess` tiene `answers_expired` (falso por defecto); al borrar una cuenta con
+  solicitud, también en un borrado masivo, queda una plaza `password_reset` con su `public_id`,
+  `code_expires_at`, `created_at` y `answers_expired = True`, y la solicitud se borra; una cuenta sin
+  solicitud no deja plaza; suite verde.
+  Decisiones: (1) La tumba no guarda el correo de la cuenta borrada (D-15: sin datos de la cuenta);
+  para eso `PhantomProcess.email` pasa a admitir vacío en la migración `0009`. [Probable] (2) Una
+  solicitud nueva del mismo correo no reemplaza la tumba: sin correo no se puede asociar; la purga la
+  borra al caducar. [Probable] (3) El receptor vive en `models.py`; `created_at` se copia con un
+  `update()` posterior porque `auto_now_add` lo pisa al guardar. [Cierto]
+
+- [x] T-025 Resolver la petición fuera de la respuesta
+  RF: RF-002, RF-003, RF-004, RF-016, RF-017 (D-13, M-09) | Depende de: T-029 de
+  `procesos-pendientes` | Archivos: 2
+  Archivos: `password_reset.py`, `tests/test_password_reset_background.py`.
+  Hecho cuando, llamando a `resolve_password_reset(public_id)` sobre una plaza sin resolver: con una
+  cuenta activa crea la solicitud con el `public_id` de la plaza (o reemplaza la que tenga, con vida y
+  huella de la cuenta nuevas), borra la plaza y deja en la bandeja el correo con el código oculto en
+  el idioma de la petición; sin cuenta o con la cuenta inactiva, la plaza queda con `payload` vacío y
+  sin correo; borra antes las demás plazas `password_reset` del mismo correo; una plaza ya resuelta o
+  inexistente no hace nada; suite verde.
+  Decisiones: (1) `start` y la resolución comparten `_create_or_replace`, que emite el código con el
+  `public_id` que se le pase. [Cierto] (2) El idioma se pasa tal cual a la bandeja, que ya cae en el
+  idioma por defecto si no es uno de los tres. [Cierto] (3) El correo con el código no se ata a la
+  cuenta en la bandeja, igual que el del registro. [Probable]
+
+- [x] T-026 Tarea y barrido del cambio de contraseña
+  RF: RF-016 (D-13, M-09) | Depende de: T-025 y T-033 de `procesos-pendientes` | Archivos: 2
+  Archivos: `tasks.py`, `tests/test_password_reset_background.py`.
+  Hecho cuando: la tarea `apps.accounts.tasks.resolve_password_reset` llama a la resolución y se
+  reintenta dentro de la ventana compartida (`REGISTRATION_START_RETRY_MINUTES`); pasada la ventana,
+  la plaza queda sin solicitud y el fallo en el log; `sweep_unresolved()` también encola las plazas
+  `password_reset` sin resolver; suite verde.
+  Decisiones: (1) Las dos tareas de resolución comparten `_resolve_or_retry` (misma espera creciente,
+  misma ventana y mismo abandono). [Cierto] (2) El barrido no toca las tumbas: ya tienen el `payload`
+  vacío. [Cierto]
+
+- [x] T-027 Pedir el cambio en la respuesta solo con el identificador
+  RF: RF-002, RF-004, RF-013, RF-016 (D-06, D-13, M-05, M-06) | Depende de: T-026 | Archivos: 6
+  Archivos: `password_reset.py`, `management/commands/password_reset.py`, `tests/factories.py`,
+  `tests/test_password_reset_service.py`, `tests/test_password_reset_command.py`,
+  `tests/test_password_reset_sessions.py`.
+  Hecho cuando: `start` con un correo de formato válido crea la plaza, encola la resolución al
+  confirmar y devuelve solo el `public_id`, con el mismo resultado y el mismo número de consultas haya
+  o no cuenta elegible; con un formato inválido, lo rechaza sin crear plaza; `manage.py
+  password_reset start` admite `--language` y muestra solo el `public_id`, igual con y sin cuenta; los
+  tests que necesitan una solicitud real usan el ayudante `make_reset_request` de
+  `tests/factories.py`; suite verde.
+  Excepción: cambiar lo que devuelve `start` rompe a la vez los tests que lo llaman; el ajuste es
+  mecánico y no se puede repartir sin dejar la suite en rojo.
+  Decisiones: (1) También se ajusta `tests/test_email_checks.py`, que llamaba a `start`; cubierto por
+  la Excepción. [Cierto] (2) El formato del correo se valida con el validador de Django y el error
+  va en el campo `email`; el comando lo muestra como `email: …`. [Cierto] (3) `password_reset.py`
+  tiene su propio `_queue`, igual al del registro, para no tocar `processes.py`, fuera de los
+  archivos de la tarea. [Probable] (4) `code_sent_to` de `tests/factories.py` resuelve también las
+  plazas de cambio de contraseña. [Cierto]
+
+- [x] T-028 Verificar y completar en las dos tablas, con "caducada"
+  RF: RF-005, RF-008, RF-010, RF-014, RF-015, RF-017 (D-14, CF-6) | Depende de: T-024, T-027 |
+  Archivos: 4
+  Archivos: `password_reset.py`, `management/commands/password_reset.py`,
+  `tests/test_password_reset_equivalence.py`, `tests/test_password_reset_service.py`.
+  Hecho cuando: para un correo sin cuenta, la misma secuencia de `verify` (con el bloqueo al quinto
+  intento), `complete` y caducidad da los mismos resultados con la plaza que con una solicitud real
+  cuyo código nunca se acierta, con el mismo número de consultas; con la cuenta inactiva, con el
+  correo o la contraseña cambiados, o tras borrar la cuenta, `verify` y `complete` responden igual que
+  una solicitud caducada, y la reactivación vuelve a admitirlas; un identificador de registro, real o
+  plaza, no sirve aquí; el comando ya no tiene mensajes de cuenta inactiva o cambiada; suite verde.
+  Excepción: quitar `AccountRefusal` cambia a la vez el servicio, el comando que la muestra y los tests
+  que la esperaban.
+  Decisiones: (1) Al quitar `AccountRefusal`, `resend` también responde «caducada» con la cuenta
+  inactiva o cambiada; sigue buscando solo en las solicitudes hasta T-029. [Cierto] (2) `complete`
+  sin solicitud bloquea una cuenta inexistente (`pk=0`) para hacer las mismas consultas que con ella.
+  [Cierto] (3) `complete` nunca completa una plaza, aunque estuviera marcada como validada. [Cierto]
+  (4) Se añade un test que comprueba que ningún mensaje del comando menciona la cuenta. [Cierto]
+
+- [x] T-029 Reenvío en dos tiempos
+  RF: RF-007, RF-013, RF-017 (D-13) | Depende de: T-028 y T-036 de `procesos-pendientes` |
+  Archivos: 4
+  Archivos: `password_reset.py`, `management/commands/password_reset.py`,
+  `tests/test_password_reset_equivalence.py`, `tests/test_password_reset_command.py`.
+  Hecho cuando: `resend` invalida el código vigente, pone los intentos a 0 y encola `reissue_code`,
+  sin devolver el código y con el mismo resultado y consultas para plaza y solicitud real; la tarea
+  emite el código y, si es real, encola su correo; `manage.py password_reset resend` muestra solo el
+  `public_id`; suite verde.
+  Excepción: el reenvío cambia a la vez el servicio, el comando que lo muestra y sus tests.
+  Decisiones: (1) Fuera de los archivos de la tarea, y dentro de su módulo M-09: `tasks.py` añade el
+  propósito `password_reset` a `reissue_code`; los tests de reenvío de `test_password_reset_service.py`
+  y `test_email_checks.py` leen el código del correo; se borra `show_code` de
+  `management/console.py`, que ya no usa nadie. [Cierto] (2) El correo reenviado va en el idioma de la
+  cuenta: la solicitud no guarda el idioma de la petición. [Probable] (3) `reissue_code` no emite
+  nada si el proceso responde «caducada» (también con la cuenta inactiva, cambiada o borrada) o ya se
+  validó. [Cierto]
+
+- [x] T-030 Aviso de contraseña restablecida al completar
+  RF: RF-009 (D-16) | Depende de: T-028 | Archivos: 2
+  Archivos: `password_reset.py`, `tests/test_password_reset_service.py`.
+  Hecho cuando: completar deja en la bandeja un `password_reset_done` a la cuenta, en su idioma y con
+  su nombre; si la transacción falla (por ejemplo, contraseña inválida), no queda ningún aviso; suite
+  verde.
+  Decisiones: (1) El aviso se encola tras fijar la contraseña y antes de borrar la solicitud; un test
+  hace fallar ese borrado y comprueba que no quedan ni el aviso ni la contraseña nueva. [Cierto]
+
+- [x] T-031 La purga borra también las plazas de cambio de contraseña
+  RF: RF-011 | Depende de: T-024 | Archivos: 2
+  Archivos: `password_reset.py`, `tests/test_password_reset_service.py`.
+  Hecho cuando: `purge_expired` borra las solicitudes y las plazas `password_reset` caducadas
+  (tumbas incluidas), las cuenta, y no toca las plazas de registro ni las vigentes; suite verde.
+
+- [x] T-032 Documentación del cambio de contraseña con correo
+  RF: — (CF-4, CF-5) | Depende de: T-029, T-030, T-031 | Archivos: 2
+  Archivos: `specs/cambio-contrasena/resumen.md`, `HUMAN_TODO.md` (rutas desde la raíz).
+  Hecho cuando: el resumen explica la plaza, "caducada" en vez de los rechazos propios, la tumba y el
+  recorrido por consola leyendo el código en la salida del worker; la entrada de `HUMAN_TODO.md`
+  "Neutralizar 'sin cuenta elegible'" pasa a pedir solo el mensaje neutro de la API.
+
+- [x] T-033 Corrección: la solicitud guarda el idioma de la petición
+  Tipo: corrección | Origen: validación de RF-013 de `correo-asincrono-plantillas`
+  RF: RF-007 (D-17, M-11) | Depende de: — | Archivos: 3
+  Archivos: `models.py`, `migrations/0010_passwordresetrequest_language.py`,
+  `tests/test_password_reset_model.py`.
+  Hecho cuando: `PasswordResetRequest` tiene `language` con los tres idiomas y `es` por defecto; las
+  solicitudes existentes quedan en `es` tras migrar; no hay migraciones pendientes; suite verde.
+
+- [x] T-034 Corrección: el reenvío sale en el idioma de la petición
+  Tipo: corrección | Origen: validación de RF-013 de `correo-asincrono-plantillas`
+  RF: RF-007 (D-17) | Depende de: T-033 | Archivos: 3
+  Archivos: `password_reset.py`, `tests/test_password_reset_background.py`,
+  `tests/test_password_reset_equivalence.py`.
+  Causa: `reissue_code` usaba el idioma de la cuenta.
+  Hecho cuando: crear y reemplazar la solicitud guarda el idioma de la petición; con la cuenta en `es`
+  y la petición en `pt-BR`, el correo del reenvío sale en `pt-BR`; suite verde.
+  Decisiones: (1) El idioma se normaliza al guardarlo en la solicitud; uno no admitido queda en `es`.
+  [Cierto] (2) `_create_or_replace` exige ahora el identificador y el idioma: ya solo la usa la
+  resolución. [Cierto]
+
+- [x] T-035 Corrección: manda la petición más reciente al resolver
+  Tipo: corrección | Origen: validación de RF-003 y RF-017
+  RF: RF-003, RF-017 (D-13) | Depende de: T-040 de `procesos-pendientes` | Archivos: 3
+  Archivos: `password_reset.py`, `tests/test_password_reset_background.py`,
+  `tests/test_password_reset_equivalence.py`.
+  Causa: la resolución borraba todas las demás plazas del mismo correo, también las posteriores.
+  Hecho cuando: con dos `start` del mismo correo y la primera resuelta antes que la segunda, la
+  primera responde «desconocida» y la segunda funciona, con cuenta y sin ella; con cuenta, la
+  solicitud y el único correo son los de la segunda; suite verde.
+
+- [x] T-036 Corrección: la plaza sin solicitud queda como una solicitud recién emitida
+  Tipo: corrección | Origen: validación de RF-017
+  RF: RF-017 (D-13) | Depende de: T-035 | Archivos: 2
+  Archivos: `password_reset.py`, `tests/test_password_reset_equivalence.py`.
+  Causa: sin cuenta, la plaza conservaba intentos, caducidad y alta de `start`; la solicitud real los
+  recibe en la resolución.
+  Hecho cuando: con plaza y con solicitud real dan el mismo resultado: intentos fallidos antes de
+  resolver y después, y la resolución retrasada 4 minutos con `verify` a los 16 y a los 31; las
+  consultas siguen siendo iguales; suite verde.
+  Decisiones: (1) Mutante equivalente: no poner `code_validated_at` a nulo; una plaza nunca llega
+  validada a la resolución. [Cierto]
+
+- [x] T-037 Corrección: verificar, reenviar y completar bloquean primero la plaza
+  Tipo: corrección | Origen: validación de RF-017
+  RF: RF-017 (D-05) | Depende de: T-036 | Archivos: 2
+  Archivos: `password_reset.py`, `tests/test_password_reset_equivalence.py`.
+  Causa: se consultaban la solicitud (y en `complete`, la cuenta) antes de bloquear la plaza; con la
+  resolución en curso, el caso con cuenta respondía «desconocida».
+  Hecho cuando: un test con transacciones reales y dos hilos, con la resolución detenida dentro de su
+  transacción, da `wrong_code`, `resent` y `code_not_verified` con cuenta y sin ella; el orden de
+  `complete` es plaza → cuenta → solicitud; las consultas siguen siendo iguales; suite verde.
+  Decisiones: (1) Sin cuenta, la resolución no encola correo; el test la detiene al dejar la plaza
+  como recién emitida, todavía dentro de su transacción. Se ejecutó tres veces seguidas sin fallos.
+  [Probable] (2) `complete` lee el dueño de la solicitud dentro de la transacción, después de
+  bloquear la plaza. [Cierto]
+
+- [x] T-038 Corrección: la ventana compartida rige el cambio de contraseña
+  Tipo: corrección | Origen: validación de RF-012
+  RF: RF-012, RF-016 | Depende de: T-039 de `procesos-pendientes` | Archivos: 1
+  Archivos: `tests/test_password_reset_background.py`.
+  Hecho cuando: con `REGISTRATION_START_RETRY_MINUTES=10`, una plaza de hace 6 minutos con la
+  resolución fallando da `RETRY` en `tasks.resolve_password_reset`; la tarea ejecutada fuera de la
+  ventana, sin simular la resolución, no crea solicitud ni encola correo; suite verde.
+
+- [x] T-039 Corrección: la equivalencia también con la cuenta inactiva
+  Tipo: corrección | Origen: validación de RF-017 (CF-6)
+  RF: RF-017 | Depende de: T-037 | Archivos: 1
+  Archivos: `tests/test_password_reset_equivalence.py`.
+  Hecho cuando: los recorridos y la comparación de consultas incluyen el identificador devuelto a una
+  cuenta inactiva, con y sin solicitud previa, y dan lo mismo que la solicitud real; suite verde.
+
+- [x] T-040 Resumen tras las correcciones
+  RF: — (CF-4) | Depende de: T-033…T-039 | Archivos: 1
+  Archivos: `specs/cambio-contrasena/resumen.md` (en la raíz).
+  Hecho cuando: el resumen explica el idioma del reenvío, la migración `0010`, que manda la petición
+  más reciente y que la plaza cuenta plazos e intentos como una solicitud real, con el paso de
+  migrar en «Cómo probarlo».
+
+- [x] T-041 Procedimiento de rotación y riesgo aceptado de la huella de la cuenta
+  RF: — (S-14) | Depende de: — | Archivos: 2
+  Archivos: `HUMAN_TODO.md`, `specs/cambio-contrasena/resumen.md` (rutas desde la raíz).
+  Hecho cuando: la entrada de `REGISTRATION_CODE_SECRET` en `HUMAN_TODO.md` pide rotar siempre con
+  `REGISTRATION_CODE_SECRET_PREVIOUS` definido, con `REGISTRATION_SECRET_TRANSITION_MINUTES` de al
+  menos `REGISTRATION_MAX_LIFETIME_MINUTES` y con `REGISTRATION_CODE_SECRET_ROTATED_AT` anotado en el
+  momento real del despliegue, y explica por qué; el resumen recoge S-14 en sus límites conocidos.
+
+- [x] T-042 Corrección: el mismo correo se compara igual al buscar la cuenta y al anular plazas
+  Tipo: corrección | Origen: 3.ª validación de RF-017
+  RF: RF-017, RF-003 | Depende de: — | Archivos: 2
+  Archivos: `password_reset.py`, `tests/test_password_reset_equivalence.py`.
+  Causa: la misma que T-047 de `procesos-pendientes`, en `resolve_password_reset`.
+  Hecho cuando: con y sin cuenta (`sam@x.com`), pedir con `ſam@x.com` y después con `sam@x.com`, en
+  orden inverso, y con `ana@gmaıl.com` → `ana@gmail.com`, da `["not_found", "wrong_code"]` en los
+  dos casos; el mutante que vuelve a la igualdad exacta muere; suite verde.
+
+- [x] T-043 Corrección: la rotación del secreto cubre la web y el worker
+  Tipo: corrección | Origen: 3.ª validación de S-14
+  RF: — (S-14) | Depende de: — | Archivos: 2
+  Archivos: `HUMAN_TODO.md`, `specs/cambio-contrasena/resumen.md` (rutas desde la raíz).
+  Causa: la huella de la cuenta la firma el worker y la comprueba la web; el procedimiento no
+  menciona el worker ni deja margen para el desfase entre reinicios.
+  Hecho cuando: la entrada de `REGISTRATION_CODE_SECRET` pide reiniciar la web y el worker con el
+  secreto nuevo a la vez, nunca el worker antes que la web; fija `ROTATED_AT` a la hora en que arranca
+  el primero y la transición en al menos la vida máxima más el tiempo hasta que el último proceso usa
+  el secreto nuevo; explica el porqué, y el resumen lo recoge en sus límites conocidos.
+
+- [x] T-044 Corrección: el procedimiento de rotación dice qué pasa con una hora futura
+  Tipo: corrección | Origen: 4.ª validación de S-14 (T-043)
+  RF: — (S-14) | Depende de: — | Archivos: 1
+  Archivos: `HUMAN_TODO.md`.
+  Causa: afirma que el arranque rechaza un `REGISTRATION_CODE_SECRET_ROTATED_AT` futuro; no lo
+  hace: cada comprobación de código falla con error del servidor hasta esa hora, y en el cambio de
+  contraseña reenviar y completar distinguen la solicitud real de la plaza.
+  Hecho cuando: la entrada dice lo que ocurre de verdad con una hora futura, pide comprobar la zona
+  horaria (hora UTC con `+00:00`, o la local con su desfase) y pone el comando de despliegue completo
+  en su propio bloque.
+
 ## RF sin tarea
 Ninguno.

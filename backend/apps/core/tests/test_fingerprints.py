@@ -469,3 +469,77 @@ def test_future_rotation_date_is_rejected_when_matching(previous: str) -> None:
                 ImproperlyConfigured, match=r"\bREGISTRATION_CODE_SECRET_ROTATED_AT\b"
             ):
                 check()
+
+
+FIXED_NONCE = "ab" * 16
+
+
+def _reference_mask(key: str, nonce: str) -> int:
+    digest = hmac.new(key.encode(), f"email_code_mask:{nonce}".encode(), hashlib.sha256)
+    return int(digest.hexdigest(), 16) % 10**6
+
+
+@pytest.mark.parametrize("code", ["000000", "123456", "999999"])
+def test_a_masked_code_is_recovered_with_its_nonce(code: str) -> None:
+    masked, nonce = fingerprints.mask_code(code)
+
+    assert fingerprints.unmask_code(masked, nonce) == code
+
+
+@override_settings(EMAIL_CODE_SECRET="vector-mask-key")
+def test_the_mask_is_the_hmac_of_the_nonce_reduced_to_six_digits(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("apps.core.fingerprints.secrets.token_hex", lambda size: FIXED_NONCE)
+
+    masked, nonce = fingerprints.mask_code("123456")
+
+    assert nonce == FIXED_NONCE
+    assert masked == (123456 + _reference_mask("vector-mask-key", FIXED_NONCE)) % 10**6
+    assert 0 <= masked < 10**6
+
+
+def test_every_masked_code_gets_its_own_nonce() -> None:
+    nonces = {fingerprints.mask_code("123456")[1] for _ in range(5)}
+
+    assert len(nonces) == 5
+    assert all(re.fullmatch(r"[0-9a-f]{32}", nonce) for nonce in nonces)
+
+
+def test_another_mask_key_does_not_recover_the_code() -> None:
+    with override_settings(EMAIL_CODE_SECRET="first-mask-key"):
+        masked = (123456 + _reference_mask("first-mask-key", FIXED_NONCE)) % 10**6
+        assert fingerprints.unmask_code(masked, FIXED_NONCE) == "123456"
+    with override_settings(EMAIL_CODE_SECRET="second-mask-key"):
+        assert fingerprints.unmask_code(masked, FIXED_NONCE) != "123456"
+
+
+@pytest.mark.parametrize(
+    ("mask_key", "code_key"), [("", "codes"), ("   ", "codes"), ("same-key", "same-key")]
+)
+def test_a_misconfigured_mask_key_is_rejected(mask_key: str, code_key: str) -> None:
+    with override_settings(EMAIL_CODE_SECRET=mask_key, REGISTRATION_CODE_SECRET=code_key):
+        with pytest.raises(ImproperlyConfigured, match=r"\bEMAIL_CODE_SECRET\b"):
+            fingerprints.mask_code("123456")
+        with pytest.raises(ImproperlyConfigured, match=r"\bEMAIL_CODE_SECRET\b"):
+            fingerprints.unmask_code(1, FIXED_NONCE)
+
+
+def test_the_mask_key_defaults_to_a_prefixed_secret_key() -> None:
+    assert settings.EMAIL_CODE_SECRET == f"email-code:{settings.SECRET_KEY}"
+    assert settings.EMAIL_CODE_SECRET != settings.REGISTRATION_CODE_SECRET
+
+
+@pytest.mark.django_db
+def test_masking_never_queries_the_database(
+    django_assert_num_queries: DjangoAssertNumQueries,
+) -> None:
+    with django_assert_num_queries(0):
+        masked, nonce = fingerprints.mask_code("123456")
+        fingerprints.unmask_code(masked, nonce)
+
+
+def test_a_masked_code_always_fits_in_six_digits() -> None:
+    for _ in range(5):
+        masked, _nonce = fingerprints.mask_code("999999")
+        assert 0 <= masked < 10**6

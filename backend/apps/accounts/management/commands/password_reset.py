@@ -7,7 +7,8 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
 
 from apps.accounts import password_reset
-from apps.accounts.management.console import format_validation_error, show_code
+from apps.accounts.management.console import format_validation_error
+from apps.emails import locales
 
 EXPIRED = gettext_noop("The password reset request has expired; start again.")
 ALREADY_VERIFIED = gettext_noop("The code was already verified.")
@@ -37,12 +38,6 @@ COMPLETE_ERRORS: dict[str, str] = {
         "Verify the code before completing."
     ),
 }
-ACCOUNT_ERRORS: dict[str, str] = {
-    password_reset.AccountRefusal.INACTIVE: gettext_noop("The account is inactive."),
-    password_reset.AccountRefusal.ACCOUNT_CHANGED: gettext_noop(
-        "The account's email or password changed after the request; start again."
-    ),
-}
 
 
 class Command(BaseCommand):
@@ -50,12 +45,17 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser: CommandParser) -> None:
         actions = parser.add_subparsers(dest="action", required=True)
-        start = actions.add_parser("start", help="Request a password reset and show its code.")
+        start = actions.add_parser(
+            "start", help="Request a password reset; the code arrives by email."
+        )
         start.add_argument("--email", required=True)
+        start.add_argument("--language", default=locales.DEFAULT, choices=locales.SUPPORTED)
         verify = actions.add_parser("verify", help="Check the code of a request.")
         verify.add_argument("public_id")
         verify.add_argument("code")
-        resend = actions.add_parser("resend", help="Issue a new code for a request.")
+        resend = actions.add_parser(
+            "resend", help="Issue a new code for a request; it arrives by email."
+        )
         resend.add_argument("public_id")
         complete = actions.add_parser(
             "complete", help="Set the new password; asks for it if not given."
@@ -68,22 +68,24 @@ class Command(BaseCommand):
         getattr(self, f"_{options['action']}")(options)
 
     def _start(self, options: dict[str, Any]) -> None:
-        result = password_reset.start(email=options["email"])
-        if isinstance(result, password_reset.NoEligibleAccount):
-            raise CommandError(_("No active account with this email."))
-        show_code(self.stdout, result.public_id, result.code)
+        try:
+            result = password_reset.start(email=options["email"], language=options["language"])
+        except ValidationError as error:
+            raise CommandError(format_validation_error(error)) from error
+        # Lo mismo tenga o no cuenta el correo: el código llega por correo (RF-013).
+        self.stdout.write(f"public_id: {result.public_id}")
 
     def _verify(self, options: dict[str, Any]) -> None:
         result = password_reset.verify(public_id=options["public_id"], code=options["code"])
         if result != password_reset.VerifyResult.VERIFIED:
-            raise CommandError(_({**VERIFY_ERRORS, **ACCOUNT_ERRORS}[result]))
+            raise CommandError(_(VERIFY_ERRORS[result]))
         self.stdout.write(f"public_id: {options['public_id']}\n" + _("Code verified."))
 
     def _resend(self, options: dict[str, Any]) -> None:
         result = password_reset.resend(public_id=options["public_id"])
         if not isinstance(result, password_reset.Resent):
-            raise CommandError(_({**RESEND_ERRORS, **ACCOUNT_ERRORS}[result]))
-        show_code(self.stdout, result.public_id, result.code)
+            raise CommandError(_(RESEND_ERRORS[result]))
+        self.stdout.write(f"public_id: {result.public_id}")
 
     def _complete(self, options: dict[str, Any]) -> None:
         password = options["password"] or getpass.getpass(_("Password: "))
@@ -92,7 +94,7 @@ class Command(BaseCommand):
         except ValidationError as error:
             raise CommandError(format_validation_error(error)) from error
         if not isinstance(result, password_reset.Completed):
-            raise CommandError(_({**COMPLETE_ERRORS, **ACCOUNT_ERRORS}[result]))
+            raise CommandError(_(COMPLETE_ERRORS[result]))
         self.stdout.write(f"public_id: {options['public_id']}\naccount: {result.user.email}")
 
     def _purge(self, options: dict[str, Any]) -> None:

@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     "apps.core",
     "apps.accounts",
     "apps.consents",
+    "apps.emails",
     "apps.audit",
 ]
 
@@ -205,13 +206,47 @@ REGISTRATION_SECRET_TRANSITION_MINUTES = env.int(
     "REGISTRATION_SECRET_TRANSITION_MINUTES", default=60
 )
 PWNED_PASSWORDS_TIMEOUT_SECONDS = env.float("PWNED_PASSWORDS_TIMEOUT_SECONDS", default=2.0)
+# Minutos durante los que se reintenta el trabajo de fuera de la respuesta de empezar un proceso.
+REGISTRATION_START_RETRY_MINUTES = env.int("REGISTRATION_START_RETRY_MINUTES", default=5)
 PWNED_PASSWORDS_ENABLED = env.bool("PWNED_PASSWORDS_ENABLED", default=True)
+
+# Correos: proveedor de envío por entorno (D-02). Sin EMAIL_BACKEND, el correo completo sale
+# por la consola del worker. En producción: SMTP contra MXroute, con las credenciales en SOPS.
+EMAIL_BACKEND = env("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
+EMAIL_HOST = env("EMAIL_HOST", default="localhost")
+EMAIL_PORT = env.int("EMAIL_PORT", default=465)
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
+EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL", default=True)
+EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=False)
+EMAIL_TIMEOUT = env.int("EMAIL_TIMEOUT", default=10)
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="no-responder@localhost")
+
+# Barrido de la bandeja de salida: encola los correos pendientes con el intento vencido (D-14).
+CELERY_BEAT_SCHEDULE = {
+    "emails-dispatch-due": {"task": "apps.emails.tasks.dispatch_due", "schedule": 30.0},
+    "accounts-sweep-unresolved": {"task": "apps.accounts.tasks.sweep_unresolved", "schedule": 60.0},
+}
+
+# Correos: dirección del frontend a la que llevan los enlaces de los correos (D-09).
+FRONTEND_BASE_URL = env("FRONTEND_BASE_URL", default="http://localhost:5173")
+# Dirección a la que el titular reporta un aviso de seguridad que no reconoce (RF-010).
+EMAIL_SUPPORT_ADDRESS = env("EMAIL_SUPPORT_ADDRESS", default="soporte@localhost")
+# Horas durante las que se reintenta un aviso de seguridad que el proveedor no acepta (RF-016).
+EMAIL_NOTICE_RETRY_HOURS = env.int("EMAIL_NOTICE_RETRY_HOURS", default=24)
+# Minutos durante los que una cuenta no recibe otro aviso "ya tienes cuenta" (RF-007).
+EMAIL_ACCOUNT_EXISTS_WINDOW_MINUTES = env.int("EMAIL_ACCOUNT_EXISTS_WINDOW_MINUTES", default=60)
 
 # El historial se consulta en el panel, pero no se revierte desde él (RF-020 de consentimientos).
 SIMPLE_HISTORY_REVERT_DISABLED = True
 
 # Consentimientos: secreto de la huella del correo (RF-012). No debe rotar nunca (S-09).
 CONSENT_EMAIL_HASH_SECRET = env("CONSENT_EMAIL_HASH_SECRET", default=SECRET_KEY)
+
+# Correos: clave de la máscara del código de los correos pendientes, distinta de la de códigos
+# (RF-011 de huellas-hmac-unificadas). No rota: al cambiarla se descartan los correos pendientes.
+EMAIL_CODE_SECRET = env("EMAIL_CODE_SECRET", default=f"email-code:{SECRET_KEY}")
+
 # En desarrollo hay un valor fijo para que Docker arranque sin .env; sin DEBUG, audit.E001 exige la
 # clave (D-05, P-02).
 AUDIT_HASH_SECRET = env("AUDIT_HASH_SECRET", default="") or (
