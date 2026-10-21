@@ -39,22 +39,33 @@ def normalize_name(value: str) -> str:
 def validate_name(value: str) -> None:
     if not value:
         raise ValidationError(_("Name cannot be empty."), code="name_empty")
+    errors: list[ValidationError] = []
     if len(value) > NAME_MAX_LENGTH:
-        raise ValidationError(
-            _("Name cannot exceed %(max)d characters."),
-            code="name_too_long",
-            params={"max": NAME_MAX_LENGTH},
+        errors.append(
+            ValidationError(
+                _("Name cannot exceed %(max)d characters."),
+                code="name_too_long",
+                params={"max": NAME_MAX_LENGTH},
+            )
         )
     if any(unicodedata.category(char) in _LINE_BREAK_CATEGORIES for char in value):
-        raise ValidationError(
-            _("Name cannot contain tabs, line breaks or control characters."),
-            code="name_control_char",
+        errors.append(
+            ValidationError(
+                _("Name cannot contain tabs, line breaks or control characters."),
+                code="name_control_char",
+            )
         )
     if any(a.isspace() and b.isspace() for a, b in pairwise(value)):
-        raise ValidationError(
-            _("Name cannot contain consecutive spaces."),
-            code="name_consecutive_spaces",
+        errors.append(
+            ValidationError(
+                _("Name cannot contain consecutive spaces."),
+                code="name_consecutive_spaces",
+            )
         )
+    if len(errors) == 1:
+        raise errors[0]
+    if errors:
+        raise ValidationError(errors)
 
 
 def minimum_age_date(birthdate: date) -> date:

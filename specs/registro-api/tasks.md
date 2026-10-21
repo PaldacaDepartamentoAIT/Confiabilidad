@@ -24,13 +24,17 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   `validate_registration_data`, que ejecuta las mismas reglas de la cuenta sin base de datos —
   [Cierto] — revertir: un `full_clean` sobre un `PendingRegistration`.
 
-- [ ] T-002 Todos los errores del nombre a la vez
+- [x] T-002 Todos los errores del nombre a la vez
   RF: RF-002 (D-13) | Depende de: — | Archivos: 2
   Archivos: `validators.py`, `tests/test_validators.py`.
   Hecho cuando: un nombre de más de 150 caracteres con un tabulador y dos espacios seguidos produce
   en una sola `ValidationError` los códigos `name_too_long`, `name_control_char` y
   `name_consecutive_spaces`; un nombre válido sigue pasando; los tests existentes de
   `usuario-personalizado` sobre el nombre siguen en verde sin cambiar lo que afirman; suite verde.
+  Decisiones: con un solo error se lanza esa `ValidationError` tal cual, y solo con varios se lanza
+  una lista, para que `.code` siga existiendo donde ya se usaba — [Cierto] — revertir: lanzar
+  siempre la lista. El nombre vacío sigue siendo un error único, porque excluye los demás —
+  [Cierto] — revertir: acumularlo también.
 
 - [ ] T-003 Idioma de la solicitud
   RF: RF-013 (D-06) | Depende de: — | Archivos: 3

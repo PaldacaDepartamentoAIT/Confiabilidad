@@ -121,3 +121,11 @@ def test_account_rules_still_accept_a_domain_without_dot() -> None:
     validate_registration_data(
         email="ana@localhost", name="Ana", birthdate=date(1990, 1, 1), country="ES"
     )
+
+
+def test_name_reports_every_failed_rule_at_once() -> None:
+    name = "Ana\tGarcía  " + "a" * 150
+    with pytest.raises(ValidationError) as excinfo:
+        validate_name(name)
+    codes = {error.code for error in excinfo.value.error_list}
+    assert codes == {"name_too_long", "name_control_char", "name_consecutive_spaces"}
