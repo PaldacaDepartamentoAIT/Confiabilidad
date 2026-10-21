@@ -230,3 +230,7 @@ solo limitan a los navegadores, y sus únicas defensas son los límites de RF-01
 - 2026-10-16 — Clarificación (C-01…C-13) — RF: RF-001, RF-004, RF-005, RF-009, RF-010, RF-011,
   RF-013 y RF-014 ajustados; S-05, S-06 y S-12 ajustados; S-16…S-22 añadidos — Estado: clarificado
 - 2026-10-16 — Aprobación por el usuario — Estado: aprobada
+- 2026-10-21 — Validación: NO CUMPLIDA (1.ª) — RF-002 (500 con caracteres nulos o sustitutos y con
+  correos de más de 254 caracteres), RF-003 (dominio IP sin corchetes aceptado; origen: plan,
+  M-03/D-14 ajustados) y CF-5 (el resumen no prueba el límite por IP). Correcciones propuestas:
+  T-018…T-021.
