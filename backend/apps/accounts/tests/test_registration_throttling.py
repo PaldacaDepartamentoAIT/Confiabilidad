@@ -91,3 +91,19 @@ def test_configured_limits_are_applied() -> None:
     assert _email_ip(at=T0 + 20) == throttling.Verdict(allowed=False, retry_after=HOUR - 20)
     assert throttling.check_ip("192.0.2.9", now=T0).allowed
     assert not throttling.check_ip("192.0.2.9", now=T0 + 1).allowed
+
+
+def test_checking_the_ip_without_recording_does_not_use_the_quota() -> None:
+    for second in range(100):
+        assert throttling.check_ip("192.0.2.1", now=T0 + second, record=False).allowed
+    assert cache.get("registration-rate:ip:192.0.2.1") is None
+    for second in range(20):
+        assert throttling.check_ip("192.0.2.1", now=T0 + 200 + second).allowed
+
+
+def test_recorded_ip_requests_count_for_the_quota() -> None:
+    for second in range(20):
+        throttling.record_ip("192.0.2.1", now=T0 + second)
+    assert throttling.check_ip("192.0.2.1", now=T0 + 30, record=False) == throttling.Verdict(
+        allowed=False, retry_after=HOUR - 30
+    )

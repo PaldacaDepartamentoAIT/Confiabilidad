@@ -27,18 +27,38 @@ def check_email_ip(email: str, ip: str, *, now: float | None = None) -> Verdict:
     )
 
 
-def check_ip(ip: str, *, now: float | None = None) -> Verdict:
+def check_ip(ip: str, *, now: float | None = None, record: bool = True) -> Verdict:
+    # Sin apuntar, la vista decide después si la solicitud cuenta (S-06, D-12).
     return _check(
-        f"registration-rate:ip:{ip}",
+        _ip_key(ip),
         per_hour=conf.rate_ip_per_hour(),
         interval=0.0,
         now=time.time() if now is None else now,
+        record=record,
     )
 
 
-def _check(key: str, *, per_hour: int, interval: float, now: float) -> Verdict:
+def record_ip(ip: str, *, now: float | None = None) -> None:
+    key = _ip_key(ip)
+    moment = time.time() if now is None else now
+    _record(key, _recent(key, moment), moment)
+
+
+def _ip_key(ip: str) -> str:
+    return f"registration-rate:ip:{ip}"
+
+
+def _recent(key: str, now: float) -> list[float]:
+    return [stamp for stamp in cache.get(key, []) if stamp > now - _HOUR]
+
+
+def _record(key: str, stamps: list[float], now: float) -> None:
+    cache.set(key, [*stamps, now], timeout=int(_HOUR))
+
+
+def _check(key: str, *, per_hour: int, interval: float, now: float, record: bool = True) -> Verdict:
     # Sin cerrojo: dos solicitudes simultáneas pueden colarse a la vez (D-09).
-    stamps = [stamp for stamp in cache.get(key, []) if stamp > now - _HOUR]
+    stamps = _recent(key, now)
     wait = 0.0
     if stamps and interval:
         wait = max(wait, stamps[-1] + interval - now)
@@ -46,5 +66,6 @@ def _check(key: str, *, per_hour: int, interval: float, now: float) -> Verdict:
         wait = max(wait, stamps[-per_hour] + _HOUR - now)
     if wait > 0:
         return Verdict(allowed=False, retry_after=math.ceil(wait))
-    cache.set(key, [*stamps, now], timeout=int(_HOUR))
+    if record:
+        _record(key, stamps, now)
     return Verdict(allowed=True, retry_after=0)

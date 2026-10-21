@@ -211,7 +211,7 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   `registration start` no pide documento), así que no hay salidas nuevas que comprobar — [Cierto] —
   revertir: añadir un paso que complete un registro con documento desde la API de `registro-api`.
 
-- [ ] T-017 Corrección: comprobar el límite por IP sin apuntar
+- [x] T-017 Corrección: comprobar el límite por IP sin apuntar
   Tipo: corrección | Origen: bug detectado al preparar T-013
   RF: RF-011 (S-06, D-12) | Depende de: T-008 | Archivos: 2
   Archivos: `throttling.py`, `tests/test_registration_throttling.py`.
