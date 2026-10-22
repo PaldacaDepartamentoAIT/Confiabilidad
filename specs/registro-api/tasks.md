@@ -327,13 +327,16 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   — [Probable] — revertir: solo la normalización. La suite detectó que `inet_aton` lanza
   `ValueError` con un carácter nulo; se captura y un test lo fija — [Cierto] — revertir: no aplica.
 
-- [ ] T-026 Corrección: límite con la IP real tras el proxy (solo test)
+- [x] T-026 Corrección: límite con la IP real tras el proxy (solo test)
   Tipo: corrección | Origen: validación de RF-010 y RF-011
   RF: RF-010, RF-011 | Depende de: — | Archivos: 1
   Archivos: `tests/test_registration_api_limits.py`.
   Hecho cuando: con `TRUSTED_PROXY_IPS` configurado, dos solicitudes desde el proxy con la misma
   última entrada de `X-Forwarded-For` comparten el límite y otra con una entrada distinta no;
   suite verde.
+  Decisiones: el test pasa desde el principio (la vista ya usaba la IP del middleware); su valor se
+  comprobó con un mutante que toma la primera entrada de `X-Forwarded-For`, la que el cliente
+  puede falsificar — [Cierto] — revertir: no aplica.
 
 - [ ] T-027 Corrección: límites de 0 o negativos como error de configuración
   Tipo: corrección | Origen: validación de RF-012

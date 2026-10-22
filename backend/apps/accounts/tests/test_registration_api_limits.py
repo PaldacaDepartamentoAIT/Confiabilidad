@@ -119,3 +119,15 @@ def test_unreadable_body_counts_for_the_ip_and_reports_an_invalid_body(
         }
     }
     _assert_limited(_post(_form()))
+
+
+@override_settings(REGISTRATION_RATE_IP_PER_HOUR=1, TRUSTED_PROXY_IPS=["10.0.0.1"])
+def test_limit_uses_the_real_client_ip_behind_the_trusted_proxy() -> None:
+    def via_proxy(forwarded_for: str, email: str) -> int:
+        client = Client(REMOTE_ADDR="10.0.0.1", HTTP_X_FORWARDED_FOR=forwarded_for)
+        response = client.post(APP, _form(email), content_type="application/json")
+        return int(response.status_code)
+
+    assert via_proxy("6.6.6.6, 203.0.113.9", "a@example.com") == 202
+    assert via_proxy("7.7.7.7, 203.0.113.9", "b@example.com") == 429
+    assert via_proxy("203.0.113.10", "c@example.com") == 202
