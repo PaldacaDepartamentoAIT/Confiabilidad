@@ -131,7 +131,22 @@ se lee el código.
     docker compose -f docker/docker-compose.yml run --rm backend python manage.py consents status ana@example.com
     ```
     Deberías ver `terms: accepted`.
-11. Ejecuta la suite completa (cobertura mínima 80 % sobre todo el proyecto):
+11. Prueba el límite por IP con un segundo servidor que solo admite una solicitud por hora y por IP,
+    con su propia caché para que no cuenten las solicitudes de los pasos anteriores:
+    ```bash
+    docker compose -f docker/docker-compose.yml run -d --rm --name registro-limite-ip -e REGISTRATION_RATE_IP_PER_HOUR=1 -e CACHE_URL=redis://redis:6379/5 -p 8001:8000 backend
+    ```
+    Envía un cuerpo vacío y repite el mismo comando una segunda vez:
+    ```bash
+    curl -s -i -X POST http://localhost:8001/api/app/v1/registration -H "Content-Type: application/json" -d '{}'
+    ```
+    La primera vez deberías ver `400` con un error `required` en cada campo; la segunda, `429` con
+    `Retry-After: 3600` y sin errores de validación: superado el límite por IP, la solicitud ya no se
+    valida. Para el servidor de prueba:
+    ```bash
+    docker stop registro-limite-ip
+    ```
+12. Ejecuta la suite completa (cobertura mínima 80 % sobre todo el proyecto):
     ```bash
     docker compose -f docker/docker-compose.yml run --rm backend pytest -q
     ```

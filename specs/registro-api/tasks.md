@@ -264,13 +264,17 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   Hecho cuando: `ana@192.168.1.100` y `ana@10.0.0.10` se rechazan con `email_ip_domain`;
   `ana@example.com` y `ana@1and1.es` se siguen aceptando; suite verde.
 
-- [ ] T-021 Corrección: probar el límite por IP en el resumen
+- [x] T-021 Corrección: probar el límite por IP en el resumen
   Tipo: corrección | Origen: validación de CF-5
   RF: RF-011 | Depende de: — | Archivos: 1
   Archivos: `specs/registro-api/resumen.md`.
   Causa: *Cómo probarlo* solo ejercita el límite de correo e IP.
   Hecho cuando: un paso muestra con `curl`, con el límite bajado por configuración, que la IP
   recibe 429 sin validar el cuerpo; el comando se ha ejecutado y da lo que dice el texto.
+  Decisiones: el segundo servidor usa otra base de Redis (`CACHE_URL`) para que las solicitudes de
+  los pasos anteriores, que salen de la misma IP del anfitrión, no agoten el límite antes de
+  probarlo; verificado con el mismo código fuera de Docker, como el resto del resumen — [Cierto] —
+  revertir: no aplica.
 
 ## RF sin tarea
 Ninguno.
