@@ -1,3 +1,4 @@
+import ipaddress
 import unicodedata
 from datetime import date, timedelta
 from itertools import pairwise
@@ -23,13 +24,21 @@ _email_format = EmailValidator()
 def validate_registration_email(value: str) -> None:
     # Más estricto que la cuenta: un dominio sin punto o una IP nunca recibirá el código (S-08).
     user, _sep, domain = value.rpartition("@")
-    if user and domain.startswith("["):
+    if user and (domain.startswith("[") or _is_ip_address(domain)):
         raise ValidationError(_("Email domain cannot be an IP address."), code="email_ip_domain")
     if user and domain and "." not in domain:
         raise ValidationError(
             _("Email domain must contain a dot."), code="email_domain_without_dot"
         )
     _email_format(value)
+
+
+def _is_ip_address(domain: str) -> bool:
+    try:
+        ipaddress.ip_address(domain)
+    except ValueError:
+        return False
+    return True
 
 
 def normalize_name(value: str) -> str:

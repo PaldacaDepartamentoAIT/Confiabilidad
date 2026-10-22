@@ -93,7 +93,15 @@ def test_placeholder_country_is_kept_while_unchanged() -> None:
 
 
 @pytest.mark.parametrize(
-    "email", ["ana@example.com", "ana+etiqueta@example.com", "ana@españa.es", "Ana@Sub.Example.Org"]
+    "email",
+    [
+        "ana@example.com",
+        "ana+etiqueta@example.com",
+        "ana@españa.es",
+        "Ana@Sub.Example.Org",
+        "ana@1and1.es",
+        "ana@123.example.com",
+    ],
 )
 def test_registration_email_with_dotted_domain_is_accepted(email: str) -> None:
     validate_registration_email(email)
@@ -106,6 +114,8 @@ def test_registration_email_with_dotted_domain_is_accepted(email: str) -> None:
         ("ana@intranet", "email_domain_without_dot"),
         ("ana@[192.0.2.1]", "email_ip_domain"),
         ("ana@[IPv6:2001:db8::1]", "email_ip_domain"),
+        ("ana@192.168.1.100", "email_ip_domain"),
+        ("ana@10.0.0.10", "email_ip_domain"),
         ("ana", "invalid"),
         ("ana@", "invalid"),
         ("@example.com", "invalid"),
