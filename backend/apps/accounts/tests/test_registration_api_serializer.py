@@ -185,3 +185,22 @@ def test_email_of_254_characters_is_accepted(terms: dict[str, Terms]) -> None:
     assert len(email) == 254
     serializer = RegistrationSerializer(data=_data(email=email))
     assert serializer.is_valid(), serializer.errors
+
+
+def test_email_with_dotted_capital_i_is_rejected_in_its_field(terms: dict[str, Terms]) -> None:
+    codes = _codes(RegistrationSerializer(data=_data(email="İnci@example.com")))
+    assert list(codes) == ["email"]
+    assert set(codes["email"]) <= set(messages.ERRORS)
+
+
+def test_email_length_is_checked_after_lowercasing(terms: dict[str, Terms]) -> None:
+    email = "a" * 64 + "@" + "İ" + "b" * 62 + "." + "c" * 63 + "." + "d" * 57 + ".com"
+    assert len(email) == 254
+    codes = _codes(RegistrationSerializer(data=_data(email=email)))
+    assert "max_length" in codes["email"]
+
+
+def test_validated_email_is_the_normalized_one(terms: dict[str, Terms]) -> None:
+    serializer = RegistrationSerializer(data=_data(email="  Ana@Example.COM "))
+    assert serializer.is_valid(), serializer.errors
+    assert serializer.validated_data["email"] == "ana@example.com"

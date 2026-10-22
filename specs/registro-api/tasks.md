@@ -276,7 +276,7 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   probarlo; verificado con el mismo código fuera de Docker, como el resto del resumen — [Cierto] —
   revertir: no aplica.
 
-- [ ] T-022 Corrección: validar el correo ya normalizado
+- [x] T-022 Corrección: validar el correo ya normalizado
   Tipo: corrección | Origen: validación de RF-002 y RF-003
   RF: RF-002, RF-003 | Depende de: — | Archivos: 2
   Archivos: `api/serializers.py`, `tests/test_registration_api_serializer.py`.
@@ -285,6 +285,10 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   Hecho cuando: `İnci@example.com` da 400 bajo `email` con un código del catálogo; un correo de
   254 caracteres con `İ` en el dominio da 400 `max_length`; los casos de T-001 y T-019 no
   cambian; suite verde.
+  Decisiones: el campo de correo pasa el valor a minúsculas antes de sus validadores, así que el
+  serializador devuelve ya el correo normalizado; `İnci@example.com` queda como `invalid`, porque
+  en minúsculas lleva un punto combinante que no es un carácter válido de correo — [Cierto] —
+  revertir: validar también la forma original.
 
 - [ ] T-023 Corrección: caracteres nulos y sustitutos en el documento de términos
   Tipo: corrección | Origen: validación de RF-002 y RF-004
