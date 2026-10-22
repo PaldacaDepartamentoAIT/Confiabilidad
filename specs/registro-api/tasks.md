@@ -394,7 +394,7 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   es un dot-atom ASCII — [Cierto] — revertir: no aplica. La IDNA es la del códec de Python
   (IDNA 2003) — [Probable] — revertir: no aplica sin una dependencia nueva.
 
-- [ ] T-031 Corrección: todos los errores del correo a la vez
+- [x] T-031 Corrección: todos los errores del correo a la vez
   Tipo: corrección | Origen: validación de RF-002
   RF: RF-002, RF-003 | Depende de: — | Archivos: 2
   Archivos: `validators.py`, `tests/test_validators.py`.

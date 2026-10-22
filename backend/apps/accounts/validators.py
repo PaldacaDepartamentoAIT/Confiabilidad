@@ -27,12 +27,22 @@ def validate_registration_email(value: str) -> None:
     # Más estricto que la cuenta: un dominio sin punto o una IP nunca recibirá el código (S-08).
     user, _sep, domain = value.rpartition("@")
     if user and (domain.startswith("[") or _is_ip_address(domain)):
-        raise ValidationError(_("Email domain cannot be an IP address."), code="email_ip_domain")
-    if user and domain and "." not in domain:
-        raise ValidationError(
+        domain_error = ValidationError(
+            _("Email domain cannot be an IP address."), code="email_ip_domain"
+        )
+    elif user and domain and "." not in domain:
+        domain_error = ValidationError(
             _("Email domain must contain a dot."), code="email_domain_without_dot"
         )
-    _email_format(value)
+    else:
+        _email_format(value)
+        return
+    # El formato completo fallaría siempre por el dominio: solo se añade si falla la parte local.
+    if not _email_format.user_regex.match(user):
+        raise ValidationError(
+            [domain_error, ValidationError(_("Enter a valid email address."), code="invalid")]
+        )
+    raise domain_error
 
 
 # Separadores que IDNA trata como un punto.

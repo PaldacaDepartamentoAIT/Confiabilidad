@@ -149,3 +149,32 @@ def test_registration_email_with_a_null_character_is_rejected_as_invalid() -> No
     with pytest.raises(ValidationError) as excinfo:
         validate_registration_email("ana@exam\x00ple.com")
     assert excinfo.value.code == "invalid"
+
+
+@pytest.mark.parametrize(
+    ("email", "codes"),
+    [
+        ("ana garcia@gmail", {"email_domain_without_dot", "invalid"}),
+        ("ana garcia@192.168.1.1", {"email_ip_domain", "invalid"}),
+    ],
+)
+def test_registration_email_reports_domain_and_local_part_errors_together(
+    email: str, codes: set[str]
+) -> None:
+    with pytest.raises(ValidationError) as excinfo:
+        validate_registration_email(email)
+    assert {error.code for error in excinfo.value.error_list} == codes
+
+
+@pytest.mark.parametrize(
+    ("email", "code"),
+    [
+        ("ana@gmail", "email_domain_without_dot"),
+        ("ana@localhost", "email_domain_without_dot"),
+        ("ana@[192.0.2.1]", "email_ip_domain"),
+    ],
+)
+def test_valid_local_part_gets_only_the_domain_error(email: str, code: str) -> None:
+    with pytest.raises(ValidationError) as excinfo:
+        validate_registration_email(email)
+    assert [error.code for error in excinfo.value.error_list] == [code]
