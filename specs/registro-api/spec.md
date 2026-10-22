@@ -234,3 +234,7 @@ solo limitan a los navegadores, y sus únicas defensas son los límites de RF-01
   correos de más de 254 caracteres), RF-003 (dominio IP sin corchetes aceptado; origen: plan,
   M-03/D-14 ajustados) y CF-5 (el resumen no prueba el límite por IP). Correcciones propuestas:
   T-018…T-021.
+- 2026-10-22 — Validación: NO CUMPLIDA (2.ª) — RF-002 (500 con `İ` en el correo y con caracteres
+  nulos o sustitutos en `terms`), RF-003 (dominios IP no canónicos aceptados) y RF-011 (un cuerpo
+  ilegible se salta el límite por IP). Riesgo pendiente de decisión: un límite configurado a 0 da
+  500 (RF-012). Correcciones propuestas: T-022…T-026.
