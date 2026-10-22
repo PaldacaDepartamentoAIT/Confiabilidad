@@ -365,7 +365,7 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   enumerar las de cada parser y códec; no cambia los tipos de contenido admitidos — [Cierto] —
   revertir: limitar `parser_classes` a `JSONParser`.
 
-- [ ] T-029 Corrección: el límite por correo e IP agrupa los correos que el registro trata como iguales
+- [x] T-029 Corrección: el límite por correo e IP agrupa los correos que el registro trata como iguales
   Tipo: corrección | Origen: validación de RF-010
   RF: RF-010 (D-08) | Depende de: — | Archivos: 2
   Archivos: `throttling.py`, `tests/test_registration_throttling.py`.
@@ -374,6 +374,9 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   Hecho cuando: desde la misma IP, `isis@example.com` seguido en menos de 60 s por
   `ısis@example.com`, `iſis@example.com` o `ıſıſ@example.com` recibe 429, y la clave de caché
   sigue sin contener el correo; suite verde.
+  Decisiones: la clave pliega el correo con `upper().lower()` antes de la huella; puede agrupar
+  algo más que Postgres (por ejemplo, `ß` y `ss`), lo que solo hace el límite más estricto —
+  [Probable] — revertir: plegar solo `ı` y `ſ`.
 
 ## RF sin tarea
 Ninguno.

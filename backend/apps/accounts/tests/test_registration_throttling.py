@@ -1,3 +1,4 @@
+import pytest
 from django.core.cache import cache
 from django.test import override_settings
 
@@ -107,3 +108,9 @@ def test_recorded_ip_requests_count_for_the_quota() -> None:
     assert throttling.check_ip("192.0.2.1", now=T0 + 30, record=False) == throttling.Verdict(
         allowed=False, retry_after=HOUR - 30
     )
+
+
+@pytest.mark.parametrize("variant", ["ısis@example.com", "iſis@example.com", "ıſıſ@example.com"])
+def test_email_variants_the_registration_treats_as_equal_share_the_limit(variant: str) -> None:
+    assert _email_ip(email="isis@example.com", at=T0).allowed
+    assert _email_ip(email=variant, at=T0 + 1) == throttling.Verdict(allowed=False, retry_after=59)

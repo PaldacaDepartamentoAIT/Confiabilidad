@@ -18,7 +18,9 @@ class Verdict:
 
 def check_email_ip(email: str, ip: str, *, now: float | None = None) -> Verdict:
     # La pareja correo e IP impide que un tercero agote el límite del correo de otra persona (C-01).
-    key = f"registration-rate:email-ip:{consent_email_fingerprint(email)}:{ip}"
+    # upper() antes de lower() pliega "ı" y "ſ" como el iexact de Postgres que usa el registro.
+    folded = email.strip().upper().lower()
+    key = f"registration-rate:email-ip:{consent_email_fingerprint(folded)}:{ip}"
     return _check(
         key,
         per_hour=conf.rate_email_ip_per_hour(),
