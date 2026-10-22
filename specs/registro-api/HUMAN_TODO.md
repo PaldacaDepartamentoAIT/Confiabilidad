@@ -19,6 +19,12 @@ cada una y muévela a *Hecho* con la fecha.
   reenviar códigos…» de `specs/cambio-contrasena/HUMAN_TODO.md`: el formulario de registro ya tiene
   su límite, pero el reenvío y la verificación del código no.
 
+- [ ] **Decidir si las cuentas creadas por consola o por el panel deben guardar el correo en forma
+  canónica.** La API ya convierte las variantes del mismo buzón (`ana@ｅxample.com`,
+  `"ana"@example.com`) a `ana@example.com` (D-15 de `registro-api`), pero `createsuperuser`, el
+  panel y otros caminos guardan el correo tal cual. Por ahí aún podría existir una segunda cuenta
+  para el mismo buzón. Es de la feature `usuario-personalizado`; decide si se especifica allí.
+
 ## Hecho
 
 <!-- Mueve aquí las tareas completadas, con fecha. -->
