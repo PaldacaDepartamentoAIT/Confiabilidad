@@ -9,7 +9,8 @@ llegarán con una feature de frontend (S-01).
 - **Dos rutas** (D-01): `POST /api/browser/v1/registration` para la web, que exige el token CSRF
   (RF-014), y `POST /api/app/v1/registration` para el cliente de aplicación, sin CSRF. La segunda
   la puede usar cualquier cliente que no sea un navegador; sus defensas son los límites (S-19).
-- **Cuerpo**: `name`, `birthdate` (`AAAA-MM-DD`), `email`, `country`, `terms`
+- **Cuerpo**, solo en JSON (`Content-Type: application/json`; cualquier otro tipo es un cuerpo
+  ilegible, D-16): `name`, `birthdate` (`AAAA-MM-DD`), `email`, `country`, `terms`
   (`{"version", "locale", "accepted": true}`) y, opcional, `language` (`es`, `pt-BR` o `en`).
 - **Respuesta neutra** (RF-005): `202` con `{"public_id", "message"}`, idéntica tanto si el correo es
   nuevo como si tiene un registro pendiente o una cuenta, activa o inactiva. Lo que depende del
