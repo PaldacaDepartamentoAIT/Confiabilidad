@@ -378,5 +378,17 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   algo más que Postgres (por ejemplo, `ß` y `ss`), lo que solo hace el límite más estricto —
   [Probable] — revertir: plegar solo `ı` y `ſ`.
 
+- [ ] T-030 Corrección: forma canónica del correo en la API
+  Tipo: corrección | Origen: validación (3.ª), hallazgo de variantes del mismo buzón (D-15)
+  RF: RF-003, RF-008, RF-010 | Depende de: T-022 | Archivos: 3
+  Archivos: `validators.py`, `api/serializers.py`, `tests/test_registration_api_serializer.py`.
+  Causa: la normalización del correo solo pasa a minúsculas, y variantes del mismo buzón cuentan
+  como correos distintos.
+  Hecho cuando: `ana@ｅxample.com` y `"ana"@example.com` salen del serializador como
+  `ana@example.com`; `ana@xn--espaa-rta.es` sale como `ana@españa.es`; `"a b"@example.com`
+  conserva las comillas; con una cuenta en `ana@example.com`, empezar el registro con
+  `ana@ｅxample.com` no crea registro pendiente y encola el aviso; los correos ya canónicos no
+  cambian; suite verde.
+
 ## RF sin tarea
 Ninguno.
