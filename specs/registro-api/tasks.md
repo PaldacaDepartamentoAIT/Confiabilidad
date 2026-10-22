@@ -351,5 +351,26 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   salta al leer el límite (en la primera solicitud), no al arrancar el servidor — [Probable] —
   revertir: una comprobación de sistema de Django.
 
+- [ ] T-028 Corrección: cuerpos que rompen el parser responden 400 y cuentan para la IP
+  Tipo: corrección | Origen: validación de RF-002 y RF-011
+  RF: RF-002, RF-011 (D-12) | Depende de: — | Archivos: 3
+  Archivos: `api/views.py`, `api/serializers.py`, `tests/test_registration_api_limits.py`.
+  Causa: la vista solo captura `ParseError` y `UnsupportedMediaType` al leer el cuerpo; se escapan
+  `RecursionError` y los errores de códecs no textuales, y el `JSONField` de `terms` deja escapar
+  `RecursionError` con un cuerpo de formulario.
+  Hecho cuando: un JSON anidado 100 000 niveles, un `terms` anidado en un formulario y
+  `charset=zlib`, `bz2` o `rot13` responden 400 (`non_field_errors`/`invalid`, o el error bajo
+  `terms`), nunca 500, y cuentan para la IP; por encima del límite, el mismo 429; suite verde.
+
+- [ ] T-029 Corrección: el límite por correo e IP agrupa los correos que el registro trata como iguales
+  Tipo: corrección | Origen: validación de RF-010
+  RF: RF-010 (D-08) | Depende de: — | Archivos: 2
+  Archivos: `throttling.py`, `tests/test_registration_throttling.py`.
+  Causa: la clave usa `strip().lower()`, pero el registro compara con `iexact` de Postgres, que
+  pliega `ı`→`I` y `ſ`→`S`.
+  Hecho cuando: desde la misma IP, `isis@example.com` seguido en menos de 60 s por
+  `ısis@example.com`, `iſis@example.com` o `ıſıſ@example.com` recibe 429, y la clave de caché
+  sigue sin contener el correo; suite verde.
+
 ## RF sin tarea
 Ninguno.
