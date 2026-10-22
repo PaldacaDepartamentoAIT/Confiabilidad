@@ -431,5 +431,16 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   formulario ya no llega al serializador; se conservan como defensa, como prevé D-16 (cobertura
   total 99,76 %) — [Probable] — revertir: quitar `_BoundedJSONField`.
 
+- [ ] T-034 Corrección: idioma del campo en el 429 del límite por IP
+  Tipo: corrección | Origen: validación de RF-013
+  RF: RF-013, RF-011 | Depende de: — | Archivos: 2
+  Archivos: `api/views.py`, `tests/test_registration_api_limits.py`.
+  Causa: superado el límite por IP, la vista elige el idioma solo con `Accept-Language` y no mira
+  el campo `language` de un cuerpo JSON legible.
+  Hecho cuando: superado el límite por IP, un cuerpo JSON con `"language": "en"` (sin cabecera, y
+  con `Accept-Language: es-ES`) recibe el 429 en inglés; un cuerpo ilegible o que no sea JSON sigue
+  recibiendo el 429 con el idioma de `Accept-Language`; la solicitud sigue sin validarse, sin contar
+  para ningún límite y sin llamar a `start`; suite verde.
+
 ## RF sin tarea
 Ninguno.
