@@ -204,3 +204,16 @@ def test_validated_email_is_the_normalized_one(terms: dict[str, Terms]) -> None:
     serializer = RegistrationSerializer(data=_data(email="  Ana@Example.COM "))
     assert serializer.is_valid(), serializer.errors
     assert serializer.validated_data["email"] == "ana@example.com"
+
+
+@pytest.mark.parametrize("key", ["version", "locale"])
+@pytest.mark.parametrize(
+    ("character", "code"),
+    [("\u0000", "null_characters_not_allowed"), ("\ud800", "surrogate_characters_not_allowed")],
+)
+def test_forbidden_characters_in_the_terms_document_are_rejected(
+    terms: dict[str, Terms], key: str, character: str, code: str
+) -> None:
+    document: dict[str, object] = {"version": "1", "locale": "es", "accepted": True}
+    document[key] = f"{document[key]}{character}"
+    assert _codes(RegistrationSerializer(data=_data(terms=document))) == {"terms": [code]}

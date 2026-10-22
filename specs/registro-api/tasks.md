@@ -290,7 +290,7 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   en minúsculas lleva un punto combinante que no es un carácter válido de correo — [Cierto] —
   revertir: validar también la forma original.
 
-- [ ] T-023 Corrección: caracteres nulos y sustitutos en el documento de términos
+- [x] T-023 Corrección: caracteres nulos y sustitutos en el documento de términos
   Tipo: corrección | Origen: validación de RF-002 y RF-004
   RF: RF-002, RF-004, RF-013 | Depende de: — | Archivos: 2
   Archivos: `api/serializers.py`, `tests/test_registration_api_serializer.py`.

@@ -52,6 +52,8 @@ class RegistrationSerializer(serializers.Serializer[dict[str, Any]]):
             errors.append(
                 serializers.ErrorDetail(str(_("Terms document is required.")), code="required")
             )
+        elif forbidden := _forbidden_characters(version + locale):
+            errors.append(forbidden)
         else:
             try:
                 document = current_document_shown(Terms.Kind.TERMS, version=version, locale=locale)
@@ -60,3 +62,17 @@ class RegistrationSerializer(serializers.Serializer[dict[str, Any]]):
         if errors:
             raise serializers.ValidationError(errors)
         return {"version": document.version, "locale": document.locale}
+
+
+def _forbidden_characters(text: str) -> serializers.ErrorDetail | None:
+    # Los mismos que rechaza CharField de DRF: Postgres no admite el nulo ni un sustituto suelto.
+    if "\x00" in text:
+        return serializers.ErrorDetail(
+            str(_("Null characters are not allowed.")), code="null_characters_not_allowed"
+        )
+    if any(0xD800 <= ord(char) <= 0xDFFF for char in text):
+        return serializers.ErrorDetail(
+            str(_("Surrogate characters are not allowed.")),
+            code="surrogate_characters_not_allowed",
+        )
+    return None
