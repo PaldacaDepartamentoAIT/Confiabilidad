@@ -1,6 +1,8 @@
 from datetime import timedelta
 
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
+from django.utils.translation import gettext_lazy as _
 
 
 def max_failed_attempts() -> int:
@@ -28,12 +30,22 @@ def start_retry_window() -> timedelta:
 
 
 def rate_email_ip_interval() -> timedelta:
-    return timedelta(seconds=settings.REGISTRATION_RATE_EMAIL_IP_INTERVAL_SECONDS)
+    return timedelta(seconds=_at_least_one("REGISTRATION_RATE_EMAIL_IP_INTERVAL_SECONDS"))
 
 
 def rate_email_ip_per_hour() -> int:
-    return int(settings.REGISTRATION_RATE_EMAIL_IP_PER_HOUR)
+    return _at_least_one("REGISTRATION_RATE_EMAIL_IP_PER_HOUR")
 
 
 def rate_ip_per_hour() -> int:
-    return int(settings.REGISTRATION_RATE_IP_PER_HOUR)
+    return _at_least_one("REGISTRATION_RATE_IP_PER_HOUR")
+
+
+def _at_least_one(name: str) -> int:
+    # Un límite de 0 no tiene significado definido: es un error de configuración, no un cierre.
+    value = int(getattr(settings, name))
+    if value < 1:
+        raise ImproperlyConfigured(
+            _("%(name)s must be at least 1 (got %(value)d).") % {"name": name, "value": value}
+        )
+    return value

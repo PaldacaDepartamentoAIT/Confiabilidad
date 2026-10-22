@@ -2,10 +2,13 @@ import json
 import os
 import subprocess
 import sys
+from collections.abc import Callable
 from datetime import timedelta
 from pathlib import Path
 
+import pytest
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from django.test import override_settings
 
 from apps.accounts import conf
@@ -93,3 +96,31 @@ def test_limits_are_read_from_environment_variables() -> None:
         "REGISTRATION_RATE_EMAIL_IP_PER_HOUR": 4,
         "REGISTRATION_RATE_IP_PER_HOUR": 50,
     }
+
+
+@pytest.mark.parametrize(
+    ("name", "reader"),
+    [
+        ("REGISTRATION_RATE_EMAIL_IP_INTERVAL_SECONDS", conf.rate_email_ip_interval),
+        ("REGISTRATION_RATE_EMAIL_IP_PER_HOUR", conf.rate_email_ip_per_hour),
+        ("REGISTRATION_RATE_IP_PER_HOUR", conf.rate_ip_per_hour),
+    ],
+)
+@pytest.mark.parametrize("value", [0, -1])
+def test_rate_limit_below_one_is_a_configuration_error(
+    name: str, reader: Callable[[], object], value: int
+) -> None:
+    with override_settings(**{name: value}):
+        with pytest.raises(ImproperlyConfigured, match=name):
+            reader()
+
+
+@override_settings(
+    REGISTRATION_RATE_EMAIL_IP_INTERVAL_SECONDS=1,
+    REGISTRATION_RATE_EMAIL_IP_PER_HOUR=1,
+    REGISTRATION_RATE_IP_PER_HOUR=1,
+)
+def test_rate_limits_of_one_are_valid() -> None:
+    assert conf.rate_email_ip_interval() == timedelta(seconds=1)
+    assert conf.rate_email_ip_per_hour() == 1
+    assert conf.rate_ip_per_hour() == 1

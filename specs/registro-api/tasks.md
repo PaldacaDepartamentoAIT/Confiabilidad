@@ -338,7 +338,7 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   comprobó con un mutante que toma la primera entrada de `X-Forwarded-For`, la que el cliente
   puede falsificar — [Cierto] — revertir: no aplica.
 
-- [ ] T-027 Corrección: límites de 0 o negativos como error de configuración
+- [x] T-027 Corrección: límites de 0 o negativos como error de configuración
   Tipo: corrección | Origen: validación de RF-012
   RF: RF-012 | Depende de: — | Archivos: 2
   Archivos: `conf.py`, `tests/test_registration_conf.py`.
@@ -346,6 +346,10 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   Hecho cuando: un límite de registro menor que 1 hace fallar al leerlo con
   `ImproperlyConfigured`, con un mensaje que nombra la variable; los valores de 1 o más funcionan
   como hasta ahora; suite verde.
+  Decisiones: la regla se aplica a los tres límites, también al intervalo en segundos, aunque un
+  intervalo de 0 no provocaba el error — [Probable] — revertir: dejar el intervalo fuera. El error
+  salta al leer el límite (en la primera solicitud), no al arrancar el servidor — [Probable] —
+  revertir: una comprobación de sistema de Django.
 
 ## RF sin tarea
 Ninguno.
