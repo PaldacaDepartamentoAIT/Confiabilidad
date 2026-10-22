@@ -156,7 +156,7 @@ def test_body_that_breaks_the_parser_is_invalid_and_counts(body: str, content_ty
 
 
 @override_settings(REGISTRATION_RATE_IP_PER_HOUR=1)
-def test_deeply_nested_terms_in_a_form_body_is_reported_under_terms_and_counts() -> None:
+def test_form_body_with_deeply_nested_terms_is_an_unreadable_body_and_counts() -> None:
     body = "&".join(f"{key}={value}" for key, value in _form().items() if key != "terms")
     body += "&terms=" + "[" * 100_000
     response = Client(REMOTE_ADDR="192.0.2.1").post(
@@ -164,5 +164,5 @@ def test_deeply_nested_terms_in_a_form_body_is_reported_under_terms_and_counts()
     )
 
     assert response.status_code == 400
-    assert response.json()["errors"]["terms"][0]["code"] == "invalid"
+    assert response.json()["errors"]["non_field_errors"][0]["code"] == "invalid"
     _assert_limited(_post(_form()))

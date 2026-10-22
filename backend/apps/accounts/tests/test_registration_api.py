@@ -189,3 +189,35 @@ def test_unknown_error_code_gets_the_generic_text_instead_of_failing(
     assert response.json()["errors"]["country"] == [
         {"code": "no_such_code", "message": messages.error_text("invalid", "es")}
     ]
+
+
+NON_JSON_BODIES = [
+    ("application/x-www-form-urlencoded", "name=Ana&email=ana%40example.com"),
+    (
+        "multipart/form-data; boundary=x",
+        '--x\r\nContent-Disposition: form-data; name="name"\r\n\r\nAna\r\n--x--\r\n',
+    ),
+    ("text/plain", '{"name": "Ana"}'),
+]
+
+
+@pytest.mark.parametrize(("content_type", "body"), NON_JSON_BODIES)
+def test_app_route_accepts_only_json(content_type: str, body: str) -> None:
+    response = Client().post(APP, body, content_type=content_type)
+
+    assert response.status_code == 400
+    assert response.json()["errors"]["non_field_errors"][0]["code"] == "invalid"
+    assert not PhantomProcess.objects.exists()
+
+
+@pytest.mark.parametrize(("content_type", "body"), NON_JSON_BODIES)
+def test_browser_route_accepts_only_json(csrf_client: Client, content_type: str, body: str) -> None:
+    csrf_client.get("/_allauth/browser/v1/auth/session")
+    token = csrf_client.cookies["csrftoken"].value
+    response = csrf_client.post(
+        BROWSER, body, content_type=content_type, headers={"X-CSRFToken": token}
+    )
+
+    assert response.status_code == 400
+    assert response.json()["errors"]["non_field_errors"][0]["code"] == "invalid"
+    assert not PhantomProcess.objects.exists()

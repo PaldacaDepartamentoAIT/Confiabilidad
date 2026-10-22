@@ -4,6 +4,7 @@ from django.http import HttpRequest, HttpResponse
 from django.utils.translation import gettext_lazy as _
 from rest_framework import exceptions, status
 from rest_framework.authentication import CSRFCheck
+from rest_framework.parsers import JSONParser
 from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -22,6 +23,9 @@ class AppRegistrationView(APIView):
     # Sin autenticación: la sesión de quien envía el formulario no influye (S-14).
     authentication_classes: list[Any] = []
     permission_classes = [AllowAny]
+    # Solo JSON: otra web no puede enviarlo desde un navegador sin la comprobación previa de CORS
+    # (D-16); un formulario HTML sí podría.
+    parser_classes = [JSONParser]
 
     def post(self, request: Request) -> Response:
         header = request.headers.get("Accept-Language")
@@ -32,6 +36,9 @@ class AppRegistrationView(APIView):
         if not verdict.allowed:
             return _limited(verdict, request_language(None, header))
         try:
+            if request.content_type.split(";")[0].strip().lower() != "application/json":
+                # En la ruta web, el CSRF ya ha leído un formulario y DRF lo vería vacío.
+                raise exceptions.UnsupportedMediaType(request.content_type)
             body = request.data
         except Exception:
             # Cualquier fallo al leer el cuerpo (JSON muy anidado, codificación rara) es un cuerpo

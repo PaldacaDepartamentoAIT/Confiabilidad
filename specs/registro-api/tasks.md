@@ -414,7 +414,7 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   `"a\ b"@example.com` se conserva; con una cuenta en `ana@example.com`, empezar con
   `"\ana"@example.com` no crea registro pendiente y encola el aviso; suite verde.
 
-- [ ] T-033 Corrección: solo JSON en las rutas de registro
+- [x] T-033 Corrección: solo JSON en las rutas de registro
   Tipo: corrección | Origen: validación de RF-014 (plan, D-16)
   RF: RF-014, RF-011 | Depende de: T-028 | Archivos: 3
   Archivos: `api/views.py`, `tests/test_registration_api.py`, `tests/test_registration_api_limits.py`.
@@ -424,6 +424,12 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   `multipart/form-data` o `text/plain` responde 400 `non_field_errors`/`invalid` sin empezar el
   registro y cuenta para la IP; un cuerpo JSON sigue funcionando; el test de T-028 con `terms`
   anidado en un formulario pasa a comprobar ese 400; suite verde.
+  Decisiones: además de `parser_classes = [JSONParser]`, la vista comprueba el tipo de contenido
+  antes de leer el cuerpo, porque en la ruta web el CSRF ya ha leído un formulario y DRF lo veía
+  vacío (400 con `required` en vez de cuerpo ilegible) — [Cierto] — revertir: solo
+  `parser_classes`. Las dos líneas de `_BoundedJSONField` (T-028) quedan sin cubrir porque un
+  formulario ya no llega al serializador; se conservan como defensa, como prevé D-16 (cobertura
+  total 99,76 %) — [Probable] — revertir: quitar `_BoundedJSONField`.
 
 ## RF sin tarea
 Ninguno.
