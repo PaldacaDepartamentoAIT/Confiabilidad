@@ -20,7 +20,9 @@ llegarán con una feature de frontend (S-01).
   errores de todos los campos a la vez. Cada error tiene un código estable y un texto en el idioma
   de la solicitud.
 - **Reglas**: las de la cuenta para nombre, fecha (18 años y 5 días, S-02) y país; el correo debe
-  tener un dominio con punto y no puede ser una IP (RF-003); los términos exigen la marca
+  tener un dominio con punto y no puede ser una IP (RF-003), y se guarda en su forma canónica: las
+  variantes del mismo buzón (`ana@ｅxample.com`, `"ana"@example.com`) pasan a `ana@example.com`
+  (D-15); los términos exigen la marca
   `accepted: true` y un documento de la versión vigente, en cualquier idioma (RF-004).
 - **Términos** (RF-009): el registro pendiente guarda el documento aceptado, y la aceptación se
   registra al completar el registro con la contraseña. Si para entonces el documento ya no es de la
@@ -141,7 +143,8 @@ se lee el código.
     curl -s -i -X POST http://localhost:8001/api/app/v1/registration -H "Content-Type: application/json" -d '{}'
     ```
     La primera vez deberías ver `400` con un error `required` en cada campo; la segunda, `429` con
-    `Retry-After: 3600` y sin errores de validación: superado el límite por IP, la solicitud ya no se
+    `Retry-After` cerca de 3600 (los segundos que faltan para que pase una hora) y sin errores de
+    validación: superado el límite por IP, la solicitud ya no se
     valida. Para el servidor de prueba:
     ```bash
     docker stop registro-limite-ip
