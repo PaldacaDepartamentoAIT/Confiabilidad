@@ -394,5 +394,36 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   es un dot-atom ASCII — [Cierto] — revertir: no aplica. La IDNA es la del códec de Python
   (IDNA 2003) — [Probable] — revertir: no aplica sin una dependencia nueva.
 
+- [ ] T-031 Corrección: todos los errores del correo a la vez
+  Tipo: corrección | Origen: validación de RF-002
+  RF: RF-002, RF-003 | Depende de: — | Archivos: 2
+  Archivos: `validators.py`, `tests/test_validators.py`.
+  Causa: `validate_registration_email` lanza el error del dominio y no comprueba el formato de la
+  parte local.
+  Hecho cuando: `ana garcia@gmail` da `email_domain_without_dot` e `invalid` en la misma
+  `ValidationError`; `ana garcia@192.168.1.1` da `email_ip_domain` e `invalid`; `ana@gmail`,
+  `ana@localhost` y `ana@[192.0.2.1]` siguen dando solo su código propio; los casos de T-001,
+  T-020 y T-025 no cambian; suite verde.
+
+- [ ] T-032 Corrección: comillas con caracteres escapados en la forma canónica del correo
+  Tipo: corrección | Origen: validación de RF-010 (D-15)
+  RF: RF-010, RF-008 | Depende de: T-030 | Archivos: 2
+  Archivos: `validators.py`, `tests/test_registration_api_serializer.py`.
+  Causa: las comillas solo se quitan si el interior es un dot-atom sin escapes.
+  Hecho cuando: `"\ana"@example.com` y `"an\a"@example.com` salen como `ana@example.com`;
+  `"a\ b"@example.com` se conserva; con una cuenta en `ana@example.com`, empezar con
+  `"\ana"@example.com` no crea registro pendiente y encola el aviso; suite verde.
+
+- [ ] T-033 Corrección: solo JSON en las rutas de registro
+  Tipo: corrección | Origen: validación de RF-014 (plan, D-16)
+  RF: RF-014, RF-011 | Depende de: T-028 | Archivos: 3
+  Archivos: `api/views.py`, `tests/test_registration_api.py`, `tests/test_registration_api_limits.py`.
+  Causa: las vistas usan los parsers por defecto de DRF; un formulario HTML de otra web no necesita
+  comprobación previa y llega a la ruta de la app.
+  Hecho cuando: por las dos rutas, un cuerpo `application/x-www-form-urlencoded`,
+  `multipart/form-data` o `text/plain` responde 400 `non_field_errors`/`invalid` sin empezar el
+  registro y cuenta para la IP; un cuerpo JSON sigue funcionando; el test de T-028 con `terms`
+  anidado en un formulario pasa a comprobar ese 400; suite verde.
+
 ## RF sin tarea
 Ninguno.
