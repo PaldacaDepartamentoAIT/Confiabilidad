@@ -267,3 +267,6 @@ igual que RF-005 con un registro real.
   de términos aceptado y completar el registro registra su aceptación — RF: RF-001, RF-005, RF-020
   y RF-024 modificados; S-03 ajustado. Clarificado sin hallazgos; impacto: sin cambios en el plan,
   lo implementan T-009…T-011 y T-016 de `registro-api` — Estado: impacto analizado
+- 2026-10-22 — Validación del cambio del 2026-10-21: CUMPLIDA, dentro de la 6.ª validación de
+  `registro-api` (RF-001, RF-005, RF-020 y RF-024 cumplidos con la suite en verde) — RF: ninguno
+  modificado
