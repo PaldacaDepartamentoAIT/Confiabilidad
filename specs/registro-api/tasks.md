@@ -276,5 +276,60 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   probarlo; verificado con el mismo código fuera de Docker, como el resto del resumen — [Cierto] —
   revertir: no aplica.
 
+- [ ] T-022 Corrección: validar el correo ya normalizado
+  Tipo: corrección | Origen: validación de RF-002 y RF-003
+  RF: RF-002, RF-003 | Depende de: — | Archivos: 2
+  Archivos: `api/serializers.py`, `tests/test_registration_api_serializer.py`.
+  Causa: el serializador valida el correo antes de `strip().lower()`, y el modelo lo rechaza
+  después en `start`: 500 con `İ`.
+  Hecho cuando: `İnci@example.com` da 400 bajo `email` con un código del catálogo; un correo de
+  254 caracteres con `İ` en el dominio da 400 `max_length`; los casos de T-001 y T-019 no
+  cambian; suite verde.
+
+- [ ] T-023 Corrección: caracteres nulos y sustitutos en el documento de términos
+  Tipo: corrección | Origen: validación de RF-002 y RF-004
+  RF: RF-002, RF-004, RF-013 | Depende de: — | Archivos: 2
+  Archivos: `api/serializers.py`, `tests/test_registration_api_serializer.py`.
+  Causa: `validate_terms` pasa `version` y `locale` a la consulta sin filtrar `\u0000` ni
+  sustitutos.
+  Hecho cuando: `version` o `locale` con `\u0000` o un sustituto suelto dan 400 bajo `terms` con
+  `null_characters_not_allowed` o `surrogate_characters_not_allowed`; suite verde.
+
+- [ ] T-024 Corrección: límite por IP antes de leer el cuerpo
+  Tipo: corrección | Origen: validación de RF-011
+  RF: RF-011 (D-12) | Depende de: — | Archivos: 2
+  Archivos: `api/views.py`, `tests/test_registration_api_limits.py`.
+  Causa: la vista lee `request.data` para el idioma antes de `check_ip`.
+  Hecho cuando: con el límite por IP superado, un JSON mal formado o un tipo de contenido no
+  admitido reciben el mismo 429, con el idioma de `Accept-Language`; por debajo del límite, ese
+  cuerpo cuenta para la IP y responde 400 con `{"errors": {"non_field_errors": [{"code":
+  "invalid", …}]}}`; suite verde.
+
+- [ ] T-025 Corrección: rechazar dominios IP no canónicos
+  Tipo: corrección | Origen: validación de RF-003
+  RF: RF-003 (D-14) | Depende de: — | Archivos: 2
+  Archivos: `validators.py`, `tests/test_validators.py`.
+  Causa: la comprobación de IP se hace sobre el dominio sin normalizar y con la sintaxis estricta.
+  Hecho cuando: `ana@１９２.１６８.１.１００`, `ana@1.2.3.04` y `ana@01.02.03.04` se rechazan
+  con `email_ip_domain`; `ana@1and1.es`, `ana@123.example.com` y `ana@españa.es` se siguen
+  aceptando; suite verde.
+
+- [ ] T-026 Corrección: límite con la IP real tras el proxy (solo test)
+  Tipo: corrección | Origen: validación de RF-010 y RF-011
+  RF: RF-010, RF-011 | Depende de: — | Archivos: 1
+  Archivos: `tests/test_registration_api_limits.py`.
+  Hecho cuando: con `TRUSTED_PROXY_IPS` configurado, dos solicitudes desde el proxy con la misma
+  última entrada de `X-Forwarded-For` comparten el límite y otra con una entrada distinta no;
+  suite verde.
+
+- [ ] T-027 Corrección: límites de 0 o negativos como error de configuración
+  Tipo: corrección | Origen: validación de RF-012
+  RF: RF-012 | Depende de: — | Archivos: 2
+  Archivos: `conf.py`, `tests/test_registration_conf.py`.
+  Causa: con un límite a 0, `throttling` indexa una lista vacía y da 500 en cada solicitud.
+  Hecho cuando: un límite de registro menor que 1 hace fallar al leerlo con
+  `ImproperlyConfigured`, con un mensaje que nombra la variable; los valores de 1 o más funcionan
+  como hasta ahora; suite verde.
+
 ## RF sin tarea
 Ninguno.
