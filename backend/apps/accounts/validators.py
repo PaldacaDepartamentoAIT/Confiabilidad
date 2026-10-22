@@ -82,8 +82,11 @@ def canonical_registration_email(value: str) -> str:
         domain = domain.encode("idna").decode("idna")
     except (UnicodeError, ValueError):
         pass
-    if len(user) > 2 and user[0] == user[-1] == '"' and _DOT_ATOM.fullmatch(user[1:-1]):
-        user = user[1:-1]
+    if len(user) > 2 and user[0] == user[-1] == '"':
+        # Un par escapado ("\a") no cambia la dirección: se compara lo que queda sin escapes.
+        unescaped = re.sub(r"\\(.)", r"\1", user[1:-1])
+        if _DOT_ATOM.fullmatch(unescaped):
+            user = unescaped
     return f"{user}@{domain}"
 
 

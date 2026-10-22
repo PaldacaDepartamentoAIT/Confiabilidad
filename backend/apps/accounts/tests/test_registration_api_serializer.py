@@ -231,6 +231,9 @@ def test_forbidden_characters_in_the_terms_document_are_rejected(
         ('"Ana.Lopez"@Example.com', "ana.lopez@example.com"),
         ("ana@xn--espaa-rta.es", "ana@españa.es"),
         ('"a..b"@example.com', '"a..b"@example.com'),
+        ('"\\ana"@example.com', "ana@example.com"),
+        ('"an\\a"@example.com', "ana@example.com"),
+        ('"a\\ b"@example.com', '"a\\ b"@example.com'),
         ("ana@example.com", "ana@example.com"),
         ("ana+etiqueta@españa.es", "ana+etiqueta@españa.es"),
     ],
@@ -248,6 +251,26 @@ def test_variant_of_an_email_with_an_account_gets_the_account_notice(
 ) -> None:
     make_user(email="ana@example.com")
     serializer = RegistrationSerializer(data=_data(email="ana@ｅxample.com"))
+    assert serializer.is_valid(), serializer.errors
+    data = serializer.validated_data
+
+    started = registration.start(
+        email=data["email"], name=data["name"], birthdate=data["birthdate"], country=data["country"]
+    )
+    registration.resolve_registration(started.public_id)
+
+    assert not PendingRegistration.objects.exists()
+    assert (
+        OutboundEmail.objects.filter(kind="account_exists", recipient="ana@example.com").count()
+        == 1
+    )
+
+
+def test_escaped_variant_of_an_email_with_an_account_gets_the_account_notice(
+    terms: dict[str, Terms],
+) -> None:
+    make_user(email="ana@example.com")
+    serializer = RegistrationSerializer(data=_data(email='"\\ana"@example.com'))
     assert serializer.is_valid(), serializer.errors
     data = serializer.validated_data
 

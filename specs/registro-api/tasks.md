@@ -405,7 +405,7 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   `ana@localhost` y `ana@[192.0.2.1]` siguen dando solo su código propio; los casos de T-001,
   T-020 y T-025 no cambian; suite verde.
 
-- [ ] T-032 Corrección: comillas con caracteres escapados en la forma canónica del correo
+- [x] T-032 Corrección: comillas con caracteres escapados en la forma canónica del correo
   Tipo: corrección | Origen: validación de RF-010 (D-15)
   RF: RF-010, RF-008 | Depende de: T-030 | Archivos: 2
   Archivos: `validators.py`, `tests/test_registration_api_serializer.py`.
