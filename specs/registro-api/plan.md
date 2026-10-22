@@ -22,6 +22,7 @@ respuesta. Respuestas (D-03, D-04):
 - `400` `{"errors": {"<campo>": [{"code": "<código>", "message": "<texto>"}]}}`;
 - `429` `{"message": "<texto>", "retry_after": <segundos>}` y cabecera `Retry-After`;
 - `403` de Django si falta el CSRF en la variante web.
+Las dos rutas solo admiten cuerpos JSON (D-16).
 RF: RF-001, RF-005, RF-006, RF-007, RF-008, RF-010, RF-011, RF-014
 
 ### M-02 Validación del formulario (`apps/accounts/api/serializers.py`)
@@ -215,6 +216,17 @@ Motivo: corrige el hallazgo de la 3.ª validación sin cambiar la spec ni otra f
 ya canónicos no cambian. *Coste:* la cuenta muestra la forma canónica. *Riesgo restante:* las
 cuentas creadas por consola o por el panel no se convierten (`usuario-personalizado`; anotado en
 `HUMAN_TODO.md`).
+
+### D-16 Solo JSON en las dos rutas
+Elegida: `parser_classes = [JSONParser]` en las dos vistas; cualquier otro tipo de contenido es un
+cuerpo ilegible (400 que cuenta para la IP).
+Descartada: mantener los parsers por defecto de DRF, o rechazar en la ruta de la app una cabecera
+`Origin` presente y no configurada.
+Motivo: un navegador solo puede enviar JSON a otro origen tras una comprobación previa que CORS
+rechaza para los orígenes no configurados; así esos orígenes (RF-007 de `auth-headless`) sí limitan
+a los navegadores, como pide RF-014. Comprobar `Origin` depende de que el navegador la envíe, y
+`Origin: null` lo engaña. Los dos clientes ya envían JSON. *Coste:* la protección de T-028 frente a
+un `terms` anidado en un formulario queda como defensa sin uso.
 
 ## Estrategia de tests
 - Unitarios (`pytest`, sin HTTP):
