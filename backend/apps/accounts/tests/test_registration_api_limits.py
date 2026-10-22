@@ -131,3 +131,38 @@ def test_limit_uses_the_real_client_ip_behind_the_trusted_proxy() -> None:
     assert via_proxy("6.6.6.6, 203.0.113.9", "a@example.com") == 202
     assert via_proxy("7.7.7.7, 203.0.113.9", "b@example.com") == 429
     assert via_proxy("203.0.113.10", "c@example.com") == 202
+
+
+DEEP_JSON = "[" * 100_000 + "]" * 100_000
+
+
+@pytest.mark.parametrize(
+    ("body", "content_type"),
+    [
+        (DEEP_JSON, "application/json"),
+        ('{"name": "Ana"}', "application/json; charset=zlib"),
+        ('{"name": "Ana"}', "application/json; charset=bz2"),
+        ('{"name": "Ana"}', "application/json; charset=rot13"),
+    ],
+)
+@override_settings(REGISTRATION_RATE_IP_PER_HOUR=1)
+def test_body_that_breaks_the_parser_is_invalid_and_counts(body: str, content_type: str) -> None:
+    client = Client(REMOTE_ADDR="192.0.2.1")
+    response = client.generic("POST", APP, body.encode(), content_type=content_type)
+
+    assert response.status_code == 400
+    assert response.json()["errors"]["non_field_errors"][0]["code"] == "invalid"
+    _assert_limited(_post(_form()))
+
+
+@override_settings(REGISTRATION_RATE_IP_PER_HOUR=1)
+def test_deeply_nested_terms_in_a_form_body_is_reported_under_terms_and_counts() -> None:
+    body = "&".join(f"{key}={value}" for key, value in _form().items() if key != "terms")
+    body += "&terms=" + "[" * 100_000
+    response = Client(REMOTE_ADDR="192.0.2.1").post(
+        APP, body, content_type="application/x-www-form-urlencoded"
+    )
+
+    assert response.status_code == 400
+    assert response.json()["errors"]["terms"][0]["code"] == "invalid"
+    _assert_limited(_post(_form()))

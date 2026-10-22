@@ -351,7 +351,7 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   salta al leer el límite (en la primera solicitud), no al arrancar el servidor — [Probable] —
   revertir: una comprobación de sistema de Django.
 
-- [ ] T-028 Corrección: cuerpos que rompen el parser responden 400 y cuentan para la IP
+- [x] T-028 Corrección: cuerpos que rompen el parser responden 400 y cuentan para la IP
   Tipo: corrección | Origen: validación de RF-002 y RF-011
   RF: RF-002, RF-011 (D-12) | Depende de: — | Archivos: 3
   Archivos: `api/views.py`, `api/serializers.py`, `tests/test_registration_api_limits.py`.
@@ -361,6 +361,9 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   Hecho cuando: un JSON anidado 100 000 niveles, un `terms` anidado en un formulario y
   `charset=zlib`, `bz2` o `rot13` responden 400 (`non_field_errors`/`invalid`, o el error bajo
   `terms`), nunca 500, y cuentan para la IP; por encima del límite, el mismo 429; suite verde.
+  Decisiones: la vista trata cualquier excepción al leer el cuerpo como cuerpo ilegible, en vez de
+  enumerar las de cada parser y códec; no cambia los tipos de contenido admitidos — [Cierto] —
+  revertir: limitar `parser_classes` a `JSONParser`.
 
 - [ ] T-029 Corrección: el límite por correo e IP agrupa los correos que el registro trata como iguales
   Tipo: corrección | Origen: validación de RF-010

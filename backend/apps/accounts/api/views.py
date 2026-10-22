@@ -33,7 +33,9 @@ class AppRegistrationView(APIView):
             return _limited(verdict, request_language(None, header))
         try:
             body = request.data
-        except (exceptions.ParseError, exceptions.UnsupportedMediaType):
+        except Exception:
+            # Cualquier fallo al leer el cuerpo (JSON muy anidado, codificación rara) es un cuerpo
+            # ilegible: 400 que cuenta para la IP, nunca 500.
             throttling.record_ip(ip)
             return _unreadable(request_language(None, header))
         field = body.get("language") if isinstance(body, dict) else None

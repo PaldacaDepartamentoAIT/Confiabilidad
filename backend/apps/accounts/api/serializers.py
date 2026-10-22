@@ -21,13 +21,22 @@ class _NormalizedEmailField(serializers.CharField):
         return str(super().to_internal_value(data)).lower()
 
 
+class _BoundedJSONField(serializers.JSONField):
+    # Desde un formulario, DRF hace json.loads del texto; un anidamiento enorme no es un ValueError.
+    def to_internal_value(self, data: Any) -> Any:
+        try:
+            return super().to_internal_value(data)
+        except RecursionError:
+            self.fail("invalid")
+
+
 class RegistrationSerializer(serializers.Serializer[dict[str, Any]]):
     # Solo reglas que no consultan cuentas ni registros pendientes (RF-024 de procesos-pendientes).
     name = serializers.CharField(validators=[validate_name])
     birthdate = serializers.DateField(input_formats=["iso-8601"], validators=[validate_birthdate])
     email = _NormalizedEmailField(max_length=254, validators=[validate_registration_email])
     country = serializers.CharField()
-    terms = serializers.JSONField()
+    terms = _BoundedJSONField()
     language = serializers.CharField(
         required=False, allow_null=True, allow_blank=True, default=None
     )
