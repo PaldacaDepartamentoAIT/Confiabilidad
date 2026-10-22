@@ -233,5 +233,40 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   `record_ip(ip)` apunta una solicitud; con `record=True` (por defecto) el comportamiento es el de
   T-008; comprobar sin apuntar 100 veces no consume el cupo; suite verde.
 
+- [ ] T-018 Corrección: textos para los códigos de caracteres nulos y sustitutos
+  Tipo: corrección | Origen: validación de RF-002
+  RF: RF-002, RF-013 | Depende de: — | Archivos: 3
+  Archivos: `api/messages.py`, `api/views.py`, `tests/test_registration_api.py`.
+  Causa: los validadores implícitos del CharField de DRF emiten `null_characters_not_allowed` y
+  `surrogate_characters_not_allowed`, que no están en el catálogo; la vista responde 500.
+  Hecho cuando: un nombre, correo o país con `\u0000` o con un sustituto suelto responde 400 con
+  el código en su campo y el texto en `es`, `pt-BR` y `en`; un código ajeno al catálogo responde
+  400 con ese código y el texto genérico de `invalid`, nunca 500; suite verde.
+
+- [ ] T-019 Corrección: correo de más de 254 caracteres rechazado en su campo
+  Tipo: corrección | Origen: validación de RF-002 y RF-003
+  RF: RF-002, RF-003 | Depende de: — | Archivos: 3
+  Archivos: `api/serializers.py`, `api/messages.py`, `tests/test_registration_api_serializer.py`.
+  Causa: el serializador acepta correos de 255 a 320 caracteres y el modelo los rechaza al empezar
+  el registro con un error que la vista no captura (500).
+  Hecho cuando: un correo de formato válido y más de 254 caracteres da 400 con un error bajo
+  `email` cuyo código está en el catálogo en los tres idiomas; uno de 254 se acepta; suite verde.
+
+- [ ] T-020 Corrección: dominio IP sin corchetes rechazado
+  Tipo: corrección | Origen: validación de RF-003 (plan)
+  RF: RF-003 | Depende de: — | Archivos: 2
+  Archivos: `validators.py`, `tests/test_validators.py`.
+  Causa: `validate_registration_email` solo rechazaba las IP entre corchetes (M-03/D-14).
+  Hecho cuando: `ana@192.168.1.100` y `ana@10.0.0.10` se rechazan con `email_ip_domain`;
+  `ana@example.com` y `ana@1and1.es` se siguen aceptando; suite verde.
+
+- [ ] T-021 Corrección: probar el límite por IP en el resumen
+  Tipo: corrección | Origen: validación de CF-5
+  RF: RF-011 | Depende de: — | Archivos: 1
+  Archivos: `specs/registro-api/resumen.md`.
+  Causa: *Cómo probarlo* solo ejercita el límite de correo e IP.
+  Hecho cuando: un paso muestra con `curl`, con el límite bajado por configuración, que la IP
+  recibe 429 sin validar el cuerpo; el comando se ha ejecutado y da lo que dice el texto.
+
 ## RF sin tarea
 Ninguno.
