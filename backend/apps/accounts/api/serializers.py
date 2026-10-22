@@ -5,6 +5,7 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
 from apps.accounts.validators import (
+    canonical_registration_email,
     normalize_country,
     validate_birthdate,
     validate_country,
@@ -18,7 +19,7 @@ from apps.consents.services import current_document_shown
 class _NormalizedEmailField(serializers.CharField):
     # Se valida el correo tal como se guardará: en minúsculas cambia de longitud y de forma ("İ").
     def to_internal_value(self, data: Any) -> str:
-        return str(super().to_internal_value(data)).lower()
+        return canonical_registration_email(str(super().to_internal_value(data)).lower())
 
 
 class _BoundedJSONField(serializers.JSONField):

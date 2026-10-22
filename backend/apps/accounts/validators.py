@@ -1,4 +1,5 @@
 import ipaddress
+import re
 import socket
 import unicodedata
 from datetime import date, timedelta
@@ -55,6 +56,25 @@ def _is_ip_address(domain: str) -> bool:
     except (OSError, ValueError):
         return False
     return True
+
+
+# Parte local sin comillas (dot-atom); entre comillas, solo si las comillas no cambian la dirección.
+_DOT_ATOM = re.compile(r"[-!#$%&'*+/=?^_`{}|~0-9a-z]+(?:\.[-!#$%&'*+/=?^_`{}|~0-9a-z]+)*", re.ASCII)
+
+
+def canonical_registration_email(value: str) -> str:
+    # Variantes que llegan al mismo buzón son el mismo correo (D-15): el dominio pasa por la ida y
+    # vuelta de IDNA y la parte local pierde las comillas que sobran.
+    user, separator, domain = value.rpartition("@")
+    if not separator or not user or not domain:
+        return value
+    try:
+        domain = domain.encode("idna").decode("idna")
+    except (UnicodeError, ValueError):
+        pass
+    if len(user) > 2 and user[0] == user[-1] == '"' and _DOT_ATOM.fullmatch(user[1:-1]):
+        user = user[1:-1]
+    return f"{user}@{domain}"
 
 
 def normalize_name(value: str) -> str:

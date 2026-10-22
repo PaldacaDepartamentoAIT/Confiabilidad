@@ -6,10 +6,14 @@ from django.db import connection
 from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 
+from apps.accounts import registration
 from apps.accounts.api import messages
 from apps.accounts.api.serializers import RegistrationSerializer
+from apps.accounts.models import PendingRegistration
+from apps.accounts.tests.factories import make_user
 from apps.consents.models import Terms
 from apps.consents.tests.factories import make_document, publish_version
+from apps.emails.models import OutboundEmail
 
 pytestmark = pytest.mark.django_db
 
@@ -217,3 +221,43 @@ def test_forbidden_characters_in_the_terms_document_are_rejected(
     document: dict[str, object] = {"version": "1", "locale": "es", "accepted": True}
     document[key] = f"{document[key]}{character}"
     assert _codes(RegistrationSerializer(data=_data(terms=document))) == {"terms": [code]}
+
+
+@pytest.mark.parametrize(
+    ("email", "canonical"),
+    [
+        ("ana@ｅxample.com", "ana@example.com"),
+        ('"ana"@example.com', "ana@example.com"),
+        ('"Ana.Lopez"@Example.com', "ana.lopez@example.com"),
+        ("ana@xn--espaa-rta.es", "ana@españa.es"),
+        ('"a..b"@example.com', '"a..b"@example.com'),
+        ("ana@example.com", "ana@example.com"),
+        ("ana+etiqueta@españa.es", "ana+etiqueta@españa.es"),
+    ],
+)
+def test_email_is_turned_into_its_canonical_form(
+    terms: dict[str, Terms], email: str, canonical: str
+) -> None:
+    serializer = RegistrationSerializer(data=_data(email=email))
+    assert serializer.is_valid(), serializer.errors
+    assert serializer.validated_data["email"] == canonical
+
+
+def test_variant_of_an_email_with_an_account_gets_the_account_notice(
+    terms: dict[str, Terms],
+) -> None:
+    make_user(email="ana@example.com")
+    serializer = RegistrationSerializer(data=_data(email="ana@ｅxample.com"))
+    assert serializer.is_valid(), serializer.errors
+    data = serializer.validated_data
+
+    started = registration.start(
+        email=data["email"], name=data["name"], birthdate=data["birthdate"], country=data["country"]
+    )
+    registration.resolve_registration(started.public_id)
+
+    assert not PendingRegistration.objects.exists()
+    assert (
+        OutboundEmail.objects.filter(kind="account_exists", recipient="ana@example.com").count()
+        == 1
+    )
