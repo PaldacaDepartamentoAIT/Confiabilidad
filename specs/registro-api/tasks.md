@@ -314,7 +314,7 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   e `invalid`, como un cuerpo que no es un objeto — [Probable] — revertir: dejar la respuesta de
   DRF.
 
-- [ ] T-025 Corrección: rechazar dominios IP no canónicos
+- [x] T-025 Corrección: rechazar dominios IP no canónicos
   Tipo: corrección | Origen: validación de RF-003
   RF: RF-003 (D-14) | Depende de: — | Archivos: 2
   Archivos: `validators.py`, `tests/test_validators.py`.
@@ -322,6 +322,10 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   Hecho cuando: `ana@１９２.１６８.１.１００`, `ana@1.2.3.04` y `ana@01.02.03.04` se rechazan
   con `email_ip_domain`; `ana@1and1.es`, `ana@123.example.com` y `ana@españa.es` se siguen
   aceptando; suite verde.
+  Decisiones: el dominio se normaliza con NFKC y los puntos que IDNA admite (`。`, `．`, `｡`), y se
+  considera IP lo que aceptan `ipaddress` o `socket.inet_aton` (ceros a la izquierda, hexadecimal)
+  — [Probable] — revertir: solo la normalización. La suite detectó que `inet_aton` lanza
+  `ValueError` con un carácter nulo; se captura y un test lo fija — [Cierto] — revertir: no aplica.
 
 - [ ] T-026 Corrección: límite con la IP real tras el proxy (solo test)
   Tipo: corrección | Origen: validación de RF-010 y RF-011

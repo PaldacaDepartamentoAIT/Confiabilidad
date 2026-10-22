@@ -116,6 +116,10 @@ def test_registration_email_with_dotted_domain_is_accepted(email: str) -> None:
         ("ana@[IPv6:2001:db8::1]", "email_ip_domain"),
         ("ana@192.168.1.100", "email_ip_domain"),
         ("ana@10.0.0.10", "email_ip_domain"),
+        ("ana@１９２.１６８.１.１００", "email_ip_domain"),
+        ("ana@192。168。1。100", "email_ip_domain"),
+        ("ana@1.2.3.04", "email_ip_domain"),
+        ("ana@01.02.03.04", "email_ip_domain"),
         ("ana", "invalid"),
         ("ana@", "invalid"),
         ("@example.com", "invalid"),
@@ -139,3 +143,9 @@ def test_name_reports_every_failed_rule_at_once() -> None:
         validate_name(name)
     codes = {error.code for error in excinfo.value.error_list}
     assert codes == {"name_too_long", "name_control_char", "name_consecutive_spaces"}
+
+
+def test_registration_email_with_a_null_character_is_rejected_as_invalid() -> None:
+    with pytest.raises(ValidationError) as excinfo:
+        validate_registration_email("ana@exam\x00ple.com")
+    assert excinfo.value.code == "invalid"

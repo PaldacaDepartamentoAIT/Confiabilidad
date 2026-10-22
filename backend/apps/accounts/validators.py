@@ -1,4 +1,5 @@
 import ipaddress
+import socket
 import unicodedata
 from datetime import date, timedelta
 from itertools import pairwise
@@ -33,10 +34,25 @@ def validate_registration_email(value: str) -> None:
     _email_format(value)
 
 
+# Separadores que IDNA trata como un punto.
+_IDNA_DOTS = str.maketrans({"\u3002": ".", "\uff0e": ".", "\uff61": "."})
+
+
 def _is_ip_address(domain: str) -> bool:
+    # La forma que acabará resolviendo un cliente de correo: dígitos de ancho completo, otros
+    # puntos y las variantes de IPv4 que admite inet_aton (ceros a la izquierda, hexadecimal).
+    canonical = unicodedata.normalize("NFKC", domain).translate(_IDNA_DOTS)
     try:
-        ipaddress.ip_address(domain)
+        ipaddress.ip_address(canonical)
     except ValueError:
+        pass
+    else:
+        return True
+    if not canonical.isascii():
+        return False
+    try:
+        socket.inet_aton(canonical)
+    except (OSError, ValueError):
         return False
     return True
 
