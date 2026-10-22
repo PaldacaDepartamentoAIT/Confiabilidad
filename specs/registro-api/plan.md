@@ -40,6 +40,9 @@ Django, un dominio con al menos un punto y que no sea una dirección IP, con o s
 (`ana@[192.0.2.1]`, `ana@192.0.2.1`, `ana@[IPv6:2001:db8::1]`) (D-14); y que
 `validate_name` lance todos los errores que se cumplan a la vez, no solo el primero (D-13). El
 modelo sigue rechazando igual: solo cambia cuántos errores informa.
+`canonical_registration_email` convierte el correo, ya en minúsculas, a su forma canónica: el
+dominio, con la ida y vuelta de IDNA (ancho completo, otros puntos y etiquetas `xn--` a su forma
+Unicode), y la parte local sin las comillas que no cambian la dirección (D-15).
 RF: RF-002, RF-003
 
 ### M-04 Catálogo de textos por idioma (`apps/accounts/api/messages.py`)
@@ -201,6 +204,17 @@ Un dominio que sea una dirección IP, con o sin corchetes, se rechaza con `email
 Descartada: endurecer el validador del modelo.
 Motivo: S-08 limita la regla a la API; cambiar el modelo afectaría a las cuentas de consola y del
 panel, fuera del alcance.
+
+### D-15 Correo en forma canónica, en vez de rechazar las variantes
+Elegida: la API convierte el correo a su forma canónica antes de validarlo y de usarlo, de modo que
+las variantes que llegan al mismo buzón son el mismo correo para la cuenta, el registro pendiente y
+el límite.
+Descartada: rechazar las formas no canónicas (exige un `sdd-cambio` de RF-003, que el usuario
+rechazó) y aceptarlas como correos distintos (permite una segunda cuenta para el mismo buzón).
+Motivo: corrige el hallazgo de la 3.ª validación sin cambiar la spec ni otra feature; los correos
+ya canónicos no cambian. *Coste:* la cuenta muestra la forma canónica. *Riesgo restante:* las
+cuentas creadas por consola o por el panel no se convierten (`usuario-personalizado`; anotado en
+`HUMAN_TODO.md`).
 
 ## Estrategia de tests
 - Unitarios (`pytest`, sin HTTP):
