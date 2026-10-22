@@ -251,4 +251,4 @@ solo limitan a los navegadores, y sus únicas defensas son los límites de RF-01
 - 2026-10-22 — Validación: NO CUMPLIDA (5.ª) — RF-013 (el 429 del límite por IP no usa el campo
   `language` de un cuerpo JSON legible). Riesgos nuevos propuestos para aceptar: parte local de más
   de 64 caracteres aceptada, punycode inválido guardado tal cual y `terms.locale` en una variante
-  (`pt-br`) tratado como documento inexistente. Corrección propuesta: T-034.
+  (`pt-br`) tratado como documento inexistente (aceptados por el usuario). Corrección: T-034.
