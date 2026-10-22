@@ -299,7 +299,7 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   Hecho cuando: `version` o `locale` con `\u0000` o un sustituto suelto dan 400 bajo `terms` con
   `null_characters_not_allowed` o `surrogate_characters_not_allowed`; suite verde.
 
-- [ ] T-024 Corrección: límite por IP antes de leer el cuerpo
+- [x] T-024 Corrección: límite por IP antes de leer el cuerpo
   Tipo: corrección | Origen: validación de RF-011
   RF: RF-011 (D-12) | Depende de: — | Archivos: 2
   Archivos: `api/views.py`, `tests/test_registration_api_limits.py`.
@@ -308,6 +308,11 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   admitido reciben el mismo 429, con el idioma de `Accept-Language`; por debajo del límite, ese
   cuerpo cuenta para la IP y responde 400 con `{"errors": {"non_field_errors": [{"code":
   "invalid", …}]}}`; suite verde.
+  Decisiones: el `429` del límite por IP usa solo el idioma de `Accept-Language`, porque el cuerpo
+  aún no se ha leído; el del límite por correo e IP sigue usando también el campo `language` —
+  [Cierto] — revertir: no aplica. Un cuerpo ilegible responde con el formato de `non_field_errors`
+  e `invalid`, como un cuerpo que no es un objeto — [Probable] — revertir: dejar la respuesta de
+  DRF.
 
 - [ ] T-025 Corrección: rechazar dominios IP no canónicos
   Tipo: corrección | Origen: validación de RF-003

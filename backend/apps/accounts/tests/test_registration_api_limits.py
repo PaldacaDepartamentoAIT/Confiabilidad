@@ -81,3 +81,41 @@ def test_request_rejected_for_csrf_does_not_count() -> None:
     browser = Client(enforce_csrf_checks=True, REMOTE_ADDR="192.0.2.1")
     assert browser.post(BROWSER, _form(), content_type="application/json").status_code == 403
     assert _post(_form()).status_code == 202
+
+
+@override_settings(REGISTRATION_RATE_IP_PER_HOUR=1)
+@pytest.mark.parametrize(
+    ("body", "content_type"),
+    [("{not json", "application/json"), ("name=Ana", "text/plain")],
+)
+def test_unreadable_body_over_the_ip_limit_gets_the_same_429(body: str, content_type: str) -> None:
+    assert _post(_form()).status_code == 202
+
+    response = Client(REMOTE_ADDR="192.0.2.1").post(
+        APP, body, content_type=content_type, headers={"Accept-Language": "en"}
+    )
+
+    _assert_limited(response, language="en")
+
+
+@override_settings(REGISTRATION_RATE_IP_PER_HOUR=1)
+@pytest.mark.parametrize(
+    ("body", "content_type"),
+    [("{not json", "application/json"), ("name=Ana", "text/plain")],
+)
+def test_unreadable_body_counts_for_the_ip_and_reports_an_invalid_body(
+    body: str, content_type: str
+) -> None:
+    response = Client(REMOTE_ADDR="192.0.2.1").post(
+        APP, body, content_type=content_type, headers={"Accept-Language": "pt-BR"}
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "errors": {
+            "non_field_errors": [
+                {"code": "invalid", "message": messages.error_text("invalid", "pt-BR")}
+            ]
+        }
+    }
+    _assert_limited(_post(_form()))

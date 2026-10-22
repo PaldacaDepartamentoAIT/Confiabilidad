@@ -24,16 +24,21 @@ class AppRegistrationView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request: Request) -> Response:
-        field = request.data.get("language") if isinstance(request.data, dict) else None
-        language = request_language(
-            field if isinstance(field, str) else None, request.headers.get("Accept-Language")
-        )
-        # Orden de D-12; solo cuenta lo que no rechaza ningún límite (S-06).
+        header = request.headers.get("Accept-Language")
+        # Orden de D-12: el límite por IP va antes de leer el cuerpo; solo cuenta lo que no
+        # rechaza ningún límite (S-06).
         ip = str(request.META.get("REMOTE_ADDR", ""))
         verdict = throttling.check_ip(ip, record=False)
         if not verdict.allowed:
-            return _limited(verdict, language)
-        serializer = RegistrationSerializer(data=request.data)
+            return _limited(verdict, request_language(None, header))
+        try:
+            body = request.data
+        except (exceptions.ParseError, exceptions.UnsupportedMediaType):
+            throttling.record_ip(ip)
+            return _unreadable(request_language(None, header))
+        field = body.get("language") if isinstance(body, dict) else None
+        language = request_language(field if isinstance(field, str) else None, header)
+        serializer = RegistrationSerializer(data=body)
         if not serializer.is_valid():
             throttling.record_ip(ip)
             return Response(
@@ -83,6 +88,11 @@ def _limited(verdict: throttling.Verdict, language: str) -> Response:
         status=status.HTTP_429_TOO_MANY_REQUESTS,
         headers={"Retry-After": str(verdict.retry_after)},
     )
+
+
+def _unreadable(language: str) -> Response:
+    error = {"code": "invalid", "message": messages.error_text("invalid", language)}
+    return Response({"errors": {"non_field_errors": [error]}}, status=status.HTTP_400_BAD_REQUEST)
 
 
 def _render(errors: Any, language: str) -> dict[str, list[dict[str, str]]]:
