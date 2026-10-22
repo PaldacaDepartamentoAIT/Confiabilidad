@@ -22,6 +22,16 @@ ERRORS: dict[str, dict[str, str]] = {
         "pt-BR": "O valor não é válido.",
         "en": "This value is not valid.",
     },
+    "null_characters_not_allowed": {
+        "es": "El texto no puede contener caracteres nulos.",
+        "pt-BR": "O texto não pode conter caracteres nulos.",
+        "en": "The text cannot contain null characters.",
+    },
+    "surrogate_characters_not_allowed": {
+        "es": "El texto contiene caracteres no válidos.",
+        "pt-BR": "O texto contém caracteres inválidos.",
+        "en": "The text contains invalid characters.",
+    },
     "email_domain_without_dot": {
         "es": "El dominio del correo debe tener un punto, como dominio.com.",
         "pt-BR": "O domínio do e-mail deve ter um ponto, como dominio.com.",

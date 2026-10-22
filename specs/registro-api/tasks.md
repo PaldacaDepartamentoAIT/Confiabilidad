@@ -233,7 +233,7 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   `record_ip(ip)` apunta una solicitud; con `record=True` (por defecto) el comportamiento es el de
   T-008; comprobar sin apuntar 100 veces no consume el cupo; suite verde.
 
-- [ ] T-018 Corrección: textos para los códigos de caracteres nulos y sustitutos
+- [x] T-018 Corrección: textos para los códigos de caracteres nulos y sustitutos
   Tipo: corrección | Origen: validación de RF-002
   RF: RF-002, RF-013 | Depende de: — | Archivos: 3
   Archivos: `api/messages.py`, `api/views.py`, `tests/test_registration_api.py`.

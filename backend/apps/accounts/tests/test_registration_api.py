@@ -2,8 +2,10 @@ from typing import Any
 
 import pytest
 from django.test import Client
+from rest_framework import serializers
 
 from apps.accounts.api import messages
+from apps.accounts.api.serializers import RegistrationSerializer
 from apps.accounts.models import PhantomProcess
 from apps.accounts.tests.factories import make_user
 from apps.consents.models import Terms
@@ -154,3 +156,36 @@ def test_signed_in_session_does_not_change_the_response() -> None:
     assert response.status_code == 202
     assert set(response.json()) == {"public_id", "message"}
     assert PhantomProcess.objects.get().email == "ana@example.com"
+
+
+@pytest.mark.parametrize("field", ["name", "email", "country"])
+@pytest.mark.parametrize(
+    ("character", "code"),
+    [("\u0000", "null_characters_not_allowed"), ("\ud800", "surrogate_characters_not_allowed")],
+)
+@pytest.mark.parametrize("language", ["es", "pt-BR", "en"])
+def test_forbidden_characters_are_reported_in_their_field(
+    field: str, character: str, code: str, language: str
+) -> None:
+    value = {"name": "Ana", "email": "ana@example.com", "country": "ES"}[field]
+    response = _app_post(_form(**{field: value + character}, language=language))
+
+    assert response.status_code == 400
+    errors = response.json()["errors"][field]
+    assert {"code": code, "message": messages.error_text(code, language)} in errors
+
+
+def test_unknown_error_code_gets_the_generic_text_instead_of_failing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def odd_country(self: RegistrationSerializer, value: str) -> str:
+        raise serializers.ValidationError("odd", code="no_such_code")
+
+    monkeypatch.setattr(RegistrationSerializer, "validate_country", odd_country)
+
+    response = _app_post(_form())
+
+    assert response.status_code == 400
+    assert response.json()["errors"]["country"] == [
+        {"code": "no_such_code", "message": messages.error_text("invalid", "es")}
+    ]

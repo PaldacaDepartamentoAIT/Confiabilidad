@@ -91,10 +91,15 @@ def _render(errors: Any, language: str) -> dict[str, list[dict[str, str]]]:
             {
                 "code": str(detail.code),
                 "message": messages.error_text(
-                    str(detail.code), language, field=field, params=_PARAMS
+                    _known(str(detail.code)), language, field=field, params=_PARAMS
                 ),
             }
             for detail in details
         ]
         for field, details in errors.items()
     }
+
+
+def _known(code: str) -> str:
+    # Un código sin texto propio (por ejemplo, uno nuevo de DRF) recibe el genérico, nunca un 500.
+    return code if code in messages.ERRORS else "invalid"
