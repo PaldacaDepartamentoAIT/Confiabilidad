@@ -32,6 +32,11 @@ ERRORS: dict[str, dict[str, str]] = {
         "pt-BR": "O texto contém caracteres inválidos.",
         "en": "The text contains invalid characters.",
     },
+    "max_length": {
+        "es": "El valor es demasiado largo.",
+        "pt-BR": "O valor é longo demais.",
+        "en": "The value is too long.",
+    },
     "email_domain_without_dot": {
         "es": "El dominio del correo debe tener un punto, como dominio.com.",
         "pt-BR": "O domínio do e-mail deve ter um ponto, como dominio.com.",
@@ -109,6 +114,11 @@ FIELD_ERRORS: dict[str, dict[str, str]] = {
         "es": "Introduce un correo válido, como usuario@dominio.com.",
         "pt-BR": "Informe um e-mail válido, como usuario@dominio.com.",
         "en": "Enter a valid email address, such as user@domain.com.",
+    },
+    "email:max_length": {
+        "es": "El correo no puede tener más de 254 caracteres.",
+        "pt-BR": "O e-mail não pode ter mais de 254 caracteres.",
+        "en": "The email address cannot be longer than 254 characters.",
     },
     "birthdate:invalid": {
         "es": "Introduce una fecha válida con el formato AAAA-MM-DD.",

@@ -167,3 +167,21 @@ def test_every_emitted_code_is_in_the_catalog() -> None:
     assert not serializer.is_valid()
     emitted = {error.code for errors in serializer.errors.values() for error in errors}
     assert emitted <= set(messages.ERRORS)
+
+
+def test_email_longer_than_254_characters_is_rejected_in_its_field(
+    terms: dict[str, Terms],
+) -> None:
+    for email in (
+        "a" * 250 + "@example.com",
+        "a" * 64 + "@" + "b" * 63 + "." + "c" * 63 + "." + "d" * 58 + ".com",
+    ):
+        assert _codes(RegistrationSerializer(data=_data(email=email))) == {"email": ["max_length"]}
+    assert "max_length" in messages.ERRORS
+
+
+def test_email_of_254_characters_is_accepted(terms: dict[str, Terms]) -> None:
+    email = "a" * 64 + "@" + "b" * 63 + "." + "c" * 63 + "." + "d" * 57 + ".com"
+    assert len(email) == 254
+    serializer = RegistrationSerializer(data=_data(email=email))
+    assert serializer.is_valid(), serializer.errors

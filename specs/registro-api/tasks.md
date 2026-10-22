@@ -243,7 +243,7 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   el código en su campo y el texto en `es`, `pt-BR` y `en`; un código ajeno al catálogo responde
   400 con ese código y el texto genérico de `invalid`, nunca 500; suite verde.
 
-- [ ] T-019 Corrección: correo de más de 254 caracteres rechazado en su campo
+- [x] T-019 Corrección: correo de más de 254 caracteres rechazado en su campo
   Tipo: corrección | Origen: validación de RF-002 y RF-003
   RF: RF-002, RF-003 | Depende de: — | Archivos: 3
   Archivos: `api/serializers.py`, `api/messages.py`, `tests/test_registration_api_serializer.py`.
@@ -251,6 +251,10 @@ CF-6). Las tareas T-009…T-011 esperan además a que esté aprobado el `sdd-cam
   el registro con un error que la vista no captura (500).
   Hecho cuando: un correo de formato válido y más de 254 caracteres da 400 con un error bajo
   `email` cuyo código está en el catálogo en los tres idiomas; uno de 254 se acepta; suite verde.
+  Decisiones: el límite es el `max_length` de DRF (código `max_length`), con un texto genérico y
+  otro propio del correo — [Cierto] — revertir: un validador con código propio. El test incluye un
+  correo de 255 caracteres con etiquetas válidas para matar el mutante `max_length=255` — [Cierto] —
+  revertir: no aplica.
 
 - [x] T-020 Corrección: dominio IP sin corchetes rechazado
   Tipo: corrección | Origen: validación de RF-003 (plan)
