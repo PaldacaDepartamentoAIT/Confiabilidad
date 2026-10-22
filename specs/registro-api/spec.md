@@ -238,3 +238,8 @@ solo limitan a los navegadores, y sus únicas defensas son los límites de RF-01
   nulos o sustitutos en `terms`), RF-003 (dominios IP no canónicos aceptados) y RF-011 (un cuerpo
   ilegible se salta el límite por IP). Riesgo pendiente de decisión: un límite configurado a 0 da
   500 (RF-012). Correcciones propuestas: T-022…T-026.
+- 2026-10-22 — Validación: NO CUMPLIDA (3.ª) — RF-002 y RF-011 (500 sin apuntar la IP con un JSON
+  muy anidado, `terms` anidado en un formulario o un `charset` no textual) y RF-010 (`ı` y `ſ` se
+  saltan el límite por correo e IP). Hallazgo de origen spec: variantes del mismo buzón (dominio en
+  ancho completo, parte local entre comillas) cuentan como correos distintos. Correcciones
+  propuestas: T-028 y T-029.
