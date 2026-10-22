@@ -243,3 +243,8 @@ solo limitan a los navegadores, y sus únicas defensas son los límites de RF-01
   saltan el límite por correo e IP). Hallazgo de origen spec: variantes del mismo buzón (dominio en
   ancho completo, parte local entre comillas) cuentan como correos distintos. Correcciones
   propuestas: T-028 y T-029.
+- 2026-10-22 — Validación: NO CUMPLIDA (4.ª) — RF-014 (origen plan: la ruta de la app admite
+  formularios HTML, así que otra web puede empezar registros desde el navegador de su visitante sin
+  preflight), RF-002 (el correo no informa de todos sus errores a la vez) y RF-010/D-15 (comillas
+  con escapes cuentan como otro correo). Correcciones propuestas: T-031 y T-032; RF-014 vuelve al
+  plan.
