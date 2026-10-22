@@ -29,24 +29,18 @@ class AppRegistrationView(APIView):
 
     def post(self, request: Request) -> Response:
         header = request.headers.get("Accept-Language")
-        # Orden de D-12: el límite por IP va antes de leer el cuerpo; solo cuenta lo que no
-        # rechaza ningún límite (S-06).
+        body, readable = _read_body(request)
+        field = body.get("language") if isinstance(body, dict) else None
+        language = request_language(field if isinstance(field, str) else None, header)
+        # Orden de D-12: el límite por IP va antes de validar; solo cuenta lo que no rechaza ningún
+        # límite (S-06). Leer el idioma del cuerpo no es validarlo (RF-013).
         ip = str(request.META.get("REMOTE_ADDR", ""))
         verdict = throttling.check_ip(ip, record=False)
         if not verdict.allowed:
-            return _limited(verdict, request_language(None, header))
-        try:
-            if request.content_type.split(";")[0].strip().lower() != "application/json":
-                # En la ruta web, el CSRF ya ha leído un formulario y DRF lo vería vacío.
-                raise exceptions.UnsupportedMediaType(request.content_type)
-            body = request.data
-        except Exception:
-            # Cualquier fallo al leer el cuerpo (JSON muy anidado, codificación rara) es un cuerpo
-            # ilegible: 400 que cuenta para la IP, nunca 500.
+            return _limited(verdict, language)
+        if not readable:
             throttling.record_ip(ip)
-            return _unreadable(request_language(None, header))
-        field = body.get("language") if isinstance(body, dict) else None
-        language = request_language(field if isinstance(field, str) else None, header)
+            return _unreadable(language)
         serializer = RegistrationSerializer(data=body)
         if not serializer.is_valid():
             throttling.record_ip(ip)
@@ -97,6 +91,18 @@ def _limited(verdict: throttling.Verdict, language: str) -> Response:
         status=status.HTTP_429_TOO_MANY_REQUESTS,
         headers={"Retry-After": str(verdict.retry_after)},
     )
+
+
+def _read_body(request: Request) -> tuple[Any, bool]:
+    try:
+        if request.content_type.split(";")[0].strip().lower() != "application/json":
+            # En la ruta web, el CSRF ya ha leído un formulario y DRF lo vería vacío.
+            raise exceptions.UnsupportedMediaType(request.content_type)
+        return request.data, True
+    except Exception:
+        # Cualquier fallo al leer el cuerpo (JSON muy anidado, codificación rara) es un cuerpo
+        # ilegible: 400 que cuenta para la IP, nunca 500.
+        return None, False
 
 
 def _unreadable(language: str) -> Response:

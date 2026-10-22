@@ -166,3 +166,29 @@ def test_form_body_with_deeply_nested_terms_is_an_unreadable_body_and_counts() -
     assert response.status_code == 400
     assert response.json()["errors"]["non_field_errors"][0]["code"] == "invalid"
     _assert_limited(_post(_form()))
+
+
+@override_settings(REGISTRATION_RATE_IP_PER_HOUR=1)
+@pytest.mark.parametrize("headers", [{}, {"Accept-Language": "es-ES"}])
+def test_ip_limit_answers_in_the_language_of_the_field(headers: dict[str, str]) -> None:
+    assert _post(_form("a@example.com")).status_code == 202
+
+    response = _post(_form("b@example.com", language="en", country="XX"), **headers)
+
+    _assert_limited(response, language="en")
+    assert PhantomProcess.objects.count() == 1
+    assert _post(_form("c@example.com"), ip="198.51.100.7").status_code == 202
+
+
+@override_settings(REGISTRATION_RATE_IP_PER_HOUR=1)
+def test_ip_limit_with_an_unreadable_body_uses_the_header_language() -> None:
+    assert _post(_form("a@example.com")).status_code == 202
+
+    response = Client(REMOTE_ADDR="192.0.2.1").post(
+        APP,
+        '{"language": "en", ',
+        content_type="application/json",
+        headers={"Accept-Language": "pt-BR"},
+    )
+
+    _assert_limited(response, language="pt-BR")
