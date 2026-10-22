@@ -252,3 +252,7 @@ solo limitan a los navegadores, y sus únicas defensas son los límites de RF-01
   `language` de un cuerpo JSON legible). Riesgos nuevos propuestos para aceptar: parte local de más
   de 64 caracteres aceptada, punycode inválido guardado tal cual y `terms.locale` en una variante
   (`pt-br`) tratado como documento inexistente (aceptados por el usuario). Corrección: T-034.
+- 2026-10-22 — Validación: CUMPLIDA (6.ª) — RF-001…RF-014 cumplidos con la suite en verde (1803
+  pasan, 1 omitido, cobertura 99,76 %), `mypy`/`ruff`/`black` limpios y CF-1…CF-7 cumplidos;
+  incluye RF-001, RF-005, RF-020 y RF-024 de `procesos-pendientes` cambiados el 2026-10-21. Siguen
+  los riesgos ya aceptados por el usuario en las validaciones anteriores — RF: ninguno modificado
