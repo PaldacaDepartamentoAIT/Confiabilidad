@@ -184,3 +184,19 @@ procede, se crea en el worker.
 Es la cabecera con la que el navegador anuncia los idiomas de su usuario, por orden de preferencia
 (`fr, en;q=0.8`). Aquí solo es el respaldo: manda el idioma que la persona eligió en la interfaz,
 porque se guarda en la cuenta y decide el idioma de sus avisos de seguridad.
+
+### Peticiones simples y comprobación previa (preflight)
+Un navegador deja que cualquier web envíe a otro sitio, sin preguntar, las peticiones «simples»: las
+de un formulario HTML (`application/x-www-form-urlencoded`, `multipart/form-data` o `text/plain`).
+Para enviar JSON a otro origen, antes tiene que preguntar al servidor con una petición `OPTIONS`, y
+CORS solo responde que sí a los orígenes configurados (el escritorio Tauri). Por eso las dos rutas
+solo admiten JSON (D-16): así otra web no puede usar el navegador de su visitante para empezar
+registros.
+
+### Forma canónica de un correo
+Un mismo buzón se puede escribir de varias formas: `ana@ｅxample.com` (letras de ancho completo),
+`"ana"@example.com` (comillas que no cambian nada) o con el dominio en punycode
+(`ana@xn--espaa-rta.es` es `ana@españa.es`). Si el sistema las tratara como correos distintos, una
+variante saltaría el límite y hasta permitiría una segunda cuenta para el mismo buzón. La API las
+convierte todas a una sola forma antes de usarlas (D-15).
+
