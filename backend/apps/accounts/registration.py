@@ -6,6 +6,7 @@ from enum import StrEnum
 from allauth.account.models import EmailAddress
 from celery import current_app
 from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
@@ -13,6 +14,7 @@ from apps.accounts import codes, conf, processes, signals
 from apps.accounts.models import PendingRegistration, PhantomProcess, User
 from apps.accounts.processes import VerifyResult as VerifyResult
 from apps.accounts.validators import normalize_country, normalize_name
+from apps.consents import services as consents
 from apps.emails import locales, outbox
 
 _PURPOSE = codes.Purpose.REGISTRATION
@@ -43,23 +45,33 @@ def validate_registration_data(*, email: str, name: str, birthdate: date, countr
 
 
 def start(
-    *, email: str, name: str, birthdate: date, country: str, language: str = locales.DEFAULT
+    *,
+    email: str,
+    name: str,
+    birthdate: date,
+    country: str,
+    language: str = locales.DEFAULT,
+    terms_version: str = "",
+    terms_locale: str = "",
 ) -> Started:
     # La respuesta hace el mismo trabajo tenga o no cuenta el correo: valida los datos y deja una
     # plaza que se resuelve fuera de la respuesta (D-11).
     validate_registration_data(email=email, name=name, birthdate=birthdate, country=country)
+    payload: dict[str, str] = {
+        "name": normalize_name(name),
+        "birthdate": birthdate.isoformat(),
+        "country": normalize_country(country),
+        "language": locales.normalize(language),
+    }
+    if terms_version:
+        payload.update(terms_version=terms_version, terms_locale=terms_locale)
     slot = PhantomProcess(
         purpose=_PURPOSE,
         email=email,
         public_id=codes.generate_public_id(),
         code_hash="",
         code_expires_at=timezone.now() + conf.code_ttl(),
-        payload={
-            "name": normalize_name(name),
-            "birthdate": birthdate.isoformat(),
-            "country": normalize_country(country),
-            "language": locales.normalize(language),
-        },
+        payload=payload,
     )
     with transaction.atomic():
         slot.save()
@@ -196,9 +208,21 @@ def complete(*, public_id: str, password: str) -> Completed | CompleteRefusal:
         user.set_password(password)
         user.save()
         EmailAddress.objects.create(user=user, email=user.email, verified=True, primary=True)
+        _accept_stored_terms(user, pending)
         pending.delete()
         signals.account_created.send(sender=User, email=user.email, success=True)
         return Completed(user=user)
+
+
+def _accept_stored_terms(user: User, pending: PendingRegistration) -> None:
+    # Si el documento ya no es de la versión vigente, la cuenta nace sin aceptación (D-11, S-12).
+    if not pending.terms_version:
+        return
+    try:
+        with transaction.atomic():
+            consents.accept_terms(user, version=pending.terms_version, locale=pending.terms_locale)
+    except ValidationError:
+        return
 
 
 def resolve_registration(public_id: str) -> None:
@@ -287,6 +311,8 @@ def _register_or_repeat(
             birthdate=date.fromisoformat(str(data["birthdate"])),
             country=str(data["country"]),
             language=str(data["language"]),
+            terms_version=str(data.get("terms_version", "")),
+            terms_locale=str(data.get("terms_locale", "")),
         )
         code = processes.issue_code(pending, _PURPOSE, public_id)
         try:

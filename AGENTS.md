@@ -122,6 +122,10 @@ Secretos:
   o una llamada documentada (httpie/curl). Las tareas Celery y los canales
   WebSocket deben poder dispararse desde CLI para su verificación.
 - No añadir dependencias nuevas ni servicios sin preguntar.
+- Evitar `sdd-cambio` en una feature distinta de la activa salvo que sea imprescindible. Antes,
+  buscar una solución dentro de la feature activa: usar funciones públicas que ya existen o
+  reorganizar código sin cambiar su comportamiento. Si aun así hace falta, explicar al usuario por
+  qué, con el coste de la mejor alternativa que no lo necesita, y esperar su decisión.
 - Cualquier acción que requiera intervención humana (credenciales, claves, binarios,
   instalaciones locales, decisiones de infraestructura) se anota como checklist en vez de
   dejarla solo en la conversación:

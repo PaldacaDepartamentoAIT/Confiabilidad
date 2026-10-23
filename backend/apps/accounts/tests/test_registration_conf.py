@@ -2,10 +2,13 @@ import json
 import os
 import subprocess
 import sys
+from collections.abc import Callable
 from datetime import timedelta
 from pathlib import Path
 
+import pytest
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from django.test import override_settings
 
 from apps.accounts import conf
@@ -19,6 +22,9 @@ def test_defaults() -> None:
     assert conf.pwned_timeout() == 2.0
     assert settings.REGISTRATION_SECRET_TRANSITION_MINUTES == 60
     assert conf.start_retry_window() == timedelta(minutes=5)
+    assert conf.rate_email_ip_interval() == timedelta(seconds=60)
+    assert conf.rate_email_ip_per_hour() == 5
+    assert conf.rate_ip_per_hour() == 20
 
 
 @override_settings(
@@ -28,6 +34,9 @@ def test_defaults() -> None:
     REGISTRATION_MAX_LIFETIME_MINUTES=30,
     PWNED_PASSWORDS_TIMEOUT_SECONDS=0.5,
     REGISTRATION_START_RETRY_MINUTES=2,
+    REGISTRATION_RATE_EMAIL_IP_INTERVAL_SECONDS=30,
+    REGISTRATION_RATE_EMAIL_IP_PER_HOUR=3,
+    REGISTRATION_RATE_IP_PER_HOUR=100,
 )
 def test_values_follow_settings() -> None:
     assert conf.max_failed_attempts() == 3
@@ -36,6 +45,9 @@ def test_values_follow_settings() -> None:
     assert conf.max_lifetime() == timedelta(minutes=30)
     assert conf.pwned_timeout() == 0.5
     assert conf.start_retry_window() == timedelta(minutes=2)
+    assert conf.rate_email_ip_interval() == timedelta(seconds=30)
+    assert conf.rate_email_ip_per_hour() == 3
+    assert conf.rate_ip_per_hour() == 100
 
 
 BACKEND_DIR = Path(__file__).resolve().parents[3]
@@ -47,6 +59,9 @@ ENV_LIMITS = {
     "REGISTRATION_SECRET_TRANSITION_MINUTES": "45",
     "PWNED_PASSWORDS_TIMEOUT_SECONDS": "0.75",
     "REGISTRATION_START_RETRY_MINUTES": "8",
+    "REGISTRATION_RATE_EMAIL_IP_INTERVAL_SECONDS": "90",
+    "REGISTRATION_RATE_EMAIL_IP_PER_HOUR": "4",
+    "REGISTRATION_RATE_IP_PER_HOUR": "50",
 }
 _READ_SETTINGS = (
     "import json, django\n"
@@ -77,4 +92,35 @@ def test_limits_are_read_from_environment_variables() -> None:
         "REGISTRATION_MAX_FAILED_ATTEMPTS": 7,
         "REGISTRATION_MAX_LIFETIME_MINUTES": 90,
         "REGISTRATION_SECRET_TRANSITION_MINUTES": 45,
+        "REGISTRATION_RATE_EMAIL_IP_INTERVAL_SECONDS": 90,
+        "REGISTRATION_RATE_EMAIL_IP_PER_HOUR": 4,
+        "REGISTRATION_RATE_IP_PER_HOUR": 50,
     }
+
+
+@pytest.mark.parametrize(
+    ("name", "reader"),
+    [
+        ("REGISTRATION_RATE_EMAIL_IP_INTERVAL_SECONDS", conf.rate_email_ip_interval),
+        ("REGISTRATION_RATE_EMAIL_IP_PER_HOUR", conf.rate_email_ip_per_hour),
+        ("REGISTRATION_RATE_IP_PER_HOUR", conf.rate_ip_per_hour),
+    ],
+)
+@pytest.mark.parametrize("value", [0, -1])
+def test_rate_limit_below_one_is_a_configuration_error(
+    name: str, reader: Callable[[], object], value: int
+) -> None:
+    with override_settings(**{name: value}):
+        with pytest.raises(ImproperlyConfigured, match=name):
+            reader()
+
+
+@override_settings(
+    REGISTRATION_RATE_EMAIL_IP_INTERVAL_SECONDS=1,
+    REGISTRATION_RATE_EMAIL_IP_PER_HOUR=1,
+    REGISTRATION_RATE_IP_PER_HOUR=1,
+)
+def test_rate_limits_of_one_are_valid() -> None:
+    assert conf.rate_email_ip_interval() == timedelta(seconds=1)
+    assert conf.rate_email_ip_per_hour() == 1
+    assert conf.rate_ip_per_hour() == 1

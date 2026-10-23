@@ -57,7 +57,7 @@ def _required_version(versions: list[InForceVersion]) -> InForceVersion:
 
 def accept_terms(user: User, *, version: str, locale: str) -> UserTerms:
     _check_active(user)
-    document = _current_document_shown(Terms.Kind.TERMS, version=version, locale=locale)
+    document = current_document_shown(Terms.Kind.TERMS, version=version, locale=locale)
     with transaction.atomic():
         existing = _active_acceptance(user, document)
         if existing is not None:
@@ -79,7 +79,7 @@ def accept_terms(user: User, *, version: str, locale: str) -> UserTerms:
 
 def grant_marketing(user: User, *, version: str, locale: str) -> MarketingConsent:
     _check_active(user)
-    document = _current_document_shown(Terms.Kind.MARKETING, version=version, locale=locale)
+    document = current_document_shown(Terms.Kind.MARKETING, version=version, locale=locale)
     with transaction.atomic():
         active = _active_consent(user)
         if active is not None and active.terms_id == document.pk:
@@ -129,7 +129,7 @@ def _check_active(user: User) -> None:
         raise ValidationError(_("The account is inactive."), code="inactive_account")
 
 
-def _current_document_shown(kind: str, *, version: str, locale: str) -> Terms:
+def current_document_shown(kind: str, *, version: str, locale: str) -> Terms:
     candidates = Terms.objects.filter(version__iexact=version, locale=locale)
     document = candidates.filter(kind=kind).first()
     if document is None:
