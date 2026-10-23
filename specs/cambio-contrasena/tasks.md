@@ -509,9 +509,6 @@ esquema, para que al final quede una sola migración (M-07).
   horaria (hora UTC con `+00:00`, o la local con su desfase) y pone el comando de despliegue completo
   en su propio bloque.
 
-## RF sin tarea
-Ninguno.
-
 - [ ] T-045 Corrección: clave del contador de inicios fallidos con allauth 65.20
   Tipo: corrección | Origen: bug reportado (CI de la PR #17)
   RF: RF-009 | Depende de: — | Archivos: 2
@@ -520,3 +517,6 @@ Ninguno.
   contraseña usa para borrar el contador de inicios fallidos por correo.
   Hecho cuando: los tests de `test_password_reset_sessions.py` pasan con allauth 65.19.7 y con
   65.20.1; suite verde.
+
+## RF sin tarea
+Ninguno.
