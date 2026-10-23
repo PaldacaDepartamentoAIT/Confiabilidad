@@ -511,3 +511,12 @@ esquema, para que al final quede una sola migración (M-07).
 
 ## RF sin tarea
 Ninguno.
+
+- [ ] T-045 Corrección: clave del contador de inicios fallidos con allauth 65.20
+  Tipo: corrección | Origen: bug reportado (CI de la PR #17)
+  RF: RF-009 | Depende de: — | Archivos: 2
+  Archivos: `password_reset.py`, `tests/test_password_reset_sessions.py`.
+  Causa: allauth 65.20 añadió el argumento obligatorio `app` a `get_cache_key`, que el cambio de
+  contraseña usa para borrar el contador de inicios fallidos por correo.
+  Hecho cuando: los tests de `test_password_reset_sessions.py` pasan con allauth 65.19.7 y con
+  65.20.1; suite verde.
