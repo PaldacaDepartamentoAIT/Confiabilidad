@@ -1,6 +1,8 @@
+import inspect
 import logging
 from dataclasses import dataclass
 from enum import StrEnum
+from typing import Any
 
 from allauth.account import app_settings as allauth_account_settings
 from allauth.account.adapter import get_adapter
@@ -299,9 +301,20 @@ def _clear_failed_logins(email: str) -> None:
     rates = allauth_ratelimit.parse_rates(allauth_account_settings.RATE_LIMITS.get("login_failed"))
     for rate in rates:
         if rate.per == "key":
-            cache.delete(
-                allauth_ratelimit.get_cache_key(request, action="login_failed", rate=rate, key=key)
-            )
+            cache.delete(login_failed_cache_key(request, rate, key=key))
+
+
+def login_failed_cache_key(request: HttpRequest, rate: Any, key: str | None = None) -> str:
+    # allauth 65.20 exige el argumento app, que antes no existía; para login_failed usa
+    # "allauth.account".
+    extra = (
+        {"app": "allauth.account"}
+        if "app" in inspect.signature(allauth_ratelimit.get_cache_key).parameters
+        else {}
+    )
+    return str(
+        allauth_ratelimit.get_cache_key(request, action="login_failed", rate=rate, key=key, **extra)
+    )
 
 
 def _locked_by_public_id(public_id: str) -> PasswordResetRequest | None:
