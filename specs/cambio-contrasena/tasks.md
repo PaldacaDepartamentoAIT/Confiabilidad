@@ -509,5 +509,19 @@ esquema, para que al final quede una sola migración (M-07).
   horaria (hora UTC con `+00:00`, o la local con su desfase) y pone el comando de despliegue completo
   en su propio bloque.
 
+- [x] T-045 Corrección: clave del contador de inicios fallidos con allauth 65.20
+  Tipo: corrección | Origen: bug reportado (CI de la PR #17)
+  RF: RF-009 | Depende de: — | Archivos: 2
+  Archivos: `password_reset.py`, `tests/test_password_reset_sessions.py`.
+  Causa: allauth 65.20 añadió el argumento obligatorio `app` a `get_cache_key`, que el cambio de
+  contraseña usa para borrar el contador de inicios fallidos por correo.
+  Hecho cuando: los tests de `test_password_reset_sessions.py` pasan con allauth 65.19.7 y con
+  65.20.1; suite verde.
+  Decisiones: se pasa `app` solo si la versión instalada lo admite (se mira la firma), para no
+  fijar la versión de allauth; el test usa la misma función para calcular la clave — [Cierto] —
+  revertir: limitar `django-allauth` a `<65.20`. Sigue el riesgo de depender de funciones internas
+  de allauth (`allauth.core.internal`), que pueden volver a cambiar — [Probable] — revertir: no
+  aplica.
+
 ## RF sin tarea
 Ninguno.
