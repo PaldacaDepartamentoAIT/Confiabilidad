@@ -130,10 +130,7 @@ def _ip_failed_logins(client: Client) -> Any:
     rates = allauth_ratelimit.parse_rates(allauth_account_settings.RATE_LIMITS["login_failed"])
     ip_rates = [rate for rate in rates if rate.per == "ip"]
     assert ip_rates
-    return [
-        cache.get(allauth_ratelimit.get_cache_key(request, action="login_failed", rate=rate))
-        for rate in ip_rates
-    ]
+    return [cache.get(password_reset.login_failed_cache_key(request, rate)) for rate in ip_rates]
 
 
 def test_completing_keeps_the_failed_login_counter_by_ip(
