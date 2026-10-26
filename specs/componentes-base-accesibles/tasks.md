@@ -101,7 +101,7 @@ los tres archivos de idioma a la vez.
   protección a `main.tsx`. Un valor guardado solo vale si es exactamente `es`, `pt-BR` o `en`
   (`pt` guardado se borra) — [Probable] — revertir: pasar el valor por `matchLanguage`.
 
-- [ ] T-008 Selector de idioma
+- [x] T-008 Selector de idioma
   RF: RF-003, RF-004, RF-005, RF-006 (D-06) | Depende de: T-002, T-007 | Archivos: 4
   Archivos: `frontend/package.json`, `pnpm-lock.yaml`, `components/LanguageSwitcher.tsx`,
   `components/LanguageSwitcher.test.tsx`.
@@ -111,6 +111,12 @@ los tres archivos de idioma a la vez.
   «English» y Enter (y, en otro caso, Espacio) cambia el idioma de la instancia, lo guarda con
   `persistLanguage`, marca el botón como activo y deja el foco en él; suite verde.
   Excepción: `pnpm-lock.yaml` lo regenera `pnpm add`; no es un archivo editado a mano.
+  Decisiones: el selector recibe el almacenamiento como prop opcional (sin él, cambia el idioma
+  pero no lo guarda), para probarlo con uno en memoria — [Cierto] — revertir: leer
+  `browserStorage()` dentro del componente. El grupo usa `role="group"` con `aria-label` en lugar
+  de `<fieldset>`, que no es un formulario — [Probable] — revertir: `<fieldset>` y `<legend>`. Los
+  botones son `type="button"` para no enviar un formulario que los contenga — [Cierto] — revertir:
+  quitar el atributo.
 
 - [ ] T-009 Selector de idioma en la aplicación
   RF: RF-004, RF-005 | Depende de: T-006, T-008 | Archivos: 3
