@@ -9,6 +9,12 @@ Estado: borrador | aprobado
   Hecho cuando: <test o comando concreto que pasa>
   Excepción: <solo si supera el límite de archivos, y por qué>
 
+## Entregas
+- E-01 <qué puede probar el usuario cuando se fusione>
+  Tareas: T-001, T-002 | Líneas estimadas: <n> | Rama: <tipo>/<feature>-<descripcion>
+  Cómo probarlo: <comando o pasos concretos>
+  Excepción: <solo si supera sdd.max_lineas_pr, y por qué>
+
 ## RF sin tarea
 <ninguno | lista>
 ```
