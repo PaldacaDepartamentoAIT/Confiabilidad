@@ -63,7 +63,7 @@ Siguiente paso: <skill a ejecutar o acción del usuario>
 
 ## Modo fuerte
 
-Tras el paso 9, informa con este formato y DETENTE; no empieces la siguiente tarea aunque sea obvia:
+Tras el paso 9, si la tarea completa una entrega, crea su resumen de entrega (ver «Al completar cada entrega» en `AGENTS.md`). Después informa con este formato y DETENTE; no empieces la siguiente tarea aunque sea obvia:
 
 ```
 Tarea T-XXX completada
@@ -71,13 +71,13 @@ Archivos modificados: <lista>
 Tests nuevos: <lista>
 Mutantes: <muertos / supervivientes y por qué>
 Suite: <n> pasan, <n> fallan
-Entrega: E-0X — <n> de <máximo> líneas; <quedan tareas | completa: ¿abro el PR?>
+Entrega: E-0X — <n> de <máximo> líneas; <quedan tareas | completa: resumen de entrega creado, ¿abro el PR?>
 Siguiente tarea disponible: <T-XXX | ninguna: ejecuta sdd-validar>
 ```
 
 ## Modo ligero
 
-1. Tras el paso 9, sigue con la siguiente tarea sin marcar de la entrega en curso. Al completarla, informa de las tareas, las líneas reales y «Cómo probarlo», y pregunta si abres su PR; no empieces la siguiente entrega hasta que el usuario responda.
+1. Tras el paso 9, sigue con la siguiente tarea sin marcar de la entrega en curso. Al completarla, crea su resumen de entrega (ver «Al completar cada entrega» en `AGENTS.md`), informa de las tareas, las líneas reales y «Cómo probarlo», y pregunta si abres su PR; no empieces la siguiente entrega hasta que el usuario responda.
 2. Ante una parada obligatoria de `AGENTS.md`, detente: explica la causa, la tarea en curso y las opciones, y espera al usuario. Cuando la resuelva, continúa la cadena sin volver a preguntar el modo.
 3. Al terminar todas las tareas, entrega el informe con el formato de abajo y lanza `sdd-validar` en un subagente sin el contexto de esta conversación. Si el entorno no admite subagentes, no valides aquí: pide al usuario que la lance en una sesión nueva.
 4. Si el veredicto es CUMPLIDA, `sdd-validar` registra la validación y el resumen; actualiza el informe con el resultado. Con cualquier otro veredicto, detente: las tareas de corrección y el cierre con riesgo residual los decide el usuario.
