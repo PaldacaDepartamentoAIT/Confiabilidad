@@ -75,13 +75,17 @@ los tres archivos de idioma a la vez.
   es el título portugués; tras `changeLanguage("en")` ambos pasan a inglés sin volver a montar;
   suite verde.
 
-- [ ] T-006 Aplicación traducida al arrancar
+- [x] T-006 Aplicación traducida al arrancar
   RF: RF-001, RF-002 | Depende de: T-003, T-004, T-005 | Archivos: 3
   Archivos: `App.tsx`, `App.test.tsx`, `main.tsx`.
   Hecho cuando: `main.tsx` crea la instancia con `detectInitialLanguage(navigator.languages, …)` y
   la pasa con el proveedor de `react-i18next`; `App` usa `useDocumentLanguage` y muestra el título
   y la introducción de `app` traducidos; el test renderiza `App` en `es`, `pt-BR` y `en` y
   encuentra el encabezado por rol y nombre en cada idioma; suite verde.
+  Decisiones: `main.tsx` no tiene test unitario (está excluido de la cobertura); su arranque se
+  comprobó en Chromium con los idiomas de navegador `pt-BR`, `en-US`, `fr-FR` y `es-AR` — [Cierto]
+  — revertir: no aplica. `index.html` sigue con `lang="es"` hasta que arranca la app, que lo
+  sustituye; cambiarlo queda fuera de los archivos de la tarea — [Probable] — revertir: no aplica.
 
 - [ ] T-007 Idioma elegido guardado en el navegador
   RF: RF-005, RF-023 (S-04) | Depende de: T-004 | Archivos: 2
