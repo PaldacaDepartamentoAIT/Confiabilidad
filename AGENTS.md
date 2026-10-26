@@ -157,11 +157,22 @@ Secretos:
   vertical): atraviesa todas las capas que necesita (modelo, servicio, API y, si aplica, UI) para
   que un comportamiento funcione de extremo a extremo. Nunca se divide por capas horizontales (un
   PR solo con modelos, otro solo con serializadores), porque esos PR no se pueden probar. Cada
-  entrega deja `main` en verde y no expone en rutas ni en la UI nada que aún no funcione. Una
-  entrega puede llegar a `sdd.max_lineas_pr_excepcion` solo con una línea `Excepción:` que explique
-  por qué no se puede dividir; por encima, se divide o decide el usuario. La siguiente rama sale de
-  `main` cuando la anterior está fusionada, o de la rama anterior (PR apilado) si el usuario no
-  quiere esperar. La descripción de cada PR incluye «Cómo probarlo» con pasos ejecutables.
+  entrega deja la rama de integración en verde y no expone en rutas ni en la UI nada que aún no
+  funcione. Una entrega puede llegar a `sdd.max_lineas_pr_excepcion` solo con una línea
+  `Excepción:` que explique por qué no se puede dividir; por encima, se divide o decide el usuario.
+  La siguiente rama sale de la rama de integración cuando la anterior está fusionada en ella, o de
+  la rama anterior (PR apilado) si el usuario no quiere esperar. La descripción de cada PR incluye
+  «Cómo probarlo» con pasos ejecutables.
+- **Rama de integración.** Cada feature tiene una rama de integración, `feat/<feature>`, que sale
+  de `main` antes de su primera entrega. Las ramas de las entregas (`feat/<feature>-<descripcion>`)
+  salen de ella y sus PR van contra ella, nunca contra `main`. Con todas las entregas fusionadas,
+  `sdd-validar` valida la feature sobre la rama de integración; solo con veredicto CUMPLIDA (o con
+  el cierre con riesgo residual que acepte el usuario) se abre el PR de la rama de integración a
+  `main`, que fusiona el usuario. Ese PR final no tiene límite de líneas, porque sus entregas ya se
+  revisaron una a una, y su descripción enlaza el PR y el resumen de cada entrega. Si `main` avanza
+  mientras dura la feature, se fusiona `main` en la rama de integración (merge, nunca rebase) y los
+  conflictos se resuelven allí. Si la feature tiene una sola entrega, su rama es la propia rama de
+  integración: se valida en ella y su PR va a `main`.
 - **Modos de aprobación.** Cada feature declara el suyo en `spec.md`, justo debajo de `Estado:`,
   con la línea `Aprobación: fuerte | ligera`. `sdd-spec` lo pregunta antes de la entrevista; los
   demás agentes y sesiones leen esa línea y la respetan sin volver a preguntar. Si falta, el modo
@@ -177,7 +188,8 @@ Secretos:
     (tras `sdd-clarificar`), el plan, la lista de tareas y cualquier cambio en ellos (`sdd-cambio`
     con su análisis de impacto, y toda tarea nueva, sea por un bug, un mutante o la validación).
     Todo lo demás es automático: `sdd-implementar` encadena las tareas sin pedir aprobación de cada
-    diff, y al terminarlas se lanza `sdd-validar`. Los textos que se escriben sin Aceptar/Rechazar
+    diff, y al terminarlas (con todas las entregas fusionadas en la rama de integración) se lanza
+    `sdd-validar`. Los textos que se escriben sin Aceptar/Rechazar
     (`resumen.md`, los resúmenes de entrega, el `HUMAN_TODO.md` de la feature, las marcas y decisiones de
     `tasks.md`, la entrada de validación)
     se listan en el informe final. El código se revisa en el PR de cada entrega, que solo se abre si el
@@ -195,7 +207,8 @@ Secretos:
       lo mate sin afirmar nada que no esté en la spec o el plan. Un mutante equivalente se anota en
       el informe y no detiene;
     - un veredicto de validación distinto de CUMPLIDA: las tareas de corrección y el cierre con
-      riesgo residual los decide el usuario.
+      riesgo residual los decide el usuario;
+    - abrir el PR de la rama de integración a `main`: se pregunta siempre, también tras CUMPLIDA.
   - **Qué se muestra al pedir una aprobación (en ambos modos).** No se pide aprobar nada que el
     usuario no haya visto. Antes de cada aprobación, el texto completo que se aprueba (o, si se
     modifica algo existente, cada cambio con su versión anterior y la nueva) va **en el propio
@@ -249,6 +262,6 @@ Cada artefacto tiene una línea `Estado:` al principio. Solo pasa a aprobado cua
 - `sdd.max_lineas_pr`: 400 (líneas añadidas + borradas de código y tests; no cuentan la
   documentación, es decir, `specs/` y los `.md`, ni los lockfiles)
 - `sdd.max_lineas_pr_excepcion`: 500
-- Medición de una entrega:
-  `git diff --numstat origin/main...HEAD -- . ':(exclude)specs' ':(exclude)*.md' ':(exclude)pnpm-lock.yaml' ':(exclude)desktop/src-tauri/Cargo.lock' | awk '{ total += $1 + $2 } END { print total + 0 }'`
+- Medición de una entrega (contra su rama de integración, `feat/<feature>`):
+  `git diff --numstat origin/feat/<feature>...HEAD -- . ':(exclude)specs' ':(exclude)*.md' ':(exclude)pnpm-lock.yaml' ':(exclude)desktop/src-tauri/Cargo.lock' | awk '{ total += $1 + $2 } END { print total + 0 }'`
 - `sdd.comando_tests`: pytest (backend) · `pnpm --filter frontend test` (frontend)
