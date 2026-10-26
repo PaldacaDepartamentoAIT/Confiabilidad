@@ -44,12 +44,16 @@ los tres archivos de idioma a la vez.
   mantiene `initAsync: false` explícito para no depender de ese detalle — [Probable] — revertir:
   quitar la opción.
 
-- [ ] T-003 Claves de traducción comprobadas por el compilador
+- [x] T-003 Claves de traducción comprobadas por el compilador
   RF: RF-008 (D-04) | Depende de: T-002 | Archivos: 2
   Archivos: `i18n/i18next.d.ts`, `i18n/keys.test.ts`.
   Hecho cuando: `keys.test.ts` contiene un `t("clave.que.no.existe")` marcado con
   `@ts-expect-error` y `pnpm --filter frontend typecheck` pasa; al borrar `i18next.d.ts`,
   `typecheck` falla por esa directiva sin uso; suite verde.
+  Decisiones: la declaración fija también `returnNull: false`, para que `t()` devuelva siempre
+  `string` y los componentes no tengan que tratar `null` — [Cierto] — revertir: quitar la línea.
+  La comprobación la hace `tsc` (`pnpm --filter frontend typecheck`, que corre en CI), no Vitest,
+  que no comprueba tipos — [Cierto] — revertir: no aplica.
 
 - [ ] T-004 Idioma inicial según el navegador
   RF: RF-002 | Depende de: — | Archivos: 2
