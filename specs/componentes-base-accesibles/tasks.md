@@ -55,12 +55,18 @@ los tres archivos de idioma a la vez.
   La comprobación la hace `tsc` (`pnpm --filter frontend typecheck`, que corre en CI), no Vitest,
   que no comprueba tipos — [Cierto] — revertir: no aplica.
 
-- [ ] T-004 Idioma inicial según el navegador
+- [x] T-004 Idioma inicial según el navegador
   RF: RF-002 | Depende de: — | Archivos: 2
   Archivos: `i18n/language.ts`, `i18n/language.test.ts`.
   Hecho cuando: `matchLanguage` asigna `es-MX` → `es`, `PT-pt` → `pt-BR`, `en-GB` → `en` y `fr` →
   ninguno; `detectInitialLanguage(["fr-FR", "pt-PT", "en"], almacenamiento vacío)` devuelve
   `pt-BR`; con `["fr-FR", "de"]` o con una lista vacía devuelve `en`; suite verde.
+  Decisiones: en esta tarea `detectInitialLanguage` recibe solo los idiomas del navegador; el
+  parámetro del almacenamiento llega con T-007, que es quien lo usa (añadirlo antes dejaría un
+  parámetro sin uso, que `tsc` rechaza) — [Cierto] — revertir: no aplica. La correspondencia usa un
+  `Map` para que etiquetas como `constructor` no encajen con propiedades heredadas de `Object` —
+  [Cierto] — revertir: volver a un objeto literal. `LANGUAGE_NAMES` se define aquí (M-03) aunque
+  lo use T-008 — [Cierto] — revertir: moverlo al selector.
 
 - [ ] T-005 Idioma y título del documento sincronizados
   RF: RF-004, RF-006 | Depende de: T-002 | Archivos: 2
