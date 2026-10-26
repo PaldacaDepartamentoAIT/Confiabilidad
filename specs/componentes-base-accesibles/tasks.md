@@ -1,5 +1,5 @@
 # Tareas: componentes-base-accesibles
-Estado: borrador
+Estado: aprobado
 
 Rutas relativas a `frontend/src/` salvo que se indique. Los tests van junto al archivo que prueban
 (`X.test.ts` o `X.test.tsx`). "Suite verde" = `pnpm --filter frontend test`,
