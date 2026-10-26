@@ -11,6 +11,7 @@ Trocea el plan en tareas pequeñas: producen diffs que se pueden revisar de verd
 
 - **Feature**: nombre de la carpeta en `specs/`.
 - **Máximo de archivos por tarea**: lee `sdd.max_archivos_tarea` en la sección SDD de `CLAUDE.md` o `AGENTS.md`.
+- **Máximo de líneas por PR**: lee `sdd.max_lineas_pr` y `sdd.max_lineas_pr_excepcion` en `AGENTS.md`.
 
 Si falta alguno, pídelo al usuario en un solo mensaje y no continúes hasta tenerlo. Si falta la configuración, sugiere además añadirla a `CLAUDE.md`.
 
@@ -39,8 +40,9 @@ Siguiente paso: <skill a ejecutar o acción del usuario>
    - Cada tarea toca como máximo el número configurado de archivos; si no cabe, divídela. Si no se puede dividir (andamiaje, renombrados, configuración repartida), añade una línea `Excepción:` que explique por qué.
    - Ordénalas por dependencia.
    - La línea `Hecho cuando:` debe poder comprobarse ejecutando algo concreto.
+   - Agrupa las tareas en entregas (ver «Tamaño de los PR» en `AGENTS.md`) estimando las líneas de código y tests de cada una. Cada entrega es un *vertical slice*: un comportamiento que funciona de extremo a extremo y que el usuario puede probar. Nunca dividas por capas horizontales: un PR solo con modelos o solo con serializadores no se puede probar. Si la feature cabe en un PR, tiene una sola entrega.
 3. Si actualizas un `tasks.md` existente: conserva los IDs y el estado de las tareas hechas, añade las nuevas con el siguiente ID libre y, si una tarea hecha queda afectada por el cambio, no la desmarques: crea una tarea nueva que la ajuste y explícalo.
-4. Comprueba que todo RF no obsoleto aparece en al menos una tarea y lista los que no.
+4. Comprueba que todo RF no obsoleto aparece en al menos una tarea y lista los que no. Comprueba también que cada tarea pertenece a exactamente una entrega.
 5. Muestra las tareas y espera la aprobación del usuario. Cuando apruebe, cambia a `Estado: aprobado`.
 6. Indica el siguiente paso: `sdd-implementar` con la primera tarea.
 
