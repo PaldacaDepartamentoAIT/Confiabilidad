@@ -143,6 +143,13 @@ Secretos:
 - Cada concepto que le genere dudas al usuario durante una feature se documenta en una sección
   **"Marco teórico"** de su `resumen.md`, explicado de forma accesible (qué es y por qué importa),
   para que quede como referencia reutilizable.
+- Al completar cada entrega, antes de preguntar si se abre su PR, crea
+  `specs/<feature>/entregas/E-XX-<descripcion>/resumen.md` (la descripción es el sufijo de su rama)
+  con **qué se hizo**, las **tareas** que la completaron (ID, título y commit; el detalle sigue en
+  `tasks.md` y no se copia), **cómo ejecutarlo y probarlo** (pasos concretos y ejecutables, como en
+  el resumen de la feature), sus líneas reales y su PR cuando exista. Si durante la entrega surgió un
+  concepto que generó dudas, se explica también en su **"Marco teórico"**. Cuando algo de la entrega
+  cambie (por ejemplo, en la revisión de su PR), actualiza su resumen.
 - **Tamaño de los PR.** Cada PR es una entrega: un incremento que el usuario puede probar por sí
   mismo (`pytest`, un management command, httpie/curl o la UI) y que no supera
   `sdd.max_lineas_pr`. Si la feature no cabe en un PR, `sdd-tareas` agrupa sus tareas en entregas
@@ -171,7 +178,8 @@ Secretos:
     con su análisis de impacto, y toda tarea nueva, sea por un bug, un mutante o la validación).
     Todo lo demás es automático: `sdd-implementar` encadena las tareas sin pedir aprobación de cada
     diff, y al terminarlas se lanza `sdd-validar`. Los textos que se escriben sin Aceptar/Rechazar
-    (`resumen.md`, el `HUMAN_TODO.md` de la feature, las marcas y decisiones de `tasks.md`, la entrada de validación)
+    (`resumen.md`, los resúmenes de entrega, el `HUMAN_TODO.md` de la feature, las marcas y decisiones de
+    `tasks.md`, la entrada de validación)
     se listan en el informe final. El código se revisa en el PR de cada entrega, que solo se abre si el
     usuario lo confirma. Paradas obligatorias (detente y pregunta; resuelta la parada, la cadena sigue en modo
     ligero sin volver a preguntar):
@@ -180,8 +188,8 @@ Secretos:
     - una desviación del plan o la necesidad de tocar un módulo fuera de su alcance;
     - superar `sdd.max_archivos_tarea` sin una `Excepción:` en la tarea;
     - superar `sdd.max_lineas_pr` en una entrega sin una `Excepción:`;
-    - completar una entrega: se informa de sus líneas reales y de cómo probarla, y se pregunta si
-      se abre su PR antes de empezar la siguiente;
+    - completar una entrega: se crea su resumen de entrega, se informa de sus líneas reales y de cómo
+      probarla, y se pregunta si se abre su PR antes de empezar la siguiente;
     - añadir dependencias, servicios o infraestructura;
     - un mutante que sobrevive sin un arreglo claro: un test dentro de los archivos de la tarea que
       lo mate sin afirmar nada que no esté en la spec o el plan. Un mutante equivalente se anota en
@@ -219,6 +227,7 @@ Secretos:
 - `specs/<feature>/plan.md`: diseño técnico
 - `specs/<feature>/tasks.md`: tareas de implementación
 - `specs/<feature>/resumen.md`: resumen de qué se hizo, cómo probarlo y **marco teórico** de los conceptos que generaron dudas (se crea al terminar la feature; se actualiza con cada cambio)
+- `specs/<feature>/entregas/E-XX-<descripcion>/resumen.md`: qué se hizo en la entrega, sus tareas, cómo ejecutarla y probarla, sus líneas y su PR (se crea al completar la entrega; se actualiza con cada cambio)
 
 `<feature>` es un nombre en kebab-case (por ejemplo, `login-con-google`).
 
