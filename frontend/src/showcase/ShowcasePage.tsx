@@ -2,6 +2,7 @@ import { useId } from "react";
 import { useTranslation } from "react-i18next";
 
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
+import { PasswordField } from "../components/fields/PasswordField";
 import { RequiredLegend } from "../components/fields/RequiredLegend";
 import { TextField } from "../components/fields/TextField";
 import type { LanguageStorage } from "../i18n/language";
@@ -24,6 +25,12 @@ export function ShowcasePage({ storage }: ShowcasePageProps) {
       <form aria-labelledby={formTitleId} noValidate>
         <TextField label={t("showcase.nameLabel")} name="name" autoComplete="name" required />
         <TextField label={t("showcase.emailLabel")} name="email" type="email" required />
+        <PasswordField
+          label={t("showcase.passwordLabel")}
+          name="password"
+          kind="current"
+          required
+        />
       </form>
     </main>
   );

@@ -180,7 +180,7 @@ los tres archivos de idioma a la vez.
   va después del input, así que en el orden de Tab viene justo detrás del campo — [Probable] —
   revertir: moverlo delante.
 
-- [ ] T-013 Contraseña en la página de muestra
+- [x] T-013 Contraseña en la página de muestra
   RF: RF-019, RF-020, RF-024 (S-09) | Depende de: T-011, T-012 | Archivos: 2
   Archivos: `showcase/ShowcasePage.tsx`, `showcase/ShowcasePage.test.tsx`.
   Hecho cuando: la página añade un campo de contraseña actual obligatorio tras el correo; el orden
