@@ -1,7 +1,9 @@
 # Entrega E-02 · Selector de idioma que recuerda la elección
 
 Rama: `feat/componentes-base-accesibles-selector-idioma`, con PR contra la rama de integración
-`feat/componentes-base-accesibles` · PR: pendiente · Líneas de código y tests: 279 (límite: 400).
+`feat/componentes-base-accesibles` · PR:
+[PaldacaDepartamentoAIT/Confiabilidad#22](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/22) ·
+Líneas de código y tests: 279 (límite: 400).
 
 ## Qué se hizo
 - La página tiene un selector de idioma: un grupo llamado «Idioma» (o «Language») con tres
