@@ -143,6 +143,18 @@ Secretos:
 - Cada concepto que le genere dudas al usuario durante una feature se documenta en una sección
   **"Marco teórico"** de su `resumen.md`, explicado de forma accesible (qué es y por qué importa),
   para que quede como referencia reutilizable.
+- **Tamaño de los PR.** Cada PR es una entrega: un incremento que el usuario puede probar por sí
+  mismo (`pytest`, un management command, httpie/curl o la UI) y que no supera
+  `sdd.max_lineas_pr`. Si la feature no cabe en un PR, `sdd-tareas` agrupa sus tareas en entregas
+  (`E-01`, `E-02`…), cada una con su rama y su PR. Cada entrega es un *vertical slice* (corte
+  vertical): atraviesa todas las capas que necesita (modelo, servicio, API y, si aplica, UI) para
+  que un comportamiento funcione de extremo a extremo. Nunca se divide por capas horizontales (un
+  PR solo con modelos, otro solo con serializadores), porque esos PR no se pueden probar. Cada
+  entrega deja `main` en verde y no expone en rutas ni en la UI nada que aún no funcione. Una
+  entrega puede llegar a `sdd.max_lineas_pr_excepcion` solo con una línea `Excepción:` que explique
+  por qué no se puede dividir; por encima, se divide o decide el usuario. La siguiente rama sale de
+  `main` cuando la anterior está fusionada, o de la rama anterior (PR apilado) si el usuario no
+  quiere esperar. La descripción de cada PR incluye «Cómo probarlo» con pasos ejecutables.
 - **Modos de aprobación.** Cada feature declara el suyo en `spec.md`, justo debajo de `Estado:`,
   con la línea `Aprobación: fuerte | ligera`. `sdd-spec` lo pregunta antes de la entrevista; los
   demás agentes y sesiones leen esa línea y la respetan sin volver a preguntar. Si falta, el modo
@@ -160,13 +172,16 @@ Secretos:
     Todo lo demás es automático: `sdd-implementar` encadena las tareas sin pedir aprobación de cada
     diff, y al terminarlas se lanza `sdd-validar`. Los textos que se escriben sin Aceptar/Rechazar
     (`resumen.md`, el `HUMAN_TODO.md` de la feature, las marcas y decisiones de `tasks.md`, la entrada de validación)
-    se listan en el informe final. El código se revisa en el PR, que solo se abre si el usuario lo
-    confirma. Paradas obligatorias (detente y pregunta; resuelta la parada, la cadena sigue en modo
+    se listan en el informe final. El código se revisa en el PR de cada entrega, que solo se abre si el
+    usuario lo confirma. Paradas obligatorias (detente y pregunta; resuelta la parada, la cadena sigue en modo
     ligero sin volver a preguntar):
     - ambigüedad o contradicción en la spec;
     - una decisión de seguridad o de diseño que la spec o el plan no cubren;
     - una desviación del plan o la necesidad de tocar un módulo fuera de su alcance;
     - superar `sdd.max_archivos_tarea` sin una `Excepción:` en la tarea;
+    - superar `sdd.max_lineas_pr` en una entrega sin una `Excepción:`;
+    - completar una entrega: se informa de sus líneas reales y de cómo probarla, y se pregunta si
+      se abre su PR antes de empezar la siguiente;
     - añadir dependencias, servicios o infraestructura;
     - un mutante que sobrevive sin un arreglo claro: un test dentro de los archivos de la tarea que
       lo mate sin afirmar nada que no esté en la spec o el plan. Un mutante equivalente se anota en
@@ -205,7 +220,7 @@ Secretos:
 `<feature>` es un nombre en kebab-case (por ejemplo, `login-con-google`).
 
 ### Identificadores
-- `P-01` principios · `RF-001` requisitos funcionales · `S-01` supuestos · `C-01` hallazgos · `M-01` módulos · `D-01` decisiones · `T-001` tareas
+- `P-01` principios · `RF-001` requisitos funcionales · `S-01` supuestos · `C-01` hallazgos · `M-01` módulos · `D-01` decisiones · `T-001` tareas · `E-01` entregas
 - Los `RF` nunca se renumeran. Los eliminados se marcan `OBSOLETO`, no se borran.
 
 ### Estados
@@ -219,4 +234,9 @@ Cada artefacto tiene una línea `Estado:` al principio. Solo pasa a aprobado cua
 - `sdd.max_principios`: 10
 - `sdd.max_preguntas_spec`: 8
 - `sdd.max_archivos_tarea`: 3
+- `sdd.max_lineas_pr`: 400 (líneas añadidas + borradas de código y tests; no cuentan la
+  documentación, es decir, `specs/` y los `.md`, ni los lockfiles)
+- `sdd.max_lineas_pr_excepcion`: 500
+- Medición de una entrega:
+  `git diff --numstat origin/main...HEAD -- . ':(exclude)specs' ':(exclude)*.md' ':(exclude)pnpm-lock.yaml' ':(exclude)desktop/src-tauri/Cargo.lock' | awk '{ total += $1 + $2 } END { print total + 0 }'`
 - `sdd.comando_tests`: pytest (backend) · `pnpm --filter frontend test` (frontend)
