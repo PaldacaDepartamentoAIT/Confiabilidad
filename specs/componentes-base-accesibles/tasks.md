@@ -11,7 +11,7 @@ menos un mutante del código que introduce y debe hacer fallar sus tests.
 Los textos de toda la feature se escriben en T-001 para que ninguna tarea posterior tenga que tocar
 los tres archivos de idioma a la vez.
 
-- [ ] T-001 Textos provisionales de toda la feature en tres idiomas
+- [x] T-001 Textos provisionales de toda la feature en tres idiomas
   RF: RF-001, RF-008 (D-04) | Depende de: — | Archivos: 4
   Archivos: `i18n/locales/en.ts`, `i18n/locales/es.ts`, `i18n/locales/pt-BR.ts`,
   `i18n/locales/locales.test.ts`.
@@ -22,6 +22,11 @@ los tres archivos de idioma a la vez.
   una clave y vaciando un texto); suite verde.
   Excepción: los tres archivos de idioma son una sola unidad: `es` y `pt-BR` se tipan contra `en`,
   así que separarlos dejaría `tsc` roto entre tareas.
+  Decisiones: además de los grupos de M-02, se añaden `button.processingAnnouncement` (el aviso
+  «procesando» sin puntos suspensivos, distinto del texto visible) y `showcase.formTitle` (nombre
+  accesible del formulario de ejemplo) — [Probable] — revertir: borrar las dos claves de los tres
+  idiomas. El nombre de la app se traduce («Confiabilidad», «Confiabilidade», «Reliability») porque
+  C-12 pide traducir el título — [Suposición] — revertir: usar «Confiabilidad» en los tres.
 
 - [ ] T-002 Instancia de traducción con reserva en inglés
   RF: RF-001, RF-007 (D-01, D-03) | Depende de: T-001 | Archivos: 4
