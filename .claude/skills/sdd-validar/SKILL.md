@@ -23,6 +23,7 @@ El agente que implementó tiende a darse la razón a sí mismo. En ambos modos, 
 - [ ] Existe `specs/<feature>/spec.md` con `Estado: aprobada`.
 - [ ] Existen `specs/<feature>/plan.md` y `specs/<feature>/tasks.md`.
 - [ ] Todas las tareas de `tasks.md` están marcadas.
+- [ ] Se valida sobre la rama de integración de la feature (`feat/<feature>`, ver «Rama de integración» en `AGENTS.md`), con todas las entregas fusionadas en ella.
 - [ ] La suite se ejecuta con el comando configurado.
 
 ## Si falta una precondición

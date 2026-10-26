@@ -10,6 +10,8 @@ Estado: borrador | aprobado
   Excepción: <solo si supera el límite de archivos, y por qué>
 
 ## Entregas
+Rama de integración: feat/<feature> (los PR de las entregas van contra ella; ver `AGENTS.md`)
+
 - E-01 <qué puede probar el usuario cuando se fusione>
   Tareas: T-001, T-002 | Líneas estimadas: <n> | Rama: <tipo>/<feature>-<descripcion>
   Cómo probarlo: <comando o pasos concretos>
