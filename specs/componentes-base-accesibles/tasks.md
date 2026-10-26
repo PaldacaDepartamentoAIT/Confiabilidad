@@ -131,7 +131,7 @@ los tres archivos de idioma a la vez.
   a portugués con el foco en «Português (Brasil)»; al recargar sigue en portugués; un valor
   guardado `xx` se borra y vuelve al idioma del navegador — [Cierto] — revertir: no aplica.
 
-- [ ] T-010 Campo de texto y de correo
+- [x] T-010 Campo de texto y de correo
   RF: RF-011, RF-016 (D-09) | Depende de: T-002 | Archivos: 3
   Archivos: `components/fields/TextField.tsx`, `components/fields/TextField.test.tsx`,
   `components/fields/RequiredLegend.tsx`.
@@ -140,8 +140,15 @@ los tres archivos de idioma a la vez.
   de tipo correo, `autocomplete="email"` e `inputmode="email"`; con error, `aria-invalid="true"` y
   una descripción accesible igual al mensaje; sin error, ninguno de los dos; `RequiredLegend`
   muestra el texto traducido que explica el asterisco; suite verde.
+  Decisiones: `TextField` recibe la etiqueta y el error ya traducidos (texto, no claves): la página
+  que lo usa traduce al pintar, así que un cambio de idioma lo repinta igual (D-05 se cumple en el
+  estado del formulario, M-10) — [Probable] — revertir: pasar claves y traducir dentro. Reenvía su
+  `ref` al input, para que el foco al primer error (T-022) no necesite tocar el componente —
+  [Cierto] — revertir: quitar `forwardRef`. El resto de atributos del input pasan tal cual, pero
+  `type`, `required`, `id` y los `aria-*` de accesibilidad los fija el componente — [Cierto] —
+  revertir: no aplica.
 
-- [ ] T-011 Página de muestra con los campos de texto y correo
+- [x] T-011 Página de muestra con los campos de texto y correo
   RF: RF-011, RF-019, RF-020 | Depende de: T-009, T-010 | Archivos: 4
   Archivos: `showcase/ShowcasePage.tsx`, `showcase/ShowcasePage.test.tsx`, `App.tsx`,
   `App.test.tsx`.
@@ -151,6 +158,13 @@ los tres archivos de idioma a la vez.
   selector → texto → correo en ese orden y comprueba que un valor escrito se conserva al cambiar de
   idioma; suite verde.
   Excepción: mover el contenido de `App` a la página cambia `App` y su test a la vez que la página.
+  Decisiones: al final no hizo falta tocar `App.test.tsx`: sus tests siguen valiendo porque `App`
+  muestra la página, así que la tarea tocó 3 archivos y no usó la excepción — [Cierto] — revertir:
+  no aplica. El formulario se nombra con un encabezado visible `h2` («Formulario de ejemplo») y
+  `aria-labelledby` — [Probable] — revertir: `aria-label` sin encabezado. Los campos aún no
+  guardan su valor en el estado (el navegador lo conserva al cambiar de idioma); el estado llega
+  con la validación (T-019) — [Cierto] — revertir: no aplica. Comprobado en Chromium: orden de Tab
+  y valores conservados al pasar a portugués — [Cierto] — revertir: no aplica.
 
 - [ ] T-012 Campo de contraseña
   RF: RF-012, RF-024 (D-10) | Depende de: T-010 | Archivos: 2
