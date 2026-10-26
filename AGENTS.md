@@ -203,6 +203,9 @@ Secretos:
     entorno no admite subagentes; nunca la misma sesión).
 
 ## Al terminar cualquier tarea
+- Si la tarea solo cambia documentación (`.md`), no se levanta Docker ni se ejecutan tests, tipos
+  ni linters de código; basta con revisar el diff.
+- Si toca código, antes de los tests se levantan los servicios con `.claude/hooks/start-services.sh`.
 - Ejecutar los tests del área tocada (`pytest` y/o `pnpm --filter frontend test`).
 - Pasar tipos (`cd backend && mypy .`, `pnpm --filter frontend typecheck`).
 - Pasar lint/formato (`ruff`/`black`, `eslint`/`prettier`, `cargo fmt`/`clippy`).
