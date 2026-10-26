@@ -166,7 +166,7 @@ los tres archivos de idioma a la vez.
   con la validación (T-019) — [Cierto] — revertir: no aplica. Comprobado en Chromium: orden de Tab
   y valores conservados al pasar a portugués — [Cierto] — revertir: no aplica.
 
-- [ ] T-012 Campo de contraseña
+- [x] T-012 Campo de contraseña
   RF: RF-012, RF-024 (D-10) | Depende de: T-010 | Archivos: 2
   Archivos: `components/fields/PasswordField.tsx`, `components/fields/PasswordField.test.tsx`.
   Hecho cuando: `kind` es obligatorio en el tipo (un uso sin `kind` en el test va marcado con
@@ -174,6 +174,11 @@ los tres archivos de idioma a la vez.
   `new-password`; el control «Mostrar contraseña» se activa con Enter y con Espacio, alterna el
   `type` entre `password` y `text`, cambia `aria-pressed`, conserva el valor y deja el foco en el
   control; suite verde.
+  Decisiones: para apoyarse en `TextField` (M-07), este acepta ahora el tipo `password` y un hueco
+  `adornment` tras el input, donde va el control; la tarea tocó así 3 archivos en lugar de 2, dentro
+  del máximo — [Cierto] — revertir: duplicar la estructura del campo en `PasswordField`. El control
+  va después del input, así que en el orden de Tab viene justo detrás del campo — [Probable] —
+  revertir: moverlo delante.
 
 - [ ] T-013 Contraseña en la página de muestra
   RF: RF-019, RF-020, RF-024 (S-09) | Depende de: T-011, T-012 | Archivos: 2

@@ -1,0 +1,64 @@
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import type { ReactElement } from "react";
+import { I18nextProvider } from "react-i18next";
+
+import { createI18n } from "../../i18n";
+import { PasswordField } from "./PasswordField";
+
+function renderWithI18n(element: ReactElement) {
+  return render(<I18nextProvider i18n={createI18n("en")}>{element}</I18nextProvider>);
+}
+
+// Nunca se ejecuta: solo comprueba en compilación que `kind` es obligatorio (RF-024).
+export function missingKindDoesNotCompile() {
+  // @ts-expect-error: kind is required
+  return <PasswordField label="Password" />;
+}
+
+test.each([
+  ["current", "current-password"],
+  ["new", "new-password"],
+] as const)("a %s password asks for %s autocompletion", (kind, autocomplete) => {
+  renderWithI18n(<PasswordField label="Password" kind={kind} required />);
+
+  const input = screen.getByLabelText("Password", { exact: false });
+  expect(input).toHaveAttribute("type", "password");
+  expect(input).toHaveAttribute("autocomplete", autocomplete);
+  expect(input).toHaveAttribute("aria-required", "true");
+});
+
+test("shows and hides the password from the keyboard, keeping value and focus", async () => {
+  const user = userEvent.setup();
+  renderWithI18n(<PasswordField label="Password" kind="current" />);
+
+  const input = screen.getByLabelText("Password");
+  await user.type(input, "s3cret pass");
+  await user.tab();
+  const toggle = screen.getByRole("button", { name: "Show password" });
+  expect(toggle).toHaveFocus();
+  expect(toggle).toHaveAttribute("type", "button");
+  expect(toggle).toHaveAttribute("aria-pressed", "false");
+
+  await user.keyboard("{Enter}");
+
+  expect(input).toHaveAttribute("type", "text");
+  expect(input).toHaveValue("s3cret pass");
+  expect(toggle).toHaveAttribute("aria-pressed", "true");
+  expect(toggle).toHaveFocus();
+
+  await user.keyboard(" ");
+
+  expect(input).toHaveAttribute("type", "password");
+  expect(input).toHaveValue("s3cret pass");
+  expect(toggle).toHaveAttribute("aria-pressed", "false");
+  expect(toggle).toHaveFocus();
+});
+
+test("links an error to the password input", () => {
+  renderWithI18n(<PasswordField label="Password" kind="new" error="Fill in this field." />);
+
+  const input = screen.getByLabelText("Password");
+  expect(input).toHaveAttribute("aria-invalid", "true");
+  expect(input).toHaveAccessibleDescription("Fill in this field.");
+});
