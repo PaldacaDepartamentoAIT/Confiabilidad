@@ -77,11 +77,11 @@ Siguiente tarea disponible: <T-XXX | ninguna: ejecuta sdd-validar>
 
 ## Modo ligero
 
-1. Tras el paso 9, sigue con la siguiente tarea sin marcar de la entrega en curso. Al completarla, crea su resumen de entrega (ver «Al completar cada entrega» en `AGENTS.md`), informa de las tareas, las líneas reales y «Cómo probarlo», y pregunta si abres su PR; no empieces la siguiente entrega hasta que el usuario responda.
+1. Tras el paso 9, sigue con la siguiente tarea sin marcar de la entrega en curso. Al completarla, crea su resumen de entrega (ver «Al completar cada entrega» en `AGENTS.md`), informa de las tareas, las líneas reales y «Cómo probarlo», y pregunta si abres su PR contra la rama de integración de la feature (`feat/<feature>`, ver «Rama de integración» en `AGENTS.md`); no empieces la siguiente entrega hasta que el usuario responda.
 2. Ante una parada obligatoria de `AGENTS.md`, detente: explica la causa, la tarea en curso y las opciones, y espera al usuario. Cuando la resuelva, continúa la cadena sin volver a preguntar el modo.
-3. Al terminar todas las tareas, entrega el informe con el formato de abajo y lanza `sdd-validar` en un subagente sin el contexto de esta conversación. Si el entorno no admite subagentes, no valides aquí: pide al usuario que la lance en una sesión nueva.
+3. Al terminar todas las tareas, y con todas las entregas fusionadas en la rama de integración, entrega el informe con el formato de abajo y lanza `sdd-validar` sobre esa rama en un subagente sin el contexto de esta conversación. Si el entorno no admite subagentes, no valides aquí: pide al usuario que la lance en una sesión nueva.
 4. Si el veredicto es CUMPLIDA, `sdd-validar` registra la validación y el resumen; actualiza el informe con el resultado. Con cualquier otro veredicto, detente: las tareas de corrección y el cierre con riesgo residual los decide el usuario.
-5. Termina preguntando si abres el PR de la última entrega; no lo abras sin su confirmación.
+5. Termina preguntando si abres el PR de la rama de integración a `main`; no lo abras sin su confirmación.
 
 ```
 # Informe: <feature>
