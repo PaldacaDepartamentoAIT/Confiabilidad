@@ -1,7 +1,9 @@
 # Entrega E-03 · Campos de texto y correo en la página de muestra
 
 Rama: `feat/componentes-base-accesibles-campos-texto`, con PR contra la rama de integración
-`feat/componentes-base-accesibles` · PR: pendiente · Líneas de código y tests: 215 (límite: 400).
+`feat/componentes-base-accesibles` · PR:
+[PaldacaDepartamentoAIT/Confiabilidad#23](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/23) ·
+Líneas de código y tests: 215 (límite: 400).
 
 ## Qué se hizo
 - Un componente de campo de texto, que también sirve para correo:
