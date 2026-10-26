@@ -131,7 +131,7 @@ los tres archivos de idioma a la vez.
   a portugués con el foco en «Português (Brasil)»; al recargar sigue en portugués; un valor
   guardado `xx` se borra y vuelve al idioma del navegador — [Cierto] — revertir: no aplica.
 
-- [ ] T-010 Campo de texto y de correo
+- [x] T-010 Campo de texto y de correo
   RF: RF-011, RF-016 (D-09) | Depende de: T-002 | Archivos: 3
   Archivos: `components/fields/TextField.tsx`, `components/fields/TextField.test.tsx`,
   `components/fields/RequiredLegend.tsx`.
@@ -140,6 +140,13 @@ los tres archivos de idioma a la vez.
   de tipo correo, `autocomplete="email"` e `inputmode="email"`; con error, `aria-invalid="true"` y
   una descripción accesible igual al mensaje; sin error, ninguno de los dos; `RequiredLegend`
   muestra el texto traducido que explica el asterisco; suite verde.
+  Decisiones: `TextField` recibe la etiqueta y el error ya traducidos (texto, no claves): la página
+  que lo usa traduce al pintar, así que un cambio de idioma lo repinta igual (D-05 se cumple en el
+  estado del formulario, M-10) — [Probable] — revertir: pasar claves y traducir dentro. Reenvía su
+  `ref` al input, para que el foco al primer error (T-022) no necesite tocar el componente —
+  [Cierto] — revertir: quitar `forwardRef`. El resto de atributos del input pasan tal cual, pero
+  `type`, `required`, `id` y los `aria-*` de accesibilidad los fija el componente — [Cierto] —
+  revertir: no aplica.
 
 - [ ] T-011 Página de muestra con los campos de texto y correo
   RF: RF-011, RF-019, RF-020 | Depende de: T-009, T-010 | Archivos: 4
