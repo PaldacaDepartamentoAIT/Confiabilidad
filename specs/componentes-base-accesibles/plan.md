@@ -1,13 +1,13 @@
 # Plan: componentes-base-accesibles
-Estado: borrador
+Estado: aprobado
 
 Base de código: `frontend/` tal como está en `main` (React 18, Vite, Vitest con jsdom, Testing
 Library, TypeScript estricto). Solo se toca `frontend/`: ni el backend ni `desktop/` cambian (S-07).
 
 ## Dependencias nuevas
 - `i18next` y `react-i18next` (ejecución): autorizadas por el usuario (D-01).
-- `@testing-library/user-event` (desarrollo): **pendiente de autorización** (D-12).
-- `axe-core` (desarrollo): **pendiente de autorización**, opcional (D-13).
+- `@testing-library/user-event` (desarrollo): autorizada por el usuario (D-12).
+- `axe-core` (desarrollo): autorizada por el usuario (D-13).
 
 El contenedor `frontend` de Docker ya ejecuta `pnpm install` al arrancar, así que las dependencias
 nuevas no añaden pasos manuales (P-02).
@@ -227,8 +227,7 @@ estados principales (inicial, con errores, procesando, con mensaje general) y en
 Descartada: no auditar, o usar `jest-axe` o `vitest-axe`.
 Motivo: detecta etiquetas que faltan, `id` repetidos, ARIA mal usado y `lang` no válidos que los
 tests escritos a mano pueden no cubrir. Se usa `axe-core` directamente porque `vitest-axe` está
-abandonado (0.1.0) y `jest-axe` está pensado para Jest. Es opcional: sin ella, la feature se
-puede cumplir con los tests manuales de cada componente y el checklist de CF-5.
+abandonado (0.1.0) y `jest-axe` está pensado para Jest.
 
 ### D-14 Error local por delante del de servidor
 Elegida: si un campo tiene a la vez un error local y uno de servidor, se muestra el local.
@@ -253,8 +252,8 @@ TDD estricto (P-04) y un mutante por tarea (`sdd-implementar`).
   M-05. Cubre RF-003, RF-004, RF-006, RF-009 a RF-018 y RF-024.
 - **Integración** (página de muestra completa): orden de tabulación de principio a fin, envío con
   errores y foco, envío válido con temporizadores simulados (3 s), error general de ejemplo, cambio
-  de idioma conservando valores, errores, foco, `lang` y título, y la auditoría de `axe-core` si se
-  autoriza (D-13). Cubre RF-001, RF-004, RF-018 a RF-022 y RF-025.
+  de idioma conservando valores, errores, foco, `lang` y título, y la auditoría de `axe-core`
+  (D-13). Cubre RF-001, RF-004, RF-018 a RF-022 y RF-025.
 - **Manual** (fuera de la suite): el recorrido solo con teclado (CF-3) y el checklist de lector de
   pantalla con NVDA o VoiceOver (CF-5, S-08), que va en `resumen.md` y en `HUMAN_TODO.md`. jsdom no
   pronuncia ni aplica `inputmode` o `autocomplete`: los tests prueban que los atributos están; el
