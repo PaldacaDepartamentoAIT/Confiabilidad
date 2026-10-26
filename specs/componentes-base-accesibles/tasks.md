@@ -148,7 +148,7 @@ los tres archivos de idioma a la vez.
   `type`, `required`, `id` y los `aria-*` de accesibilidad los fija el componente — [Cierto] —
   revertir: no aplica.
 
-- [ ] T-011 Página de muestra con los campos de texto y correo
+- [x] T-011 Página de muestra con los campos de texto y correo
   RF: RF-011, RF-019, RF-020 | Depende de: T-009, T-010 | Archivos: 4
   Archivos: `showcase/ShowcasePage.tsx`, `showcase/ShowcasePage.test.tsx`, `App.tsx`,
   `App.test.tsx`.
@@ -158,6 +158,13 @@ los tres archivos de idioma a la vez.
   selector → texto → correo en ese orden y comprueba que un valor escrito se conserva al cambiar de
   idioma; suite verde.
   Excepción: mover el contenido de `App` a la página cambia `App` y su test a la vez que la página.
+  Decisiones: al final no hizo falta tocar `App.test.tsx`: sus tests siguen valiendo porque `App`
+  muestra la página, así que la tarea tocó 3 archivos y no usó la excepción — [Cierto] — revertir:
+  no aplica. El formulario se nombra con un encabezado visible `h2` («Formulario de ejemplo») y
+  `aria-labelledby` — [Probable] — revertir: `aria-label` sin encabezado. Los campos aún no
+  guardan su valor en el estado (el navegador lo conserva al cambiar de idioma); el estado llega
+  con la validación (T-019) — [Cierto] — revertir: no aplica. Comprobado en Chromium: orden de Tab
+  y valores conservados al pasar a portugués — [Cierto] — revertir: no aplica.
 
 - [ ] T-012 Campo de contraseña
   RF: RF-012, RF-024 (D-10) | Depende de: T-010 | Archivos: 2

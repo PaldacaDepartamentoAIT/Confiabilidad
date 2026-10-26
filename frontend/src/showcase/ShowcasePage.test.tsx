@@ -1,0 +1,57 @@
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { I18nextProvider } from "react-i18next";
+
+import { createI18n } from "../i18n";
+import { ShowcasePage } from "./ShowcasePage";
+
+function renderPage(language = "es") {
+  render(
+    <I18nextProvider i18n={createI18n(language)}>
+      <ShowcasePage />
+    </I18nextProvider>,
+  );
+}
+
+test("shows the sample form with its required fields and the asterisk legend", () => {
+  renderPage("en");
+
+  expect(screen.getByRole("heading", { level: 1, name: "Reliability" })).toBeInTheDocument();
+  const form = screen.getByRole("form", { name: "Sample form" });
+  expect(form).toHaveAttribute("novalidate");
+  expect(screen.getByText("Fields marked with * are required.")).toBeInTheDocument();
+  expect(screen.getByRole("textbox", { name: "Full name" })).toHaveAttribute(
+    "aria-required",
+    "true",
+  );
+  expect(screen.getByRole("textbox", { name: "Email" })).toHaveAttribute("type", "email");
+});
+
+test("the tab order goes through the language selector, then name, then email", async () => {
+  const user = userEvent.setup();
+  renderPage();
+
+  const expected = [
+    screen.getByRole("button", { name: "Español" }),
+    screen.getByRole("button", { name: "Português (Brasil)" }),
+    screen.getByRole("button", { name: "English" }),
+    screen.getByRole("textbox", { name: "Nombre completo" }),
+    screen.getByRole("textbox", { name: "Correo electrónico" }),
+  ];
+  for (const element of expected) {
+    await user.tab();
+    expect(element).toHaveFocus();
+  }
+});
+
+test("keeps typed values when the language changes", async () => {
+  const user = userEvent.setup();
+  renderPage();
+
+  await user.type(screen.getByRole("textbox", { name: "Nombre completo" }), "Ana Pérez");
+  await user.type(screen.getByRole("textbox", { name: "Correo electrónico" }), "ana@planta.com");
+  await user.click(screen.getByRole("button", { name: "English" }));
+
+  expect(screen.getByRole("textbox", { name: "Full name" })).toHaveValue("Ana Pérez");
+  expect(screen.getByRole("textbox", { name: "Email" })).toHaveValue("ana@planta.com");
+});
