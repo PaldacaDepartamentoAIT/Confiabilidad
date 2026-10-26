@@ -87,15 +87,21 @@ los tres archivos de idioma a la vez.
   — revertir: no aplica. `index.html` sigue con `lang="es"` hasta que arranca la app, que lo
   sustituye; cambiarlo queda fuera de los archivos de la tarea — [Probable] — revertir: no aplica.
 
-- [ ] T-007 Idioma elegido guardado en el navegador
+- [x] T-007 Idioma elegido guardado en el navegador
   RF: RF-005, RF-023 (S-04) | Depende de: T-004 | Archivos: 2
   Archivos: `i18n/language.ts`, `i18n/language.test.ts`.
   Hecho cuando: `persistLanguage("pt-BR", almacenamiento)` guarda el valor en
   `confiabilidad.language`; `detectInitialLanguage` prefiere un valor guardado válido al del
   navegador; con un valor guardado `fr` lo borra y aplica RF-002; con un almacenamiento cuyo
   `getItem`, `setItem` o `removeItem` lanzan errores no lanza nada y aplica RF-002; suite verde.
+  Decisiones: el almacenamiento es un parámetro opcional de `detectInitialLanguage`, así que las
+  llamadas de T-004 sin él siguen valiendo — [Cierto] — revertir: hacerlo obligatorio. Se añade
+  `browserStorage()`, que devuelve `window.localStorage` o nada si el navegador bloquea el acceso
+  (que también puede lanzar), para que T-009 lo use en `main.tsx` — [Cierto] — revertir: mover esa
+  protección a `main.tsx`. Un valor guardado solo vale si es exactamente `es`, `pt-BR` o `en`
+  (`pt` guardado se borra) — [Probable] — revertir: pasar el valor por `matchLanguage`.
 
-- [ ] T-008 Selector de idioma
+- [x] T-008 Selector de idioma
   RF: RF-003, RF-004, RF-005, RF-006 (D-06) | Depende de: T-002, T-007 | Archivos: 4
   Archivos: `frontend/package.json`, `pnpm-lock.yaml`, `components/LanguageSwitcher.tsx`,
   `components/LanguageSwitcher.test.tsx`.
@@ -105,13 +111,25 @@ los tres archivos de idioma a la vez.
   «English» y Enter (y, en otro caso, Espacio) cambia el idioma de la instancia, lo guarda con
   `persistLanguage`, marca el botón como activo y deja el foco en él; suite verde.
   Excepción: `pnpm-lock.yaml` lo regenera `pnpm add`; no es un archivo editado a mano.
+  Decisiones: el selector recibe el almacenamiento como prop opcional (sin él, cambia el idioma
+  pero no lo guarda), para probarlo con uno en memoria — [Cierto] — revertir: leer
+  `browserStorage()` dentro del componente. El grupo usa `role="group"` con `aria-label` en lugar
+  de `<fieldset>`, que no es un formulario — [Probable] — revertir: `<fieldset>` y `<legend>`. Los
+  botones son `type="button"` para no enviar un formulario que los contenga — [Cierto] — revertir:
+  quitar el atributo.
 
-- [ ] T-009 Selector de idioma en la aplicación
+- [x] T-009 Selector de idioma en la aplicación
   RF: RF-004, RF-005 | Depende de: T-006, T-008 | Archivos: 3
   Archivos: `App.tsx`, `App.test.tsx`, `main.tsx`.
   Hecho cuando: `main.tsx` pasa `window.localStorage` (protegido) a `detectInitialLanguage`; `App`
   muestra el selector; el test cambia de `es` a `pt-BR` con el teclado y comprueba el encabezado
   portugués, `<html lang="pt-BR">`, el título portugués y el foco en el botón; suite verde.
+  Decisiones: `main.tsx` obtiene el almacenamiento con `browserStorage()` (T-007) y `App` lo recibe
+  como prop para pasarlo al selector — [Cierto] — revertir: leerlo dentro del selector. El selector
+  va antes del encabezado, primero en el orden de tabulación — [Probable] — revertir: moverlo
+  detrás. Comprobado en Chromium: con el navegador en francés sale en inglés; Tab, Tab, Enter pasa
+  a portugués con el foco en «Português (Brasil)»; al recargar sigue en portugués; un valor
+  guardado `xx` se borra y vuelve al idioma del navegador — [Cierto] — revertir: no aplica.
 
 - [ ] T-010 Campo de texto y de correo
   RF: RF-011, RF-016 (D-09) | Depende de: T-002 | Archivos: 3
