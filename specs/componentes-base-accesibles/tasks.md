@@ -118,12 +118,18 @@ los tres archivos de idioma a la vez.
   botones son `type="button"` para no enviar un formulario que los contenga — [Cierto] — revertir:
   quitar el atributo.
 
-- [ ] T-009 Selector de idioma en la aplicación
+- [x] T-009 Selector de idioma en la aplicación
   RF: RF-004, RF-005 | Depende de: T-006, T-008 | Archivos: 3
   Archivos: `App.tsx`, `App.test.tsx`, `main.tsx`.
   Hecho cuando: `main.tsx` pasa `window.localStorage` (protegido) a `detectInitialLanguage`; `App`
   muestra el selector; el test cambia de `es` a `pt-BR` con el teclado y comprueba el encabezado
   portugués, `<html lang="pt-BR">`, el título portugués y el foco en el botón; suite verde.
+  Decisiones: `main.tsx` obtiene el almacenamiento con `browserStorage()` (T-007) y `App` lo recibe
+  como prop para pasarlo al selector — [Cierto] — revertir: leerlo dentro del selector. El selector
+  va antes del encabezado, primero en el orden de tabulación — [Probable] — revertir: moverlo
+  detrás. Comprobado en Chromium: con el navegador en francés sale en inglés; Tab, Tab, Enter pasa
+  a portugués con el foco en «Português (Brasil)»; al recargar sigue en portugués; un valor
+  guardado `xx` se borra y vuelve al idioma del navegador — [Cierto] — revertir: no aplica.
 
 - [ ] T-010 Campo de texto y de correo
   RF: RF-011, RF-016 (D-09) | Depende de: T-002 | Archivos: 3
