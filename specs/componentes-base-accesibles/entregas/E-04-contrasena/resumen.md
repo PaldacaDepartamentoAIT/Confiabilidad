@@ -1,7 +1,9 @@
 # Entrega E-04 · Contraseña con mostrar u ocultar y auditoría de accesibilidad
 
 Rama: `feat/componentes-base-accesibles-contrasena`, con PR contra la rama de integración
-`feat/componentes-base-accesibles` · PR: pendiente · Líneas de código y tests: 154 (límite: 400).
+`feat/componentes-base-accesibles` · PR:
+[PaldacaDepartamentoAIT/Confiabilidad#24](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/24) ·
+Líneas de código y tests: 154 (límite: 400).
 
 ## Qué se hizo
 - Un campo de contraseña que se apoya en el campo de texto (misma etiqueta, asterisco y errores):
