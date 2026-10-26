@@ -1,5 +1,5 @@
 # Spec: componentes-base-accesibles
-Estado: borrador
+Estado: aprobada
 Aprobación: ligera
 
 ## Objetivo (por qué)
@@ -155,10 +155,10 @@ envío.
   idiomas. Sustituirlos por los definitivos consiste en editar los archivos de traducción, sin
   tocar los componentes.
 - S-02 Cuando el navegador no prefiere ninguno de los tres idiomas, la interfaz usa el inglés
-  (C-13), que es también el texto de reserva de RF-007. El backend usa el español por defecto
-  (RF-012 de `correo-asincrono-plantillas`); para que la interfaz y los correos coincidan, las
-  pantallas que llamen a la API deberán enviar siempre el idioma activo de forma explícita (fuera
-  del alcance de esta feature).
+  (C-13), que es también el texto de reserva de RF-007. El backend mantiene el español por defecto
+  (RF-012 de `correo-asincrono-plantillas`). Las pantallas que llamen a la API deberán enviar
+  siempre el idioma activo de forma explícita (fuera del alcance de esta feature), porque el
+  backend lee el idioma del navegador y no el elegido en el selector.
 - S-03 «Recordado» significa guardado en el navegador del usuario; no se guarda en la cuenta ni se
   envía al backend en esta feature.
 - S-04 Si el navegador no permite guardar el idioma elegido (por ejemplo, en modo privado
@@ -200,3 +200,6 @@ envío.
 - 2026-10-26 — Clarificación (C-01…C-13) — RF: RF-002, RF-004, RF-008, RF-010, RF-011, RF-013,
   RF-014, RF-016, RF-017, RF-018, RF-021 y RF-022 ajustados; RF-023, RF-024 y RF-025 añadidos; S-02
   ajustado; S-09 y S-10 añadidos — Estado: clarificado
+- 2026-10-26 — S-02 ajustado: el backend mantiene el español por defecto; se descarta el
+  `sdd-cambio` del backend por su poco beneficio — Estado: clarificado
+- 2026-10-26 — Aprobación por el usuario — Estado: aprobada
