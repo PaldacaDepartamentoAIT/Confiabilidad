@@ -186,13 +186,20 @@ los tres archivos de idioma a la vez.
   Hecho cuando: la página añade un campo de contraseña actual obligatorio tras el correo; el orden
   de Tab es selector → texto → correo → contraseña → «Mostrar contraseña»; suite verde.
 
-- [ ] T-014 Auditoría automática de accesibilidad de la página
+- [x] T-014 Auditoría automática de accesibilidad de la página
   RF: RF-006, RF-011, RF-019 (D-13) | Depende de: T-013 | Archivos: 3
   Archivos: `frontend/package.json`, `pnpm-lock.yaml`, `showcase/a11y.test.tsx`.
   Hecho cuando: `axe-core` está en `devDependencies`; el test ejecuta `axe` sobre la página de
   muestra en `es`, `pt-BR` y `en` y falla si hay alguna infracción (comprobado quitando la etiqueta
   de un campo); suite verde.
   Excepción: `pnpm-lock.yaml` lo regenera `pnpm add`; no es un archivo editado a mano.
+  Decisiones: la auditoría se ejecuta sobre todo el documento con `App` montada, así que también
+  revisa `<html lang>` y las reglas de buenas prácticas de axe (encabezado `h1`, región `main`) —
+  [Cierto] — revertir: auditar solo el contenedor. Un segundo test comprueba que la auditoría
+  detecta un campo sin etiqueta, para que no pase en verde sin revisar nada. Los tests pasaron
+  desde el principio porque la página ya cumplía; lo que demuestra que la auditoría funciona son
+  los mutantes (etiquetas desenlazadas y un `aria-checked` no válido en un botón: los dos la hacen
+  fallar) — [Cierto] — revertir: no aplica.
 
 - [ ] T-015 Normalización del código
   RF: RF-013, RF-014 | Depende de: — | Archivos: 2
