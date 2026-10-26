@@ -68,7 +68,7 @@ los tres archivos de idioma a la vez.
   [Cierto] — revertir: volver a un objeto literal. `LANGUAGE_NAMES` se define aquí (M-03) aunque
   lo use T-008 — [Cierto] — revertir: moverlo al selector.
 
-- [ ] T-005 Idioma y título del documento sincronizados
+- [x] T-005 Idioma y título del documento sincronizados
   RF: RF-004, RF-006 | Depende de: T-002 | Archivos: 2
   Archivos: `i18n/useDocumentLanguage.ts`, `i18n/useDocumentLanguage.test.tsx`.
   Hecho cuando: al montar con la instancia en `pt-BR`, `<html lang>` es `pt-BR` y `document.title`
