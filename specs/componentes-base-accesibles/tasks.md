@@ -28,7 +28,7 @@ los tres archivos de idioma a la vez.
   idiomas. El nombre de la app se traduce («Confiabilidad», «Confiabilidade», «Reliability») porque
   C-12 pide traducir el título — [Suposición] — revertir: usar «Confiabilidad» en los tres.
 
-- [ ] T-002 Instancia de traducción con reserva en inglés
+- [x] T-002 Instancia de traducción con reserva en inglés
   RF: RF-001, RF-007 (D-01, D-03) | Depende de: T-001 | Archivos: 4
   Archivos: `frontend/package.json`, `pnpm-lock.yaml`, `i18n/index.ts`, `i18n/index.test.ts`.
   Hecho cuando: `i18next` y `react-i18next` están en `dependencies`; `createI18n("pt-BR")`
@@ -36,6 +36,13 @@ los tres archivos de idioma a la vez.
   (sin esperar promesas); una clave ausente en `es` (recurso de prueba) devuelve el texto inglés y
   nunca la clave; suite verde.
   Excepción: `pnpm-lock.yaml` lo regenera `pnpm add`; no es un archivo editado a mano.
+  Decisiones: `createI18n` acepta los textos como segundo parámetro (por defecto, los tres de M-02)
+  para probar la reserva con un recurso incompleto sin tocar los reales — [Cierto] — revertir:
+  quitar el parámetro y probar con `addResourceBundle`. Un texto vacío también cae al inglés
+  (`returnEmptyString: false`) — [Cierto] — revertir: quitar la opción. Mutante equivalente: con
+  los textos incluidos, `initAsync: true` también traduce en el primer acceso en i18next 26; se
+  mantiene `initAsync: false` explícito para no depender de ese detalle — [Probable] — revertir:
+  quitar la opción.
 
 - [ ] T-003 Claves de traducción comprobadas por el compilador
   RF: RF-008 (D-04) | Depende de: T-002 | Archivos: 2
