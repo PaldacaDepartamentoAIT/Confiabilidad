@@ -245,11 +245,17 @@ los tres archivos de idioma a la vez.
   `a@`, `a b@c` y `a@b@c`; `sixDigitCode` rechaza `"12345"` y acepta `"123456"`; cada rechazo
   devuelve una clave de `validation` existente; suite verde.
 
-- [ ] T-019 Validación al salir de cada campo
+- [x] T-019 Validación al salir de cada campo
   RF: RF-016, RF-025 (D-05) | Depende de: T-002 | Archivos: 2
   Archivos: `forms/useFormValidation.ts`, `forms/useFormValidation.test.tsx`.
   Hecho cuando: al salir de un campo, aunque no se haya enviado nada, el hook valida solo ese campo
   y pone o quita su error; los errores se guardan como clave y parámetros; suite verde.
+  Decisiones: se implementó antes que T-018 porque define los tipos `FieldError` (clave y
+  parámetros) y `Validator` que usan las reglas de la página; así el hook genérico no importa nada
+  de la página — [Cierto] — revertir: no aplica. El hook lee el valor del propio evento al salir
+  (`event.target.value`), sin guardar los valores de los campos, así que sirve también para
+  `CodeField`, que gestiona su propio estado — [Probable] — revertir: guardar los valores en el
+  hook. Con varias reglas, el campo muestra el primer error — [Cierto] — revertir: mostrar todos.
 
 - [ ] T-020 Errores al salir en la página de muestra
   RF: RF-016, RF-018, RF-025 | Depende de: T-017, T-018, T-019 | Archivos: 2
