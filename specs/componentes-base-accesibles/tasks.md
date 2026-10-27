@@ -463,13 +463,20 @@ los tres archivos de idioma a la vez.
   `kind="new"` y esperaba solo el error como descripción; se actualizó para esperar la ayuda y el
   error, que es lo que pide RF-027 — [Cierto] — revertir: no aplica.
 
-- [ ] T-039 Contraseña nueva en la página de muestra
+- [x] T-039 Contraseña nueva en la página de muestra
   RF: RF-020, RF-021, RF-026 | Depende de: T-037, T-038 | Archivos: 2
   Archivos: `showcase/ShowcasePage.tsx`, `showcase/ShowcasePage.test.tsx`.
   Hecho cuando: la página añade «Nueva contraseña» (obligatoria) tras la contraseña actual; salir de
   ella con `abc` muestra «Usa al menos 12 caracteres.»; con `123456789012`, «No uses solo números.»;
   la contraseña actual no aplica esas reglas; el orden de Tab incluye la nueva y su botón; la
   auditoría de axe sigue sin infracciones; suite verde.
+  Decisiones: los tests buscan las contraseñas por etiqueta con `/^Contraseña/` y
+  `/^Nueva contraseña/`, porque «contraseña» aparece en las dos — [Cierto] — revertir: no aplica.
+  Las dos contraseñas tienen ahora un botón con el mismo nombre accesible, «Mostrar contraseña»;
+  los tests lo distinguen por su posición. Queda planteado al usuario si cada botón debe nombrar
+  su campo — [Cierto] — revertir: no aplica. Comprobado en Chromium: ayuda al cargar; `abc` y 6
+  emojis dan «Usa al menos 12 caracteres.»; `123456789012`, «No uses solo números.»; la actual
+  acepta `abc` — [Cierto] — revertir: no aplica.
 
 ## Entregas
 Arrancar la página de muestra (para el «Cómo probarlo» de cada entrega), desde la raíz del

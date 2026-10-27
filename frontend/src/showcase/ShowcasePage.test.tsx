@@ -25,7 +25,7 @@ test("shows the sample form with its required fields and the asterisk legend", (
     "true",
   );
   expect(screen.getByRole("textbox", { name: "Email" })).toHaveAttribute("type", "email");
-  const password = screen.getByLabelText("Password", { exact: false });
+  const password = screen.getByLabelText(/^Password/);
   expect(password).toHaveAttribute("type", "password");
   expect(password).toHaveAttribute("autocomplete", "current-password");
   expect(password).toHaveAttribute("aria-required", "true");
@@ -44,8 +44,10 @@ test("the tab order goes through the language selector and then each field in or
     screen.getByRole("button", { name: "English" }),
     screen.getByRole("textbox", { name: "Nombre completo" }),
     screen.getByRole("textbox", { name: "Correo electrónico" }),
-    screen.getByLabelText("Contraseña", { exact: false }),
-    screen.getByRole("button", { name: "Mostrar contraseña" }),
+    screen.getByLabelText(/^Contraseña/),
+    screen.getAllByRole("button", { name: "Mostrar contraseña" })[0],
+    screen.getByLabelText(/^Nueva contraseña/),
+    screen.getAllByRole("button", { name: "Mostrar contraseña" })[1],
     screen.getByRole("textbox", { name: "Código de verificación" }),
     screen.getByRole("button", { name: "Verificar" }),
   ];
@@ -125,7 +127,7 @@ test("the password is validated when leaving it together with its toggle", async
   const user = userEvent.setup();
   renderPage();
 
-  const password = screen.getByLabelText("Contraseña", { exact: false });
+  const password = screen.getByLabelText(/^Contraseña/);
   await user.click(password);
   await user.tab();
   await user.tab({ shift: true });
@@ -135,7 +137,7 @@ test("the password is validated when leaving it together with its toggle", async
 
   await user.tab();
 
-  expect(screen.getByRole("textbox", { name: "Código de verificación" })).toHaveFocus();
+  expect(screen.getByLabelText(/^Nueva contraseña/)).toHaveFocus();
   expect(password).toHaveAccessibleDescription("Completa este campo.");
 });
 
@@ -143,7 +145,7 @@ test("a filled password left from its toggle has no error", async () => {
   const user = userEvent.setup();
   renderPage();
 
-  const password = screen.getByLabelText("Contraseña", { exact: false });
+  const password = screen.getByLabelText(/^Contraseña/);
   await user.type(password, "s3cret");
   await user.tab();
   await user.tab();
@@ -154,7 +156,8 @@ test("a filled password left from its toggle has no error", async () => {
 async function fillValidForm(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByRole("textbox", { name: "Nombre completo" }), "Ana Pérez");
   await user.type(screen.getByRole("textbox", { name: "Correo electrónico" }), "ana@planta.com");
-  await user.type(screen.getByLabelText("Contraseña", { exact: false }), "s3cret");
+  await user.type(screen.getByLabelText(/^Contraseña/), "s3cret");
+  await user.type(screen.getByLabelText(/^Nueva contraseña/), "turbina-compresor-7");
   await user.type(screen.getByRole("textbox", { name: "Código de verificación" }), "123456");
 }
 
@@ -163,7 +166,7 @@ test("submitting with Enter shows every error and focuses the first invalid fiel
   renderPage();
 
   await user.type(screen.getByRole("textbox", { name: "Nombre completo" }), "Ana Pérez");
-  await user.type(screen.getByLabelText("Contraseña", { exact: false }), "s3cret");
+  await user.type(screen.getByLabelText(/^Contraseña/), "s3cret");
   await user.type(screen.getByRole("textbox", { name: "Código de verificación" }), "12345{Enter}");
 
   const email = screen.getByRole("textbox", { name: "Correo electrónico" });
@@ -207,4 +210,50 @@ test("the next submission removes the general message", async () => {
   expect(
     screen.queryByText("Formulario de demostración", { exact: false }),
   ).not.toBeInTheDocument();
+});
+
+test("the new password shows its rules and checks them when left", async () => {
+  const user = userEvent.setup();
+  renderPage();
+
+  const newPassword = screen.getByLabelText(/^Nueva contraseña/);
+  expect(newPassword).toHaveAttribute("autocomplete", "new-password");
+  expect(newPassword).toHaveAttribute("aria-required", "true");
+  expect(newPassword).toHaveAccessibleDescription("Al menos 12 caracteres, no solo números.");
+
+  await user.type(newPassword, "abc");
+  await user.click(screen.getByRole("textbox", { name: "Código de verificación" }));
+  expect(newPassword).toHaveAccessibleDescription(
+    "Al menos 12 caracteres, no solo números. Usa al menos 12 caracteres.",
+  );
+
+  await user.clear(newPassword);
+  await user.type(newPassword, "123456789012");
+  await user.click(screen.getByRole("textbox", { name: "Código de verificación" }));
+  expect(newPassword).toHaveAccessibleDescription(
+    "Al menos 12 caracteres, no solo números. No uses solo números.",
+  );
+});
+
+test("the current password does not apply the new password rules", async () => {
+  const user = userEvent.setup();
+  renderPage();
+
+  const password = screen.getByLabelText(/^Contraseña/);
+  await user.type(password, "abc");
+  await user.click(screen.getByRole("textbox", { name: "Código de verificación" }));
+
+  expect(password).not.toHaveAttribute("aria-invalid");
+});
+
+test("submitting with a short new password focuses it", async () => {
+  const user = userEvent.setup();
+  renderPage();
+
+  await fillValidForm(user);
+  await user.clear(screen.getByLabelText(/^Nueva contraseña/));
+  await user.type(screen.getByLabelText(/^Nueva contraseña/), "corta");
+  await user.click(screen.getByRole("button", { name: "Verificar" }));
+
+  expect(screen.getByLabelText(/^Nueva contraseña/)).toHaveFocus();
 });
