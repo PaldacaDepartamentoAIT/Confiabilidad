@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 
 import { TextField } from "./TextField";
 
-type PasswordFieldProps = Omit<ComponentProps<typeof TextField>, "type" | "adornment"> & {
+type PasswordFieldProps = Omit<ComponentProps<typeof TextField>, "type" | "adornment" | "hint"> & {
   kind: "current" | "new";
 };
 
@@ -38,6 +38,7 @@ export const PasswordField = forwardRef<HTMLInputElement, PasswordFieldProps>(
         autoCapitalize="off"
         autoCorrect="off"
         onBlur={handleLeave}
+        hint={kind === "new" ? t("field.newPasswordHint") : undefined}
         adornment={
           <button
             ref={toggleRef}

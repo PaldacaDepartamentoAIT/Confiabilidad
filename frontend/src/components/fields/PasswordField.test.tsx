@@ -60,7 +60,9 @@ test("links an error to the password input", () => {
 
   const input = screen.getByLabelText("Password");
   expect(input).toHaveAttribute("aria-invalid", "true");
-  expect(input).toHaveAccessibleDescription("Fill in this field.");
+  expect(input).toHaveAccessibleDescription(
+    "At least 12 characters, not only numbers. Fill in this field.",
+  );
 });
 
 test("keeps the password away from spellcheckers and autocorrection, hidden or shown", async () => {
@@ -131,4 +133,19 @@ test("forwards its ref to the password input", () => {
   renderWithI18n(<PasswordField ref={ref} label="Password" kind="current" />);
 
   expect(ref.current).toBe(screen.getByLabelText("Password"));
+});
+
+test("a new password shows the translated hint with its rules", () => {
+  renderWithI18n(<PasswordField label="New password" kind="new" />);
+
+  const input = screen.getByLabelText("New password");
+  expect(screen.getByText("At least 12 characters, not only numbers.")).toBeVisible();
+  expect(input).toHaveAccessibleDescription("At least 12 characters, not only numbers.");
+});
+
+test("a current password has no hint", () => {
+  renderWithI18n(<PasswordField label="Password" kind="current" />);
+
+  expect(screen.queryByText("At least 12 characters, not only numbers.")).not.toBeInTheDocument();
+  expect(screen.getByLabelText("Password")).not.toHaveAttribute("aria-describedby");
 });

@@ -453,11 +453,15 @@ los tres archivos de idioma a la vez.
   (`²`), que `isdigit()` de Python sí cuenta: una contraseña solo de superíndices pasaría aquí y la
   rechazaría el servidor al enviar — [Cierto] — revertir: no aplica (el servidor decide, S-11).
 
-- [ ] T-038 Contraseña nueva con su ayuda
+- [x] T-038 Contraseña nueva con su ayuda
   RF: RF-027 | Depende de: T-035, T-036 | Archivos: 2
   Archivos: `components/fields/PasswordField.tsx`, `components/fields/PasswordField.test.tsx`.
   Hecho cuando: con `kind="new"`, la ayuda traducida se ve y es la descripción accesible del input;
   con `kind="current"` no hay ayuda; suite verde.
+  Decisiones: `PasswordField` ya no acepta `hint` desde fuera: la ayuda la decide su `kind` —
+  [Probable] — revertir: permitir una ayuda propia en la contraseña actual. Un test de T-012 usaba
+  `kind="new"` y esperaba solo el error como descripción; se actualizó para esperar la ayuda y el
+  error, que es lo que pide RF-027 — [Cierto] — revertir: no aplica.
 
 - [ ] T-039 Contraseña nueva en la página de muestra
   RF: RF-020, RF-021, RF-026 | Depende de: T-037, T-038 | Archivos: 2
