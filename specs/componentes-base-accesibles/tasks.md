@@ -476,6 +476,9 @@ pnpm --filter frontend test
   Tareas: T-021…T-024, T-034 | Líneas estimadas: 380 | Rama: feat/componentes-base-accesibles-envio
   Cómo probarlo: con el formulario vacío, pulsar Enter en un campo: aparecen los errores y el
   foco va al primer campo; con todo válido, enviar: aparece el mensaje de demostración con el foco.
+  Excepción: 403 líneas reales. T-034 corrige un fallo de T-024 encontrado en Chromium (el clic en
+  «Verificar» se pierde si al salir del campo desaparece un error); separarla dejaría en la rama de
+  integración un botón de envío que a veces no funciona.
 
 - E-08 Botón «procesando» durante 3 segundos con aviso al lector de pantalla.
   Tareas: T-025…T-027 | Líneas estimadas: 250 | Rama:
