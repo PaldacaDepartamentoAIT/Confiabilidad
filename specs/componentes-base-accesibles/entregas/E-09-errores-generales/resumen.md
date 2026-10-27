@@ -1,7 +1,8 @@
 # Entrega E-09 · Mensajes generales de error y cierre de la feature
 
 Rama: `feat/componentes-base-accesibles-errores-generales`, con PR contra la rama de integración
-`feat/componentes-base-accesibles` · PR: pendiente · Líneas de código y tests: 403 (límite: 400;
+`feat/componentes-base-accesibles` · PR:
+[PaldacaDepartamentoAIT/Confiabilidad#30](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/30) · Líneas de código y tests: 403 (límite: 400;
 excepción aprobada, anotada en la entrega E-09 de [`tasks.md`](../../tasks.md)).
 
 ## Qué se hizo
