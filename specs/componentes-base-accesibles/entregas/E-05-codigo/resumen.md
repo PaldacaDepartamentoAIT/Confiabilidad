@@ -1,7 +1,9 @@
 # Entrega E-05 · Campo del código de 6 dígitos
 
 Rama: `feat/componentes-base-accesibles-codigo`, con PR contra la rama de integración
-`feat/componentes-base-accesibles` · PR: pendiente · Líneas de código y tests: 194 (límite: 400).
+`feat/componentes-base-accesibles` · PR:
+[PaldacaDepartamentoAIT/Confiabilidad#25](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/25) ·
+Líneas de código y tests: 194 (límite: 400).
 
 ## Qué se hizo
 - Un campo único para el código de verificación, no seis casillas, con su etiqueta, su asterisco
