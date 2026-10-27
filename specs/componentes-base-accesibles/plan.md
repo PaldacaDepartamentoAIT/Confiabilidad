@@ -30,7 +30,10 @@ falte o sobre no compila (D-04). Grupos de claves: `app` (título del documento)
 contraseña), `message` (prefijos «Error:», «Éxito:», «Información:»), `validation` (vacío, correo,
 código incompleto, demasiados intentos, error del servidor) y `showcase` (etiquetas, botones y
 mensajes de la página de muestra). Los nombres de los idiomas del selector no se traducen: cada uno
-va siempre en su propio idioma (RF-003).
+va siempre en su propio idioma (RF-003). Para la contraseña nueva (RF-026, RF-027) se añaden
+`field.newPasswordHint` («Al menos 12 caracteres, no solo números.»),
+`validation.passwordTooShort` («Usa al menos 12 caracteres.»), `validation.passwordOnlyDigits`
+(«No uses solo números.») y `showcase.newPasswordLabel` («Nueva contraseña»).
 RF: RF-001, RF-008
 
 ### M-03 Idioma del usuario (`src/i18n/language.ts`)
@@ -88,7 +91,10 @@ Responsabilidad:
 Al validar al salir (RF-025), el input y el control de mostrar u ocultar cuentan como uno:
 `PasswordField` solo llama a su `onBlur` cuando el foco sale de los dos, y siempre con el input como
 destino del evento, para que la validación lea su valor (D-16).
-RF: RF-011, RF-012, RF-016, RF-024
+`TextField` acepta un texto de ayuda (`hint`) visible bajo el campo, con su propio `id`;
+`aria-describedby` apunta a la ayuda y, si hay error, también al error. `PasswordField` con
+`kind="new"` muestra siempre la ayuda de sus reglas (RF-027).
+RF: RF-011, RF-012, RF-016, RF-024, RF-027
 
 ### M-08 Campo del código (`src/components/fields/CodeField.tsx`, `src/components/fields/code.ts`)
 Responsabilidad: `code.ts` con dos funciones puras: `normalizeTypedCode(value)` convierte los
@@ -128,13 +134,20 @@ RF: RF-016, RF-017, RF-018, RF-021, RF-025
 Responsabilidad: `App` monta el proveedor de M-05, `useDocumentLanguage` y `ShowcasePage`, que
 sustituye al contenido actual (S-06). La página tiene un título, el selector de idioma (M-04), la
 leyenda del asterisco y un formulario `noValidate` con, en este orden: un campo de texto, uno de
-correo, uno de contraseña actual (S-09), el campo del código, el botón de envío y un botón
+correo, uno de contraseña actual, uno de contraseña nueva con las reglas de M-12 (S-09), el campo
+del código, el botón de envío y un botón
 «Mostrar error general de ejemplo». `validators.ts` define las reglas de RF-021: obligatorio
 (vacío o solo espacios), correo (`^[^@\s]+@[^@\s]+$`: una sola `@`, algo antes y después, sin
 espacios) y código de 6 dígitos. Un envío válido pone el botón en «procesando» 3 segundos y después
 muestra el mensaje informativo de demostración (RF-022). El botón de ejemplo fija un error general
 de «demasiados intentos» y le lleva el foco.
-RF: RF-019, RF-020, RF-021, RF-022
+RF: RF-019, RF-020, RF-021, RF-022, RF-026
+
+### M-12 Reglas de la contraseña nueva (`src/forms/passwordRules.ts`)
+Responsabilidad: `newPasswordRules`, la lista de validadores de RF-026: longitud mínima de 12
+contada por punto de código y rechazo de una contraseña formada solo por dígitos Unicode (`\p{Nd}`).
+Es independiente de la página de muestra, para que la usen las pantallas reales.
+RF: RF-026
 
 ## Modelo de datos
 No hay datos de servidor ni cambios de backend. El único dato persistente es el idioma elegido, en
@@ -268,6 +281,16 @@ desaparece, el botón se desplaza entre el `mousedown` y el `mouseup` y el clic 
 el hueco es una decisión de estilo, que se define más adelante; retirar los errores al escribir
 cambiaría RF-025 y no evita el salto cuando aparece un error nuevo.
 
+### D-18 Reglas de la contraseña nueva como las del servidor
+Elegida: copiar en el navegador solo la longitud mínima y la de «no solo números», contando como
+Django (puntos de código e `isdigit`).
+Descartada: replicar también el parecido al correo o al nombre, la lista de contraseñas comunes o la
+consulta a contraseñas filtradas.
+Motivo: las dos elegidas son exactas y baratas; el parecido exige reproducir el algoritmo de Django
+y arriesga resultados distintos; la lista común pesa unas 20.000 entradas en cada página; la de
+filtradas es una consulta a un servicio externo que debe hacer el servidor. Igual que con el correo
+(C-07), el servidor decide el resto al enviar.
+
 ## Estrategia de tests
 Todo con Vitest en jsdom (`pnpm --filter frontend test`), con cobertura de líneas ≥ 80 % (P-05),
 TDD estricto (P-04) y un mutante por tarea (`sdd-implementar`).
@@ -319,6 +342,8 @@ TDD estricto (P-04) y un mutante por tarea (`sdd-implementar`).
 | RF-023 | M-03 | Unitario |
 | RF-024 | M-07 | Componente, `tsc` |
 | RF-025 | M-10 | Componente, integración |
+| RF-026 | M-12, M-11 | Unitario, integración |
+| RF-027 | M-07, M-02 | Componente |
 
 ## RF sin cobertura
 Ninguno.

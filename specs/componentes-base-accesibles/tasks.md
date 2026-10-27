@@ -420,6 +420,39 @@ los tres archivos de idioma a la vez.
   Chromium: contraseña vacía → botón y vuelta, sin error; botón → código, «Completa este campo.»;
   con texto, sin error — [Cierto] — revertir: no aplica.
 
+
+- [ ] T-035 Textos de la contraseña nueva
+  RF: RF-026, RF-027 | Depende de: T-001 | Archivos: 3
+  Archivos: `i18n/locales/en.ts`, `i18n/locales/es.ts`, `i18n/locales/pt-BR.ts`.
+  Hecho cuando: las cuatro claves nuevas de M-02 existen en los tres idiomas y el test de
+  traducciones de T-001 sigue en verde; suite verde.
+
+- [ ] T-036 Texto de ayuda ligado al campo
+  RF: RF-027 | Depende de: T-010 | Archivos: 2
+  Archivos: `components/fields/TextField.tsx`, `components/fields/TextField.test.tsx`.
+  Hecho cuando: con `hint`, el texto se ve bajo el campo y es su descripción accesible; con `hint`
+  y error, la descripción accesible contiene los dos; sin `hint` nada cambia; suite verde.
+
+- [ ] T-037 Reglas de la contraseña nueva
+  RF: RF-026 (D-18) | Depende de: T-019 | Archivos: 2
+  Archivos: `forms/passwordRules.ts`, `forms/passwordRules.test.ts`.
+  Hecho cuando: rechaza `"abcdefghijk"` (11) con `passwordTooShort`; acepta `"abcdefghijkl"` (12);
+  rechaza 6 emojis (6 puntos de código) por corta; rechaza `"123456789012"` y
+  `"１２３４５６７８９０１２"` con `passwordOnlyDigits`; acepta `"12345678901a"`; suite verde.
+
+- [ ] T-038 Contraseña nueva con su ayuda
+  RF: RF-027 | Depende de: T-035, T-036 | Archivos: 2
+  Archivos: `components/fields/PasswordField.tsx`, `components/fields/PasswordField.test.tsx`.
+  Hecho cuando: con `kind="new"`, la ayuda traducida se ve y es la descripción accesible del input;
+  con `kind="current"` no hay ayuda; suite verde.
+
+- [ ] T-039 Contraseña nueva en la página de muestra
+  RF: RF-020, RF-021, RF-026 | Depende de: T-037, T-038 | Archivos: 2
+  Archivos: `showcase/ShowcasePage.tsx`, `showcase/ShowcasePage.test.tsx`.
+  Hecho cuando: la página añade «Nueva contraseña» (obligatoria) tras la contraseña actual; salir de
+  ella con `abc` muestra «Usa al menos 12 caracteres.»; con `123456789012`, «No uses solo números.»;
+  la contraseña actual no aplica esas reglas; el orden de Tab incluye la nueva y su botón; la
+  auditoría de axe sigue sin infracciones; suite verde.
 ## Entregas
 Arrancar la página de muestra (para el «Cómo probarlo» de cada entrega), desde la raíz del
 repositorio:
@@ -492,6 +525,14 @@ pnpm --filter frontend test
   Cómo probarlo: pulsar «Mostrar error general de ejemplo»: aparece «Error: …» con el foco;
   cambiar de idioma lo traduce; enviar de nuevo lo retira. Recorrer el checklist de `resumen.md`
   con NVDA o VoiceOver.
+
+- E-10 Contraseña nueva con sus reglas y su ayuda visible. Se implementa después de E-07 y antes
+  de E-08, porque no depende de E-08 ni de E-09.
+  Tareas: T-035…T-039 | Líneas estimadas: 200 | Rama:
+  feat/componentes-base-accesibles-contrasena-nueva
+  Cómo probarlo: en «Nueva contraseña» se ve la ayuda; escribir `abc` y salir muestra el error de
+  longitud; `123456789012`, el de solo números; la contraseña actual acepta cualquier valor no
+  vacío.
 
 ## RF sin tarea
 Ninguno.
