@@ -20,10 +20,10 @@
   Deberías ver que Vite queda escuchando en el puerto 5173 y la página en http://localhost:5173 en
   el idioma de tu navegador.
 
-- [ ] **Completar los checklists de teclado y de lector de pantalla (CF-3, CF-5).** La prueba con un
-  lector real no se puede automatizar (S-08). Sigue «Checklist de teclado» y «Checklist de lector
-  de pantalla» en [`resumen.md`](resumen.md), con NVDA en Windows o VoiceOver en macOS, marca allí
-  cada punto y después esta acción. Para arrancar la página, desde la raíz del repositorio:
+- [ ] **Completar el checklist de lector de pantalla (CF-5).** La prueba con un lector real no se
+  puede automatizar (S-08). Sigue «Checklist de lector de pantalla» en [`resumen.md`](resumen.md),
+  con NVDA en Windows o VoiceOver en macOS, marca allí cada punto y después esta acción. El
+  checklist de teclado (CF-3) ya está completado (2026-10-27). Para arrancar la página, desde la raíz del repositorio:
   ```bash
   pnpm --filter frontend dev
   ```

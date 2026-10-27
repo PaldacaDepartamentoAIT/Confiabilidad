@@ -89,23 +89,23 @@ Deberías ver la misma página en http://localhost:5173.
 4. Recarga la página. Deberías verla en el último idioma elegido.
 
 ### Checklist de teclado (CF-3)
-Sin tocar el ratón:
-- [ ] Tab recorre, en este orden: los tres botones de idioma, «Nombre completo», «Correo
+Sin tocar el ratón. Completado por el usuario el 2026-10-27:
+- [x] Tab recorre, en este orden: los tres botones de idioma, «Nombre completo», «Correo
   electrónico», «Contraseña», su «Mostrar contraseña», «Nueva contraseña», su «Mostrar
   contraseña», «Código de verificación», «Verificar» y «Mostrar error general de ejemplo».
   Mayús+Tab lo recorre al revés y en ningún punto el foco se queda atrapado.
-- [ ] Enter o Espacio sobre un botón de idioma cambia el idioma, y el foco sigue en ese botón.
-- [ ] Al salir de un campo obligatorio vacío aparece «Completa este campo.»; al corregirlo y salir,
+- [x] Enter o Espacio sobre un botón de idioma cambia el idioma, y el foco sigue en ese botón.
+- [x] Al salir de un campo obligatorio vacío aparece «Completa este campo.»; al corregirlo y salir,
   el error desaparece.
-- [ ] Pasar con Tab de «Contraseña» a su «Mostrar contraseña» y volver no muestra error; salir de
+- [x] Pasar con Tab de «Contraseña» a su «Mostrar contraseña» y volver no muestra error; salir de
   los dos con la contraseña vacía, sí.
-- [ ] Espacio sobre «Mostrar contraseña» deja ver la contraseña, y otra vez la oculta.
-- [ ] En el código, escribir letras no hace nada; pegar `Tu código: 12 34 56` deja `123456`.
-- [ ] Enter desde cualquier campo con errores envía y lleva el foco al primer campo con error.
-- [ ] Con todo válido (por ejemplo, la nueva contraseña `turbina-compresor-7` y el código `123456`),
+- [x] Espacio sobre «Mostrar contraseña» deja ver la contraseña, y otra vez la oculta.
+- [x] En el código, escribir letras no hace nada; pegar `Tu código: 12 34 56` deja `123456`.
+- [x] Enter desde cualquier campo con errores envía y lleva el foco al primer campo con error.
+- [x] Con todo válido (por ejemplo, la nueva contraseña `turbina-compresor-7` y el código `123456`),
   Enter sobre «Verificar» lo pone en «Procesando…» con el foco en él; Enter otra vez no hace nada;
   a los 3 segundos aparece el mensaje de demostración con el foco.
-- [ ] Enter sobre «Mostrar error general de ejemplo» muestra el error con el foco en él.
+- [x] Enter sobre «Mostrar error general de ejemplo» muestra el error con el foco en él.
 
 ### Checklist de lector de pantalla (CF-5)
 Con NVDA en Windows (Firefox o Chrome) o VoiceOver en macOS (Safari), recorriendo con Tab:
