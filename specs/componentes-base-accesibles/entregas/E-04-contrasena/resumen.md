@@ -3,7 +3,7 @@
 Rama: `feat/componentes-base-accesibles-contrasena`, con PR contra la rama de integración
 `feat/componentes-base-accesibles` · PR:
 [PaldacaDepartamentoAIT/Confiabilidad#24](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/24) ·
-Líneas de código y tests: 154 (límite: 400).
+Líneas de código y tests: 175 (límite: 400).
 
 ## Qué se hizo
 - Un campo de contraseña que se apoya en el campo de texto (misma etiqueta, asterisco y errores):
@@ -12,7 +12,10 @@ Líneas de código y tests: 154 (límite: 400).
     guardada o proponer una nueva segura;
   - tiene un botón «Mostrar contraseña», justo detrás del campo en el orden de Tab, que se activa
     con Enter, Espacio o clic. Alterna entre ver y ocultar lo escrito, sin perderlo y sin mover el
-    foco. El lector anuncia el botón como «presionado» mientras la contraseña está visible.
+    foco. El lector anuncia el botón como «presionado» mientras la contraseña está visible;
+  - el campo queda fuera de la revisión ortográfica, la autocorrección y las mayúsculas
+    automáticas, también al mostrar la contraseña, para que los correctores del navegador o de
+    extensiones no lean ni envíen su texto y el teclado del móvil no lo cambie.
 - La página de muestra añade el campo «Contraseña» (contraseña actual, obligatoria) después del
   correo.
 - Una auditoría automática con axe revisa la página entera en español, portugués e inglés, y la
@@ -29,6 +32,7 @@ El detalle de cada tarea, con su «Hecho cuando» y sus decisiones, está en
 | T-012 | Campo de contraseña | `0a36fc2` |
 | T-013 | Contraseña en la página de muestra | `03dcc19` |
 | T-014 | Auditoría automática de accesibilidad de la página | `91f6ceb` |
+| T-032 | Contraseña visible fuera de correctores y autocorrección | `a261857` |
 
 ## Cómo ejecutarlo y probarlo
 Desde la raíz del repositorio, instala las dependencias:
@@ -40,7 +44,7 @@ Ejecuta los tests del frontend, incluida la auditoría de accesibilidad:
 ```bash
 pnpm --filter frontend test
 ```
-Deberías ver 57 tests en verde.
+Deberías ver 58 tests en verde.
 
 Arranca la página:
 ```bash
@@ -56,7 +60,9 @@ Pruébalo solo con el teclado:
 4. Pulsa Espacio otra vez. Deberías volver a ver puntos, con el mismo texto.
 
 En DevTools (F12) → **Elements** → **Accessibility**, con el botón seleccionado, deberías ver
-**Pressed** en `true` mientras la contraseña está visible y en `false` cuando está oculta.
+**Pressed** en `true` mientras la contraseña está visible y en `false` cuando está oculta. Con el
+campo seleccionado, en la pestaña **Elements** deberías ver los atributos `spellcheck="false"`,
+`autocapitalize="off"` y `autocorrect="off"` en el `<input>`.
 
 Con Docker, desde la raíz del repositorio:
 ```bash
