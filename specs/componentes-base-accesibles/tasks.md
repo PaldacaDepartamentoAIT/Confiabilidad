@@ -326,6 +326,15 @@ los tres archivos de idioma a la vez.
   checklist de teclado (CF-3) y de lector de pantalla con NVDA o VoiceOver (CF-5) y el marco
   teórico; `HUMAN_TODO.md` tiene la acción de completar ese checklist.
 
+- [ ] T-032 Contraseña visible fuera de correctores y autocorrección
+  Tipo: corrección | Origen: revisión de seguridad durante E-04 (D-15)
+  RF: RF-012 (D-15) | Depende de: T-012 | Archivos: 2
+  Archivos: `components/fields/PasswordField.tsx`, `components/fields/PasswordField.test.tsx`.
+  Causa: al mostrar la contraseña el input pasa a `type="text"`, y los correctores del navegador
+  o de extensiones pueden leer o enviar su texto, y el teclado móvil, corregirlo.
+  Hecho cuando: el input de contraseña tiene `spellcheck="false"`, `autocapitalize="off"` y
+  `autocorrect="off"`, tanto oculto como visible; suite verde.
+
 ## Entregas
 Arrancar la página de muestra (para el «Cómo probarlo» de cada entrega), desde la raíz del
 repositorio:
@@ -362,7 +371,7 @@ pnpm --filter frontend test
   valores se conservan.
 
 - E-04 Campo de contraseña con mostrar u ocultar y auditoría automática de accesibilidad.
-  Tareas: T-012…T-014 | Líneas estimadas: 230 | Rama:
+  Tareas: T-012…T-014, T-032 | Líneas estimadas: 230 | Rama:
   feat/componentes-base-accesibles-contrasena
   Cómo probarlo: escribir una contraseña, llegar con Tab a «Mostrar contraseña» y pulsar Espacio:
   se ve el texto y el foco sigue en el control; volver a pulsar la oculta.
