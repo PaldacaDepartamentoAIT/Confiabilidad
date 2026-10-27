@@ -1,7 +1,9 @@
 # Entrega E-06 · Errores de campo al salir de cada campo
 
 Rama: `feat/componentes-base-accesibles-validacion-al-salir`, con PR contra la rama de integración
-`feat/componentes-base-accesibles` · PR: pendiente · Líneas de código y tests: 363 (límite: 400).
+`feat/componentes-base-accesibles` · PR:
+[PaldacaDepartamentoAIT/Confiabilidad#26](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/26) ·
+Líneas de código y tests: 363 (límite: 400).
 
 ## Qué se hizo
 - Una pieza común de validación de formularios que comprueba cada campo **al salir de él**, desde
