@@ -201,12 +201,17 @@ los tres archivos de idioma a la vez.
   los mutantes (etiquetas desenlazadas y un `aria-checked` no válido en un botón: los dos la hacen
   fallar) — [Cierto] — revertir: no aplica.
 
-- [ ] T-015 Normalización del código
+- [x] T-015 Normalización del código
   RF: RF-013, RF-014 | Depende de: — | Archivos: 2
   Archivos: `components/fields/code.ts`, `components/fields/code.test.ts`.
   Hecho cuando: `normalizeTypedCode("12a３٤5 67")` devuelve `"123456"`; `extractPastedCode("Tu
   código: 98-76 54 321")` devuelve `"987654"`; `extractPastedCode("sin números")` indica que no hay
   dígitos; suite verde.
+  Decisiones: solo se convierten los dígitos de ancho completo (`０`-`９`) y los arábigos
+  (`٠`-`٩`) que nombra RF-013; los persas (`۰`-`۹`) y otros sistemas se descartan como cualquier
+  otro carácter — [Cierto] — revertir: añadir su primer carácter a la lista de series. La longitud
+  se exporta como `CODE_LENGTH` para que el campo y la validación (T-018) usen la misma —
+  [Cierto] — revertir: repetir el 6.
 
 - [ ] T-016 Campo del código
   RF: RF-013, RF-014, RF-015, RF-016 | Depende de: T-010, T-015 | Archivos: 2
