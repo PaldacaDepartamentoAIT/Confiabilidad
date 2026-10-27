@@ -69,3 +69,19 @@ test("the legend explains the asterisk in the active language", () => {
 
   expect(screen.getByText("Os campos marcados com * são obrigatórios.")).toBeInTheDocument();
 });
+
+test("a hint is shown under the field and describes it", () => {
+  render(<TextField label="Name" hint="As written on your ID." />);
+
+  const input = screen.getByRole("textbox", { name: "Name" });
+  expect(screen.getByText("As written on your ID.")).toBeVisible();
+  expect(input).toHaveAccessibleDescription("As written on your ID.");
+});
+
+test("with a hint and an error, the description contains both", () => {
+  render(<TextField label="Name" hint="As written on your ID." error="Fill in this field." />);
+
+  expect(screen.getByRole("textbox", { name: "Name" })).toHaveAccessibleDescription(
+    "As written on your ID. Fill in this field.",
+  );
+});

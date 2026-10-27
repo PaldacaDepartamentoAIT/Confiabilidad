@@ -420,6 +420,78 @@ los tres archivos de idioma a la vez.
   Chromium: contraseña vacía → botón y vuelta, sin error; botón → código, «Completa este campo.»;
   con texto, sin error — [Cierto] — revertir: no aplica.
 
+
+- [x] T-035 Textos de la contraseña nueva
+  RF: RF-026, RF-027 | Depende de: T-001 | Archivos: 3
+  Archivos: `i18n/locales/en.ts`, `i18n/locales/es.ts`, `i18n/locales/pt-BR.ts`.
+  Hecho cuando: las cuatro claves nuevas de M-02 existen en los tres idiomas y el test de
+  traducciones de T-001 sigue en verde; suite verde.
+  Decisiones: como la tarea no admite un archivo de test propio (máximo de 3), hizo de test que
+  falla la comprobación de T-001 y `tsc`: con las claves solo en inglés, los dos fallaron; con los
+  tres idiomas, pasan. Vaciar un texto nuevo en portugués hace fallar el test — [Cierto] —
+  revertir: no aplica.
+
+- [x] T-036 Texto de ayuda ligado al campo
+  RF: RF-027 | Depende de: T-010 | Archivos: 2
+  Archivos: `components/fields/TextField.tsx`, `components/fields/TextField.test.tsx`.
+  Hecho cuando: con `hint`, el texto se ve bajo el campo y es su descripción accesible; con `hint`
+  y error, la descripción accesible contiene los dos; sin `hint` nada cambia; suite verde.
+  Decisiones: la ayuda va tras el control de la contraseña y antes del error, y la descripción
+  accesible lee primero la ayuda y después el error — [Probable] — revertir: invertir el orden de
+  `aria-describedby`. «Sin `hint` nada cambia» lo cubren los tests de T-010, que siguen pasando —
+  [Cierto] — revertir: no aplica.
+
+- [x] T-037 Reglas de la contraseña nueva
+  RF: RF-026 (D-18) | Depende de: T-019 | Archivos: 2
+  Archivos: `forms/passwordRules.ts`, `forms/passwordRules.test.ts`.
+  Hecho cuando: rechaza `"abcdefghijk"` (11) con `passwordTooShort`; acepta `"abcdefghijkl"` (12);
+  rechaza 6 emojis (6 puntos de código) por corta; rechaza `"123456789012"` y
+  `"１２３４５６７８９０１２"` con `passwordOnlyDigits`; acepta `"12345678901a"`; suite verde.
+  Decisiones: con las dos reglas a la vez, se muestra la de longitud (una contraseña corta y solo de
+  dígitos dice «Usa al menos 12 caracteres.») — [Probable] — revertir: invertir el orden de la
+  lista. `\p{Nd}` cubre los dígitos decimales de cualquier escritura, pero no los superíndices
+  (`²`), que `isdigit()` de Python sí cuenta: una contraseña solo de superíndices pasaría aquí y la
+  rechazaría el servidor al enviar — [Cierto] — revertir: no aplica (el servidor decide, S-11).
+
+- [x] T-038 Contraseña nueva con su ayuda
+  RF: RF-027 | Depende de: T-035, T-036 | Archivos: 2
+  Archivos: `components/fields/PasswordField.tsx`, `components/fields/PasswordField.test.tsx`.
+  Hecho cuando: con `kind="new"`, la ayuda traducida se ve y es la descripción accesible del input;
+  con `kind="current"` no hay ayuda; suite verde.
+  Decisiones: `PasswordField` ya no acepta `hint` desde fuera: la ayuda la decide su `kind` —
+  [Probable] — revertir: permitir una ayuda propia en la contraseña actual. Un test de T-012 usaba
+  `kind="new"` y esperaba solo el error como descripción; se actualizó para esperar la ayuda y el
+  error, que es lo que pide RF-027 — [Cierto] — revertir: no aplica.
+
+- [x] T-039 Contraseña nueva en la página de muestra
+  RF: RF-020, RF-021, RF-026 | Depende de: T-037, T-038 | Archivos: 2
+  Archivos: `showcase/ShowcasePage.tsx`, `showcase/ShowcasePage.test.tsx`.
+  Hecho cuando: la página añade «Nueva contraseña» (obligatoria) tras la contraseña actual; salir de
+  ella con `abc` muestra «Usa al menos 12 caracteres.»; con `123456789012`, «No uses solo números.»;
+  la contraseña actual no aplica esas reglas; el orden de Tab incluye la nueva y su botón; la
+  auditoría de axe sigue sin infracciones; suite verde.
+  Decisiones: los tests buscan las contraseñas por etiqueta con `/^Contraseña/` y
+  `/^Nueva contraseña/`, porque «contraseña» aparece en las dos — [Cierto] — revertir: no aplica.
+  Las dos contraseñas tienen ahora un botón con el mismo nombre accesible, «Mostrar contraseña»;
+  los tests lo distinguen por su posición. Queda planteado al usuario si cada botón debe nombrar
+  su campo — [Cierto] — revertir: no aplica. Comprobado en Chromium: ayuda al cargar; `abc` y 6
+  emojis dan «Usa al menos 12 caracteres.»; `123456789012`, «No uses solo números.»; la actual
+  acepta `abc` — [Cierto] — revertir: no aplica.
+
+- [x] T-040 Cada control de mostrar contraseña nombra su campo
+  Tipo: cambio | Origen: `sdd-cambio` de RF-012 (2026-10-27)
+  RF: RF-012 (D-10) | Depende de: T-039 | Archivos: 3
+  Archivos: `components/fields/PasswordField.tsx`, `components/fields/PasswordField.test.tsx`,
+  `showcase/ShowcasePage.test.tsx`.
+  Hecho cuando: el control se llama «Mostrar contraseña (<etiqueta del campo>)» en el idioma
+  activo y su texto visible sigue siendo «Mostrar contraseña»; en la página de muestra los dos
+  controles tienen nombres distintos; la auditoría de axe sigue sin infracciones; suite verde.
+  Decisiones: el nombre se forma con el texto traducido y la etiqueta del campo entre paréntesis,
+  sin clave nueva, porque el formato sirve igual en los tres idiomas — [Probable] — revertir: una
+  clave con interpolación (`{{label}}`). Los tests que buscaban la etiqueta «Password» por subcadena
+  encontraban también el botón y pasaron a buscarla por inicio (`/^Password/`) — [Cierto] —
+  revertir: no aplica.
+
 ## Entregas
 Arrancar la página de muestra (para el «Cómo probarlo» de cada entrega), desde la raíz del
 repositorio:
@@ -492,6 +564,14 @@ pnpm --filter frontend test
   Cómo probarlo: pulsar «Mostrar error general de ejemplo»: aparece «Error: …» con el foco;
   cambiar de idioma lo traduce; enviar de nuevo lo retira. Recorrer el checklist de `resumen.md`
   con NVDA o VoiceOver.
+
+- E-10 Contraseña nueva con sus reglas y su ayuda visible. Se implementa después de E-07 y antes
+  de E-08, porque no depende de E-08 ni de E-09.
+  Tareas: T-035…T-040 | Líneas estimadas: 200 | Rama:
+  feat/componentes-base-accesibles-contrasena-nueva
+  Cómo probarlo: en «Nueva contraseña» se ve la ayuda; escribir `abc` y salir muestra el error de
+  longitud; `123456789012`, el de solo números; la contraseña actual acepta cualquier valor no
+  vacío.
 
 ## RF sin tarea
 Ninguno.

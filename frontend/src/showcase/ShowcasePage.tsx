@@ -9,6 +9,7 @@ import { CodeField } from "../components/fields/CodeField";
 import { PasswordField } from "../components/fields/PasswordField";
 import { RequiredLegend } from "../components/fields/RequiredLegend";
 import { TextField } from "../components/fields/TextField";
+import { newPasswordRules } from "../forms/passwordRules";
 import { useFormValidation, type FieldError } from "../forms/useFormValidation";
 import type { LanguageStorage } from "../i18n/language";
 import { email, required, sixDigitCode } from "./validators";
@@ -17,6 +18,7 @@ const FIELDS = {
   name: [required],
   email: [required, email],
   password: [required],
+  newPassword: [required, ...newPasswordRules],
   code: [required, sixDigitCode],
 };
 
@@ -77,6 +79,14 @@ export function ShowcasePage({ storage }: ShowcasePageProps) {
           required
           error={errorText(errors.password)}
           onBlur={onBlur("password")}
+        />
+        <PasswordField
+          label={t("showcase.newPasswordLabel")}
+          name="newPassword"
+          kind="new"
+          required
+          error={errorText(errors.newPassword)}
+          onBlur={onBlur("newPassword")}
         />
         <CodeField
           label={t("showcase.codeLabel")}

@@ -5,15 +5,18 @@ type TextFieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, "type" | "requ
   type?: "text" | "email" | "password";
   required?: boolean;
   error?: string;
+  hint?: string;
   adornment?: ReactNode;
 };
 
 export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(function TextField(
-  { label, type = "text", required = false, error, adornment, ...inputProps },
+  { label, type = "text", required = false, error, hint, adornment, ...inputProps },
   ref,
 ) {
   const id = useId();
   const errorId = `${id}-error`;
+  const hintId = `${id}-hint`;
+  const describedBy = [hint && hintId, error && errorId].filter(Boolean).join(" ") || undefined;
   const emailProps = type === "email" ? { autoComplete: "email", inputMode: "email" as const } : {};
 
   return (
@@ -30,9 +33,10 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(function T
         type={type}
         aria-required={required || undefined}
         aria-invalid={error ? true : undefined}
-        aria-describedby={error ? errorId : undefined}
+        aria-describedby={describedBy}
       />
       {adornment}
+      {hint && <p id={hintId}>{hint}</p>}
       {error && <p id={errorId}>{error}</p>}
     </div>
   );
