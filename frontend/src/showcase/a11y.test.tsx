@@ -88,11 +88,7 @@ describe.each(["es", "pt-BR", "en"])("in %s, the sample page has no violations",
 
   test("with the sample general error", async () => {
     const i18n = createI18n(language);
-    render(
-      <I18nextProvider i18n={i18n}>
-        <App />
-      </I18nextProvider>,
-    );
+    await renderFilledApp(language);
     fireEvent.click(screen.getByRole("button", { name: i18n.t("showcase.showExampleError") }));
 
     expect(screen.getByText(i18n.t("validation.tooManyAttempts"))).toBeInTheDocument();
