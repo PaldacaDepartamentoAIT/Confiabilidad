@@ -45,9 +45,9 @@ test("the tab order goes through the language selector and then each field in or
     screen.getByRole("textbox", { name: "Nombre completo" }),
     screen.getByRole("textbox", { name: "Correo electrónico" }),
     screen.getByLabelText(/^Contraseña/),
-    screen.getAllByRole("button", { name: "Mostrar contraseña" })[0],
+    screen.getByRole("button", { name: "Mostrar contraseña (Contraseña)" }),
     screen.getByLabelText(/^Nueva contraseña/),
-    screen.getAllByRole("button", { name: "Mostrar contraseña" })[1],
+    screen.getByRole("button", { name: "Mostrar contraseña (Nueva contraseña)" }),
     screen.getByRole("textbox", { name: "Código de verificación" }),
     screen.getByRole("button", { name: "Verificar" }),
   ];

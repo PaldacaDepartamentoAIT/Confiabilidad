@@ -44,6 +44,7 @@ export const PasswordField = forwardRef<HTMLInputElement, PasswordFieldProps>(
             ref={toggleRef}
             type="button"
             aria-pressed={visible}
+            aria-label={`${t("field.showPassword")} (${fieldProps.label})`}
             onClick={() => setVisible(!visible)}
             onBlur={handleLeave}
           >

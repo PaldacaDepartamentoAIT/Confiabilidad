@@ -478,7 +478,7 @@ los tres archivos de idioma a la vez.
   emojis dan «Usa al menos 12 caracteres.»; `123456789012`, «No uses solo números.»; la actual
   acepta `abc` — [Cierto] — revertir: no aplica.
 
-- [ ] T-040 Cada control de mostrar contraseña nombra su campo
+- [x] T-040 Cada control de mostrar contraseña nombra su campo
   Tipo: cambio | Origen: `sdd-cambio` de RF-012 (2026-10-27)
   RF: RF-012 (D-10) | Depende de: T-039 | Archivos: 3
   Archivos: `components/fields/PasswordField.tsx`, `components/fields/PasswordField.test.tsx`,
@@ -486,6 +486,11 @@ los tres archivos de idioma a la vez.
   Hecho cuando: el control se llama «Mostrar contraseña (<etiqueta del campo>)» en el idioma
   activo y su texto visible sigue siendo «Mostrar contraseña»; en la página de muestra los dos
   controles tienen nombres distintos; la auditoría de axe sigue sin infracciones; suite verde.
+  Decisiones: el nombre se forma con el texto traducido y la etiqueta del campo entre paréntesis,
+  sin clave nueva, porque el formato sirve igual en los tres idiomas — [Probable] — revertir: una
+  clave con interpolación (`{{label}}`). Los tests que buscaban la etiqueta «Password» por subcadena
+  encontraban también el botón y pasaron a buscarla por inicio (`/^Password/`) — [Cierto] —
+  revertir: no aplica.
 
 ## Entregas
 Arrancar la página de muestra (para el «Cómo probarlo» de cada entrega), desde la raíz del

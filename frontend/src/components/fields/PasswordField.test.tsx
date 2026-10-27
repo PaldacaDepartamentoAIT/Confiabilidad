@@ -22,7 +22,7 @@ test.each([
 ] as const)("a %s password asks for %s autocompletion", (kind, autocomplete) => {
   renderWithI18n(<PasswordField label="Password" kind={kind} required />);
 
-  const input = screen.getByLabelText("Password", { exact: false });
+  const input = screen.getByLabelText(/^Password/);
   expect(input).toHaveAttribute("type", "password");
   expect(input).toHaveAttribute("autocomplete", autocomplete);
   expect(input).toHaveAttribute("aria-required", "true");
@@ -35,7 +35,7 @@ test("shows and hides the password from the keyboard, keeping value and focus", 
   const input = screen.getByLabelText("Password");
   await user.type(input, "s3cret pass");
   await user.tab();
-  const toggle = screen.getByRole("button", { name: "Show password" });
+  const toggle = screen.getByRole("button", { name: "Show password (Password)" });
   expect(toggle).toHaveFocus();
   expect(toggle).toHaveAttribute("type", "button");
   expect(toggle).toHaveAttribute("aria-pressed", "false");
@@ -77,7 +77,7 @@ test("keeps the password away from spellcheckers and autocorrection, hidden or s
   };
   expectProtected();
 
-  await user.click(screen.getByRole("button", { name: "Show password" }));
+  await user.click(screen.getByRole("button", { name: "Show password (Password)" }));
 
   expect(input).toHaveAttribute("type", "text");
   expectProtected();
@@ -96,7 +96,7 @@ test("moving between the input and its toggle is not leaving the field", async (
   const input = screen.getByLabelText("Password");
   await user.click(input);
   await user.tab();
-  expect(screen.getByRole("button", { name: "Show password" })).toHaveFocus();
+  expect(screen.getByRole("button", { name: "Show password (Password)" })).toHaveFocus();
   await user.tab({ shift: true });
   expect(input).toHaveFocus();
   await user.tab();
@@ -148,4 +148,11 @@ test("a current password has no hint", () => {
 
   expect(screen.queryByText("At least 12 characters, not only numbers.")).not.toBeInTheDocument();
   expect(screen.getByLabelText("Password")).not.toHaveAttribute("aria-describedby");
+});
+
+test("the toggle names its field while showing only its own text", () => {
+  renderWithI18n(<PasswordField label="New password" kind="new" />);
+
+  const toggle = screen.getByRole("button", { name: "Show password (New password)" });
+  expect(toggle).toHaveTextContent(/^Show password$/);
 });
