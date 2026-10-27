@@ -238,12 +238,15 @@ los tres archivos de idioma a la vez.
   pegar «Tu código: 98-76 54 321» con el cursor en medio deja `987654`; pegar «sin números» no
   cambia nada; el foco sigue en el campo y no se envía nada — [Cierto] — revertir: no aplica.
 
-- [ ] T-018 Reglas de validación de la página de muestra
+- [x] T-018 Reglas de validación de la página de muestra
   RF: RF-021 | Depende de: — | Archivos: 2
   Archivos: `showcase/validators.ts`, `showcase/validators.test.ts`.
   Hecho cuando: `required` rechaza `""` y `"   "`; `email` acepta `a@b` y rechaza `a@@b`, `@b`,
   `a@`, `a b@c` y `a@b@c`; `sixDigitCode` rechaza `"12345"` y acepta `"123456"`; cada rechazo
   devuelve una clave de `validation` existente; suite verde.
+  Decisiones: las reglas son `Validator` del hook (T-019) y devuelven `{ key }` sin parámetros; el
+  correo vacío lo cubre `required`, que irá antes en la lista de cada campo — [Cierto] — revertir:
+  no aplica. `sixDigitCode` usa `CODE_LENGTH` (T-015) — [Cierto] — revertir: repetir el 6.
 
 - [x] T-019 Validación al salir de cada campo
   RF: RF-016, RF-025 (D-05) | Depende de: T-002 | Archivos: 2
