@@ -260,12 +260,18 @@ los tres archivos de idioma a la vez.
   `CodeField`, que gestiona su propio estado — [Probable] — revertir: guardar los valores en el
   hook. Con varias reglas, el campo muestra el primer error — [Cierto] — revertir: mostrar todos.
 
-- [ ] T-020 Errores al salir en la página de muestra
+- [x] T-020 Errores al salir en la página de muestra
   RF: RF-016, RF-018, RF-025 | Depende de: T-017, T-018, T-019 | Archivos: 2
   Archivos: `showcase/ShowcasePage.tsx`, `showcase/ShowcasePage.test.tsx`.
   Hecho cuando: salir del correo con `a@` muestra su error, ligado al campo; corregirlo y salir lo
   retira; con un error visible, cambiar a `en` muestra el error en inglés y el campo sigue marcado
   como no válido; suite verde.
+  Decisiones: reglas por campo: nombre y contraseña, obligatorios; correo, obligatorio y con formato;
+  código, obligatorio y de 6 dígitos — [Cierto] — revertir: no aplica. Al salir de la contraseña
+  hacia «Mostrar contraseña» también se valida, porque el foco sale del input — [Probable] —
+  revertir: no validar cuando el foco va al control. Comprobado en Chromium: el error aparece al
+  salir, se traduce al cambiar a portugués y desaparece al corregir — [Cierto] — revertir: no
+  aplica.
 
 - [ ] T-021 Botón
   RF: RF-009 | Depende de: T-002 | Archivos: 2

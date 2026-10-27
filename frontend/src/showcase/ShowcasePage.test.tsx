@@ -65,3 +65,57 @@ test("keeps typed values when the language changes", async () => {
   expect(screen.getByRole("textbox", { name: "Full name" })).toHaveValue("Ana Pérez");
   expect(screen.getByRole("textbox", { name: "Email" })).toHaveValue("ana@planta.com");
 });
+
+test("shows a field error when leaving the field and removes it once fixed", async () => {
+  const user = userEvent.setup();
+  renderPage();
+
+  const email = screen.getByRole("textbox", { name: "Correo electrónico" });
+  await user.type(email, "a@");
+  await user.tab();
+
+  expect(email).toHaveAttribute("aria-invalid", "true");
+  expect(email).toHaveAccessibleDescription("Escribe un correo como nombre@empresa.com.");
+
+  await user.type(email, "planta.com");
+  await user.tab();
+
+  expect(email).not.toHaveAttribute("aria-invalid");
+  expect(email).not.toHaveAccessibleDescription();
+});
+
+test("an empty required field gets its error when left", async () => {
+  const user = userEvent.setup();
+  renderPage();
+
+  await user.click(screen.getByRole("textbox", { name: "Nombre completo" }));
+  await user.tab();
+
+  expect(screen.getByRole("textbox", { name: "Nombre completo" })).toHaveAccessibleDescription(
+    "Completa este campo.",
+  );
+});
+
+test("an incomplete code gets its error when left", async () => {
+  const user = userEvent.setup();
+  renderPage();
+
+  const code = screen.getByRole("textbox", { name: "Código de verificación" });
+  await user.type(code, "12345");
+  await user.tab();
+
+  expect(code).toHaveAccessibleDescription("Escribe los 6 dígitos del código.");
+});
+
+test("a visible error follows the language change and keeps the field invalid", async () => {
+  const user = userEvent.setup();
+  renderPage();
+
+  await user.type(screen.getByRole("textbox", { name: "Correo electrónico" }), "a@");
+  await user.tab();
+  await user.click(screen.getByRole("button", { name: "English" }));
+
+  const email = screen.getByRole("textbox", { name: "Email" });
+  expect(email).toHaveAttribute("aria-invalid", "true");
+  expect(email).toHaveAccessibleDescription("Enter an email like name@company.com.");
+});
