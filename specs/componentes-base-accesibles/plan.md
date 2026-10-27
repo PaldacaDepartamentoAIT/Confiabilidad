@@ -236,6 +236,15 @@ Motivo: un error local nuevo describe el valor actual (el usuario lo ha cambiado
 mientras que el de servidor describe el valor ya enviado; mostrar los dos duplica el anuncio al
 llegar al campo.
 
+### D-15 Contraseña fuera de correctores y autocorrección
+Elegida: el input de `PasswordField` lleva siempre `spellcheck="false"`, `autocapitalize="off"` y
+`autocorrect="off"`.
+Descartada: dejar el comportamiento por defecto del navegador.
+Motivo: al mostrar la contraseña (RF-012), el input pasa a `type="text"`; con la revisión
+ortográfica mejorada de Chrome o extensiones de corrección, el texto visible puede enviarse a
+servidores externos, y en móvil el teclado puede autocorregirlo o capitalizarlo. Decisión de
+seguridad tomada por el usuario durante E-04.
+
 ## Estrategia de tests
 Todo con Vitest en jsdom (`pnpm --filter frontend test`), con cobertura de líneas ≥ 80 % (P-05),
 TDD estricto (P-04) y un mutante por tarea (`sdd-implementar`).

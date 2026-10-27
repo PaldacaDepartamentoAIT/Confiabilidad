@@ -1,14 +1,15 @@
-import { forwardRef, useId, type InputHTMLAttributes } from "react";
+import { forwardRef, useId, type InputHTMLAttributes, type ReactNode } from "react";
 
 type TextFieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, "type" | "required"> & {
   label: string;
-  type?: "text" | "email";
+  type?: "text" | "email" | "password";
   required?: boolean;
   error?: string;
+  adornment?: ReactNode;
 };
 
 export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(function TextField(
-  { label, type = "text", required = false, error, ...inputProps },
+  { label, type = "text", required = false, error, adornment, ...inputProps },
   ref,
 ) {
   const id = useId();
@@ -31,6 +32,7 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(function T
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorId : undefined}
       />
+      {adornment}
       {error && <p id={errorId}>{error}</p>}
     </div>
   );

@@ -166,7 +166,7 @@ los tres archivos de idioma a la vez.
   con la validación (T-019) — [Cierto] — revertir: no aplica. Comprobado en Chromium: orden de Tab
   y valores conservados al pasar a portugués — [Cierto] — revertir: no aplica.
 
-- [ ] T-012 Campo de contraseña
+- [x] T-012 Campo de contraseña
   RF: RF-012, RF-024 (D-10) | Depende de: T-010 | Archivos: 2
   Archivos: `components/fields/PasswordField.tsx`, `components/fields/PasswordField.test.tsx`.
   Hecho cuando: `kind` es obligatorio en el tipo (un uso sin `kind` en el test va marcado con
@@ -174,20 +174,32 @@ los tres archivos de idioma a la vez.
   `new-password`; el control «Mostrar contraseña» se activa con Enter y con Espacio, alterna el
   `type` entre `password` y `text`, cambia `aria-pressed`, conserva el valor y deja el foco en el
   control; suite verde.
+  Decisiones: para apoyarse en `TextField` (M-07), este acepta ahora el tipo `password` y un hueco
+  `adornment` tras el input, donde va el control; la tarea tocó así 3 archivos en lugar de 2, dentro
+  del máximo — [Cierto] — revertir: duplicar la estructura del campo en `PasswordField`. El control
+  va después del input, así que en el orden de Tab viene justo detrás del campo — [Probable] —
+  revertir: moverlo delante.
 
-- [ ] T-013 Contraseña en la página de muestra
+- [x] T-013 Contraseña en la página de muestra
   RF: RF-019, RF-020, RF-024 (S-09) | Depende de: T-011, T-012 | Archivos: 2
   Archivos: `showcase/ShowcasePage.tsx`, `showcase/ShowcasePage.test.tsx`.
   Hecho cuando: la página añade un campo de contraseña actual obligatorio tras el correo; el orden
   de Tab es selector → texto → correo → contraseña → «Mostrar contraseña»; suite verde.
 
-- [ ] T-014 Auditoría automática de accesibilidad de la página
+- [x] T-014 Auditoría automática de accesibilidad de la página
   RF: RF-006, RF-011, RF-019 (D-13) | Depende de: T-013 | Archivos: 3
   Archivos: `frontend/package.json`, `pnpm-lock.yaml`, `showcase/a11y.test.tsx`.
   Hecho cuando: `axe-core` está en `devDependencies`; el test ejecuta `axe` sobre la página de
   muestra en `es`, `pt-BR` y `en` y falla si hay alguna infracción (comprobado quitando la etiqueta
   de un campo); suite verde.
   Excepción: `pnpm-lock.yaml` lo regenera `pnpm add`; no es un archivo editado a mano.
+  Decisiones: la auditoría se ejecuta sobre todo el documento con `App` montada, así que también
+  revisa `<html lang>` y las reglas de buenas prácticas de axe (encabezado `h1`, región `main`) —
+  [Cierto] — revertir: auditar solo el contenedor. Un segundo test comprueba que la auditoría
+  detecta un campo sin etiqueta, para que no pase en verde sin revisar nada. Los tests pasaron
+  desde el principio porque la página ya cumplía; lo que demuestra que la auditoría funciona son
+  los mutantes (etiquetas desenlazadas y un `aria-checked` no válido en un botón: los dos la hacen
+  fallar) — [Cierto] — revertir: no aplica.
 
 - [ ] T-015 Normalización del código
   RF: RF-013, RF-014 | Depende de: — | Archivos: 2
@@ -314,6 +326,15 @@ los tres archivos de idioma a la vez.
   checklist de teclado (CF-3) y de lector de pantalla con NVDA o VoiceOver (CF-5) y el marco
   teórico; `HUMAN_TODO.md` tiene la acción de completar ese checklist.
 
+- [x] T-032 Contraseña visible fuera de correctores y autocorrección
+  Tipo: corrección | Origen: revisión de seguridad durante E-04 (D-15)
+  RF: RF-012 (D-15) | Depende de: T-012 | Archivos: 2
+  Archivos: `components/fields/PasswordField.tsx`, `components/fields/PasswordField.test.tsx`.
+  Causa: al mostrar la contraseña el input pasa a `type="text"`, y los correctores del navegador
+  o de extensiones pueden leer o enviar su texto, y el teclado móvil, corregirlo.
+  Hecho cuando: el input de contraseña tiene `spellcheck="false"`, `autocapitalize="off"` y
+  `autocorrect="off"`, tanto oculto como visible; suite verde.
+
 ## Entregas
 Arrancar la página de muestra (para el «Cómo probarlo» de cada entrega), desde la raíz del
 repositorio:
@@ -350,7 +371,7 @@ pnpm --filter frontend test
   valores se conservan.
 
 - E-04 Campo de contraseña con mostrar u ocultar y auditoría automática de accesibilidad.
-  Tareas: T-012…T-014 | Líneas estimadas: 230 | Rama:
+  Tareas: T-012…T-014, T-032 | Líneas estimadas: 230 | Rama:
   feat/componentes-base-accesibles-contrasena
   Cómo probarlo: escribir una contraseña, llegar con Tab a «Mostrar contraseña» y pulsar Espacio:
   se ve el texto y el foco sigue en el control; volver a pulsar la oculta.
