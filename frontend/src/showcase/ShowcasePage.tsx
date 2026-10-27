@@ -2,6 +2,7 @@ import { useId } from "react";
 import { useTranslation } from "react-i18next";
 
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
+import { CodeField } from "../components/fields/CodeField";
 import { PasswordField } from "../components/fields/PasswordField";
 import { RequiredLegend } from "../components/fields/RequiredLegend";
 import { TextField } from "../components/fields/TextField";
@@ -31,6 +32,7 @@ export function ShowcasePage({ storage }: ShowcasePageProps) {
           kind="current"
           required
         />
+        <CodeField label={t("showcase.codeLabel")} name="code" required />
       </form>
     </main>
   );

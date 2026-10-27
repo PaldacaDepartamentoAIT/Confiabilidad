@@ -29,6 +29,9 @@ test("shows the sample form with its required fields and the asterisk legend", (
   expect(password).toHaveAttribute("type", "password");
   expect(password).toHaveAttribute("autocomplete", "current-password");
   expect(password).toHaveAttribute("aria-required", "true");
+  const code = screen.getByRole("textbox", { name: "Verification code" });
+  expect(code).toHaveAttribute("autocomplete", "one-time-code");
+  expect(code).toHaveAttribute("aria-required", "true");
 });
 
 test("the tab order goes through the language selector and then each field in order", async () => {
@@ -43,6 +46,7 @@ test("the tab order goes through the language selector and then each field in or
     screen.getByRole("textbox", { name: "Correo electrónico" }),
     screen.getByLabelText("Contraseña", { exact: false }),
     screen.getByRole("button", { name: "Mostrar contraseña" }),
+    screen.getByRole("textbox", { name: "Código de verificación" }),
   ];
   for (const element of expected) {
     await user.tab();

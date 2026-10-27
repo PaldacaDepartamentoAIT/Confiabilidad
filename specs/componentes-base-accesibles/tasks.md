@@ -201,14 +201,19 @@ los tres archivos de idioma a la vez.
   los mutantes (etiquetas desenlazadas y un `aria-checked` no válido en un botón: los dos la hacen
   fallar) — [Cierto] — revertir: no aplica.
 
-- [ ] T-015 Normalización del código
+- [x] T-015 Normalización del código
   RF: RF-013, RF-014 | Depende de: — | Archivos: 2
   Archivos: `components/fields/code.ts`, `components/fields/code.test.ts`.
   Hecho cuando: `normalizeTypedCode("12a３٤5 67")` devuelve `"123456"`; `extractPastedCode("Tu
   código: 98-76 54 321")` devuelve `"987654"`; `extractPastedCode("sin números")` indica que no hay
   dígitos; suite verde.
+  Decisiones: solo se convierten los dígitos de ancho completo (`０`-`９`) y los arábigos
+  (`٠`-`٩`) que nombra RF-013; los persas (`۰`-`۹`) y otros sistemas se descartan como cualquier
+  otro carácter — [Cierto] — revertir: añadir su primer carácter a la lista de series. La longitud
+  se exporta como `CODE_LENGTH` para que el campo y la validación (T-018) usen la misma —
+  [Cierto] — revertir: repetir el 6.
 
-- [ ] T-016 Campo del código
+- [x] T-016 Campo del código
   RF: RF-013, RF-014, RF-015, RF-016 | Depende de: T-010, T-015 | Archivos: 2
   Archivos: `components/fields/CodeField.tsx`, `components/fields/CodeField.test.tsx`.
   Hecho cuando: un único campo con etiqueta, `inputmode="numeric"` y
@@ -216,13 +221,22 @@ los tres archivos de idioma a la vez.
   con `"12"` ya escrito y el cursor en medio deja `"987654"`; pegar `"abc"` deja el valor como
   estaba; al llegar a 6 dígitos no se llama a `onSubmit` del formulario y el foco sigue en el campo;
   con error, `aria-invalid` y descripción accesible como en T-010; suite verde.
+  Decisiones: `CodeField` reutiliza `TextField` (etiqueta, obligatoriedad, error y `ref`) y guarda
+  el código en su propio estado, con `defaultValue` y un aviso `onValueChange` para quien necesite
+  el valor (la validación, T-019) — [Probable] — revertir: hacerlo controlado desde fuera con
+  `value`. Un mutante sin `preventDefault` en el pegado sobrevivió, porque `user-event` no inserta
+  el texto pegado tras el manejador como haría un navegador; se añadió un test que comprueba que el
+  pegado por defecto se cancela — [Cierto] — revertir: no aplica.
 
-- [ ] T-017 Código en la página de muestra
+- [x] T-017 Código en la página de muestra
   RF: RF-019, RF-020 | Depende de: T-013, T-016 | Archivos: 2
   Archivos: `showcase/ShowcasePage.tsx`, `showcase/ShowcasePage.test.tsx`.
   Hecho cuando: la página añade el campo del código obligatorio tras la contraseña; el orden de Tab
   incluye el código tras «Mostrar contraseña»; la auditoría de T-014 sigue sin infracciones; suite
   verde.
+  Decisiones: comprobado en Chromium con el portapapeles real: escribir `1a2b` y `３٤` deja `1234`;
+  pegar «Tu código: 98-76 54 321» con el cursor en medio deja `987654`; pegar «sin números» no
+  cambia nada; el foco sigue en el campo y no se envía nada — [Cierto] — revertir: no aplica.
 
 - [ ] T-018 Reglas de validación de la página de muestra
   RF: RF-021 | Depende de: — | Archivos: 2
