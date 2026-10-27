@@ -421,11 +421,15 @@ los tres archivos de idioma a la vez.
   con texto, sin error — [Cierto] — revertir: no aplica.
 
 
-- [ ] T-035 Textos de la contraseña nueva
+- [x] T-035 Textos de la contraseña nueva
   RF: RF-026, RF-027 | Depende de: T-001 | Archivos: 3
   Archivos: `i18n/locales/en.ts`, `i18n/locales/es.ts`, `i18n/locales/pt-BR.ts`.
   Hecho cuando: las cuatro claves nuevas de M-02 existen en los tres idiomas y el test de
   traducciones de T-001 sigue en verde; suite verde.
+  Decisiones: como la tarea no admite un archivo de test propio (máximo de 3), hizo de test que
+  falla la comprobación de T-001 y `tsc`: con las claves solo en inglés, los dos fallaron; con los
+  tres idiomas, pasan. Vaciar un texto nuevo en portugués hace fallar el test — [Cierto] —
+  revertir: no aplica.
 
 - [ ] T-036 Texto de ayuda ligado al campo
   RF: RF-027 | Depende de: T-010 | Archivos: 2
@@ -453,6 +457,7 @@ los tres archivos de idioma a la vez.
   ella con `abc` muestra «Usa al menos 12 caracteres.»; con `123456789012`, «No uses solo números.»;
   la contraseña actual no aplica esas reglas; el orden de Tab incluye la nueva y su botón; la
   auditoría de axe sigue sin infracciones; suite verde.
+
 ## Entregas
 Arrancar la página de muestra (para el «Cómo probarlo» de cada entrega), desde la raíz del
 repositorio:
