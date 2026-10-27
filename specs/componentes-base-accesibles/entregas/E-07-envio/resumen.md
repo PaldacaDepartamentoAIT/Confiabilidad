@@ -1,8 +1,9 @@
 # Entrega E-07 · Envío con foco al primer error y mensaje de demostración
 
 Rama: `feat/componentes-base-accesibles-envio`, con PR contra la rama de integración
-`feat/componentes-base-accesibles` · PR: pendiente · Líneas de código y tests: 403 (límite con la
-excepción aprobada en `tasks.md`: 500).
+`feat/componentes-base-accesibles` · PR:
+[PaldacaDepartamentoAIT/Confiabilidad#27](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/27) ·
+Líneas de código y tests: 403 (límite con la excepción aprobada en `tasks.md`: 500).
 
 ## Qué se hizo
 - Un botón accesible:
