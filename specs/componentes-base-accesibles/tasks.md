@@ -273,11 +273,15 @@ los tres archivos de idioma a la vez.
   salir, se traduce al cambiar a portugués y desaparece al corregir — [Cierto] — revertir: no
   aplica.
 
-- [ ] T-021 Botón
+- [x] T-021 Botón
   RF: RF-009 | Depende de: T-002 | Archivos: 2
   Archivos: `components/Button.tsx`, `components/Button.test.tsx`.
   Hecho cuando: el nombre accesible es su texto visible; se activa con clic, Enter y Espacio;
   suite verde.
+  Decisiones: el botón es `type="button"` por defecto y solo envía con `type="submit"` explícito,
+  para que un botón dentro de un formulario no lo envíe por descuido — [Cierto] — revertir: dejar
+  el valor por defecto del navegador (`submit`). Mutantes: `submit` por defecto, sin contenido y un
+  `div` con `role="button"` (no responde a Enter ni Espacio); todos mueren.
 
 - [ ] T-022 Validación al enviar y foco al primer error
   RF: RF-021, RF-025, RF-010 | Depende de: T-019 | Archivos: 2
