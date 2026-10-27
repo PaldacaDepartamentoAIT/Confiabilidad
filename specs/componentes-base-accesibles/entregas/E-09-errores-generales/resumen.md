@@ -2,7 +2,7 @@
 
 Rama: `feat/componentes-base-accesibles-errores-generales`, con PR contra la rama de integración
 `feat/componentes-base-accesibles` · PR: pendiente · Líneas de código y tests: 403 (límite: 400;
-excepción pendiente de aprobar).
+excepción aprobada, anotada en la entrega E-09 de [`tasks.md`](../../tasks.md)).
 
 ## Qué se hizo
 - El **hook de validación** acepta la respuesta del servidor con `showResult`:

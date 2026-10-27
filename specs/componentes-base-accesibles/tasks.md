@@ -617,6 +617,9 @@ pnpm --filter frontend test
   Cómo probarlo: pulsar «Mostrar error general de ejemplo»: aparece «Error: …» con el foco;
   cambiar de idioma lo traduce; enviar de nuevo lo retira. Recorrer el checklist de `resumen.md`
   con NVDA o VoiceOver.
+  Excepción: 403 líneas reales. Los tests de T-028 necesitan un formulario de prueba que use todo el
+  hook (errores de servidor, mensaje general, foco y anuncios), y T-030 audita cuatro estados en
+  tres idiomas. Bajar de 400 obligaría a quitar cobertura o a empeorar la lectura de la página.
 
 - E-10 Contraseña nueva con sus reglas y su ayuda visible. Se implementa después de E-07 y antes
   de E-08, porque no depende de E-08 ni de E-09.
