@@ -1,7 +1,9 @@
 # Entrega E-08 · Botón «Procesando…» durante 3 segundos con aviso al lector
 
 Rama: `feat/componentes-base-accesibles-procesando`, con PR contra la rama de integración
-`feat/componentes-base-accesibles` · PR: pendiente · Líneas de código y tests: 374 (límite: 400).
+`feat/componentes-base-accesibles` · PR:
+[PaldacaDepartamentoAIT/Confiabilidad#29](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/29) ·
+Líneas de código y tests: 374 (límite: 400).
 
 ## Qué se hizo
 - Un **anunciador** para el lector de pantalla: dos regiones invisibles, una «educada» (espera a
