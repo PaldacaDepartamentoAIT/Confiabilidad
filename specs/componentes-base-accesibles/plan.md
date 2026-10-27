@@ -84,6 +84,10 @@ Responsabilidad:
   activarse alterna el `type` del input entre `password` y `text` sin desmontarlo, así que conserva
   el valor y el foco se queda en el control (RF-012).
 - `RequiredLegend`: el texto visible que explica el asterisco (RF-011).
+
+Al validar al salir (RF-025), el input y el control de mostrar u ocultar cuentan como uno:
+`PasswordField` solo llama a su `onBlur` cuando el foco sale de los dos, y siempre con el input como
+destino del evento, para que la validación lea su valor (D-16).
 RF: RF-011, RF-012, RF-016, RF-024
 
 ### M-08 Campo del código (`src/components/fields/CodeField.tsx`, `src/components/fields/code.ts`)
@@ -244,6 +248,15 @@ Motivo: al mostrar la contraseña (RF-012), el input pasa a `type="text"`; con l
 ortográfica mejorada de Chrome o extensiones de corrección, el texto visible puede enviarse a
 servidores externos, y en móvil el teclado puede autocorregirlo o capitalizarlo. Decisión de
 seguridad tomada por el usuario durante E-04.
+
+### D-16 Salida de la contraseña gestionada dentro de `PasswordField`
+Elegida: `PasswordField` comprueba a dónde va el foco (`relatedTarget`) al salir del input o del
+control, y solo avisa a su `onBlur` si no va al otro de los dos.
+Descartada: cambiar el hook de validación para que reciba valores en lugar de eventos, o que la
+página filtre el destino del foco.
+Motivo: el hook y la página siguen tratando la contraseña igual que los demás campos
+(`onBlur={onBlur("password")}`), y la regla de qué cuenta como «salir» queda en el componente que
+conoce su propio botón.
 
 ## Estrategia de tests
 Todo con Vitest en jsdom (`pnpm --filter frontend test`), con cobertura de líneas ≥ 80 % (P-05),

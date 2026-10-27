@@ -364,6 +364,16 @@ los tres archivos de idioma a la vez.
   Hecho cuando: el input de contraseña tiene `spellcheck="false"`, `autocapitalize="off"` y
   `autocorrect="off"`, tanto oculto como visible; suite verde.
 
+- [ ] T-033 Contraseña y su control como un solo campo al salir
+  Tipo: cambio | Origen: `sdd-cambio` de RF-025 (2026-10-27)
+  RF: RF-025 (D-16) | Depende de: T-012, T-020 | Archivos: 3
+  Archivos: `components/fields/PasswordField.tsx`, `components/fields/PasswordField.test.tsx`,
+  `showcase/ShowcasePage.test.tsx`.
+  Hecho cuando: pasar con Tab de la contraseña vacía a «Mostrar contraseña» (y volver con
+  Mayús+Tab) no muestra error; salir del control hacia el código con la contraseña vacía muestra
+  «Completa este campo.» en la contraseña; con la contraseña escrita y saliendo desde el control,
+  no hay error; suite verde.
+
 ## Entregas
 Arrancar la página de muestra (para el «Cómo probarlo» de cada entrega), desde la raíz del
 repositorio:
@@ -411,7 +421,7 @@ pnpm --filter frontend test
   98-76 54» sobre un código ya escrito (queda «987654»).
 
 - E-06 Errores de campo al salir de cada campo, traducidos al cambiar de idioma.
-  Tareas: T-018…T-020 | Líneas estimadas: 330 | Rama:
+  Tareas: T-018…T-020, T-033 | Líneas estimadas: 330 | Rama:
   feat/componentes-base-accesibles-validacion-al-salir
   Cómo probarlo: escribir «a@» en el correo y pulsar Tab: aparece el error; cambiar a portugués:
   el error se traduce; corregir el correo y salir: el error desaparece.
