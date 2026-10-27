@@ -397,7 +397,7 @@ los tres archivos de idioma a la vez.
   «Completa este campo.» en la contraseña; con la contraseña escrita y saliendo desde el control,
   no hay error; suite verde.
 
-- [ ] T-034 Corrección: el clic de envío se pierde cuando un error desaparece al salir del campo
+- [x] T-034 Corrección: el clic de envío se pierde cuando un error desaparece al salir del campo
   Tipo: corrección | Origen: prueba en Chromium de T-024
   RF: RF-019, RF-021 (D-17) | Depende de: T-021, T-024 | Archivos: 3
   Archivos: `components/Button.tsx`, `components/Button.test.tsx`, `showcase/ShowcasePage.tsx`.
@@ -407,6 +407,11 @@ los tres archivos de idioma a la vez.
   el campo; con teclado nada cambia; el botón «Verificar» de la página lo usa; en Chromium, con el
   error del código visible, completarlo y pulsar «Verificar» con el ratón envía el formulario; suite
   verde.
+  Decisiones: que la página use `keepFocusOnMouseDown` no se puede comprobar en jsdom, que no
+  calcula posiciones; se comprobó en Chromium con el escenario que fallaba (con la corrección el
+  botón no se mueve y el envío llega; sin ella sube 50 px y el envío se pierde) — [Cierto] —
+  revertir: no aplica. Un mutante que dejaba de reenviar el `onMouseDown` propio del botón
+  sobrevivió; se añadió su test — [Cierto] — revertir: no aplica.
   Decisiones: el evento que recibe el `onBlur` de fuera se crea con `Object.create` sobre el
   original, con el input como `target`, para que la validación lea su valor aunque se salga desde
   el control — [Probable] — revertir: que el hook reciba valores en vez de eventos (D-16,

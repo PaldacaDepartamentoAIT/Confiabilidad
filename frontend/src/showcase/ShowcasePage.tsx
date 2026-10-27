@@ -85,7 +85,9 @@ export function ShowcasePage({ storage }: ShowcasePageProps) {
           error={errorText(errors.code)}
           onBlur={onBlur("code")}
         />
-        <Button type="submit">{t("showcase.submit")}</Button>
+        <Button type="submit" keepFocusOnMouseDown>
+          {t("showcase.submit")}
+        </Button>
       </form>
     </main>
   );
