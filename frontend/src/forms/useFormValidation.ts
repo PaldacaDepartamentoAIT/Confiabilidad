@@ -1,4 +1,5 @@
-import { useState, type FocusEvent } from "react";
+import { useState, type FocusEvent, type FormEvent } from "react";
+import { flushSync } from "react-dom";
 
 import type { Messages } from "../i18n/locales/en";
 
@@ -20,8 +21,13 @@ function firstError(validators: readonly Validator[], value: string): FieldError
   return null;
 }
 
+type Options = {
+  processing?: boolean;
+};
+
 export function useFormValidation<Field extends string>(
   fields: Record<Field, readonly Validator[]>,
+  { processing = false }: Options = {},
 ) {
   const [errors, setErrors] = useState<Partial<Record<Field, FieldError>>>({});
 
@@ -39,5 +45,32 @@ export function useFormValidation<Field extends string>(
     return (event: FocusEvent<HTMLInputElement>) => validateField(name, event.target.value);
   }
 
-  return { errors, onBlur };
+  // Los campos se buscan por su `name` y se recorren en el orden en que se declaran (orden visual).
+  function handleSubmit(onValid: (values: Record<Field, string>) => void) {
+    return (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      if (processing) return;
+      const form = event.currentTarget;
+      const names = Object.keys(fields) as Field[];
+      const values = {} as Record<Field, string>;
+      const next: Partial<Record<Field, FieldError>> = {};
+      for (const name of names) {
+        const element = form.elements.namedItem(name);
+        values[name] = element instanceof HTMLInputElement ? element.value : "";
+        const error = firstError(fields[name], values[name]);
+        if (error) next[name] = error;
+      }
+      // El error se pinta antes de mover el foco, para que el lector lea el campo con su error.
+      flushSync(() => setErrors(next));
+      const firstInvalid = names.find((name) => next[name]);
+      if (firstInvalid) {
+        const element = form.elements.namedItem(firstInvalid);
+        if (element instanceof HTMLElement) element.focus();
+        return;
+      }
+      onValid(values);
+    };
+  }
+
+  return { errors, onBlur, handleSubmit };
 }

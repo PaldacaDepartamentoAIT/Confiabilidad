@@ -1,6 +1,9 @@
-import { useId } from "react";
+import { useId, useRef, useState, type FormEvent } from "react";
+import { flushSync } from "react-dom";
 import { useTranslation } from "react-i18next";
 
+import { Button } from "../components/Button";
+import { FormMessage } from "../components/FormMessage";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import { CodeField } from "../components/fields/CodeField";
 import { PasswordField } from "../components/fields/PasswordField";
@@ -24,7 +27,20 @@ type ShowcasePageProps = {
 export function ShowcasePage({ storage }: ShowcasePageProps) {
   const { t } = useTranslation();
   const formTitleId = useId();
-  const { errors, onBlur } = useFormValidation(FIELDS);
+  const { errors, onBlur, handleSubmit } = useFormValidation(FIELDS);
+  const [demoSent, setDemoSent] = useState(false);
+  const messageRef = useRef<HTMLDivElement>(null);
+
+  function showDemoMessage() {
+    flushSync(() => setDemoSent(true));
+    messageRef.current?.focus();
+  }
+
+  // El mensaje general se retira en cada envío (RF-017).
+  function submit(event: FormEvent<HTMLFormElement>) {
+    setDemoSent(false);
+    handleSubmit(showDemoMessage)(event);
+  }
 
   const errorText = (error: FieldError | undefined) =>
     error && t(`validation.${error.key}`, error.params);
@@ -36,7 +52,8 @@ export function ShowcasePage({ storage }: ShowcasePageProps) {
       <p>{t("app.intro")}</p>
       <h2 id={formTitleId}>{t("showcase.formTitle")}</h2>
       <RequiredLegend />
-      <form aria-labelledby={formTitleId} noValidate>
+      {demoSent && <FormMessage ref={messageRef} type="info" messageKey="showcase.demoInfo" />}
+      <form aria-labelledby={formTitleId} noValidate onSubmit={submit}>
         <TextField
           label={t("showcase.nameLabel")}
           name="name"
@@ -68,6 +85,9 @@ export function ShowcasePage({ storage }: ShowcasePageProps) {
           error={errorText(errors.code)}
           onBlur={onBlur("code")}
         />
+        <Button type="submit" keepFocusOnMouseDown>
+          {t("showcase.submit")}
+        </Button>
       </form>
     </main>
   );

@@ -47,6 +47,7 @@ test("the tab order goes through the language selector and then each field in or
     screen.getByLabelText("Contraseña", { exact: false }),
     screen.getByRole("button", { name: "Mostrar contraseña" }),
     screen.getByRole("textbox", { name: "Código de verificación" }),
+    screen.getByRole("button", { name: "Verificar" }),
   ];
   for (const element of expected) {
     await user.tab();
@@ -148,4 +149,62 @@ test("a filled password left from its toggle has no error", async () => {
   await user.tab();
 
   expect(password).not.toHaveAttribute("aria-invalid");
+});
+
+async function fillValidForm(user: ReturnType<typeof userEvent.setup>) {
+  await user.type(screen.getByRole("textbox", { name: "Nombre completo" }), "Ana Pérez");
+  await user.type(screen.getByRole("textbox", { name: "Correo electrónico" }), "ana@planta.com");
+  await user.type(screen.getByLabelText("Contraseña", { exact: false }), "s3cret");
+  await user.type(screen.getByRole("textbox", { name: "Código de verificación" }), "123456");
+}
+
+test("submitting with Enter shows every error and focuses the first invalid field", async () => {
+  const user = userEvent.setup();
+  renderPage();
+
+  await user.type(screen.getByRole("textbox", { name: "Nombre completo" }), "Ana Pérez");
+  await user.type(screen.getByLabelText("Contraseña", { exact: false }), "s3cret");
+  await user.type(screen.getByRole("textbox", { name: "Código de verificación" }), "12345{Enter}");
+
+  const email = screen.getByRole("textbox", { name: "Correo electrónico" });
+  expect(email).toHaveFocus();
+  expect(email).toHaveAccessibleDescription("Completa este campo.");
+  expect(
+    screen.getByRole("textbox", { name: "Código de verificación" }),
+  ).toHaveAccessibleDescription("Escribe los 6 dígitos del código.");
+});
+
+test("submitting with the button behaves the same", async () => {
+  const user = userEvent.setup();
+  renderPage();
+
+  await user.click(screen.getByRole("button", { name: "Verificar" }));
+
+  expect(screen.getByRole("textbox", { name: "Nombre completo" })).toHaveFocus();
+});
+
+test("a valid submission shows the demo message and focuses it", async () => {
+  const user = userEvent.setup();
+  renderPage();
+
+  await fillValidForm(user);
+  await user.click(screen.getByRole("button", { name: "Verificar" }));
+
+  const message = screen.getByText("Formulario de demostración", { exact: false }).closest("div");
+  expect(message).toHaveTextContent("Información: Formulario de demostración: no se envían datos.");
+  expect(message).toHaveFocus();
+});
+
+test("the next submission removes the general message", async () => {
+  const user = userEvent.setup();
+  renderPage();
+
+  await fillValidForm(user);
+  await user.click(screen.getByRole("button", { name: "Verificar" }));
+  await user.clear(screen.getByRole("textbox", { name: "Nombre completo" }));
+  await user.click(screen.getByRole("button", { name: "Verificar" }));
+
+  expect(
+    screen.queryByText("Formulario de demostración", { exact: false }),
+  ).not.toBeInTheDocument();
 });
