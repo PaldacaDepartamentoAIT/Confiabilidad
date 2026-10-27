@@ -213,7 +213,7 @@ los tres archivos de idioma a la vez.
   se exporta como `CODE_LENGTH` para que el campo y la validación (T-018) usen la misma —
   [Cierto] — revertir: repetir el 6.
 
-- [ ] T-016 Campo del código
+- [x] T-016 Campo del código
   RF: RF-013, RF-014, RF-015, RF-016 | Depende de: T-010, T-015 | Archivos: 2
   Archivos: `components/fields/CodeField.tsx`, `components/fields/CodeField.test.tsx`.
   Hecho cuando: un único campo con etiqueta, `inputmode="numeric"` y
@@ -221,6 +221,12 @@ los tres archivos de idioma a la vez.
   con `"12"` ya escrito y el cursor en medio deja `"987654"`; pegar `"abc"` deja el valor como
   estaba; al llegar a 6 dígitos no se llama a `onSubmit` del formulario y el foco sigue en el campo;
   con error, `aria-invalid` y descripción accesible como en T-010; suite verde.
+  Decisiones: `CodeField` reutiliza `TextField` (etiqueta, obligatoriedad, error y `ref`) y guarda
+  el código en su propio estado, con `defaultValue` y un aviso `onValueChange` para quien necesite
+  el valor (la validación, T-019) — [Probable] — revertir: hacerlo controlado desde fuera con
+  `value`. Un mutante sin `preventDefault` en el pegado sobrevivió, porque `user-event` no inserta
+  el texto pegado tras el manejador como haría un navegador; se añadió un test que comprueba que el
+  pegado por defecto se cancela — [Cierto] — revertir: no aplica.
 
 - [ ] T-017 Código en la página de muestra
   RF: RF-019, RF-020 | Depende de: T-013, T-016 | Archivos: 2
