@@ -325,12 +325,20 @@ los tres archivos de idioma a la vez.
   botón sube 50 px entre `mousedown` y `mouseup`); se corrige en T-034 (D-17) — [Cierto] — revertir:
   no aplica.
 
-- [ ] T-025 Anunciador
+- [x] T-025 Anunciador
   RF: RF-010, RF-017 (D-08) | Depende de: — | Archivos: 2
   Archivos: `components/LiveAnnouncer.tsx`, `components/LiveAnnouncer.test.tsx`.
   Hecho cuando: las regiones `polite` y `assertive` existen desde el primer renderizado y están
   vacías; `announce("x", "polite")` deja `"x"` solo en la educada tras el siguiente ciclo; anunciar
   dos veces el mismo texto vacía la región entre medias; suite verde.
+  Decisiones: el contexto, el tipo y `useAnnouncer` viven en `components/announcer.ts`, aparte del
+  componente, porque exportarlos junto a él daba un aviso de lint (recarga rápida de Vite); la
+  tarea tocó 3 archivos, dentro del máximo — [Cierto] — revertir: no aplica. La región educada
+  usa `role="status"` y la urgente solo `aria-live="assertive"`, sin `role="alert"`, para no
+  duplicar el anuncio — [Probable] — revertir: `role="alert"`. Las regiones se ocultan a la vista
+  con estilos en línea, porque aún no hay hoja de estilos — [Cierto] — revertir: una clase CSS
+  cuando se defina el estilo. Sin proveedor, `useAnnouncer` no hace nada, así que los componentes
+  funcionan en tests aislados — [Cierto] — revertir: lanzar un error sin proveedor.
 
 - [ ] T-026 Botón procesando
   RF: RF-010 (D-07) | Depende de: T-021, T-025 | Archivos: 2
