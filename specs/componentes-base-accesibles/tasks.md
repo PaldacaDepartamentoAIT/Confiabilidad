@@ -441,12 +441,17 @@ los tres archivos de idioma a la vez.
   `aria-describedby`. «Sin `hint` nada cambia» lo cubren los tests de T-010, que siguen pasando —
   [Cierto] — revertir: no aplica.
 
-- [ ] T-037 Reglas de la contraseña nueva
+- [x] T-037 Reglas de la contraseña nueva
   RF: RF-026 (D-18) | Depende de: T-019 | Archivos: 2
   Archivos: `forms/passwordRules.ts`, `forms/passwordRules.test.ts`.
   Hecho cuando: rechaza `"abcdefghijk"` (11) con `passwordTooShort`; acepta `"abcdefghijkl"` (12);
   rechaza 6 emojis (6 puntos de código) por corta; rechaza `"123456789012"` y
   `"１２３４５６７８９０１２"` con `passwordOnlyDigits`; acepta `"12345678901a"`; suite verde.
+  Decisiones: con las dos reglas a la vez, se muestra la de longitud (una contraseña corta y solo de
+  dígitos dice «Usa al menos 12 caracteres.») — [Probable] — revertir: invertir el orden de la
+  lista. `\p{Nd}` cubre los dígitos decimales de cualquier escritura, pero no los superíndices
+  (`²`), que `isdigit()` de Python sí cuenta: una contraseña solo de superíndices pasaría aquí y la
+  rechazaría el servidor al enviar — [Cierto] — revertir: no aplica (el servidor decide, S-11).
 
 - [ ] T-038 Contraseña nueva con su ayuda
   RF: RF-027 | Depende de: T-035, T-036 | Archivos: 2
