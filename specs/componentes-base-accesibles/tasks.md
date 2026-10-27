@@ -340,13 +340,19 @@ los tres archivos de idioma a la vez.
   cuando se defina el estilo. Sin proveedor, `useAnnouncer` no hace nada, así que los componentes
   funcionan en tests aislados — [Cierto] — revertir: lanzar un error sin proveedor.
 
-- [ ] T-026 Botón procesando
+- [x] T-026 Botón procesando
   RF: RF-010 (D-07) | Depende de: T-021, T-025 | Archivos: 2
   Archivos: `components/Button.tsx`, `components/Button.test.tsx`.
   Hecho cuando: con `processing`, el texto visible y el nombre accesible son «Procesando…» en el
   idioma activo, tiene `aria-disabled="true"` y no `disabled`, un clic, Enter o Espacio no llama a
   `onClick`, sigue en el orden de Tab y conserva el foco; al entrar en ese estado la región educada
   contiene «procesando»; al salir recupera su texto y no se anuncia nada nuevo; suite verde.
+  Decisiones: solo se anuncia el paso de no procesar a procesar; un botón que se monta ya
+  procesando no se anuncia — [Probable] — revertir: anunciar también al montar. Al procesar, el
+  clic se cancela con `preventDefault`, lo que también impide el envío implícito con Enter desde un
+  campo — [Cierto] — revertir: no aplica. El test del anuncio usa un anunciador espía (el contexto
+  de T-025) en lugar de las regiones vivas, para poder comprobar que al salir no se anuncia nada —
+  [Cierto] — revertir: no aplica.
 
 - [ ] T-027 Simulación de envío de 3 segundos
   RF: RF-010, RF-022 | Depende de: T-024, T-026 | Archivos: 3
