@@ -326,7 +326,7 @@ los tres archivos de idioma a la vez.
   checklist de teclado (CF-3) y de lector de pantalla con NVDA o VoiceOver (CF-5) y el marco
   teórico; `HUMAN_TODO.md` tiene la acción de completar ese checklist.
 
-- [ ] T-032 Contraseña visible fuera de correctores y autocorrección
+- [x] T-032 Contraseña visible fuera de correctores y autocorrección
   Tipo: corrección | Origen: revisión de seguridad durante E-04 (D-15)
   RF: RF-012 (D-15) | Depende de: T-012 | Archivos: 2
   Archivos: `components/fields/PasswordField.tsx`, `components/fields/PasswordField.test.tsx`.

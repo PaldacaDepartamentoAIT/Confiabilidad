@@ -18,6 +18,9 @@ export const PasswordField = forwardRef<HTMLInputElement, PasswordFieldProps>(
         ref={ref}
         type={visible ? "text" : "password"}
         autoComplete={kind === "current" ? "current-password" : "new-password"}
+        spellCheck={false}
+        autoCapitalize="off"
+        autoCorrect="off"
         adornment={
           <button type="button" aria-pressed={visible} onClick={() => setVisible(!visible)}>
             {t("field.showPassword")}

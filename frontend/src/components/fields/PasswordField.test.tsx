@@ -62,3 +62,21 @@ test("links an error to the password input", () => {
   expect(input).toHaveAttribute("aria-invalid", "true");
   expect(input).toHaveAccessibleDescription("Fill in this field.");
 });
+
+test("keeps the password away from spellcheckers and autocorrection, hidden or shown", async () => {
+  const user = userEvent.setup();
+  renderWithI18n(<PasswordField label="Password" kind="current" />);
+
+  const input = screen.getByLabelText("Password");
+  const expectProtected = () => {
+    expect(input).toHaveAttribute("spellcheck", "false");
+    expect(input).toHaveAttribute("autocapitalize", "off");
+    expect(input).toHaveAttribute("autocorrect", "off");
+  };
+  expectProtected();
+
+  await user.click(screen.getByRole("button", { name: "Show password" }));
+
+  expect(input).toHaveAttribute("type", "text");
+  expectProtected();
+});
