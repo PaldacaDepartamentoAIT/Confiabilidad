@@ -1,10 +1,10 @@
 # Entrega E-10 · Contraseña nueva con sus reglas y su ayuda visible
 
 Rama: `feat/componentes-base-accesibles-contrasena-nueva`, con PR contra la rama de integración
-`feat/componentes-base-accesibles` · PR: pendiente · Líneas de código y tests: 175 (límite: 400).
+`feat/componentes-base-accesibles` · PR: pendiente · Líneas de código y tests: 191 (límite: 400).
 
 Se hizo después de E-07 y antes de E-08, porque no depende de ellas. Nació de un `sdd-cambio` que
-añadió RF-026 y RF-027 y cambió RF-020 y RF-021.
+añadió RF-026 y RF-027 y cambió RF-020 y RF-021; un segundo cambio, de RF-012, añadió T-040.
 
 ## Qué se hizo
 - Los campos de texto aceptan un **texto de ayuda** visible bajo el campo. El lector de pantalla lo
@@ -20,6 +20,9 @@ añadió RF-026 y RF-027 y cambió RF-020 y RF-021.
 - La **contraseña actual** no aplica estas reglas: bloquearían a cuentas con contraseñas anteriores
   a la política y revelarían la política en el inicio de sesión.
 - La página de muestra añade el campo «Nueva contraseña» (obligatorio) tras la contraseña actual.
+- Cada botón «Mostrar contraseña» nombra su campo para el lector de pantalla («Mostrar contraseña
+  (Nueva contraseña)»), así que los dos de la página ya no se confunden. El texto visible sigue
+  siendo «Mostrar contraseña».
 
 **Riesgo conocido (S-11):** las reglas están duplicadas a mano, porque backend y frontend no
 comparten código. Si el servidor cambia el mínimo de 12, hay que cambiarlo también en
@@ -36,6 +39,7 @@ El detalle de cada tarea, con su «Hecho cuando» y sus decisiones, está en
 | T-037 | Reglas de la contraseña nueva | `d0d5053` |
 | T-038 | Contraseña nueva con su ayuda | `52c67b4` |
 | T-039 | Contraseña nueva en la página de muestra | `633ed25` |
+| T-040 | Cada control de mostrar contraseña nombra su campo | `8962de8` |
 
 ## Cómo ejecutarlo y probarlo
 Desde la raíz del repositorio, instala las dependencias:
@@ -47,7 +51,7 @@ Ejecuta los tests del frontend:
 ```bash
 pnpm --filter frontend test
 ```
-Deberías ver 152 tests en verde.
+Deberías ver 153 tests en verde.
 
 Arranca la página:
 ```bash
@@ -65,6 +69,9 @@ Pruébalo:
    ayuda.
 4. Escribe `abc` en «Contraseña» (la actual) y sal. Deberías ver que no aparece ningún error: la
    contraseña actual no tiene esas reglas.
+5. En DevTools (F12) → **Elements** → **Accessibility**, selecciona cada botón «Mostrar
+   contraseña». Deberías ver como **Name** «Mostrar contraseña (Contraseña)» en el primero y
+   «Mostrar contraseña (Nueva contraseña)» en el segundo.
 
 En DevTools (F12) → **Elements** → **Accessibility**, con «Nueva contraseña» seleccionada, deberías
 ver la ayuda como **Description** y, si hay error, la ayuda seguida del error.
@@ -78,5 +85,4 @@ remoto (el contenedor no tiene salida a internet); está pendiente en
 [`HUMAN_TODO.md`](../../HUMAN_TODO.md).
 
 ## Fuera de esta entrega
-Las dos contraseñas tienen un botón llamado igual, «Mostrar contraseña». Está pendiente de decidir
-si cada botón debe nombrar su campo.
+El estado «Procesando…» del botón llega en E-08, y los mensajes generales de error, en E-09.
