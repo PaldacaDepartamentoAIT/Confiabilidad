@@ -108,20 +108,24 @@ Sin tocar el ratón. Completado por el usuario el 2026-10-27:
 - [x] Enter sobre «Mostrar error general de ejemplo» muestra el error con el foco en él.
 
 ### Checklist de lector de pantalla (CF-5)
-Con NVDA en Windows (Firefox o Chrome) o VoiceOver en macOS (Safari), recorriendo con Tab:
-- [ ] Al cargar, el lector dice el título de la página («Confiabilidad — Componentes» en español).
-- [ ] El selector se anuncia como el grupo «Idioma», y el botón del idioma activo, como pulsado.
-- [ ] Cada botón de idioma se pronuncia con la voz de su idioma («English» con voz inglesa).
-- [ ] Cada campo obligatorio se anuncia con su etiqueta y como obligatorio, sin leer el asterisco.
-- [ ] «Nueva contraseña» lee también su ayuda: «Al menos 12 caracteres, no solo números.».
-- [ ] Los dos «Mostrar contraseña» se distinguen por su campo y dicen si están pulsados.
-- [ ] Al volver a un campo con error, el lector lo anuncia como no válido y lee el error.
-- [ ] Al enviar con errores, el lector anuncia el primer campo con error con su mensaje.
-- [ ] Al enviar con todo válido, el lector dice «Procesando» y, a los 3 segundos, «Información:
+Con NVDA en Windows (Firefox o Chrome) o VoiceOver en macOS (Safari), recorriendo con Tab.
+Recorrido por el usuario el 2026-10-27:
+- [x] Al cargar, el lector dice el título de la página («Confiabilidad — Componentes» en español).
+- [x] El selector se anuncia como el grupo «Idioma», y el botón del idioma activo, como pulsado.
+- [x] Cada botón de idioma se pronuncia con la voz de su idioma («English» con voz inglesa).
+- [x] Cada campo obligatorio se anuncia con su etiqueta y como obligatorio, sin leer el asterisco.
+- [x] «Nueva contraseña» lee también su ayuda: «Al menos 12 caracteres, no solo números.».
+- [x] Los dos «Mostrar contraseña» se distinguen por su campo y dicen si están pulsados.
+- [x] Al volver a un campo con error, el lector lo anuncia como no válido y lee el error.
+- [x] Al enviar con errores, el lector anuncia el primer campo con error con su mensaje.
+- [x] Al enviar con todo válido, el lector dice «Procesando» y, a los 3 segundos, «Información:
   Formulario de demostración: no se envían datos.».
-- [ ] «Mostrar error general de ejemplo» hace que el lector lea «Error: Demasiados intentos. Espera
+- [x] «Mostrar error general de ejemplo» hace que el lector lea «Error: Demasiados intentos. Espera
   unos minutos y vuelve a intentarlo.».
 - [ ] Al cambiar de idioma, el lector lee la página con la voz del idioma nuevo.
+  **Falla (2026-10-27):** tras pasar a inglés sin recargar, solo «English», «Verify» y «Show sample
+  general error» se oyen con voz inglesa; el resto sigue con la voz anterior, aunque `<html lang>`
+  sí cambia a `en`. Pendiente de diagnóstico (RF-006).
 
 Cuando lo completes, marca la acción correspondiente en [`HUMAN_TODO.md`](HUMAN_TODO.md).
 
