@@ -228,12 +228,15 @@ los tres archivos de idioma a la vez.
   el texto pegado tras el manejador como haría un navegador; se añadió un test que comprueba que el
   pegado por defecto se cancela — [Cierto] — revertir: no aplica.
 
-- [ ] T-017 Código en la página de muestra
+- [x] T-017 Código en la página de muestra
   RF: RF-019, RF-020 | Depende de: T-013, T-016 | Archivos: 2
   Archivos: `showcase/ShowcasePage.tsx`, `showcase/ShowcasePage.test.tsx`.
   Hecho cuando: la página añade el campo del código obligatorio tras la contraseña; el orden de Tab
   incluye el código tras «Mostrar contraseña»; la auditoría de T-014 sigue sin infracciones; suite
   verde.
+  Decisiones: comprobado en Chromium con el portapapeles real: escribir `1a2b` y `３٤` deja `1234`;
+  pegar «Tu código: 98-76 54 321» con el cursor en medio deja `987654`; pegar «sin números» no
+  cambia nada; el foco sigue en el campo y no se envía nada — [Cierto] — revertir: no aplica.
 
 - [ ] T-018 Reglas de validación de la página de muestra
   RF: RF-021 | Depende de: — | Archivos: 2
