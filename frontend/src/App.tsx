@@ -1,3 +1,4 @@
+import { LiveAnnouncer } from "./components/LiveAnnouncer";
 import type { LanguageStorage } from "./i18n/language";
 import { useDocumentLanguage } from "./i18n/useDocumentLanguage";
 import { ShowcasePage } from "./showcase/ShowcasePage";
@@ -8,5 +9,9 @@ type AppProps = {
 
 export function App({ storage }: AppProps) {
   useDocumentLanguage();
-  return <ShowcasePage storage={storage} />;
+  return (
+    <LiveAnnouncer>
+      <ShowcasePage storage={storage} />
+    </LiveAnnouncer>
+  );
 }

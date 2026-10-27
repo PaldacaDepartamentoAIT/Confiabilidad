@@ -1,4 +1,4 @@
-import { useId, useRef, useState, type FormEvent } from "react";
+import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { flushSync } from "react-dom";
 import { useTranslation } from "react-i18next";
 
@@ -22,6 +22,9 @@ const FIELDS = {
   code: [required, sixDigitCode],
 };
 
+// La página de muestra no envía nada: simula la espera de una respuesta (RF-022).
+const SIMULATED_DELAY_MS = 3000;
+
 type ShowcasePageProps = {
   storage?: LanguageStorage;
 };
@@ -29,19 +32,29 @@ type ShowcasePageProps = {
 export function ShowcasePage({ storage }: ShowcasePageProps) {
   const { t } = useTranslation();
   const formTitleId = useId();
-  const { errors, onBlur, handleSubmit } = useFormValidation(FIELDS);
+  const [processing, setProcessing] = useState(false);
+  const { errors, onBlur, handleSubmit } = useFormValidation(FIELDS, { processing });
   const [demoSent, setDemoSent] = useState(false);
   const messageRef = useRef<HTMLDivElement>(null);
+  const timer = useRef<number>();
 
-  function showDemoMessage() {
-    flushSync(() => setDemoSent(true));
-    messageRef.current?.focus();
+  useEffect(() => () => window.clearTimeout(timer.current), []);
+
+  function simulateSending() {
+    setProcessing(true);
+    timer.current = window.setTimeout(() => {
+      flushSync(() => {
+        setProcessing(false);
+        setDemoSent(true);
+      });
+      messageRef.current?.focus();
+    }, SIMULATED_DELAY_MS);
   }
 
   // El mensaje general se retira en cada envío (RF-017).
   function submit(event: FormEvent<HTMLFormElement>) {
     setDemoSent(false);
-    handleSubmit(showDemoMessage)(event);
+    handleSubmit(simulateSending)(event);
   }
 
   const errorText = (error: FieldError | undefined) =>
@@ -95,7 +108,7 @@ export function ShowcasePage({ storage }: ShowcasePageProps) {
           error={errorText(errors.code)}
           onBlur={onBlur("code")}
         />
-        <Button type="submit" keepFocusOnMouseDown>
+        <Button type="submit" keepFocusOnMouseDown processing={processing}>
           {t("showcase.submit")}
         </Button>
       </form>

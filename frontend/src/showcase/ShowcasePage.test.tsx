@@ -1,7 +1,8 @@
-import { render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { I18nextProvider } from "react-i18next";
 
+import { App } from "../App";
 import { createI18n } from "../i18n";
 import { ShowcasePage } from "./ShowcasePage";
 
@@ -186,26 +187,74 @@ test("submitting with the button behaves the same", async () => {
   expect(screen.getByRole("textbox", { name: "Nombre completo" })).toHaveFocus();
 });
 
-test("a valid submission shows the demo message and focuses it", async () => {
+// Testing Library espera a sus propios `setTimeout`, que con temporizadores simulados no avanzan:
+// se rellena con temporizadores reales y solo el envío (síncrono, con `fireEvent`) usa los simulados.
+test("a valid submission processes for 3 seconds and then shows the demo message", async () => {
   const user = userEvent.setup();
   renderPage();
-
   await fillValidForm(user);
-  await user.click(screen.getByRole("button", { name: "Verificar" }));
+  await user.tab();
+  const button = screen.getByRole("button", { name: "Verificar" });
+  expect(button).toHaveFocus();
 
+  vi.useFakeTimers();
+  try {
+    fireEvent.click(button);
+    expect(button).toHaveAccessibleName("Procesando…");
+    expect(button).toHaveFocus();
+
+    fireEvent.click(button);
+    act(() => vi.advanceTimersByTime(2999));
+    expect(button).toHaveAccessibleName("Procesando…");
+    expect(screen.queryByText("Formulario de demostración", { exact: false })).toBeNull();
+
+    act(() => vi.advanceTimersByTime(1));
+  } finally {
+    vi.useRealTimers();
+  }
+
+  expect(button).toHaveAccessibleName("Verificar");
   const message = screen.getByText("Formulario de demostración", { exact: false }).closest("div");
   expect(message).toHaveTextContent("Información: Formulario de demostración: no se envían datos.");
   expect(message).toHaveFocus();
 });
 
+test("a second submission while processing does not restart the wait", async () => {
+  const user = userEvent.setup();
+  renderPage();
+  await fillValidForm(user);
+  const button = screen.getByRole("button", { name: "Verificar" });
+
+  vi.useFakeTimers();
+  try {
+    fireEvent.click(button);
+    act(() => vi.advanceTimersByTime(2000));
+    fireEvent.click(button);
+    act(() => vi.advanceTimersByTime(1000));
+  } finally {
+    vi.useRealTimers();
+  }
+
+  expect(screen.getByText("Formulario de demostración", { exact: false })).toBeInTheDocument();
+});
+
 test("the next submission removes the general message", async () => {
   const user = userEvent.setup();
   renderPage();
-
   await fillValidForm(user);
-  await user.click(screen.getByRole("button", { name: "Verificar" }));
+  const button = screen.getByRole("button", { name: "Verificar" });
+
+  vi.useFakeTimers();
+  try {
+    fireEvent.click(button);
+    act(() => vi.advanceTimersByTime(3000));
+  } finally {
+    vi.useRealTimers();
+  }
+  expect(screen.getByText("Formulario de demostración", { exact: false })).toBeInTheDocument();
+
   await user.clear(screen.getByRole("textbox", { name: "Nombre completo" }));
-  await user.click(screen.getByRole("button", { name: "Verificar" }));
+  await user.click(button);
 
   expect(
     screen.queryByText("Formulario de demostración", { exact: false }),
@@ -256,4 +305,26 @@ test("submitting with a short new password focuses it", async () => {
   await user.click(screen.getByRole("button", { name: "Verificar" }));
 
   expect(screen.getByLabelText(/^Nueva contraseña/)).toHaveFocus();
+});
+
+test("in the whole app, entering the processing state is announced to screen readers", async () => {
+  const user = userEvent.setup();
+  render(
+    <I18nextProvider i18n={createI18n("es")}>
+      <App />
+    </I18nextProvider>,
+  );
+  await fillValidForm(user);
+  const status = screen.getByRole("status");
+  expect(status).toBeEmptyDOMElement();
+
+  vi.useFakeTimers();
+  try {
+    fireEvent.click(screen.getByRole("button", { name: "Verificar" }));
+    act(() => vi.advanceTimersByTime(0));
+    expect(status).toHaveTextContent("Procesando");
+  } finally {
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+  }
 });

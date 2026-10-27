@@ -354,13 +354,23 @@ los tres archivos de idioma a la vez.
   de T-025) en lugar de las regiones vivas, para poder comprobar que al salir no se anuncia nada —
   [Cierto] — revertir: no aplica.
 
-- [ ] T-027 Simulación de envío de 3 segundos
+- [x] T-027 Simulación de envío de 3 segundos
   RF: RF-010, RF-022 | Depende de: T-024, T-026 | Archivos: 3
   Archivos: `showcase/ShowcasePage.tsx`, `showcase/ShowcasePage.test.tsx`, `App.tsx`.
   Hecho cuando: `App` monta el proveedor del anunciador; con temporizadores simulados, un envío
   válido pone el botón en «procesando» con el foco en él, un segundo envío durante ese tiempo no
   hace nada, y a los 3 segundos (no antes) el botón recupera su texto y el mensaje informativo
   aparece con el foco; suite verde.
+  Decisiones: Testing Library espera a sus propios `setTimeout`, que con los temporizadores
+  simulados de Vitest no avanzan y cuelgan el test; los tests rellenan el formulario con
+  temporizadores reales y solo el envío (síncrono, con `fireEvent.click`) usa los simulados —
+  [Cierto] — revertir: exponer `jest` en `setupTests.ts` para que Testing Library los detecte. El
+  foco «en el botón» se comprueba por el camino del teclado (Tab y Enter), porque con el ratón el
+  foco se queda en el campo (D-17) — [Cierto] — revertir: no aplica. Mutante equivalente: quitar
+  `processing` del hook, porque en esta página el botón ya bloquea el segundo envío (la protección
+  del hook la prueba T-022). Un mutante que quitaba el proveedor del anunciador de `App`
+  sobrevivió; se añadió un test que monta la app completa y comprueba el aviso — [Cierto] —
+  revertir: no aplica. Comprobado en Chromium con tiempo real — [Cierto] — revertir: no aplica.
 
 - [ ] T-028 Errores de servidor y mensaje general junto a errores de campo
   RF: RF-017, RF-025 (D-14) | Depende de: T-022, T-025 | Archivos: 2
