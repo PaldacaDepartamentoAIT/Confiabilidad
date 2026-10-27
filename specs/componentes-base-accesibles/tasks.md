@@ -283,12 +283,19 @@ los tres archivos de idioma a la vez.
   el valor por defecto del navegador (`submit`). Mutantes: `submit` por defecto, sin contenido y un
   `div` con `role="button"` (no responde a Enter ni Espacio); todos mueren.
 
-- [ ] T-022 Validación al enviar y foco al primer error
+- [x] T-022 Validación al enviar y foco al primer error
   RF: RF-021, RF-025, RF-010 | Depende de: T-019 | Archivos: 2
   Archivos: `forms/useFormValidation.ts`, `forms/useFormValidation.test.tsx`.
   Hecho cuando: al enviar valida todos los campos y lleva el foco al primero con error en orden
   visual; sin errores llama al manejador de envío; mientras `processing` está activo, un segundo
   envío no llama al manejador; suite verde.
+  Decisiones: `handleSubmit` busca cada campo en el formulario por su `name` y los recorre en el
+  orden en que se declaran, que es el orden visual; así no hacen falta `ref` por campo — [Probable] —
+  revertir: registrar un `ref` por campo. El error se pinta con `flushSync` antes de mover el foco,
+  para que el lector lea el campo con su error al llegar; un test comprueba `aria-invalid` en el
+  mismo instante del foco, y el mutante sin `flushSync` muere — [Cierto] — revertir: mover el foco
+  en un efecto tras el pintado. `processing` se pasa al hook como opción — [Cierto] — revertir: no
+  aplica.
 
 - [ ] T-023 Mensaje general
   RF: RF-017, RF-018 (D-11) | Depende de: T-002 | Archivos: 2
