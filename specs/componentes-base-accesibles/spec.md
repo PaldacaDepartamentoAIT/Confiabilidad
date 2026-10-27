@@ -73,7 +73,9 @@ anunciar el campo como obligatorio.
 Cuando el usuario active el control de mostrar u ocultar del campo de contraseña, el sistema deberá
 alternar entre mostrar el texto escrito y ocultarlo, conservar el valor, comunicar al lector de
 pantalla si la contraseña está visible y dejar el foco en el control. El control deberá poder
-usarse solo con el teclado.
+usarse solo con el teclado. Su nombre accesible deberá contener su texto visible seguido de la
+etiqueta de su campo (por ejemplo, «Mostrar contraseña (Nueva contraseña)»), para distinguirlo
+cuando haya varios en la página.
 
 ### RF-013 Campo del código
 El sistema deberá ofrecer un único campo para el código de verificación con una etiqueta visible
@@ -234,3 +236,9 @@ campo tenga un error.
   sistema, como el servidor — Estado: clarificado
 - 2026-10-27 — Impacto analizado: plan (M-02, M-07, M-11, M-12, D-18) y entrega nueva E-10
   (T-035…T-039); aprobado por el usuario — Estado: impacto analizado
+- 2026-10-27 — Cambio: el control de mostrar u ocultar nombra su campo, porque la página tiene dos
+  — RF: RF-012 — Estado: pendiente de clarificar
+- 2026-10-27 — Clarificación: el nombre accesible contiene el texto visible (WCAG 2.5.3) — RF:
+  RF-012 — Estado: clarificado
+- 2026-10-27 — Impacto analizado: plan (D-10) y tarea nueva T-040 en E-10; pedido por el usuario
+  (opción A) — RF: RF-012 — Estado: impacto analizado

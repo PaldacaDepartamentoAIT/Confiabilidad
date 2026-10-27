@@ -220,7 +220,9 @@ interfaz, y compite con RF-021 y RF-025. Ocultar el asterisco al lector evita qu
 además de «obligatorio».
 
 ### D-10 Mostrar contraseña como botón conmutador
-Elegida: nombre fijo «Mostrar contraseña» con `aria-pressed` verdadero o falso.
+Elegida: nombre fijo «Mostrar contraseña» con `aria-pressed` verdadero o falso. El nombre accesible
+(`aria-label`) añade entre paréntesis la etiqueta del campo («Mostrar contraseña (Nueva
+contraseña)»), para distinguir varios controles; contiene el texto visible, como pide WCAG 2.5.3.
 Descartada: cambiar el nombre entre «Mostrar» y «Ocultar».
 Motivo: un nombre que cambia sobre el elemento enfocado no se anuncia de forma fiable (el mismo
 problema que en C-05); `aria-pressed` sí se anuncia al cambiar («presionado» / «no presionado»).

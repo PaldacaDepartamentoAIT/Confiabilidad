@@ -478,6 +478,15 @@ los tres archivos de idioma a la vez.
   emojis dan «Usa al menos 12 caracteres.»; `123456789012`, «No uses solo números.»; la actual
   acepta `abc` — [Cierto] — revertir: no aplica.
 
+- [ ] T-040 Cada control de mostrar contraseña nombra su campo
+  Tipo: cambio | Origen: `sdd-cambio` de RF-012 (2026-10-27)
+  RF: RF-012 (D-10) | Depende de: T-039 | Archivos: 3
+  Archivos: `components/fields/PasswordField.tsx`, `components/fields/PasswordField.test.tsx`,
+  `showcase/ShowcasePage.test.tsx`.
+  Hecho cuando: el control se llama «Mostrar contraseña (<etiqueta del campo>)» en el idioma
+  activo y su texto visible sigue siendo «Mostrar contraseña»; en la página de muestra los dos
+  controles tienen nombres distintos; la auditoría de axe sigue sin infracciones; suite verde.
+
 ## Entregas
 Arrancar la página de muestra (para el «Cómo probarlo» de cada entrega), desde la raíz del
 repositorio:
@@ -553,7 +562,7 @@ pnpm --filter frontend test
 
 - E-10 Contraseña nueva con sus reglas y su ayuda visible. Se implementa después de E-07 y antes
   de E-08, porque no depende de E-08 ni de E-09.
-  Tareas: T-035…T-039 | Líneas estimadas: 200 | Rama:
+  Tareas: T-035…T-040 | Líneas estimadas: 200 | Rama:
   feat/componentes-base-accesibles-contrasena-nueva
   Cómo probarlo: en «Nueva contraseña» se ve la ayuda; escribir `abc` y salir muestra el error de
   longitud; `123456789012`, el de solo números; la contraseña actual acepta cualquier valor no
