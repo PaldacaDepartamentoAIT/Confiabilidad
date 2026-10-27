@@ -1,7 +1,26 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import type { ReactElement } from "react";
+import { I18nextProvider } from "react-i18next";
 import userEvent from "@testing-library/user-event";
 
+import { createI18n } from "../i18n";
+import { AnnouncerContext } from "./announcer";
 import { Button } from "./Button";
+
+function renderInSpanish(element: ReactElement, announce = vi.fn()) {
+  const view = render(
+    <I18nextProvider i18n={createI18n("es")}>
+      <AnnouncerContext.Provider value={announce}>{element}</AnnouncerContext.Provider>
+    </I18nextProvider>,
+  );
+  const rerender = (next: ReactElement) =>
+    view.rerender(
+      <I18nextProvider i18n={createI18n("es")}>
+        <AnnouncerContext.Provider value={announce}>{next}</AnnouncerContext.Provider>
+      </I18nextProvider>,
+    );
+  return { rerender, announce };
+}
 
 test("its accessible name is its visible text", () => {
   render(<Button>Verify</Button>);
@@ -87,4 +106,64 @@ test("still calls its own onMouseDown when keeping the focus", () => {
   fireEvent.mouseDown(screen.getByRole("button", { name: "Verify" }));
 
   expect(onMouseDown).toHaveBeenCalledTimes(1);
+});
+
+test("while processing, it says so in its text and name and is marked as disabled", () => {
+  renderInSpanish(<Button processing>Verificar</Button>);
+
+  const button = screen.getByRole("button", { name: "Procesando…" });
+  expect(button).toHaveTextContent("Procesando…");
+  expect(button).toHaveAttribute("aria-disabled", "true");
+  expect(button).not.toBeDisabled();
+});
+
+test("while processing, clicks, Enter and Space are ignored and the focus stays", async () => {
+  const user = userEvent.setup();
+  const onClick = vi.fn();
+  renderInSpanish(
+    <Button processing onClick={onClick}>
+      Verificar
+    </Button>,
+  );
+
+  await user.tab();
+  const button = screen.getByRole("button", { name: "Procesando…" });
+  expect(button).toHaveFocus();
+  await user.click(button);
+  await user.keyboard("{Enter}");
+  await user.keyboard(" ");
+
+  expect(onClick).not.toHaveBeenCalled();
+  expect(button).toHaveFocus();
+});
+
+test("while processing, a submit button does not submit its form", async () => {
+  const user = userEvent.setup();
+  const onSubmit = vi.fn((event: React.FormEvent) => event.preventDefault());
+  renderInSpanish(
+    <form onSubmit={onSubmit}>
+      <input aria-label="Field" />
+      <Button type="submit" processing>
+        Verificar
+      </Button>
+    </form>,
+  );
+
+  await user.type(screen.getByRole("textbox", { name: "Field" }), "x{Enter}");
+  await user.click(screen.getByRole("button", { name: "Procesando…" }));
+
+  expect(onSubmit).not.toHaveBeenCalled();
+});
+
+test("entering the processing state is announced once, leaving it is not", () => {
+  const { rerender, announce } = renderInSpanish(<Button>Verificar</Button>);
+  expect(announce).not.toHaveBeenCalled();
+
+  rerender(<Button processing>Verificar</Button>);
+  expect(announce).toHaveBeenCalledTimes(1);
+  expect(announce).toHaveBeenCalledWith("Procesando", "polite");
+
+  rerender(<Button>Verificar</Button>);
+  expect(screen.getByRole("button", { name: "Verificar" })).not.toHaveAttribute("aria-disabled");
+  expect(announce).toHaveBeenCalledTimes(1);
 });

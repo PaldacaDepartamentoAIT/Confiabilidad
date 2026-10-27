@@ -325,28 +325,52 @@ los tres archivos de idioma a la vez.
   botón sube 50 px entre `mousedown` y `mouseup`); se corrige en T-034 (D-17) — [Cierto] — revertir:
   no aplica.
 
-- [ ] T-025 Anunciador
+- [x] T-025 Anunciador
   RF: RF-010, RF-017 (D-08) | Depende de: — | Archivos: 2
   Archivos: `components/LiveAnnouncer.tsx`, `components/LiveAnnouncer.test.tsx`.
   Hecho cuando: las regiones `polite` y `assertive` existen desde el primer renderizado y están
   vacías; `announce("x", "polite")` deja `"x"` solo en la educada tras el siguiente ciclo; anunciar
   dos veces el mismo texto vacía la región entre medias; suite verde.
+  Decisiones: el contexto, el tipo y `useAnnouncer` viven en `components/announcer.ts`, aparte del
+  componente, porque exportarlos junto a él daba un aviso de lint (recarga rápida de Vite); la
+  tarea tocó 3 archivos, dentro del máximo — [Cierto] — revertir: no aplica. La región educada
+  usa `role="status"` y la urgente solo `aria-live="assertive"`, sin `role="alert"`, para no
+  duplicar el anuncio — [Probable] — revertir: `role="alert"`. Las regiones se ocultan a la vista
+  con estilos en línea, porque aún no hay hoja de estilos — [Cierto] — revertir: una clase CSS
+  cuando se defina el estilo. Sin proveedor, `useAnnouncer` no hace nada, así que los componentes
+  funcionan en tests aislados — [Cierto] — revertir: lanzar un error sin proveedor.
 
-- [ ] T-026 Botón procesando
+- [x] T-026 Botón procesando
   RF: RF-010 (D-07) | Depende de: T-021, T-025 | Archivos: 2
   Archivos: `components/Button.tsx`, `components/Button.test.tsx`.
   Hecho cuando: con `processing`, el texto visible y el nombre accesible son «Procesando…» en el
   idioma activo, tiene `aria-disabled="true"` y no `disabled`, un clic, Enter o Espacio no llama a
   `onClick`, sigue en el orden de Tab y conserva el foco; al entrar en ese estado la región educada
   contiene «procesando»; al salir recupera su texto y no se anuncia nada nuevo; suite verde.
+  Decisiones: solo se anuncia el paso de no procesar a procesar; un botón que se monta ya
+  procesando no se anuncia — [Probable] — revertir: anunciar también al montar. Al procesar, el
+  clic se cancela con `preventDefault`, lo que también impide el envío implícito con Enter desde un
+  campo — [Cierto] — revertir: no aplica. El test del anuncio usa un anunciador espía (el contexto
+  de T-025) en lugar de las regiones vivas, para poder comprobar que al salir no se anuncia nada —
+  [Cierto] — revertir: no aplica.
 
-- [ ] T-027 Simulación de envío de 3 segundos
+- [x] T-027 Simulación de envío de 3 segundos
   RF: RF-010, RF-022 | Depende de: T-024, T-026 | Archivos: 3
   Archivos: `showcase/ShowcasePage.tsx`, `showcase/ShowcasePage.test.tsx`, `App.tsx`.
   Hecho cuando: `App` monta el proveedor del anunciador; con temporizadores simulados, un envío
   válido pone el botón en «procesando» con el foco en él, un segundo envío durante ese tiempo no
   hace nada, y a los 3 segundos (no antes) el botón recupera su texto y el mensaje informativo
   aparece con el foco; suite verde.
+  Decisiones: Testing Library espera a sus propios `setTimeout`, que con los temporizadores
+  simulados de Vitest no avanzan y cuelgan el test; los tests rellenan el formulario con
+  temporizadores reales y solo el envío (síncrono, con `fireEvent.click`) usa los simulados —
+  [Cierto] — revertir: exponer `jest` en `setupTests.ts` para que Testing Library los detecte. El
+  foco «en el botón» se comprueba por el camino del teclado (Tab y Enter), porque con el ratón el
+  foco se queda en el campo (D-17) — [Cierto] — revertir: no aplica. Mutante equivalente: quitar
+  `processing` del hook, porque en esta página el botón ya bloquea el segundo envío (la protección
+  del hook la prueba T-022). Un mutante que quitaba el proveedor del anunciador de `App`
+  sobrevivió; se añadió un test que monta la app completa y comprueba el aviso — [Cierto] —
+  revertir: no aplica. Comprobado en Chromium con tiempo real — [Cierto] — revertir: no aplica.
 
 - [ ] T-028 Errores de servidor y mensaje general junto a errores de campo
   RF: RF-017, RF-025 (D-14) | Depende de: T-022, T-025 | Archivos: 2
