@@ -407,11 +407,18 @@ los tres archivos de idioma a la vez.
   «Verify» con campos vacíos lo retira; Tab desde «Verify» llega al botón y Enter muestra el error —
   [Cierto] — revertir: no aplica.
 
-- [ ] T-030 Auditoría de accesibilidad en todos los estados
+- [x] T-030 Auditoría de accesibilidad en todos los estados
   RF: RF-016, RF-017, RF-019 (D-13) | Depende de: T-014, T-029 | Archivos: 1
   Archivos: `showcase/a11y.test.tsx`.
   Hecho cuando: `axe` no encuentra infracciones en la página con errores de campo, procesando, con
   el mensaje informativo y con el error general, en los tres idiomas; suite verde.
+  Decisiones: el envío corre con temporizadores simulados y axe con los reales, así que el estado
+  («procesando» o con el mensaje) queda congelado mientras se audita — [Cierto] — revertir: no
+  aplica. Los avisos de jsdom «HTMLCanvasElement.prototype.getContext» vienen de la regla de
+  contraste de axe y ya salían antes de esta tarea; no hacen fallar nada y quitarlos exigiría la
+  dependencia `canvas` — [Cierto] — revertir: no aplica. Un mutante que añadía un atributo ARIA
+  con un valor no válido solo al procesar hizo fallar solo los tres tests de «procesando» —
+  [Cierto] — revertir: no aplica.
 
 - [ ] T-031 Resumen y checklist de prueba manual
   RF: RF-019, RF-020 (CF-3, CF-5, S-08) | Depende de: T-030 | Archivos: 2
