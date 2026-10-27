@@ -297,12 +297,18 @@ los tres archivos de idioma a la vez.
   en un efecto tras el pintado. `processing` se pasa al hook como opción — [Cierto] — revertir: no
   aplica.
 
-- [ ] T-023 Mensaje general
+- [x] T-023 Mensaje general
   RF: RF-017, RF-018 (D-11) | Depende de: T-002 | Archivos: 2
   Archivos: `components/FormMessage.tsx`, `components/FormMessage.test.tsx`.
   Hecho cuando: cada tipo (`error`, `success`, `info`) muestra su prefijo traducido delante del
   texto; recibe la clave y la traduce al pintar, así que al cambiar de idioma cambia el texto;
   `focus()` lo enfoca y no está en el orden de tabulación; suite verde.
+  Decisiones: la clave se tipa con `ParseKeys` de i18next, así que cualquier clave existente vale
+  (las de `validation` y `showcase.demoInfo` hoy, las de las pantallas mañana) y una inexistente no
+  compila — [Cierto] — revertir: limitarla a una lista fija. `focus()` se expone con un `ref` al
+  contenedor (`forwardRef`), no con un método propio — [Cierto] — revertir: `useImperativeHandle`.
+  El contenedor no lleva rol: al recibir el foco el lector lee su texto, prefijo incluido (D-11) —
+  [Probable] — revertir: `role="group"` con el prefijo como nombre.
 
 - [ ] T-024 Envío en la página de muestra
   RF: RF-019, RF-020, RF-021 | Depende de: T-020, T-021, T-022, T-023 | Archivos: 2
