@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type FormEvent } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { useTranslation } from "react-i18next";
 
@@ -10,7 +10,11 @@ import { PasswordField } from "../components/fields/PasswordField";
 import { RequiredLegend } from "../components/fields/RequiredLegend";
 import { TextField } from "../components/fields/TextField";
 import { newPasswordRules } from "../forms/passwordRules";
-import { useFormValidation, type FieldError } from "../forms/useFormValidation";
+import {
+  useFormValidation,
+  type FieldError,
+  type GeneralMessage,
+} from "../forms/useFormValidation";
 import type { LanguageStorage } from "../i18n/language";
 import { email, required, sixDigitCode } from "./validators";
 
@@ -25,6 +29,9 @@ const FIELDS = {
 // La página de muestra no envía nada: simula la espera de una respuesta (RF-022).
 const SIMULATED_DELAY_MS = 3000;
 
+const DEMO_INFO: GeneralMessage = { type: "info", messageKey: "showcase.demoInfo" };
+const SAMPLE_ERROR: GeneralMessage = { type: "error", messageKey: "validation.tooManyAttempts" };
+
 type ShowcasePageProps = {
   storage?: LanguageStorage;
 };
@@ -33,9 +40,8 @@ export function ShowcasePage({ storage }: ShowcasePageProps) {
   const { t } = useTranslation();
   const formTitleId = useId();
   const [processing, setProcessing] = useState(false);
-  const { errors, onBlur, handleSubmit } = useFormValidation(FIELDS, { processing });
-  const [demoSent, setDemoSent] = useState(false);
-  const messageRef = useRef<HTMLDivElement>(null);
+  const { errors, onBlur, handleSubmit, showResult, message, formRef, messageRef } =
+    useFormValidation(FIELDS, { processing });
   const timer = useRef<number>();
 
   useEffect(() => () => window.clearTimeout(timer.current), []);
@@ -43,18 +49,9 @@ export function ShowcasePage({ storage }: ShowcasePageProps) {
   function simulateSending() {
     setProcessing(true);
     timer.current = window.setTimeout(() => {
-      flushSync(() => {
-        setProcessing(false);
-        setDemoSent(true);
-      });
-      messageRef.current?.focus();
+      flushSync(() => setProcessing(false));
+      showResult({ message: DEMO_INFO });
     }, SIMULATED_DELAY_MS);
-  }
-
-  // El mensaje general se retira en cada envío (RF-017).
-  function submit(event: FormEvent<HTMLFormElement>) {
-    setDemoSent(false);
-    handleSubmit(simulateSending)(event);
   }
 
   const errorText = (error: FieldError | undefined) =>
@@ -67,8 +64,15 @@ export function ShowcasePage({ storage }: ShowcasePageProps) {
       <p>{t("app.intro")}</p>
       <h2 id={formTitleId}>{t("showcase.formTitle")}</h2>
       <RequiredLegend />
-      {demoSent && <FormMessage ref={messageRef} type="info" messageKey="showcase.demoInfo" />}
-      <form aria-labelledby={formTitleId} noValidate onSubmit={submit}>
+      {message && (
+        <FormMessage ref={messageRef} type={message.type} messageKey={message.messageKey} />
+      )}
+      <form
+        ref={formRef}
+        aria-labelledby={formTitleId}
+        noValidate
+        onSubmit={handleSubmit(simulateSending)}
+      >
         <TextField
           label={t("showcase.nameLabel")}
           name="name"
@@ -110,6 +114,9 @@ export function ShowcasePage({ storage }: ShowcasePageProps) {
         />
         <Button type="submit" keepFocusOnMouseDown processing={processing}>
           {t("showcase.submit")}
+        </Button>
+        <Button keepFocusOnMouseDown onClick={() => showResult({ message: SAMPLE_ERROR })}>
+          {t("showcase.showExampleError")}
         </Button>
       </form>
     </main>

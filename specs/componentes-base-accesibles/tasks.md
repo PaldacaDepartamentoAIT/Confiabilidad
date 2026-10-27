@@ -392,12 +392,20 @@ los tres archivos de idioma a la vez.
   dar avisos — [Cierto] — revertir: no aplica. El mutante que ponía el error de servidor por delante
   del local murió — [Cierto] — revertir: no aplica.
 
-- [ ] T-029 Error general de ejemplo en la página de muestra
+- [x] T-029 Error general de ejemplo en la página de muestra
   RF: RF-017, RF-018, RF-020 | Depende de: T-027, T-028 | Archivos: 2
   Archivos: `showcase/ShowcasePage.tsx`, `showcase/ShowcasePage.test.tsx`.
   Hecho cuando: el botón «Mostrar error general de ejemplo», último en el orden de Tab, muestra el
   error de demasiados intentos con el prefijo «Error:» y le lleva el foco; cambiar de idioma lo
   traduce sin perderlo; el siguiente envío lo retira; suite verde.
+  Decisiones: el mensaje de demostración de T-027 pasa también por `showResult` del hook, así que
+  la página ya no guarda su propio estado del mensaje y el hook lo retira en cada envío —
+  [Cierto] — revertir: no aplica. El botón de ejemplo usa `keepFocusOnMouseDown`, como «Verificar»
+  (D-17) — [Cierto] — revertir: no aplica. Un mutante que quitaba el `ref` del mensaje murió —
+  [Cierto] — revertir: no aplica. Comprobado en Chromium: con el error del código visible,
+  completarlo y pulsar el botón con el ratón muestra el error con el foco; en inglés se traduce;
+  «Verify» con campos vacíos lo retira; Tab desde «Verify» llega al botón y Enter muestra el error —
+  [Cierto] — revertir: no aplica.
 
 - [ ] T-030 Auditoría de accesibilidad en todos los estados
   RF: RF-016, RF-017, RF-019 (D-13) | Depende de: T-014, T-029 | Archivos: 1
