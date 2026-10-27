@@ -1,7 +1,9 @@
 # Entrega E-10 · Contraseña nueva con sus reglas y su ayuda visible
 
 Rama: `feat/componentes-base-accesibles-contrasena-nueva`, con PR contra la rama de integración
-`feat/componentes-base-accesibles` · PR: pendiente · Líneas de código y tests: 191 (límite: 400).
+`feat/componentes-base-accesibles` · PR:
+[PaldacaDepartamentoAIT/Confiabilidad#28](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/28) ·
+Líneas de código y tests: 191 (límite: 400).
 
 Se hizo después de E-07 y antes de E-08, porque no depende de ellas. Nació de un `sdd-cambio` que
 añadió RF-026 y RF-027 y cambió RF-020 y RF-021; un segundo cambio, de RF-012, añadió T-040.
