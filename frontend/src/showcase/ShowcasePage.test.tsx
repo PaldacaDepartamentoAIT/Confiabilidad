@@ -119,3 +119,33 @@ test("a visible error follows the language change and keeps the field invalid", 
   expect(email).toHaveAttribute("aria-invalid", "true");
   expect(email).toHaveAccessibleDescription("Enter an email like name@company.com.");
 });
+
+test("the password is validated when leaving it together with its toggle", async () => {
+  const user = userEvent.setup();
+  renderPage();
+
+  const password = screen.getByLabelText("Contraseña", { exact: false });
+  await user.click(password);
+  await user.tab();
+  await user.tab({ shift: true });
+  await user.tab();
+
+  expect(password).not.toHaveAttribute("aria-invalid");
+
+  await user.tab();
+
+  expect(screen.getByRole("textbox", { name: "Código de verificación" })).toHaveFocus();
+  expect(password).toHaveAccessibleDescription("Completa este campo.");
+});
+
+test("a filled password left from its toggle has no error", async () => {
+  const user = userEvent.setup();
+  renderPage();
+
+  const password = screen.getByLabelText("Contraseña", { exact: false });
+  await user.type(password, "s3cret");
+  await user.tab();
+  await user.tab();
+
+  expect(password).not.toHaveAttribute("aria-invalid");
+});

@@ -364,7 +364,7 @@ los tres archivos de idioma a la vez.
   Hecho cuando: el input de contraseña tiene `spellcheck="false"`, `autocapitalize="off"` y
   `autocorrect="off"`, tanto oculto como visible; suite verde.
 
-- [ ] T-033 Contraseña y su control como un solo campo al salir
+- [x] T-033 Contraseña y su control como un solo campo al salir
   Tipo: cambio | Origen: `sdd-cambio` de RF-025 (2026-10-27)
   RF: RF-025 (D-16) | Depende de: T-012, T-020 | Archivos: 3
   Archivos: `components/fields/PasswordField.tsx`, `components/fields/PasswordField.test.tsx`,
@@ -373,6 +373,13 @@ los tres archivos de idioma a la vez.
   Mayús+Tab) no muestra error; salir del control hacia el código con la contraseña vacía muestra
   «Completa este campo.» en la contraseña; con la contraseña escrita y saliendo desde el control,
   no hay error; suite verde.
+  Decisiones: el evento que recibe el `onBlur` de fuera se crea con `Object.create` sobre el
+  original, con el input como `target`, para que la validación lea su valor aunque se salga desde
+  el control — [Probable] — revertir: que el hook reciba valores en vez de eventos (D-16,
+  descartada). Un mutante que dejaba de reenviar el `ref` sobrevivió; se añadió un test que
+  comprueba que `PasswordField` lo reenvía al input — [Cierto] — revertir: no aplica. Comprobado en
+  Chromium: contraseña vacía → botón y vuelta, sin error; botón → código, «Completa este campo.»;
+  con texto, sin error — [Cierto] — revertir: no aplica.
 
 ## Entregas
 Arrancar la página de muestra (para el «Cómo probarlo» de cada entrega), desde la raíz del
