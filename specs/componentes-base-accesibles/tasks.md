@@ -310,7 +310,7 @@ los tres archivos de idioma a la vez.
   El contenedor no lleva rol: al recibir el foco el lector lee su texto, prefijo incluido (D-11) —
   [Probable] — revertir: `role="group"` con el prefijo como nombre.
 
-- [ ] T-024 Envío en la página de muestra
+- [x] T-024 Envío en la página de muestra
   RF: RF-019, RF-020, RF-021 | Depende de: T-020, T-021, T-022, T-023 | Archivos: 2
   Archivos: `showcase/ShowcasePage.tsx`, `showcase/ShowcasePage.test.tsx`.
   Hecho cuando: la página añade el botón de envío tras el código; enviar con Enter desde un campo o
@@ -318,6 +318,12 @@ los tres archivos de idioma a la vez.
   en el correo; un envío válido muestra el mensaje informativo de demostración y le lleva el foco;
   el orden de Tab completo es selector → texto → correo → contraseña → «Mostrar contraseña» →
   código → enviar; suite verde.
+  Decisiones: el mensaje de demostración va encima del formulario y se retira en cada envío, desde
+  la página (el hook lo asumirá en T-028) — [Probable] — revertir: llevarlo al hook ya. Recibe el
+  foco tras pintarse (`flushSync`) — [Cierto] — revertir: no aplica. La prueba en Chromium encontró
+  que el clic con ratón en «Verificar» se pierde si al salir del campo desaparece un error (el
+  botón sube 50 px entre `mousedown` y `mouseup`); se corrige en T-034 (D-17) — [Cierto] — revertir:
+  no aplica.
 
 - [ ] T-025 Anunciador
   RF: RF-010, RF-017 (D-08) | Depende de: — | Archivos: 2
@@ -390,6 +396,17 @@ los tres archivos de idioma a la vez.
   Mayús+Tab) no muestra error; salir del control hacia el código con la contraseña vacía muestra
   «Completa este campo.» en la contraseña; con la contraseña escrita y saliendo desde el control,
   no hay error; suite verde.
+
+- [ ] T-034 Corrección: el clic de envío se pierde cuando un error desaparece al salir del campo
+  Tipo: corrección | Origen: prueba en Chromium de T-024
+  RF: RF-019, RF-021 (D-17) | Depende de: T-021, T-024 | Archivos: 3
+  Archivos: `components/Button.tsx`, `components/Button.test.tsx`, `showcase/ShowcasePage.tsx`.
+  Causa: al pulsar el botón con el ratón, el campo pierde el foco y su error desaparece; el botón
+  sube entre el `mousedown` y el `mouseup` y el navegador no cuenta el clic.
+  Hecho cuando: con `keepFocusOnMouseDown`, el `mousedown` del botón se cancela y el foco sigue en
+  el campo; con teclado nada cambia; el botón «Verificar» de la página lo usa; en Chromium, con el
+  error del código visible, completarlo y pulsar «Verificar» con el ratón envía el formulario; suite
+  verde.
   Decisiones: el evento que recibe el `onBlur` de fuera se crea con `Object.create` sobre el
   original, con el input como `target`, para que la validación lea su valor aunque se salga desde
   el control — [Probable] — revertir: que el hook reciba valores en vez de eventos (D-16,
@@ -451,7 +468,7 @@ pnpm --filter frontend test
   el error se traduce; corregir el correo y salir: el error desaparece.
 
 - E-07 Envío del formulario con foco al primer error y mensaje informativo de demostración.
-  Tareas: T-021…T-024 | Líneas estimadas: 380 | Rama: feat/componentes-base-accesibles-envio
+  Tareas: T-021…T-024, T-034 | Líneas estimadas: 380 | Rama: feat/componentes-base-accesibles-envio
   Cómo probarlo: con el formulario vacío, pulsar Enter en un campo: aparecen los errores y el
   foco va al primer campo; con todo válido, enviar: aparece el mensaje de demostración con el foco.
 

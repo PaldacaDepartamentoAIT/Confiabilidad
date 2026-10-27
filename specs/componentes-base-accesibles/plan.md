@@ -258,6 +258,16 @@ Motivo: el hook y la página siguen tratando la contraseña igual que los demás
 (`onBlur={onBlur("password")}`), y la regla de qué cuenta como «salir» queda en el componente que
 conoce su propio botón.
 
+### D-17 El clic en los botones bajo los campos no quita el foco al campo
+Elegida: `Button` acepta `keepFocusOnMouseDown`, que cancela el `mousedown`; el botón de envío y el
+de error de ejemplo (E-09) lo usan.
+Descartada: reservar siempre el hueco del mensaje de error bajo cada campo, o retirar los errores
+al escribir.
+Motivo: al validar al salir (RF-025), pulsar el botón con el ratón hace salir del campo; si su error
+desaparece, el botón se desplaza entre el `mousedown` y el `mouseup` y el clic se pierde. Reservar
+el hueco es una decisión de estilo, que se define más adelante; retirar los errores al escribir
+cambiaría RF-025 y no evita el salto cuando aparece un error nuevo.
+
 ## Estrategia de tests
 Todo con Vitest en jsdom (`pnpm --filter frontend test`), con cobertura de líneas ≥ 80 % (P-05),
 TDD estricto (P-04) y un mutante por tarea (`sdd-implementar`).
