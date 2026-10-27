@@ -431,11 +431,15 @@ los tres archivos de idioma a la vez.
   tres idiomas, pasan. Vaciar un texto nuevo en portugués hace fallar el test — [Cierto] —
   revertir: no aplica.
 
-- [ ] T-036 Texto de ayuda ligado al campo
+- [x] T-036 Texto de ayuda ligado al campo
   RF: RF-027 | Depende de: T-010 | Archivos: 2
   Archivos: `components/fields/TextField.tsx`, `components/fields/TextField.test.tsx`.
   Hecho cuando: con `hint`, el texto se ve bajo el campo y es su descripción accesible; con `hint`
   y error, la descripción accesible contiene los dos; sin `hint` nada cambia; suite verde.
+  Decisiones: la ayuda va tras el control de la contraseña y antes del error, y la descripción
+  accesible lee primero la ayuda y después el error — [Probable] — revertir: invertir el orden de
+  `aria-describedby`. «Sin `hint` nada cambia» lo cubren los tests de T-010, que siguen pasando —
+  [Cierto] — revertir: no aplica.
 
 - [ ] T-037 Reglas de la contraseña nueva
   RF: RF-026 (D-18) | Depende de: T-019 | Archivos: 2
