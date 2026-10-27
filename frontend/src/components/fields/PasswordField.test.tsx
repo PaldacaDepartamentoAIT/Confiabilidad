@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { ReactElement } from "react";
+import { createRef, type ReactElement } from "react";
 import { I18nextProvider } from "react-i18next";
 
 import { createI18n } from "../../i18n";
@@ -79,4 +79,56 @@ test("keeps the password away from spellcheckers and autocorrection, hidden or s
 
   expect(input).toHaveAttribute("type", "text");
   expectProtected();
+});
+
+test("moving between the input and its toggle is not leaving the field", async () => {
+  const user = userEvent.setup();
+  const onBlur = vi.fn();
+  renderWithI18n(
+    <>
+      <PasswordField label="Password" kind="current" onBlur={onBlur} />
+      <button type="button">After</button>
+    </>,
+  );
+
+  const input = screen.getByLabelText("Password");
+  await user.click(input);
+  await user.tab();
+  expect(screen.getByRole("button", { name: "Show password" })).toHaveFocus();
+  await user.tab({ shift: true });
+  expect(input).toHaveFocus();
+  await user.tab();
+
+  expect(onBlur).not.toHaveBeenCalled();
+
+  await user.tab();
+
+  expect(screen.getByRole("button", { name: "After" })).toHaveFocus();
+  expect(onBlur).toHaveBeenCalledTimes(1);
+  expect(onBlur.mock.calls[0][0].target).toBe(input);
+});
+
+test("leaving the input towards anything but its toggle is leaving the field", async () => {
+  const user = userEvent.setup();
+  const onBlur = vi.fn();
+  renderWithI18n(
+    <>
+      <PasswordField label="Password" kind="current" onBlur={onBlur} />
+      <button type="button">After</button>
+    </>,
+  );
+
+  const input = screen.getByLabelText("Password");
+  await user.click(input);
+  await user.click(screen.getByRole("button", { name: "After" }));
+
+  expect(onBlur).toHaveBeenCalledTimes(1);
+  expect(onBlur.mock.calls[0][0].target).toBe(input);
+});
+
+test("forwards its ref to the password input", () => {
+  const ref = createRef<HTMLInputElement>();
+  renderWithI18n(<PasswordField ref={ref} label="Password" kind="current" />);
+
+  expect(ref.current).toBe(screen.getByLabelText("Password"));
 });

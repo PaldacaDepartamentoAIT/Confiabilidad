@@ -144,9 +144,10 @@ según esa indicación.
 ### RF-025 Momento de la validación
 Cuando el usuario salga de un campo, aunque aún no haya enviado el formulario, o cuando envíe el
 formulario, el sistema deberá validar ese campo (todos, al enviar) y mostrar o retirar su error
-según el resultado. Las comprobaciones que dependen de datos del servidor (por ejemplo, si un correo
-ya está registrado) solo deberán hacerse al enviar, y su error deberá mantenerse hasta el siguiente
-envío.
+según el resultado. El campo de contraseña y su control de mostrar u ocultar cuentan como un solo
+campo: pasar el foco del uno al otro no es salir del campo, y salir de los dos sí lo es. Las
+comprobaciones que dependen de datos del servidor (por ejemplo, si un correo ya está registrado)
+solo deberán hacerse al enviar, y su error deberá mantenerse hasta el siguiente envío.
 
 ## Supuestos
 - S-01 Los textos provisionales describen el contexto real en el que se usarán (cuenta de usuario
@@ -203,3 +204,9 @@ envío.
 - 2026-10-26 — S-02 ajustado: el backend mantiene el español por defecto; se descarta el
   `sdd-cambio` del backend por su poco beneficio — Estado: clarificado
 - 2026-10-26 — Aprobación por el usuario — Estado: aprobada
+- 2026-10-27 — Cambio: la contraseña y su control de mostrar u ocultar cuentan como un solo campo al
+  validar al salir — RF: RF-025 — Estado: pendiente de clarificar
+- 2026-10-27 — Clarificación (C-14): salir de los dos sí valida la contraseña — RF: RF-025 —
+  Estado: clarificado
+- 2026-10-27 — Impacto analizado: plan (M-07, D-16) y tarea nueva T-033 en E-06; aprobado por el
+  usuario — RF: RF-025 — Estado: impacto analizado

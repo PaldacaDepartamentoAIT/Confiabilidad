@@ -238,25 +238,40 @@ los tres archivos de idioma a la vez.
   pegar «Tu código: 98-76 54 321» con el cursor en medio deja `987654`; pegar «sin números» no
   cambia nada; el foco sigue en el campo y no se envía nada — [Cierto] — revertir: no aplica.
 
-- [ ] T-018 Reglas de validación de la página de muestra
+- [x] T-018 Reglas de validación de la página de muestra
   RF: RF-021 | Depende de: — | Archivos: 2
   Archivos: `showcase/validators.ts`, `showcase/validators.test.ts`.
   Hecho cuando: `required` rechaza `""` y `"   "`; `email` acepta `a@b` y rechaza `a@@b`, `@b`,
   `a@`, `a b@c` y `a@b@c`; `sixDigitCode` rechaza `"12345"` y acepta `"123456"`; cada rechazo
   devuelve una clave de `validation` existente; suite verde.
+  Decisiones: las reglas son `Validator` del hook (T-019) y devuelven `{ key }` sin parámetros; el
+  correo vacío lo cubre `required`, que irá antes en la lista de cada campo — [Cierto] — revertir:
+  no aplica. `sixDigitCode` usa `CODE_LENGTH` (T-015) — [Cierto] — revertir: repetir el 6.
 
-- [ ] T-019 Validación al salir de cada campo
+- [x] T-019 Validación al salir de cada campo
   RF: RF-016, RF-025 (D-05) | Depende de: T-002 | Archivos: 2
   Archivos: `forms/useFormValidation.ts`, `forms/useFormValidation.test.tsx`.
   Hecho cuando: al salir de un campo, aunque no se haya enviado nada, el hook valida solo ese campo
   y pone o quita su error; los errores se guardan como clave y parámetros; suite verde.
+  Decisiones: se implementó antes que T-018 porque define los tipos `FieldError` (clave y
+  parámetros) y `Validator` que usan las reglas de la página; así el hook genérico no importa nada
+  de la página — [Cierto] — revertir: no aplica. El hook lee el valor del propio evento al salir
+  (`event.target.value`), sin guardar los valores de los campos, así que sirve también para
+  `CodeField`, que gestiona su propio estado — [Probable] — revertir: guardar los valores en el
+  hook. Con varias reglas, el campo muestra el primer error — [Cierto] — revertir: mostrar todos.
 
-- [ ] T-020 Errores al salir en la página de muestra
+- [x] T-020 Errores al salir en la página de muestra
   RF: RF-016, RF-018, RF-025 | Depende de: T-017, T-018, T-019 | Archivos: 2
   Archivos: `showcase/ShowcasePage.tsx`, `showcase/ShowcasePage.test.tsx`.
   Hecho cuando: salir del correo con `a@` muestra su error, ligado al campo; corregirlo y salir lo
   retira; con un error visible, cambiar a `en` muestra el error en inglés y el campo sigue marcado
   como no válido; suite verde.
+  Decisiones: reglas por campo: nombre y contraseña, obligatorios; correo, obligatorio y con formato;
+  código, obligatorio y de 6 dígitos — [Cierto] — revertir: no aplica. Al salir de la contraseña
+  hacia «Mostrar contraseña» también se valida, porque el foco sale del input — [Probable] —
+  revertir: no validar cuando el foco va al control. Comprobado en Chromium: el error aparece al
+  salir, se traduce al cambiar a portugués y desaparece al corregir — [Cierto] — revertir: no
+  aplica.
 
 - [ ] T-021 Botón
   RF: RF-009 | Depende de: T-002 | Archivos: 2
@@ -349,6 +364,23 @@ los tres archivos de idioma a la vez.
   Hecho cuando: el input de contraseña tiene `spellcheck="false"`, `autocapitalize="off"` y
   `autocorrect="off"`, tanto oculto como visible; suite verde.
 
+- [x] T-033 Contraseña y su control como un solo campo al salir
+  Tipo: cambio | Origen: `sdd-cambio` de RF-025 (2026-10-27)
+  RF: RF-025 (D-16) | Depende de: T-012, T-020 | Archivos: 3
+  Archivos: `components/fields/PasswordField.tsx`, `components/fields/PasswordField.test.tsx`,
+  `showcase/ShowcasePage.test.tsx`.
+  Hecho cuando: pasar con Tab de la contraseña vacía a «Mostrar contraseña» (y volver con
+  Mayús+Tab) no muestra error; salir del control hacia el código con la contraseña vacía muestra
+  «Completa este campo.» en la contraseña; con la contraseña escrita y saliendo desde el control,
+  no hay error; suite verde.
+  Decisiones: el evento que recibe el `onBlur` de fuera se crea con `Object.create` sobre el
+  original, con el input como `target`, para que la validación lea su valor aunque se salga desde
+  el control — [Probable] — revertir: que el hook reciba valores en vez de eventos (D-16,
+  descartada). Un mutante que dejaba de reenviar el `ref` sobrevivió; se añadió un test que
+  comprueba que `PasswordField` lo reenvía al input — [Cierto] — revertir: no aplica. Comprobado en
+  Chromium: contraseña vacía → botón y vuelta, sin error; botón → código, «Completa este campo.»;
+  con texto, sin error — [Cierto] — revertir: no aplica.
+
 ## Entregas
 Arrancar la página de muestra (para el «Cómo probarlo» de cada entrega), desde la raíz del
 repositorio:
@@ -396,7 +428,7 @@ pnpm --filter frontend test
   98-76 54» sobre un código ya escrito (queda «987654»).
 
 - E-06 Errores de campo al salir de cada campo, traducidos al cambiar de idioma.
-  Tareas: T-018…T-020 | Líneas estimadas: 330 | Rama:
+  Tareas: T-018…T-020, T-033 | Líneas estimadas: 330 | Rama:
   feat/componentes-base-accesibles-validacion-al-salir
   Cómo probarlo: escribir «a@» en el correo y pulsar Tab: aparece el error; cambiar a portugués:
   el error se traduce; corregir el correo y salir: el error desaparece.
