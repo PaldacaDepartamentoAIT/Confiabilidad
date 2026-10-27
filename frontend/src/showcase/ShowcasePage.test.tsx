@@ -51,6 +51,7 @@ test("the tab order goes through the language selector and then each field in or
     screen.getByRole("button", { name: "Mostrar contraseña (Nueva contraseña)" }),
     screen.getByRole("textbox", { name: "Código de verificación" }),
     screen.getByRole("button", { name: "Verificar" }),
+    screen.getByRole("button", { name: "Mostrar error general de ejemplo" }),
   ];
   for (const element of expected) {
     await user.tab();
@@ -327,4 +328,33 @@ test("in the whole app, entering the processing state is announced to screen rea
     vi.runOnlyPendingTimers();
     vi.useRealTimers();
   }
+});
+
+test("the sample error button shows the too many attempts error and focuses it", async () => {
+  const user = userEvent.setup();
+  renderPage();
+
+  await user.click(screen.getByRole("button", { name: "Mostrar error general de ejemplo" }));
+
+  const message = screen.getByText("Demasiados intentos", { exact: false }).closest("div");
+  expect(message).toHaveTextContent(
+    "Error: Demasiados intentos. Espera unos minutos y vuelve a intentarlo.",
+  );
+  expect(message).toHaveFocus();
+});
+
+test("the sample error follows the language change and the next submission removes it", async () => {
+  const user = userEvent.setup();
+  renderPage();
+
+  await user.click(screen.getByRole("button", { name: "Mostrar error general de ejemplo" }));
+  await user.click(screen.getByRole("button", { name: "English" }));
+
+  expect(screen.getByText("Too many attempts", { exact: false }).closest("div")).toHaveTextContent(
+    "Error: Too many attempts. Wait a few minutes and try again.",
+  );
+
+  await user.click(screen.getByRole("button", { name: "Verify" }));
+
+  expect(screen.queryByText("Too many attempts", { exact: false })).not.toBeInTheDocument();
 });

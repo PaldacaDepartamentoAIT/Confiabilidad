@@ -372,7 +372,7 @@ los tres archivos de idioma a la vez.
   sobrevivió; se añadió un test que monta la app completa y comprueba el aviso — [Cierto] —
   revertir: no aplica. Comprobado en Chromium con tiempo real — [Cierto] — revertir: no aplica.
 
-- [ ] T-028 Errores de servidor y mensaje general junto a errores de campo
+- [x] T-028 Errores de servidor y mensaje general junto a errores de campo
   RF: RF-017, RF-025 (D-14) | Depende de: T-022, T-025 | Archivos: 2
   Archivos: `forms/useFormValidation.ts`, `forms/useFormValidation.test.tsx`.
   Hecho cuando: un error de servidor en un campo se mantiene al salir del campo y se retira en el
@@ -380,27 +380,56 @@ los tres archivos de idioma a la vez.
   y sin errores de campo, el foco va al mensaje; con ambos, el foco va al primer campo con error y
   el mensaje se anuncia en la región urgente si es un error y en la educada si no; el mensaje
   general se retira en el siguiente envío; suite verde.
+  Decisiones: la pantalla entrega la respuesta con `showResult({ fieldErrors, message })`; el hook
+  guarda el mensaje general y expone `formRef` y `messageRef` para mover el foco cuando la respuesta
+  llega más tarde que el envío — [Probable] — revertir: que la pantalla gestione el foco. El foco
+  se decide solo con los errores de servidor que llegan en esa respuesta, no con los locales que
+  ya hubiera, porque un mensaje general que no viene de un envío (el botón de ejemplo de T-029) debe
+  recibir el foco — [Probable] — revertir: contar también los errores locales. Si el error local de
+  un campo desaparece, vuelve a verse su error de servidor hasta el siguiente envío, como pide
+  RF-025 — [Probable] — revertir: retirar el de servidor al cambiar el valor. Como el hook ahora
+  traduce el anuncio, los tests anteriores del hook se montan con el proveedor de traducción para no
+  dar avisos — [Cierto] — revertir: no aplica. El mutante que ponía el error de servidor por delante
+  del local murió — [Cierto] — revertir: no aplica.
 
-- [ ] T-029 Error general de ejemplo en la página de muestra
+- [x] T-029 Error general de ejemplo en la página de muestra
   RF: RF-017, RF-018, RF-020 | Depende de: T-027, T-028 | Archivos: 2
   Archivos: `showcase/ShowcasePage.tsx`, `showcase/ShowcasePage.test.tsx`.
   Hecho cuando: el botón «Mostrar error general de ejemplo», último en el orden de Tab, muestra el
   error de demasiados intentos con el prefijo «Error:» y le lleva el foco; cambiar de idioma lo
   traduce sin perderlo; el siguiente envío lo retira; suite verde.
+  Decisiones: el mensaje de demostración de T-027 pasa también por `showResult` del hook, así que
+  la página ya no guarda su propio estado del mensaje y el hook lo retira en cada envío —
+  [Cierto] — revertir: no aplica. El botón de ejemplo usa `keepFocusOnMouseDown`, como «Verificar»
+  (D-17) — [Cierto] — revertir: no aplica. Un mutante que quitaba el `ref` del mensaje murió —
+  [Cierto] — revertir: no aplica. Comprobado en Chromium: con el error del código visible,
+  completarlo y pulsar el botón con el ratón muestra el error con el foco; en inglés se traduce;
+  «Verify» con campos vacíos lo retira; Tab desde «Verify» llega al botón y Enter muestra el error —
+  [Cierto] — revertir: no aplica.
 
-- [ ] T-030 Auditoría de accesibilidad en todos los estados
+- [x] T-030 Auditoría de accesibilidad en todos los estados
   RF: RF-016, RF-017, RF-019 (D-13) | Depende de: T-014, T-029 | Archivos: 1
   Archivos: `showcase/a11y.test.tsx`.
   Hecho cuando: `axe` no encuentra infracciones en la página con errores de campo, procesando, con
   el mensaje informativo y con el error general, en los tres idiomas; suite verde.
+  Decisiones: el envío corre con temporizadores simulados y axe con los reales, así que el estado
+  («procesando» o con el mensaje) queda congelado mientras se audita — [Cierto] — revertir: no
+  aplica. Los avisos de jsdom «HTMLCanvasElement.prototype.getContext» vienen de la regla de
+  contraste de axe y ya salían antes de esta tarea; no hacen fallar nada y quitarlos exigiría la
+  dependencia `canvas` — [Cierto] — revertir: no aplica. Un mutante que añadía un atributo ARIA
+  con un valor no válido solo al procesar hizo fallar solo los tres tests de «procesando» —
+  [Cierto] — revertir: no aplica.
 
-- [ ] T-031 Resumen y checklist de prueba manual
+- [x] T-031 Resumen y checklist de prueba manual
   RF: RF-019, RF-020 (CF-3, CF-5, S-08) | Depende de: T-030 | Archivos: 2
   Archivos: `specs/componentes-base-accesibles/resumen.md`,
   `specs/componentes-base-accesibles/HUMAN_TODO.md`.
   Hecho cuando: `resumen.md` explica qué se hizo, cómo arrancar y probar la página de muestra, el
   checklist de teclado (CF-3) y de lector de pantalla con NVDA o VoiceOver (CF-5) y el marco
   teórico; `HUMAN_TODO.md` tiene la acción de completar ese checklist.
+  Decisiones: el marco teórico reúne los conceptos que generaron dudas en toda la feature, no solo
+  en esta entrega — [Cierto] — revertir: no aplica. El resumen queda en estado «pendiente de
+  validación» hasta que `sdd-validar` dé su veredicto — [Cierto] — revertir: no aplica.
 
 - [x] T-032 Contraseña visible fuera de correctores y autocorrección
   Tipo: corrección | Origen: revisión de seguridad durante E-04 (D-15)
@@ -588,6 +617,9 @@ pnpm --filter frontend test
   Cómo probarlo: pulsar «Mostrar error general de ejemplo»: aparece «Error: …» con el foco;
   cambiar de idioma lo traduce; enviar de nuevo lo retira. Recorrer el checklist de `resumen.md`
   con NVDA o VoiceOver.
+  Excepción: 403 líneas reales. Los tests de T-028 necesitan un formulario de prueba que use todo el
+  hook (errores de servidor, mensaje general, foco y anuncios), y T-030 audita cuatro estados en
+  tres idiomas. Bajar de 400 obligaría a quitar cobertura o a empeorar la lectura de la página.
 
 - E-10 Contraseña nueva con sus reglas y su ayuda visible. Se implementa después de E-07 y antes
   de E-08, porque no depende de E-08 ni de E-09.
