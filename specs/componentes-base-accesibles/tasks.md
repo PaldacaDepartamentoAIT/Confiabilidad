@@ -420,13 +420,16 @@ los tres archivos de idioma a la vez.
   con un valor no válido solo al procesar hizo fallar solo los tres tests de «procesando» —
   [Cierto] — revertir: no aplica.
 
-- [ ] T-031 Resumen y checklist de prueba manual
+- [x] T-031 Resumen y checklist de prueba manual
   RF: RF-019, RF-020 (CF-3, CF-5, S-08) | Depende de: T-030 | Archivos: 2
   Archivos: `specs/componentes-base-accesibles/resumen.md`,
   `specs/componentes-base-accesibles/HUMAN_TODO.md`.
   Hecho cuando: `resumen.md` explica qué se hizo, cómo arrancar y probar la página de muestra, el
   checklist de teclado (CF-3) y de lector de pantalla con NVDA o VoiceOver (CF-5) y el marco
   teórico; `HUMAN_TODO.md` tiene la acción de completar ese checklist.
+  Decisiones: el marco teórico reúne los conceptos que generaron dudas en toda la feature, no solo
+  en esta entrega — [Cierto] — revertir: no aplica. El resumen queda en estado «pendiente de
+  validación» hasta que `sdd-validar` dé su veredicto — [Cierto] — revertir: no aplica.
 
 - [x] T-032 Contraseña visible fuera de correctores y autocorrección
   Tipo: corrección | Origen: revisión de seguridad durante E-04 (D-15)
