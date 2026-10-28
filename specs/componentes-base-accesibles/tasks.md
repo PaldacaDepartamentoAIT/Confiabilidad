@@ -87,15 +87,21 @@ los tres archivos de idioma a la vez.
   — revertir: no aplica. `index.html` sigue con `lang="es"` hasta que arranca la app, que lo
   sustituye; cambiarlo queda fuera de los archivos de la tarea — [Probable] — revertir: no aplica.
 
-- [ ] T-007 Idioma elegido guardado en el navegador
+- [x] T-007 Idioma elegido guardado en el navegador
   RF: RF-005, RF-023 (S-04) | Depende de: T-004 | Archivos: 2
   Archivos: `i18n/language.ts`, `i18n/language.test.ts`.
   Hecho cuando: `persistLanguage("pt-BR", almacenamiento)` guarda el valor en
   `confiabilidad.language`; `detectInitialLanguage` prefiere un valor guardado válido al del
   navegador; con un valor guardado `fr` lo borra y aplica RF-002; con un almacenamiento cuyo
   `getItem`, `setItem` o `removeItem` lanzan errores no lanza nada y aplica RF-002; suite verde.
+  Decisiones: el almacenamiento es un parámetro opcional de `detectInitialLanguage`, así que las
+  llamadas de T-004 sin él siguen valiendo — [Cierto] — revertir: hacerlo obligatorio. Se añade
+  `browserStorage()`, que devuelve `window.localStorage` o nada si el navegador bloquea el acceso
+  (que también puede lanzar), para que T-009 lo use en `main.tsx` — [Cierto] — revertir: mover esa
+  protección a `main.tsx`. Un valor guardado solo vale si es exactamente `es`, `pt-BR` o `en`
+  (`pt` guardado se borra) — [Probable] — revertir: pasar el valor por `matchLanguage`.
 
-- [ ] T-008 Selector de idioma
+- [x] T-008 Selector de idioma
   RF: RF-003, RF-004, RF-005, RF-006 (D-06) | Depende de: T-002, T-007 | Archivos: 4
   Archivos: `frontend/package.json`, `pnpm-lock.yaml`, `components/LanguageSwitcher.tsx`,
   `components/LanguageSwitcher.test.tsx`.
@@ -105,15 +111,27 @@ los tres archivos de idioma a la vez.
   «English» y Enter (y, en otro caso, Espacio) cambia el idioma de la instancia, lo guarda con
   `persistLanguage`, marca el botón como activo y deja el foco en él; suite verde.
   Excepción: `pnpm-lock.yaml` lo regenera `pnpm add`; no es un archivo editado a mano.
+  Decisiones: el selector recibe el almacenamiento como prop opcional (sin él, cambia el idioma
+  pero no lo guarda), para probarlo con uno en memoria — [Cierto] — revertir: leer
+  `browserStorage()` dentro del componente. El grupo usa `role="group"` con `aria-label` en lugar
+  de `<fieldset>`, que no es un formulario — [Probable] — revertir: `<fieldset>` y `<legend>`. Los
+  botones son `type="button"` para no enviar un formulario que los contenga — [Cierto] — revertir:
+  quitar el atributo.
 
-- [ ] T-009 Selector de idioma en la aplicación
+- [x] T-009 Selector de idioma en la aplicación
   RF: RF-004, RF-005 | Depende de: T-006, T-008 | Archivos: 3
   Archivos: `App.tsx`, `App.test.tsx`, `main.tsx`.
   Hecho cuando: `main.tsx` pasa `window.localStorage` (protegido) a `detectInitialLanguage`; `App`
   muestra el selector; el test cambia de `es` a `pt-BR` con el teclado y comprueba el encabezado
   portugués, `<html lang="pt-BR">`, el título portugués y el foco en el botón; suite verde.
+  Decisiones: `main.tsx` obtiene el almacenamiento con `browserStorage()` (T-007) y `App` lo recibe
+  como prop para pasarlo al selector — [Cierto] — revertir: leerlo dentro del selector. El selector
+  va antes del encabezado, primero en el orden de tabulación — [Probable] — revertir: moverlo
+  detrás. Comprobado en Chromium: con el navegador en francés sale en inglés; Tab, Tab, Enter pasa
+  a portugués con el foco en «Português (Brasil)»; al recargar sigue en portugués; un valor
+  guardado `xx` se borra y vuelve al idioma del navegador — [Cierto] — revertir: no aplica.
 
-- [ ] T-010 Campo de texto y de correo
+- [x] T-010 Campo de texto y de correo
   RF: RF-011, RF-016 (D-09) | Depende de: T-002 | Archivos: 3
   Archivos: `components/fields/TextField.tsx`, `components/fields/TextField.test.tsx`,
   `components/fields/RequiredLegend.tsx`.
@@ -122,8 +140,15 @@ los tres archivos de idioma a la vez.
   de tipo correo, `autocomplete="email"` e `inputmode="email"`; con error, `aria-invalid="true"` y
   una descripción accesible igual al mensaje; sin error, ninguno de los dos; `RequiredLegend`
   muestra el texto traducido que explica el asterisco; suite verde.
+  Decisiones: `TextField` recibe la etiqueta y el error ya traducidos (texto, no claves): la página
+  que lo usa traduce al pintar, así que un cambio de idioma lo repinta igual (D-05 se cumple en el
+  estado del formulario, M-10) — [Probable] — revertir: pasar claves y traducir dentro. Reenvía su
+  `ref` al input, para que el foco al primer error (T-022) no necesite tocar el componente —
+  [Cierto] — revertir: quitar `forwardRef`. El resto de atributos del input pasan tal cual, pero
+  `type`, `required`, `id` y los `aria-*` de accesibilidad los fija el componente — [Cierto] —
+  revertir: no aplica.
 
-- [ ] T-011 Página de muestra con los campos de texto y correo
+- [x] T-011 Página de muestra con los campos de texto y correo
   RF: RF-011, RF-019, RF-020 | Depende de: T-009, T-010 | Archivos: 4
   Archivos: `showcase/ShowcasePage.tsx`, `showcase/ShowcasePage.test.tsx`, `App.tsx`,
   `App.test.tsx`.
@@ -133,8 +158,15 @@ los tres archivos de idioma a la vez.
   selector → texto → correo en ese orden y comprueba que un valor escrito se conserva al cambiar de
   idioma; suite verde.
   Excepción: mover el contenido de `App` a la página cambia `App` y su test a la vez que la página.
+  Decisiones: al final no hizo falta tocar `App.test.tsx`: sus tests siguen valiendo porque `App`
+  muestra la página, así que la tarea tocó 3 archivos y no usó la excepción — [Cierto] — revertir:
+  no aplica. El formulario se nombra con un encabezado visible `h2` («Formulario de ejemplo») y
+  `aria-labelledby` — [Probable] — revertir: `aria-label` sin encabezado. Los campos aún no
+  guardan su valor en el estado (el navegador lo conserva al cambiar de idioma); el estado llega
+  con la validación (T-019) — [Cierto] — revertir: no aplica. Comprobado en Chromium: orden de Tab
+  y valores conservados al pasar a portugués — [Cierto] — revertir: no aplica.
 
-- [ ] T-012 Campo de contraseña
+- [x] T-012 Campo de contraseña
   RF: RF-012, RF-024 (D-10) | Depende de: T-010 | Archivos: 2
   Archivos: `components/fields/PasswordField.tsx`, `components/fields/PasswordField.test.tsx`.
   Hecho cuando: `kind` es obligatorio en el tipo (un uso sin `kind` en el test va marcado con
@@ -142,29 +174,46 @@ los tres archivos de idioma a la vez.
   `new-password`; el control «Mostrar contraseña» se activa con Enter y con Espacio, alterna el
   `type` entre `password` y `text`, cambia `aria-pressed`, conserva el valor y deja el foco en el
   control; suite verde.
+  Decisiones: para apoyarse en `TextField` (M-07), este acepta ahora el tipo `password` y un hueco
+  `adornment` tras el input, donde va el control; la tarea tocó así 3 archivos en lugar de 2, dentro
+  del máximo — [Cierto] — revertir: duplicar la estructura del campo en `PasswordField`. El control
+  va después del input, así que en el orden de Tab viene justo detrás del campo — [Probable] —
+  revertir: moverlo delante.
 
-- [ ] T-013 Contraseña en la página de muestra
+- [x] T-013 Contraseña en la página de muestra
   RF: RF-019, RF-020, RF-024 (S-09) | Depende de: T-011, T-012 | Archivos: 2
   Archivos: `showcase/ShowcasePage.tsx`, `showcase/ShowcasePage.test.tsx`.
   Hecho cuando: la página añade un campo de contraseña actual obligatorio tras el correo; el orden
   de Tab es selector → texto → correo → contraseña → «Mostrar contraseña»; suite verde.
 
-- [ ] T-014 Auditoría automática de accesibilidad de la página
+- [x] T-014 Auditoría automática de accesibilidad de la página
   RF: RF-006, RF-011, RF-019 (D-13) | Depende de: T-013 | Archivos: 3
   Archivos: `frontend/package.json`, `pnpm-lock.yaml`, `showcase/a11y.test.tsx`.
   Hecho cuando: `axe-core` está en `devDependencies`; el test ejecuta `axe` sobre la página de
   muestra en `es`, `pt-BR` y `en` y falla si hay alguna infracción (comprobado quitando la etiqueta
   de un campo); suite verde.
   Excepción: `pnpm-lock.yaml` lo regenera `pnpm add`; no es un archivo editado a mano.
+  Decisiones: la auditoría se ejecuta sobre todo el documento con `App` montada, así que también
+  revisa `<html lang>` y las reglas de buenas prácticas de axe (encabezado `h1`, región `main`) —
+  [Cierto] — revertir: auditar solo el contenedor. Un segundo test comprueba que la auditoría
+  detecta un campo sin etiqueta, para que no pase en verde sin revisar nada. Los tests pasaron
+  desde el principio porque la página ya cumplía; lo que demuestra que la auditoría funciona son
+  los mutantes (etiquetas desenlazadas y un `aria-checked` no válido en un botón: los dos la hacen
+  fallar) — [Cierto] — revertir: no aplica.
 
-- [ ] T-015 Normalización del código
+- [x] T-015 Normalización del código
   RF: RF-013, RF-014 | Depende de: — | Archivos: 2
   Archivos: `components/fields/code.ts`, `components/fields/code.test.ts`.
   Hecho cuando: `normalizeTypedCode("12a３٤5 67")` devuelve `"123456"`; `extractPastedCode("Tu
   código: 98-76 54 321")` devuelve `"987654"`; `extractPastedCode("sin números")` indica que no hay
   dígitos; suite verde.
+  Decisiones: solo se convierten los dígitos de ancho completo (`０`-`９`) y los arábigos
+  (`٠`-`٩`) que nombra RF-013; los persas (`۰`-`۹`) y otros sistemas se descartan como cualquier
+  otro carácter — [Cierto] — revertir: añadir su primer carácter a la lista de series. La longitud
+  se exporta como `CODE_LENGTH` para que el campo y la validación (T-018) usen la misma —
+  [Cierto] — revertir: repetir el 6.
 
-- [ ] T-016 Campo del código
+- [x] T-016 Campo del código
   RF: RF-013, RF-014, RF-015, RF-016 | Depende de: T-010, T-015 | Archivos: 2
   Archivos: `components/fields/CodeField.tsx`, `components/fields/CodeField.test.tsx`.
   Hecho cuando: un único campo con etiqueta, `inputmode="numeric"` y
@@ -172,55 +221,96 @@ los tres archivos de idioma a la vez.
   con `"12"` ya escrito y el cursor en medio deja `"987654"`; pegar `"abc"` deja el valor como
   estaba; al llegar a 6 dígitos no se llama a `onSubmit` del formulario y el foco sigue en el campo;
   con error, `aria-invalid` y descripción accesible como en T-010; suite verde.
+  Decisiones: `CodeField` reutiliza `TextField` (etiqueta, obligatoriedad, error y `ref`) y guarda
+  el código en su propio estado, con `defaultValue` y un aviso `onValueChange` para quien necesite
+  el valor (la validación, T-019) — [Probable] — revertir: hacerlo controlado desde fuera con
+  `value`. Un mutante sin `preventDefault` en el pegado sobrevivió, porque `user-event` no inserta
+  el texto pegado tras el manejador como haría un navegador; se añadió un test que comprueba que el
+  pegado por defecto se cancela — [Cierto] — revertir: no aplica.
 
-- [ ] T-017 Código en la página de muestra
+- [x] T-017 Código en la página de muestra
   RF: RF-019, RF-020 | Depende de: T-013, T-016 | Archivos: 2
   Archivos: `showcase/ShowcasePage.tsx`, `showcase/ShowcasePage.test.tsx`.
   Hecho cuando: la página añade el campo del código obligatorio tras la contraseña; el orden de Tab
   incluye el código tras «Mostrar contraseña»; la auditoría de T-014 sigue sin infracciones; suite
   verde.
+  Decisiones: comprobado en Chromium con el portapapeles real: escribir `1a2b` y `３٤` deja `1234`;
+  pegar «Tu código: 98-76 54 321» con el cursor en medio deja `987654`; pegar «sin números» no
+  cambia nada; el foco sigue en el campo y no se envía nada — [Cierto] — revertir: no aplica.
 
-- [ ] T-018 Reglas de validación de la página de muestra
+- [x] T-018 Reglas de validación de la página de muestra
   RF: RF-021 | Depende de: — | Archivos: 2
   Archivos: `showcase/validators.ts`, `showcase/validators.test.ts`.
   Hecho cuando: `required` rechaza `""` y `"   "`; `email` acepta `a@b` y rechaza `a@@b`, `@b`,
   `a@`, `a b@c` y `a@b@c`; `sixDigitCode` rechaza `"12345"` y acepta `"123456"`; cada rechazo
   devuelve una clave de `validation` existente; suite verde.
+  Decisiones: las reglas son `Validator` del hook (T-019) y devuelven `{ key }` sin parámetros; el
+  correo vacío lo cubre `required`, que irá antes en la lista de cada campo — [Cierto] — revertir:
+  no aplica. `sixDigitCode` usa `CODE_LENGTH` (T-015) — [Cierto] — revertir: repetir el 6.
 
-- [ ] T-019 Validación al salir de cada campo
+- [x] T-019 Validación al salir de cada campo
   RF: RF-016, RF-025 (D-05) | Depende de: T-002 | Archivos: 2
   Archivos: `forms/useFormValidation.ts`, `forms/useFormValidation.test.tsx`.
   Hecho cuando: al salir de un campo, aunque no se haya enviado nada, el hook valida solo ese campo
   y pone o quita su error; los errores se guardan como clave y parámetros; suite verde.
+  Decisiones: se implementó antes que T-018 porque define los tipos `FieldError` (clave y
+  parámetros) y `Validator` que usan las reglas de la página; así el hook genérico no importa nada
+  de la página — [Cierto] — revertir: no aplica. El hook lee el valor del propio evento al salir
+  (`event.target.value`), sin guardar los valores de los campos, así que sirve también para
+  `CodeField`, que gestiona su propio estado — [Probable] — revertir: guardar los valores en el
+  hook. Con varias reglas, el campo muestra el primer error — [Cierto] — revertir: mostrar todos.
 
-- [ ] T-020 Errores al salir en la página de muestra
+- [x] T-020 Errores al salir en la página de muestra
   RF: RF-016, RF-018, RF-025 | Depende de: T-017, T-018, T-019 | Archivos: 2
   Archivos: `showcase/ShowcasePage.tsx`, `showcase/ShowcasePage.test.tsx`.
   Hecho cuando: salir del correo con `a@` muestra su error, ligado al campo; corregirlo y salir lo
   retira; con un error visible, cambiar a `en` muestra el error en inglés y el campo sigue marcado
   como no válido; suite verde.
+  Decisiones: reglas por campo: nombre y contraseña, obligatorios; correo, obligatorio y con formato;
+  código, obligatorio y de 6 dígitos — [Cierto] — revertir: no aplica. Al salir de la contraseña
+  hacia «Mostrar contraseña» también se valida, porque el foco sale del input — [Probable] —
+  revertir: no validar cuando el foco va al control. Comprobado en Chromium: el error aparece al
+  salir, se traduce al cambiar a portugués y desaparece al corregir — [Cierto] — revertir: no
+  aplica.
 
-- [ ] T-021 Botón
+- [x] T-021 Botón
   RF: RF-009 | Depende de: T-002 | Archivos: 2
   Archivos: `components/Button.tsx`, `components/Button.test.tsx`.
   Hecho cuando: el nombre accesible es su texto visible; se activa con clic, Enter y Espacio;
   suite verde.
+  Decisiones: el botón es `type="button"` por defecto y solo envía con `type="submit"` explícito,
+  para que un botón dentro de un formulario no lo envíe por descuido — [Cierto] — revertir: dejar
+  el valor por defecto del navegador (`submit`). Mutantes: `submit` por defecto, sin contenido y un
+  `div` con `role="button"` (no responde a Enter ni Espacio); todos mueren.
 
-- [ ] T-022 Validación al enviar y foco al primer error
+- [x] T-022 Validación al enviar y foco al primer error
   RF: RF-021, RF-025, RF-010 | Depende de: T-019 | Archivos: 2
   Archivos: `forms/useFormValidation.ts`, `forms/useFormValidation.test.tsx`.
   Hecho cuando: al enviar valida todos los campos y lleva el foco al primero con error en orden
   visual; sin errores llama al manejador de envío; mientras `processing` está activo, un segundo
   envío no llama al manejador; suite verde.
+  Decisiones: `handleSubmit` busca cada campo en el formulario por su `name` y los recorre en el
+  orden en que se declaran, que es el orden visual; así no hacen falta `ref` por campo — [Probable] —
+  revertir: registrar un `ref` por campo. El error se pinta con `flushSync` antes de mover el foco,
+  para que el lector lea el campo con su error al llegar; un test comprueba `aria-invalid` en el
+  mismo instante del foco, y el mutante sin `flushSync` muere — [Cierto] — revertir: mover el foco
+  en un efecto tras el pintado. `processing` se pasa al hook como opción — [Cierto] — revertir: no
+  aplica.
 
-- [ ] T-023 Mensaje general
+- [x] T-023 Mensaje general
   RF: RF-017, RF-018 (D-11) | Depende de: T-002 | Archivos: 2
   Archivos: `components/FormMessage.tsx`, `components/FormMessage.test.tsx`.
   Hecho cuando: cada tipo (`error`, `success`, `info`) muestra su prefijo traducido delante del
   texto; recibe la clave y la traduce al pintar, así que al cambiar de idioma cambia el texto;
   `focus()` lo enfoca y no está en el orden de tabulación; suite verde.
+  Decisiones: la clave se tipa con `ParseKeys` de i18next, así que cualquier clave existente vale
+  (las de `validation` y `showcase.demoInfo` hoy, las de las pantallas mañana) y una inexistente no
+  compila — [Cierto] — revertir: limitarla a una lista fija. `focus()` se expone con un `ref` al
+  contenedor (`forwardRef`), no con un método propio — [Cierto] — revertir: `useImperativeHandle`.
+  El contenedor no lleva rol: al recibir el foco el lector lee su texto, prefijo incluido (D-11) —
+  [Probable] — revertir: `role="group"` con el prefijo como nombre.
 
-- [ ] T-024 Envío en la página de muestra
+- [x] T-024 Envío en la página de muestra
   RF: RF-019, RF-020, RF-021 | Depende de: T-020, T-021, T-022, T-023 | Archivos: 2
   Archivos: `showcase/ShowcasePage.tsx`, `showcase/ShowcasePage.test.tsx`.
   Hecho cuando: la página añade el botón de envío tras el código; enviar con Enter desde un campo o
@@ -228,31 +318,61 @@ los tres archivos de idioma a la vez.
   en el correo; un envío válido muestra el mensaje informativo de demostración y le lleva el foco;
   el orden de Tab completo es selector → texto → correo → contraseña → «Mostrar contraseña» →
   código → enviar; suite verde.
+  Decisiones: el mensaje de demostración va encima del formulario y se retira en cada envío, desde
+  la página (el hook lo asumirá en T-028) — [Probable] — revertir: llevarlo al hook ya. Recibe el
+  foco tras pintarse (`flushSync`) — [Cierto] — revertir: no aplica. La prueba en Chromium encontró
+  que el clic con ratón en «Verificar» se pierde si al salir del campo desaparece un error (el
+  botón sube 50 px entre `mousedown` y `mouseup`); se corrige en T-034 (D-17) — [Cierto] — revertir:
+  no aplica.
 
-- [ ] T-025 Anunciador
+- [x] T-025 Anunciador
   RF: RF-010, RF-017 (D-08) | Depende de: — | Archivos: 2
   Archivos: `components/LiveAnnouncer.tsx`, `components/LiveAnnouncer.test.tsx`.
   Hecho cuando: las regiones `polite` y `assertive` existen desde el primer renderizado y están
   vacías; `announce("x", "polite")` deja `"x"` solo en la educada tras el siguiente ciclo; anunciar
   dos veces el mismo texto vacía la región entre medias; suite verde.
+  Decisiones: el contexto, el tipo y `useAnnouncer` viven en `components/announcer.ts`, aparte del
+  componente, porque exportarlos junto a él daba un aviso de lint (recarga rápida de Vite); la
+  tarea tocó 3 archivos, dentro del máximo — [Cierto] — revertir: no aplica. La región educada
+  usa `role="status"` y la urgente solo `aria-live="assertive"`, sin `role="alert"`, para no
+  duplicar el anuncio — [Probable] — revertir: `role="alert"`. Las regiones se ocultan a la vista
+  con estilos en línea, porque aún no hay hoja de estilos — [Cierto] — revertir: una clase CSS
+  cuando se defina el estilo. Sin proveedor, `useAnnouncer` no hace nada, así que los componentes
+  funcionan en tests aislados — [Cierto] — revertir: lanzar un error sin proveedor.
 
-- [ ] T-026 Botón procesando
+- [x] T-026 Botón procesando
   RF: RF-010 (D-07) | Depende de: T-021, T-025 | Archivos: 2
   Archivos: `components/Button.tsx`, `components/Button.test.tsx`.
   Hecho cuando: con `processing`, el texto visible y el nombre accesible son «Procesando…» en el
   idioma activo, tiene `aria-disabled="true"` y no `disabled`, un clic, Enter o Espacio no llama a
   `onClick`, sigue en el orden de Tab y conserva el foco; al entrar en ese estado la región educada
   contiene «procesando»; al salir recupera su texto y no se anuncia nada nuevo; suite verde.
+  Decisiones: solo se anuncia el paso de no procesar a procesar; un botón que se monta ya
+  procesando no se anuncia — [Probable] — revertir: anunciar también al montar. Al procesar, el
+  clic se cancela con `preventDefault`, lo que también impide el envío implícito con Enter desde un
+  campo — [Cierto] — revertir: no aplica. El test del anuncio usa un anunciador espía (el contexto
+  de T-025) en lugar de las regiones vivas, para poder comprobar que al salir no se anuncia nada —
+  [Cierto] — revertir: no aplica.
 
-- [ ] T-027 Simulación de envío de 3 segundos
+- [x] T-027 Simulación de envío de 3 segundos
   RF: RF-010, RF-022 | Depende de: T-024, T-026 | Archivos: 3
   Archivos: `showcase/ShowcasePage.tsx`, `showcase/ShowcasePage.test.tsx`, `App.tsx`.
   Hecho cuando: `App` monta el proveedor del anunciador; con temporizadores simulados, un envío
   válido pone el botón en «procesando» con el foco en él, un segundo envío durante ese tiempo no
   hace nada, y a los 3 segundos (no antes) el botón recupera su texto y el mensaje informativo
   aparece con el foco; suite verde.
+  Decisiones: Testing Library espera a sus propios `setTimeout`, que con los temporizadores
+  simulados de Vitest no avanzan y cuelgan el test; los tests rellenan el formulario con
+  temporizadores reales y solo el envío (síncrono, con `fireEvent.click`) usa los simulados —
+  [Cierto] — revertir: exponer `jest` en `setupTests.ts` para que Testing Library los detecte. El
+  foco «en el botón» se comprueba por el camino del teclado (Tab y Enter), porque con el ratón el
+  foco se queda en el campo (D-17) — [Cierto] — revertir: no aplica. Mutante equivalente: quitar
+  `processing` del hook, porque en esta página el botón ya bloquea el segundo envío (la protección
+  del hook la prueba T-022). Un mutante que quitaba el proveedor del anunciador de `App`
+  sobrevivió; se añadió un test que monta la app completa y comprueba el aviso — [Cierto] —
+  revertir: no aplica. Comprobado en Chromium con tiempo real — [Cierto] — revertir: no aplica.
 
-- [ ] T-028 Errores de servidor y mensaje general junto a errores de campo
+- [x] T-028 Errores de servidor y mensaje general junto a errores de campo
   RF: RF-017, RF-025 (D-14) | Depende de: T-022, T-025 | Archivos: 2
   Archivos: `forms/useFormValidation.ts`, `forms/useFormValidation.test.tsx`.
   Hecho cuando: un error de servidor en un campo se mantiene al salir del campo y se retira en el
@@ -260,27 +380,170 @@ los tres archivos de idioma a la vez.
   y sin errores de campo, el foco va al mensaje; con ambos, el foco va al primer campo con error y
   el mensaje se anuncia en la región urgente si es un error y en la educada si no; el mensaje
   general se retira en el siguiente envío; suite verde.
+  Decisiones: la pantalla entrega la respuesta con `showResult({ fieldErrors, message })`; el hook
+  guarda el mensaje general y expone `formRef` y `messageRef` para mover el foco cuando la respuesta
+  llega más tarde que el envío — [Probable] — revertir: que la pantalla gestione el foco. El foco
+  se decide solo con los errores de servidor que llegan en esa respuesta, no con los locales que
+  ya hubiera, porque un mensaje general que no viene de un envío (el botón de ejemplo de T-029) debe
+  recibir el foco — [Probable] — revertir: contar también los errores locales. Si el error local de
+  un campo desaparece, vuelve a verse su error de servidor hasta el siguiente envío, como pide
+  RF-025 — [Probable] — revertir: retirar el de servidor al cambiar el valor. Como el hook ahora
+  traduce el anuncio, los tests anteriores del hook se montan con el proveedor de traducción para no
+  dar avisos — [Cierto] — revertir: no aplica. El mutante que ponía el error de servidor por delante
+  del local murió — [Cierto] — revertir: no aplica.
 
-- [ ] T-029 Error general de ejemplo en la página de muestra
+- [x] T-029 Error general de ejemplo en la página de muestra
   RF: RF-017, RF-018, RF-020 | Depende de: T-027, T-028 | Archivos: 2
   Archivos: `showcase/ShowcasePage.tsx`, `showcase/ShowcasePage.test.tsx`.
   Hecho cuando: el botón «Mostrar error general de ejemplo», último en el orden de Tab, muestra el
   error de demasiados intentos con el prefijo «Error:» y le lleva el foco; cambiar de idioma lo
   traduce sin perderlo; el siguiente envío lo retira; suite verde.
+  Decisiones: el mensaje de demostración de T-027 pasa también por `showResult` del hook, así que
+  la página ya no guarda su propio estado del mensaje y el hook lo retira en cada envío —
+  [Cierto] — revertir: no aplica. El botón de ejemplo usa `keepFocusOnMouseDown`, como «Verificar»
+  (D-17) — [Cierto] — revertir: no aplica. Un mutante que quitaba el `ref` del mensaje murió —
+  [Cierto] — revertir: no aplica. Comprobado en Chromium: con el error del código visible,
+  completarlo y pulsar el botón con el ratón muestra el error con el foco; en inglés se traduce;
+  «Verify» con campos vacíos lo retira; Tab desde «Verify» llega al botón y Enter muestra el error —
+  [Cierto] — revertir: no aplica.
 
-- [ ] T-030 Auditoría de accesibilidad en todos los estados
+- [x] T-030 Auditoría de accesibilidad en todos los estados
   RF: RF-016, RF-017, RF-019 (D-13) | Depende de: T-014, T-029 | Archivos: 1
   Archivos: `showcase/a11y.test.tsx`.
   Hecho cuando: `axe` no encuentra infracciones en la página con errores de campo, procesando, con
   el mensaje informativo y con el error general, en los tres idiomas; suite verde.
+  Decisiones: el envío corre con temporizadores simulados y axe con los reales, así que el estado
+  («procesando» o con el mensaje) queda congelado mientras se audita — [Cierto] — revertir: no
+  aplica. Los avisos de jsdom «HTMLCanvasElement.prototype.getContext» vienen de la regla de
+  contraste de axe y ya salían antes de esta tarea; no hacen fallar nada y quitarlos exigiría la
+  dependencia `canvas` — [Cierto] — revertir: no aplica. Un mutante que añadía un atributo ARIA
+  con un valor no válido solo al procesar hizo fallar solo los tres tests de «procesando» —
+  [Cierto] — revertir: no aplica.
 
-- [ ] T-031 Resumen y checklist de prueba manual
+- [x] T-031 Resumen y checklist de prueba manual
   RF: RF-019, RF-020 (CF-3, CF-5, S-08) | Depende de: T-030 | Archivos: 2
   Archivos: `specs/componentes-base-accesibles/resumen.md`,
   `specs/componentes-base-accesibles/HUMAN_TODO.md`.
   Hecho cuando: `resumen.md` explica qué se hizo, cómo arrancar y probar la página de muestra, el
   checklist de teclado (CF-3) y de lector de pantalla con NVDA o VoiceOver (CF-5) y el marco
   teórico; `HUMAN_TODO.md` tiene la acción de completar ese checklist.
+  Decisiones: el marco teórico reúne los conceptos que generaron dudas en toda la feature, no solo
+  en esta entrega — [Cierto] — revertir: no aplica. El resumen queda en estado «pendiente de
+  validación» hasta que `sdd-validar` dé su veredicto — [Cierto] — revertir: no aplica.
+
+- [x] T-032 Contraseña visible fuera de correctores y autocorrección
+  Tipo: corrección | Origen: revisión de seguridad durante E-04 (D-15)
+  RF: RF-012 (D-15) | Depende de: T-012 | Archivos: 2
+  Archivos: `components/fields/PasswordField.tsx`, `components/fields/PasswordField.test.tsx`.
+  Causa: al mostrar la contraseña el input pasa a `type="text"`, y los correctores del navegador
+  o de extensiones pueden leer o enviar su texto, y el teclado móvil, corregirlo.
+  Hecho cuando: el input de contraseña tiene `spellcheck="false"`, `autocapitalize="off"` y
+  `autocorrect="off"`, tanto oculto como visible; suite verde.
+
+- [x] T-033 Contraseña y su control como un solo campo al salir
+  Tipo: cambio | Origen: `sdd-cambio` de RF-025 (2026-10-27)
+  RF: RF-025 (D-16) | Depende de: T-012, T-020 | Archivos: 3
+  Archivos: `components/fields/PasswordField.tsx`, `components/fields/PasswordField.test.tsx`,
+  `showcase/ShowcasePage.test.tsx`.
+  Hecho cuando: pasar con Tab de la contraseña vacía a «Mostrar contraseña» (y volver con
+  Mayús+Tab) no muestra error; salir del control hacia el código con la contraseña vacía muestra
+  «Completa este campo.» en la contraseña; con la contraseña escrita y saliendo desde el control,
+  no hay error; suite verde.
+
+- [x] T-034 Corrección: el clic de envío se pierde cuando un error desaparece al salir del campo
+  Tipo: corrección | Origen: prueba en Chromium de T-024
+  RF: RF-019, RF-021 (D-17) | Depende de: T-021, T-024 | Archivos: 3
+  Archivos: `components/Button.tsx`, `components/Button.test.tsx`, `showcase/ShowcasePage.tsx`.
+  Causa: al pulsar el botón con el ratón, el campo pierde el foco y su error desaparece; el botón
+  sube entre el `mousedown` y el `mouseup` y el navegador no cuenta el clic.
+  Hecho cuando: con `keepFocusOnMouseDown`, el `mousedown` del botón se cancela y el foco sigue en
+  el campo; con teclado nada cambia; el botón «Verificar» de la página lo usa; en Chromium, con el
+  error del código visible, completarlo y pulsar «Verificar» con el ratón envía el formulario; suite
+  verde.
+  Decisiones: que la página use `keepFocusOnMouseDown` no se puede comprobar en jsdom, que no
+  calcula posiciones; se comprobó en Chromium con el escenario que fallaba (con la corrección el
+  botón no se mueve y el envío llega; sin ella sube 50 px y el envío se pierde) — [Cierto] —
+  revertir: no aplica. Un mutante que dejaba de reenviar el `onMouseDown` propio del botón
+  sobrevivió; se añadió su test — [Cierto] — revertir: no aplica.
+  Decisiones: el evento que recibe el `onBlur` de fuera se crea con `Object.create` sobre el
+  original, con el input como `target`, para que la validación lea su valor aunque se salga desde
+  el control — [Probable] — revertir: que el hook reciba valores en vez de eventos (D-16,
+  descartada). Un mutante que dejaba de reenviar el `ref` sobrevivió; se añadió un test que
+  comprueba que `PasswordField` lo reenvía al input — [Cierto] — revertir: no aplica. Comprobado en
+  Chromium: contraseña vacía → botón y vuelta, sin error; botón → código, «Completa este campo.»;
+  con texto, sin error — [Cierto] — revertir: no aplica.
+
+
+- [x] T-035 Textos de la contraseña nueva
+  RF: RF-026, RF-027 | Depende de: T-001 | Archivos: 3
+  Archivos: `i18n/locales/en.ts`, `i18n/locales/es.ts`, `i18n/locales/pt-BR.ts`.
+  Hecho cuando: las cuatro claves nuevas de M-02 existen en los tres idiomas y el test de
+  traducciones de T-001 sigue en verde; suite verde.
+  Decisiones: como la tarea no admite un archivo de test propio (máximo de 3), hizo de test que
+  falla la comprobación de T-001 y `tsc`: con las claves solo en inglés, los dos fallaron; con los
+  tres idiomas, pasan. Vaciar un texto nuevo en portugués hace fallar el test — [Cierto] —
+  revertir: no aplica.
+
+- [x] T-036 Texto de ayuda ligado al campo
+  RF: RF-027 | Depende de: T-010 | Archivos: 2
+  Archivos: `components/fields/TextField.tsx`, `components/fields/TextField.test.tsx`.
+  Hecho cuando: con `hint`, el texto se ve bajo el campo y es su descripción accesible; con `hint`
+  y error, la descripción accesible contiene los dos; sin `hint` nada cambia; suite verde.
+  Decisiones: la ayuda va tras el control de la contraseña y antes del error, y la descripción
+  accesible lee primero la ayuda y después el error — [Probable] — revertir: invertir el orden de
+  `aria-describedby`. «Sin `hint` nada cambia» lo cubren los tests de T-010, que siguen pasando —
+  [Cierto] — revertir: no aplica.
+
+- [x] T-037 Reglas de la contraseña nueva
+  RF: RF-026 (D-18) | Depende de: T-019 | Archivos: 2
+  Archivos: `forms/passwordRules.ts`, `forms/passwordRules.test.ts`.
+  Hecho cuando: rechaza `"abcdefghijk"` (11) con `passwordTooShort`; acepta `"abcdefghijkl"` (12);
+  rechaza 6 emojis (6 puntos de código) por corta; rechaza `"123456789012"` y
+  `"１２３４５６７８９０１２"` con `passwordOnlyDigits`; acepta `"12345678901a"`; suite verde.
+  Decisiones: con las dos reglas a la vez, se muestra la de longitud (una contraseña corta y solo de
+  dígitos dice «Usa al menos 12 caracteres.») — [Probable] — revertir: invertir el orden de la
+  lista. `\p{Nd}` cubre los dígitos decimales de cualquier escritura, pero no los superíndices
+  (`²`), que `isdigit()` de Python sí cuenta: una contraseña solo de superíndices pasaría aquí y la
+  rechazaría el servidor al enviar — [Cierto] — revertir: no aplica (el servidor decide, S-11).
+
+- [x] T-038 Contraseña nueva con su ayuda
+  RF: RF-027 | Depende de: T-035, T-036 | Archivos: 2
+  Archivos: `components/fields/PasswordField.tsx`, `components/fields/PasswordField.test.tsx`.
+  Hecho cuando: con `kind="new"`, la ayuda traducida se ve y es la descripción accesible del input;
+  con `kind="current"` no hay ayuda; suite verde.
+  Decisiones: `PasswordField` ya no acepta `hint` desde fuera: la ayuda la decide su `kind` —
+  [Probable] — revertir: permitir una ayuda propia en la contraseña actual. Un test de T-012 usaba
+  `kind="new"` y esperaba solo el error como descripción; se actualizó para esperar la ayuda y el
+  error, que es lo que pide RF-027 — [Cierto] — revertir: no aplica.
+
+- [x] T-039 Contraseña nueva en la página de muestra
+  RF: RF-020, RF-021, RF-026 | Depende de: T-037, T-038 | Archivos: 2
+  Archivos: `showcase/ShowcasePage.tsx`, `showcase/ShowcasePage.test.tsx`.
+  Hecho cuando: la página añade «Nueva contraseña» (obligatoria) tras la contraseña actual; salir de
+  ella con `abc` muestra «Usa al menos 12 caracteres.»; con `123456789012`, «No uses solo números.»;
+  la contraseña actual no aplica esas reglas; el orden de Tab incluye la nueva y su botón; la
+  auditoría de axe sigue sin infracciones; suite verde.
+  Decisiones: los tests buscan las contraseñas por etiqueta con `/^Contraseña/` y
+  `/^Nueva contraseña/`, porque «contraseña» aparece en las dos — [Cierto] — revertir: no aplica.
+  Las dos contraseñas tienen ahora un botón con el mismo nombre accesible, «Mostrar contraseña»;
+  los tests lo distinguen por su posición. Queda planteado al usuario si cada botón debe nombrar
+  su campo — [Cierto] — revertir: no aplica. Comprobado en Chromium: ayuda al cargar; `abc` y 6
+  emojis dan «Usa al menos 12 caracteres.»; `123456789012`, «No uses solo números.»; la actual
+  acepta `abc` — [Cierto] — revertir: no aplica.
+
+- [x] T-040 Cada control de mostrar contraseña nombra su campo
+  Tipo: cambio | Origen: `sdd-cambio` de RF-012 (2026-10-27)
+  RF: RF-012 (D-10) | Depende de: T-039 | Archivos: 3
+  Archivos: `components/fields/PasswordField.tsx`, `components/fields/PasswordField.test.tsx`,
+  `showcase/ShowcasePage.test.tsx`.
+  Hecho cuando: el control se llama «Mostrar contraseña (<etiqueta del campo>)» en el idioma
+  activo y su texto visible sigue siendo «Mostrar contraseña»; en la página de muestra los dos
+  controles tienen nombres distintos; la auditoría de axe sigue sin infracciones; suite verde.
+  Decisiones: el nombre se forma con el texto traducido y la etiqueta del campo entre paréntesis,
+  sin clave nueva, porque el formato sirve igual en los tres idiomas — [Probable] — revertir: una
+  clave con interpolación (`{{label}}`). Los tests que buscaban la etiqueta «Password» por subcadena
+  encontraban también el botón y pasaron a buscarla por inicio (`/^Password/`) — [Cierto] —
+  revertir: no aplica.
 
 ## Entregas
 Arrancar la página de muestra (para el «Cómo probarlo» de cada entrega), desde la raíz del
@@ -318,7 +581,7 @@ pnpm --filter frontend test
   valores se conservan.
 
 - E-04 Campo de contraseña con mostrar u ocultar y auditoría automática de accesibilidad.
-  Tareas: T-012…T-014 | Líneas estimadas: 230 | Rama:
+  Tareas: T-012…T-014, T-032 | Líneas estimadas: 230 | Rama:
   feat/componentes-base-accesibles-contrasena
   Cómo probarlo: escribir una contraseña, llegar con Tab a «Mostrar contraseña» y pulsar Espacio:
   se ve el texto y el foco sigue en el control; volver a pulsar la oculta.
@@ -329,15 +592,18 @@ pnpm --filter frontend test
   98-76 54» sobre un código ya escrito (queda «987654»).
 
 - E-06 Errores de campo al salir de cada campo, traducidos al cambiar de idioma.
-  Tareas: T-018…T-020 | Líneas estimadas: 330 | Rama:
+  Tareas: T-018…T-020, T-033 | Líneas estimadas: 330 | Rama:
   feat/componentes-base-accesibles-validacion-al-salir
   Cómo probarlo: escribir «a@» en el correo y pulsar Tab: aparece el error; cambiar a portugués:
   el error se traduce; corregir el correo y salir: el error desaparece.
 
 - E-07 Envío del formulario con foco al primer error y mensaje informativo de demostración.
-  Tareas: T-021…T-024 | Líneas estimadas: 380 | Rama: feat/componentes-base-accesibles-envio
+  Tareas: T-021…T-024, T-034 | Líneas estimadas: 380 | Rama: feat/componentes-base-accesibles-envio
   Cómo probarlo: con el formulario vacío, pulsar Enter en un campo: aparecen los errores y el
   foco va al primer campo; con todo válido, enviar: aparece el mensaje de demostración con el foco.
+  Excepción: 403 líneas reales. T-034 corrige un fallo de T-024 encontrado en Chromium (el clic en
+  «Verificar» se pierde si al salir del campo desaparece un error); separarla dejaría en la rama de
+  integración un botón de envío que a veces no funciona.
 
 - E-08 Botón «procesando» durante 3 segundos con aviso al lector de pantalla.
   Tareas: T-025…T-027 | Líneas estimadas: 250 | Rama:
@@ -351,6 +617,17 @@ pnpm --filter frontend test
   Cómo probarlo: pulsar «Mostrar error general de ejemplo»: aparece «Error: …» con el foco;
   cambiar de idioma lo traduce; enviar de nuevo lo retira. Recorrer el checklist de `resumen.md`
   con NVDA o VoiceOver.
+  Excepción: 403 líneas reales. Los tests de T-028 necesitan un formulario de prueba que use todo el
+  hook (errores de servidor, mensaje general, foco y anuncios), y T-030 audita cuatro estados en
+  tres idiomas. Bajar de 400 obligaría a quitar cobertura o a empeorar la lectura de la página.
+
+- E-10 Contraseña nueva con sus reglas y su ayuda visible. Se implementa después de E-07 y antes
+  de E-08, porque no depende de E-08 ni de E-09.
+  Tareas: T-035…T-040 | Líneas estimadas: 200 | Rama:
+  feat/componentes-base-accesibles-contrasena-nueva
+  Cómo probarlo: en «Nueva contraseña» se ve la ayuda; escribir `abc` y salir muestra el error de
+  longitud; `123456789012`, el de solo números; la contraseña actual acepta cualquier valor no
+  vacío.
 
 ## RF sin tarea
 Ninguno.
