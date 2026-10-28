@@ -14,6 +14,7 @@ export const en = {
   field: {
     requiredLegend: "Fields marked with * are required.",
     showPassword: "Show password",
+    newPasswordHint: "At least 12 characters, not only numbers.",
   },
   message: {
     error: "Error:",
@@ -26,12 +27,15 @@ export const en = {
     codeIncomplete: "Enter all 6 digits of the code.",
     tooManyAttempts: "Too many attempts. Wait a few minutes and try again.",
     serverError: "Something went wrong on our server. Try again in a few minutes.",
+    passwordTooShort: "Use at least 12 characters.",
+    passwordOnlyDigits: "Don't use only numbers.",
   },
   showcase: {
     formTitle: "Sample form",
     nameLabel: "Full name",
     emailLabel: "Email",
     passwordLabel: "Password",
+    newPasswordLabel: "New password",
     codeLabel: "Verification code",
     submit: "Verify",
     showExampleError: "Show sample general error",

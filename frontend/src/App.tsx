@@ -1,15 +1,17 @@
-import { useTranslation } from "react-i18next";
-
+import { LiveAnnouncer } from "./components/LiveAnnouncer";
+import type { LanguageStorage } from "./i18n/language";
 import { useDocumentLanguage } from "./i18n/useDocumentLanguage";
+import { ShowcasePage } from "./showcase/ShowcasePage";
 
-export function App() {
-  const { t } = useTranslation();
+type AppProps = {
+  storage?: LanguageStorage;
+};
+
+export function App({ storage }: AppProps) {
   useDocumentLanguage();
-
   return (
-    <main>
-      <h1>{t("app.heading")}</h1>
-      <p>{t("app.intro")}</p>
-    </main>
+    <LiveAnnouncer>
+      <ShowcasePage storage={storage} />
+    </LiveAnnouncer>
   );
 }
