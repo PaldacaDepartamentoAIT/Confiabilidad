@@ -112,7 +112,8 @@ Secretos:
   que aparece en cada mensaje; por ejemplo: «T-002 (código, identificador público y huella)».
 - No te acredites como agente/IA en ninguna parte: ni en mensajes de commit
   (sin `Co-Authored-By` ni firmas), ni en descripciones de PR, ni en comentarios
-  o partes visibles del código.
+  o partes visibles del código. El autor de los commits que fija el entorno (la identidad de git)
+  queda fuera de esta regla. Si una herramienta añade una firma a la descripción de un PR, se quita.
 - Secretos: en desarrollo se usa `.env` local (gitignoreado) con valores de dev;
   en producción los secretos reales van cifrados con SOPS + age. Jamás commitear
   credenciales ni `.env`; solo archivos cifrados `*.enc.*` y el `.env.example`.
