@@ -242,3 +242,11 @@ campo tenga un error.
   RF-012 — Estado: clarificado
 - 2026-10-27 — Impacto analizado: plan (D-10) y tarea nueva T-040 en E-10; pedido por el usuario
   (opción A) — RF: RF-012 — Estado: impacto analizado
+- 2026-10-28 — Validación: cerrada con riesgo residual aceptado. Riesgos aceptados: (1) RF-006:
+  con NVDA + Chrome, al recorrer con Tab, los nombres de los campos y de los controles de mostrar
+  contraseña se leen con la voz por defecto del lector y no con la del idioma activo, también al
+  recargar; `<html lang>` es correcto y el test solo comprueba el atributo; causa sin confirmar
+  (probable limitación de NVDA en modo foco); (2) RF-026: una contraseña solo de superíndices pasa
+  en el navegador y la rechaza el servidor (S-11); (3) P-02: el arranque del contenedor `frontend`
+  queda pendiente de verificar en local (`HUMAN_TODO.md`). RF-001…RF-027 verificados con evidencia
+  (suite 185/185, cobertura 99,76 %); CF-3 y CF-5 recorridos por el usuario — RF: RF-006, RF-026

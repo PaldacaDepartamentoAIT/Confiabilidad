@@ -1,5 +1,5 @@
 # Resumen — componentes-base-accesibles
-Estado: entregas completas, pendiente de validación · Última actualización: 2026-10-27
+Estado: cerrada con riesgo residual aceptado · Última actualización: 2026-10-28
 
 ## Qué se hizo
 Los componentes comunes de las futuras pantallas del frontend, accesibles desde el principio y
@@ -44,10 +44,20 @@ Cada entrega tiene su propio resumen en [`entregas/`](entregas/), con sus tareas
   cambia, hay que cambiarlas también aquí.
 - El servidor sigue usando el español por defecto; las pantallas que llamen a la API tendrán que
   enviarle el idioma elegido (S-02).
-- La prueba con un lector de pantalla real es manual y está pendiente (ver más abajo y
-  [`HUMAN_TODO.md`](HUMAN_TODO.md)).
 - El arranque con Docker no se pudo comprobar en el entorno remoto, que no tiene salida a internet
   (también en [`HUMAN_TODO.md`](HUMAN_TODO.md)).
+- **Riesgos residuales aceptados** (validación del 2026-10-28):
+  1. RF-006: con NVDA + Chrome, al recorrer la página con Tab, los nombres de los campos y de los
+     «Mostrar contraseña (…)» se leen con la voz por defecto del lector, no con la del idioma
+     activo, aunque `<html lang>` es correcto. Solo cambian de voz los nombres de idioma del
+     selector y los botones cuyo nombre es su texto. Pasa también al recargar la página, así que
+     no se debe al cambio en vivo. Causa sin confirmar: lo más probable es una limitación de NVDA
+     en modo foco; no se probó el modo exploración. El test automático de RF-006 solo comprueba el
+     atributo `lang`.
+  2. RF-026: una contraseña nueva hecha solo de superíndices (`²`) pasa en el navegador y la
+     rechaza el servidor al enviar (S-11).
+  3. El arranque del contenedor Docker `frontend` no se ha comprobado (en
+     [`HUMAN_TODO.md`](HUMAN_TODO.md)).
 
 ## Cómo probarlo
 Desde la raíz del repositorio, instala las dependencias:
@@ -125,7 +135,8 @@ Recorrido por el usuario el 2026-10-27:
 - [ ] Al cambiar de idioma, el lector lee la página con la voz del idioma nuevo.
   **Falla (2026-10-27):** tras pasar a inglés sin recargar, solo «English», «Verify» y «Show sample
   general error» se oyen con voz inglesa; el resto sigue con la voz anterior, aunque `<html lang>`
-  sí cambia a `en`. Pendiente de diagnóstico (RF-006).
+  sí cambia a `en`. Recargar la página en inglés tampoco lo cambia. Aceptado como riesgo residual
+  el 2026-10-28 (ver «Límites conocidos»).
 
 Cuando lo completes, marca la acción correspondiente en [`HUMAN_TODO.md`](HUMAN_TODO.md).
 

@@ -20,13 +20,17 @@
   Deberías ver que Vite queda escuchando en el puerto 5173 y la página en http://localhost:5173 en
   el idioma de tu navegador.
 
-- [ ] **Completar el checklist de lector de pantalla (CF-5).** La prueba con un lector real no se
-  puede automatizar (S-08). Sigue «Checklist de lector de pantalla» en [`resumen.md`](resumen.md),
-  con NVDA en Windows o VoiceOver en macOS, marca allí cada punto y después esta acción. El
-  checklist de teclado (CF-3) ya está completado (2026-10-27). Para arrancar la página, desde la raíz del repositorio:
+- [ ] **Decidir qué hacer con la rama `fix/componentes-base-accesibles-idioma-inicial` (T-041).**
+  Fija `<html lang>` antes de montar la página, pero no cambió lo que se oye con NVDA, así que no
+  se fusionó. Si no se retoma (por ejemplo, en una investigación del modo exploración), bórrala
+  desde tu máquina:
   ```bash
-  pnpm --filter frontend dev
+  git push origin --delete fix/componentes-base-accesibles-idioma-inicial
   ```
-  Deberías ver la página de muestra en http://localhost:5173.
 
 ## Hecho
+
+- [x] **Completar los checklists de teclado y de lector de pantalla (CF-3, CF-5).** Recorridos con
+  NVDA + Chrome el 2026-10-27 y el 2026-10-28. Todo pasa salvo la voz del idioma activo en los
+  nombres de los campos, aceptada como riesgo residual (ver «Límites conocidos» en
+  [`resumen.md`](resumen.md)).
