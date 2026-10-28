@@ -545,6 +545,25 @@ los tres archivos de idioma a la vez.
   encontraban también el botón y pasaron a buscarla por inicio (`/^Password/`) — [Cierto] —
   revertir: no aplica.
 
+- [ ] T-041 Corrección: idioma del documento fijado antes de crear la página
+  Tipo: corrección | Origen: checklist CF-5 con NVDA + Chrome (2026-10-28)
+  RF: RF-006 | Depende de: T-008 | Archivos: 3
+  Archivos: `i18n/useDocumentLanguage.ts`, `i18n/useDocumentLanguage.test.tsx`, `main.tsx`.
+  Causa: `index.html` declara `lang="es"` y el idioma activo se aplica en un `useEffect`, después
+  de que React cree los elementos. Chrome fija el idioma de cada elemento al crearlo, así que NVDA
+  lee los campos y los controles con la voz del idioma de `index.html`, aunque la página esté en
+  inglés.
+  Hecho cuando: `applyDocumentLanguage(language)` fija `<html lang>` y lo usan tanto `main.tsx`,
+  antes de montar React, como `useDocumentLanguage`; un test comprueba que deja `lang` con el
+  idioma dado; con NVDA + Chrome, recargar la página en inglés hace que todos los controles se lean
+  con voz inglesa; suite verde.
+  Decisiones: `index.html` sigue con `lang="es"`; solo cuenta antes de que cargue el JavaScript —
+  [Probable] — revertir: cambiarlo a `en`, el idioma por defecto. La llamada de `main.tsx` no la
+  cubre ningún test unitario (el archivo no se importa en los tests); se comprobó en Chromium
+  mirando `<html lang>` cuando React crea los primeros elementos: `en` con la corrección y `es` con
+  el mutante que la quita — [Cierto] — revertir: no aplica. Falta la comprobación con NVDA + Chrome
+  del «Hecho cuando», que hace el usuario — [Cierto] — revertir: no aplica.
+
 ## Entregas
 Arrancar la página de muestra (para el «Cómo probarlo» de cada entrega), desde la raíz del
 repositorio:
@@ -628,6 +647,11 @@ pnpm --filter frontend test
   Cómo probarlo: en «Nueva contraseña» se ve la ayuda; escribir `abc` y salir muestra el error de
   longitud; `123456789012`, el de solo números; la contraseña actual acepta cualquier valor no
   vacío.
+
+- E-11 Corrección: idioma del documento antes de crear la página.
+  Tareas: T-041 | Líneas estimadas: 20 | Rama: fix/componentes-base-accesibles-idioma-inicial
+  Cómo probarlo: con NVDA + Chrome, elegir «English», recargar y recorrer con Tab: los campos y
+  los controles se leen con voz inglesa.
 
 ## RF sin tarea
 Ninguno.

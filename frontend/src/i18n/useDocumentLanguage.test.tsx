@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { I18nextProvider } from "react-i18next";
 
 import { createI18n } from ".";
-import { useDocumentLanguage } from "./useDocumentLanguage";
+import { applyDocumentLanguage, useDocumentLanguage } from "./useDocumentLanguage";
 
 test("keeps the document language and title in sync with the active language", async () => {
   const i18n = createI18n("pt-BR");
@@ -20,4 +20,13 @@ test("keeps the document language and title in sync with the active language", a
 
   expect(document.documentElement.lang).toBe("en");
   expect(document.title).toBe("Reliability — Components");
+});
+
+// `main.tsx` lo llama antes de montar React: Chrome fija el idioma de cada elemento al crearlo.
+test("applies a language to the document before anything is rendered", () => {
+  document.documentElement.lang = "es";
+
+  applyDocumentLanguage("en");
+
+  expect(document.documentElement.lang).toBe("en");
 });
