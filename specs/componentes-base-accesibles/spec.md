@@ -122,7 +122,7 @@ ejemplo que contenga un campo de texto, uno de correo, uno de contraseña actual
 nueva, el campo del código y un botón de envío, para probar los componentes a mano con teclado y lector de pantalla.
 
 ### RF-021 Validación de la página de muestra
-Cuando el usuario envíe el formulario de ejemplo con algún campo vacío (los seis son obligatorios),
+Cuando el usuario envíe el formulario de ejemplo con algún campo vacío (los cinco son obligatorios),
 un correo que no tenga exactamente una `@` con algún carácter antes y después o que contenga
 espacios, una contraseña nueva que no cumpla RF-026 o un código de menos de 6 dígitos, el sistema deberá mostrar el error de cada campo
 afectado y llevar el foco al primer campo con error. Las mismas reglas se aplican al salir de cada
@@ -252,3 +252,7 @@ campo tenga un error.
   (suite 185/185, cobertura 99,76 %); CF-3 y CF-5 recorridos por el usuario — RF: RF-006, RF-026
 - 2026-10-28 — Riesgo residual (3) resuelto: el usuario comprobó en local que el contenedor
   `frontend` arranca — RF: — — Estado: cerrado
+- 2026-10-28 — Corrección de redacción: RF-021 decía «los seis son obligatorios» y el formulario
+  tiene cinco campos; sin cambio de comportamiento (los cinco ya eran obligatorios y así lo prueban
+  los tests). Impacto: ninguno en plan, tareas ni tests; pedido por el usuario — RF: RF-021 —
+  Estado: impacto analizado
