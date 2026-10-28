@@ -44,8 +44,6 @@ Cada entrega tiene su propio resumen en [`entregas/`](entregas/), con sus tareas
   cambia, hay que cambiarlas también aquí.
 - El servidor sigue usando el español por defecto; las pantallas que llamen a la API tendrán que
   enviarle el idioma elegido (S-02).
-- El arranque con Docker no se pudo comprobar en el entorno remoto, que no tiene salida a internet
-  (también en [`HUMAN_TODO.md`](HUMAN_TODO.md)).
 - **Riesgos residuales aceptados** (validación del 2026-10-28):
   1. RF-006: con NVDA + Chrome, al recorrer la página con Tab, los nombres de los campos y de los
      «Mostrar contraseña (…)» se leen con la voz por defecto del lector, no con la del idioma
@@ -56,8 +54,6 @@ Cada entrega tiene su propio resumen en [`entregas/`](entregas/), con sus tareas
      atributo `lang`.
   2. RF-026: una contraseña nueva hecha solo de superíndices (`²`) pasa en el navegador y la
      rechaza el servidor al enviar (S-11).
-  3. El arranque del contenedor Docker `frontend` no se ha comprobado (en
-     [`HUMAN_TODO.md`](HUMAN_TODO.md)).
 
 ## Cómo probarlo
 Desde la raíz del repositorio, instala las dependencias:

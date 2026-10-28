@@ -64,9 +64,7 @@ Con Docker, desde la raíz del repositorio:
 ```bash
 docker compose -f docker/docker-compose.yml up frontend
 ```
-Deberías ver la misma página en http://localhost:5173. Esta vía no se pudo comprobar en el entorno
-remoto (el contenedor no tiene salida a internet); está pendiente en
-[`HUMAN_TODO.md`](../../HUMAN_TODO.md).
+Deberías ver la misma página en http://localhost:5173. Comprobado por el usuario en local el 2026-10-28.
 
 ## Fuera de esta entrega
 El campo de contraseña llega en E-04 y el del código en E-05.

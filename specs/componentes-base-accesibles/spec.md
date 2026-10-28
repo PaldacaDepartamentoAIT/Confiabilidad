@@ -250,3 +250,5 @@ campo tenga un error.
   en el navegador y la rechaza el servidor (S-11); (3) P-02: el arranque del contenedor `frontend`
   queda pendiente de verificar en local (`HUMAN_TODO.md`). RF-001…RF-027 verificados con evidencia
   (suite 185/185, cobertura 99,76 %); CF-3 y CF-5 recorridos por el usuario — RF: RF-006, RF-026
+- 2026-10-28 — Riesgo residual (3) resuelto: el usuario comprobó en local que el contenedor
+  `frontend` arranca — RF: — — Estado: cerrado
