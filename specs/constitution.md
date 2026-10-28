@@ -38,5 +38,5 @@ El código se escribe en inglés según la convención de cada lenguaje; los com
 Se verifica: revisión de PR; identificadores en inglés (PEP 8 / camelCase / snake_case Rust) y ausencia de comentarios triviales.
 
 ## P-10 Convención de ramas, commits y sin atribución de IA
-Las ramas siguen `tipo/descripcion-corta` y los commits `tipo: descripción`; ningún commit, PR o parte visible del código acredita a un agente/IA.
-Se verifica: revisión de nombres de rama y mensajes de commit contra los prefijos permitidos; ausencia de trailers `Co-Authored-By` o firmas de IA.
+Las ramas siguen `tipo/descripcion-corta` y los commits `tipo: descripción`; ningún mensaje de commit, descripción de PR o parte visible del código acredita a un agente/IA. El autor de los commits que fija el entorno (la identidad de git) queda fuera de esta regla.
+Se verifica: revisión de nombres de rama y mensajes de commit contra los prefijos permitidos; ausencia de trailers `Co-Authored-By` o firmas de IA en mensajes de commit y descripciones de PR.
