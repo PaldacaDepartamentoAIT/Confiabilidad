@@ -1,6 +1,6 @@
 # Identidad visual
 
-Estado: borrador
+Estado: aprobado
 
 Referencia visual de la interfaz de Confiabilidad (web y escritorio). Define colores, tipografía,
 formas y reglas de uso. Los valores salen de la maqueta revisada con el usuario; el código los
