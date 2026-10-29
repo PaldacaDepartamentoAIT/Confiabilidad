@@ -15,6 +15,7 @@ que envuelve la app web. Todo dockerizado; secretos de producción cifrados con 
 - `docker/`   — docker-compose y entrypoints.
 - `secrets/`  — variables de entorno cifradas con SOPS/age.
 - `specs/`    — artefactos SDD (ver Rutas).
+- `docs/`     — documentación transversal del proyecto que no pertenece a una feature (por ejemplo, `docs/identidad-visual.md`).
 
 ## Comandos
 Entorno reproducible con Docker (fuente de verdad):
