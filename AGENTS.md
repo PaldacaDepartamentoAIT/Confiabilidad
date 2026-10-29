@@ -15,6 +15,7 @@ que envuelve la app web. Todo dockerizado; secretos de producción cifrados con 
 - `docker/`   — docker-compose y entrypoints.
 - `secrets/`  — variables de entorno cifradas con SOPS/age.
 - `specs/`    — artefactos SDD (ver Rutas).
+- `docs/`     — documentación transversal del proyecto que no pertenece a una feature (por ejemplo, `docs/identidad-visual.md`).
 
 ## Comandos
 Entorno reproducible con Docker (fuente de verdad):
@@ -107,6 +108,7 @@ Secretos:
 
 ## Reglas
 - Lee `specs/constitution.md` y la spec activa antes de tocar código.
+- Antes de diseñar o modificar cualquier interfaz (pantallas, componentes o estilos de `frontend/` o `desktop/`), lee `docs/identidad-visual.md` y síguelo. Si un caso no está cubierto o hace falta desviarse, pregunta al usuario y, con su decisión, actualiza el documento.
 - Al hablar con el usuario, cada identificador (`T-002`, `RF-005`, `D-03`, `S-06`, `C-01`,
   `M-02`, `CF-1`, `P-04`…) va acompañado de su título o de una descripción breve la primera vez
   que aparece en cada mensaje; por ejemplo: «T-002 (código, identificador público y huella)».
