@@ -112,10 +112,14 @@ sistema deberá sumar un intento fallido y rechazar la petición sin evaluar la 
 deberá tomar todos los datos de la cuenta del registro pendiente y ningún otro del cliente.
 
 ### RF-013 Política de contraseña
-Si la contraseña no cumple la política de RF-022 de `procesos-pendientes` (al menos 12 caracteres,
-no parecida al correo ni al nombre, no común y no filtrada), entonces el sistema deberá mostrar bajo
-el campo cada regla incumplida y conservar el código válido, sin sumar ningún intento, para que la
-persona pruebe otra contraseña.
+Cuando la persona salga del campo de contraseña o la envíe, el sistema deberá comprobar en el
+navegador que tiene al menos 12 caracteres y que no consta solo de números. Si alguna de esas
+comprobaciones falla al enviar, entonces el sistema no deberá enviar la contraseña al servidor. Si
+la contraseña no cumple la política del servidor (RF-022 de `procesos-pendientes`: al menos 12
+caracteres, no parecida al correo ni al nombre, no común y no filtrada; y la regla de no constar
+solo de números, que el servidor ya aplica), entonces el sistema deberá mostrar bajo el campo cada
+regla incumplida y conservar el código válido, sin sumar ningún intento, para que la persona pruebe
+otra contraseña.
 
 ### RF-014 Creación de la cuenta
 Cuando el código y la contraseña sean válidos, el sistema deberá, en una sola operación, crear la
@@ -229,6 +233,14 @@ borrado de RF-020 (24 horas).
   reenviar y completar; el valor se confirma en la clarificación.
 - S-14 Las pantallas siguen `docs/identidad-visual.md` y usan los componentes de
   `componentes-base-accesibles`; los textos son provisionales hasta revisarse en el PR.
+- S-15 El navegador comprueba en la pantalla de contraseña la longitud mínima y que no conste solo
+  de números (petición del usuario tras la entrevista). La similitud, las comunes y las filtradas
+  las comprueba solo el servidor. *Por qué:* la similitud exigiría enviar al navegador el nombre y
+  el correo del registro pendiente, lo que rompería RF-005 y RF-016; las comunes y las filtradas
+  exigirían copiar una lista de unas 20 000 contraseñas o consultar un servicio externo desde el
+  navegador. *Riesgo aceptado por el usuario:* las dos reglas están copiadas a mano en el navegador
+  y en el servidor. Si cambian, hay que actualizarlas en ambos lados; mientras no coincidan, el
+  navegador bloqueará o dejará pasar contraseñas de forma distinta al servidor, que es quien decide.
 
 ## Fuera de alcance
 - Inicio de sesión, pantalla de inicio de sesión y área privada (S-07).
@@ -262,3 +274,6 @@ borrado de RF-020 (24 horas).
 
 ## Historial de cambios
 - 2026-10-29 — Creación (feature nueva) — RF: RF-001…RF-023 — Estado: pendiente de clarificar
+- 2026-10-29 — Ajuste del borrador a petición del usuario: la pantalla de contraseña comprueba en
+  el navegador la longitud y que no sea solo números — RF: RF-013 — S-15 añadido — Estado:
+  pendiente de clarificar
