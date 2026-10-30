@@ -1,7 +1,9 @@
+from datetime import timedelta
 from typing import Any
 
 import pytest
 from django.test import Client, override_settings
+from django.utils import timezone
 
 from apps.accounts.api import messages
 from apps.accounts.models import PendingRegistration
@@ -10,6 +12,7 @@ from apps.accounts.tests.factories import StartedWithCode, make_pending
 pytestmark = pytest.mark.django_db
 
 VERIFY = "/api/{client}/v1/registration/verify"
+RESEND = "/api/{client}/v1/registration/resend"
 
 
 def _wrong(code: str) -> str:
@@ -147,3 +150,61 @@ def test_too_many_requests_from_an_ip_are_rejected_without_evaluating(
     assert int(response.headers["Retry-After"]) > 0
     assert response.json()["retry_after"] == int(response.headers["Retry-After"])
     assert PendingRegistration.objects.get().code_validated_at is None
+
+
+def _ready_to_resend() -> None:
+    PendingRegistration.objects.update(last_sent_at=timezone.now() - timedelta(seconds=61))
+
+
+def test_resend_from_the_app_is_accepted(started: StartedWithCode) -> None:
+    _ready_to_resend()
+
+    response = _app(RESEND, {"public_id": started.public_id})
+
+    assert response.status_code == 202
+    assert response.json() == {"result": "resent"}
+    assert PendingRegistration.objects.get().resend_count == 1
+
+
+def test_resend_from_the_browser_needs_csrf(csrf_client: Client, started: StartedWithCode) -> None:
+    _ready_to_resend()
+    rejected = csrf_client.post(
+        RESEND.format(client="browser"),
+        {"public_id": started.public_id},
+        content_type="application/json",
+    )
+
+    accepted = _browser(csrf_client, RESEND, {"public_id": started.public_id})
+
+    assert (rejected.status_code, accepted.status_code) == (403, 202)
+
+
+def test_resend_too_soon_is_unavailable(started: StartedWithCode) -> None:
+    response = _app(RESEND, {"public_id": started.public_id, "language": "pt-BR"})
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "code": "resend_unavailable",
+        "message": messages.error_text("resend_unavailable", "pt-BR"),
+    }
+
+
+def test_resend_of_an_unknown_public_id_is_not_found() -> None:
+    assert _app(RESEND, {"public_id": "a\x00b"}).status_code == 404
+    assert _app(RESEND, {"public_id": "unknown"}).status_code == 404
+
+
+def test_resend_without_public_id_is_a_bad_request() -> None:
+    assert _app(RESEND, {}).status_code == 400
+
+
+@override_settings(REGISTRATION_RATE_FLOW_IP_PER_HOUR=2)
+def test_resend_and_verify_share_the_ip_limit(started: StartedWithCode) -> None:
+    _app(VERIFY, {"public_id": started.public_id, "code": _wrong(started.code)})
+    _app(RESEND, {"public_id": started.public_id})
+    _ready_to_resend()
+
+    response = _app(RESEND, {"public_id": started.public_id})
+
+    assert response.status_code == 429
+    assert PendingRegistration.objects.get().resend_count == 0
