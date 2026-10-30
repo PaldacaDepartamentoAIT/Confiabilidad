@@ -1,5 +1,5 @@
 # Spec: procesos-pendientes (registro pendiente)
-Estado: borrador
+Estado: aprobada
 Aprobación: ligera
 
 ## Objetivo (por qué)
@@ -69,9 +69,11 @@ Cuando se presente un código para un proceso, el sistema deberá aceptarlo solo
 caducado y no se han agotado los intentos, y al aceptarlo deberá marcar el código del proceso como
 validado. Si el código no coincide, entonces el sistema deberá sumar un intento fallido. Si el
 proceso ya tiene el código validado, entonces el sistema deberá rechazar cualquier código que se
-presente, salvo en un registro pendiente: ahí deberá comparar el código igual que si no estuviera
-validado, aceptarlo de nuevo sin cambiar nada si coincide, no ha caducado y no se han agotado los
-intentos, y sumar un intento fallido si no coincide (S-12).
+presente, salvo en un registro pendiente. Ahí, si el código coincide y no se han agotado los
+intentos, el sistema deberá aceptarlo de nuevo sin cambiar nada mientras el proceso no haya caducado
+(RF-011), aunque el código sí haya caducado; si no coincide, deberá tratarlo igual que en un
+proceso sin validar: sumar un intento fallido mientras el código esté vigente, o rechazarlo por
+código caducado si ya no lo está (S-12).
 
 ### RF-010 Bloqueo por intentos
 Si un proceso acumula el máximo de intentos fallidos (5 por defecto, RF-019), entonces el sistema
@@ -233,6 +235,12 @@ igual que RF-005 con un registro real.
   enviar el código, y recargar la pantalla obliga a escribirlo otra vez. Además, rechazar sin
   comparar delataría que el registro es real, porque un identificador sin registro detrás (RF-025)
   nunca está validado y siempre suma un intento. El cambio de contraseña conserva la regla anterior.
+  Se acepta de nuevo hasta que caduca el proceso, no el código (C-01), para que recargar la pantalla
+  durante la gracia de S-04 no deje a la persona sin forma de continuar. Si un registro validado se
+  bloquea por intentos, el reenvío sigue prohibido (RF-016) y la salida es repetir el formulario
+  (RF-005), que anula la validación y da un identificador y un código nuevos (C-02). *Riesgo
+  aceptado:* quien tenga el enlace puede bloquear un registro ya validado con 5 códigos incorrectos y
+  obligar a su dueño a repetir el formulario.
 
 ## Fuera de alcance
 - API y pantallas (ver S-01). El envío de correos es de `correo-asincrono-plantillas`.
@@ -299,4 +307,5 @@ igual que RF-005 con un registro real.
   `resumen.md` — Estado: impacto analizado
 - 2026-10-30 — Cambio por `registro-flujo` (S-01, RF-008, RF-012): en un registro pendiente, un
   código ya validado se compara de nuevo; si coincide se acepta sin cambios y si no, suma un intento
-  — RF: RF-009 modificado; S-12 añadido — Estado: pendiente de clarificar
+  — RF: RF-009 modificado; S-12 añadido. Clarificado (C-01, C-02): RF-009 y S-12 ajustados —
+  Estado: clarificado
