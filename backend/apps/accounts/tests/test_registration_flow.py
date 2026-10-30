@@ -2,10 +2,11 @@ from collections.abc import Callable
 from datetime import timedelta
 
 import pytest
+from allauth.account.models import EmailAddress
 from django.utils import timezone
 
 from apps.accounts import registration
-from apps.accounts.models import PendingRegistration, PhantomProcess
+from apps.accounts.models import PendingRegistration, PhantomProcess, User
 from apps.accounts.tests.factories import DEFAULT_PROFILE, StartedWithCode, make_pending, make_user
 
 pytestmark = pytest.mark.django_db
@@ -356,3 +357,104 @@ def test_a_phantom_has_the_same_status_as_a_real_registration(source: Callable[[
     assert registration.status(public_id=public_id) == registration.Status(
         code_expires_in=600, resend_in=40, resends_left=5, locked=False, expired=False
     )
+
+
+GOOD_PASSWORD = "Kq7#mZ2!vR9p"
+
+
+def _complete(
+    started: StartedWithCode, *, code: str | None = None, password: str = GOOD_PASSWORD
+) -> object:
+    return registration.complete_with_code(
+        public_id=started.public_id, code=started.code if code is None else code, password=password
+    )
+
+
+def test_right_validated_code_and_good_password_create_the_account() -> None:
+    started = _validated()
+
+    result = _complete(started)
+
+    assert isinstance(result, registration.Completed)
+    assert result.user.email == EMAIL and result.user.check_password(GOOD_PASSWORD)
+    assert EmailAddress.objects.get(user=result.user).verified
+    assert not PendingRegistration.objects.exists()
+
+
+def test_completing_during_the_grace_period_works() -> None:
+    started = _validated()
+    _age(code_expires_at=1)
+
+    assert isinstance(_complete(started), registration.Completed)
+
+
+@pytest.mark.parametrize("validated", [True, False], ids=["validated", "not-validated"])
+def test_a_wrong_code_counts_an_attempt_without_judging_the_password(validated: bool) -> None:
+    started = _validated() if validated else make_pending(EMAIL)
+
+    result = _complete(started, code=_wrong(started.code), password="short")
+
+    assert result is Result.WRONG_CODE
+    assert _stored().failed_attempts == 1
+    assert not User.objects.filter(email=EMAIL).exists()
+
+
+def test_a_right_code_never_validated_counts_an_attempt_like_a_wrong_one() -> None:
+    started = make_pending(EMAIL)
+
+    result = _complete(started)
+
+    assert result is Result.WRONG_CODE
+    assert (_stored().failed_attempts, _stored().code_validated_at) == (1, None)
+    assert not User.objects.filter(email=EMAIL).exists()
+
+
+def test_a_weak_password_is_rejected_rule_by_rule_and_keeps_the_code() -> None:
+    started = _validated()
+
+    result = _complete(started, password="12345")
+
+    assert isinstance(result, registration.PasswordRejected)
+    assert {"password_too_short", "password_entirely_numeric"} <= set(result.codes)
+    assert _stored().failed_attempts == 0
+    assert isinstance(_complete(started), registration.Completed)
+
+
+@pytest.mark.parametrize(
+    ("change", "expected"),
+    [
+        pytest.param({"failed_attempts": 5}, Result.LOCKED, id="locked"),
+        pytest.param({"created_at": 120}, Result.EXPIRED, id="expired"),
+    ],
+)
+def test_a_locked_or_expired_registration_never_completes(
+    change: dict[str, int], expected: Result
+) -> None:
+    started = _validated()
+    if "failed_attempts" in change:
+        PendingRegistration.objects.update(**change)
+    else:
+        _age(**change)
+
+    assert _complete(started) is expected
+    assert not User.objects.filter(email=EMAIL).exists()
+
+
+def test_an_unknown_public_id_never_completes() -> None:
+    result = registration.complete_with_code(
+        public_id="unknown", code="123456", password=GOOD_PASSWORD
+    )
+
+    assert result is Result.NOT_FOUND
+
+
+def test_a_phantom_never_completes_and_counts_the_attempt() -> None:
+    public_id = _phantom()
+    PhantomProcess.objects.update(code_validated_at=timezone.now())
+
+    result = registration.complete_with_code(
+        public_id=public_id, code="123456", password=GOOD_PASSWORD
+    )
+
+    assert result is Result.WRONG_CODE
+    assert PhantomProcess.objects.get().failed_attempts == 1

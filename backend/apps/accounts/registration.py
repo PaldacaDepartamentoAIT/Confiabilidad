@@ -310,6 +310,43 @@ def complete(*, public_id: str, password: str) -> Completed | CompleteRefusal:
         return Completed(user=user)
 
 
+@dataclass(frozen=True)
+class PasswordRejected:
+    codes: tuple[str, ...]
+
+
+def complete_with_code(
+    *, public_id: str, code: str, password: str
+) -> Completed | VerifyResult | PasswordRejected:
+    # El código se comprueba de nuevo en cada petición y nada del cliente salvo la contraseña llega
+    # a la cuenta (RF-012). Un código no validado cuenta igual que uno incorrecto (C-03).
+    with transaction.atomic():
+        process = _locked_process(public_id)
+        if process is None:
+            return VerifyResult.NOT_FOUND
+        if process.is_expired:
+            return VerifyResult.EXPIRED
+        if process.is_locked:
+            return VerifyResult.LOCKED
+        matches = fingerprints.code_matches(_PURPOSE, process.public_id, code, process.code_hash)
+        if not matches or process.code_validated_at is None:
+            process.failed_attempts += 1
+            process.save(update_fields=["failed_attempts"])
+            signals.registration_code_verified.send(
+                sender=PendingRegistration, email=process.email, success=False
+            )
+            return VerifyResult.WRONG_CODE
+        try:
+            with transaction.atomic():
+                result = complete(public_id=public_id, password=password)
+        except ValidationError as error:
+            # La contraseña no gasta intentos y el código sigue valiendo (RF-013).
+            return PasswordRejected(codes=tuple(str(item.code) for item in error.error_list))
+        if isinstance(result, Completed):
+            return result
+        return VerifyResult.NOT_FOUND
+
+
 def _accept_stored_terms(user: User, pending: PendingRegistration) -> None:
     # Si el documento ya no es de la versión vigente, la cuenta nace sin aceptación (D-11, S-12).
     if not pending.terms_version:
