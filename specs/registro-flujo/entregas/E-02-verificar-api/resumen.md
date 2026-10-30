@@ -1,6 +1,7 @@
 # Entrega E-02 · Verificar el código por la API, con límite por IP
 
-Rama: `feat/registro-flujo-verificar-api` · PR: pendiente ·
+Rama: `feat/registro-flujo-verificar-api` · PR:
+[PaldacaDepartamentoAIT/Confiabilidad#35](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/35) ·
 Líneas de código y tests: 402 (límite: 400; excepción aprobada por el usuario, hasta 500).
 
 ## Qué se hizo
