@@ -1,6 +1,7 @@
 import logging
+import math
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime
 from enum import StrEnum
 
 from allauth.account.models import EmailAddress
@@ -110,6 +111,38 @@ def _locked_process(public_id: str) -> PendingRegistration | PhantomProcess | No
 def verify(*, public_id: str, code: str) -> VerifyResult:
     # La consola aplica la misma regla que la API (D-01).
     return verify_code(public_id=public_id, code=code)
+
+
+@dataclass(frozen=True)
+class Status:
+    code_expires_in: int
+    resend_in: int
+    resends_left: int
+    locked: bool
+    expired: bool
+
+
+def status(*, public_id: str) -> Status | None:
+    # Nada de la validación: una plaza nunca está validada y la diferencia la delataría (D-05).
+    with transaction.atomic():
+        process = _locked_process(public_id)
+        if process is None:
+            return None
+        now = timezone.now()
+        resend_at = (
+            now if process.last_sent_at is None else process.last_sent_at + conf.resend_interval()
+        )
+        return Status(
+            code_expires_in=_seconds_until(process.code_expires_at, now),
+            resend_in=_seconds_until(resend_at, now),
+            resends_left=max(0, conf.max_resends() - process.resend_count),
+            locked=process.is_locked,
+            expired=process.is_expired,
+        )
+
+
+def _seconds_until(moment: datetime, now: datetime) -> int:
+    return max(0, math.ceil((moment - now).total_seconds()))
 
 
 def verify_code(*, public_id: str, code: str) -> VerifyResult:

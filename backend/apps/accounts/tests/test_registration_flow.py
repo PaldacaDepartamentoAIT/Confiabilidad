@@ -280,3 +280,79 @@ def test_a_phantom_resends_like_a_real_registration(source: Callable[[], str]) -
         *["resent"] * 5,
         Refusal.UNAVAILABLE,
     ]
+
+
+def _pin(code_in: int, sent_ago: int, resends: int = 0) -> None:
+    # Fija los instantes para comparar estados sin depender de los segundos que tarda el test.
+    now = timezone.now()
+    changes = {
+        "code_expires_at": now + timedelta(seconds=code_in),
+        "last_sent_at": now - timedelta(seconds=sent_ago),
+        "resend_count": resends,
+    }
+    PendingRegistration.objects.update(**changes)
+    PhantomProcess.objects.update(**changes)
+
+
+def test_status_of_a_fresh_registration() -> None:
+    started = make_pending(EMAIL)
+    _pin(code_in=600, sent_ago=20, resends=2)
+
+    status = registration.status(public_id=started.public_id)
+
+    assert status is not None
+    assert 599 <= status.code_expires_in <= 600
+    assert 39 <= status.resend_in <= 40
+    assert (status.resends_left, status.locked, status.expired) == (3, False, False)
+
+
+def test_status_never_goes_below_zero() -> None:
+    started = make_pending(EMAIL)
+    _pin(code_in=-60, sent_ago=600, resends=9)
+
+    status = registration.status(public_id=started.public_id)
+
+    assert status is not None
+    assert (status.code_expires_in, status.resend_in, status.resends_left) == (0, 0, 0)
+
+
+def test_status_without_a_recorded_send_can_resend_now() -> None:
+    started = make_pending(EMAIL)
+    PendingRegistration.objects.update(last_sent_at=None)
+
+    status = registration.status(public_id=started.public_id)
+
+    assert status is not None and status.resend_in == 0
+
+
+def test_status_reports_locked_and_expired() -> None:
+    started = make_pending(EMAIL)
+    PendingRegistration.objects.update(failed_attempts=5)
+    _age(created_at=120)
+
+    status = registration.status(public_id=started.public_id)
+
+    assert status is not None and (status.locked, status.expired) == (True, True)
+
+
+def test_status_does_not_reveal_a_validated_code() -> None:
+    started = make_pending(EMAIL)
+    _pin(code_in=600, sent_ago=20)
+    before = registration.status(public_id=started.public_id)
+    registration.verify_code(public_id=started.public_id, code=started.code)
+
+    assert registration.status(public_id=started.public_id) == before
+
+
+def test_status_of_an_unknown_public_id_is_none() -> None:
+    assert registration.status(public_id="unknown") is None
+
+
+@pytest.mark.parametrize("source", [_phantom, _real], ids=["phantom", "real"])
+def test_a_phantom_has_the_same_status_as_a_real_registration(source: Callable[[], str]) -> None:
+    public_id = source()
+    _pin(code_in=600, sent_ago=20)
+
+    assert registration.status(public_id=public_id) == registration.Status(
+        code_expires_in=600, resend_in=40, resends_left=5, locked=False, expired=False
+    )
