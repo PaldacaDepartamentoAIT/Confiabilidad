@@ -1,12 +1,13 @@
 # Spec: registro-api
-Estado: aprobada
+Estado: borrador
 Aprobación: ligera
 
 ## Objetivo (por qué)
 El registro ya existe como operación de consola (`procesos-pendientes`) y sus correos los envía
 `correo-asincrono-plantillas`, pero ningún cliente puede usarlo. Esta feature abre el primer paso
 del registro a la web y al escritorio: un endpoint que recibe el formulario (nombre completo, fecha
-de nacimiento, correo, país y aceptación de los términos), indica cada error bajo su campo y, si
+de nacimiento, correo, país, aceptación de los términos y, opcionalmente, consentimiento de
+marketing), indica cada error bajo su campo y, si
 todo es válido, empieza el registro y devuelve el identificador público con el que el cliente
 lleva a la pantalla de verificación. La respuesta es la misma tanto si el correo es nuevo como si
 tiene un registro pendiente o una cuenta, para que el formulario no sirva para averiguar quién está
@@ -16,9 +17,9 @@ registrado.
 ### RF-001 Solicitud de registro
 Cuando se envíe una solicitud de registro con nombre completo, fecha de nacimiento, correo, país,
 el documento de términos aceptado (su versión y su idioma) y la marca de aceptación, y opcionalmente
-el idioma (RF-013), y todos los campos sean válidos, el sistema deberá empezar el registro (RF-024
-de `procesos-pendientes`) y responder con el identificador público que este devuelve y el mensaje
-neutro (RF-005).
+el idioma (RF-013) y el documento de marketing aceptado (RF-015), y todos los campos sean válidos, el
+sistema deberá empezar el registro (RF-024 de `procesos-pendientes`) y responder con el identificador
+público que este devuelve y el mensaje neutro (RF-005).
 
 ### RF-002 Errores por campo
 Si falta algún campo o alguno no es válido, entonces el sistema deberá rechazar la solicitud sin
@@ -55,9 +56,9 @@ y enviar el código de registro (RF-004 de `correo-asincrono-plantillas`).
 
 ### RF-007 Correo con registro pendiente
 Cuando una solicitud válida llegue con un correo que tiene un registro pendiente vigente, el sistema
-deberá conservar el registro existente, con sus datos y su documento de términos, descartar los de la
-solicitud y emitir y enviar un código nuevo con un identificador público nuevo (RF-005 de
-`procesos-pendientes`), con el límite de frecuencia de RF-010.
+deberá conservar el registro existente, con sus datos y sus documentos de términos y de marketing (o
+la ausencia de este último), descartar los de la solicitud y emitir y enviar un código nuevo con un
+identificador público nuevo (RF-005 de `procesos-pendientes`), con el límite de frecuencia de RF-010.
 
 ### RF-008 Correo con cuenta
 Cuando una solicitud válida llegue con un correo que pertenece a una cuenta, el sistema deberá
@@ -112,6 +113,15 @@ sin empezar el registro ni enviar ningún correo. La variante del cliente de apl
 cualquier cliente que no sea un navegador; los orígenes configurados (RF-007 de `auth-headless`)
 solo limitan a los navegadores, y sus únicas defensas son los límites de RF-010 y RF-011 (S-19).
 
+### RF-015 Marketing opcional
+Cuando una solicitud válida lleve el documento de marketing aceptado (su versión y su idioma), el
+sistema deberá pasarlo al empezar el registro (RF-024 de `procesos-pendientes`), que lo descarta si
+no existe o no pertenece a la versión vigente, y la concesión se registrará al completar el
+registro (RF-020 de `procesos-pendientes`). Si la solicitud no lo lleva, o no hay ningún documento de
+marketing vigente, entonces el sistema deberá empezar el registro sin marketing. El marketing no
+deberá producir ningún error de campo ni cambiar la respuesta neutra (RF-005) ni los límites
+(RF-010, RF-011).
+
 ## Supuestos
 - S-01 Solo API (pregunta 1). Los criterios de pantalla del usuario («mostrar mensajes debajo de cada
   campo», «la pantalla no revela el caso», «redirige con un `public_id` en la URL») se cumplen aquí
@@ -158,7 +168,12 @@ solo limitan a los navegadores, y sus únicas defensas son los límites de RF-01
   términos vigentes publicados.
 - S-11 Repetir el registro con un correo que tiene un registro pendiente descarta también el
   documento de términos nuevo: se conserva el aceptado la primera vez (RF-007), igual que el resto
-  de los datos.
+  de los datos. Lo mismo vale para el marketing: se conserva la elección del primer registro, también
+  si no lo marcó (cambio del 2026-10-30).
+- S-23 El formulario admite el consentimiento de marketing opcional (cambio del 2026-10-30, pedido
+  por `registro-flujo`, S-06 y RF-018). *Por qué:* el marketing es opcional y no debe impedir el
+  registro, así que un documento ausente, inexistente o no vigente se ignora sin error, a diferencia
+  de los términos (S-10).
 - S-12 Si entre empezar y completar el registro entra en vigor una versión nueva de términos, la
   cuenta se crea sin aceptación (C-02), y RF-015 de `consentimientos` la da por no aceptada. Lo mismo
   ocurre con los registros pendientes creados antes de esta feature, que no tienen documento guardado
@@ -204,7 +219,8 @@ solo limitan a los navegadores, y sus únicas defensas son los límites de RF-01
 - La API del restablecimiento de contraseña y sus límites (S-15).
 - CAPTCHA u otras defensas contra bots aparte del límite de frecuencia.
 - Cambiar la edad mínima de la cuenta (S-02).
-- Marketing: el consentimiento de marketing no se pide en el formulario.
+- Revocar o cambiar el consentimiento de marketing: el formulario solo puede concederlo (cambio
+  del 2026-10-30; antes, el marketing no se pedía en el formulario).
 
 ## Criterios de finalización
 - CF-1 Hay tests para cada RF. La suite `pytest` está en verde con cobertura ≥ 80 %, y
@@ -224,6 +240,9 @@ solo limitan a los navegadores, y sus únicas defensas son los límites de RF-01
   de `procesos-pendientes` para guardar los términos (S-03) está aprobado.
 - CF-7 Los textos de los errores, del mensaje neutro y del límite superado existen en `es`, `pt-BR` y
   `en` (RF-013).
+- CF-8 Un test demuestra que la respuesta es idéntica con y sin marketing, con un documento de
+  marketing no vigente o inexistente y sin ningún documento de marketing vigente, y que en ninguno de
+  esos casos hay un error de campo (RF-015).
 
 ## Historial de cambios
 - 2026-10-16 — Creación (feature nueva) — RF: RF-001…RF-014 — Estado: pendiente de clarificar
@@ -256,3 +275,7 @@ solo limitan a los navegadores, y sus únicas defensas son los límites de RF-01
   pasan, 1 omitido, cobertura 99,76 %), `mypy`/`ruff`/`black` limpios y CF-1…CF-7 cumplidos;
   incluye RF-001, RF-005, RF-020 y RF-024 de `procesos-pendientes` cambiados el 2026-10-21. Siguen
   los riesgos ya aceptados por el usuario en las validaciones anteriores — RF: ninguno modificado
+- 2026-10-30 — Cambio por `registro-flujo` (S-06, RF-018): el formulario admite el consentimiento
+  de marketing opcional, que se ignora sin error si no es de la versión vigente — RF: RF-001 y
+  RF-007 modificados; RF-015 añadido; objetivo, S-11 y fuera de alcance ajustados; S-23 y CF-8
+  añadidos — Estado: pendiente de clarificar
