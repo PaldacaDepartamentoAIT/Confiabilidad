@@ -1,5 +1,5 @@
 # Plan: registro-flujo
-Estado: borrador
+Estado: aprobado
 
 ## Dependencias previas a implementar
 - `sdd-cambio` en `procesos-pendientes`, RF-009 (S-01, CF-6): hoy rechaza cualquier código en un
