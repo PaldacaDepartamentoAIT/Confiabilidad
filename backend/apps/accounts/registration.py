@@ -107,22 +107,8 @@ def _locked_process(public_id: str) -> PendingRegistration | PhantomProcess | No
 
 
 def verify(*, public_id: str, code: str) -> VerifyResult:
-    with transaction.atomic():
-        process = _locked_process(public_id)
-        if process is None:
-            return VerifyResult.NOT_FOUND
-        if process.is_expired:
-            signals.registration_code_verified.send(
-                sender=PendingRegistration, email=process.email, success=False
-            )
-            return VerifyResult.EXPIRED
-        result = processes.check_code(process, _PURPOSE, code)
-        signals.registration_code_verified.send(
-            sender=PendingRegistration,
-            email=process.email,
-            success=result is VerifyResult.VERIFIED,
-        )
-        return result
+    # La consola aplica la misma regla que la API (D-01).
+    return verify_code(public_id=public_id, code=code)
 
 
 def verify_code(*, public_id: str, code: str) -> VerifyResult:
