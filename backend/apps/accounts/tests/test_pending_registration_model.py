@@ -7,7 +7,12 @@ from django.db import IntegrityError, transaction
 from django.test import override_settings
 from django.utils import timezone
 
-from apps.accounts.models import PendingRegistration
+from apps.accounts.models import (
+    CodeProcess,
+    PasswordResetRequest,
+    PendingRegistration,
+    PhantomProcess,
+)
 from apps.accounts.tests.factories import make_user
 
 pytestmark = pytest.mark.django_db
@@ -190,3 +195,18 @@ def test_registration_without_terms_document_keeps_it_empty() -> None:
 
     stored = PendingRegistration.objects.get(pk=pending.pk)
     assert (stored.terms_version, stored.terms_locale) == ("", "")
+
+
+@pytest.mark.parametrize("model", [PendingRegistration, PhantomProcess, PasswordResetRequest])
+def test_code_processes_start_without_resends(model: type[CodeProcess]) -> None:
+    fields = {field.name: field for field in model._meta.get_fields()}
+
+    assert fields["resend_count"].default == 0  # type: ignore[union-attr]
+    assert fields["last_sent_at"].null  # type: ignore[union-attr]
+
+
+def test_a_stored_registration_keeps_its_resend_counters() -> None:
+    _pending().save()
+
+    stored = PendingRegistration.objects.get()
+    assert (stored.resend_count, stored.last_sent_at) == (0, None)
