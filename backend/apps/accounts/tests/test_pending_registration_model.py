@@ -202,7 +202,7 @@ def test_code_processes_start_without_resends(model: type[CodeProcess]) -> None:
     fields = {field.name: field for field in model._meta.get_fields()}
 
     assert fields["resend_count"].default == 0  # type: ignore[union-attr]
-    assert fields["last_sent_at"].null  # type: ignore[union-attr]
+    assert fields["last_sent_at"].null
 
 
 def test_a_stored_registration_keeps_its_resend_counters() -> None:
