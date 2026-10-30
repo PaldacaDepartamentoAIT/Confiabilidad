@@ -332,14 +332,46 @@ def test_expired_code_or_process_is_rejected_without_counting(
     assert (_stored().failed_attempts, _stored().code_validated_at) == (0, None)
 
 
-def test_already_validated_code_rejects_any_code_without_counting() -> None:
+def test_already_validated_code_is_accepted_again_without_changes() -> None:
     started = _start()
     registration.verify(public_id=started.public_id, code=started.code)
+    validated_at = _stored().code_validated_at
 
-    for code in (started.code, _wrong(started.code)):
-        result = registration.verify(public_id=started.public_id, code=code)
-        assert result == registration.VerifyResult.ALREADY_VERIFIED
-    assert _stored().failed_attempts == 0
+    result = registration.verify(public_id=started.public_id, code=started.code)
+
+    assert result == registration.VerifyResult.VERIFIED
+    assert (_stored().failed_attempts, _stored().code_validated_at) == (0, validated_at)
+
+
+@pytest.mark.parametrize(
+    ("code_expired", "expected", "attempts"),
+    [
+        pytest.param(False, registration.VerifyResult.WRONG_CODE, 1, id="code-in-force"),
+        pytest.param(True, registration.VerifyResult.CODE_EXPIRED, 0, id="code-expired-in-grace"),
+    ],
+)
+def test_wrong_code_on_an_already_validated_code_is_treated_as_unvalidated(
+    code_expired: bool, expected: registration.VerifyResult, attempts: int
+) -> None:
+    started = _start()
+    registration.verify(public_id=started.public_id, code=started.code)
+    if code_expired:
+        PendingRegistration.objects.update(code_expires_at=timezone.now() - timedelta(minutes=1))
+
+    result = registration.verify(public_id=started.public_id, code=_wrong(started.code))
+
+    assert result == expected
+    assert _stored().failed_attempts == attempts
+
+
+def test_already_validated_code_is_accepted_again_during_the_grace_period() -> None:
+    started = _start()
+    registration.verify(public_id=started.public_id, code=started.code)
+    PendingRegistration.objects.update(code_expires_at=timezone.now() - timedelta(minutes=1))
+
+    result = registration.verify(public_id=started.public_id, code=started.code)
+
+    assert result == registration.VerifyResult.VERIFIED
 
 
 def test_unknown_public_id_is_rejected() -> None:
