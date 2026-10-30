@@ -1,5 +1,5 @@
 # Spec: procesos-pendientes (registro pendiente)
-Estado: aprobada
+Estado: borrador
 Aprobación: ligera
 
 ## Objetivo (por qué)
@@ -69,7 +69,9 @@ Cuando se presente un código para un proceso, el sistema deberá aceptarlo solo
 caducado y no se han agotado los intentos, y al aceptarlo deberá marcar el código del proceso como
 validado. Si el código no coincide, entonces el sistema deberá sumar un intento fallido. Si el
 proceso ya tiene el código validado, entonces el sistema deberá rechazar cualquier código que se
-presente.
+presente, salvo en un registro pendiente: ahí deberá comparar el código igual que si no estuviera
+validado, aceptarlo de nuevo sin cambiar nada si coincide, no ha caducado y no se han agotado los
+intentos, y sumar un intento fallido si no coincide (S-12).
 
 ### RF-010 Bloqueo por intentos
 Si un proceso acumula el máximo de intentos fallidos (5 por defecto, RF-019), entonces el sistema
@@ -226,6 +228,11 @@ igual que RF-005 con un registro real.
   borrado al borrar la cuenta (antes RF-014); una cuenta inactiva no puede pedirla y la que tenga
   en curso muere al caducar (C-05, antes RF-018); completar fija la contraseña y borra la
   solicitud (antes RF-021); cerrar sesiones y avisar por correo, en su flujo.
+- S-12 En el registro, un código ya validado se puede presentar de nuevo (cambio del 2026-10-30,
+  pedido por `registro-flujo`, S-01, RF-008 y RF-012). *Por qué:* el paso de contraseña vuelve a
+  enviar el código, y recargar la pantalla obliga a escribirlo otra vez. Además, rechazar sin
+  comparar delataría que el registro es real, porque un identificador sin registro detrás (RF-025)
+  nunca está validado y siempre suma un intento. El cambio de contraseña conserva la regla anterior.
 
 ## Fuera de alcance
 - API y pantallas (ver S-01). El envío de correos es de `correo-asincrono-plantillas`.
@@ -290,3 +297,6 @@ igual que RF-005 con un registro real.
   Clarificado (C-01…C-03): RF-020 y RF-024 ajustados; S-03 ajustado. Impacto: sin cambios en el
   plan; lo implementan el plan y las tareas de `registro-flujo`, que actualizan también
   `resumen.md` — Estado: impacto analizado
+- 2026-10-30 — Cambio por `registro-flujo` (S-01, RF-008, RF-012): en un registro pendiente, un
+  código ya validado se compara de nuevo; si coincide se acepta sin cambios y si no, suma un intento
+  — RF: RF-009 modificado; S-12 añadido — Estado: pendiente de clarificar
