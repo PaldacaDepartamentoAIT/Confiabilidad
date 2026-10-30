@@ -1,5 +1,8 @@
+import dataclasses
 from typing import Any, ClassVar
 
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework import serializers, status
 from rest_framework.parsers import JSONParser
 from rest_framework.permissions import AllowAny
@@ -13,6 +16,9 @@ from apps.accounts.api.flow_serializers import VerifySerializer, _Text
 from apps.accounts.api.language import request_language
 from apps.accounts.api.views import _enforce_csrf, _limited, _read_body, _render, _unreadable
 from apps.accounts.models import CodeProcess
+from apps.accounts.validators import COUNTRY_CODES
+from apps.consents.models import Terms
+from apps.consents.versions import current_document
 
 _PUBLIC_ID_MAX_LENGTH = CodeProcess._meta.get_field("public_id").max_length or 0
 
@@ -27,6 +33,7 @@ class _FlowView(APIView):
     permission_classes = [AllowAny]
     parser_classes = [JSONParser]
     serializer_class: ClassVar[type[serializers.Serializer[dict[str, str]]]]
+    counts_for_limit: ClassVar[bool] = True
 
     def post(self, request: Request) -> Response:
         body, readable = _read_body(request)
@@ -34,10 +41,12 @@ class _FlowView(APIView):
         language = request_language(
             field if isinstance(field, str) else None, request.headers.get("Accept-Language")
         )
-        # Toda petición cuenta para el límite por IP antes de evaluarse (RF-019).
-        verdict = throttling.check_flow_ip(str(request.META.get("REMOTE_ADDR", "")))
-        if not verdict.allowed:
-            return _limited(verdict, language)
+        # Toda petición cuenta para el límite por IP antes de evaluarse, salvo la consulta del
+        # estado, que solo lee (RF-019).
+        if self.counts_for_limit:
+            verdict = throttling.check_flow_ip(str(request.META.get("REMOTE_ADDR", "")))
+            if not verdict.allowed:
+                return _limited(verdict, language)
         if not readable:
             return _unreadable(language)
         serializer = self.serializer_class(data=body)
@@ -87,6 +96,51 @@ class AppResendView(_FlowView):
 
 class BrowserResendView(_BrowserMixin, AppResendView):
     pass
+
+
+class AppStatusView(_FlowView):
+    serializer_class = PublicIdSerializer
+    counts_for_limit = False
+
+    def act(self, data: dict[str, str], language: str) -> Response:
+        current = registration.status(public_id=data["public_id"])
+        if current is None:
+            return _not_found(language)
+        return Response(dataclasses.asdict(current))
+
+
+class BrowserStatusView(_BrowserMixin, AppStatusView):
+    pass
+
+
+class AppOptionsView(APIView):
+    # Datos públicos del formulario: no lee procesos ni cuenta para ningún límite.
+    authentication_classes: list[Any] = []
+    permission_classes = [AllowAny]
+
+    def get(self, request: Request) -> Response:
+        field = request.query_params.get("language")
+        language = request_language(field, request.headers.get("Accept-Language"))
+        return Response(
+            {
+                "countries": list(COUNTRY_CODES),
+                "terms": _document(Terms.Kind.TERMS, language),
+                "marketing": _document(Terms.Kind.MARKETING, language),
+            }
+        )
+
+
+@method_decorator(ensure_csrf_cookie, name="dispatch")
+class BrowserOptionsView(AppOptionsView):
+    # Da al navegador la cookie que exigen los POST del flujo (D-09).
+    pass
+
+
+def _document(kind: str, language: str) -> dict[str, str] | None:
+    document = current_document(kind, language)
+    if document is None:
+        return None
+    return {"version": document.version, "locale": document.locale, "content": document.content}
 
 
 def _storable(public_id: str) -> bool:

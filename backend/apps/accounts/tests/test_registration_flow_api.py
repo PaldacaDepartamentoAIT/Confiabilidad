@@ -8,11 +8,15 @@ from django.utils import timezone
 from apps.accounts.api import messages
 from apps.accounts.models import PendingRegistration
 from apps.accounts.tests.factories import StartedWithCode, make_pending
+from apps.consents.models import Terms
+from apps.consents.tests.factories import publish_version
 
 pytestmark = pytest.mark.django_db
 
 VERIFY = "/api/{client}/v1/registration/verify"
 RESEND = "/api/{client}/v1/registration/resend"
+STATUS = "/api/{client}/v1/registration/status"
+OPTIONS = "/api/{client}/v1/registration/options"
 
 
 def _wrong(code: str) -> str:
@@ -208,3 +212,76 @@ def test_resend_and_verify_share_the_ip_limit(started: StartedWithCode) -> None:
 
     assert response.status_code == 429
     assert PendingRegistration.objects.get().resend_count == 0
+
+
+def test_status_from_the_app_reports_the_timers(started: StartedWithCode) -> None:
+    response = _app(STATUS, {"public_id": started.public_id})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert set(body) == {"code_expires_in", "resend_in", "resends_left", "locked", "expired"}
+    assert 0 < body["code_expires_in"] <= 900 and 0 < body["resend_in"] <= 60
+    assert (body["resends_left"], body["locked"], body["expired"]) == (5, False, False)
+
+
+def test_status_from_the_browser_needs_csrf(csrf_client: Client, started: StartedWithCode) -> None:
+    rejected = csrf_client.post(
+        STATUS.format(client="browser"),
+        {"public_id": started.public_id},
+        content_type="application/json",
+    )
+
+    accepted = _browser(csrf_client, STATUS, {"public_id": started.public_id})
+
+    assert (rejected.status_code, accepted.status_code) == (403, 200)
+
+
+def test_status_of_an_unknown_public_id_is_not_found() -> None:
+    assert _app(STATUS, {"public_id": "unknown"}).status_code == 404
+    assert _app(STATUS, {"public_id": "x" * 500}).status_code == 404
+
+
+@override_settings(REGISTRATION_RATE_FLOW_IP_PER_HOUR=2)
+def test_status_does_not_count_for_the_ip_limit(started: StartedWithCode) -> None:
+    statuses = [_app(STATUS, {"public_id": started.public_id}).status_code for _ in range(5)]
+
+    assert statuses == [200] * 5
+    assert _app(VERIFY, {"public_id": started.public_id, "code": started.code}).status_code == 200
+
+
+def _document(document: Terms) -> dict[str, str]:
+    return {"version": document.version, "locale": document.locale, "content": document.content}
+
+
+def test_options_give_the_countries_and_the_documents_in_force_in_the_language() -> None:
+    terms = publish_version(version="7")
+    marketing = publish_version(kind=Terms.Kind.MARKETING, version="2")
+
+    response = Client().get(OPTIONS.format(client="app"), {"language": "pt-BR"})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert "ES" in body["countries"] and body["countries"] == sorted(body["countries"])
+    assert body["terms"] == _document(terms["pt-BR"])
+    assert body["marketing"] == _document(marketing["pt-BR"])
+
+
+def test_options_without_documents_in_force_give_null() -> None:
+    body = Client().get(OPTIONS.format(client="app")).json()
+
+    assert (body["terms"], body["marketing"]) == (None, None)
+
+
+def test_options_language_falls_back_to_the_header() -> None:
+    terms = publish_version(version="7")
+
+    response = Client().get(OPTIONS.format(client="app"), headers={"Accept-Language": "en-US"})
+
+    assert response.json()["terms"] == _document(terms["en"])
+
+
+def test_browser_options_set_the_csrf_cookie_for_the_flow(csrf_client: Client) -> None:
+    response = csrf_client.get(OPTIONS.format(client="browser"))
+
+    assert response.status_code == 200
+    assert "csrftoken" in response.cookies
