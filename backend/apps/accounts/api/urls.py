@@ -1,10 +1,12 @@
 from django.urls import path
 
 from apps.accounts.api.flow_views import (
+    AppCompleteView,
     AppOptionsView,
     AppResendView,
     AppStatusView,
     AppVerifyView,
+    BrowserCompleteView,
     BrowserOptionsView,
     BrowserResendView,
     BrowserStatusView,
@@ -43,4 +45,14 @@ urlpatterns = [
         name="registration-options-browser",
     ),
     path("app/v1/registration/options", AppOptionsView.as_view(), name="registration-options-app"),
+    path(
+        "browser/v1/registration/complete",
+        BrowserCompleteView.as_view(),
+        name="registration-complete-browser",
+    ),
+    path(
+        "app/v1/registration/complete",
+        AppCompleteView.as_view(),
+        name="registration-complete-app",
+    ),
 ]
