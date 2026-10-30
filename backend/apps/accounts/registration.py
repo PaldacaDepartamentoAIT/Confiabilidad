@@ -72,6 +72,7 @@ def start(
         public_id=codes.generate_public_id(),
         code_hash="",
         code_expires_at=timezone.now() + conf.code_ttl(),
+        last_sent_at=timezone.now(),
         payload=payload,
     )
     with transaction.atomic():
@@ -171,6 +172,44 @@ def resend(*, public_id: str) -> Resent | ResendRefusal:
             return ResendRefusal.ALREADY_VERIFIED
         # Sin save(): un registro real no admite la huella vacía en su validación.
         type(process).objects.filter(pk=process.pk).update(code_hash="", failed_attempts=0)
+        transaction.on_commit(lambda: _queue(REISSUE_TASK, [_PURPOSE, public_id]))
+        signals.registration_code_sent.send(
+            sender=PendingRegistration, email=process.email, success=True
+        )
+        return Resent(public_id=public_id)
+
+
+class FlowResendRefusal(StrEnum):
+    NOT_FOUND = "not_found"
+    EXPIRED = "expired"
+    UNAVAILABLE = "resend_unavailable"
+
+
+def resend_code(*, public_id: str) -> Resent | FlowResendRefusal:
+    # Como resend, con la espera y el tope de la pantalla (RF-010 de registro-flujo). Esperar,
+    # agotar los reenvíos o tener el código validado dan el mismo rechazo (C-04).
+    with transaction.atomic():
+        process = _locked_process(public_id)
+        if process is None:
+            return FlowResendRefusal.NOT_FOUND
+        if process.is_expired:
+            return FlowResendRefusal.EXPIRED
+        now = timezone.now()
+        waiting = (
+            process.last_sent_at is not None and now < process.last_sent_at + conf.resend_interval()
+        )
+        if (
+            waiting
+            or process.resend_count >= conf.max_resends()
+            or process.code_validated_at is not None
+        ):
+            return FlowResendRefusal.UNAVAILABLE
+        type(process).objects.filter(pk=process.pk).update(
+            code_hash="",
+            failed_attempts=0,
+            resend_count=process.resend_count + 1,
+            last_sent_at=now,
+        )
         transaction.on_commit(lambda: _queue(REISSUE_TASK, [_PURPOSE, public_id]))
         signals.registration_code_sent.send(
             sender=PendingRegistration, email=process.email, success=True
@@ -306,6 +345,8 @@ def _leave_as_issued(slot: PhantomProcess, previous: PhantomProcess | None) -> N
     slot.payload = None
     slot.failed_attempts = 0
     slot.code_validated_at = None
+    slot.resend_count = 0
+    slot.last_sent_at = timezone.now()
     slot.code_expires_at = timezone.now() + conf.code_ttl()
     slot.resolved_at = timezone.now()
     if previous is not None and not previous.is_expired:
@@ -320,6 +361,8 @@ def _leave_as_issued(slot: PhantomProcess, previous: PhantomProcess | None) -> N
             "code_validated_at",
             "code_expires_at",
             "created_at",
+            "resend_count",
+            "last_sent_at",
         ]
     )
 

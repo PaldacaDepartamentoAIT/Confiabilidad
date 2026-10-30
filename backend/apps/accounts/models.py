@@ -170,6 +170,9 @@ class CodeProcess(models.Model):
     failed_attempts = models.PositiveSmallIntegerField(default=0)
     code_validated_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    # Reenvíos del código vigente y momento del último envío (D-04 de registro-flujo).
+    resend_count = models.PositiveSmallIntegerField(default=0)
+    last_sent_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         abstract = True

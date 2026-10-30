@@ -86,7 +86,7 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   ejecutó una vez para T-004…T-007 juntas (1867 pasan): las ejecuciones por tarea se cortaron por el
   entorno (procesos de Postgres y Redis detenidos) — [Cierto] — revertir: no aplica.
 
-- [ ] T-008 Contadores de reenvío en el modelo
+- [x] T-008 Contadores de reenvío en el modelo
   RF: RF-010 (M-02, D-04) | Depende de: — | Archivos: 3
   Archivos: `models.py`, `migrations/0013_codeprocess_resend.py`,
   `tests/test_pending_registration_model.py`.
@@ -94,25 +94,34 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   la migración se aplica sobre datos existentes; `python manage.py makemigrations --check` no
   propone nada; suite verde.
 
-- [ ] T-009 Contadores al emitir el código
+- [x] T-009 Contadores al emitir el código
   RF: RF-010, RF-017 (M-02) | Depende de: T-008 | Archivos: 3
   Archivos: `processes.py`, `registration.py`, `tests/test_registration_flow.py`.
   Hecho cuando: la plaza nace con `last_sent_at`; un registro nuevo, uno repetido y una plaza con
   cuenta al resolverse quedan con `resend_count` 0 y `last_sent_at` del momento de la resolución,
   igual en los tres casos; suite verde.
 
-- [ ] T-010 Reenvío con espera y tope
+- [x] T-010 Reenvío con espera y tope
   RF: RF-010 (M-01) | Depende de: T-004, T-009 | Archivos: 2
   Archivos: `registration.py`, `tests/test_registration_flow.py`.
   Hecho cuando: `resend_code` reenvía pasados 60 s y suma uno a `resend_count`; antes de 60 s, tras
   el quinto reenvío o con el código validado devuelve `UNAVAILABLE` sin cambiar nada; una plaza se
   comporta igual que un registro real sin validar; suite verde.
+  Decisiones: un proceso caducado da su propio rechazo, `expired`, y no `UNAVAILABLE`, como el resto
+  del flujo — [Probable] — revertir: devolver `UNAVAILABLE` también al caducar. `resend_code` tiene
+  su propio enumerado (`FlowResendRefusal`) para no añadir un valor a `ResendRefusal`, que la consola
+  traduce caso a caso — [Cierto] — revertir: no aplica.
 
-- [ ] T-011 Ruta de reenvío
+- [x] T-011 Ruta de reenvío
   RF: RF-010, RF-016, RF-019, RF-021 (M-03) | Depende de: T-007, T-010 | Archivos: 3
   Archivos: `api/flow_views.py`, `api/urls.py`, `tests/test_registration_flow_api.py`.
   Hecho cuando: `POST …/registration/resend` da `202`, `400` `{"code": "resend_unavailable"}`,
   `404`, `403` sin CSRF y `429`, y cuenta para el límite por IP; suite verde.
+  Decisiones: las vistas del flujo pasan a una vista base común (`_FlowView`) con el idioma, el
+  límite, la lectura del cuerpo y el «no encontrado», y `PublicIdSerializer` vive en `flow_views.py`
+  importando `_Text`, para no tocar un cuarto archivo — [Cierto] — revertir: moverlo a
+  `flow_serializers.py`. La suite completa se ejecutó una vez para T-008…T-011 (1889 pasan) —
+  [Cierto] — revertir: no aplica.
 
 - [ ] T-012 Estado del proceso
   RF: RF-006, RF-009, RF-010 (M-01, D-05) | Depende de: T-010 | Archivos: 2

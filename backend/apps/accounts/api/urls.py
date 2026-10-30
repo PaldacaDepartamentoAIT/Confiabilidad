@@ -1,6 +1,11 @@
 from django.urls import path
 
-from apps.accounts.api.flow_views import AppVerifyView, BrowserVerifyView
+from apps.accounts.api.flow_views import (
+    AppResendView,
+    AppVerifyView,
+    BrowserResendView,
+    BrowserVerifyView,
+)
 from apps.accounts.api.views import AppRegistrationView, BrowserRegistrationView
 
 urlpatterns = [
@@ -16,4 +21,10 @@ urlpatterns = [
         name="registration-verify-browser",
     ),
     path("app/v1/registration/verify", AppVerifyView.as_view(), name="registration-verify-app"),
+    path(
+        "browser/v1/registration/resend",
+        BrowserResendView.as_view(),
+        name="registration-resend-browser",
+    ),
+    path("app/v1/registration/resend", AppResendView.as_view(), name="registration-resend-app"),
 ]

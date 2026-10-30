@@ -12,6 +12,8 @@ ISSUED_FIELDS = [
     "code_expires_at",
     "failed_attempts",
     "code_validated_at",
+    "resend_count",
+    "last_sent_at",
 ]
 
 
@@ -29,6 +31,8 @@ def issue_code(process: CodeProcess, purpose: codes.Purpose, public_id: str | No
     process.public_id = public_id or codes.generate_public_id()
     process.failed_attempts = 0
     process.code_validated_at = None
+    process.resend_count = 0
+    process.last_sent_at = timezone.now()
     return _set_new_code(process, purpose)
 
 
