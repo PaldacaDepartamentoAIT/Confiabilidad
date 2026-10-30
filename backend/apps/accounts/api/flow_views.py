@@ -1,6 +1,8 @@
 import dataclasses
 from typing import Any, ClassVar
 
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework import serializers, status
 from rest_framework.parsers import JSONParser
 from rest_framework.permissions import AllowAny
@@ -14,6 +16,9 @@ from apps.accounts.api.flow_serializers import VerifySerializer, _Text
 from apps.accounts.api.language import request_language
 from apps.accounts.api.views import _enforce_csrf, _limited, _read_body, _render, _unreadable
 from apps.accounts.models import CodeProcess
+from apps.accounts.validators import COUNTRY_CODES
+from apps.consents.models import Terms
+from apps.consents.versions import current_document
 
 _PUBLIC_ID_MAX_LENGTH = CodeProcess._meta.get_field("public_id").max_length or 0
 
@@ -106,6 +111,36 @@ class AppStatusView(_FlowView):
 
 class BrowserStatusView(_BrowserMixin, AppStatusView):
     pass
+
+
+class AppOptionsView(APIView):
+    # Datos públicos del formulario: no lee procesos ni cuenta para ningún límite.
+    authentication_classes: list[Any] = []
+    permission_classes = [AllowAny]
+
+    def get(self, request: Request) -> Response:
+        field = request.query_params.get("language")
+        language = request_language(field, request.headers.get("Accept-Language"))
+        return Response(
+            {
+                "countries": list(COUNTRY_CODES),
+                "terms": _document(Terms.Kind.TERMS, language),
+                "marketing": _document(Terms.Kind.MARKETING, language),
+            }
+        )
+
+
+@method_decorator(ensure_csrf_cookie, name="dispatch")
+class BrowserOptionsView(AppOptionsView):
+    # Da al navegador la cookie que exigen los POST del flujo (D-09).
+    pass
+
+
+def _document(kind: str, language: str) -> dict[str, str] | None:
+    document = current_document(kind, language)
+    if document is None:
+        return None
+    return {"version": document.version, "locale": document.locale, "content": document.content}
 
 
 def _storable(public_id: str) -> bool:

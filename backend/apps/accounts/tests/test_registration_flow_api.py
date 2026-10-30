@@ -8,12 +8,15 @@ from django.utils import timezone
 from apps.accounts.api import messages
 from apps.accounts.models import PendingRegistration
 from apps.accounts.tests.factories import StartedWithCode, make_pending
+from apps.consents.models import Terms
+from apps.consents.tests.factories import publish_version
 
 pytestmark = pytest.mark.django_db
 
 VERIFY = "/api/{client}/v1/registration/verify"
 RESEND = "/api/{client}/v1/registration/resend"
 STATUS = "/api/{client}/v1/registration/status"
+OPTIONS = "/api/{client}/v1/registration/options"
 
 
 def _wrong(code: str) -> str:
@@ -244,3 +247,41 @@ def test_status_does_not_count_for_the_ip_limit(started: StartedWithCode) -> Non
 
     assert statuses == [200] * 5
     assert _app(VERIFY, {"public_id": started.public_id, "code": started.code}).status_code == 200
+
+
+def _document(document: Terms) -> dict[str, str]:
+    return {"version": document.version, "locale": document.locale, "content": document.content}
+
+
+def test_options_give_the_countries_and_the_documents_in_force_in_the_language() -> None:
+    terms = publish_version(version="7")
+    marketing = publish_version(kind=Terms.Kind.MARKETING, version="2")
+
+    response = Client().get(OPTIONS.format(client="app"), {"language": "pt-BR"})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert "ES" in body["countries"] and body["countries"] == sorted(body["countries"])
+    assert body["terms"] == _document(terms["pt-BR"])
+    assert body["marketing"] == _document(marketing["pt-BR"])
+
+
+def test_options_without_documents_in_force_give_null() -> None:
+    body = Client().get(OPTIONS.format(client="app")).json()
+
+    assert (body["terms"], body["marketing"]) == (None, None)
+
+
+def test_options_language_falls_back_to_the_header() -> None:
+    terms = publish_version(version="7")
+
+    response = Client().get(OPTIONS.format(client="app"), headers={"Accept-Language": "en-US"})
+
+    assert response.json()["terms"] == _document(terms["en"])
+
+
+def test_browser_options_set_the_csrf_cookie_for_the_flow(csrf_client: Client) -> None:
+    response = csrf_client.get(OPTIONS.format(client="browser"))
+
+    assert response.status_code == 200
+    assert "csrftoken" in response.cookies

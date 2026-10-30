@@ -1,9 +1,11 @@
 from django.urls import path
 
 from apps.accounts.api.flow_views import (
+    AppOptionsView,
     AppResendView,
     AppStatusView,
     AppVerifyView,
+    BrowserOptionsView,
     BrowserResendView,
     BrowserStatusView,
     BrowserVerifyView,
@@ -35,4 +37,10 @@ urlpatterns = [
         name="registration-status-browser",
     ),
     path("app/v1/registration/status", AppStatusView.as_view(), name="registration-status-app"),
+    path(
+        "browser/v1/registration/options",
+        BrowserOptionsView.as_view(),
+        name="registration-options-browser",
+    ),
+    path("app/v1/registration/options", AppOptionsView.as_view(), name="registration-options-app"),
 ]
