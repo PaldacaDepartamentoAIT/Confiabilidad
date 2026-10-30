@@ -15,6 +15,7 @@ from apps.accounts.models import PendingRegistration, PhantomProcess, User
 from apps.accounts.processes import VerifyResult as VerifyResult
 from apps.accounts.validators import normalize_country, normalize_name
 from apps.consents import services as consents
+from apps.core import fingerprints
 from apps.emails import locales, outbox
 
 _PURPOSE = codes.Purpose.REGISTRATION
@@ -122,6 +123,43 @@ def verify(*, public_id: str, code: str) -> VerifyResult:
             success=result is VerifyResult.VERIFIED,
         )
         return result
+
+
+def verify_code(*, public_id: str, code: str) -> VerifyResult:
+    with transaction.atomic():
+        process = _locked_process(public_id)
+        if process is None:
+            return VerifyResult.NOT_FOUND
+        result = _check_registration_code(process, code)
+        signals.registration_code_verified.send(
+            sender=PendingRegistration,
+            email=process.email,
+            success=result is VerifyResult.VERIFIED,
+        )
+        return result
+
+
+def _check_registration_code(
+    process: PendingRegistration | PhantomProcess, code: str
+) -> VerifyResult:
+    # El código se compara antes de mirar si está validado: rechazar sin comparar delataría que el
+    # registro es real, porque una plaza nunca está validada (D-02, RF-009 de procesos-pendientes).
+    if process.is_expired:
+        return VerifyResult.EXPIRED
+    if process.is_locked:
+        return VerifyResult.LOCKED
+    matches = fingerprints.code_matches(_PURPOSE, process.public_id, code, process.code_hash)
+    if matches and process.code_validated_at is not None:
+        return VerifyResult.VERIFIED
+    if timezone.now() >= process.code_expires_at:
+        return VerifyResult.CODE_EXPIRED
+    if not matches:
+        process.failed_attempts += 1
+        process.save(update_fields=["failed_attempts"])
+        return VerifyResult.WRONG_CODE
+    process.code_validated_at = timezone.now()
+    process.save(update_fields=["code_validated_at"])
+    return VerifyResult.VERIFIED
 
 
 @dataclass(frozen=True)
