@@ -1,6 +1,7 @@
 # Entrega E-03 · Reenviar el código con espera y tope
 
-Rama: `feat/registro-flujo-reenvio` · PR: pendiente ·
+Rama: `feat/registro-flujo-reenvio` · PR:
+[PaldacaDepartamentoAIT/Confiabilidad#36](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/36) ·
 Líneas de código y tests: 400 (límite: 400).
 
 ## Qué se hizo
