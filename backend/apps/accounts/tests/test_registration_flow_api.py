@@ -13,6 +13,7 @@ pytestmark = pytest.mark.django_db
 
 VERIFY = "/api/{client}/v1/registration/verify"
 RESEND = "/api/{client}/v1/registration/resend"
+STATUS = "/api/{client}/v1/registration/status"
 
 
 def _wrong(code: str) -> str:
@@ -208,3 +209,38 @@ def test_resend_and_verify_share_the_ip_limit(started: StartedWithCode) -> None:
 
     assert response.status_code == 429
     assert PendingRegistration.objects.get().resend_count == 0
+
+
+def test_status_from_the_app_reports_the_timers(started: StartedWithCode) -> None:
+    response = _app(STATUS, {"public_id": started.public_id})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert set(body) == {"code_expires_in", "resend_in", "resends_left", "locked", "expired"}
+    assert 0 < body["code_expires_in"] <= 900 and 0 < body["resend_in"] <= 60
+    assert (body["resends_left"], body["locked"], body["expired"]) == (5, False, False)
+
+
+def test_status_from_the_browser_needs_csrf(csrf_client: Client, started: StartedWithCode) -> None:
+    rejected = csrf_client.post(
+        STATUS.format(client="browser"),
+        {"public_id": started.public_id},
+        content_type="application/json",
+    )
+
+    accepted = _browser(csrf_client, STATUS, {"public_id": started.public_id})
+
+    assert (rejected.status_code, accepted.status_code) == (403, 200)
+
+
+def test_status_of_an_unknown_public_id_is_not_found() -> None:
+    assert _app(STATUS, {"public_id": "unknown"}).status_code == 404
+    assert _app(STATUS, {"public_id": "x" * 500}).status_code == 404
+
+
+@override_settings(REGISTRATION_RATE_FLOW_IP_PER_HOUR=2)
+def test_status_does_not_count_for_the_ip_limit(started: StartedWithCode) -> None:
+    statuses = [_app(STATUS, {"public_id": started.public_id}).status_code for _ in range(5)]
+
+    assert statuses == [200] * 5
+    assert _app(VERIFY, {"public_id": started.public_id, "code": started.code}).status_code == 200
