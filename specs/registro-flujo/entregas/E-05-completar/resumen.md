@@ -101,7 +101,8 @@ Deberías ver todos en verde.
 
 ## Marco teórico
 ### Por qué un código correcto pero no validado cuenta como incorrecto
-La pantalla siempre valida el código antes de pedir la contraseña. Quien llama a completar sin
-haberlo validado se ha saltado ese paso a propósito, y completar es la única ruta que además evalúa
-la contraseña. Si ahí un código correcto no gastara intentos, alguien podría probar códigos por esa
-ruta sin el freno de los 5 intentos de la verificación. Por eso cuenta igual que uno incorrecto.
+La pantalla siempre valida el código antes de pedir la contraseña, así que solo llega a completar
+con un código sin validar quien se salta ese paso. Se decidió (C-03 de la clarificación) tratarlo
+con rigor: responde exactamente igual que un código incorrecto y gasta un intento. Así completar
+nunca sirve para averiguar si un código sin validar es el bueno, y el único camino para validarlo
+es la verificación, con su bloqueo a los 5 intentos.
