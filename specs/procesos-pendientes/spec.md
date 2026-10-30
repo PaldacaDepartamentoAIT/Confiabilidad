@@ -1,5 +1,5 @@
 # Spec: procesos-pendientes (registro pendiente)
-Estado: borrador
+Estado: aprobada
 Aprobación: ligera
 
 ## Objetivo (por qué)
@@ -129,9 +129,9 @@ a la versión vigente, entonces el sistema deberá registrar en esa misma operac
 vigente, deberá crear la cuenta sin registrar ninguna aceptación. Si el registro pendiente tiene un
 documento de marketing aceptado que pertenece a la versión vigente, entonces el sistema deberá
 registrar en esa misma operación la concesión de marketing (RF-008 de `consentimientos`), con la
-fecha de compleción; si no lo tiene o ya no es de la versión vigente, deberá crear la cuenta sin
-registrar ninguna concesión. Si la contraseña no cumple la
-política de RF-022, entonces deberá rechazarlo
+fecha de compleción; si no lo tiene, ya no es de la versión vigente o `consentimientos` rechaza la
+concesión por cualquier otro motivo, deberá crear la cuenta sin registrar ninguna concesión. Si
+la contraseña no cumple la política de RF-022, entonces deberá rechazarlo
 indicando cada regla incumplida y conservar el registro pendiente.
 
 ### RF-021 OBSOLETO — Completar el cambio de contraseña
@@ -161,6 +161,8 @@ términos aceptado y el documento de marketing aceptado, el sistema deberá devo
 un identificador público nuevo, con el mismo formato tenga o no cuenta el correo, y hacer fuera de
 la respuesta todo el trabajo que depende de ello: comprobar cuentas y registros pendientes (RF-004,
 RF-005, RF-017), crear o reemplazar el registro pendiente con ese identificador y emitir el código.
+Si el documento de marketing indicado no existe o no pertenece a la versión vigente, entonces el
+sistema deberá descartarlo, sin error, y guardar el registro pendiente sin marketing.
 Si el nombre, la fecha de nacimiento, el país o el formato del correo no son válidos, entonces el
 sistema deberá rechazarlos en la propia respuesta, indicando cada error. Que el correo pertenezca a
 una cuenta o tenga un registro pendiente nunca se indicará en la respuesta. Si el trabajo de fuera
@@ -193,7 +195,11 @@ igual que RF-005 con un registro real.
   aceptación (S-12 y C-13 de `registro-api`). Del mismo modo, guarda el documento de marketing si
   se marcó en el formulario, y su concesión se registra al completar el registro (cambio del
   2026-10-30, pedido por `registro-flujo`, S-06 y RF-018); sin documento, o si ya no es de la
-  versión vigente, la cuenta se crea sin concesión, sin error.
+  versión vigente, la cuenta se crea sin concesión, sin error. Un documento de marketing que no
+  existe o no es vigente al empezar se descarta (C-03), y la consola no indica el de marketing,
+  igual que el de términos (C-02). *Riesgo aceptado (C-01):* si `consentimientos` rechaza la
+  concesión al completar por cualquier motivo, la cuenta se crea sin ella y sin dejar rastro, como
+  hoy con los términos; un consentimiento que la persona dio puede perderse sin que nadie lo note.
 - S-04 La gracia de 15 minutos tras caducar el código (diagrama de registro) permite completar el
   registro tras validar el código y cerrar la ventana.
 - S-05 Crear la cuenta se hace aquí (RF-020). Los correos de código y el aviso "ya tienes cuenta"
@@ -280,5 +286,5 @@ igual que RF-005 con un registro real.
   modificado
 - 2026-10-30 — Cambio por `registro-flujo` (S-06, RF-018): el registro pendiente guarda el
   documento de marketing aceptado, lo conserva al repetirse el registro y completar el registro
-  registra su concesión — RF: RF-001, RF-005, RF-020 y RF-024 modificados; S-03 ajustado — Estado:
-  pendiente de clarificar
+  registra su concesión — RF: RF-001, RF-005, RF-020 y RF-024 modificados; S-03 ajustado.
+  Clarificado (C-01…C-03): RF-020 y RF-024 ajustados; S-03 ajustado — Estado: clarificado
