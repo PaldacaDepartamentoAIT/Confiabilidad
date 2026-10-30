@@ -1,6 +1,7 @@
 # Entrega E-04 · Estado del proceso y opciones del formulario
 
-Rama: `feat/registro-flujo-estado` · PR: pendiente ·
+Rama: `feat/registro-flujo-estado` · PR:
+[PaldacaDepartamentoAIT/Confiabilidad#37](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/37) ·
 Líneas de código y tests: 279 (límite: 400).
 
 ## Qué se hizo
