@@ -191,3 +191,92 @@ def test_resolving_resets_the_resend_counters(prepare: Callable[[], str]) -> Non
     process = _resolved()
 
     assert process.resend_count == 0
+
+
+Refusal = registration.FlowResendRefusal
+
+
+def _sent(seconds_ago: int, resends: int = 0) -> None:
+    changes = {
+        "last_sent_at": timezone.now() - timedelta(seconds=seconds_ago),
+        "resend_count": resends,
+    }
+    PendingRegistration.objects.update(**changes)
+    PhantomProcess.objects.update(**changes)
+
+
+def test_resend_after_the_interval_issues_a_new_code_and_counts_it() -> None:
+    started = make_pending(EMAIL)
+    PendingRegistration.objects.update(failed_attempts=2)
+    _sent(61)
+    before = timezone.now()
+
+    result = registration.resend_code(public_id=started.public_id)
+
+    stored = _stored()
+    assert result == registration.Resent(public_id=started.public_id)
+    assert (stored.resend_count, stored.failed_attempts, stored.code_hash) == (1, 0, "")
+    assert stored.last_sent_at is not None and before <= stored.last_sent_at
+
+
+def test_resend_without_a_recorded_send_is_allowed() -> None:
+    started = make_pending(EMAIL)
+    PendingRegistration.objects.update(last_sent_at=None)
+
+    assert isinstance(registration.resend_code(public_id=started.public_id), registration.Resent)
+
+
+@pytest.mark.parametrize(
+    ("seconds_ago", "resends", "validated"),
+    [
+        pytest.param(30, 0, False, id="before-the-interval"),
+        pytest.param(61, 5, False, id="after-the-last-resend"),
+        pytest.param(61, 0, True, id="validated"),
+    ],
+)
+def test_resend_is_unavailable_without_changing_anything(
+    seconds_ago: int, resends: int, validated: bool
+) -> None:
+    started = make_pending(EMAIL)
+    if validated:
+        registration.verify_code(public_id=started.public_id, code=started.code)
+    _sent(seconds_ago, resends)
+    before = _stored()
+
+    result = registration.resend_code(public_id=started.public_id)
+
+    after = _stored()
+    assert result is Refusal.UNAVAILABLE
+    assert (after.code_hash, after.resend_count, after.last_sent_at) == (
+        before.code_hash,
+        before.resend_count,
+        before.last_sent_at,
+    )
+
+
+def test_resend_of_an_expired_or_unknown_process_is_refused() -> None:
+    started = make_pending(EMAIL)
+    _age(created_at=120)
+
+    assert registration.resend_code(public_id=started.public_id) is Refusal.EXPIRED
+    assert registration.resend_code(public_id="unknown") is Refusal.NOT_FOUND
+
+
+def _resend_journey(public_id: str) -> list[object]:
+    results: list[object] = [registration.resend_code(public_id=public_id)]
+    for _ in range(6):
+        last_send = timezone.now() - timedelta(seconds=61)
+        PendingRegistration.objects.update(last_sent_at=last_send)
+        PhantomProcess.objects.update(last_sent_at=last_send)
+        result = registration.resend_code(public_id=public_id)
+        results.append("resent" if isinstance(result, registration.Resent) else result)
+    return results
+
+
+@pytest.mark.parametrize("source", [_phantom, _real], ids=["phantom", "real"])
+def test_a_phantom_resends_like_a_real_registration(source: Callable[[], str]) -> None:
+    assert _resend_journey(source()) == [
+        Refusal.UNAVAILABLE,
+        *["resent"] * 5,
+        Refusal.UNAVAILABLE,
+    ]
