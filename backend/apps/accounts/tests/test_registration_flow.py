@@ -142,3 +142,52 @@ def test_a_phantom_answers_like_a_registration_whose_code_is_never_guessed(
         Result.CODE_EXPIRED,
         Result.EXPIRED,
     ]
+
+
+def test_a_new_slot_is_sent_now_without_resends() -> None:
+    before = timezone.now()
+
+    started = registration.start(email=EMAIL, **DEFAULT_PROFILE)
+
+    slot = PhantomProcess.objects.get(public_id=started.public_id)
+    assert slot.resend_count == 0
+    assert slot.last_sent_at is not None and before <= slot.last_sent_at <= timezone.now()
+
+
+def _resolved() -> PendingRegistration | PhantomProcess:
+    # Envejece los contadores antes de resolver para ver que la resolución los pone al día.
+    started = registration.start(email=EMAIL, **DEFAULT_PROFILE)
+    PhantomProcess.objects.update(resend_count=3, last_sent_at=timezone.now() - timedelta(hours=1))
+    PendingRegistration.objects.update(
+        resend_count=3, last_sent_at=timezone.now() - timedelta(hours=1)
+    )
+    before = timezone.now()
+    registration.resolve_registration(started.public_id)
+    process = PendingRegistration.objects.filter(
+        public_id=started.public_id
+    ).first() or PhantomProcess.objects.get(public_id=started.public_id)
+    assert process.last_sent_at is not None and before <= process.last_sent_at
+    return process
+
+
+def _with_account() -> str:
+    make_user(email=EMAIL)
+    return EMAIL
+
+
+def _with_pending() -> str:
+    make_pending(EMAIL)
+    return EMAIL
+
+
+@pytest.mark.parametrize(
+    "prepare",
+    [lambda: EMAIL, _with_pending, _with_account],
+    ids=["new", "repeated", "account"],
+)
+def test_resolving_resets_the_resend_counters(prepare: Callable[[], str]) -> None:
+    prepare()
+
+    process = _resolved()
+
+    assert process.resend_count == 0

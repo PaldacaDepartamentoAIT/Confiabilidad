@@ -72,6 +72,7 @@ def start(
         public_id=codes.generate_public_id(),
         code_hash="",
         code_expires_at=timezone.now() + conf.code_ttl(),
+        last_sent_at=timezone.now(),
         payload=payload,
     )
     with transaction.atomic():
@@ -306,6 +307,8 @@ def _leave_as_issued(slot: PhantomProcess, previous: PhantomProcess | None) -> N
     slot.payload = None
     slot.failed_attempts = 0
     slot.code_validated_at = None
+    slot.resend_count = 0
+    slot.last_sent_at = timezone.now()
     slot.code_expires_at = timezone.now() + conf.code_ttl()
     slot.resolved_at = timezone.now()
     if previous is not None and not previous.is_expired:
@@ -320,6 +323,8 @@ def _leave_as_issued(slot: PhantomProcess, previous: PhantomProcess | None) -> N
             "code_validated_at",
             "code_expires_at",
             "created_at",
+            "resend_count",
+            "last_sent_at",
         ]
     )
 
