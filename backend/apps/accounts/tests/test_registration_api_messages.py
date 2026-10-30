@@ -22,6 +22,12 @@ CODES = [
     "wrong_kind",
     "no_current_version",
     "not_current_document",
+    "wrong_code",
+    "locked",
+    "code_expired",
+    "expired",
+    "resend_unavailable",
+    "not_found",
 ]
 
 
