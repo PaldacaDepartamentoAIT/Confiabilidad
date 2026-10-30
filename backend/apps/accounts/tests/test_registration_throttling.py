@@ -114,3 +114,39 @@ def test_recorded_ip_requests_count_for_the_quota() -> None:
 def test_email_variants_the_registration_treats_as_equal_share_the_limit(variant: str) -> None:
     assert _email_ip(email="isis@example.com", at=T0).allowed
     assert _email_ip(email=variant, at=T0 + 1) == throttling.Verdict(allowed=False, retry_after=59)
+
+
+def _flow(ip: str = "192.0.2.1", at: float = T0) -> throttling.Verdict:
+    return throttling.check_flow_ip(ip, now=at)
+
+
+def test_flow_ip_is_rejected_after_sixty_requests_in_an_hour() -> None:
+    for second in range(60):
+        assert _flow(at=T0 + second).allowed
+
+    assert _flow(at=T0 + 600) == throttling.Verdict(allowed=False, retry_after=HOUR - 600)
+    assert _flow(at=T0 + HOUR).allowed
+
+
+def test_flow_limit_follows_the_setting() -> None:
+    with override_settings(REGISTRATION_RATE_FLOW_IP_PER_HOUR=2):
+        assert _flow(at=T0).allowed
+        assert _flow(at=T0 + 1).allowed
+        assert not _flow(at=T0 + 2).allowed
+
+
+def test_flow_limit_is_independent_from_the_form_limits() -> None:
+    for second in range(20):
+        throttling.check_ip("192.0.2.1", now=T0 + second)
+
+    assert _flow(at=T0 + 30).allowed
+    assert throttling.check_ip("192.0.2.1", now=T0 + 31) == throttling.Verdict(
+        allowed=False, retry_after=HOUR - 31
+    )
+
+
+def test_flow_limit_counts_each_ip_separately() -> None:
+    with override_settings(REGISTRATION_RATE_FLOW_IP_PER_HOUR=1):
+        assert _flow("192.0.2.1").allowed
+        assert _flow("192.0.2.2").allowed
+        assert not _flow("192.0.2.1", at=T0 + 1).allowed
