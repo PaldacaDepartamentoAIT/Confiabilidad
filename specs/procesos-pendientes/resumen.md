@@ -39,6 +39,11 @@ acceso al correo con un código y se fija una contraseña. Todo se puede recorre
   servidor y atada al `public_id`); el código en claro solo viaja en el correo (RF-007, RF-008). El
   secreto se puede rotar sin invalidar los códigos en curso (RF-015).
 - **Verificación**: 5 intentos fallidos bloquean el código hasta pedir otro (RF-009, RF-010).
+  Desde el cambio del 2026-10-30 (pedido por `registro-flujo`), un código ya validado se puede
+  presentar de nuevo: el correcto se acepta otra vez sin cambiar nada mientras el proceso no haya
+  caducado, aunque el código sí; uno incorrecto suma un intento con el código vigente, o da «código
+  caducado» sin sumar si ya no lo está. Así responde igual que un identificador sin registro
+  detrás, que nunca está validado. El cambio de contraseña conserva la regla anterior.
 - **Caducidad**: el proceso muere 15 min después de caducar su código o 1 h después del alta, lo
   que llegue antes (RF-011). La gracia sirve para completar tras validar el código.
 - **Reenvío en dos tiempos** (RF-016): la respuesta anula el código vigente y pone los intentos a
@@ -151,7 +156,13 @@ proveedor de correo configurado, los correos salen por la consola del worker: ah
    ```bash
    docker compose -f docker/docker-compose.yml run --rm backend python manage.py registration verify <PUBLIC_ID> <CODE>
    ```
-   Deberías ver `Code verified.`
+   Deberías ver `Code verified.` Si repites el mismo comando, verás otra vez `Code verified.`: el
+   código ya validado se acepta de nuevo. Con un código incorrecto, en cambio, el intento cuenta
+   para el bloqueo:
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py registration verify <PUBLIC_ID> 000000
+   ```
+   Deberías ver `Wrong code.`
 7. Completa el registro. Primero con una contraseña débil, para ver cada regla incumplida:
    ```bash
    docker compose -f docker/docker-compose.yml run --rm backend python manage.py registration complete <PUBLIC_ID> --password 12345678
