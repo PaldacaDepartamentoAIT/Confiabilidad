@@ -435,6 +435,9 @@ entrega (`entregas/E-XX-<descripcion>/resumen.md`).
   Cómo probarlo: con `curl`, empezar un registro por la API de `registro-api`, y llamar a la ruta de
   verificación con el código bueno, uno malo, un identificador inventado (`404`) y 61 veces seguidas
   (`429`).
+  Excepción: 402 líneas reales, aprobadas por el usuario el 2026-10-30. La configuración, el límite
+  y los textos solo son observables a través de la ruta; separarlos daría un PR que no se puede
+  probar con `curl`.
 
 - E-03 Reenviar el código con espera y tope
   Tareas: T-008, T-009, T-010, T-011 | Líneas estimadas: 350 | Rama: feat/registro-flujo-reenvio

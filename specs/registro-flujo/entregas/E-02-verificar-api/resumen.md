@@ -1,7 +1,7 @@
 # Entrega E-02 · Verificar el código por la API, con límite por IP
 
 Rama: `feat/registro-flujo-verificar-api` · PR: pendiente ·
-Líneas de código y tests: 402 (límite: 400; ver «Excepción» en `tasks.md`).
+Líneas de código y tests: 402 (límite: 400; excepción aprobada por el usuario, hasta 500).
 
 ## Qué se hizo
 - **Ruta de verificación** para los dos clientes, con el mismo reparto que el formulario de
