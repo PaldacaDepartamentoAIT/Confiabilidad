@@ -123,31 +123,38 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   `flow_serializers.py`. La suite completa se ejecutó una vez para T-008…T-011 (1889 pasan) —
   [Cierto] — revertir: no aplica.
 
-- [ ] T-012 Estado del proceso
+- [x] T-012 Estado del proceso
   RF: RF-006, RF-009, RF-010 (M-01, D-05) | Depende de: T-010 | Archivos: 2
   Archivos: `registration.py`, `tests/test_registration_flow.py`.
   Hecho cuando: `status` devuelve los segundos del código, los segundos hasta poder reenviar, los
   reenvíos restantes, bloqueado y caducado; no incluye ningún dato de la validación; un registro
   validado y uno sin validar dan el mismo estado; `None` si no existe; suite verde.
+  Decisiones: los segundos se redondean hacia arriba y nunca bajan de 0; sin último envío
+  registrado, el reenvío está disponible ya (0 s) — [Cierto] — revertir: cambiar `_seconds_until`.
+  `status` bloquea las filas como el resto del flujo (`_locked_process`), para hacer las mismas
+  consultas en un registro real y en una plaza — [Cierto] — revertir: no aplica.
 
-- [ ] T-013 Ruta de estado
+- [x] T-013 Ruta de estado
   RF: RF-006, RF-016, RF-021 (M-03, D-03) | Depende de: T-011, T-012 | Archivos: 3
   Archivos: `api/flow_views.py`, `api/urls.py`, `tests/test_registration_flow_api.py`.
   Hecho cuando: `POST …/registration/status` da `200` con el estado o `404`, exige CSRF en la ruta
   web y no cuenta para el límite por IP (61 consultas seguidas dan `200`); suite verde.
 
-- [ ] T-014 Lista pública de países
+- [x] T-014 Lista pública de países
   RF: RF-001 (M-06) | Depende de: — | Archivos: 2
   Archivos: `validators.py`, `tests/test_validators.py`.
   Hecho cuando: `COUNTRY_CODES` es pública, ordenada y es la misma que usa `validate_country`, sin
   cambiar ninguna validación; suite verde.
 
-- [ ] T-015 Ruta de opciones del formulario
+- [x] T-015 Ruta de opciones del formulario
   RF: RF-001, RF-021 (M-06, D-09) | Depende de: T-013, T-014 | Archivos: 3
   Archivos: `api/flow_views.py`, `api/urls.py`, `tests/test_registration_flow_api.py`.
   Hecho cuando: `GET …/registration/options?language=pt-BR` da los países y los documentos vigentes
   de términos y de marketing en ese idioma, o `null` si no hay; la ruta web pone la cookie
   `csrftoken`; suite verde.
+  Decisiones: el idioma de las opciones sale del parámetro `language` y, si no es válido, de
+  `Accept-Language`, como en el formulario — [Cierto] — revertir: no aplica. La suite completa se
+  ejecutó una vez para T-012…T-015 (1906 pasan) — [Cierto] — revertir: no aplica.
 
 - [ ] T-016 Completar con código y contraseña
   RF: RF-012, RF-013, RF-014 (M-01, D-02; C-03) | Depende de: T-001 | Archivos: 2
