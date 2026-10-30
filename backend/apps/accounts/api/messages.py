@@ -107,6 +107,37 @@ ERRORS: dict[str, dict[str, str]] = {
         "pt-BR": "Os termos mudaram. Revise-os e aceite-os novamente.",
         "en": "The terms have changed. Review them and accept them again.",
     },
+    # Verificar, reenviar y completar (registro-flujo).
+    "wrong_code": {
+        "es": "El código no es correcto. Revísalo e inténtalo de nuevo.",
+        "pt-BR": "O código não está correto. Verifique-o e tente novamente.",
+        "en": "The code is not correct. Check it and try again.",
+    },
+    "locked": {
+        "es": "Has agotado los intentos con este código. Pide uno nuevo.",
+        "pt-BR": "Você esgotou as tentativas com este código. Peça um novo.",
+        "en": "You have used up the attempts for this code. Request a new one.",
+    },
+    "code_expired": {
+        "es": "El código ha caducado. Pide uno nuevo.",
+        "pt-BR": "O código expirou. Peça um novo.",
+        "en": "The code has expired. Request a new one.",
+    },
+    "expired": {
+        "es": "El registro ha caducado. Vuelve a empezarlo.",
+        "pt-BR": "O cadastro expirou. Comece-o novamente.",
+        "en": "The registration has expired. Start it again.",
+    },
+    "resend_unavailable": {
+        "es": "Ahora no se puede enviar otro código.",
+        "pt-BR": "No momento não é possível enviar outro código.",
+        "en": "Another code cannot be sent right now.",
+    },
+    "not_found": {
+        "es": "El enlace no es válido o ha caducado.",
+        "pt-BR": "O link não é válido ou expirou.",
+        "en": "The link is not valid or has expired.",
+    },
 }
 
 FIELD_ERRORS: dict[str, dict[str, str]] = {

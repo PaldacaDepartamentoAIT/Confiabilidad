@@ -41,6 +41,22 @@ def rate_ip_per_hour() -> int:
     return _at_least_one("REGISTRATION_RATE_IP_PER_HOUR")
 
 
+def resend_interval() -> timedelta:
+    return timedelta(seconds=_at_least_one("REGISTRATION_RESEND_INTERVAL_SECONDS"))
+
+
+def max_resends() -> int:
+    return _at_least_one("REGISTRATION_MAX_RESENDS")
+
+
+def rate_flow_ip_per_hour() -> int:
+    return _at_least_one("REGISTRATION_RATE_FLOW_IP_PER_HOUR")
+
+
+def purge_after() -> timedelta:
+    return timedelta(hours=_at_least_one("REGISTRATION_PURGE_AFTER_HOURS"))
+
+
 def _at_least_one(name: str) -> int:
     # Un límite de 0 no tiene significado definido: es un error de configuración, no un cierre.
     value = int(getattr(settings, name))
