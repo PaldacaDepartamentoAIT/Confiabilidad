@@ -2,11 +2,11 @@
 Estado: aprobado
 
 ## Dependencias previas a implementar
-- `sdd-cambio` en `procesos-pendientes`, RF-009 (S-01, CF-6): hoy rechaza cualquier código en un
-  proceso con el código validado y antepone ese rechazo a comparar el código. RF-008 y RF-012 de esta
-  feature exigen aceptar de nuevo el código correcto y sumar un intento con uno incorrecto. No hay
-  solución dentro de esta feature: cualquier ruta que acepte el código contradice ese RF. El cambio
-  se limita al registro (registro pendiente y su plaza), porque `cambio-contrasena` reutiliza RF-009.
+- `sdd-cambio` en `procesos-pendientes`, RF-009 (S-01, CF-6): aprobado el 2026-10-30 con impacto
+  analizado. En un registro pendiente, un código ya validado se compara de nuevo: si coincide se
+  acepta sin cambios mientras el proceso no haya caducado, aunque el código sí; si no, suma un
+  intento con el código vigente o se rechaza por código caducado si ya no lo está (C-01 y C-02 de
+  esa clarificación). `cambio-contrasena` conserva la regla anterior.
 - Los `sdd-cambio` de marketing en `procesos-pendientes` y `registro-api` ya están aprobados con
   impacto analizado: los implementa este plan (M-05).
 
@@ -20,8 +20,9 @@ plaza primero; D-14 y D-18 de `procesos-pendientes`), para que un registro real 
 mismas consultas (RF-017):
 - `status(public_id)`: segundos que le quedan al código, segundos hasta poder reenviar, reenvíos
   restantes, bloqueado y caducado. Nunca dice si el código está validado (D-05). `None` si no existe.
-- `verify_code(public_id, code)`: orden caducado → bloqueado → código caducado → no coincide (suma
-  intento) → si ya estaba validado, lo acepta sin cambiar nada; si no, lo valida (RF-007, RF-008).
+- `verify_code(public_id, code)`: orden proceso caducado → bloqueado → ya validado y coincide
+  (aceptado sin cambiar nada, aunque el código haya caducado) → código caducado → no coincide (suma
+  intento) → lo valida (RF-007, RF-008; RF-009 de `procesos-pendientes`).
 - `resend_code(public_id)`: además de RF-016 de `procesos-pendientes`, rechaza antes de 60 s desde el
   último envío o tras el quinto reenvío, y con el código validado, con el mismo resultado `UNAVAILABLE`
   en los tres casos (RF-010, C-04).
@@ -31,7 +32,8 @@ mismas consultas (RF-017):
   (M-05) (RF-012, RF-014).
 - `purge_stale()`: borra, en una transacción, los registros pendientes y las plazas de registro cuyo
   último código caducó hace más de 24 h (RF-020, D-07).
-`verify`, `resend` y `complete` actuales siguen para la consola (RF-023 de `procesos-pendientes`).
+`verify` de la consola pasa a llamar a `verify_code`, con la misma firma; `resend` y `complete`
+siguen como están para la consola (RF-023 de `procesos-pendientes`).
 RF: RF-006, RF-007, RF-008, RF-009, RF-010, RF-012, RF-013, RF-014, RF-016, RF-017, RF-020
 
 ### M-02 Contadores de reenvío (`apps/accounts/models.py`, `apps/accounts/processes.py`, migración nueva)
@@ -179,13 +181,16 @@ RF: RF-021 (CF-7)
 
 ## Decisiones
 
-### D-01 Operaciones nuevas en el servicio, no cambios en las de la consola
-Elegida: `status`, `verify_code`, `resend_code` y `complete_with_code` nuevas en `registration.py`,
-y las de la consola sin cambios de firma.
-Descartada: cambiar `verify`, `resend` y `complete` para que pidan el código y apliquen los límites.
+### D-01 Operaciones nuevas en el servicio, no cambios de firma en las de la consola
+Elegida: `status`, `verify_code`, `resend_code` y `complete_with_code` nuevas en `registration.py`.
+Las de la consola no cambian de firma; `verify` delega en `verify_code`, porque RF-009 de
+`procesos-pendientes` es la misma regla en la consola y en la API.
+Descartada: cambiar `resend` y `complete` para que pidan el código y apliquen los límites, o dejar
+`verify` con la regla anterior.
 Motivo: la consola de RF-023 de `procesos-pendientes` completa sin código y sin límites de reenvío;
-cambiar su firma obligaría a otro `sdd-cambio`. Las nuevas reutilizan `_locked_process`, el cálculo
-de la huella y `complete`, así que las reglas siguen en un solo sitio.
+cambiar su firma obligaría a otro `sdd-cambio`. Con dos `verify` distintos, la misma regla de la
+spec se comportaría distinto según el canal. Las nuevas reutilizan `_locked_process`, el cálculo de
+la huella y `complete`, así que las reglas siguen en un solo sitio.
 
 ### D-02 Comparar el código antes de mirar si está validado
 Elegida: en `verify_code` y `complete_with_code`, comparar el código antes de mirar
@@ -193,7 +198,9 @@ Elegida: en `verify_code` y `complete_with_code`, comparar el código antes de m
 Descartada: el orden de `processes.check_code` (validado primero).
 Motivo: con el orden actual, cualquier código enviado a un proceso validado da «ya validado» y una
 plaza nunca puede darlo: delataría que el registro es real (RF-017). Comparando antes, un código
-incorrecto suma intento igual en los dos. `check_code` sigue como está para `cambio-contrasena`.
+incorrecto suma intento igual en los dos; y con el código caducado, uno incorrecto da «código
+caducado» sin sumar intento, también igual que una plaza. `check_code` sigue como está para
+`cambio-contrasena`.
 
 ### D-03 El identificador va en el cuerpo de un `POST`
 Elegida: `public_id` en el cuerpo JSON de las cuatro rutas, también en la consulta de estado.
@@ -277,7 +284,8 @@ listas para él.
 
 ## Estrategia de tests
 - Servicio (`backend/apps/accounts/tests/test_registration_flow.py`, pytest): cada rama de
-  `verify_code`, `resend_code`, `complete_with_code` y `status` (RF-007…RF-014, RF-016); contadores de
+  `verify_code`, `resend_code`, `complete_with_code` y `status` (RF-007…RF-014, RF-016), incluido el
+  código validado presentado de nuevo con el código vigente y caducado; contadores de
   reenvío al empezar, repetir, resolver la plaza y reenviar (RF-010); `purge_stale` con el borde de
   24 h (RF-020). El tiempo se mueve con `update()` (D-07 de `procesos-pendientes`).
 - Equivalencia (`test_registration_flow_equivalence.py`, pytest): un registro real cuyo código no se
@@ -291,6 +299,11 @@ listas para él.
   cuenta (CF-3).
 - Marketing (`test_registration_service.py`, `test_registration_api.py`, pytest): los tests del
   análisis de impacto de `procesos-pendientes` y `registro-api` (CF-4, CF-8 de `registro-api`).
+- Código validado en la consola: se sustituye
+  `test_registration_service.py::test_already_validated_code_rejects_any_code_without_counting`
+  por los casos de RF-009 de `procesos-pendientes`, y
+  `apps/audit/tests/test_registration_events.py::test_already_verified_code_is_recorded_as_failed_verification`
+  pasa a esperar `[True, True]`.
 - Casos compartidos de contraseña: un test de pytest y otro de Vitest recorren la tabla de la spec
   (CF-8).
 - Frontend (Vitest + Testing Library, `fetch` simulado): formulario (comprobaciones, errores de
