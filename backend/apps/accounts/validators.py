@@ -15,7 +15,8 @@ NAME_MAX_LENGTH = 150
 MINIMUM_AGE_YEARS = 18
 MINIMUM_AGE_EXTRA_DAYS = 5
 PLACEHOLDER_COUNTRY = "ZZ"
-_ISO_ALPHA_2 = frozenset(country.alpha_2 for country in pycountry.countries)
+COUNTRY_CODES = tuple(sorted(country.alpha_2 for country in pycountry.countries))
+_ISO_ALPHA_2 = frozenset(COUNTRY_CODES)
 # Separadores de línea y de párrafo de Unicode: también son "saltos de línea".
 _LINE_BREAK_CATEGORIES = {"Cc", "Zl", "Zp"}
 
