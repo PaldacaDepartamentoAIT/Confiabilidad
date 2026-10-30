@@ -41,7 +41,7 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   Hecho cuando: el resumen explica que repetir `registration verify` con el código correcto ya
   validado lo acepta de nuevo y que uno incorrecto suma un intento.
 
-- [ ] T-004 Valores configurables del flujo
+- [x] T-004 Valores configurables del flujo
   RF: RF-023 (M-04) | Depende de: — | Archivos: 4
   Archivos: `backend/config/settings.py`, `backend/.env.example`, `conf.py`,
   `tests/test_registration_conf.py`.
@@ -51,20 +51,20 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   Excepción: la configuración está repartida por diseño entre `settings.py`, `.env.example` y
   `conf.py`; separarla dejaría un ajuste sin lector o un lector sin ajuste.
 
-- [ ] T-005 Límite por IP del flujo
+- [x] T-005 Límite por IP del flujo
   RF: RF-019 (M-04) | Depende de: T-004 | Archivos: 2
   Archivos: `throttling.py`, `tests/test_registration_throttling.py`.
   Hecho cuando: `check_flow_ip` permite 60 peticiones por hora y rechaza la siguiente con los
   segundos de espera, con una clave distinta de las del formulario (no se suman); suite verde.
 
-- [ ] T-006 Textos del flujo en tres idiomas
+- [x] T-006 Textos del flujo en tres idiomas
   RF: RF-022 (M-03) | Depende de: — | Archivos: 2
   Archivos: `api/messages.py`, `tests/test_registration_api_messages.py`.
   Hecho cuando: `wrong_code`, `locked`, `code_expired`, `expired`, `resend_unavailable` y
   `not_found` tienen texto en `es`, `pt-BR` y `en`, y el test de completitud los incluye; suite
   verde.
 
-- [ ] T-007 Ruta de verificación
+- [x] T-007 Ruta de verificación
   RF: RF-007, RF-016, RF-019, RF-021, RF-022 (M-03, D-03) | Depende de: T-001, T-005, T-006 |
   Archivos: 4
   Archivos: `api/flow_serializers.py`, `api/flow_views.py`, `api/urls.py`,
@@ -76,6 +76,15 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   suite verde.
   Excepción: una ruta nueva solo es observable con su serializador, su vista y su entrada en
   `urls.py` a la vez.
+  Decisiones: las vistas del flujo reutilizan `_enforce_csrf`, `_read_body`, `_limited`, `_render`
+  y `_unreadable` de `api/views.py` en vez de copiarlas, para que el formulario y el flujo respondan
+  igual — [Cierto] — revertir: hacerlas públicas en un módulo común. Un identificador que no cabe en
+  la columna (más de 64 caracteres), vacío o con un nulo o un sustituto suelto da `404` sin consultar,
+  porque Postgres no los admite y daría `500` — [Cierto] — revertir: no aplica. El `200` lleva
+  `{"result": "verified"}` y una petición mal formada da `400` con `{"errors": …}` como el
+  formulario — [Probable] — revertir: cambiar el cuerpo en `flow_views.py`. La suite completa se
+  ejecutó una vez para T-004…T-007 juntas (1867 pasan): las ejecuciones por tarea se cortaron por el
+  entorno (procesos de Postgres y Redis detenidos) — [Cierto] — revertir: no aplica.
 
 - [ ] T-008 Contadores de reenvío en el modelo
   RF: RF-010 (M-02, D-04) | Depende de: — | Archivos: 3
