@@ -13,7 +13,7 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
 
 ## Backend
 
-- [ ] T-001 Verificar de nuevo un código validado
+- [x] T-001 Verificar de nuevo un código validado
   RF: RF-007, RF-008 (RF-009 de `procesos-pendientes`; M-01, D-02) | Depende de: — | Archivos: 2
   Archivos: `registration.py`, `tests/test_registration_flow.py`.
   Hecho cuando: `verify_code` valida un código correcto; con el código ya validado, el correcto se
@@ -21,8 +21,13 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   proceso en la gracia; uno incorrecto suma un intento con el código vigente y da `CODE_EXPIRED` sin
   sumar con el código caducado; bloqueado o caducado se rechaza; una plaza da los mismos resultados
   que un registro sin validar cuyo código no se acierta; suite verde.
+  Decisiones: la comprobación vive en `registration._check_registration_code` y no en
+  `processes.py`, porque solo el registro cambia de regla y `check_code` sigue sirviendo a
+  `cambio-contrasena` — [Cierto] — revertir: añadir a `check_code` un parámetro por propósito.
+  `verify_code` envía la señal de auditoría en todos los casos salvo «no existe», igual que hacía
+  `verify` — [Cierto] — revertir: no aplica.
 
-- [ ] T-002 La consola usa la regla nueva
+- [x] T-002 La consola usa la regla nueva
   RF: RF-008 (RF-009 de `procesos-pendientes`; D-01) | Depende de: T-001 | Archivos: 3
   Archivos: `registration.py`, `tests/test_registration_service.py`,
   `backend/apps/audit/tests/test_registration_events.py`.
@@ -30,7 +35,7 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   `test_already_validated_code_rejects_any_code_without_counting` se sustituye por los casos de
   T-001 a través de `verify`; el test de auditoría espera `[True, True]`; suite verde.
 
-- [ ] T-003 Resumen de `procesos-pendientes`: código validado
+- [x] T-003 Resumen de `procesos-pendientes`: código validado
   RF: RF-008 | Depende de: T-002 | Archivos: 1
   Archivos: `specs/procesos-pendientes/resumen.md`.
   Hecho cuando: el resumen explica que repetir `registration verify` con el código correcto ya
