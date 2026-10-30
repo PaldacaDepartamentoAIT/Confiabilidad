@@ -1,5 +1,5 @@
 # Tareas: registro-flujo
-Estado: borrador
+Estado: aprobado
 
 Rutas del backend relativas a `backend/apps/accounts/` y del frontend a `frontend/src/`, salvo que
 se indique otra. «Suite verde» = `cd backend && pytest -q` + `mypy .` + `ruff check .` +
