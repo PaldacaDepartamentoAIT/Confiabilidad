@@ -288,4 +288,6 @@ neutra (RF-005) ni los límites (RF-010, RF-011).
 - 2026-10-30 — Cambio por `registro-flujo` (S-06, RF-018): el formulario admite el consentimiento
   de marketing opcional, que se ignora sin error si no es de la versión vigente — RF: RF-001 y
   RF-007 modificados; RF-015 añadido; objetivo, S-11 y fuera de alcance ajustados; S-23 y CF-8
-  añadidos. Clarificado (C-01…C-03): RF-015, S-23 y CF-8 ajustados — Estado: clarificado
+  añadidos. Clarificado (C-01…C-03): RF-015, S-23 y CF-8 ajustados. Impacto: sin cambios en el
+  plan; lo implementan el plan y las tareas de `registro-flujo`, que actualizan también
+  `resumen.md` — Estado: impacto analizado
