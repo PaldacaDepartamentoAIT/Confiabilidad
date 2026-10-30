@@ -8,7 +8,7 @@ se indique otra. «Suite verde» = `cd backend && pytest -q` + `mypy .` + `ruff 
 un mutante del código que introduce, que debe hacer fallar sus tests (archivo de tests completo,
 nunca con `-k`).
 
-Las pantallas se construyen sin ruta (E-11…E-14) y se enlazan todas a la vez en E-15, para no
+Las pantallas se construyen sin ruta (E-12…E-14) y se enlazan todas a la vez en E-15, para no
 exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
 
 ## Backend
