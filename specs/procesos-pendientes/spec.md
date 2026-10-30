@@ -287,4 +287,6 @@ igual que RF-005 con un registro real.
 - 2026-10-30 — Cambio por `registro-flujo` (S-06, RF-018): el registro pendiente guarda el
   documento de marketing aceptado, lo conserva al repetirse el registro y completar el registro
   registra su concesión — RF: RF-001, RF-005, RF-020 y RF-024 modificados; S-03 ajustado.
-  Clarificado (C-01…C-03): RF-020 y RF-024 ajustados; S-03 ajustado — Estado: clarificado
+  Clarificado (C-01…C-03): RF-020 y RF-024 ajustados; S-03 ajustado. Impacto: sin cambios en el
+  plan; lo implementan el plan y las tareas de `registro-flujo`, que actualizan también
+  `resumen.md` — Estado: impacto analizado
