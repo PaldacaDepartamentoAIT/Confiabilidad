@@ -1,5 +1,5 @@
 # Spec: registro-api
-Estado: borrador
+Estado: aprobada
 Aprobación: ligera
 
 ## Objetivo (por qué)
@@ -118,9 +118,13 @@ Cuando una solicitud válida lleve el documento de marketing aceptado (su versi�
 sistema deberá pasarlo al empezar el registro (RF-024 de `procesos-pendientes`), que lo descarta si
 no existe o no pertenece a la versión vigente, y la concesión se registrará al completar el
 registro (RF-020 de `procesos-pendientes`). Si la solicitud no lo lleva, o no hay ningún documento de
-marketing vigente, entonces el sistema deberá empezar el registro sin marketing. El marketing no
-deberá producir ningún error de campo ni cambiar la respuesta neutra (RF-005) ni los límites
-(RF-010, RF-011).
+marketing vigente, entonces el sistema deberá empezar el registro sin marketing. Enviar el
+documento basta para conceder el marketing, sin marca de aceptación aparte. El sistema deberá
+aceptar el idioma del documento en las variantes de escritura de RF-013 (como `pt-br` o `pt_BR`).
+Si el campo de marketing llega mal formado (no es un objeto, le falta la versión o el idioma, tiene
+tipos erróneos, una longitud excesiva o caracteres no admitidos), entonces el sistema deberá
+tratarlo como ausente. El marketing no deberá producir ningún error de campo ni cambiar la respuesta
+neutra (RF-005) ni los límites (RF-010, RF-011).
 
 ## Supuestos
 - S-01 Solo API (pregunta 1). Los criterios de pantalla del usuario («mostrar mensajes debajo de cada
@@ -173,7 +177,12 @@ deberá producir ningún error de campo ni cambiar la respuesta neutra (RF-005) 
 - S-23 El formulario admite el consentimiento de marketing opcional (cambio del 2026-10-30, pedido
   por `registro-flujo`, S-06 y RF-018). *Por qué:* el marketing es opcional y no debe impedir el
   registro, así que un documento ausente, inexistente o no vigente se ignora sin error, a diferencia
-  de los términos (S-10).
+  de los términos (S-10). Un campo mal formado también se ignora, sin error ni registro en el log
+  (C-01), y enviar el documento ya es conceder, sin marca aparte (C-02); la intención la recoge la
+  casilla sin marcar por defecto de la pantalla (RF-001 de `registro-flujo`). El idioma del
+  documento se normaliza (C-03), al contrario que en los términos, porque aquí un fallo no se vería.
+  *Riesgos aceptados:* un cliente que envíe el campo mal formado pierde consentimientos sin que nadie
+  lo note, y uno que envíe siempre el documento concede el marketing sin que la persona lo marque.
 - S-12 Si entre empezar y completar el registro entra en vigor una versión nueva de términos, la
   cuenta se crea sin aceptación (C-02), y RF-015 de `consentimientos` la da por no aceptada. Lo mismo
   ocurre con los registros pendientes creados antes de esta feature, que no tienen documento guardado
@@ -241,8 +250,9 @@ deberá producir ningún error de campo ni cambiar la respuesta neutra (RF-005) 
 - CF-7 Los textos de los errores, del mensaje neutro y del límite superado existen en `es`, `pt-BR` y
   `en` (RF-013).
 - CF-8 Un test demuestra que la respuesta es idéntica con y sin marketing, con un documento de
-  marketing no vigente o inexistente y sin ningún documento de marketing vigente, y que en ninguno de
-  esos casos hay un error de campo (RF-015).
+  marketing no vigente o inexistente, con un campo de marketing mal formado y sin ningún documento de
+  marketing vigente, y que en ninguno de esos casos hay un error de campo ni de servidor (RF-015).
+  Otro demuestra que un idioma escrito como `pt-br` concede el documento `pt-BR`.
 
 ## Historial de cambios
 - 2026-10-16 — Creación (feature nueva) — RF: RF-001…RF-014 — Estado: pendiente de clarificar
@@ -278,4 +288,4 @@ deberá producir ningún error de campo ni cambiar la respuesta neutra (RF-005) 
 - 2026-10-30 — Cambio por `registro-flujo` (S-06, RF-018): el formulario admite el consentimiento
   de marketing opcional, que se ignora sin error si no es de la versión vigente — RF: RF-001 y
   RF-007 modificados; RF-015 añadido; objetivo, S-11 y fuera de alcance ajustados; S-23 y CF-8
-  añadidos — Estado: pendiente de clarificar
+  añadidos. Clarificado (C-01…C-03): RF-015, S-23 y CF-8 ajustados — Estado: clarificado
