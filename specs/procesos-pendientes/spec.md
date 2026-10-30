@@ -307,5 +307,7 @@ igual que RF-005 con un registro real.
   `resumen.md` — Estado: impacto analizado
 - 2026-10-30 — Cambio por `registro-flujo` (S-01, RF-008, RF-012): en un registro pendiente, un
   código ya validado se compara de nuevo; si coincide se acepta sin cambios y si no, suma un intento
-  — RF: RF-009 modificado; S-12 añadido. Clarificado (C-01, C-02): RF-009 y S-12 ajustados —
-  Estado: clarificado
+  — RF: RF-009 modificado; S-12 añadido. Clarificado (C-01, C-02): RF-009 y S-12 ajustados.
+  Impacto: sin cambios en este plan; cambian M-01, D-01 y D-02 del plan de `registro-flujo`, que lo
+  implementa, y los tests del código validado del servicio y de la auditoría — Estado: impacto
+  analizado
