@@ -138,6 +138,32 @@ ERRORS: dict[str, dict[str, str]] = {
         "pt-BR": "O link não é válido ou expirou.",
         "en": "The link is not valid or has expired.",
     },
+    # Política de contraseñas (RF-022 de procesos-pendientes), con los códigos de sus validadores.
+    "password_too_short": {
+        "es": "La contraseña debe tener al menos %(min_length)d caracteres.",
+        "pt-BR": "A senha deve ter pelo menos %(min_length)d caracteres.",
+        "en": "The password must be at least %(min_length)d characters long.",
+    },
+    "password_too_similar": {
+        "es": "La contraseña se parece demasiado a tu nombre o a tu correo.",
+        "pt-BR": "A senha é parecida demais com seu nome ou seu e-mail.",
+        "en": "The password is too similar to your name or email address.",
+    },
+    "password_too_common": {
+        "es": "Esta contraseña es demasiado común.",
+        "pt-BR": "Esta senha é comum demais.",
+        "en": "This password is too common.",
+    },
+    "password_entirely_numeric": {
+        "es": "La contraseña no puede tener solo números.",
+        "pt-BR": "A senha não pode ter apenas números.",
+        "en": "The password cannot be entirely numeric.",
+    },
+    "password_pwned": {
+        "es": "Esta contraseña ha aparecido en filtraciones de datos. Elige otra.",
+        "pt-BR": "Esta senha apareceu em vazamentos de dados. Escolha outra.",
+        "en": "This password has appeared in data breaches. Choose another one.",
+    },
 }
 
 FIELD_ERRORS: dict[str, dict[str, str]] = {
