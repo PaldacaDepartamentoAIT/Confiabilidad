@@ -1,6 +1,7 @@
 # Entrega E-01 · Volver a presentar un código validado
 
-Rama: `feat/registro-flujo-codigo-validado` · PR: pendiente ·
+Rama: `feat/registro-flujo-codigo-validado` · PR:
+[PaldacaDepartamentoAIT/Confiabilidad#34](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/34) ·
 Líneas de código y tests: 228 (límite: 400).
 
 ## Qué se hizo
