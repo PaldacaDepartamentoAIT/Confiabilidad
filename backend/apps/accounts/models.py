@@ -202,6 +202,10 @@ class PendingRegistration(CodeProcess):
     # Documento de términos aceptado en el formulario; vacío si se empezó desde consola (D-10).
     terms_version = models.CharField(max_length=20, blank=True, default="")
     terms_locale = models.CharField(max_length=5, blank=True, default="")
+    # Documento de marketing aceptado en el formulario; vacío si no se marcó (RF-018 de
+    # registro-flujo).
+    marketing_version = models.CharField(max_length=20, blank=True, default="")
+    marketing_locale = models.CharField(max_length=5, blank=True, default="")
 
     objects = CodeProcessQuerySet["PendingRegistration"].as_manager()
 

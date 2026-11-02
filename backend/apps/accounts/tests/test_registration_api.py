@@ -221,3 +221,70 @@ def test_browser_route_accepts_only_json(csrf_client: Client, content_type: str,
     assert response.status_code == 400
     assert response.json()["errors"]["non_field_errors"][0]["code"] == "invalid"
     assert not PhantomProcess.objects.exists()
+
+
+def _nested(depth: int) -> Any:
+    value: Any = "m2"
+    for _ in range(depth):
+        value = {"version": value}
+    return value
+
+
+@pytest.fixture
+def marketing() -> dict[str, Terms]:
+    return publish_version(kind=Terms.Kind.MARKETING, version="m2")
+
+
+def _slot_marketing() -> tuple[str, str] | None:
+    payload = PhantomProcess.objects.get().payload or {}
+    if "marketing_version" not in payload:
+        return None
+    return (payload["marketing_version"], payload["marketing_locale"])
+
+
+@pytest.mark.parametrize("locale", ["pt-BR", "pt-br", "pt_BR"])
+def test_marketing_in_force_reaches_the_registration(
+    marketing: dict[str, Terms], locale: str
+) -> None:
+    response = _app_post(_form(marketing={"version": "m2", "locale": locale}))
+
+    assert response.status_code == 202
+    assert _slot_marketing() == ("m2", "pt-BR")
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        pytest.param({"version": "m9", "locale": "es"}, id="unknown-version"),
+        pytest.param({"version": "m2", "locale": "fr"}, id="unknown-locale"),
+        pytest.param("sí", id="text"),
+        pytest.param(1, id="number"),
+        pytest.param(["m2", "es"], id="list"),
+        pytest.param(None, id="null"),
+        pytest.param({"version": 1, "locale": "es"}, id="wrong-type"),
+        pytest.param({"version": "m2"}, id="missing-locale"),
+        pytest.param({"version": "m" * 21, "locale": "es"}, id="too-long"),
+        pytest.param({"version": "m2", "locale": "es-ES-x"}, id="locale-too-long"),
+        pytest.param({"version": "m\x00", "locale": "es"}, id="null-character"),
+        pytest.param({"version": "m\ud800", "locale": "es"}, id="surrogate"),
+        pytest.param(_nested(50), id="nested"),
+    ],
+)
+def test_marketing_not_in_force_or_malformed_is_ignored_without_errors(
+    marketing: dict[str, Terms], value: Any
+) -> None:
+    plain = _app_post(_form(email="bea@example.com"))
+    PhantomProcess.objects.all().delete()
+
+    response = _app_post(_form(marketing=value))
+
+    assert response.status_code == 202
+    assert set(response.json()) == set(plain.json()) == {"public_id", "message"}
+    assert _slot_marketing() is None
+
+
+def test_marketing_without_any_document_in_force_is_ignored() -> None:
+    response = _app_post(_form(marketing={"version": "m2", "locale": "es"}))
+
+    assert response.status_code == 202
+    assert _slot_marketing() is None

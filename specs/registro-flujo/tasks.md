@@ -202,36 +202,45 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   aplica. La suite completa se ejecutó una vez para T-016…T-019 (1950 pasan) — [Cierto] —
   revertir: no aplica.
 
-- [ ] T-020 Marketing en el modelo
+- [x] T-020 Marketing en el modelo
   RF: RF-018 (M-05) | Depende de: T-008 | Archivos: 3
   Archivos: `models.py`, `migrations/0014_pendingregistration_marketing.py`,
   `tests/test_pending_registration_model.py`.
   Hecho cuando: `PendingRegistration` guarda `marketing_version` y `marketing_locale`, vacíos por
   defecto; `makemigrations --check` no propone nada; suite verde.
 
-- [ ] T-021 Marketing al empezar y al repetir
+- [x] T-021 Marketing al empezar y al repetir
   RF: RF-018 (RF-005 y RF-024 de `procesos-pendientes`) | Depende de: T-020 | Archivos: 2
   Archivos: `registration.py`, `tests/test_registration_service.py`.
   Hecho cuando: `start` guarda en la plaza un documento de marketing vigente y descarta sin error uno
   inexistente o no vigente; un registro nuevo lo copia; uno repetido conserva el del primero, también
   su ausencia; un correo con cuenta no guarda nada; suite verde.
 
-- [ ] T-022 Concesión de marketing al completar
+- [x] T-022 Concesión de marketing al completar
   RF: RF-014, RF-018 (RF-020 de `procesos-pendientes`; C-01) | Depende de: T-021 | Archivos: 2
   Archivos: `registration.py`, `tests/test_registration_service.py`.
   Hecho cuando: completar registra la concesión con la fecha de compleción en la misma operación;
   un documento que ya no es vigente, borrado o de otro tipo crea la cuenta sin concesión y sin
   error; suite verde.
 
-- [ ] T-023 Marketing en la API del formulario
+- [x] T-023 Marketing en la API del formulario
   RF: RF-018 (RF-015 de `registro-api`; D-06) | Depende de: T-021 | Archivos: 3
   Archivos: `api/serializers.py`, `api/views.py`, `tests/test_registration_api.py`.
   Hecho cuando: `marketing` vigente llega a la plaza; ausente, no vigente, inexistente, sin documento
   vigente o mal formado (no objeto, tipos erróneos, longitudes, nulos, sustitutos, anidamiento) da la
   misma respuesta `202` sin error de campo ni `500`; `pt-br` concede `pt-BR` (CF-8 de
   `registro-api`); suite verde.
+  Decisiones: el campo no tiene valor por defecto y solo aparece en los datos validados si llega
+  en la petición, para no cambiar un test existente de `registro-api` que compara esos datos —
+  [Cierto] — revertir: `default=None` y ajustar ese test. Un idioma que no es una variante de
+  `es`, `pt-BR` o `en` se deja tal cual (no se convierte en `es` como en `locales.normalize`), para
+  que el documento no exista y se descarte — [Cierto] — revertir: no aplica. La suite completa
+  falló una vez en `test_template_syntax_is_checked_quickly[closed-blocks]` (`apps/emails`, que esta
+  entrega no toca: exige menos de 1 s de reloj y la máquina iba cargada); el archivo pasó 3 de 3
+  veces por separado y la suite repetida pasó entera (1981 pasan) — [Probable] — revertir: no
+  aplica.
 
-- [ ] T-024 Resúmenes de `procesos-pendientes` y `registro-api`: marketing
+- [x] T-024 Resúmenes de `procesos-pendientes` y `registro-api`: marketing
   RF: RF-018 | Depende de: T-022, T-023 | Archivos: 2
   Archivos: `specs/procesos-pendientes/resumen.md`, `specs/registro-api/resumen.md`.
   Hecho cuando: los dos resúmenes describen el marketing aceptado, con un `curl` del formulario con

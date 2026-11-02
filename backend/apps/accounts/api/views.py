@@ -61,6 +61,8 @@ class AppRegistrationView(APIView):
             language=language,
             terms_version=data["terms"]["version"],
             terms_locale=data["terms"]["locale"],
+            marketing_version=(data.get("marketing") or {}).get("version", ""),
+            marketing_locale=(data.get("marketing") or {}).get("locale", ""),
         )
         return Response(
             {"public_id": started.public_id, "message": messages.neutral_text(language)},

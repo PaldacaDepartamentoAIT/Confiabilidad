@@ -210,3 +210,20 @@ def test_a_stored_registration_keeps_its_resend_counters() -> None:
 
     stored = PendingRegistration.objects.get()
     assert (stored.resend_count, stored.last_sent_at) == (0, None)
+
+
+def test_accepted_marketing_document_is_stored() -> None:
+    pending = _pending()
+    pending.marketing_version = "m2"
+    pending.marketing_locale = "pt-BR"
+    pending.save()
+
+    stored = PendingRegistration.objects.get()
+    assert (stored.marketing_version, stored.marketing_locale) == ("m2", "pt-BR")
+
+
+def test_registration_without_marketing_document_keeps_it_empty() -> None:
+    _pending().save()
+
+    stored = PendingRegistration.objects.get()
+    assert (stored.marketing_version, stored.marketing_locale) == ("", "")
