@@ -258,3 +258,19 @@ def test_console_works_when_the_generator_first_yields_a_dash(
     shown = _call("complete", public_id, "--password", GOOD_PASSWORD)
 
     assert shown["account"] == "ana@x.com"
+
+
+def test_purge_stale_deletes_registrations_a_day_after_their_code_expired() -> None:
+    _started()
+    PendingRegistration.objects.update(code_expires_at=timezone.now() - timedelta(hours=25))
+
+    assert _call("purge-stale") == {"deleted": "1"}
+    assert not PendingRegistration.objects.exists()
+
+
+def test_purge_stale_keeps_an_expired_registration_until_its_day_passes() -> None:
+    _started()
+    PendingRegistration.objects.update(code_expires_at=timezone.now() - timedelta(minutes=30))
+
+    assert _call("purge-stale") == {"deleted": "0"}
+    assert PendingRegistration.objects.exists()

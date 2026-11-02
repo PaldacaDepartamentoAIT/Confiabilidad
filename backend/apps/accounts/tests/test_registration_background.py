@@ -376,3 +376,20 @@ def test_the_sweep_runs_every_minute() -> None:
     ]
 
     assert [entry["schedule"] for entry in entries] == [60.0]
+
+
+def test_the_purge_task_deletes_stale_registrations() -> None:
+    with mock.patch.object(registration, "purge_stale", return_value=3) as purge:
+        assert tasks.purge_stale_registrations() == 3
+
+    purge.assert_called_once_with()
+
+
+def test_the_purge_runs_every_hour() -> None:
+    entries = [
+        entry
+        for entry in settings.CELERY_BEAT_SCHEDULE.values()
+        if entry["task"] == "apps.accounts.tasks.purge_stale_registrations"
+    ]
+
+    assert [entry["schedule"] for entry in entries] == [3600.0]

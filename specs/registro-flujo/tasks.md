@@ -246,26 +246,30 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   Hecho cuando: los dos resúmenes describen el marketing aceptado, con un `curl` del formulario con
   `marketing`.
 
-- [ ] T-025 Borrado de procesos antiguos
+- [x] T-025 Borrado de procesos antiguos
   RF: RF-020, RF-017 (M-01, D-07) | Depende de: T-004 | Archivos: 2
   Archivos: `registration.py`, `tests/test_registration_flow.py`.
   Hecho cuando: `purge_stale` borra en una transacción los registros pendientes y las plazas de
   registro cuyo código caducó hace 24 h o más, conserva los de menos, no toca las plazas de cambio
   de contraseña y devuelve cuántos borró; suite verde.
 
-- [ ] T-026 Tarea programada de borrado
+- [x] T-026 Tarea programada de borrado
   RF: RF-020 (M-07) | Depende de: T-025 | Archivos: 3
   Archivos: `tasks.py`, `backend/config/settings.py`, `tests/test_registration_background.py`.
   Hecho cuando: `purge_stale_registrations` llama a `purge_stale` y está en `CELERY_BEAT_SCHEDULE`
   cada 3600 s; `celery -A config call apps.accounts.tasks.purge_stale_registrations` la dispara;
   suite verde.
 
-- [ ] T-027 Borrado desde consola
+- [x] T-027 Borrado desde consola
   RF: RF-020 (M-07, P-03) | Depende de: T-025 | Archivos: 2
   Archivos: `management/commands/registration.py`, `tests/test_registration_command.py`.
   Hecho cuando: `python manage.py registration purge-stale` borra y muestra cuántos; suite verde.
+  Decisiones: el despachador del comando convierte el guion del subcomando en guion bajo para
+  llamar a `_purge_stale` — [Cierto] — revertir: no aplica. Un test con un registro caducado hace
+  30 min distingue `purge-stale` de `purge`, porque el primer test no mataba el mutante que
+  cambia una orden por la otra — [Cierto] — revertir: no aplica.
 
-- [ ] T-028 Equivalencia de plaza y registro real en el flujo
+- [x] T-028 Equivalencia de plaza y registro real en el flujo
   RF: RF-016, RF-017, RF-020 (CF-2) | Depende de: T-013, T-018, T-023, T-026 | Archivos: 1
   Archivos: `tests/test_registration_flow_equivalence.py`.
   Hecho cuando: un registro real cuyo código no se acierta y una plaza dan las mismas respuestas
@@ -273,6 +277,11 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   consultar, verificar, reenviar, completar y caducar, con bloqueo y tope de reenvíos; pasan a `404`
   a la vez al repetir el registro y con `purge_stale`; un identificador desconocido da `404` sin
   escribir nada; suite verde.
+  Decisiones: el recorrido fija los instantes del proceso antes de cada consulta del estado, para
+  que los segundos no dependan de lo que tarda el test; compara las respuestas por la API de la
+  aplicación (sin CSRF) — [Cierto] — revertir: no aplica. Se añadió una consulta del estado con el
+  proceso bloqueado porque el mutante que oculta el bloqueo en la plaza sobrevivía. La suite
+  completa se ejecutó una vez para T-025…T-028 (2009 pasan) — [Cierto] — revertir: no aplica.
 
 ## Frontend
 

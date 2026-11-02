@@ -502,6 +502,20 @@ def _register_or_repeat(
     return existing, code
 
 
+def purge_stale() -> int:
+    # Mismo criterio y misma operación para registros y plazas: pasan a "no encontrado" a la vez
+    # (RF-017 y RF-020 de registro-flujo, D-07).
+    cutoff = timezone.now() - conf.purge_after()
+    with transaction.atomic():
+        pending, _by_model = PendingRegistration.objects.filter(
+            code_expires_at__lte=cutoff
+        ).delete()
+        slots, _by_model = PhantomProcess.objects.filter(
+            purpose=_PURPOSE, code_expires_at__lte=cutoff
+        ).delete()
+    return pending + slots
+
+
 def purge_expired() -> int:
     pending, _by_model = PendingRegistration.objects.expired().delete()
     slots, _by_model = PhantomProcess.objects.expired().filter(purpose=_PURPOSE).delete()
