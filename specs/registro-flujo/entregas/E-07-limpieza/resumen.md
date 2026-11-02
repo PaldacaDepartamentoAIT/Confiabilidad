@@ -1,6 +1,7 @@
 # Entrega E-07 · Limpieza programada y equivalencia completa
 
-Rama: `feat/registro-flujo-limpieza` · PR: pendiente ·
+Rama: `feat/registro-flujo-limpieza` · PR:
+[PaldacaDepartamentoAIT/Confiabilidad#41](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/41) ·
 Líneas de código y tests: 273 (límite: 400).
 
 ## Qué se hizo
