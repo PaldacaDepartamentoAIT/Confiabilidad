@@ -1,6 +1,10 @@
 import dataclasses
 from typing import Any, ClassVar
 
+from django.contrib.auth.password_validation import (
+    MinimumLengthValidator,
+    get_default_password_validators,
+)
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework import serializers, status
@@ -12,9 +16,16 @@ from rest_framework.views import APIView
 
 from apps.accounts import registration, throttling
 from apps.accounts.api import messages
-from apps.accounts.api.flow_serializers import VerifySerializer, _Text
+from apps.accounts.api.flow_serializers import CompleteSerializer, VerifySerializer, _Text
 from apps.accounts.api.language import request_language
-from apps.accounts.api.views import _enforce_csrf, _limited, _read_body, _render, _unreadable
+from apps.accounts.api.views import (
+    _enforce_csrf,
+    _known,
+    _limited,
+    _read_body,
+    _render,
+    _unreadable,
+)
 from apps.accounts.models import CodeProcess
 from apps.accounts.validators import COUNTRY_CODES
 from apps.consents.models import Terms
@@ -96,6 +107,41 @@ class AppResendView(_FlowView):
 
 class BrowserResendView(_BrowserMixin, AppResendView):
     pass
+
+
+class AppCompleteView(_FlowView):
+    serializer_class = CompleteSerializer
+
+    def act(self, data: dict[str, str], language: str) -> Response:
+        result = registration.complete_with_code(
+            public_id=data["public_id"], code=data["code"], password=data["password"]
+        )
+        if isinstance(result, registration.Completed):
+            return Response({"result": "created"}, status=status.HTTP_201_CREATED)
+        if isinstance(result, registration.PasswordRejected):
+            errors = [
+                {
+                    "code": code,
+                    "message": messages.error_text(
+                        _known(code), language, params=_password_params()
+                    ),
+                }
+                for code in result.codes
+            ]
+            return Response({"errors": {"password": errors}}, status=status.HTTP_400_BAD_REQUEST)
+        return _refused(result.value, language)
+
+
+class BrowserCompleteView(_BrowserMixin, AppCompleteView):
+    pass
+
+
+def _password_params() -> dict[str, object]:
+    # La longitud mínima sale de la propia política, para no repetirla en el texto.
+    for validator in get_default_password_validators():
+        if isinstance(validator, MinimumLengthValidator):
+            return {"min_length": validator.min_length}
+    return {}
 
 
 class AppStatusView(_FlowView):

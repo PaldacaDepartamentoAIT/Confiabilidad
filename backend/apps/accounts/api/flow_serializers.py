@@ -21,3 +21,7 @@ class _Text(serializers.Field):  # type: ignore[type-arg]
 class VerifySerializer(serializers.Serializer[dict[str, str]]):
     public_id = _Text()
     code = _Text()
+
+
+class CompleteSerializer(VerifySerializer):
+    password = _Text()

@@ -28,6 +28,11 @@ CODES = [
     "expired",
     "resend_unavailable",
     "not_found",
+    "password_too_short",
+    "password_too_similar",
+    "password_too_common",
+    "password_entirely_numeric",
+    "password_pwned",
 ]
 
 
@@ -35,7 +40,7 @@ CODES = [
 @pytest.mark.parametrize("code", CODES)
 def test_every_error_code_has_a_text_in_every_language(code: str, language: str) -> None:
     text = messages.error_text(
-        code, language, field="name", params={"max": 1, "years": 1, "days": 1}
+        code, language, field="name", params={"max": 1, "years": 1, "days": 1, "min_length": 1}
     )
     assert text.strip()
     assert "%(" not in text
@@ -75,3 +80,8 @@ def test_field_specific_text_overrides_the_generic_one() -> None:
 def test_unknown_code_is_an_error() -> None:
     with pytest.raises(KeyError):
         messages.error_text("no_such_code", "es")
+
+
+@pytest.mark.parametrize("language", locales.SUPPORTED)
+def test_password_minimum_length_is_a_parameter(language: str) -> None:
+    assert "12" in messages.error_text("password_too_short", language, params={"min_length": 12})

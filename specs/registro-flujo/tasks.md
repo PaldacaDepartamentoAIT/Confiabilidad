@@ -156,22 +156,28 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   `Accept-Language`, como en el formulario — [Cierto] — revertir: no aplica. La suite completa se
   ejecutó una vez para T-012…T-015 (1906 pasan) — [Cierto] — revertir: no aplica.
 
-- [ ] T-016 Completar con código y contraseña
+- [x] T-016 Completar con código y contraseña
   RF: RF-012, RF-013, RF-014 (M-01, D-02; C-03) | Depende de: T-001 | Archivos: 2
   Archivos: `registration.py`, `tests/test_registration_flow.py`.
   Hecho cuando: `complete_with_code` crea la cuenta solo con el código correcto y validado; un código
   incorrecto o no validado suma un intento y no evalúa la contraseña; una contraseña que incumple la
   política devuelve cada regla sin sumar intento y conserva el código; bloqueado, caducado o
   inexistente se rechaza; una plaza nunca crea cuenta; suite verde.
+  Decisiones: un código incorrecto o no validado en la compleción envía la misma señal de auditoría
+  que una verificación fallida — [Probable] — revertir: quitar la señal. La compleción delega en
+  `complete` dentro de un punto de guardado y traduce su `ValidationError` en las reglas
+  incumplidas; si `complete` rechaza por otro motivo (por ejemplo, el correo consiguió cuenta
+  entretanto y borra el registro), responde «no encontrado» — [Probable] — revertir: devolver un
+  rechazo propio.
 
-- [ ] T-017 Textos de la política de contraseña
+- [x] T-017 Textos de la política de contraseña
   RF: RF-013, RF-022 | Depende de: T-006 | Archivos: 2
   Archivos: `api/messages.py`, `tests/test_registration_api_messages.py`.
   Hecho cuando: `password_too_short`, `password_too_similar`, `password_too_common`,
   `password_entirely_numeric` y el código de contraseña filtrada tienen texto en los tres idiomas;
   suite verde.
 
-- [ ] T-018 Ruta de compleción
+- [x] T-018 Ruta de compleción
   RF: RF-012, RF-013, RF-014, RF-016, RF-019, RF-021 (M-03) | Depende de: T-011, T-016, T-017 |
   Archivos: 4
   Archivos: `api/flow_serializers.py`, `api/flow_views.py`, `api/urls.py`,
@@ -181,12 +187,20 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   `{"errors": {"password": […]}}`; `404`; `403` sin CSRF; `429`; completar sin código, con uno
   incorrecto o con uno no validado nunca crea la cuenta (CF-3); suite verde.
   Excepción: igual que T-007, la ruta no es observable sin serializador, vista y `urls.py`.
+  Decisiones: la longitud mínima del texto de la contraseña sale del `MinimumLengthValidator`
+  configurado — [Cierto] — revertir: no aplica. La contraseña no tiene longitud máxima: la spec no
+  la pide, y una muy larga cuesta CPU al hashearla; el límite por IP lo frena — [Cierto] — revertir:
+  añadir un tope por `sdd-cambio`.
 
-- [ ] T-019 Casos compartidos de contraseña en el servidor
+- [x] T-019 Casos compartidos de contraseña en el servidor
   RF: RF-013 (CF-8, S-17) | Depende de: — | Archivos: 1
   Archivos: `tests/test_password_shared_cases.py`.
   Hecho cuando: un test recorre la tabla de la spec con los validadores de longitud y de solo
   números del servidor y obtiene el resultado de cada fila; suite verde.
+  Decisiones: el test pasa desde el principio porque fija un comportamiento que ya existía; su
+  mutante es quitar `NumericPasswordValidator` de la configuración — [Cierto] — revertir: no
+  aplica. La suite completa se ejecutó una vez para T-016…T-019 (1950 pasan) — [Cierto] —
+  revertir: no aplica.
 
 - [ ] T-020 Marketing en el modelo
   RF: RF-018 (M-05) | Depende de: T-008 | Archivos: 3
