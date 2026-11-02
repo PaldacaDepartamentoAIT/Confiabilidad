@@ -286,11 +286,15 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
 ## Frontend
 
 - [ ] T-029 Variables de la identidad visual
-  RF: RF-001, RF-005 (M-13, D-13; S-14) | Depende de: — | Archivos: 3
-  Archivos: `styles/tokens.css`, `styles/base.css`, `styles/tokens.test.ts`.
+  RF: RF-001, RF-005 (M-13, D-13; S-14) | Depende de: — | Archivos: 4
+  Archivos: `styles/tokens.css`, `styles/base.css`, `styles/tokens.test.ts`,
+  `frontend/vite.config.ts`.
   Hecho cuando: `tokens.css` define los 13 colores de cada tema de `docs/identidad-visual.md`, el
   oscuro bajo `prefers-color-scheme: dark`; `base.css` aplica lienzo, tinta, formas y foco visible;
   el test lee el CSS y comprueba cada valor de las dos tablas; suite verde.
+  Excepción: Vitest no procesa CSS por defecto; para que el test lea la paleta hace falta
+  `test.css.include` en `frontend/vite.config.ts`, y sin él no se puede comprobar el CSS (aprobada
+  por el usuario el 2026-11-02).
 
 - [ ] T-030 Fuentes y estilos cargados
   RF: RF-001 (M-13) | Depende de: T-029 | Archivos: 3
