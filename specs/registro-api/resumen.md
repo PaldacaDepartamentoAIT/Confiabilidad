@@ -171,8 +171,8 @@ se lee el código.
     Deberías ver la misma respuesta `202` que sin marketing. Con un documento inexistente, por
     ejemplo `"marketing": {"version": "nope", "locale": "es"}`, la respuesta tampoco cambia, pero el
     registro se guarda sin marketing. Al completar el registro de Clara (pasos 9 y 10 con su
-    identificador y su código), el panel de administración muestra su consentimiento de marketing en
-    **Consentimientos**.
+    identificador y su código), el panel de administración muestra su consentimiento en la lista de
+    consentimientos de marketing.
 13. Ejecuta la suite completa (cobertura mínima 80 % sobre todo el proyecto):
     ```bash
     docker compose -f docker/docker-compose.yml run --rm backend pytest -q
