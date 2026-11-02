@@ -668,7 +668,7 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   `Visita //app.ejemplo.com` seguido de `;`, `!`, `?` o `:` y `Entra en http://app.ejemplo.com/x`;
   mueren esos tres mutantes; suite verde.
 
-- [ ] T-051 Corrección: los tests de tiempo lineal de las plantillas no dependen de la carga de la máquina
+- [x] T-051 Corrección: los tests de tiempo lineal de las plantillas no dependen de la carga de la máquina
   Tipo: corrección | Origen: bug reportado (suite de la entrega E-06 de registro-flujo, 2026-11-02)
   RF: RF-021 | Depende de: T-045 | Archivos: 1
   Archivos: `tests/test_rendering.py`.
@@ -677,8 +677,15 @@ los tests con `update()` (D-07 de `procesos-pendientes`), sin librerías de relo
   límite de 1 s; con la máquina cargada, la validación cuesta lo mismo en CPU pero tarda más en
   reloj, y el test falla sin que el código cambie (falló una vez en 1981 tests y pasó al repetirlo).
   Hecho cuando: los tres tests miden el tiempo de CPU del proceso (`time.process_time`) con el mismo
-  límite de 1 s; un mutante que vuelve a buscar el cierre de forma cuadrática (como antes de T-045) lo hace
-  fallar; suite verde.
+  límite de 1 s; un mutante que vuelve a buscar el cierre de forma cuadrática (como antes de T-045)
+  lo hace fallar; suite verde.
+  Decisiones: el fallo se reprodujo con pytest fijado a una CPU y seis procesos ocupándola; con el
+  cambio, el archivo pasa entero con la misma carga — [Cierto] — revertir: volver a
+  `time.monotonic`. Los tests de palabras largas y de barras no tienen mutante propio: el cambio
+  solo afecta a cómo se mide el tiempo — [Cierto] — revertir: no aplica. Medir CPU elimina la
+  interferencia de otros procesos, pero en una máquina mucho más lenta 1 s podría quedarse corto;
+  la alternativa sería comprobar el crecimiento al duplicar la entrada — [Probable] — revertir: no
+  aplica.
 
 ## RF sin tarea
 - RF-008 (aviso de contraseña restablecida) y RF-019 (mismo trabajo exista o no la cuenta): sin
