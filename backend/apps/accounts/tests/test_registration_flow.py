@@ -458,3 +458,49 @@ def test_a_phantom_never_completes_and_counts_the_attempt() -> None:
 
     assert result is Result.WRONG_CODE
     assert PhantomProcess.objects.get().failed_attempts == 1
+
+
+def _code_expired(
+    minutes_ago: int, *, model: type[PendingRegistration] | type[PhantomProcess]
+) -> None:
+    model.objects.update(code_expires_at=timezone.now() - timedelta(minutes=minutes_ago))
+
+
+def test_purge_stale_deletes_registrations_whose_code_expired_a_day_ago() -> None:
+    _validated()
+    _code_expired(24 * 60 + 1, model=PendingRegistration)
+
+    assert registration.purge_stale() == 1
+    assert not PendingRegistration.objects.exists()
+
+
+def test_purge_stale_keeps_registrations_whose_code_expired_less_than_a_day_ago() -> None:
+    make_pending(EMAIL)
+    _code_expired(24 * 60 - 1, model=PendingRegistration)
+
+    assert registration.purge_stale() == 0
+    assert PendingRegistration.objects.exists()
+
+
+def test_purge_stale_deletes_registration_slots_but_not_password_reset_ones() -> None:
+    _phantom()
+    make_user(email="bea@x.com")
+    other = registration.start(email="bea@x.com", **DEFAULT_PROFILE)
+    registration.resolve_registration(other.public_id)
+    PhantomProcess.objects.filter(public_id=other.public_id).update(
+        purpose=PhantomProcess.Purpose.PASSWORD_RESET
+    )
+    _code_expired(24 * 60 + 1, model=PhantomProcess)
+
+    assert registration.purge_stale() == 1
+    assert list(PhantomProcess.objects.values_list("purpose", flat=True)) == [
+        PhantomProcess.Purpose.PASSWORD_RESET
+    ]
+
+
+def test_purge_stale_follows_the_configured_hours(settings: object) -> None:
+    make_pending(EMAIL)
+    _code_expired(2 * 60 + 1, model=PendingRegistration)
+    settings.REGISTRATION_PURGE_AFTER_HOURS = 2  # type: ignore[attr-defined]
+
+    assert registration.purge_stale() == 1
