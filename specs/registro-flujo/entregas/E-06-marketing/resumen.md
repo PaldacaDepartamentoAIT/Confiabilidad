@@ -1,6 +1,7 @@
 # Entrega E-06 · Consentimiento de marketing en el registro
 
-Rama: `feat/registro-flujo-marketing` · PR: pendiente ·
+Rama: `feat/registro-flujo-marketing` · PR:
+[PaldacaDepartamentoAIT/Confiabilidad#39](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/39) ·
 Líneas de código y tests: 305 (límite: 400).
 
 ## Qué se hizo
