@@ -19,7 +19,7 @@ from apps.accounts.tests.factories import (
     make_user,
 )
 from apps.consents import services as consents
-from apps.consents.models import UserTerms
+from apps.consents.models import Terms, UserTerms
 from apps.consents.tests.factories import publish_version
 from apps.core import fingerprints
 from apps.emails.models import OutboundEmail
@@ -866,3 +866,70 @@ def test_failure_after_the_acceptance_leaves_neither_account_nor_acceptance(
 
     assert not User.objects.exists()
     assert not UserTerms.objects.exists()
+
+
+MARKETING: dict[str, Any] = {"marketing_version": "m2", "marketing_locale": "pt-BR"}
+
+
+@pytest.fixture
+def marketing_in_force() -> None:
+    publish_version(kind=Terms.Kind.MARKETING, version="m2")
+
+
+@pytest.mark.usefixtures("marketing_in_force")
+def test_start_keeps_a_marketing_document_in_force_in_the_slot() -> None:
+    registration.start(email="ana@x.com", **DATA, **MARKETING)
+
+    payload = PhantomProcess.objects.get().payload
+    assert payload is not None
+    assert (payload["marketing_version"], payload["marketing_locale"]) == ("m2", "pt-BR")
+
+
+@pytest.mark.parametrize(
+    "marketing",
+    [
+        pytest.param({"marketing_version": "m9", "marketing_locale": "es"}, id="unknown"),
+        pytest.param({"marketing_version": "old", "marketing_locale": "es"}, id="not-in-force"),
+        pytest.param({"marketing_version": "m2", "marketing_locale": "fr"}, id="other-locale"),
+    ],
+)
+@pytest.mark.usefixtures("marketing_in_force")
+def test_start_discards_a_marketing_document_not_in_force(marketing: dict[str, Any]) -> None:
+    publish_version(
+        kind=Terms.Kind.MARKETING,
+        version="old",
+        published_at=timezone.now() - timedelta(days=30),
+    )
+
+    registration.start(email="ana@x.com", **DATA, **marketing)
+
+    payload = PhantomProcess.objects.get().payload
+    assert payload is not None and "marketing_version" not in payload
+
+
+@pytest.mark.usefixtures("marketing_in_force")
+def test_new_registration_stores_the_marketing_document() -> None:
+    _start("ana@x.com", **MARKETING)
+
+    pending = PendingRegistration.objects.get()
+    assert (pending.marketing_version, pending.marketing_locale) == ("m2", "pt-BR")
+
+
+@pytest.mark.usefixtures("marketing_in_force")
+def test_repeat_keeps_the_absence_of_marketing_of_the_first_registration() -> None:
+    _start("ana@x.com")
+
+    _start("ANA@x.com", **MARKETING)
+
+    pending = PendingRegistration.objects.get()
+    assert (pending.marketing_version, pending.marketing_locale) == ("", "")
+
+
+@pytest.mark.usefixtures("marketing_in_force")
+def test_start_with_marketing_and_an_account_stores_no_registration() -> None:
+    make_user(email="ana@x.com")
+
+    result = registration.start(email="ana@x.com", **DATA, **MARKETING)
+    registration.resolve_registration(result.public_id)
+
+    assert not PendingRegistration.objects.exists()

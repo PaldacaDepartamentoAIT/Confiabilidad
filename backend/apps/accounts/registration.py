@@ -16,6 +16,7 @@ from apps.accounts.models import PendingRegistration, PhantomProcess, User
 from apps.accounts.processes import VerifyResult as VerifyResult
 from apps.accounts.validators import normalize_country, normalize_name
 from apps.consents import services as consents
+from apps.consents.models import Terms
 from apps.core import fingerprints
 from apps.emails import locales, outbox
 
@@ -55,6 +56,8 @@ def start(
     language: str = locales.DEFAULT,
     terms_version: str = "",
     terms_locale: str = "",
+    marketing_version: str = "",
+    marketing_locale: str = "",
 ) -> Started:
     # La respuesta hace el mismo trabajo tenga o no cuenta el correo: valida los datos y deja una
     # plaza que se resuelve fuera de la respuesta (D-11).
@@ -67,6 +70,8 @@ def start(
     }
     if terms_version:
         payload.update(terms_version=terms_version, terms_locale=terms_locale)
+    if marketing_version:
+        payload.update(_marketing_in_force(marketing_version, marketing_locale))
     slot = PhantomProcess(
         purpose=_PURPOSE,
         email=email,
@@ -85,6 +90,18 @@ def start(
     )
     signals.registration_code_sent.send(sender=PendingRegistration, email=email, success=True)
     return Started(public_id=slot.public_id)
+
+
+def _marketing_in_force(version: str, locale: str) -> dict[str, str]:
+    # Un documento que no existe o no es de la versión vigente se descarta sin error (C-03 de
+    # procesos-pendientes): el marketing es opcional y no impide el registro.
+    try:
+        document = consents.current_document_shown(
+            Terms.Kind.MARKETING, version=version, locale=locale
+        )
+    except ValidationError:
+        return {}
+    return {"marketing_version": document.version, "marketing_locale": document.locale}
 
 
 def _queue(task: str, args: list[str]) -> None:
@@ -450,6 +467,8 @@ def _register_or_repeat(
             language=str(data["language"]),
             terms_version=str(data.get("terms_version", "")),
             terms_locale=str(data.get("terms_locale", "")),
+            marketing_version=str(data.get("marketing_version", "")),
+            marketing_locale=str(data.get("marketing_locale", "")),
         )
         code = processes.issue_code(pending, _PURPOSE, public_id)
         try:
