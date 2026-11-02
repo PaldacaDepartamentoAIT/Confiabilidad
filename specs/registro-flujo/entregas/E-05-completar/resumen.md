@@ -1,6 +1,7 @@
 # Entrega E-05 · Completar el registro con código y contraseña
 
-Rama: `feat/registro-flujo-completar` · PR: pendiente ·
+Rama: `feat/registro-flujo-completar` · PR:
+[PaldacaDepartamentoAIT/Confiabilidad#38](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/38) ·
 Líneas de código y tests: 383 (límite: 400).
 
 ## Qué se hizo
