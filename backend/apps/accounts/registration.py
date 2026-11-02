@@ -322,6 +322,7 @@ def complete(*, public_id: str, password: str) -> Completed | CompleteRefusal:
         user.save()
         EmailAddress.objects.create(user=user, email=user.email, verified=True, primary=True)
         _accept_stored_terms(user, pending)
+        _grant_stored_marketing(user, pending)
         pending.delete()
         signals.account_created.send(sender=User, email=user.email, success=True)
         return Completed(user=user)
@@ -362,6 +363,20 @@ def complete_with_code(
         if isinstance(result, Completed):
             return result
         return VerifyResult.NOT_FOUND
+
+
+def _grant_stored_marketing(user: User, pending: PendingRegistration) -> None:
+    # Cualquier rechazo de consentimientos deja la cuenta sin concesión y sin rastro (C-01 de
+    # procesos-pendientes, riesgo aceptado).
+    if not pending.marketing_version:
+        return
+    try:
+        with transaction.atomic():
+            consents.grant_marketing(
+                user, version=pending.marketing_version, locale=pending.marketing_locale
+            )
+    except (ValidationError, IntegrityError):
+        return
 
 
 def _accept_stored_terms(user: User, pending: PendingRegistration) -> None:

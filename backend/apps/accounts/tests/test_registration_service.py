@@ -19,7 +19,7 @@ from apps.accounts.tests.factories import (
     make_user,
 )
 from apps.consents import services as consents
-from apps.consents.models import Terms, UserTerms
+from apps.consents.models import MarketingConsent, Terms, UserTerms
 from apps.consents.tests.factories import publish_version
 from apps.core import fingerprints
 from apps.emails.models import OutboundEmail
@@ -933,3 +933,61 @@ def test_start_with_marketing_and_an_account_stores_no_registration() -> None:
     registration.resolve_registration(result.public_id)
 
     assert not PendingRegistration.objects.exists()
+
+
+def _verified_with_marketing(version: str = "m2", locale: str = "pt-BR") -> StartedWithCode:
+    started = _start("ana@x.com", marketing_version=version, marketing_locale=locale)
+    assert registration.verify(public_id=started.public_id, code=started.code) == "verified"
+    return started
+
+
+def test_complete_grants_the_stored_marketing_with_the_completion_date() -> None:
+    documents = publish_version(kind=Terms.Kind.MARKETING, version="m2")
+    started = _verified_with_marketing()
+    before = timezone.now()
+
+    user = _complete(started.public_id).user
+
+    consent = MarketingConsent.objects.get()
+    assert (consent.user, consent.terms, consent.granted) == (user, documents["pt-BR"], True)
+    assert consent.granted_at >= before
+
+
+def test_complete_with_marketing_no_longer_in_force_creates_the_account_without_it() -> None:
+    publish_version(
+        kind=Terms.Kind.MARKETING, version="m2", published_at=timezone.now() - timedelta(days=3)
+    )
+    started = _verified_with_marketing()
+    publish_version(kind=Terms.Kind.MARKETING, version="m3")
+
+    _complete(started.public_id)
+
+    assert User.objects.filter(email="ana@x.com").exists()
+    assert not MarketingConsent.objects.exists()
+
+
+@pytest.mark.parametrize("change", ["deleted", "other-kind"])
+def test_complete_with_a_broken_marketing_document_creates_the_account_silently(
+    change: str,
+) -> None:
+    documents = publish_version(kind=Terms.Kind.MARKETING, version="m2")
+    publish_version(version="v2")
+    started = _verified_with_marketing()
+    if change == "deleted":
+        documents["pt-BR"].delete()
+    else:
+        PendingRegistration.objects.update(marketing_version="v2")
+
+    _complete(started.public_id)
+
+    assert User.objects.filter(email="ana@x.com").exists()
+    assert not MarketingConsent.objects.exists()
+
+
+def test_complete_without_stored_marketing_grants_nothing() -> None:
+    publish_version(kind=Terms.Kind.MARKETING, version="m2")
+    started = _verified()
+
+    _complete(started.public_id)
+
+    assert not MarketingConsent.objects.exists()
