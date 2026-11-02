@@ -61,6 +61,14 @@ acceso al correo con un código y se fija una contraseña. Todo se puede recorre
   aceptación y figura con los términos sin aceptar. Esto pasa con todo registro empezado desde
   consola (`registration start` no pide documento) o antes del cambio. Un registro repetido conserva
   el documento del primero, igual que el resto de sus datos.
+- **Marketing aceptado** (cambio del 2026-10-30, pedido por `registro-flujo`; RF-001, RF-005,
+  RF-020, RF-024). El registro pendiente guarda también el documento de marketing marcado en el
+  formulario (`marketing_version` y `marketing_locale`, migración `0014`). Al empezar, uno que no
+  existe o no es de la versión vigente se descarta sin error. Al completar, si sigue siendo vigente,
+  la concesión se registra en la misma operación que crea la cuenta, con la fecha de compleción; si
+  no, o si `consentimientos` la rechaza por cualquier otro motivo, la cuenta se crea sin concesión y
+  sin rastro (riesgo aceptado, C-01). Un registro repetido conserva la elección del primero, también
+  si no marcó el marketing. La consola no indica marketing.
 - **Política de contraseñas** de todo el proyecto: 12 caracteres o más, no parecida al correo ni
   al nombre, no común y no filtrada según Have I Been Pwned, consultado sin enviar la contraseña.
   Si el servicio no responde, se acepta y se registra un aviso (RF-022, S-09).

@@ -11,7 +11,16 @@ llegarán con una feature de frontend (S-01).
   la puede usar cualquier cliente que no sea un navegador; sus defensas son los límites (S-19).
 - **Cuerpo**, solo en JSON (`Content-Type: application/json`; cualquier otro tipo es un cuerpo
   ilegible, D-16): `name`, `birthdate` (`AAAA-MM-DD`), `email`, `country`, `terms`
-  (`{"version", "locale", "accepted": true}`) y, opcional, `language` (`es`, `pt-BR` o `en`).
+  (`{"version", "locale", "accepted": true}`) y, opcionales, `language` (`es`, `pt-BR` o `en`) y
+  `marketing` (`{"version", "locale"}`).
+- **Marketing** (RF-015, cambio del 2026-10-30, pedido por `registro-flujo`): enviar el documento de
+  marketing vigente basta para concederlo, y la concesión se registra al completar el registro. El
+  idioma admite sus variantes (`pt-br`, `pt_BR`). Un documento que no existe o no es de la versión
+  vigente, la ausencia de documento vigente o un campo mal formado se ignoran **sin ningún error**:
+  la respuesta es la misma que sin marketing. Un registro repetido conserva la elección del primero,
+  también si no lo marcó. *Riesgos aceptados:* un cliente que envíe el campo mal formado pierde el
+  consentimiento sin que nadie lo note, y uno que lo envíe siempre lo concede sin que la persona lo
+  marque.
 - **Respuesta neutra** (RF-005): `202` con `{"public_id", "message"}`, idéntica tanto si el correo es
   nuevo como si tiene un registro pendiente o una cuenta, activa o inactiva. Lo que depende del
   caso (crear o repetir el registro, enviar el código o el aviso "ya tienes cuenta") pasa fuera de
@@ -150,7 +159,21 @@ se lee el código.
     ```bash
     docker stop registro-limite-ip
     ```
-12. Ejecuta la suite completa (cobertura mínima 80 % sobre todo el proyecto):
+12. Prueba el marketing. Publica un documento de marketing de prueba (versión `m1`, en los tres
+    idiomas, desde ayer):
+    ```bash
+    docker compose -f docker/docker-compose.yml run --rm backend python manage.py shell -c "from datetime import timedelta; from django.utils import timezone; from apps.consents.models import Terms; [Terms.objects.get_or_create(kind='marketing', version='m1', locale=locale, defaults={'content': 'Marketing de prueba.', 'published_at': timezone.now() - timedelta(days=1)}) for locale in ('es', 'pt-BR', 'en')]"
+    ```
+    Envía el formulario con el marketing marcado y un correo nuevo:
+    ```bash
+    curl -s -X POST http://localhost:8000/api/app/v1/registration -H "Content-Type: application/json" -d '{"name": "Clara Pérez", "birthdate": "1991-07-08", "email": "clara@example.com", "country": "ES", "terms": {"version": "1", "locale": "es", "accepted": true}, "marketing": {"version": "m1", "locale": "es"}}'
+    ```
+    Deberías ver la misma respuesta `202` que sin marketing. Con un documento inexistente, por
+    ejemplo `"marketing": {"version": "nope", "locale": "es"}`, la respuesta tampoco cambia, pero el
+    registro se guarda sin marketing. Al completar el registro de Clara (pasos 9 y 10 con su
+    identificador y su código), el panel de administración muestra su consentimiento de marketing en
+    **Consentimientos**.
+13. Ejecuta la suite completa (cobertura mínima 80 % sobre todo el proyecto):
     ```bash
     docker compose -f docker/docker-compose.yml run --rm backend pytest -q
     ```
