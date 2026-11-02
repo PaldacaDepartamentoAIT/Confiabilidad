@@ -529,12 +529,14 @@ def test_an_opening_without_closing_does_not_hide_a_block_of_the_other_kind(
     ids=["openings", "tag-openings", "unclosed-values", "closed-blocks"],
 )
 def test_template_syntax_is_checked_quickly(body: str) -> None:
-    started = time.monotonic()
+    # Tiempo de CPU del proceso y no de reloj: con la máquina cargada, el reloj sigue corriendo
+    # mientras otros procesos usan la CPU, y el test fallaría sin que el código cambie (T-051).
+    started = time.process_time()
 
     with contextlib.suppress(ValidationError):
         rendering.validate_template("account_exists", "Aviso", body)
 
-    assert time.monotonic() - started < 1
+    assert time.process_time() - started < 1
 
 
 @pytest.mark.usefixtures("_frontend")
