@@ -68,6 +68,12 @@ def sweep_unresolved() -> int:
     return queued
 
 
+@shared_task(name="apps.accounts.tasks.purge_stale_registrations")  # type: ignore[untyped-decorator]
+def purge_stale_registrations() -> int:
+    # Cada hora: un registro se borra entre 24 y 25 h después de caducar su código (RF-020).
+    return registration.purge_stale()
+
+
 def _unresolved_after_window(public_id: str) -> bool:
     slot = PhantomProcess.objects.filter(public_id=public_id, payload__isnull=False).first()
     return slot is not None and timezone.now() >= slot.created_at + conf.start_retry_window()

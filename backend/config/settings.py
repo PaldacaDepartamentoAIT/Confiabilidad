@@ -237,6 +237,10 @@ DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="no-responder@localhost")
 CELERY_BEAT_SCHEDULE = {
     "emails-dispatch-due": {"task": "apps.emails.tasks.dispatch_due", "schedule": 30.0},
     "accounts-sweep-unresolved": {"task": "apps.accounts.tasks.sweep_unresolved", "schedule": 60.0},
+    "accounts-purge-stale-registrations": {
+        "task": "apps.accounts.tasks.purge_stale_registrations",
+        "schedule": 3600.0,
+    },
 }
 
 # Correos: dirección del frontend a la que llevan los enlaces de los correos (D-09).
