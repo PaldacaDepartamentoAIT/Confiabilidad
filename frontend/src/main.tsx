@@ -1,3 +1,8 @@
+import "@fontsource-variable/manrope";
+import "@fontsource-variable/jetbrains-mono";
+import "./styles/tokens.css";
+import "./styles/base.css";
+
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { I18nextProvider } from "react-i18next";
