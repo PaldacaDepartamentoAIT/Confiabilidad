@@ -13,7 +13,8 @@ exceso.
   campo de texto: etiqueta asociada, asterisco de obligatorio oculto al lector, `aria-required`,
   `aria-invalid` con error, y ayuda y error leídos como descripción del campo. La etiqueta de la
   casilla admite contenido, para poder enlazar los términos. El selector empieza con una opción
-  vacía («Elige…») que vale `""`. `axe-core` no encuentra fallos con error en los dos.
+  vacía («Elige…») que vale `""`. `axe-core` no encuentra fallos con error en los dos, salvo el contraste de color, que
+  no comprueba (ver «Marco teórico»).
 - **Campo de fecha**: `TextField` admite `type="date"`, que el formulario usará para la fecha de
   nacimiento.
 - **Validación ampliada** (`frontend/src/forms/useFormValidation.ts`), sin cambiar a quien ya la usa:
@@ -63,3 +64,9 @@ Deberías ver 232 tests en verde.
 - **Por qué una casilla vale `"true"` o `""`.** El hook valida textos. Si la casilla se convierte en
   texto vacío cuando no está marcada, la regla «obligatorio» que ya usan los demás campos sirve
   también para «acepta los términos», sin una regla especial.
+- **Lo que axe no comprueba en los tests.** Los tests corren en jsdom, un navegador simulado sin
+  dibujo (no tiene `<canvas>`). La regla de contraste de axe necesita dibujar el texto para medirlo,
+  así que en jsdom queda «incompleta»: ni pasa ni falla. Por eso el test la excluye de forma
+  explícita (cambio hecho después del PR #45, en la rama de E-11). El contraste de la paleta está
+  respaldado por `docs/identidad-visual.md` y el test de los colores, pero que cada texto use el
+  color correcto sobre su fondo solo se puede comprobar en un navegador real.

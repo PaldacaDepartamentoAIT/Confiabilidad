@@ -367,7 +367,9 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   Decisiones: la etiqueta de la casilla va detrás de ella y admite contenido (`ReactNode`) para
   poder enlazar los términos; el selector lleva siempre una primera opción vacía con el texto
   `placeholder`, para que «sin elegir» valga `""` como un campo vacío — [Cierto] — revertir: no
-  aplica. Mutantes (casilla sin `aria-invalid`; selector sin opción vacía; `aria-required` fijo)
+  aplica. El test de axe excluye `color-contrast` de forma explícita: en jsdom axe no puede medirlo
+  (no hay canvas) y lo dejaba como incompleto, sin que el test lo notara; el contraste queda
+  pendiente de comprobarse en un navegador real (2026-11-03, tras el PR #45). Mutantes (casilla sin `aria-invalid`; selector sin opción vacía; `aria-required` fijo)
   detectados.
 
 - [x] T-037 Campo de fecha
