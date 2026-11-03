@@ -116,6 +116,7 @@ it("axe no encuentra fallos en la casilla ni en el selector con error", async ()
     </form>,
   );
 
-  const results = await axe.run(container);
+  // jsdom no tiene canvas: axe no puede medir el contraste, así que se excluye de forma explícita.
+  const results = await axe.run(container, { rules: { "color-contrast": { enabled: false } } });
   expect(results.violations.map((violation) => violation.id)).toEqual([]);
 });
