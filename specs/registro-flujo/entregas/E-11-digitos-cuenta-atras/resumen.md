@@ -1,6 +1,7 @@
 # Entrega E-11 · Contraseña como el servidor y cuenta atrás
 
-Rama: `feat/registro-flujo-digitos-cuenta-atras` · PR: pendiente ·
+Rama: `feat/registro-flujo-digitos-cuenta-atras` · PR:
+[PaldacaDepartamentoAIT/Confiabilidad#46](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/46) ·
 Líneas de código y tests: 197 (límite: 400).
 
 ## Qué se hizo
