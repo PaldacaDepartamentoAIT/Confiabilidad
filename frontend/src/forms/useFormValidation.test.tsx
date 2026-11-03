@@ -28,6 +28,7 @@ function renderInSpanish(element: ReactElement, announce = vi.fn()) {
 }
 
 let latestErrors: Partial<Record<"name" | "code", FieldError>> = {};
+let latestAllErrors: Partial<Record<string, readonly FieldError[]>> = {};
 
 function SampleForm() {
   const { errors, onBlur } = useFormValidation({
@@ -172,12 +173,14 @@ test("while processing, a new submission is ignored", async () => {
 
 type ResultFormProps = {
   respond: (values: Record<"name" | "code", string>) => SubmitResult<"name" | "code"> | undefined;
+  scrollToError?: boolean;
 };
 
-function ResultForm({ respond }: ResultFormProps) {
-  const { errors, onBlur, handleSubmit, showResult, message, formRef, messageRef } =
-    useFormValidation({ name: [notEmpty], code: [notEmpty, longEnough] });
+function ResultForm({ respond, scrollToError }: ResultFormProps) {
+  const { errors, allErrors, onBlur, handleSubmit, showResult, message, formRef, messageRef } =
+    useFormValidation({ name: [notEmpty], code: [notEmpty, longEnough] }, { scrollToError });
   latestErrors = errors;
+  latestAllErrors = allErrors;
   return (
     <>
       {message && (
@@ -315,4 +318,128 @@ test("the general message goes away on the next submission, even an invalid one"
 
   expect(screen.queryByText("Demasiados intentos", { exact: false })).not.toBeInTheDocument();
   expect(screen.getByRole("textbox", { name: "Name" })).toHaveFocus();
+});
+
+function ChoiceForm({ onValid, scrollToError }: { onValid: () => void; scrollToError?: boolean }) {
+  const { errors, allErrors, onBlur, handleSubmit } = useFormValidation(
+    { country: [notEmpty], terms: [notEmpty] },
+    { scrollToError },
+  );
+  latestErrors = errors as typeof latestErrors;
+  latestAllErrors = allErrors;
+  return (
+    <form onSubmit={handleSubmit(onValid)}>
+      <label>
+        Country
+        <select name="country" onBlur={onBlur("country")} defaultValue="">
+          <option value="">Choose</option>
+          <option value="BR">Brazil</option>
+        </select>
+      </label>
+      <label>
+        Terms
+        <input type="checkbox" name="terms" onBlur={onBlur("terms")} />
+      </label>
+      <button type="submit">Send</button>
+    </form>
+  );
+}
+
+test("reads selects and checkboxes, a checkbox as true or empty", async () => {
+  const user = userEvent.setup();
+  const onValid = vi.fn();
+  renderInSpanish(<ChoiceForm onValid={onValid} />);
+
+  await user.click(screen.getByRole("button", { name: "Send" }));
+  expect(latestErrors).toEqual({ country: { key: "required" }, terms: { key: "required" } });
+  expect(screen.getByRole("combobox", { name: "Country" })).toHaveFocus();
+
+  await user.selectOptions(screen.getByRole("combobox", { name: "Country" }), "BR");
+  await user.click(screen.getByRole("checkbox", { name: "Terms" }));
+  await user.click(screen.getByRole("button", { name: "Send" }));
+  expect(onValid).toHaveBeenCalledWith({ country: "BR", terms: "true" });
+});
+
+test("leaving a checkbox validates whether it is checked", async () => {
+  const user = userEvent.setup();
+  renderInSpanish(<ChoiceForm onValid={vi.fn()} />);
+  const terms = screen.getByRole("checkbox", { name: "Terms" });
+
+  await user.click(terms);
+  await user.tab();
+  expect(latestErrors).toEqual({});
+
+  await user.click(terms);
+  await user.tab();
+  expect(latestErrors).toEqual({ terms: { key: "required" } });
+});
+
+test("a field can show several server errors at once", async () => {
+  const user = userEvent.setup();
+  const both: FieldError[] = [{ key: "serverError" }, { key: "required" }];
+  renderResultForm(vi.fn().mockReturnValueOnce({ fieldErrors: { code: both } }));
+
+  await submitValid(user);
+
+  expect(latestErrors).toEqual({ code: { key: "serverError" } });
+  expect(latestAllErrors).toEqual({ code: both });
+  expect(screen.getByRole("textbox", { name: "Code" })).toHaveFocus();
+});
+
+test("all the errors of each field are available, local ones as a list of one", async () => {
+  const user = userEvent.setup();
+  renderInSpanish(<ChoiceForm onValid={vi.fn()} />);
+
+  await user.click(screen.getByRole("button", { name: "Send" }));
+
+  expect(latestAllErrors).toEqual({ country: [{ key: "required" }], terms: [{ key: "required" }] });
+});
+
+describe("scrollToError", () => {
+  const scrolled: { element: Element; focused: Element | null }[] = [];
+
+  beforeEach(() => {
+    scrolled.length = 0;
+    Element.prototype.scrollIntoView = function (this: Element) {
+      scrolled.push({ element: this, focused: document.activeElement });
+    };
+  });
+
+  afterEach(() => {
+    delete (Element.prototype as Partial<Element>).scrollIntoView;
+  });
+
+  it("scrolls to the first invalid field before focusing it", async () => {
+    const user = userEvent.setup();
+    renderInSpanish(<ChoiceForm onValid={vi.fn()} scrollToError />);
+    const country = screen.getByRole("combobox", { name: "Country" });
+
+    await user.click(screen.getByRole("button", { name: "Send" }));
+
+    expect(scrolled).toHaveLength(1);
+    expect(scrolled[0].element).toBe(country);
+    expect(scrolled[0].focused).not.toBe(country);
+    expect(country).toHaveFocus();
+  });
+
+  it("also scrolls to the first field with a server error", async () => {
+    const user = userEvent.setup();
+    const respond = vi.fn().mockReturnValueOnce({ fieldErrors: { code: { key: "serverError" } } });
+    renderInSpanish(<ResultForm respond={respond} scrollToError />);
+
+    await submitValid(user);
+
+    const code = screen.getByRole("textbox", { name: "Code" });
+    expect(scrolled.map((entry) => entry.element)).toEqual([code]);
+    expect(code).toHaveFocus();
+  });
+
+  it("does not scroll without the option", async () => {
+    const user = userEvent.setup();
+    renderInSpanish(<ChoiceForm onValid={vi.fn()} />);
+
+    await user.click(screen.getByRole("button", { name: "Send" }));
+
+    expect(scrolled).toEqual([]);
+  });
 });
