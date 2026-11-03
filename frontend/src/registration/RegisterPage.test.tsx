@@ -107,6 +107,28 @@ test("gives access to the text of the terms and of the marketing consent", async
   expect(screen.getByText("Texto del marketing.")).toBeVisible();
 });
 
+test("shows the terms and the marketing text as Markdown without interpreting HTML", async () => {
+  const content =
+    "**Cláusula 1**\n\nVer <https://example.com>.\n\n<b>negrita</b><script>x()</script>";
+  const { fetcher } = fakeFetch(
+    respondWith({
+      ...OPTIONS,
+      terms: { ...OPTIONS.terms, content },
+      marketing: { ...OPTIONS.marketing, content },
+    }),
+  );
+  renderPage(fetcher);
+
+  await screen.findByText("Términos y condiciones");
+  for (const title of ["Términos y condiciones", "Novedades por correo"]) {
+    const details = screen.getByText(title).closest("details") as HTMLElement;
+    expect(details.querySelector("strong")).toHaveTextContent("Cláusula 1");
+    expect(details.querySelector("a")).toHaveAttribute("href", "https://example.com");
+    expect(details.querySelectorAll("p")).toHaveLength(3);
+    expect(details.querySelector("b, script")).toBeNull();
+  }
+});
+
 test("without a marketing document there is no marketing checkbox", async () => {
   const { fetcher } = fakeFetch(respondWith({ ...OPTIONS, marketing: null }));
   renderPage(fetcher);

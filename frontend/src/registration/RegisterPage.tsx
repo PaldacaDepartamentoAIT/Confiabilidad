@@ -1,5 +1,6 @@
 import { useEffect, useId, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import Markdown from "react-markdown";
 
 import type { ApiClient } from "../api/client";
 import { fetchOptions, type RegistrationOptions } from "../api/registration";
@@ -142,7 +143,7 @@ function RegisterForm({ options, language, titleId }: RegisterFormProps) {
         />
         <details>
           <summary>{t("register.termsTitle")}</summary>
-          <p>{options.terms?.content}</p>
+          <Markdown>{options.terms?.content}</Markdown>
         </details>
         <Checkbox
           label={t("register.termsLabel")}
@@ -155,7 +156,7 @@ function RegisterForm({ options, language, titleId }: RegisterFormProps) {
           <>
             <details>
               <summary>{t("register.marketingTitle")}</summary>
-              <p>{options.marketing.content}</p>
+              <Markdown>{options.marketing.content}</Markdown>
             </details>
             <Checkbox label={t("register.marketingLabel")} name="marketing" />
           </>
