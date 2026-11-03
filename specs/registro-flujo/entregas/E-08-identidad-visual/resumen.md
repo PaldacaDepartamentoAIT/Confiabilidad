@@ -1,6 +1,7 @@
 # Entrega E-08 · Identidad visual, proxy y enrutador
 
-Rama: `feat/registro-flujo-identidad-visual` · PR: pendiente ·
+Rama: `feat/registro-flujo-identidad-visual` · PR:
+[PaldacaDepartamentoAIT/Confiabilidad#42](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/42) ·
 Líneas de código y tests: 341 (límite: 400).
 
 ## Qué se hizo
