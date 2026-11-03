@@ -347,12 +347,16 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   fallo sin código — [Cierto] — revertir: no aplica. Mutantes (`404` por `410`; otro nombre de
   cookie) detectados.
 
-- [ ] T-035 Llamadas del registro
+- [x] T-035 Llamadas del registro
   RF: RF-001, RF-004, RF-006…RF-012 (M-08) | Depende de: T-034 | Archivos: 2
   Archivos: `api/registration.ts`, `api/registration.test.ts`.
   Hecho cuando: hay funciones tipadas para opciones, formulario, estado, verificar, reenviar y
   completar, con el cuerpo de cada ruta y `public_id` siempre en el cuerpo; `marketing` solo se
   incluye si se pasa; suite verde.
+  Decisiones: `submitRegistration` añade `accepted: true` a los términos, porque el formulario solo
+  se envía con la casilla marcada; el test exige que la clave `marketing` no exista (no basta con
+  que valga `undefined`, que `toEqual` daba por igual) — [Cierto] — revertir: no aplica. Mutantes
+  (`marketing` siempre presente; términos sin `accepted`) detectados.
 
 - [ ] T-036 Casilla y selector accesibles
   RF: RF-001, RF-003 (M-12) | Depende de: — | Archivos: 3
