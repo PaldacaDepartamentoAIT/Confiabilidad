@@ -1,6 +1,7 @@
 # Entrega E-13 · Pantalla de verificación: estado y enlace no válido
 
-Rama: `feat/registro-flujo-verificacion` · PR: pendiente ·
+Rama: `feat/registro-flujo-verificacion` · PR:
+[PaldacaDepartamentoAIT/Confiabilidad#50](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/50) ·
 Líneas de código y tests: 291 (límite: 400).
 
 ## Qué se hizo
