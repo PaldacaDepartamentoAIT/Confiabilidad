@@ -3,7 +3,12 @@ import { useTranslation } from "react-i18next";
 import Markdown from "react-markdown";
 
 import type { ApiClient } from "../api/client";
-import { fetchOptions, type RegistrationOptions } from "../api/registration";
+import {
+  fetchOptions,
+  submitRegistration,
+  type LegalDocument,
+  type RegistrationOptions,
+} from "../api/registration";
 import { Button } from "../components/Button";
 import { FormMessage } from "../components/FormMessage";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
@@ -11,9 +16,17 @@ import { Checkbox } from "../components/fields/Checkbox";
 import { RequiredLegend } from "../components/fields/RequiredLegend";
 import { SelectField } from "../components/fields/SelectField";
 import { TextField } from "../components/fields/TextField";
-import { useFormValidation, type FieldError, type Validator } from "../forms/useFormValidation";
+import {
+  useFormValidation,
+  type FieldError,
+  type SubmitResult,
+  type Validator,
+} from "../forms/useFormValidation";
 import type { LanguageStorage } from "../i18n/language";
+import { navigate } from "../routing/router";
 import { email, required } from "../showcase/validators";
+import { translateFieldErrors } from "./serverErrors";
+import { useCountdown } from "./useCountdown";
 
 const chosen =
   (key: FieldError["key"]): Validator =>
@@ -27,7 +40,20 @@ const FIELDS = {
   email: [required, email],
   country: [chosen("countryInvalid")],
   terms: [chosen("termsNotAccepted")],
+  marketing: [],
 };
+
+type Field = keyof typeof FIELDS;
+
+const FAILURE = { type: "error", messageKey: "validation.serverError" } as const;
+const NETWORK = { type: "error", messageKey: "validation.networkError" } as const;
+const UNKNOWN = { type: "error", messageKey: "validation.unknownError" } as const;
+
+// Un error de un campo que la pantalla no tiene no se puede pintar bajo él: va como mensaje general.
+function fieldResult(errors: Record<string, string[]>): SubmitResult<Field> {
+  const known = Object.keys(errors).every((name) => name in FIELDS);
+  return { fieldErrors: translateFieldErrors(errors), message: known ? undefined : UNKNOWN };
+}
 
 type Loaded =
   { status: "loading" } | { status: "failed" } | { status: "ready"; options: RegistrationOptions };
@@ -64,7 +90,13 @@ export function RegisterPage({ client, storage }: RegisterPageProps) {
       )}
       {loaded.status === "ready" &&
         (loaded.options.terms ? (
-          <RegisterForm options={loaded.options} language={i18n.language} titleId={titleId} />
+          <RegisterForm
+            client={client}
+            options={loaded.options}
+            terms={loaded.options.terms}
+            language={i18n.language}
+            titleId={titleId}
+          />
         ) : (
           <FormMessage type="error" messageKey="validation.termsUnavailable" />
         ))}
@@ -73,16 +105,41 @@ export function RegisterPage({ client, storage }: RegisterPageProps) {
 }
 
 type RegisterFormProps = {
+  client: ApiClient;
   options: RegistrationOptions;
+  terms: LegalDocument;
   language: string;
   titleId: string;
 };
 
-function RegisterForm({ options, language, titleId }: RegisterFormProps) {
+function RegisterForm({ client, options, terms, language, titleId }: RegisterFormProps) {
   const { t } = useTranslation();
-  const { errors, onBlur, handleSubmit, message, formRef, messageRef } = useFormValidation(FIELDS, {
-    scrollToError: true,
-  });
+  const [processing, setProcessing] = useState(false);
+  const wait = useCountdown();
+  const { allErrors, onBlur, handleSubmit, showResult, message, formRef, messageRef } =
+    useFormValidation(FIELDS, { scrollToError: true, processing });
+
+  async function send(values: Record<Field, string>) {
+    const { marketing } = options;
+    setProcessing(true);
+    const result = await submitRegistration(client, {
+      name: values.name,
+      birthdate: values.birthdate,
+      email: values.email,
+      country: values.country,
+      terms: { version: terms.version, locale: terms.locale },
+      ...(values.marketing && marketing
+        ? { marketing: { version: marketing.version, locale: marketing.locale } }
+        : {}),
+    });
+    setProcessing(false);
+    if (result.kind === "ok") navigate(`/register/continue#${result.data.public_id}`);
+    else if (result.kind === "fieldErrors") showResult(fieldResult(result.errors));
+    else if (result.kind === "rateLimited") wait.start(result.retryAfter);
+    else if (result.kind === "networkError") showResult({ message: NETWORK });
+    else if (result.kind === "refused") showResult({ message: UNKNOWN });
+    else showResult({ message: FAILURE });
+  }
 
   const countries = useMemo(() => {
     const names = new Intl.DisplayNames([language], { type: "region" });
@@ -91,12 +148,15 @@ function RegisterForm({ options, language, titleId }: RegisterFormProps) {
       .sort((first, second) => first.label.localeCompare(second.label, language));
   }, [options.countries, language]);
 
-  const errorText = (error: FieldError | undefined) =>
-    error && t(`validation.${error.key}`, error.params);
+  const errorText = (list: readonly FieldError[] | undefined) =>
+    list?.map((error) => t(`validation.${error.key}`, error.params)).join(" ") || undefined;
 
   return (
     <>
       <RequiredLegend />
+      {wait.remaining > 0 && (
+        <p role="status">{t("validation.retryIn", { seconds: wait.remaining })}</p>
+      )}
       {message && (
         <FormMessage ref={messageRef} type={message.type} messageKey={message.messageKey} />
       )}
@@ -104,14 +164,14 @@ function RegisterForm({ options, language, titleId }: RegisterFormProps) {
         ref={formRef}
         aria-labelledby={titleId}
         noValidate
-        onSubmit={handleSubmit(() => undefined)}
+        onSubmit={handleSubmit((values) => void send(values))}
       >
         <TextField
           label={t("register.nameLabel")}
           name="name"
           autoComplete="name"
           required
-          error={errorText(errors.name)}
+          error={errorText(allErrors.name)}
           onBlur={onBlur("name")}
         />
         <TextField
@@ -120,7 +180,7 @@ function RegisterForm({ options, language, titleId }: RegisterFormProps) {
           type="date"
           autoComplete="bday"
           required
-          error={errorText(errors.birthdate)}
+          error={errorText(allErrors.birthdate)}
           onBlur={onBlur("birthdate")}
         />
         <TextField
@@ -128,7 +188,7 @@ function RegisterForm({ options, language, titleId }: RegisterFormProps) {
           name="email"
           type="email"
           required
-          error={errorText(errors.email)}
+          error={errorText(allErrors.email)}
           onBlur={onBlur("email")}
         />
         <SelectField
@@ -138,18 +198,18 @@ function RegisterForm({ options, language, titleId }: RegisterFormProps) {
           options={countries}
           autoComplete="country"
           required
-          error={errorText(errors.country)}
+          error={errorText(allErrors.country)}
           onBlur={onBlur("country")}
         />
         <details>
           <summary>{t("register.termsTitle")}</summary>
-          <Markdown>{options.terms?.content}</Markdown>
+          <Markdown>{terms.content}</Markdown>
         </details>
         <Checkbox
           label={t("register.termsLabel")}
           name="terms"
           required
-          error={errorText(errors.terms)}
+          error={errorText(allErrors.terms)}
           onBlur={onBlur("terms")}
         />
         {options.marketing && (
@@ -161,7 +221,12 @@ function RegisterForm({ options, language, titleId }: RegisterFormProps) {
             <Checkbox label={t("register.marketingLabel")} name="marketing" />
           </>
         )}
-        <Button type="submit" keepFocusOnMouseDown>
+        <Button
+          type="submit"
+          keepFocusOnMouseDown
+          processing={processing}
+          disabled={wait.remaining > 0}
+        >
           {t("register.submit")}
         </Button>
       </form>
