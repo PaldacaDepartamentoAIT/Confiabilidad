@@ -23,11 +23,12 @@ export type GeneralMessage = {
 };
 
 export type SubmitResult<Field extends string> = {
-  fieldErrors?: Partial<Record<Field, FieldError>>;
+  fieldErrors?: Partial<Record<Field, FieldError | readonly FieldError[]>>;
   message?: GeneralMessage;
 };
 
 type Errors<Field extends string> = Partial<Record<Field, FieldError>>;
+type ErrorLists<Field extends string> = Partial<Record<Field, readonly FieldError[]>>;
 
 function firstError(validators: readonly Validator[], value: string): FieldError | null {
   for (const validate of validators) {
@@ -37,30 +38,59 @@ function firstError(validators: readonly Validator[], value: string): FieldError
   return null;
 }
 
-function focusField(form: HTMLFormElement | null, name: string) {
-  const element = form?.elements.namedItem(name);
-  if (element instanceof HTMLElement) element.focus();
+// Una casilla vale "true" marcada y "" sin marcar, para validarla como cualquier otro campo.
+function readValue(element: unknown): string {
+  if (element instanceof HTMLInputElement && element.type === "checkbox") {
+    return element.checked ? "true" : "";
+  }
+  if (element instanceof HTMLInputElement || element instanceof HTMLSelectElement) {
+    return element.value;
+  }
+  return "";
+}
+
+function asList(error: FieldError | readonly FieldError[]): readonly FieldError[] {
+  return "key" in error ? [error] : error;
 }
 
 type Options = {
   processing?: boolean;
+  scrollToError?: boolean;
 };
 
 export function useFormValidation<Field extends string>(
   fields: Record<Field, readonly Validator[]>,
-  { processing = false }: Options = {},
+  { processing = false, scrollToError = false }: Options = {},
 ) {
   const { t } = useTranslation();
   const announce = useAnnouncer();
   const [localErrors, setLocalErrors] = useState<Errors<Field>>({});
-  const [serverErrors, setServerErrors] = useState<Errors<Field>>({});
+  const [serverErrors, setServerErrors] = useState<ErrorLists<Field>>({});
   const [message, setMessage] = useState<GeneralMessage | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const messageRef = useRef<HTMLDivElement>(null);
   const names = Object.keys(fields) as Field[];
 
   // El error local describe el valor actual y el de servidor, el ya enviado: prevalece el local (D-14).
-  const errors: Errors<Field> = { ...serverErrors, ...localErrors };
+  const allErrors: ErrorLists<Field> = { ...serverErrors };
+  for (const name of Object.keys(localErrors) as Field[]) {
+    const error = localErrors[name];
+    if (error) allErrors[name] = [error];
+  }
+  const errors: Errors<Field> = {};
+  for (const name of Object.keys(allErrors) as Field[]) {
+    const first = allErrors[name]?.[0];
+    if (first) errors[name] = first;
+  }
+
+  // El desplazamiento va antes del foco para que el campo quede visible aunque el navegador no lo
+  // lleve a la vista al enfocarlo (RF-003).
+  function focusField(form: HTMLFormElement | null, name: string) {
+    const element = form?.elements.namedItem(name);
+    if (!(element instanceof HTMLElement)) return;
+    if (scrollToError) element.scrollIntoView({ block: "center" });
+    element.focus();
+  }
 
   function validateField(name: Field, value: string) {
     const error = firstError(fields[name], value);
@@ -73,7 +103,8 @@ export function useFormValidation<Field extends string>(
   }
 
   function onBlur(name: Field) {
-    return (event: FocusEvent<HTMLInputElement>) => validateField(name, event.target.value);
+    return (event: FocusEvent<HTMLInputElement | HTMLSelectElement>) =>
+      validateField(name, readValue(event.target));
   }
 
   // Los campos se buscan por su `name` y se recorren en el orden en que se declaran (orden visual).
@@ -85,8 +116,7 @@ export function useFormValidation<Field extends string>(
       const values = {} as Record<Field, string>;
       const next: Errors<Field> = {};
       for (const name of names) {
-        const element = form.elements.namedItem(name);
-        values[name] = element instanceof HTMLInputElement ? element.value : "";
+        values[name] = readValue(form.elements.namedItem(name));
         const error = firstError(fields[name], values[name]);
         if (error) next[name] = error;
       }
@@ -109,8 +139,13 @@ export function useFormValidation<Field extends string>(
   // Lo llama la pantalla con la respuesta del envío. Con errores de campo, el foco va al primero y
   // el mensaje general se anuncia sin mover el foco; sin ellos, el foco va al mensaje (RF-017).
   function showResult({ fieldErrors = {}, message: next }: SubmitResult<Field>) {
+    const lists: ErrorLists<Field> = {};
+    for (const name of names) {
+      const error = fieldErrors[name];
+      if (error) lists[name] = asList(error);
+    }
     flushSync(() => {
-      setServerErrors(fieldErrors);
+      setServerErrors(lists);
       setMessage(next ?? null);
     });
     const firstInvalid = names.find((name) => fieldErrors[name]);
@@ -127,5 +162,5 @@ export function useFormValidation<Field extends string>(
     messageRef.current?.focus();
   }
 
-  return { errors, onBlur, handleSubmit, showResult, message, formRef, messageRef };
+  return { errors, allErrors, onBlur, handleSubmit, showResult, message, formRef, messageRef };
 }
