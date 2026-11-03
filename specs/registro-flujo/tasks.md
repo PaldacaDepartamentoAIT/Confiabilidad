@@ -367,7 +367,9 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   Decisiones: la etiqueta de la casilla va detrás de ella y admite contenido (`ReactNode`) para
   poder enlazar los términos; el selector lleva siempre una primera opción vacía con el texto
   `placeholder`, para que «sin elegir» valga `""` como un campo vacío — [Cierto] — revertir: no
-  aplica. Mutantes (casilla sin `aria-invalid`; selector sin opción vacía; `aria-required` fijo)
+  aplica. El test de axe excluye `color-contrast` de forma explícita: en jsdom axe no puede medirlo
+  (no hay canvas) y lo dejaba como incompleto, sin que el test lo notara; el contraste queda
+  pendiente de comprobarse en un navegador real (2026-11-03, tras el PR #45). Mutantes (casilla sin `aria-invalid`; selector sin opción vacía; `aria-required` fijo)
   detectados.
 
 - [x] T-037 Campo de fecha
@@ -393,18 +395,31 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   local fuera de la lista) detectados; uno que conservaba solo el primer error del servidor
   sobrevivía y se mató comprobando `allErrors`.
 
-- [ ] T-039 Dígitos como el servidor
+- [x] T-039 Dígitos como el servidor
   RF: RF-013 (M-12, D-12; CF-8) | Depende de: — | Archivos: 3
   Archivos: `forms/digits.ts`, `forms/passwordRules.ts`, `forms/passwordRules.test.ts`.
   Hecho cuando: «solo números» rechaza también los caracteres con `Numeric_Type=Digit`
   (`²²²²²²²²²²²²`), con la lista generada por `unicodedata` y su comando de generación en un
   comentario; un test recorre la tabla de casos compartidos de la spec; suite verde.
+  Decisiones: la lista sale de Python 3.12 (Unicode 15.0, el de la imagen del backend) agrupada en
+  20 rangos; las reglas `minimumLength` y `notOnlyDigits` se exportan para que el test compruebe
+  cada columna de la tabla por separado. Comparado carácter a carácter con `str.isdigit()`: ningún
+  dígito del servidor se le escapa al navegador; al revés, 80 caracteres de escrituras añadidas en
+  Unicode 16 (Garay, Kirat Rai…) cuentan como dígito en un navegador con Unicode 16 y no en el
+  servidor, así que el navegador rechaza de más una contraseña hecha solo de ellos. Riesgo residual
+  aceptado por el usuario el 2026-11-03; desaparece cuando el backend use un Python con Unicode 16 — [Cierto] —
+  revertir: no aplica. Mutantes (quitar `²`, el rango de `🄀`, el etíope o los rodeados) detectados.
 
-- [ ] T-040 Cuenta atrás
+- [x] T-040 Cuenta atrás
   RF: RF-006, RF-010, RF-024 (M-11) | Depende de: — | Archivos: 2
   Archivos: `registration/useCountdown.ts`, `registration/useCountdown.test.ts`.
   Hecho cuando: con temporizadores simulados, el hook cuenta hacia atrás desde los segundos dados,
   avisa al llegar a cero y se reinicia con un valor nuevo; suite verde.
+  Decisiones: `useCountdown(onZero)` devuelve `{ remaining, start(seconds) }`; `start` reinicia
+  aunque el valor sea el mismo. Cuenta contra una hora límite (`Date.now()`) y no por ticks, para que
+  una pestaña dormida muestre al volver lo que falta de verdad — [Cierto] — revertir: no aplica.
+  Mutantes (sin parar al llegar a cero; sin limpiar al desmontar; contar ticks; contar antes de
+  empezar) detectados; uno que no reiniciaba tras llegar a cero sobrevivía y se mató con un test.
 
 - [ ] T-041 Textos del formulario y errores del servidor
   RF: RF-001, RF-003, RF-022 (D-11) | Depende de: — | Archivos: 3
