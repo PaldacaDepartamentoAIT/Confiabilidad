@@ -468,13 +468,23 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   obligatoria; términos o marketing como texto plano) detectados; `skipHtml` resultó equivalente
   al comportamiento por defecto y se quitó.
 
-- [ ] T-044 Pantalla del formulario: envío
+- [x] T-044 Pantalla del formulario: envío
   RF: RF-003, RF-004, RF-018, RF-024 (M-10) | Depende de: T-040, T-042, T-043 | Archivos: 2
   Archivos: `registration/RegisterPage.tsx`, `registration/RegisterPage.test.tsx`.
   Hecho cuando: un `400` pinta cada error bajo su campo con desplazamiento y foco al primero; un
   `429` muestra la cuenta atrás y reactiva el envío al llegar a cero; un fallo de red da el mensaje
   general sin perder los datos; `marketing` solo se envía con la casilla marcada; un `202` navega a
   `/register/continue#<public_id>`; suite verde.
+  Decisiones: el formulario recibe los términos ya comprobados como propiedad; `marketing` entra en
+  los campos del hook sin reglas, para leer la casilla como `"true"` o `""`; todos los errores del
+  servidor de un campo se pintan juntos bajo él (`allErrors`); un error de un campo que la pantalla
+  no tiene (`non_field_errors`) da el mensaje genérico, y también un rechazo con código; un `500` da
+  `serverError` y un fallo de red `networkError`. Con `429`, el botón se desactiva y la espera se
+  muestra en un `role="status"` hasta llegar a cero — [Cierto] — revertir: no aplica. Mutantes
+  (marketing siempre; sin identificador en la URL; botón activo durante la espera; solo el primer
+  error; fallo de red como fallo del servidor) detectados; tres sobrevivían (`every` por `some` en
+  los campos conocidos, sin `processing` en el hook, rechazo como fallo del servidor) y se mataron
+  con tests de errores mezclados, doble envío y `400` con código.
 
 - [x] T-045 Textos de verificación, contraseña y cuenta creada
   RF: RF-005, RF-009, RF-010, RF-015, RF-016, RF-022 | Depende de: T-041 | Archivos: 3
