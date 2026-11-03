@@ -1,6 +1,7 @@
 # Entrega E-16 · Llamadas del registro
 
-Rama: `feat/registro-flujo-llamadas-registro` · PR: pendiente ·
+Rama: `feat/registro-flujo-llamadas-registro` · PR:
+[PaldacaDepartamentoAIT/Confiabilidad#44](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/44) ·
 Líneas de código y tests: 195 (límite: 400).
 
 Sale de E-09, que con esta tarea medía 488 líneas. Va después de E-09 y antes de E-12.
