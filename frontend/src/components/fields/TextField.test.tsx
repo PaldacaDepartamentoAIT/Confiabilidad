@@ -85,3 +85,11 @@ test("with a hint and an error, the description contains both", () => {
     "As written on your ID. Fill in this field.",
   );
 });
+
+test("a date field keeps its type and its label", () => {
+  const { container } = render(<TextField label="Birthdate" type="date" name="birthdate" />);
+
+  const input = container.querySelector("input");
+  expect(input).toHaveAttribute("type", "date");
+  expect(input).toHaveAccessibleName("Birthdate");
+});
