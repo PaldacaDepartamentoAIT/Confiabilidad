@@ -449,13 +449,24 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   Mutantes (la clave general antes que la del campo; `locked` mal traducido; un valor de edad
   cambiado) detectados; `params: undefined` en lugar de omitirlo es equivalente (mismo texto).
 
-- [ ] T-043 Pantalla del formulario: campos y comprobaciones
+- [x] T-043 Pantalla del formulario: campos y comprobaciones
   RF: RF-001, RF-002, RF-003 (M-10) | Depende de: T-035, T-036, T-037, T-038, T-041 | Archivos: 2
   Archivos: `registration/RegisterPage.tsx`, `registration/RegisterPage.test.tsx`.
   Hecho cuando: con `fetch` simulado, la pantalla carga las opciones, muestra los países por nombre en
   el idioma activo, el texto de los términos y la casilla de marketing solo si hay documento; al
   enviar vacío muestra cada error bajo su campo, desplaza y enfoca el primero y no llama al servidor;
   suite verde.
+  Decisiones: la pantalla recibe el cliente de la API como propiedad (la ruta lo creará en T-051) y
+  reutiliza `required` y `email` de `showcase/validators.ts`; los países se nombran con
+  `Intl.DisplayNames` y se ordenan en el idioma activo; los términos y el marketing van en
+  desplegables (`<details>`); sin términos vigentes se muestra `termsUnavailable` y no el formulario.
+  El texto de los documentos es Markdown sin HTML (S-14 de `consentimientos`), un caso que ni la
+  spec ni el plan cubrían: el usuario eligió el 2026-11-03 renderizarlo con `react-markdown`
+  (dependencia nueva aprobada, `^10.1.0`), que descarta el HTML por defecto. El envío al servidor
+  queda para T-044 — [Cierto] — revertir: no aplica. Mutantes (sin ordenar; idioma fijo; marketing
+  siempre; sin desplazamiento; país como obligatorio genérico; formulario sin términos; fecha no
+  obligatoria; términos o marketing como texto plano) detectados; `skipHtml` resultó equivalente
+  al comportamiento por defecto y se quitó.
 
 - [ ] T-044 Pantalla del formulario: envío
   RF: RF-003, RF-004, RF-018, RF-024 (M-10) | Depende de: T-040, T-042, T-043 | Archivos: 2
