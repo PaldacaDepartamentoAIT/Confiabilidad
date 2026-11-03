@@ -1,6 +1,7 @@
 # Entrega E-12 · Textos del registro y errores del servidor
 
-Rama: `feat/registro-flujo-textos` · PR: pendiente ·
+Rama: `feat/registro-flujo-textos` · PR:
+[PaldacaDepartamentoAIT/Confiabilidad#47](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/47) ·
 Líneas de código y tests: 363 (límite: 400).
 
 Primera entrega tras reorganizar las de las pantallas (aprobado el 2026-11-03): E-12 a E-14 se
