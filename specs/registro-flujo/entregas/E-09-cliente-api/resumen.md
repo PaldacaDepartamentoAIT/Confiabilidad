@@ -1,6 +1,7 @@
 # Entrega E-09 · Cliente de la API
 
-Rama: `feat/registro-flujo-cliente-api` · PR: pendiente ·
+Rama: `feat/registro-flujo-cliente-api` · PR:
+[PaldacaDepartamentoAIT/Confiabilidad#43](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/43) ·
 Líneas de código y tests: 293 (límite: 400).
 
 La entrega se planificó con T-034 y T-035, pero juntas medían 488 líneas. Se dividió: T-035
