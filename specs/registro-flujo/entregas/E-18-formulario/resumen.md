@@ -1,6 +1,7 @@
 # Entrega E-18 · Pantalla del formulario: campos y comprobaciones
 
-Rama: `feat/registro-flujo-formulario` · PR: pendiente ·
+Rama: `feat/registro-flujo-formulario` · PR:
+[PaldacaDepartamentoAIT/Confiabilidad#48](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/48) ·
 Líneas de código y tests: 371 (límite: 400).
 
 ## Qué se hizo
