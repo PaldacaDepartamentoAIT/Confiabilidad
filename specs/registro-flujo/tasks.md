@@ -421,18 +421,33 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   Mutantes (sin parar al llegar a cero; sin limpiar al desmontar; contar ticks; contar antes de
   empezar) detectados; uno que no reiniciaba tras llegar a cero sobrevivía y se mató con un test.
 
-- [ ] T-041 Textos del formulario y errores del servidor
+- [x] T-041 Textos del formulario y errores del servidor
   RF: RF-001, RF-003, RF-022 (D-11) | Depende de: — | Archivos: 3
   Archivos: `i18n/locales/es.ts`, `i18n/locales/en.ts`, `i18n/locales/pt-BR.ts`.
   Hecho cuando: existen en los tres idiomas las etiquetas del formulario, los textos de los
   términos y del marketing, una clave por cada código de error del servidor y el texto genérico;
   `locales.test.ts` pasa; suite verde.
+  Excepción: añadir el grupo `register` obliga a incluirlo en la lista de grupos de
+  `i18n/locales/locales.test.ts`, un cuarto archivo; aprobada por el usuario el 2026-11-03.
+  Decisiones: los errores van en el grupo `validation`, que es el que pinta `useFormValidation`, y
+  copian los textos de `backend/apps/accounts/api/messages.py` con `{{max}}`, `{{years}}` y `{{days}}`;
+  dos se adaptan a la pantalla: `countryInvalid` pide elegir de la lista (no un código ISO) y
+  `birthdateInvalid` no menciona el formato `AAAA-MM-DD`, porque el campo es un selector de fecha.
+  También `retryIn`, `networkError` y `unknownError` (genérico de D-11). Test nuevo: cada texto usa
+  los mismos parámetros en los tres idiomas — [Cierto] — revertir: no aplica. Mutantes (un
+  parámetro renombrado en `es`; una clave quitada en `pt-BR`) detectados.
 
-- [ ] T-042 Traducción de los errores del servidor
+- [x] T-042 Traducción de los errores del servidor
   RF: RF-003, RF-022 (D-11) | Depende de: T-041 | Archivos: 2
   Archivos: `registration/serverErrors.ts`, `registration/serverErrors.test.ts`.
   Hecho cuando: cada código de M-04 de `registro-api`, de la contraseña y del flujo se traduce a su
   clave con sus parámetros, y uno desconocido al genérico; suite verde.
+  Decisiones: el servidor envía solo el código, no los valores, así que `max` (150), `years` (18) y
+  `days` (5) se copian de `backend/apps/accounts/validators.py`; `email:invalid`,
+  `email:max_length` y `birthdate:invalid` tienen clave propia, como en el servidor; `required`,
+  `null` y `blank` comparten el texto de campo obligatorio — [Cierto] — revertir: no aplica.
+  Mutantes (la clave general antes que la del campo; `locked` mal traducido; un valor de edad
+  cambiado) detectados; `params: undefined` en lugar de omitirlo es equivalente (mismo texto).
 
 - [ ] T-043 Pantalla del formulario: campos y comprobaciones
   RF: RF-001, RF-002, RF-003 (M-10) | Depende de: T-035, T-036, T-037, T-038, T-041 | Archivos: 2
@@ -450,12 +465,17 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   general sin perder los datos; `marketing` solo se envía con la casilla marcada; un `202` navega a
   `/register/continue#<public_id>`; suite verde.
 
-- [ ] T-045 Textos de verificación, contraseña y cuenta creada
+- [x] T-045 Textos de verificación, contraseña y cuenta creada
   RF: RF-005, RF-009, RF-010, RF-015, RF-016, RF-022 | Depende de: T-041 | Archivos: 3
   Archivos: `i18n/locales/es.ts`, `i18n/locales/en.ts`, `i18n/locales/pt-BR.ts`.
   Hecho cuando: existen en los tres idiomas el texto fijo de la verificación (sin afirmar que llegó
   un código), el temporizador, el reenvío, el bloqueo, el enlace no válido, el paso de contraseña y
   la cuenta creada; `locales.test.ts` pasa; suite verde.
+  Decisiones: los textos van en el grupo `register`; el de la verificación repite la idea del
+  mensaje neutro del servidor («si puedes registrarte…, recibirás»), sin afirmar que el correo
+  existe ni que llegó un código. Sin fase roja propia: añadir textos no rompe ningún test; los
+  vigila `locales.test.ts` (mutante: quitar `lockedNotice` en `es`, detectado por el test y por
+  `tsc`) — [Cierto] — revertir: no aplica.
 
 - [ ] T-046 Pantalla de verificación: estado y enlace no válido
   RF: RF-005, RF-006, RF-016 (M-11, D-09) | Depende de: T-035, T-040, T-045 | Archivos: 2
@@ -606,17 +626,34 @@ entrega (`entregas/E-XX-<descripcion>/resumen.md`).
   Cómo probarlo: los tests del frontend de `src/forms` y de la cuenta atrás; en la página de
   muestra, `²²²²²²²²²²²²` como contraseña nueva da el error de solo números.
 
-- E-12 Pantalla del formulario (sin ruta)
-  Tareas: T-041, T-042, T-043, T-044 | Líneas estimadas: 400 | Rama: feat/registro-flujo-formulario
-  Cómo probarlo: los tests del frontend del formulario y de los errores del servidor.
+- E-12 Textos del registro y errores del servidor
+  Tareas: T-041, T-042, T-045 | Líneas estimadas: 350 | Rama: feat/registro-flujo-textos
+  Cómo probarlo: los tests del frontend de `src/i18n` y de `src/registration/serverErrors`.
+  Reorganizada el 2026-11-03: E-12 a E-14 se re-estimaron por tarea y pasan a E-12, E-18, E-19,
+  E-13, E-20, E-14 y E-21, en este orden.
 
-- E-13 Pantalla de verificación (sin ruta)
-  Tareas: T-045, T-046, T-047, T-048 | Líneas estimadas: 390 | Rama:
-  feat/registro-flujo-verificacion
-  Cómo probarlo: los tests del frontend de la pantalla de verificación.
+- E-18 Pantalla del formulario: campos y comprobaciones (sin ruta)
+  Tareas: T-043 | Líneas estimadas: 370 | Rama: feat/registro-flujo-formulario
+  Cómo probarlo: los tests del frontend de `src/registration/RegisterPage`.
 
-- E-14 Paso de contraseña y cuenta creada (sin ruta)
-  Tareas: T-049, T-050 | Líneas estimadas: 300 | Rama: feat/registro-flujo-contrasena
+- E-19 Pantalla del formulario: envío (sin ruta)
+  Tareas: T-044 | Líneas estimadas: 260 | Rama: feat/registro-flujo-formulario-envio
+  Cómo probarlo: los tests del frontend de `src/registration/RegisterPage`.
+
+- E-13 Pantalla de verificación: estado y enlace no válido (sin ruta)
+  Tareas: T-046 | Líneas estimadas: 320 | Rama: feat/registro-flujo-verificacion
+  Cómo probarlo: los tests del frontend de `src/registration/VerifyPage`.
+
+- E-20 Pantalla de verificación: código, bloqueo y reenvío (sin ruta)
+  Tareas: T-047, T-048 | Líneas estimadas: 300 | Rama: feat/registro-flujo-verificacion-codigo
+  Cómo probarlo: los tests del frontend de `src/registration/VerifyPage`.
+
+- E-14 Paso de contraseña (sin ruta)
+  Tareas: T-049 | Líneas estimadas: 300 | Rama: feat/registro-flujo-contrasena
+  Cómo probarlo: los tests del frontend de `src/registration/PasswordStep`.
+
+- E-21 Verificación con paso de contraseña y cuenta creada (sin ruta)
+  Tareas: T-050 | Líneas estimadas: 220 | Rama: feat/registro-flujo-cuenta-creada
   Cómo probarlo: los tests del frontend de `src/registration`.
 
 - E-15 Registro completo en la web

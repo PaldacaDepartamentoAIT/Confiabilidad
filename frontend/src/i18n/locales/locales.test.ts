@@ -61,5 +61,22 @@ test("every language covers the groups used by the components", () => {
     "message",
     "validation",
     "showcase",
+    "register",
   ]);
+});
+
+function placeholders(text: string): string[] {
+  return [...text.matchAll(/\{\{(\w+)\}\}/g)].map((match) => match[1]).sort();
+}
+
+test("every text uses the same placeholders in the three languages", () => {
+  const reference = flatten(en);
+  const mismatches: string[] = [];
+  for (const [language, tree] of Object.entries({ es, "pt-BR": ptBR })) {
+    flatten(tree).forEach((text, key) => {
+      const expected = placeholders(reference.get(key) ?? "");
+      if (placeholders(text).join() !== expected.join()) mismatches.push(`${language}: ${key}`);
+    });
+  }
+  expect(mismatches).toEqual([]);
 });
