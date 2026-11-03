@@ -334,13 +334,18 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   Decisiones: el test pasa desde el principio porque conserva el comportamiento; su mutante (que
   la página de muestra no responda a `/`) lo hace fallar — [Cierto] — revertir: no aplica.
 
-- [ ] T-034 Cliente de la API
+- [x] T-034 Cliente de la API
   RF: RF-021, RF-022, RF-024 (M-08, D-10) | Depende de: — | Archivos: 2
   Archivos: `api/client.ts`, `api/client.test.ts`.
   Hecho cuando: con `fetch` simulado, el cliente usa `/api/browser/v1` y `X-CSRFToken` de la cookie
   en el navegador y `VITE_API_BASE_URL` + `/api/app/v1` en Tauri; envía `Accept-Language` y
   `language`; distingue éxito, errores de campo, código de error, `404`, `429` con `retry_after` y
   fallo de red; suite verde.
+  Decisiones: `environmentConfig` reúne el tipo de cliente (`__TAURI_INTERNALS__`) y
+  `VITE_API_BASE_URL` para que las pantallas no lean el entorno; un `429` toma la espera de
+  `retry_after` y, si falta, de la cabecera `Retry-After`; cualquier otra respuesta sin JSON es un
+  fallo sin código — [Cierto] — revertir: no aplica. Mutantes (`404` por `410`; otro nombre de
+  cookie) detectados.
 
 - [ ] T-035 Llamadas del registro
   RF: RF-001, RF-004, RF-006…RF-012 (M-08) | Depende de: T-034 | Archivos: 2
@@ -546,9 +551,15 @@ entrega (`entregas/E-XX-<descripcion>/resumen.md`).
   Cómo probarlo: abrir http://localhost:5173/ con el sistema en tema claro y en oscuro y ver la
   página de muestra con Manrope y la paleta; pedir la salud de la API a través del puerto 5173.
 
-- E-09 Cliente de la API del registro
-  Tareas: T-034, T-035 | Líneas estimadas: 320 | Rama: feat/registro-flujo-cliente-api
-  Cómo probarlo: los tests del frontend de `src/api`.
+- E-09 Cliente de la API
+  Tareas: T-034 | Líneas estimadas: 320 | Rama: feat/registro-flujo-cliente-api
+  Cómo probarlo: los tests del frontend de `src/api/client`.
+  Dividida: con T-035 medía 488 líneas, por encima de `sdd.max_lineas_pr`.
+
+- E-16 Llamadas del registro
+  Tareas: T-035 | Líneas estimadas: 195 | Rama: feat/registro-flujo-llamadas-registro
+  Cómo probarlo: los tests del frontend de `src/api/registration`.
+  Sale de E-09; va después de E-09 y antes de E-12.
 
 - E-10 Casilla, selector, fecha y validación ampliada
   Tareas: T-036, T-037, T-038 | Líneas estimadas: 380 | Rama: feat/registro-flujo-campos
