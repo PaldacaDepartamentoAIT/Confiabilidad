@@ -47,3 +47,15 @@ test("switches the whole page language from the keyboard and remembers it", asyn
   expect(portuguese).toHaveFocus();
   expect(storage.getItem(LANGUAGE_STORAGE_KEY)).toBe("pt-BR");
 });
+
+test.each(["/", "/ruta-que-no-existe"])("shows the sample page at %s", (path) => {
+  window.history.replaceState(null, "", path);
+  render(
+    <I18nextProvider i18n={createI18n("en")}>
+      <App />
+    </I18nextProvider>,
+  );
+
+  expect(screen.getByRole("heading", { level: 1, name: "Reliability" })).toBeInTheDocument();
+  window.history.replaceState(null, "", "/");
+});

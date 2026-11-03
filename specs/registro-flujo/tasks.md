@@ -285,37 +285,54 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
 
 ## Frontend
 
-- [ ] T-029 Variables de la identidad visual
-  RF: RF-001, RF-005 (M-13, D-13; S-14) | Depende de: — | Archivos: 3
-  Archivos: `styles/tokens.css`, `styles/base.css`, `styles/tokens.test.ts`.
+- [x] T-029 Variables de la identidad visual
+  RF: RF-001, RF-005 (M-13, D-13; S-14) | Depende de: — | Archivos: 4
+  Archivos: `styles/tokens.css`, `styles/base.css`, `styles/tokens.test.ts`,
+  `frontend/vite.config.ts`.
   Hecho cuando: `tokens.css` define los 13 colores de cada tema de `docs/identidad-visual.md`, el
   oscuro bajo `prefers-color-scheme: dark`; `base.css` aplica lienzo, tinta, formas y foco visible;
   el test lee el CSS y comprueba cada valor de las dos tablas; suite verde.
+  Excepción: Vitest no procesa CSS por defecto; para que el test lea la paleta hace falta
+  `test.css.include` en `frontend/vite.config.ts`, y sin él no se puede comprobar el CSS (aprobada
+  por el usuario el 2026-11-02).
+  Decisiones: además de los 13 colores, `--color-fill-strong` (la tinta en claro) y
+  `--color-on-action` (blanco en claro, el lienzo en oscuro) dan nombre a los dos usos que el
+  documento describe en texto — [Cierto] — revertir: quitarlas y usar los colores directos.
 
-- [ ] T-030 Fuentes y estilos cargados
+- [x] T-030 Fuentes y estilos cargados
   RF: RF-001 (M-13) | Depende de: T-029 | Archivos: 3
   Archivos: `frontend/package.json`, `pnpm-lock.yaml` (raíz), `main.tsx`.
   Hecho cuando: `@fontsource-variable/manrope` y `@fontsource-variable/jetbrains-mono` están
   instaladas; `main.tsx` importa fuentes y estilos; `pnpm --filter frontend build` termina sin
   errores; la página de muestra se ve con Manrope y los colores de la paleta; suite verde.
+  Decisiones: la comprobación visual se hizo con Playwright y Chromium en los dos temas (fuente
+  cargada, lienzo y botones en píldora) en vez de con un test, porque `main.tsx` no se prueba —
+  [Cierto] — revertir: no aplica. Las fuentes instaladas son la versión 5.3.0 — [Cierto] — revertir:
+  no aplica.
 
-- [ ] T-031 Proxy de la API en desarrollo
+- [x] T-031 Proxy de la API en desarrollo
   RF: RF-021 (M-14) | Depende de: — | Archivos: 2
   Archivos: `frontend/vite.config.ts`, `docker/docker-compose.yml`.
   Hecho cuando: con Docker levantado, `curl http://localhost:5173/api/health/` responde lo mismo que
   el backend; el destino sale de `VITE_BACKEND_URL`; suite verde.
+  Decisiones: el destino se lee con `loadEnv` de Vite y no con `process.env`, que no tiene tipos sin
+  `@types/node` — [Cierto] — revertir: no aplica. Se comprobó con el backend local y Vite apuntando
+  a otro puerto; el contenedor de Docker no se pudo levantar (límite de Docker Hub) — [Probable] —
+  revertir: no aplica.
 
-- [ ] T-032 Enrutador
+- [x] T-032 Enrutador
   RF: RF-004 (M-09, D-08) | Depende de: — | Archivos: 2
   Archivos: `routing/router.ts`, `routing/router.test.ts`.
   Hecho cuando: `navigate` cambia la ruta sin recargar, `popstate` la actualiza, el fragmento se lee
   aparte y una ruta desconocida da la de reserva; suite verde.
 
-- [ ] T-033 Aplicación con rutas
+- [x] T-033 Aplicación con rutas
   RF: RF-004 (M-09) | Depende de: T-032 | Archivos: 2
   Archivos: `App.tsx`, `App.test.tsx`.
   Hecho cuando: `/` y cualquier ruta desconocida muestran la página de muestra a través del
   enrutador, como hoy; suite verde.
+  Decisiones: el test pasa desde el principio porque conserva el comportamiento; su mutante (que
+  la página de muestra no responda a `/`) lo hace fallar — [Cierto] — revertir: no aplica.
 
 - [ ] T-034 Cliente de la API
   RF: RF-021, RF-022, RF-024 (M-08, D-10) | Depende de: — | Archivos: 2
