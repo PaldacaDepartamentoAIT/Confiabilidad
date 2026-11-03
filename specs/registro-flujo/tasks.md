@@ -606,17 +606,34 @@ entrega (`entregas/E-XX-<descripcion>/resumen.md`).
   Cómo probarlo: los tests del frontend de `src/forms` y de la cuenta atrás; en la página de
   muestra, `²²²²²²²²²²²²` como contraseña nueva da el error de solo números.
 
-- E-12 Pantalla del formulario (sin ruta)
-  Tareas: T-041, T-042, T-043, T-044 | Líneas estimadas: 400 | Rama: feat/registro-flujo-formulario
-  Cómo probarlo: los tests del frontend del formulario y de los errores del servidor.
+- E-12 Textos del registro y errores del servidor
+  Tareas: T-041, T-042, T-045 | Líneas estimadas: 350 | Rama: feat/registro-flujo-textos
+  Cómo probarlo: los tests del frontend de `src/i18n` y de `src/registration/serverErrors`.
+  Reorganizada el 2026-11-03: E-12 a E-14 se re-estimaron por tarea y pasan a E-12, E-18, E-19,
+  E-13, E-20, E-14 y E-21, en este orden.
 
-- E-13 Pantalla de verificación (sin ruta)
-  Tareas: T-045, T-046, T-047, T-048 | Líneas estimadas: 390 | Rama:
-  feat/registro-flujo-verificacion
-  Cómo probarlo: los tests del frontend de la pantalla de verificación.
+- E-18 Pantalla del formulario: campos y comprobaciones (sin ruta)
+  Tareas: T-043 | Líneas estimadas: 370 | Rama: feat/registro-flujo-formulario
+  Cómo probarlo: los tests del frontend de `src/registration/RegisterPage`.
 
-- E-14 Paso de contraseña y cuenta creada (sin ruta)
-  Tareas: T-049, T-050 | Líneas estimadas: 300 | Rama: feat/registro-flujo-contrasena
+- E-19 Pantalla del formulario: envío (sin ruta)
+  Tareas: T-044 | Líneas estimadas: 260 | Rama: feat/registro-flujo-formulario-envio
+  Cómo probarlo: los tests del frontend de `src/registration/RegisterPage`.
+
+- E-13 Pantalla de verificación: estado y enlace no válido (sin ruta)
+  Tareas: T-046 | Líneas estimadas: 320 | Rama: feat/registro-flujo-verificacion
+  Cómo probarlo: los tests del frontend de `src/registration/VerifyPage`.
+
+- E-20 Pantalla de verificación: código, bloqueo y reenvío (sin ruta)
+  Tareas: T-047, T-048 | Líneas estimadas: 300 | Rama: feat/registro-flujo-verificacion-codigo
+  Cómo probarlo: los tests del frontend de `src/registration/VerifyPage`.
+
+- E-14 Paso de contraseña (sin ruta)
+  Tareas: T-049 | Líneas estimadas: 300 | Rama: feat/registro-flujo-contrasena
+  Cómo probarlo: los tests del frontend de `src/registration/PasswordStep`.
+
+- E-21 Verificación con paso de contraseña y cuenta creada (sin ruta)
+  Tareas: T-050 | Líneas estimadas: 220 | Rama: feat/registro-flujo-cuenta-creada
   Cómo probarlo: los tests del frontend de `src/registration`.
 
 - E-15 Registro completo en la web
