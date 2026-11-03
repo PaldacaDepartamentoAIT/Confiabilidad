@@ -1,6 +1,7 @@
 # Entrega E-10 · Casilla, selector, fecha y validación ampliada
 
-Rama: `feat/registro-flujo-campos` · PR: pendiente ·
+Rama: `feat/registro-flujo-campos` · PR:
+[PaldacaDepartamentoAIT/Confiabilidad#45](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/45) ·
 Líneas de código y tests: 409 (límite: 400; excepción aprobada por el usuario el 2026-11-03).
 
 T-038 se podía separar en su propia entrega; el usuario prefirió no partirla por 9 líneas de
