@@ -358,25 +358,40 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   que valga `undefined`, que `toEqual` daba por igual) — [Cierto] — revertir: no aplica. Mutantes
   (`marketing` siempre presente; términos sin `accepted`) detectados.
 
-- [ ] T-036 Casilla y selector accesibles
+- [x] T-036 Casilla y selector accesibles
   RF: RF-001, RF-003 (M-12) | Depende de: — | Archivos: 3
   Archivos: `components/fields/Checkbox.tsx`, `components/fields/SelectField.tsx`,
   `components/fields/ChoiceFields.test.tsx`.
   Hecho cuando: los dos tienen etiqueta asociada, asterisco de obligatorio, `aria-invalid`, y error y
   ayuda en `aria-describedby`, como `TextField`; `axe-core` no encuentra fallos; suite verde.
+  Decisiones: la etiqueta de la casilla va detrás de ella y admite contenido (`ReactNode`) para
+  poder enlazar los términos; el selector lleva siempre una primera opción vacía con el texto
+  `placeholder`, para que «sin elegir» valga `""` como un campo vacío — [Cierto] — revertir: no
+  aplica. Mutantes (casilla sin `aria-invalid`; selector sin opción vacía; `aria-required` fijo)
+  detectados.
 
-- [ ] T-037 Campo de fecha
+- [x] T-037 Campo de fecha
   RF: RF-001 (M-12) | Depende de: — | Archivos: 2
   Archivos: `components/fields/TextField.tsx`, `components/fields/TextField.test.tsx`.
   Hecho cuando: `TextField` acepta `type="date"` y los tests existentes siguen sin cambios; suite
   verde.
+  Decisiones: el rojo es de tipos (`tsc` rechazaba `"date"`), porque React ya pasaba el atributo
+  tal cual; el mutante es quitar `"date"` del tipo, y `tsc` lo detecta — [Cierto] — revertir: no
+  aplica.
 
-- [ ] T-038 Validación con selectores, casillas y varios errores
+- [x] T-038 Validación con selectores, casillas y varios errores
   RF: RF-002, RF-003 (M-12) | Depende de: T-036 | Archivos: 2
   Archivos: `forms/useFormValidation.ts`, `forms/useFormValidation.test.tsx`.
   Hecho cuando: el hook lee `<select>` y casillas (`"true"` o `""`), un campo puede tener varios
   errores de servidor a la vez y la opción `scrollToError` llama a `scrollIntoView` antes de llevar
   el foco; sin la opción, los tests existentes pasan sin cambios; suite verde.
+  Decisiones: `errors` sigue dando un error por campo (el primero) y `allErrors` da la lista
+  completa, para no cambiar a quien ya usa el hook; el desplazamiento también se aplica a los
+  errores del servidor (`showResult`). Los casos de test existentes no cambian; su formulario
+  auxiliar acepta `scrollToError` opcional y expone `allErrors` — [Cierto] — revertir: no aplica.
+  Mutantes (casilla leída por `value`; foco antes del desplazamiento; selector no leído; error
+  local fuera de la lista) detectados; uno que conservaba solo el primer error del servidor
+  sobrevivía y se mató comprobando `allErrors`.
 
 - [ ] T-039 Dígitos como el servidor
   RF: RF-013 (M-12, D-12; CF-8) | Depende de: — | Archivos: 3
@@ -568,6 +583,8 @@ entrega (`entregas/E-XX-<descripcion>/resumen.md`).
 - E-10 Casilla, selector, fecha y validación ampliada
   Tareas: T-036, T-037, T-038 | Líneas estimadas: 380 | Rama: feat/registro-flujo-campos
   Cómo probarlo: los tests del frontend de `src/components` y `src/forms`.
+  Excepción: 409 líneas reales, aprobadas por el usuario el 2026-11-03. T-038 se podía separar en
+  su propia entrega; el usuario prefirió no partirla por 9 líneas de exceso.
 
 - E-11 Contraseña como el servidor y cuenta atrás
   Tareas: T-039, T-040 | Líneas estimadas: 200 | Rama: feat/registro-flujo-digitos-cuenta-atras
