@@ -407,7 +407,7 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   dígito del servidor se le escapa al navegador; al revés, 80 caracteres de escrituras añadidas en
   Unicode 16 (Garay, Kirat Rai…) cuentan como dígito en un navegador con Unicode 16 y no en el
   servidor, así que el navegador rechaza de más una contraseña hecha solo de ellos. Riesgo residual
-  aceptado por su rareza; desaparece cuando el backend use un Python con Unicode 16 — [Cierto] —
+  aceptado por el usuario el 2026-11-03; desaparece cuando el backend use un Python con Unicode 16 — [Cierto] —
   revertir: no aplica. Mutantes (quitar `²`, el rango de `🄀`, el etíope o los rodeados) detectados.
 
 - [x] T-040 Cuenta atrás

@@ -56,7 +56,7 @@ deberías ver «No uses solo números.». Antes de esta entrega, el navegador lo
   conocer una versión más nueva que el Python del servidor: hoy hay 80 dígitos de escrituras
   añadidas en Unicode 16 que el navegador cuenta como dígitos y el servidor no. Solo afecta a una
   contraseña hecha únicamente de esos caracteres, que el navegador rechazaría de más; es un riesgo
-  residual aceptado que desaparece al actualizar Python en el backend.
+  residual, aceptado por el usuario el 2026-11-03, que desaparece al actualizar Python en el backend.
 - **Contar contra la hora, no contar ticks.** Los navegadores ralentizan los temporizadores de las
   pestañas en segundo plano. Si la cuenta atrás restara uno en cada tick, al volver mostraría más
   tiempo del que queda. Guardar la hora límite y calcular lo que falta en cada tick lo evita.
