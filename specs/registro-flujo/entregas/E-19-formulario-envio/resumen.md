@@ -1,6 +1,7 @@
 # Entrega E-19 · Pantalla del formulario: envío
 
-Rama: `feat/registro-flujo-formulario-envio` · PR: pendiente ·
+Rama: `feat/registro-flujo-formulario-envio` · PR:
+[PaldacaDepartamentoAIT/Confiabilidad#49](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/49) ·
 Líneas de código y tests: 289 (límite: 400).
 
 ## Qué se hizo
