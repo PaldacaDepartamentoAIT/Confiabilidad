@@ -1,6 +1,7 @@
 # Entrega E-20 · Pantalla de verificación: código, bloqueo y reenvío
 
-Rama: `feat/registro-flujo-verificacion-codigo` · PR: pendiente ·
+Rama: `feat/registro-flujo-verificacion-codigo` · PR:
+[PaldacaDepartamentoAIT/Confiabilidad#51](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/51) ·
 Líneas de código y tests: 431 (límite: 400; excepción aprobada por el usuario el 2026-11-04).
 
 T-048 se podía separar en su propia entrega; el usuario prefirió no partirla.
