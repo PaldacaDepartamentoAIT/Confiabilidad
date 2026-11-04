@@ -600,6 +600,24 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   del correo del proveedor local), cómo disparar la limpieza y su marco teórico; el `HUMAN_TODO.md`
   de `cambio-contrasena` indica que los límites de reenvío y verificación del registro ya existen.
 
+- [ ] T-054 Proxy de desarrollo que conserva el origen
+  RF: RF-004, RF-021 (M-14) | Depende de: T-031 | Archivos: 1
+  Archivos: `frontend/vite.config.ts`.
+  Hecho cuando: el proxy de `/api` conserva la cabecera `Host` del navegador (`changeOrigin:
+  false`); con el backend y Vite levantados, pedir las opciones por `http://localhost:5173` y
+  después consultar el estado con la cookie `csrftoken`, su cabecera `X-CSRFToken` y `Origin:
+  http://localhost:5173` responde `404` (identificador inventado) y no `403`; suite verde.
+  Corrección: T-031 se comprobó solo con un GET; los POST de las rutas web fallaban por CSRF.
+
+- [ ] T-055 Validación al salir que no mueve un clic en curso
+  RF: RF-002, RF-003 (M-12) | Depende de: T-038 | Archivos: 2
+  Archivos: `forms/useFormValidation.ts`, `forms/useFormValidation.test.tsx`.
+  Hecho cuando: si un campo pierde el foco con un botón del puntero pulsado, su validación se
+  aplica al soltarlo y no antes; sin puntero pulsado (teclado), se aplica al salir como hasta
+  ahora; los tests existentes pasan sin cambios; suite verde.
+  Corrección: al pulsar una casilla, el error retirado del campo anterior desplazaba la casilla
+  antes de soltar el botón y el clic se perdía.
+
 ## Entregas
 Rama de integración: feat/registro-flujo (los PR de las entregas van contra ella; ver `AGENTS.md`)
 
@@ -724,7 +742,7 @@ entrega (`entregas/E-XX-<descripcion>/resumen.md`).
   Cómo probarlo: los tests del frontend de `src/registration`.
 
 - E-15 Registro completo en la web
-  Tareas: T-051, T-052, T-053 | Líneas estimadas: 150 | Rama: feat/registro-flujo-rutas
+  Tareas: T-051, T-052, T-054, T-055, T-053 | Líneas estimadas: 220 | Rama: feat/registro-flujo-rutas
   Cómo probarlo: registrarse en http://localhost:5173/register de principio a fin con el código del
   correo del proveedor local, siguiendo `resumen.md`.
 
