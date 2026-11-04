@@ -562,7 +562,7 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   de red como fallo del servidor) detectados; uno sobrevivía (sin `processing`, doble envío) y se
   mató con un test.
 
-- [ ] T-050 Verificación con paso de contraseña y cuenta creada
+- [x] T-050 Verificación con paso de contraseña y cuenta creada
   RF: RF-008, RF-011, RF-015 (M-11, S-08) | Depende de: T-048, T-049 | Archivos: 3
   Archivos: `registration/VerifyPage.tsx`, `registration/DonePage.tsx`,
   `registration/VerifyPage.test.tsx`.
@@ -570,6 +570,15 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   React; un rechazo del código vuelve a la verificación con su mensaje y sin el código; recargar
   vuelve a la verificación; `201` navega a `/register/done`, que muestra la cuenta creada sin
   iniciar sesión; suite verde.
+  Decisiones: el código aceptado se guarda en el estado de la pantalla de verificación y el paso de
+  contraseña ocupa el lugar del código y del reenvío. Si el servidor rechaza el código al crear la
+  cuenta, se olvida el código, se muestra su mensaje como mensaje general y se vuelve a pedir el
+  estado (por si quedó bloqueado o caducado); un `404` lleva al enlace no válido. La pantalla de
+  cuenta creada se prueba en `VerifyPage.test.tsx`, el único archivo de tests de la tarea — [Cierto]
+  — revertir: no aplica. Mutantes (conservar el código; sin mensaje; sin volver a pedir el estado;
+  otra ruta al terminar; `404` como rechazo; otro código al paso) detectados. Quitar el borrado del
+  mensaje al aceptar el código era equivalente (el mensaje no se ve con el paso de contraseña) y se
+  quitó del código.
 
 - [ ] T-051 Rutas del registro
   RF: RF-004, RF-005, RF-015, RF-016 (M-09) | Depende de: T-033, T-044, T-050 | Archivos: 2
