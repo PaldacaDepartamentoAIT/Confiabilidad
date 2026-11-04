@@ -1,6 +1,7 @@
 # Entrega E-14 · Paso de contraseña
 
-Rama: `feat/registro-flujo-contrasena` · PR: pendiente ·
+Rama: `feat/registro-flujo-contrasena` · PR:
+[PaldacaDepartamentoAIT/Confiabilidad#52](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/52) ·
 Líneas de código y tests: 262 (límite: 400).
 
 ## Qué se hizo
