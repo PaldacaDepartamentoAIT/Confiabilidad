@@ -1,4 +1,4 @@
-import { act, render, screen } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { I18nextProvider } from "react-i18next";
 
@@ -89,14 +89,10 @@ test("the remaining time counts down and says when the code has expired", async 
   renderPage(fetcher);
 
   await screen.findByText("El código caduca en 1:01.");
-  act(() => {
-    vi.advanceTimersByTime(2000);
-  });
+  await act(() => vi.advanceTimersByTimeAsync(2000));
   expect(screen.getByText("El código caduca en 0:59.")).toBeInTheDocument();
 
-  act(() => {
-    vi.advanceTimersByTime(59_000);
-  });
+  await act(() => vi.advanceTimersByTimeAsync(59_000));
   expect(screen.getByText("El código ha caducado. Pide uno nuevo.")).toBeInTheDocument();
   expect(screen.queryByText(/^El código caduca en/)).toBeNull();
 });
@@ -192,4 +188,140 @@ test("if the identifier changes, a late answer for the old one is ignored", asyn
   });
 
   expect(screen.getByText("El código caduca en 0:30.")).toBeInTheDocument();
+});
+
+async function typeCode(user: ReturnType<typeof userEvent.setup>, code: string) {
+  await user.type(await screen.findByRole("textbox", { name: "Código de verificación" }), code);
+  await user.click(screen.getByRole("button", { name: "Verificar" }));
+}
+
+describe("verifying the code", () => {
+  it("a wrong code shows its message under the field", async () => {
+    const user = userEvent.setup();
+    openAt("/register/continue#pid-1");
+    const { calls, fetcher } = replies(
+      reply(200, STATUS),
+      reply(400, { code: "wrong_code", message: "x" }),
+    );
+    renderPage(fetcher);
+
+    await typeCode(user, "123456");
+
+    const field = screen.getByRole("textbox", { name: "Código de verificación" });
+    await waitFor(() =>
+      expect(field).toHaveAccessibleDescription(
+        "El código no es correcto. Revísalo e inténtalo de nuevo.",
+      ),
+    );
+    expect(calls[1]).toEqual({
+      method: "POST",
+      url: "/api/browser/v1/registration/verify",
+      body: { public_id: "pid-1", code: "123456", language: "es" },
+    });
+  });
+
+  it("an expired code asks for another one under the field", async () => {
+    const user = userEvent.setup();
+    openAt("/register/continue#pid-1");
+    const { fetcher } = replies(
+      reply(200, STATUS),
+      reply(400, { code: "code_expired", message: "x" }),
+    );
+    renderPage(fetcher);
+
+    await typeCode(user, "123456");
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("textbox", { name: "Código de verificación" }),
+      ).toHaveAccessibleDescription("El código ha caducado. Pide uno nuevo."),
+    );
+  });
+
+  it("an incomplete code is not sent", async () => {
+    const user = userEvent.setup();
+    openAt("/register/continue#pid-1");
+    const { calls, fetcher } = replies(reply(200, STATUS));
+    renderPage(fetcher);
+
+    await typeCode(user, "123");
+
+    expect(
+      screen.getByRole("textbox", { name: "Código de verificación" }),
+    ).toHaveAccessibleDescription("Escribe los 6 dígitos del código.");
+    expect(calls).toHaveLength(1);
+  });
+
+  it("when the attempts run out, the sending is disabled", async () => {
+    const user = userEvent.setup();
+    openAt("/register/continue#pid-1");
+    const { fetcher } = replies(reply(200, STATUS), reply(400, { code: "locked", message: "x" }));
+    renderPage(fetcher);
+
+    await typeCode(user, "123456");
+
+    expect(
+      await screen.findByText(
+        "Has agotado los intentos con este código. Pide uno nuevo para continuar.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Verificar" })).toBeDisabled();
+  });
+
+  it("a locked process stays locked after reloading", async () => {
+    openAt("/register/continue#pid-1");
+    const { fetcher } = replies(reply(200, { ...STATUS, locked: true }));
+    renderPage(fetcher);
+
+    expect(await screen.findByText(/^Has agotado los intentos/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Verificar" })).toBeDisabled();
+  });
+
+  it("over the limit, counts down and allows sending again at zero", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    openAt("/register/continue#pid-1");
+    const { fetcher } = replies(reply(200, STATUS), reply(429, { message: "x", retry_after: 3 }));
+    renderPage(fetcher);
+
+    await typeCode(user, "123456");
+
+    expect(
+      await screen.findByText("Demasiados intentos. Vuelve a intentarlo en 3 s."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Verificar" })).toBeDisabled();
+    await act(() => vi.advanceTimersByTimeAsync(3000));
+    expect(screen.getByRole("button", { name: "Verificar" })).toBeEnabled();
+  });
+
+  it.each([
+    [reply(400, { code: "expired", message: "x" }), /El registro ha caducado/],
+    [() => Promise.reject(new TypeError("Failed to fetch")), /No se pudo conectar/],
+    [reply(500, {}), /Algo falló en nuestro servidor/],
+  ])("any other answer gives a general message", async (answer, text) => {
+    const user = userEvent.setup();
+    openAt("/register/continue#pid-1");
+    const { fetcher } = replies(reply(200, STATUS), answer);
+    renderPage(fetcher);
+
+    await typeCode(user, "123456");
+
+    expect(await screen.findByText(text)).toHaveFocus();
+  });
+
+  it("an identifier that disappears while verifying shows the invalid link", async () => {
+    const user = userEvent.setup();
+    openAt("/register/continue#pid-1");
+    const { fetcher } = replies(
+      reply(200, STATUS),
+      reply(404, { code: "not_found", message: "x" }),
+    );
+    renderPage(fetcher);
+
+    await typeCode(user, "123456");
+
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Enlace no válido" }),
+    ).toBeVisible();
+  });
 });
