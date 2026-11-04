@@ -6,6 +6,7 @@ import { createClient } from "../api/client";
 import type { RegistrationStatus } from "../api/registration";
 import { LiveAnnouncer } from "../components/LiveAnnouncer";
 import { createI18n } from "../i18n";
+import { DonePage } from "./DonePage";
 import { VerifyPage } from "./VerifyPage";
 
 const STATUS: RegistrationStatus = {
@@ -434,4 +435,104 @@ describe("sending another code", () => {
 
     expect(await screen.findByText(text)).toBeInTheDocument();
   });
+});
+
+describe("password step and account created", () => {
+  async function acceptCode(
+    user: ReturnType<typeof userEvent.setup>,
+    ...after: (() => Promise<Response>)[]
+  ) {
+    openAt("/register/continue#pid-1");
+    const answers = replies(reply(200, STATUS), reply(200, { result: "verified" }), ...after);
+    const view = renderPage(answers.fetcher);
+    await typeCode(user, "123456");
+    await screen.findByRole("heading", { level: 2, name: "Elige tu contraseña" });
+    return { ...answers, ...view };
+  }
+
+  async function sendPassword(user: ReturnType<typeof userEvent.setup>) {
+    await user.type(screen.getByLabelText(/^Contraseña/), "turbina-compresor-7");
+    await user.click(screen.getByRole("button", { name: "Crear cuenta" }));
+  }
+
+  it("an accepted code shows the password step and keeps the code only in memory", async () => {
+    const user = userEvent.setup();
+    await acceptCode(user);
+
+    expect(screen.queryByRole("textbox", { name: "Código de verificación" })).toBeNull();
+    expect(window.location.href).not.toContain("123456");
+    expect(JSON.stringify({ ...localStorage, ...sessionStorage })).not.toContain("123456");
+  });
+
+  it("with the account created, goes to the account created screen", async () => {
+    const user = userEvent.setup();
+    const { calls } = await acceptCode(user, reply(201, { result: "created" }));
+
+    await sendPassword(user);
+
+    await waitFor(() => expect(window.location.pathname).toBe("/register/done"));
+    expect(calls[2].body).toEqual({
+      public_id: "pid-1",
+      code: "123456",
+      password: "turbina-compresor-7",
+      language: "es",
+    });
+  });
+
+  it("a refused code goes back to the verification with its message and without the code", async () => {
+    const user = userEvent.setup();
+    const { calls } = await acceptCode(
+      user,
+      reply(400, { code: "wrong_code", message: "x" }),
+      reply(200, STATUS),
+    );
+
+    await sendPassword(user);
+
+    const field = await screen.findByRole("textbox", { name: "Código de verificación" });
+    expect(field).toHaveValue("");
+    expect(screen.getByText(/El código no es correcto/)).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { level: 2, name: "Elige tu contraseña" })).toBeNull();
+    expect(calls.map((call) => call.url.split("/").pop())).toEqual([
+      "status",
+      "verify",
+      "complete",
+      "status",
+    ]);
+  });
+
+  it("an identifier that disappears at the end shows the invalid link", async () => {
+    const user = userEvent.setup();
+    await acceptCode(user, reply(404, { code: "not_found", message: "x" }));
+
+    await sendPassword(user);
+
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Enlace no válido" }),
+    ).toBeVisible();
+  });
+
+  it("reloading goes back to the verification", async () => {
+    const user = userEvent.setup();
+    const { fetcher, unmount } = await acceptCode(user, reply(200, STATUS));
+    unmount();
+
+    renderPage(fetcher);
+
+    expect(await screen.findByRole("textbox", { name: "Código de verificación" })).toBeVisible();
+    expect(screen.queryByRole("heading", { level: 2, name: "Elige tu contraseña" })).toBeNull();
+  });
+});
+
+test("the account created screen says so without signing in", () => {
+  render(
+    <I18nextProvider i18n={createI18n("es")}>
+      <DonePage />
+    </I18nextProvider>,
+  );
+
+  expect(screen.getByRole("heading", { level: 1, name: "Cuenta creada" })).toBeVisible();
+  expect(screen.getByText("Tu cuenta se ha creado.")).toBeVisible();
+  expect(screen.queryByRole("textbox")).toBeNull();
+  expect(screen.queryByLabelText(/Contraseña/)).toBeNull();
 });
