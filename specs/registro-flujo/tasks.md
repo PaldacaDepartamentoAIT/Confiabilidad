@@ -546,13 +546,21 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   reenvíos; sin espera por `429`; mensajes cambiados) detectados; dos sobrevivían (no borrar el
   mensaje anterior, `404` al reenviar) y se mataron con un test cada uno.
 
-- [ ] T-049 Paso de contraseña
+- [x] T-049 Paso de contraseña
   RF: RF-011, RF-012, RF-013, RF-024 (M-11) | Depende de: T-039, T-042, T-045 | Archivos: 2
   Archivos: `registration/PasswordStep.tsx`, `registration/PasswordStep.test.tsx`.
   Hecho cuando: el paso valida longitud y solo números en el navegador sin llamar al servidor si
   fallan; envía el código recibido y la contraseña; pinta bajo el campo cada regla que devuelve el
   servidor; con un rechazo del código avisa a quien lo contiene; con `201` avisa del éxito; un `429`
   muestra la cuenta atrás; suite verde.
+  Decisiones: el paso recibe el identificador y el código como propiedades y avisa con
+  `onCreated` y `onCodeRejected(código)`; un `404` se pasa como `not_found`, para que quien guarda el
+  código decida (T-050). Todas las reglas que rechaza el servidor se pintan juntas bajo el campo;
+  la contraseña escrita se conserva tras un fallo de red o del servidor — [Cierto] — revertir: no
+  aplica. Mutantes (sin las reglas del navegador; otro código enviado; sin avisar del éxito; solo la
+  primera regla; código rechazado cambiado; `404` como otro código; botón activo en la espera; fallo
+  de red como fallo del servidor) detectados; uno sobrevivía (sin `processing`, doble envío) y se
+  mató con un test.
 
 - [ ] T-050 Verificación con paso de contraseña y cuenta creada
   RF: RF-008, RF-011, RF-015 (M-11, S-08) | Depende de: T-048, T-049 | Archivos: 3
