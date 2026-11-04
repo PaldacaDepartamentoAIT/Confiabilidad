@@ -1,6 +1,7 @@
 # Entrega E-22 · Correcciones de la validación
 
-Rama: `feat/registro-flujo-correcciones` · PR: pendiente ·
+Rama: `feat/registro-flujo-correcciones` · PR:
+[PaldacaDepartamentoAIT/Confiabilidad#55](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/55) ·
 Líneas de código y tests: 111 (límite: 400).
 
 La validación de la feature (subagente sin contexto, 2026-11-04) dio NO CUMPLIDA por RF-024 (fallo
