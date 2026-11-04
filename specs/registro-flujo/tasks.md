@@ -647,6 +647,11 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   un `role="status"` con la cuenta atrás, que desaparece al llegar a cero con el botón de nuevo
   activo; suite verde.
   Corrección: validación de RF-024; T-048 solo contaba la espera en la etiqueta del botón.
+  Decisiones: una marca indica que la espera del botón viene de un `429`, y solo entonces se
+  anuncia; se borra en cada reenvío, para que la espera normal de un código nuevo no se anuncie como
+  límite. El test que daba por buena la conducta anterior se sustituye — [Cierto] — revertir: no
+  aplica. Mutantes (sin marca; mensaje que no desaparece a cero; marca sin borrar) detectados; el
+  último sobrevivía y se mató con un test.
 
 - [ ] T-057 La equivalencia compara también las cookies
   RF: RF-017 (CF-2) | Depende de: — | Archivos: 1
@@ -655,6 +660,11 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   y atributos) y al menos un paso se repite por la ruta `browser` con CSRF, con el mismo resultado
   para la plaza y el registro real; suite verde.
   Corrección: validación de RF-017; `response.headers` de Django no incluye `Set-Cookie`.
+  Decisiones: cada paso compara `(estado, cuerpo, cabeceras, cookies, consultas)`; la primera
+  consulta de estado y el primer código incorrecto van por la ruta `browser` con CSRF, sin cambiar
+  la secuencia de códigos esperada. Mutantes en el código vigilado (una cookie solo para la plaza;
+  una cabecera solo en su ruta `browser`) detectados; el primero pasaba con el test anterior —
+  [Cierto] — revertir: no aplica.
 
 - [ ] T-058 Todo o nada al completar, también con el marketing
   RF: RF-014 (CF-4) | Depende de: — | Archivos: 1
@@ -663,6 +673,10 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   quedan `User`, `EmailAddress`, `UserTerms` ni `MarketingConsent`, y el registro pendiente sigue
   existiendo; suite verde.
   Corrección: validación de RF-014; el test de fallo no preparaba ni comprobaba el marketing.
+  Decisiones: test nuevo junto al de fallo existente, con términos y marketing guardados y la
+  comprobación de que el marketing quedó en el registro pendiente antes de fallar (para que el test
+  no pase en vacío). Mutante en el código vigilado (`complete` sin su transacción) detectado —
+  [Cierto] — revertir: no aplica.
 
 ## Entregas
 Rama de integración: feat/registro-flujo (los PR de las entregas van contra ella; ver `AGENTS.md`)
