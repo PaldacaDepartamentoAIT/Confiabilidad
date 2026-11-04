@@ -325,3 +325,113 @@ describe("verifying the code", () => {
     ).toBeVisible();
   });
 });
+
+describe("sending another code", () => {
+  it("the button counts down, says how many are left and turns on at zero", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    openAt("/register/continue#pid-1");
+    const { fetcher } = replies(reply(200, { ...STATUS, resend_in: 2, resends_left: 3 }));
+    renderPage(fetcher);
+
+    expect(await screen.findByRole("button", { name: "Enviar otro código en 2 s" })).toBeDisabled();
+    expect(screen.getByText("Códigos que aún puedes pedir: 3.")).toBeInTheDocument();
+    await act(() => vi.advanceTimersByTimeAsync(2000));
+    expect(screen.getByRole("button", { name: "Enviar otro código" })).toBeEnabled();
+  });
+
+  it("after sending, asks for the status again and lifts the lock", async () => {
+    const user = userEvent.setup();
+    openAt("/register/continue#pid-1");
+    const { calls, fetcher } = replies(
+      reply(200, { ...STATUS, resend_in: 0, locked: true }),
+      reply(202, { result: "resent" }),
+      reply(200, { ...STATUS, resends_left: 4 }),
+    );
+    renderPage(fetcher);
+
+    await user.click(await screen.findByRole("button", { name: "Enviar otro código" }));
+
+    expect(await screen.findByText("Códigos que aún puedes pedir: 4.")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Si puedes registrarte, recibirás un código nuevo/),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Verificar" })).toBeEnabled();
+    expect(calls.map((call) => call.url.split("/").pop())).toEqual(["status", "resend", "status"]);
+    expect(calls[1].body).toEqual({ public_id: "pid-1", language: "es" });
+  });
+
+  it("without codes left, the button is off and the form is offered", async () => {
+    openAt("/register/continue#pid-1");
+    const { fetcher } = replies(reply(200, { ...STATUS, resend_in: 0, resends_left: 0 }));
+    renderPage(fetcher);
+
+    expect(await screen.findByRole("button", { name: "Enviar otro código" })).toBeDisabled();
+    expect(
+      screen.getByText("No puedes pedir más códigos. Vuelve a empezar el registro."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Ir al formulario de registro" })).toBeVisible();
+  });
+
+  it("an identifier that disappears while sending shows the invalid link", async () => {
+    const user = userEvent.setup();
+    openAt("/register/continue#pid-1");
+    const { fetcher } = replies(
+      reply(200, { ...STATUS, resend_in: 0 }),
+      reply(404, { code: "not_found", message: "x" }),
+    );
+    renderPage(fetcher);
+
+    await user.click(await screen.findByRole("button", { name: "Enviar otro código" }));
+
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Enlace no válido" }),
+    ).toBeVisible();
+  });
+
+  it("a new attempt removes the message of the previous one", async () => {
+    const user = userEvent.setup();
+    openAt("/register/continue#pid-1");
+    const { fetcher } = replies(
+      reply(200, { ...STATUS, resend_in: 0 }),
+      reply(500, {}),
+      reply(429, { message: "x", retry_after: 5 }),
+    );
+    renderPage(fetcher);
+
+    await user.click(await screen.findByRole("button", { name: "Enviar otro código" }));
+    await screen.findByText(/Algo falló en nuestro servidor/);
+    await user.click(screen.getByRole("button", { name: "Enviar otro código" }));
+
+    await screen.findByRole("button", { name: "Enviar otro código en 5 s" });
+    expect(screen.queryByText(/Algo falló en nuestro servidor/)).toBeNull();
+  });
+
+  it("over the limit, the button counts down the wait", async () => {
+    const user = userEvent.setup();
+    openAt("/register/continue#pid-1");
+    const { fetcher } = replies(
+      reply(200, { ...STATUS, resend_in: 0 }),
+      reply(429, { message: "x", retry_after: 5 }),
+    );
+    renderPage(fetcher);
+
+    await user.click(await screen.findByRole("button", { name: "Enviar otro código" }));
+
+    expect(await screen.findByRole("button", { name: "Enviar otro código en 5 s" })).toBeDisabled();
+  });
+
+  it.each([
+    [reply(400, { code: "resend_unavailable", message: "x" }), /Ahora no se puede enviar otro/],
+    [() => Promise.reject(new TypeError("Failed to fetch")), /No se pudo conectar/],
+    [reply(500, {}), /Algo falló en nuestro servidor/],
+  ])("a refusal or a failure gives its message", async (answer, text) => {
+    const user = userEvent.setup();
+    openAt("/register/continue#pid-1");
+    const { fetcher } = replies(reply(200, { ...STATUS, resend_in: 0 }), answer);
+    renderPage(fetcher);
+
+    await user.click(await screen.findByRole("button", { name: "Enviar otro código" }));
+
+    expect(await screen.findByText(text)).toBeInTheDocument();
+  });
+});

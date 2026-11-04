@@ -5,6 +5,7 @@ import type { ApiClient } from "../api/client";
 import {
   fetchOptions,
   fetchStatus,
+  resendCode,
   verifyCode,
   type RegistrationStatus,
 } from "../api/registration";
@@ -13,6 +14,7 @@ import { FormMessage } from "../components/FormMessage";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import { CodeField } from "../components/fields/CodeField";
 import { useFormValidation, type FieldError } from "../forms/useFormValidation";
+import type { GeneralMessage } from "../forms/useFormValidation";
 import type { LanguageStorage } from "../i18n/language";
 import { navigate, useLocation } from "../routing/router";
 import { required, sixDigitCode } from "../showcase/validators";
@@ -45,8 +47,15 @@ export function VerifyPage({ client, storage }: VerifyPageProps) {
   const publicId = useLocation().hash;
   const [loaded, setLoaded] = useState<Loaded>(publicId ? "loading" : "notFound");
   const [status, setStatus] = useState<RegistrationStatus | null>(null);
+  // Cada reenvío vuelve a pedir el estado; cada estado recibido monta de nuevo el formulario del
+  // código, para que tome su bloqueo.
+  const [generation, setGeneration] = useState(0);
+  const [loads, setLoads] = useState(0);
+  const [resendMessage, setResendMessage] = useState<GeneralMessage | null>(null);
   const expiry = useCountdown();
+  const resendWait = useCountdown();
   const { start } = expiry;
+  const { start: startResendWait } = resendWait;
 
   useEffect(() => {
     if (!publicId) return;
@@ -58,7 +67,9 @@ export function VerifyPage({ client, storage }: VerifyPageProps) {
       if (!current) return;
       if (result.kind === "ok") {
         start(result.data.code_expires_in);
+        startResendWait(result.data.resend_in);
         setStatus(result.data);
+        setLoads((current) => current + 1);
         setLoaded("ready");
       } else if (result.kind === "notFound") setLoaded("notFound");
       else if (result.kind === "networkError") setLoaded("networkError");
@@ -68,7 +79,28 @@ export function VerifyPage({ client, storage }: VerifyPageProps) {
     return () => {
       current = false;
     };
-  }, [client, publicId, start]);
+  }, [client, publicId, start, startResendWait, generation]);
+
+  async function resend() {
+    setResendMessage(null);
+    const result = await resendCode(client, publicId);
+    if (result.kind === "ok") {
+      setResendMessage({ type: "info", messageKey: "register.resent" });
+      setGeneration((current) => current + 1);
+    } else if (result.kind === "notFound") setLoaded("notFound");
+    else if (result.kind === "rateLimited") resendWait.start(result.retryAfter);
+    else {
+      setResendMessage({
+        type: "error",
+        messageKey:
+          result.kind === "refused"
+            ? "validation.resendUnavailable"
+            : result.kind === "networkError"
+              ? "validation.networkError"
+              : "validation.serverError",
+      });
+    }
+  }
 
   if (loaded === "notFound") return <InvalidLink storage={storage} />;
 
@@ -89,11 +121,31 @@ export function VerifyPage({ client, storage }: VerifyPageProps) {
               : t("register.codeExpiredNotice")}
           </p>
           <CodeForm
+            key={loads}
             client={client}
             publicId={publicId}
             initiallyLocked={status.locked}
             onNotFound={() => setLoaded("notFound")}
           />
+          {resendMessage && (
+            <FormMessage type={resendMessage.type} messageKey={resendMessage.messageKey} />
+          )}
+          <Button
+            disabled={resendWait.remaining > 0 || status.resends_left === 0}
+            onClick={() => void resend()}
+          >
+            {resendWait.remaining > 0
+              ? t("register.resendIn", { seconds: resendWait.remaining })
+              : t("register.resend")}
+          </Button>
+          {status.resends_left > 0 ? (
+            <p>{t("register.resendsLeft", { count: status.resends_left })}</p>
+          ) : (
+            <>
+              <p>{t("register.noResendsLeft")}</p>
+              <FormLink />
+            </>
+          )}
         </>
       )}
     </main>
@@ -167,7 +219,7 @@ function CodeForm({ client, publicId, initiallyLocked, onNotFound }: CodeFormPro
   );
 }
 
-function InvalidLink({ storage }: { storage?: LanguageStorage }) {
+function FormLink() {
   const { t } = useTranslation();
 
   function goToForm(event: MouseEvent<HTMLAnchorElement>) {
@@ -176,13 +228,20 @@ function InvalidLink({ storage }: { storage?: LanguageStorage }) {
   }
 
   return (
+    <a href="/register" onClick={goToForm}>
+      {t("register.backToForm")}
+    </a>
+  );
+}
+
+function InvalidLink({ storage }: { storage?: LanguageStorage }) {
+  const { t } = useTranslation();
+  return (
     <main>
       <LanguageSwitcher storage={storage} />
       <h1>{t("register.invalidLinkTitle")}</h1>
       <p>{t("validation.linkNotFound")}</p>
-      <a href="/register" onClick={goToForm}>
-        {t("register.backToForm")}
-      </a>
+      <FormLink />
     </main>
   );
 }
