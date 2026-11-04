@@ -640,6 +640,44 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   desaparece y error que aparece) — [Cierto] — revertir: no aplica. Mutantes (sin aplazar; sin
   marcar el puntero; sin soltarlo; sin aplicar lo pendiente) detectados.
 
+- [x] T-056 Mensaje general al rechazar el reenvío por límite
+  RF: RF-024 (M-11) | Depende de: T-048 | Archivos: 2
+  Archivos: `registration/VerifyPage.tsx`, `registration/VerifyPage.test.tsx`.
+  Hecho cuando: un `429` al reenviar muestra «Demasiados intentos. Vuelve a intentarlo en N s.» en
+  un `role="status"` con la cuenta atrás, que desaparece al llegar a cero con el botón de nuevo
+  activo; suite verde.
+  Corrección: validación de RF-024; T-048 solo contaba la espera en la etiqueta del botón.
+  Decisiones: una marca indica que la espera del botón viene de un `429`, y solo entonces se
+  anuncia; se borra en cada reenvío, para que la espera normal de un código nuevo no se anuncie como
+  límite. El test que daba por buena la conducta anterior se sustituye — [Cierto] — revertir: no
+  aplica. Mutantes (sin marca; mensaje que no desaparece a cero; marca sin borrar) detectados; el
+  último sobrevivía y se mató con un test.
+
+- [x] T-057 La equivalencia compara también las cookies
+  RF: RF-017 (CF-2) | Depende de: — | Archivos: 1
+  Archivos: `backend/apps/accounts/tests/test_registration_flow_equivalence.py`.
+  Hecho cuando: cada paso del recorrido compara además las cookies de la respuesta (nombre, valor
+  y atributos) y al menos un paso se repite por la ruta `browser` con CSRF, con el mismo resultado
+  para la plaza y el registro real; suite verde.
+  Corrección: validación de RF-017; `response.headers` de Django no incluye `Set-Cookie`.
+  Decisiones: cada paso compara `(estado, cuerpo, cabeceras, cookies, consultas)`; la primera
+  consulta de estado y el primer código incorrecto van por la ruta `browser` con CSRF, sin cambiar
+  la secuencia de códigos esperada. Mutantes en el código vigilado (una cookie solo para la plaza;
+  una cabecera solo en su ruta `browser`) detectados; el primero pasaba con el test anterior —
+  [Cierto] — revertir: no aplica.
+
+- [x] T-058 Todo o nada al completar, también con el marketing
+  RF: RF-014 (CF-4) | Depende de: — | Archivos: 1
+  Archivos: `backend/apps/accounts/tests/test_registration_service.py`.
+  Hecho cuando: con términos y marketing guardados y un fallo al borrar el registro pendiente, no
+  quedan `User`, `EmailAddress`, `UserTerms` ni `MarketingConsent`, y el registro pendiente sigue
+  existiendo; suite verde.
+  Corrección: validación de RF-014; el test de fallo no preparaba ni comprobaba el marketing.
+  Decisiones: test nuevo junto al de fallo existente, con términos y marketing guardados y la
+  comprobación de que el marketing quedó en el registro pendiente antes de fallar (para que el test
+  no pase en vacío). Mutante en el código vigilado (`complete` sin su transacción) detectado —
+  [Cierto] — revertir: no aplica.
+
 ## Entregas
 Rama de integración: feat/registro-flujo (los PR de las entregas van contra ella; ver `AGENTS.md`)
 
@@ -767,6 +805,10 @@ entrega (`entregas/E-XX-<descripcion>/resumen.md`).
   Tareas: T-051, T-052, T-054, T-055, T-053 | Líneas estimadas: 220 | Rama: feat/registro-flujo-rutas
   Cómo probarlo: registrarse en http://localhost:5173/register de principio a fin con el código del
   correo del proveedor local, siguiendo `resumen.md`.
+
+- E-22 Correcciones de la validación
+  Tareas: T-056, T-057, T-058 | Líneas estimadas: 120 | Rama: feat/registro-flujo-correcciones
+  Cómo probarlo: los tests de `VerifyPage`, de la equivalencia y del servicio del registro.
 
 ## RF sin tarea
 Ninguno.

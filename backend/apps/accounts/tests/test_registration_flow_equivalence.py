@@ -44,24 +44,46 @@ def _pin(public_id: str, **changes: Any) -> None:
     _process(public_id).update(**changes)
 
 
-def _post(action: str, body: dict[str, str]) -> tuple[int, Any, dict[str, str], int]:
+Step = tuple[int, Any, dict[str, str], dict[str, Any], int]
+
+
+def _browser() -> Client:
+    # Cliente web con CSRF: la consulta de opciones le da la cookie que exigen los POST (D-09).
+    client = Client(enforce_csrf_checks=True)
+    client.get("/api/browser/v1/registration/options")
+    return client
+
+
+def _post(action: str, body: dict[str, str], browser: Client | None = None) -> Step:
+    # `response.headers` no incluye `Set-Cookie`: las cookies se comparan aparte (RF-017).
+    client, route = Client(), "app"
+    sent: dict[str, str] = {}
+    if browser is not None:
+        client, route = browser, "browser"
+        sent = {"X-CSRFToken": browser.cookies["csrftoken"].value}
     with CaptureQueriesContext(connection) as queries:
-        response = Client().post(
-            f"/api/app/v1/registration/{action}", body, content_type="application/json"
+        response = client.post(
+            f"/api/{route}/v1/registration/{action}",
+            body,
+            content_type="application/json",
+            headers=sent,
         )
     headers = {name: value for name, value in response.headers.items()}
-    return response.status_code, response.json(), headers, len(queries.captured_queries)
+    cookies = {name: (morsel.value, dict(morsel)) for name, morsel in response.cookies.items()}
+    return response.status_code, response.json(), headers, cookies, len(queries.captured_queries)
 
 
-def _journey(public_id: str) -> list[tuple[int, Any, dict[str, str], int]]:
+def _journey(public_id: str) -> list[Step]:
     now = timezone.now()
     ident = {"public_id": public_id}
     wrong = {**ident, "code": WRONG}
+    browser = _browser()
     steps = []
     _pin(public_id, code_expires_at=now + timedelta(minutes=10), last_sent_at=now)
-    steps.append(_post("status", ident))
+    steps.append(_post("status", ident, browser))
     steps.append(_post("resend", ident))
-    for _ in range(5):
+    steps.append(_post("verify", wrong, browser))
+    for _ in range(4):
         steps.append(_post("verify", wrong))
     steps.append(_post("verify", wrong))
     _pin(public_id, code_expires_at=now + timedelta(minutes=10), last_sent_at=now)

@@ -868,6 +868,34 @@ def test_failure_after_the_acceptance_leaves_neither_account_nor_acceptance(
     assert not UserTerms.objects.exists()
 
 
+def test_failure_after_the_marketing_leaves_nothing_behind(monkeypatch: pytest.MonkeyPatch) -> None:
+    publish_version(version="v2")
+    publish_version(kind=Terms.Kind.MARKETING, version="m2")
+    started = _start(
+        "ana@x.com",
+        terms_version="v2",
+        terms_locale="es",
+        marketing_version="m2",
+        marketing_locale="pt-BR",
+    )
+    assert registration.verify(public_id=started.public_id, code=started.code) == "verified"
+    assert PendingRegistration.objects.get().marketing_version == "m2"
+
+    def broken_delete(self: PendingRegistration, *args: Any, **kwargs: Any) -> None:
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(PendingRegistration, "delete", broken_delete)
+
+    with pytest.raises(RuntimeError):
+        registration.complete(public_id=started.public_id, password=GOOD_PASSWORD)
+
+    assert not User.objects.exists()
+    assert not EmailAddress.objects.exists()
+    assert not UserTerms.objects.exists()
+    assert not MarketingConsent.objects.exists()
+    assert PendingRegistration.objects.filter(public_id=started.public_id).exists()
+
+
 MARKETING: dict[str, Any] = {"marketing_version": "m2", "marketing_locale": "pt-BR"}
 
 

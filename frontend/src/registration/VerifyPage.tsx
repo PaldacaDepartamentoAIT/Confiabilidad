@@ -57,6 +57,8 @@ export function VerifyPage({ client, storage }: VerifyPageProps) {
   const [generation, setGeneration] = useState(0);
   const [loads, setLoads] = useState(0);
   const [resendMessage, setResendMessage] = useState<GeneralMessage | null>(null);
+  // Con un 429 la espera del botón es la del límite, y se anuncia como tal (RF-024).
+  const [resendLimited, setResendLimited] = useState(false);
   // El código aceptado solo vive en memoria: recargar vuelve a la verificación (RF-011, S-08).
   const [acceptedCode, setAcceptedCode] = useState<string | null>(null);
   const [rejection, setRejection] = useState<ValidationKey | null>(null);
@@ -91,13 +93,16 @@ export function VerifyPage({ client, storage }: VerifyPageProps) {
 
   async function resend() {
     setResendMessage(null);
+    setResendLimited(false);
     const result = await resendCode(client, publicId);
     if (result.kind === "ok") {
       setResendMessage({ type: "info", messageKey: "register.resent" });
       setGeneration((current) => current + 1);
     } else if (result.kind === "notFound") setLoaded("notFound");
-    else if (result.kind === "rateLimited") resendWait.start(result.retryAfter);
-    else {
+    else if (result.kind === "rateLimited") {
+      setResendLimited(true);
+      resendWait.start(result.retryAfter);
+    } else {
       setResendMessage({
         type: "error",
         messageKey:
@@ -158,6 +163,9 @@ export function VerifyPage({ client, storage }: VerifyPageProps) {
           />
           {resendMessage && (
             <FormMessage type={resendMessage.type} messageKey={resendMessage.messageKey} />
+          )}
+          {resendLimited && resendWait.remaining > 0 && (
+            <p role="status">{t("validation.retryIn", { seconds: resendWait.remaining })}</p>
           )}
           <Button
             disabled={resendWait.remaining > 0 || status.resends_left === 0}

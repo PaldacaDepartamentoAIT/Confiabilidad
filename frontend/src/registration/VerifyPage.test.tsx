@@ -407,8 +407,9 @@ describe("sending another code", () => {
     expect(screen.queryByText(/Algo falló en nuestro servidor/)).toBeNull();
   });
 
-  it("over the limit, the button counts down the wait", async () => {
-    const user = userEvent.setup();
+  it("over the limit, says so with the wait and allows sending again at zero", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     openAt("/register/continue#pid-1");
     const { fetcher } = replies(
       reply(200, { ...STATUS, resend_in: 0 }),
@@ -419,6 +420,36 @@ describe("sending another code", () => {
     await user.click(await screen.findByRole("button", { name: "Enviar otro código" }));
 
     expect(await screen.findByRole("button", { name: "Enviar otro código en 5 s" })).toBeDisabled();
+    expect(screen.getByText("Demasiados intentos. Vuelve a intentarlo en 5 s.")).toHaveAttribute(
+      "role",
+      "status",
+    );
+    await act(() => vi.advanceTimersByTimeAsync(5000));
+    expect(screen.getByRole("button", { name: "Enviar otro código" })).toBeEnabled();
+    expect(screen.queryByText(/Demasiados intentos/)).toBeNull();
+  });
+
+  it("after the limit, the normal wait of a new code is not announced as a limit", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    openAt("/register/continue#pid-1");
+    const { fetcher } = replies(
+      reply(200, { ...STATUS, resend_in: 0 }),
+      reply(429, { message: "x", retry_after: 1 }),
+      reply(202, { result: "resent" }),
+      reply(200, STATUS),
+    );
+    renderPage(fetcher);
+    await user.click(await screen.findByRole("button", { name: "Enviar otro código" }));
+    await screen.findByText(/Demasiados intentos/);
+    await act(() => vi.advanceTimersByTimeAsync(1000));
+
+    await user.click(screen.getByRole("button", { name: "Enviar otro código" }));
+
+    expect(
+      await screen.findByRole("button", { name: "Enviar otro código en 60 s" }),
+    ).toBeDisabled();
+    expect(screen.queryByText(/Demasiados intentos/)).toBeNull();
   });
 
   it.each([
