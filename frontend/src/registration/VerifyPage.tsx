@@ -13,11 +13,16 @@ import { Button } from "../components/Button";
 import { FormMessage } from "../components/FormMessage";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import { CodeField } from "../components/fields/CodeField";
-import { useFormValidation, type FieldError } from "../forms/useFormValidation";
-import type { GeneralMessage } from "../forms/useFormValidation";
+import {
+  useFormValidation,
+  type FieldError,
+  type GeneralMessage,
+  type ValidationKey,
+} from "../forms/useFormValidation";
 import type { LanguageStorage } from "../i18n/language";
 import { navigate, useLocation } from "../routing/router";
 import { required, sixDigitCode } from "../showcase/validators";
+import { PasswordStep } from "./PasswordStep";
 import { translateCode } from "./serverErrors";
 import { useCountdown } from "./useCountdown";
 
@@ -52,6 +57,9 @@ export function VerifyPage({ client, storage }: VerifyPageProps) {
   const [generation, setGeneration] = useState(0);
   const [loads, setLoads] = useState(0);
   const [resendMessage, setResendMessage] = useState<GeneralMessage | null>(null);
+  // El código aceptado solo vive en memoria: recargar vuelve a la verificación (RF-011, S-08).
+  const [acceptedCode, setAcceptedCode] = useState<string | null>(null);
+  const [rejection, setRejection] = useState<ValidationKey | null>(null);
   const expiry = useCountdown();
   const resendWait = useCountdown();
   const { start } = expiry;
@@ -102,6 +110,16 @@ export function VerifyPage({ client, storage }: VerifyPageProps) {
     }
   }
 
+  function codeRejected(code: string) {
+    setAcceptedCode(null);
+    if (code === "not_found") {
+      setLoaded("notFound");
+      return;
+    }
+    setRejection(translateCode(code).key);
+    setGeneration((current) => current + 1);
+  }
+
   if (loaded === "notFound") return <InvalidLink storage={storage} />;
 
   return (
@@ -113,8 +131,18 @@ export function VerifyPage({ client, storage }: VerifyPageProps) {
         <FormMessage type="error" messageKey="validation.networkError" />
       )}
       {loaded === "failed" && <FormMessage type="error" messageKey="validation.serverError" />}
-      {loaded === "ready" && status && (
+      {loaded === "ready" && status && acceptedCode && (
+        <PasswordStep
+          client={client}
+          publicId={publicId}
+          code={acceptedCode}
+          onCreated={() => navigate("/register/done")}
+          onCodeRejected={codeRejected}
+        />
+      )}
+      {loaded === "ready" && status && !acceptedCode && (
         <>
+          {rejection && <FormMessage type="error" messageKey={`validation.${rejection}`} />}
           <p>
             {expiry.remaining > 0
               ? t("register.codeExpiresIn", { time: minutesAndSeconds(expiry.remaining) })
@@ -125,6 +153,7 @@ export function VerifyPage({ client, storage }: VerifyPageProps) {
             client={client}
             publicId={publicId}
             initiallyLocked={status.locked}
+            onVerified={setAcceptedCode}
             onNotFound={() => setLoaded("notFound")}
           />
           {resendMessage && (
@@ -156,10 +185,11 @@ type CodeFormProps = {
   client: ApiClient;
   publicId: string;
   initiallyLocked: boolean;
+  onVerified: (code: string) => void;
   onNotFound: () => void;
 };
 
-function CodeForm({ client, publicId, initiallyLocked, onNotFound }: CodeFormProps) {
+function CodeForm({ client, publicId, initiallyLocked, onVerified, onNotFound }: CodeFormProps) {
   const { t } = useTranslation();
   const [processing, setProcessing] = useState(false);
   const [locked, setLocked] = useState(initiallyLocked);
@@ -171,8 +201,8 @@ function CodeForm({ client, publicId, initiallyLocked, onNotFound }: CodeFormPro
     setProcessing(true);
     const result = await verifyCode(client, publicId, code);
     setProcessing(false);
-    if (result.kind === "ok") return;
-    if (result.kind === "notFound") onNotFound();
+    if (result.kind === "ok") onVerified(code);
+    else if (result.kind === "notFound") onNotFound();
     else if (result.kind === "rateLimited") wait.start(result.retryAfter);
     else if (result.kind === "refused" && result.code === "locked") setLocked(true);
     else if (result.kind === "refused" && CODE_ERRORS.has(result.code)) {
