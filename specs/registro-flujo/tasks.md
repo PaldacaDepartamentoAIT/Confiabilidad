@@ -515,19 +515,36 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   ceros; cero como tiempo restante; sin identificador; enlace sin navegar) detectados; dos
   sobrevivían (respuesta obsoleta, `500` como fallo de red) y se mataron con un test cada uno.
 
-- [ ] T-047 Pantalla de verificación: código y bloqueo
+- [x] T-047 Pantalla de verificación: código y bloqueo
   RF: RF-007, RF-009, RF-024 (M-11) | Depende de: T-046 | Archivos: 2
   Archivos: `registration/VerifyPage.tsx`, `registration/VerifyPage.test.tsx`.
   Hecho cuando: un código incorrecto muestra el mensaje bajo el campo; con `locked` se desactiva el
   envío y solo queda el reenvío; con `code_expired` se indica que se pida otro; un `429` muestra la
   cuenta atrás; suite verde.
+  Decisiones: el formulario del código es un componente aparte que recibe el bloqueo del estado,
+  así que un proceso bloqueado sigue bloqueado al recargar; `wrong_code` y `code_expired` van bajo
+  el campo y los demás rechazos (`expired`…) como mensaje general; un `404` lleva al enlace no
+  válido. Si el servidor acepta el código, de momento no pasa nada visible: el paso de contraseña
+  llega en T-050. El test de la cuenta atrás de T-046 pasa a `advanceTimersByTimeAsync`, porque con
+  la pantalla más grande el reloj se adelantaba antes de crear el intervalo — [Cierto] — revertir:
+  no aplica. Mutantes (`code_expired` como mensaje general; sin bloqueo inicial; botón activo
+  bloqueado o en espera; sin enlace no válido; código sin 6 dígitos) detectados; dos sobrevivían
+  (fallo de red como fallo del servidor y rechazo con el texto genérico) y se mataron con un test.
 
-- [ ] T-048 Pantalla de verificación: reenvío
+- [x] T-048 Pantalla de verificación: reenvío
   RF: RF-010, RF-024 (M-11) | Depende de: T-047 | Archivos: 2
   Archivos: `registration/VerifyPage.tsx`, `registration/VerifyPage.test.tsx`.
   Hecho cuando: el botón muestra la cuenta atrás y se activa al llegar a cero; tras reenviar consulta
   de nuevo el estado; sin reenvíos restantes se desactiva y ofrece volver al formulario;
   `resend_unavailable` da el mensaje genérico; suite verde.
+  Decisiones: la espera del botón sale de `resend_in` y, con un `429`, de `retry_after`; tras un
+  reenvío correcto se pide de nuevo el estado y el formulario del código se vuelve a montar con
+  cada estado recibido, para tomar su bloqueo (montarlo al reenviar, antes del estado nuevo,
+  conservaba el bloqueo antiguo: fallo encontrado y corregido con su test). El enlace al formulario
+  es un componente común con el del enlace no válido — [Cierto] — revertir: no aplica. Mutantes
+  (sin espera inicial; sin volver a pedir el estado; sin volver a montar; botón activo sin
+  reenvíos; sin espera por `429`; mensajes cambiados) detectados; dos sobrevivían (no borrar el
+  mensaje anterior, `404` al reenviar) y se mataron con un test cada uno.
 
 - [ ] T-049 Paso de contraseña
   RF: RF-011, RF-012, RF-013, RF-024 (M-11) | Depende de: T-039, T-042, T-045 | Archivos: 2
@@ -678,6 +695,8 @@ entrega (`entregas/E-XX-<descripcion>/resumen.md`).
 - E-20 Pantalla de verificación: código, bloqueo y reenvío (sin ruta)
   Tareas: T-047, T-048 | Líneas estimadas: 300 | Rama: feat/registro-flujo-verificacion-codigo
   Cómo probarlo: los tests del frontend de `src/registration/VerifyPage`.
+  Excepción: 431 líneas reales, aprobadas por el usuario el 2026-11-04. T-048 se podía separar en
+  su propia entrega; el usuario prefirió no partirla.
 
 - E-14 Paso de contraseña (sin ruta)
   Tareas: T-049 | Líneas estimadas: 300 | Rama: feat/registro-flujo-contrasena
