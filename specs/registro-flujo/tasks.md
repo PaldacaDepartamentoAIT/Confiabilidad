@@ -498,12 +498,22 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   vigila `locales.test.ts` (mutante: quitar `lockedNotice` en `es`, detectado por el test y por
   `tsc`) — [Cierto] — revertir: no aplica.
 
-- [ ] T-046 Pantalla de verificación: estado y enlace no válido
+- [x] T-046 Pantalla de verificación: estado y enlace no válido
   RF: RF-005, RF-006, RF-016 (M-11, D-09) | Depende de: T-035, T-040, T-045 | Archivos: 2
   Archivos: `registration/VerifyPage.tsx`, `registration/VerifyPage.test.tsx`.
   Hecho cuando: la pantalla lee el identificador del fragmento, pide la cookie CSRF si falta, consulta
   el estado y muestra el texto fijo y el tiempo restante contando; al recargar vuelve a pedirlo; con
   `404` muestra el enlace no válido con acceso al formulario; nunca muestra un correo; suite verde.
+  Decisiones: la cookie se comprueba por su nombre (`csrftoken`) y, si falta, se pide con la
+  consulta de opciones (D-09); en Tauri tampoco hay cookie, así que esa petición se repite sin
+  efecto, un coste aceptado frente a pasar el tipo de cliente a la pantalla. Sin identificador en el
+  fragmento, el enlace no es válido sin llamar al servidor. El tiempo se muestra como `m:ss`, no es
+  una región viva (anunciar cada segundo saturaría el lector), y al llegar a cero, o con
+  `expired`, dice que el código ha caducado. Si el identificador cambia en mitad de una consulta, la
+  respuesta antigua se descarta. Un fallo de red da `networkError` y otro fallo `serverError` —
+  [Cierto] — revertir: no aplica. Mutantes (sin pedir la cookie; pedirla siempre; segundos sin
+  ceros; cero como tiempo restante; sin identificador; enlace sin navegar) detectados; dos
+  sobrevivían (respuesta obsoleta, `500` como fallo de red) y se mataron con un test cada uno.
 
 - [ ] T-047 Pantalla de verificación: código y bloqueo
   RF: RF-007, RF-009, RF-024 (M-11) | Depende de: T-046 | Archivos: 2
