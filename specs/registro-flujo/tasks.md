@@ -640,6 +640,30 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   desaparece y error que aparece) — [Cierto] — revertir: no aplica. Mutantes (sin aplazar; sin
   marcar el puntero; sin soltarlo; sin aplicar lo pendiente) detectados.
 
+- [ ] T-056 Mensaje general al rechazar el reenvío por límite
+  RF: RF-024 (M-11) | Depende de: T-048 | Archivos: 2
+  Archivos: `registration/VerifyPage.tsx`, `registration/VerifyPage.test.tsx`.
+  Hecho cuando: un `429` al reenviar muestra «Demasiados intentos. Vuelve a intentarlo en N s.» en
+  un `role="status"` con la cuenta atrás, que desaparece al llegar a cero con el botón de nuevo
+  activo; suite verde.
+  Corrección: validación de RF-024; T-048 solo contaba la espera en la etiqueta del botón.
+
+- [ ] T-057 La equivalencia compara también las cookies
+  RF: RF-017 (CF-2) | Depende de: — | Archivos: 1
+  Archivos: `backend/apps/accounts/tests/test_registration_flow_equivalence.py`.
+  Hecho cuando: cada paso del recorrido compara además las cookies de la respuesta (nombre, valor
+  y atributos) y al menos un paso se repite por la ruta `browser` con CSRF, con el mismo resultado
+  para la plaza y el registro real; suite verde.
+  Corrección: validación de RF-017; `response.headers` de Django no incluye `Set-Cookie`.
+
+- [ ] T-058 Todo o nada al completar, también con el marketing
+  RF: RF-014 (CF-4) | Depende de: — | Archivos: 1
+  Archivos: `backend/apps/accounts/tests/test_registration_service.py`.
+  Hecho cuando: con términos y marketing guardados y un fallo al borrar el registro pendiente, no
+  quedan `User`, `EmailAddress`, `UserTerms` ni `MarketingConsent`, y el registro pendiente sigue
+  existiendo; suite verde.
+  Corrección: validación de RF-014; el test de fallo no preparaba ni comprobaba el marketing.
+
 ## Entregas
 Rama de integración: feat/registro-flujo (los PR de las entregas van contra ella; ver `AGENTS.md`)
 
@@ -767,6 +791,10 @@ entrega (`entregas/E-XX-<descripcion>/resumen.md`).
   Tareas: T-051, T-052, T-054, T-055, T-053 | Líneas estimadas: 220 | Rama: feat/registro-flujo-rutas
   Cómo probarlo: registrarse en http://localhost:5173/register de principio a fin con el código del
   correo del proveedor local, siguiendo `resumen.md`.
+
+- E-22 Correcciones de la validación
+  Tareas: T-056, T-057, T-058 | Líneas estimadas: 120 | Rama: feat/registro-flujo-correcciones
+  Cómo probarlo: los tests de `VerifyPage`, de la equivalencia y del servicio del registro.
 
 ## RF sin tarea
 Ninguno.
