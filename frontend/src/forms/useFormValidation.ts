@@ -1,5 +1,5 @@
 import type { ParseKeys } from "i18next";
-import { useRef, useState, type FocusEvent, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FocusEvent, type FormEvent } from "react";
 import { flushSync } from "react-dom";
 import { useTranslation } from "react-i18next";
 
@@ -53,6 +53,27 @@ function asList(error: FieldError | readonly FieldError[]): readonly FieldError[
   return "key" in error ? [error] : error;
 }
 
+// Si el foco se va con un clic, la validación del campo que se deja espera a que el clic termine:
+// un error que aparece o desaparece desplazaría el elemento pulsado antes de soltar el botón y el
+// clic caería en otro sitio. Con el teclado no hay puntero pulsado y se valida al momento.
+let pointerTracked = false;
+let pointerPressed = false;
+const afterClick: (() => void)[] = [];
+
+function releasePointer() {
+  pointerPressed = false;
+  // El clic se emite en la misma tarea que la liberación; esto corre después.
+  window.setTimeout(() => afterClick.splice(0).forEach((run) => run()));
+}
+
+function trackPointer() {
+  if (pointerTracked) return;
+  pointerTracked = true;
+  document.addEventListener("pointerdown", () => (pointerPressed = true), true);
+  document.addEventListener("pointerup", releasePointer, true);
+  document.addEventListener("pointercancel", releasePointer, true);
+}
+
 type Options = {
   processing?: boolean;
   scrollToError?: boolean;
@@ -70,6 +91,8 @@ export function useFormValidation<Field extends string>(
   const formRef = useRef<HTMLFormElement>(null);
   const messageRef = useRef<HTMLDivElement>(null);
   const names = Object.keys(fields) as Field[];
+
+  useEffect(trackPointer, []);
 
   // El error local describe el valor actual y el de servidor, el ya enviado: prevalece el local (D-14).
   const allErrors: ErrorLists<Field> = { ...serverErrors };
@@ -103,8 +126,11 @@ export function useFormValidation<Field extends string>(
   }
 
   function onBlur(name: Field) {
-    return (event: FocusEvent<HTMLInputElement | HTMLSelectElement>) =>
-      validateField(name, readValue(event.target));
+    return (event: FocusEvent<HTMLInputElement | HTMLSelectElement>) => {
+      const value = readValue(event.target);
+      if (pointerPressed) afterClick.push(() => validateField(name, value));
+      else validateField(name, value);
+    };
   }
 
   // Los campos se buscan por su `name` y se recorren en el orden en que se declaran (orden visual).

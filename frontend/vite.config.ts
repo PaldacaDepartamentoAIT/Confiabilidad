@@ -8,8 +8,12 @@ export default defineConfig(({ mode }) => ({
     port: 5173,
     strictPort: true,
     // La web habla con la API en su mismo origen (D-10); en desarrollo, Vite la reenvía al backend.
+    // Se conserva el Host del navegador: Django lo compara con el Origin de cada POST (CSRF).
     proxy: {
-      "/api": loadEnv(mode, ".").VITE_BACKEND_URL ?? "http://localhost:8000",
+      "/api": {
+        target: loadEnv(mode, ".").VITE_BACKEND_URL ?? "http://localhost:8000",
+        changeOrigin: false,
+      },
     },
   },
   test: {

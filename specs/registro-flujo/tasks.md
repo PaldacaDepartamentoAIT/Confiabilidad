@@ -580,25 +580,65 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   mensaje al aceptar el código era equivalente (el mensaje no se ve con el paso de contraseña) y se
   quitó del código.
 
-- [ ] T-051 Rutas del registro
+- [x] T-051 Rutas del registro
   RF: RF-004, RF-005, RF-015, RF-016 (M-09) | Depende de: T-033, T-044, T-050 | Archivos: 2
   Archivos: `App.tsx`, `App.test.tsx`.
   Hecho cuando: `/register`, `/register/continue` y `/register/done` muestran sus pantallas, y `/`
   sigue con la página de muestra; suite verde.
+  Decisiones: la aplicación crea el cliente de la API con `environmentConfig` y lo acepta como
+  propiedad para los tests; navegar entre pantallas no recarga la página — [Cierto] — revertir: no
+  aplica. Mutantes (sin la ruta de verificación; sin la de cuenta creada; sin cliente por defecto)
+  detectados; el último sobrevivía y se mató con un test sin cliente.
 
-- [ ] T-052 Accesibilidad de las pantallas del registro
+- [x] T-052 Accesibilidad de las pantallas del registro
   RF: RF-003, RF-005 (CF-5) | Depende de: T-051 | Archivos: 1
   Archivos: `registration/a11y.test.tsx`.
   Hecho cuando: `axe-core` no encuentra fallos en el formulario (vacío y con errores), la
   verificación (normal, bloqueada y enlace no válido), el paso de contraseña y la cuenta creada;
   ninguna contiene un correo; suite verde.
+  Decisiones: las pantallas se montan desde la aplicación con un cliente que responde según la
+  ruta; `color-contrast` se excluye de forma explícita porque jsdom no puede medirlo. Sin fase roja
+  (solo tests); mutantes en el código vigilado (selector sin etiqueta, un correo en la
+  verificación, encabezado de cuenta creada como `h3`) detectados — [Cierto] — revertir: no aplica.
 
-- [ ] T-053 Resumen de la feature y límites pendientes
+- [x] T-053 Resumen de la feature y límites pendientes
   RF: RF-021 (CF-7, M-14) | Depende de: T-028, T-052 | Archivos: 2
   Archivos: `specs/registro-flujo/resumen.md`, `specs/cambio-contrasena/HUMAN_TODO.md`.
   Hecho cuando: `resumen.md` explica qué se hizo, el recorrido en la web y con `curl` (con el código
   del correo del proveedor local), cómo disparar la limpieza y su marco teórico; el `HUMAN_TODO.md`
   de `cambio-contrasena` indica que los límites de reenvío y verificación del registro ya existen.
+  Decisiones: los pasos de la web y de `curl` se ejecutaron el 2026-11-04 contra el backend local
+  (código leído de la consola del worker) antes de escribirlos; los límites conocidos y los riesgos
+  aceptados quedan en `resumen.md`, incluida la pantalla de cuenta creada sin salida (S-07) —
+  [Cierto] — revertir: no aplica. Commit: `b6619df`.
+
+- [x] T-054 Proxy de desarrollo que conserva el origen
+  RF: RF-004, RF-021 (M-14) | Depende de: T-031 | Archivos: 1
+  Archivos: `frontend/vite.config.ts`.
+  Hecho cuando: el proxy de `/api` conserva la cabecera `Host` del navegador (`changeOrigin:
+  false`); con el backend y Vite levantados, pedir las opciones por `http://localhost:5173` y
+  después consultar el estado con la cookie `csrftoken`, su cabecera `X-CSRFToken` y `Origin:
+  http://localhost:5173` responde `404` (identificador inventado) y no `403`; suite verde.
+  Corrección: T-031 se comprobó solo con un GET; los POST de las rutas web fallaban por CSRF.
+  Decisiones: rojo reproducido con `curl` (`403`) y verde tras el cambio (`404`); también en
+  Chromium, con el registro completo. Sin test unitario ni mutante: es configuración del servidor
+  de desarrollo, que Vitest no ejecuta. En Docker el `Host` reescrito (`backend:8000`) tampoco
+  estaba en `ALLOWED_HOSTS`, así que el proxy de T-031 no funcionaba allí ni para `GET` — [Probable]
+  — revertir: no aplica.
+
+- [x] T-055 Validación al salir que no mueve un clic en curso
+  RF: RF-002, RF-003 (M-12) | Depende de: T-038 | Archivos: 2
+  Archivos: `forms/useFormValidation.ts`, `forms/useFormValidation.test.tsx`.
+  Hecho cuando: si un campo pierde el foco con un botón del puntero pulsado, su validación se
+  aplica al soltarlo y no antes; sin puntero pulsado (teclado), se aplica al salir como hasta
+  ahora; los tests existentes pasan sin cambios; suite verde.
+  Corrección: al pulsar una casilla, el error retirado del campo anterior desplazaba la casilla
+  antes de soltar el botón y el clic se perdía.
+  Decisiones: la validación pendiente se aplica tras la tarea del clic (`setTimeout` desde
+  `pointerup`/`pointercancel`), no en `pointerup`, porque React aplicaría el cambio antes de que el
+  navegador decida dónde cae el `mouseup`. Comprobado en Chromium en las dos direcciones (error que
+  desaparece y error que aparece) — [Cierto] — revertir: no aplica. Mutantes (sin aplazar; sin
+  marcar el puntero; sin soltarlo; sin aplicar lo pendiente) detectados.
 
 ## Entregas
 Rama de integración: feat/registro-flujo (los PR de las entregas van contra ella; ver `AGENTS.md`)
@@ -724,7 +764,7 @@ entrega (`entregas/E-XX-<descripcion>/resumen.md`).
   Cómo probarlo: los tests del frontend de `src/registration`.
 
 - E-15 Registro completo en la web
-  Tareas: T-051, T-052, T-053 | Líneas estimadas: 150 | Rama: feat/registro-flujo-rutas
+  Tareas: T-051, T-052, T-054, T-055, T-053 | Líneas estimadas: 220 | Rama: feat/registro-flujo-rutas
   Cómo probarlo: registrarse en http://localhost:5173/register de principio a fin con el código del
   correo del proveedor local, siguiendo `resumen.md`.
 

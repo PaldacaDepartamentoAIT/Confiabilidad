@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import type { FocusEvent, ReactElement } from "react";
 import userEvent from "@testing-library/user-event";
 import { I18nextProvider } from "react-i18next";
@@ -442,4 +442,19 @@ describe("scrollToError", () => {
 
     expect(scrolled).toEqual([]);
   });
+});
+
+test("leaving a field with the pointer pressed validates it once the click ends", async () => {
+  const user = userEvent.setup();
+  renderInSpanish(<SampleForm />);
+  const name = screen.getByRole("textbox", { name: "Name" });
+  const code = screen.getByRole("textbox", { name: "Code" });
+  await user.click(name);
+
+  await user.pointer({ keys: "[MouseLeft>]", target: code });
+  expect(name).not.toHaveFocus();
+  expect(latestErrors).toEqual({});
+
+  await user.pointer({ keys: "[/MouseLeft]", target: code });
+  await waitFor(() => expect(latestErrors).toEqual({ name: { key: "required" } }));
 });
