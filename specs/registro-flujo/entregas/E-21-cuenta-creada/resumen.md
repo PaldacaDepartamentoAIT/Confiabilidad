@@ -1,6 +1,7 @@
 # Entrega E-21 · Verificación con paso de contraseña y cuenta creada
 
-Rama: `feat/registro-flujo-cuenta-creada` · PR: pendiente ·
+Rama: `feat/registro-flujo-cuenta-creada` · PR:
+[PaldacaDepartamentoAIT/Confiabilidad#53](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/53) ·
 Líneas de código y tests: 159 (límite: 400).
 
 ## Qué se hizo
