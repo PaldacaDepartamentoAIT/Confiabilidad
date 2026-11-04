@@ -640,7 +640,7 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   desaparece y error que aparece) — [Cierto] — revertir: no aplica. Mutantes (sin aplazar; sin
   marcar el puntero; sin soltarlo; sin aplicar lo pendiente) detectados.
 
-- [ ] T-056 Mensaje general al rechazar el reenvío por límite
+- [x] T-056 Mensaje general al rechazar el reenvío por límite
   RF: RF-024 (M-11) | Depende de: T-048 | Archivos: 2
   Archivos: `registration/VerifyPage.tsx`, `registration/VerifyPage.test.tsx`.
   Hecho cuando: un `429` al reenviar muestra «Demasiados intentos. Vuelve a intentarlo en N s.» en
@@ -653,7 +653,7 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   aplica. Mutantes (sin marca; mensaje que no desaparece a cero; marca sin borrar) detectados; el
   último sobrevivía y se mató con un test.
 
-- [ ] T-057 La equivalencia compara también las cookies
+- [x] T-057 La equivalencia compara también las cookies
   RF: RF-017 (CF-2) | Depende de: — | Archivos: 1
   Archivos: `backend/apps/accounts/tests/test_registration_flow_equivalence.py`.
   Hecho cuando: cada paso del recorrido compara además las cookies de la respuesta (nombre, valor
@@ -666,7 +666,7 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   una cabecera solo en su ruta `browser`) detectados; el primero pasaba con el test anterior —
   [Cierto] — revertir: no aplica.
 
-- [ ] T-058 Todo o nada al completar, también con el marketing
+- [x] T-058 Todo o nada al completar, también con el marketing
   RF: RF-014 (CF-4) | Depende de: — | Archivos: 1
   Archivos: `backend/apps/accounts/tests/test_registration_service.py`.
   Hecho cuando: con términos y marketing guardados y un fallo al borrar el registro pendiente, no
