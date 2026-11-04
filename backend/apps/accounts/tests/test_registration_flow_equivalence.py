@@ -56,13 +56,17 @@ def _browser() -> Client:
 
 def _post(action: str, body: dict[str, str], browser: Client | None = None) -> Step:
     # `response.headers` no incluye `Set-Cookie`: las cookies se comparan aparte (RF-017).
-    client, route, extra = Client(), "app", {}
+    client, route = Client(), "app"
+    sent: dict[str, str] = {}
     if browser is not None:
         client, route = browser, "browser"
-        extra = {"HTTP_X_CSRFTOKEN": browser.cookies["csrftoken"].value}
+        sent = {"X-CSRFToken": browser.cookies["csrftoken"].value}
     with CaptureQueriesContext(connection) as queries:
         response = client.post(
-            f"/api/{route}/v1/registration/{action}", body, content_type="application/json", **extra
+            f"/api/{route}/v1/registration/{action}",
+            body,
+            content_type="application/json",
+            headers=sent,
         )
     headers = {name: value for name, value in response.headers.items()}
     cookies = {name: (morsel.value, dict(morsel)) for name, morsel in response.cookies.items()}
