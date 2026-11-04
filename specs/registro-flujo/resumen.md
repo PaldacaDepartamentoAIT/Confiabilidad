@@ -51,7 +51,7 @@ contraseña. Cada entrega tiene su propio resumen en `entregas/`.
 | E-20 Código, bloqueo y reenvío | [#51](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/51) |
 | E-14 Paso de contraseña | [#52](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/52) |
 | E-21 Cuenta creada | [#53](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/53) |
-| E-15 Registro completo en la web | pendiente |
+| E-15 Registro completo en la web | [#54](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/54) |
 
 ### Límites conocidos
 - La pantalla de cuenta creada no ofrece salida: el inicio de sesión no es de esta feature (S-07).

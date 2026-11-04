@@ -1,6 +1,7 @@
 # Entrega E-15 · Registro completo en la web
 
-Rama: `feat/registro-flujo-rutas` · PR: pendiente ·
+Rama: `feat/registro-flujo-rutas` · PR:
+[PaldacaDepartamentoAIT/Confiabilidad#54](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/54) ·
 Líneas de código y tests: 268 (límite: 400).
 
 ## Qué se hizo
