@@ -217,6 +217,8 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   de `CodeForm` por una propiedad `notices`. Los avisos del reenvío (enviado, espera por límite)
   quedan junto a su botón, que no es el principal — [Probable] — revertir: llevarlos también a la
   zona.
+  Cambio pedido por el usuario al revisar E-05: 12 px de separación entre campos (`.field` y
+  `.checkbox`), anotado en la guía visual — [Cierto] — revertir: quitar el margen.
 
 ## E-06 Ayuda «?» en los campos del registro
 

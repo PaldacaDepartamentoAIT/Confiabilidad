@@ -156,6 +156,7 @@ iconos y formas).
   en alarma P1 (ver «Alarmas»).
 - Campo de 40 px de alto, fondo de bloque, borde de 1 px en línea fuerte y radio 4 px. Con error,
   el borde pasa a 2 px en alarma P1.
+- Entre un campo y el siguiente hay 12 px, además del hueco del error.
 - Bajo cada campo hay siempre un hueco de una línea para el error, aunque no haya error, para que
   el formulario no cambie de alto. El error va en alarma P1, en 12 px. Si no cabe en una línea, se
   muestra completo y el hueco crece mientras esté visible.
