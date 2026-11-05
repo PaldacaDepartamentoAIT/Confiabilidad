@@ -52,7 +52,7 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   clic en el botón también abre con el foco en la opción marcada, como el teclado — [Probable] —
   revertir: abrir sin mover el foco.
 
-- [ ] T-004 Menú de idioma
+- [x] T-004 Menú de idioma
   RF: RF-002 (M-05, D-05) | Depende de: T-002, T-003 | Archivos: 2
   Archivos: `components/LanguageSwitcher.tsx` → `components/LanguageMenu.tsx`,
   `components/LanguageSwitcher.test.tsx` → `components/LanguageMenu.test.tsx` (renombrados).
@@ -61,6 +61,11 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   elegir una cambia el idioma sin recargar, la guarda (RF-005 de `componentes-base-accesibles`),
   cierra el menú, deja el foco en el botón y conserva lo escrito en un campo; recorrer con las
   flechas no cambia el idioma; suite verde.
+  Decisiones: `LanguageMenu` se crea como archivo nuevo y `LanguageSwitcher` se borra en T-006, en
+  lugar de renombrarlo aquí: renombrar rompía las cuatro pantallas que lo importan y dejaba este
+  commit en rojo. El diff de la entrega es el mismo — [Cierto] — revertir: no aplica. El nombre
+  accesible del botón es «Idioma: Español (ES)», con la abreviatura visible dentro (WCAG 2.5.3) —
+  [Probable] — revertir: pasar solo el nombre del idioma a `topBar.language`.
 
 - [ ] T-005 Barra superior en toda la aplicación
   RF: RF-001 (M-05) | Depende de: T-004 | Archivos: 3
