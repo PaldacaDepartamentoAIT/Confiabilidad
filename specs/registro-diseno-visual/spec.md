@@ -1,5 +1,5 @@
 # Spec: registro-diseno-visual
-Estado: borrador
+Estado: aprobada
 Aprobación: ligera
 
 ## Objetivo (por qué)
@@ -44,7 +44,8 @@ Cuando la persona abra la aplicación sin haber elegido nunca un tema en ese nav
 deberá usar el tema del sistema operativo. Cuando haya elegido uno, el sistema deberá usarlo en las
 siguientes visitas desde el mismo navegador, por encima del del sistema operativo. Si el tema
 guardado no es válido, entonces el sistema deberá ignorarlo, borrarlo y usar el del sistema
-operativo.
+operativo. La primera pantalla que se pinte deberá mostrarse ya con el tema que corresponda, sin que
+se vea el otro ni un instante.
 
 ### RF-005 Menús desplegables de la barra
 Mientras las opciones de idioma o de tema estén desplegadas, el sistema deberá permitir recorrerlas
@@ -61,9 +62,11 @@ completados se distingan de los pendientes por forma y por texto, no solo por co
 deberá comunicar al lector de pantalla el nombre del paso actual y su posición («paso 2 de 3»).
 
 ### RF-007 Avance del indicador
-Cuando el flujo pase de un paso a otro, el sistema deberá actualizar el indicador al paso nuevo:
-hacia delante al avanzar y hacia atrás al retroceder (por ejemplo, cuando la pantalla de contraseña
-vuelve a la de verificación según RF-011 de `registro-flujo`, o con «Atrás» del navegador).
+Cuando el flujo pase de un paso a otro, el sistema deberá actualizar el indicador al paso nuevo,
+marcándolo con una animación, sin desplazar el indicador: hacia delante al avanzar y hacia atrás al
+retroceder. Se retrocede cuando la pantalla de contraseña vuelve a la de verificación según RF-011 de
+`registro-flujo`, y cuando la persona pulsa «Atrás» del navegador desde la verificación o la
+contraseña, que la lleva al formulario vacío como hasta ahora (paso 1).
 
 ### RF-008 Indicador en la cuenta creada
 Cuando se muestre la pantalla de cuenta creada, el sistema deberá mostrar el indicador con los tres
@@ -72,16 +75,20 @@ pasos completados.
 ### RF-009 Transición lateral
 Cuando el flujo pase de un paso a otro, o del último paso a la cuenta creada, el sistema deberá
 desplazar el contenido en horizontal, sin recargar la página ni mostrar un estado intermedio vacío.
-Al avanzar, el contenido nuevo deberá entrar por la derecha y el anterior salir por la izquierda; al
-retroceder, al revés. La barra superior y el título de la pantalla no deberán desplazarse.
+Al avanzar, el contenido nuevo (título del paso y tarjeta) deberá entrar por la derecha y el
+anterior salir por la izquierda; al retroceder, al revés. La barra superior y el indicador de pasos no
+deberán desplazarse. El desplazamiento deberá verse igual en todos los navegadores admitidos y en la
+aplicación de escritorio, aunque no admitan transiciones de vista.
 
 ### RF-010 Movimiento reducido
 Mientras el sistema operativo pida reducir el movimiento, el sistema deberá cambiar de paso sin
 desplazamiento ni animación del indicador ni del icono del selector (RF-017).
 
 ### RF-011 Foco tras cambiar de paso
-Cuando termine el cambio de paso, el sistema deberá llevar el foco al título o al primer campo del
-paso nuevo, como hasta ahora, y no deberá quedar ningún elemento enfocable del paso anterior.
+Cuando termine el cambio de paso, el sistema deberá llevar el foco al título del paso nuevo, y no
+deberá quedar ningún elemento enfocable del paso anterior. Si el paso nuevo se abre con errores que
+hay que mostrar (RF-003 y RF-011 de `registro-flujo`), entonces el foco deberá seguir las reglas de
+esos requisitos.
 
 ### RF-012 Solo avanzar
 El sistema deberá mostrar en cada paso un único botón principal, alineado a la derecha y con una
@@ -95,12 +102,13 @@ junto al nombre que el lector de pantalla no lea como texto suelto, manteniendo 
 obligatorios.
 
 ### RF-014 Botón de ayuda «?»
-El sistema deberá mostrar, junto al nombre de cada campo de las pantallas del registro, un botón
-circular con el signo «?». Cuando la persona pase el puntero por encima, lo enfoque con el teclado
+El sistema deberá mostrar, junto al nombre de los campos nombre completo, fecha de nacimiento,
+correo, país, código y contraseña de las pantallas del registro, un botón circular con el signo «?». Cuando la persona pase el puntero por encima, lo enfoque con el teclado
 o lo toque, el sistema deberá mostrar un globo con la descripción del campo, y cuando el puntero o
 el foco se vayan, al volver a tocarlo o al pulsar Escape, deberá ocultarlo. La descripción deberá
 estar asociada al campo para que el lector de pantalla la lea al llegar a él, y traducida en los
-tres idiomas.
+tres idiomas. Las casillas de términos y de marketing y los campos de la página de muestra no
+deberán llevarlo.
 
 ### RF-015 Reglas de la contraseña visibles
 El sistema deberá seguir mostrando bajo el campo de contraseña nueva su texto de ayuda con las
@@ -113,10 +121,14 @@ cambie el alto del formulario. Si un error necesita más de una línea, entonces
 mostrarlo completo, sin cortarlo, y el formulario podrá crecer solo mientras ese error esté visible.
 
 ### RF-017 Selector con flecha
-El sistema deberá mostrar en cada campo de selección una flecha hacia abajo propia, la misma con o
-sin el puntero encima, en lugar de la apariencia nativa del navegador. Cuando se desplieguen las
-opciones, el sistema deberá girar la flecha hacia arriba con una animación, y deshacer el giro al
-cerrarlas.
+El sistema deberá mostrar cada campo de selección con un aspecto y una lista de opciones propios,
+sin la apariencia nativa del navegador en ningún estado, con una flecha hacia abajo en su extremo
+derecho. Cuando se desplieguen las opciones, el sistema deberá girar la flecha hacia arriba con una
+animación, y deshacer el giro al cerrarlas. El selector deberá poder usarse solo con el teclado:
+abrirlo, recorrer las opciones con las flechas, saltar a una opción tecleando el principio de su
+nombre, elegirla con Intro y cerrarlo sin cambios con Escape. También deberá anunciar al lector de
+pantalla su nombre, si es obligatorio, su valor, si está desplegado y la opción resaltada. Al elegir
+una opción o cerrarlo, el foco deberá volver al selector.
 
 ### RF-018 Mostrar u ocultar la contraseña con un ojo
 El sistema deberá mostrar el control de mostrar u ocultar la contraseña dentro del campo, en su
@@ -124,6 +136,13 @@ extremo derecho, como un botón de icono: un ojo mientras la contraseña esté o
 «mostrar») y un ojo tachado mientras esté visible (acción «ocultar»). El texto escrito no deberá
 quedar debajo del icono. Su nombre accesible seguirá siendo el de RF-012 de
 `componentes-base-accesibles`.
+
+### RF-023 Zona de mensajes del paso
+El sistema deberá reservar en cada paso, encima del botón principal, una zona de mensajes con el alto
+de una línea, haya o no mensaje, para el mensaje general (RF-003 de `registro-flujo`), el aviso de
+espera por límite superado, el de bloqueo tras cinco intentos y el de código caducado. Si un mensaje
+necesita más de una línea, entonces el sistema deberá mostrarlo completo y la zona podrá crecer solo
+mientras esté visible.
 
 ### Términos y marketing
 
@@ -169,6 +188,8 @@ visible y contrastes de `docs/identidad-visual.md`, en el tema claro y en el osc
   nuevo de los campos porque los comparte; no recibe indicador de pasos ni «?».
 - S-06 En la casilla de términos, el asterisco forma parte del texto visible pero se anuncia como
   «obligatorio», igual que en los demás campos.
+- S-07 El usuario no eligió si el indicador se desliza con el contenido; se deja fijo arriba y anima
+  el cambio de paso (RF-007, RF-009), porque así pidió que «pase de uno a otro».
 
 ## Fuera de alcance
 - Cualquier cambio en los datos, las validaciones, los mensajes de error, los temporizadores o las
@@ -181,7 +202,7 @@ visible y contrastes de `docs/identidad-visual.md`, en el tema claro y en el osc
 - Los enlaces de navegación de la imagen de referencia (Jobs, Properties, My Listings, etc.).
 
 ## Criterios de finalización
-- CF-1 RF-001…RF-022 cubiertos por tests automatizados en verde, con cobertura de líneas ≥ 80 % en
+- CF-1 RF-001…RF-023 cubiertos por tests automatizados en verde, con cobertura de líneas ≥ 80 % en
   el código nuevo (P-05), y `typecheck`, `lint` y `format` limpios.
 - CF-2 Las pruebas de accesibilidad automáticas existentes de las pantallas del registro siguen en
   verde con el diseño nuevo, en ambos temas.
@@ -193,3 +214,9 @@ visible y contrastes de `docs/identidad-visual.md`, en el tema claro y en el osc
   ayuda, la ventana de documento y la transición entre pasos, con la aprobación del usuario.
 
 ## Historial de cambios
+- 2026-11-05 — Clarificación (C-01…C-08): «Atrás» del navegador vuelve al formulario como hasta
+  ahora; selector con lista propia accesible; animación propia independiente del soporte del
+  navegador; título y tarjeta se deslizan, barra e indicador fijos; foco al título del paso; zona de
+  mensajes reservada; «?» solo en campos de texto y selección; sin destello del otro tema al cargar
+  — RF: RF-004, RF-007, RF-009, RF-011, RF-014, RF-017, RF-023 — Estado: clarificado
+- 2026-11-05 — Spec aprobada por el usuario
