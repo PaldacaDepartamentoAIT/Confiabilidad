@@ -678,6 +678,25 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   no pase en vacío). Mutante en el código vigilado (`complete` sin su transacción) detectado —
   [Cierto] — revertir: no aplica.
 
+- [ ] T-059 El bloqueo se muestra al quinto intento fallido
+  RF: RF-009 (S-10, M-11) | Depende de: T-047 | Archivos: 2
+  Archivos: `registration/VerifyPage.tsx`, `registration/VerifyPage.test.tsx`.
+  Hecho cuando: tras un `wrong_code`, la pantalla vuelve a pedir el estado (no cuenta para el
+  límite por IP); si viene `locked: true`, muestra «Has agotado los intentos…» y desactiva
+  «Verificar» sin otro envío; si no, conserva el mensaje de código incorrecto bajo el campo; suite
+  verde.
+  Corrección: validación de RF-009; el servidor responde `wrong_code` al quinto intento y la
+  pantalla solo se bloqueaba con `locked`, que llega al sexto.
+
+- [ ] T-060 Tests de los datos del cliente al completar y del límite con cualquier identificador
+  RF: RF-012, RF-019 | Depende de: — | Archivos: 1
+  Archivos: `backend/apps/accounts/tests/test_registration_flow_api.py`.
+  Hecho cuando: completar con `email`, `name` y `country` añadidos crea la cuenta con los datos del
+  registro pendiente y no existe la del correo enviado; superado el límite, un identificador
+  desconocido, uno con formato inválido y uno real reciben el mismo `429` con el mismo
+  `Retry-After`; suite verde.
+  Corrección: validación de RF-012 y RF-019; faltaban esas aserciones.
+
 ## Entregas
 Rama de integración: feat/registro-flujo (los PR de las entregas van contra ella; ver `AGENTS.md`)
 
@@ -809,6 +828,11 @@ entrega (`entregas/E-XX-<descripcion>/resumen.md`).
 - E-22 Correcciones de la validación
   Tareas: T-056, T-057, T-058 | Líneas estimadas: 120 | Rama: feat/registro-flujo-correcciones
   Cómo probarlo: los tests de `VerifyPage`, de la equivalencia y del servicio del registro.
+
+- E-23 Correcciones de la segunda validación
+  Tareas: T-059, T-060 | Líneas estimadas: 120 | Rama: feat/registro-flujo-bloqueo
+  Cómo probarlo: los tests de `VerifyPage` y de la API del flujo; cinco códigos incorrectos en
+  http://localhost:5173/register/continue muestran el bloqueo al quinto.
 
 ## RF sin tarea
 Ninguno.
