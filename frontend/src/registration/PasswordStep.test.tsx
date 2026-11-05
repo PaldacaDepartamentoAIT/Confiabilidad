@@ -142,6 +142,7 @@ test("over the limit, counts down and allows sending again at zero", async () =>
   expect(screen.getByRole("button", { name: "Crear cuenta" })).toBeDisabled();
   await act(() => vi.advanceTimersByTimeAsync(2000));
   expect(screen.getByRole("button", { name: "Crear cuenta" })).toBeEnabled();
+  expect(field()).toHaveValue("turbina-compresor-7");
 });
 
 test.each([

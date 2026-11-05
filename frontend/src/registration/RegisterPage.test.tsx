@@ -380,6 +380,13 @@ describe("sending the form", () => {
     });
 
     expect(screen.getByRole("button", { name: "Continuar" })).toBeEnabled();
+    expect(screen.getByRole("textbox", { name: "Nombre completo" })).toHaveValue("Ana Pérez");
+    expect(screen.getByRole("textbox", { name: "Correo electrónico" })).toHaveValue(
+      "ana@planta.com",
+    );
+    expect(
+      screen.getByRole("checkbox", { name: "Acepto los términos y condiciones" }),
+    ).toBeChecked();
     expect(screen.queryByText(/Demasiados intentos/)).toBeNull();
     vi.useRealTimers();
   });

@@ -348,6 +348,7 @@ describe("verifying the code", () => {
     expect(screen.getByRole("button", { name: "Verificar" })).toBeDisabled();
     await act(() => vi.advanceTimersByTimeAsync(3000));
     expect(screen.getByRole("button", { name: "Verificar" })).toBeEnabled();
+    expect(screen.getByRole("textbox", { name: "Código de verificación" })).toHaveValue("123456");
   });
 
   it.each([
