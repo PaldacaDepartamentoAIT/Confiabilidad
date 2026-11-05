@@ -1,5 +1,5 @@
 # Spec: desktop-tauri-seguro
-Estado: borrador
+Estado: aprobada
 Aprobación: ligera
 
 ## Objetivo (por qué)
@@ -86,5 +86,5 @@ aplicación de escritorio deberá permitir guardarlo en el equipo en Linux, Wind
 - La configuración de la aplicación de escritorio no concede ningún permiso nativo.
 
 ## Historial de cambios
-- 2026-11-05 — Creación de la spec — RF: RF-001 a RF-009 — Estado: pendiente de clarificar
+- 2026-11-05 — Creación de la spec — RF: RF-001 a RF-009 — Estado: clarificado
 - 2026-11-05 — Clarificación C-01 a C-07 — RF: RF-003, RF-004, RF-007, RF-008, RF-009, RF-010, RF-011 — Estado: clarificado
