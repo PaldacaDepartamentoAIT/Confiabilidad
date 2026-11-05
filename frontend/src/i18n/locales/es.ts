@@ -17,6 +17,10 @@ export const es: Messages = {
     themeLabel: "Tema",
     light: "Claro",
     dark: "Oscuro",
+    hintMove: "moverte",
+    hintChoose: "elegir",
+    hintClose: "cerrar",
+    enterKey: "Intro",
   },
   button: {
     processing: "Procesando…",

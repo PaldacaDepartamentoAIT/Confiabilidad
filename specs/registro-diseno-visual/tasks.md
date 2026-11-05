@@ -89,7 +89,7 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   `LanguageSwitcher.tsx` con su test (ver T-004): nueve archivos, todos por la misma retirada —
   [Cierto] — revertir: no aplica.
 
-- [ ] T-044 Texto de la pista de teclado
+- [x] T-044 Texto de la pista de teclado
   RF: RF-005 (M-04, M-14) | Depende de: T-002 | Archivos: 3
   Archivos: `i18n/locales/es.ts`, `i18n/locales/en.ts`, `i18n/locales/pt-BR.ts`.
   Hecho cuando: existen `topBar.hintMove`, `topBar.hintChoose`, `topBar.hintClose` y

@@ -16,6 +16,10 @@ export const ptBR: Messages = {
     themeLabel: "Tema",
     light: "Claro",
     dark: "Escuro",
+    hintMove: "mover",
+    hintChoose: "escolher",
+    hintClose: "fechar",
+    enterKey: "Enter",
   },
   button: {
     processing: "Processando…",

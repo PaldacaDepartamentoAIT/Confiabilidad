@@ -14,6 +14,10 @@ export const en = {
     themeLabel: "Theme",
     light: "Light",
     dark: "Dark",
+    hintMove: "move",
+    hintChoose: "choose",
+    hintClose: "close",
+    enterKey: "Enter",
   },
   button: {
     processing: "Processing…",
