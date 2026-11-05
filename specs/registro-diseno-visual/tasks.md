@@ -179,7 +179,7 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   etiqueta va a la derecha de la casilla; sus estilos van en `components.css`, un cuarto archivo —
   [Cierto] — revertir: no aplica.
 
-- [ ] T-015 Ojo dentro del campo de contraseña
+- [x] T-015 Ojo dentro del campo de contraseña
   RF: RF-015, RF-018 (M-02, M-08) | Depende de: T-013 | Archivos: 3
   Archivos: `components/icons.tsx` (ojo, ojo tachado y la flecha abajo que usará T-027),
   `components/fields/PasswordField.tsx`,
@@ -188,6 +188,10 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   si la contraseña está oculta y el ojo tachado y `aria-pressed="true"` si está visible; el nombre
   accesible sigue siendo «Mostrar contraseña (<campo>)»; las reglas de la contraseña nueva siguen
   visibles; suite verde.
+  Decisiones: el estilo del botón de icono (`.icon-button`, círculo de 32 px en color de acción) va
+  en `components.css`, un cuarto archivo — [Cierto] — revertir: no aplica. El botón ya no tiene
+  texto visible; su nombre accesible sigue siendo «Mostrar contraseña (<campo>)» con `aria-pressed`
+  (D-10 de `componentes-base-accesibles`) — [Cierto] — revertir: no aplica.
 
 - [ ] T-016 Zona de mensajes
   RF: RF-023 (M-13) | Depende de: — | Archivos: 3
