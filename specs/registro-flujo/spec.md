@@ -362,3 +362,7 @@ similitud, las comunes ni las filtradas.
 - 2026-11-05 — Clarificación del cambio (C-01…C-04): el plazo del código nuevo cuenta desde la
   aceptación del reenvío, con la duración configurada y un segundo de tolerancia; solo el reenvío
   de la pantalla y la API; S-18 añadido — RF: RF-006 — Estado: clarificado
+- 2026-11-05 — Impacto analizado: plan (M-01 y decisión nueva D-19 sobre cómo conserva la tarea
+  de emisión el plazo del reenvío del flujo sin cambiar la consola) y tareas nuevas de servicio y de
+  equivalencia en una entrega nueva; aprobado por el usuario — RF: RF-006 — Estado: impacto
+  analizado
