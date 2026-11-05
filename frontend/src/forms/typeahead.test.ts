@@ -38,8 +38,15 @@ test("an accented word is found without its accents", () => {
   find("r", COUNTRIES, 3);
   time.advance(100);
   expect(find("u", COUNTRIES, 3)).toBe(3);
+});
+
+test("letters typed after an accented one are still matched", () => {
+  const time = clock();
+  const find = createTypeahead(time.now);
+
+  find("o", COUNTRIES, 0);
   time.advance(100);
-  expect(createTypeahead(time.now)("o", COUNTRIES, 0)).toBe(5);
+  expect(find("s", COUNTRIES, 5)).toBe(5);
 });
 
 test("after 500 ms the search starts again", () => {
