@@ -394,6 +394,8 @@ Rama de integración: `feat/registro-diseno-visual` (los PR de las entregas van 
   Tareas: T-001…T-006 | Líneas estimadas: 400 | Rama: `feat/registro-diseno-visual-barra-idioma`
   Cómo probarlo: levantar el frontend, abrir `/register`, pulsar «ES» y elegir «English» con el
   ratón y con el teclado; el menú se cierra con Escape y al hacer clic fuera.
+  Excepción: 852 líneas reales (119 de ellas, borrado del selector antiguo); los tests de teclado
+  del botón con menú ocupan más de lo estimado. Aceptado por el usuario el 2026-11-05.
 
 - E-02 El tema se elige desde la barra, se recuerda y no parpadea al recargar
   Tareas: T-007…T-011 | Líneas estimadas: 330 | Rama: `feat/registro-diseno-visual-tema`
