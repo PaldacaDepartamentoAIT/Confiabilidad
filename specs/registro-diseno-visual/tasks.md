@@ -451,6 +451,7 @@ sin dejar algo a medias llevan su excepción. Las tareas no cambian. Las líneas
   Tareas: T-012…T-015 | Líneas estimadas: 450 | Rama: `feat/registro-diseno-visual-campos`
   Cómo probarlo: en `/register`, salir de un campo vacío y ver que el error aparece sin mover el
   resto; en la contraseña, pulsar el ojo.
+  Excepción: 473 líneas reales (96 de CSS de los campos); aceptado por el usuario el 2026-11-05.
 
 - E-05 Los mensajes de cada paso tienen su sitio reservado
   Tareas: T-016…T-018 | Líneas estimadas: 250 | Rama: `feat/registro-diseno-visual-mensajes`
