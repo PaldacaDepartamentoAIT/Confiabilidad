@@ -11,16 +11,17 @@ type SelectFieldProps = Omit<SelectHTMLAttributes<HTMLSelectElement>, "required"
   required?: boolean;
   error?: string;
   hint?: string;
+  help?: string;
 };
 
 export const SelectField = forwardRef<HTMLSelectElement, SelectFieldProps>(function SelectField(
-  { label, placeholder, options, required = false, error, hint, ...selectProps },
+  { label, placeholder, options, required = false, error, hint, help, ...selectProps },
   ref,
 ) {
   const id = useId();
 
   return (
-    <FieldShell id={id} label={label} required={required} hint={hint} error={error}>
+    <FieldShell id={id} label={label} required={required} help={help} hint={hint} error={error}>
       {(describedBy) => (
         <select
           {...selectProps}

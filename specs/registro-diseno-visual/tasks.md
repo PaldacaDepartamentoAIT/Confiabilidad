@@ -253,7 +253,7 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   Decisiones: que `TextField` pase `help` al envoltorio no tiene test en esta tarea (su archivo de
   tests no está entre los tres); lo comprueban T-023 y T-024 con los campos reales — [Cierto].
 
-- [ ] T-022 «?» en el selector
+- [x] T-022 «?» en el selector
   RF: RF-014 | Depende de: T-021, T-014 | Archivos: 2
   Archivos: `components/fields/SelectField.tsx`, `components/fields/ChoiceFields.test.tsx`.
   Hecho cuando: el selector acepta `help` como los demás campos; la casilla no lo acepta; suite
