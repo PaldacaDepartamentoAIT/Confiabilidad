@@ -409,7 +409,7 @@ Rama de integración: `feat/registro-diseno-visual` (los PR de las entregas van 
   Tareas: T-001…T-006, T-044, T-045 | Líneas estimadas: 400 | Rama: `feat/registro-diseno-visual-barra-idioma`
   Cómo probarlo: levantar el frontend, abrir `/register`, pulsar «ES» y elegir «English» con el
   ratón y con el teclado; el menú se cierra con Escape y al hacer clic fuera.
-  Excepción: 860 líneas reales (119 de ellas, borrado del selector antiguo); los tests de teclado
+  Excepción: 935 líneas reales (119 de ellas, borrado del selector antiguo); los tests de teclado
   del botón con menú ocupan más de lo estimado. Aceptado por el usuario el 2026-11-05.
 
 Reagrupación del 2026-11-05, aprobada por el usuario: con la proporción real de E-01 (unas 1,8
