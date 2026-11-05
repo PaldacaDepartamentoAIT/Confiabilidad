@@ -54,6 +54,7 @@ contraseña. Cada entrega tiene su propio resumen en `entregas/`.
 | E-15 Registro completo en la web | [#54](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/54) |
 | E-22 Correcciones de la validación | [#55](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/55) |
 | E-23 Correcciones de la segunda validación | [#56](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/56) |
+| E-24 Correcciones de la tercera validación | [#57](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/57) |
 
 ### Límites conocidos
 - La pantalla de cuenta creada no ofrece salida: el inicio de sesión no es de esta feature (S-07).
