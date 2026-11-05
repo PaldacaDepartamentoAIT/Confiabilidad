@@ -20,11 +20,14 @@ origen externo o insertado en línea), entonces la aplicación de escritorio deb
 
 ### RF-003 Resto de recursos solo de la propia app
 La aplicación de escritorio deberá cargar estilos, fuentes, imágenes y demás recursos únicamente
-desde la propia app.
+desde los archivos de la propia app, con dos excepciones: las imágenes y los archivos de descarga
+que la propia app genere en memoria. Los estilos insertados en línea se bloquean igual que los
+scripts.
 
 ### RF-004 Conexiones solo con la app y el backend
 La aplicación de escritorio deberá permitir conexiones de red (peticiones HTTP y WebSocket)
-únicamente con la propia app y con el origen configurado del backend, y bloquear cualquier otra.
+únicamente con la propia app y con el origen del backend definido al compilarla, y bloquear
+cualquier otra.
 
 ### RF-005 Sin permisos nativos
 La aplicación de escritorio deberá conceder cero permisos nativos a la interfaz.
@@ -34,24 +37,36 @@ Mientras la aplicación de escritorio se ejecute en modo de desarrollo, deberá 
 política de RF-001 a RF-004, ampliada solo con el origen local del servidor de desarrollo.
 
 ### RF-007 Navegación restringida a la propia app
-Si la ventana intenta navegar a un origen distinto de la propia app, entonces la aplicación de
-escritorio deberá impedir esa navegación y seguir mostrando la app.
+Si la ventana intenta navegar a un origen distinto de la propia app, incluido el del backend,
+entonces la aplicación de escritorio deberá impedir esa navegación sin avisar al usuario y seguir
+mostrando la pantalla en la que estaba.
 
 ### RF-008 Compilación en los tres sistemas operativos
-Cuando se integre un cambio, el sistema de integración continua deberá compilar la aplicación de
-escritorio en Linux, Windows y macOS, y fallar si alguna compilación falla.
+Cuando un cambio toque `desktop/` o `frontend/`, el sistema de integración continua deberá
+compilar el ejecutable de la aplicación de escritorio (sin instaladores) en Linux, Windows y macOS,
+y fallar si alguna compilación falla.
 
 ### RF-009 Arranque en los tres sistemas operativos
-La aplicación de escritorio deberá arrancar y mostrar la interfaz web sin violaciones de la
-política de seguridad en Linux, Windows y macOS.
+La compilación de depuración de la aplicación de escritorio deberá arrancar en Linux, Windows y
+macOS, mostrar la interfaz web completa y no registrar ninguna violación de la política de
+seguridad en la consola de las herramientas de desarrollo.
+
+### RF-010 Backend no definido al compilar
+Si no se define el origen del backend al compilar, entonces la aplicación de escritorio deberá
+permitir conexiones de red únicamente con la propia app.
+
+### RF-011 Descarga de archivos generados por la app
+Cuando la interfaz ofrezca al usuario un archivo que la propia app ha generado en memoria, la
+aplicación de escritorio deberá permitir guardarlo en el equipo en Linux, Windows y macOS.
 
 ## Supuestos
 - S-01 La interfaz actual no usa ninguna función nativa de escritorio, por lo que retirar todos
   los permisos no rompe nada. Cada feature futura que necesite uno lo añadirá y lo justificará.
-- S-02 El backend se sirve desde un único origen configurable (el mismo para HTTP y WebSocket).
-- S-03 La comprobación de RF-009 es manual: una persona arranca la aplicación en cada sistema
-  operativo y revisa que la interfaz carga sin errores de la política. Se anota en el
-  `HUMAN_TODO.md` de la feature.
+- S-02 El backend se sirve desde un único origen (el mismo para HTTP y WebSocket), que se define
+  al compilar con un valor distinto por entorno.
+- S-03 Las comprobaciones de RF-009 y RF-011 son manuales: en cada sistema operativo, una persona
+  arranca la compilación de depuración, revisa la consola y guarda un archivo generado por la app.
+  Se anotan en el `HUMAN_TODO.md` de la feature.
 
 ## Fuera de alcance
 - Abrir enlaces externos en el navegador del sistema.
@@ -62,9 +77,14 @@ política de seguridad en Linux, Windows y macOS.
   llamada).
 
 ## Criterios de finalización
-- RF-001 a RF-008 verificados con evidencia automatizada en la integración continua.
-- RF-009 comprobado a mano en Linux, Windows y macOS y marcado en el `HUMAN_TODO.md` de la feature.
+- RF-001 a RF-008 y RF-010 verificados en la integración continua con dos tipos de evidencia: un
+  test que comprueba la configuración (directivas de la política y ausencia de permisos) y un test
+  que arranca la app y comprueba su comportamiento (bloqueo de scripts ajenos, de conexiones a
+  otros orígenes y de la navegación externa).
+- RF-009 y RF-011 comprobados a mano en Linux, Windows y macOS y marcados en el `HUMAN_TODO.md` de
+  la feature.
 - La configuración de la aplicación de escritorio no concede ningún permiso nativo.
 
 ## Historial de cambios
 - 2026-11-05 — Creación de la spec — RF: RF-001 a RF-009 — Estado: pendiente de clarificar
+- 2026-11-05 — Clarificación C-01 a C-07 — RF: RF-003, RF-004, RF-007, RF-008, RF-009, RF-010, RF-011 — Estado: clarificado
