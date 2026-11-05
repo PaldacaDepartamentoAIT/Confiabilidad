@@ -710,6 +710,28 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   formato del identificador antes del límite; usar el nombre enviado por el cliente) detectados —
   [Cierto] — revertir: no aplica.
 
+- [ ] T-061 Validación de la contraseña al salir del campo
+  RF: RF-013 | Depende de: T-049 | Archivos: 1
+  Archivos: `registration/PasswordStep.test.tsx`.
+  Hecho cuando: escribir `corta` y salir del campo muestra «Usa al menos 12 caracteres.» sin
+  llamar al servidor; el mutante sin `onBlur` se detecta; suite verde.
+  Corrección: validación de RF-013; no había test de la comprobación al salir del campo.
+
+- [ ] T-062 Un identificador completado da «no encontrado»
+  RF: RF-015 | Depende de: — | Archivos: 1
+  Archivos: `backend/apps/accounts/tests/test_registration_flow_api.py`.
+  Hecho cuando: tras un `201`, `status`, `verify`, `resend` y `complete` de ese identificador dan
+  `404 not_found`; suite verde.
+  Corrección: validación de RF-015; faltaba la aserción directa.
+
+- [ ] T-063 El límite superado conserva lo escrito
+  RF: RF-024 | Depende de: — | Archivos: 3
+  Archivos: `registration/RegisterPage.test.tsx`, `registration/VerifyPage.test.tsx`,
+  `registration/PasswordStep.test.tsx`.
+  Hecho cuando: tras un `429` al enviar el formulario, verificar y completar, los campos conservan
+  lo escrito; un mutante que vacíe el formulario se detecta; suite verde.
+  Corrección: validación de RF-024; los tests de `429` no comprobaban los valores.
+
 ## Entregas
 Rama de integración: feat/registro-flujo (los PR de las entregas van contra ella; ver `AGENTS.md`)
 
@@ -846,6 +868,10 @@ entrega (`entregas/E-XX-<descripcion>/resumen.md`).
   Tareas: T-059, T-060 | Líneas estimadas: 120 | Rama: feat/registro-flujo-bloqueo
   Cómo probarlo: los tests de `VerifyPage` y de la API del flujo; cinco códigos incorrectos en
   http://localhost:5173/register/continue muestran el bloqueo al quinto.
+
+- E-24 Correcciones de la tercera validación
+  Tareas: T-061, T-062, T-063 | Líneas estimadas: 90 | Rama: feat/registro-flujo-tests-finales
+  Cómo probarlo: los tests de `PasswordStep`, `RegisterPage`, `VerifyPage` y de la API del flujo.
 
 ## RF sin tarea
 Ninguno.
