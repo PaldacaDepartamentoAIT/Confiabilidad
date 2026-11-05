@@ -1,6 +1,7 @@
 # Entrega E-24 · Correcciones de la tercera validación
 
-Rama: `feat/registro-flujo-tests-finales` · PR: pendiente ·
+Rama: `feat/registro-flujo-tests-finales` · PR:
+[PaldacaDepartamentoAIT/Confiabilidad#57](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/57) ·
 Líneas de código y tests: 35 (límite: 400).
 
 La tercera validación de la feature (subagente sin contexto, 2026-11-05) dio NO CUMPLIDA sin fallos
