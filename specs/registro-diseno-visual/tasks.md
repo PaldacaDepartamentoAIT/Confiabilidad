@@ -116,7 +116,7 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   montarse: lo hace el script de `index.html` (T-009) — [Cierto] — revertir: un efecto que llame a
   `applyTheme(chosen)`.
 
-- [ ] T-008 Paleta oscura por elección o por sistema
+- [x] T-008 Paleta oscura por elección o por sistema
   RF: RF-003, RF-004 (M-03) | Depende de: — | Archivos: 2
   Archivos: `styles/tokens.css`, `styles/tokens.test.ts`.
   Hecho cuando: el test comprueba que la paleta oscura está bajo `:root[data-theme="dark"]` y bajo
