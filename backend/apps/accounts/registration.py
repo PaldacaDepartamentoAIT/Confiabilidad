@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 
 RESOLVE_TASK = "apps.accounts.tasks.resolve_registration"
 REISSUE_TASK = "apps.accounts.tasks.reissue_code"
+REISSUE_FLOW_TASK = "apps.accounts.tasks.reissue_flow_code"
 
 
 @dataclass(frozen=True)
@@ -262,7 +263,7 @@ def resend_code(*, public_id: str) -> Resent | FlowResendRefusal:
             resend_count=process.resend_count + 1,
             last_sent_at=now,
         )
-        transaction.on_commit(lambda: _queue(REISSUE_TASK, [_PURPOSE, public_id]))
+        transaction.on_commit(lambda: _queue(REISSUE_FLOW_TASK, [public_id]))
         signals.registration_code_sent.send(
             sender=PendingRegistration, email=process.email, success=True
         )
