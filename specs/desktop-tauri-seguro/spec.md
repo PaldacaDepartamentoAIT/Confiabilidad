@@ -1,5 +1,5 @@
 # Spec: desktop-tauri-seguro
-Estado: aprobada
+Estado: borrador
 Aprobación: ligera
 
 ## Objetivo (por qué)
@@ -34,7 +34,10 @@ La aplicación de escritorio deberá conceder cero permisos nativos a la interfa
 
 ### RF-006 Misma política en desarrollo
 Mientras la aplicación de escritorio se ejecute en modo de desarrollo, deberá aplicar la misma
-política de RF-001 a RF-004, ampliada solo con el origen local del servidor de desarrollo.
+política de RF-001 a RF-004, ampliada solo con el origen local del servidor de desarrollo y con un
+identificador fijo de un solo uso (nonce) que autoriza únicamente los scripts y estilos en línea que
+inserta el propio servidor de desarrollo. Cualquier otro script o estilo en línea se seguirá
+bloqueando, y la compilación de producción no contendrá ese identificador.
 
 ### RF-007 Navegación restringida a la propia app
 Si la ventana intenta navegar a un origen distinto de la propia app, incluido el del backend,
@@ -86,5 +89,6 @@ aplicación de escritorio deberá permitir guardarlo en el equipo en Linux, Wind
 - La configuración de la aplicación de escritorio no concede ningún permiso nativo.
 
 ## Historial de cambios
-- 2026-11-05 — Creación de la spec — RF: RF-001 a RF-009 — Estado: clarificado
-- 2026-11-05 — Clarificación C-01 a C-07 — RF: RF-003, RF-004, RF-007, RF-008, RF-009, RF-010, RF-011 — Estado: clarificado
+- 2026-11-05 — Creación de la spec — RF: RF-001 a RF-009 — Estado: impacto analizado
+- 2026-11-05 — Clarificación C-01 a C-07 — RF: RF-003, RF-004, RF-007, RF-008, RF-009, RF-010, RF-011 — Estado: impacto analizado
+- 2026-11-05 — En desarrollo se permite un nonce fijo para lo que inserta el servidor de desarrollo — RF: RF-006 — Estado: pendiente de clarificar
