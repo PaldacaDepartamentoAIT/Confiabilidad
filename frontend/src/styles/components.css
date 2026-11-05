@@ -185,3 +185,14 @@
   background: transparent;
   color: var(--color-action);
 }
+
+.message-zone {
+  display: grid;
+  gap: 4px;
+  min-height: 1.5em;
+  margin-block: 6px 2px;
+}
+
+.message-zone > * {
+  margin: 0;
+}

@@ -193,7 +193,7 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   texto visible; su nombre accesible sigue siendo «Mostrar contraseña (<campo>)» con `aria-pressed`
   (D-10 de `componentes-base-accesibles`) — [Cierto] — revertir: no aplica.
 
-- [ ] T-016 Zona de mensajes
+- [x] T-016 Zona de mensajes
   RF: RF-023 (M-13) | Depende de: — | Archivos: 3
   Archivos: `components/MessageZone.tsx`, `components/MessageZone.test.tsx`,
   `styles/components.css`.
