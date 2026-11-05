@@ -226,8 +226,9 @@
 
 .help-tip__bubble {
   position: absolute;
-  bottom: calc(100% + 8px);
-  right: -4px;
+  top: 50%;
+  right: calc(100% + 8px);
+  transform: translateY(-50%);
   z-index: 5;
   width: max-content;
   max-width: 280px;

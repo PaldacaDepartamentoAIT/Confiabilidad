@@ -167,7 +167,7 @@ iconos y formas).
 - Botón de icono circular de 18 px en la fila del nombre del campo, alineado a la derecha, con el
   borde derecho del campo; el «?» y el borde en color de acción.
 - El globo es un bloque de relleno fuerte con el texto en `#eaf1f6` (en claro) o en tinta (en
-  oscuro), radio 4 px, ancho máximo 280 px, sin sombra, sobre el botón y alineado con su borde derecho.
+  oscuro), radio 4 px, ancho máximo 280 px, sin sombra, a la izquierda del botón y centrado con él.
 
 ### Selector
 - Mismo aspecto que un campo de texto, con una flecha hacia abajo en texto secundario a la derecha,
