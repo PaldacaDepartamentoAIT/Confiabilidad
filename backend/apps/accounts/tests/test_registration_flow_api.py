@@ -332,6 +332,16 @@ def test_complete_from_the_app_creates_the_account_with_a_verified_email(
     assert not PendingRegistration.objects.exists()
 
 
+def test_a_completed_identifier_is_not_found_afterwards(started: StartedWithCode) -> None:
+    _validate(started)
+    assert _app(COMPLETE, _completion(started)).status_code == 201
+    body = {"public_id": started.public_id, "code": started.code, "password": GOOD_PASSWORD}
+
+    answers = [_app(path, body) for path in (STATUS, VERIFY, RESEND, COMPLETE)]
+
+    assert [(r.status_code, r.json()["code"]) for r in answers] == [(404, "not_found")] * 4
+
+
 def test_complete_ignores_the_account_data_sent_by_the_client(started: StartedWithCode) -> None:
     _validate(started)
     pending = PendingRegistration.objects.get()

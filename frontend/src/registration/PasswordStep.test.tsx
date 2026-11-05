@@ -142,6 +142,7 @@ test("over the limit, counts down and allows sending again at zero", async () =>
   expect(screen.getByRole("button", { name: "Crear cuenta" })).toBeDisabled();
   await act(() => vi.advanceTimersByTimeAsync(2000));
   expect(screen.getByRole("button", { name: "Crear cuenta" })).toBeEnabled();
+  expect(field()).toHaveValue("turbina-compresor-7");
 });
 
 test.each([
@@ -170,4 +171,20 @@ test("while waiting for the answer, a second submission sends nothing", async ()
 
   await vi.waitFor(() => expect(bodies).toHaveLength(1));
   expect(bodies).toHaveLength(1);
+});
+
+test("leaving the password field checks it without asking the server", async () => {
+  const user = userEvent.setup();
+  const { bodies, fetcher } = replies();
+  renderStep(fetcher);
+
+  await user.type(field(), "corta");
+  // El campo y su botón de mostrar cuentan como uno: se sale al dejar los dos (RF-025 de la base).
+  await user.tab();
+  await user.tab();
+
+  expect(field()).toHaveAccessibleDescription(
+    expect.stringContaining("Usa al menos 12 caracteres.") as string,
+  );
+  expect(bodies).toEqual([]);
 });
