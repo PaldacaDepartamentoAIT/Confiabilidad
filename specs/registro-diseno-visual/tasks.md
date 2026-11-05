@@ -72,6 +72,8 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   Archivos: `components/TopBar.tsx`, `App.tsx`, `App.test.tsx`.
   Hecho cuando: en `/`, `/register`, `/register/continue` y `/register/done` hay un único
   `<header>` con el menú de idioma, fuera de `<main>`; suite verde.
+  Decisiones: el estilo de la barra (botones alineados a la derecha), previsto en T-011, se adelanta
+  a E-01 a petición del usuario al revisar la entrega — [Cierto] — revertir: no aplica.
 
 - [x] T-006 Las pantallas dejan de pintar su selector
   RF: RF-001 (M-05) | Depende de: T-005 | Archivos: 4
@@ -394,7 +396,7 @@ Rama de integración: `feat/registro-diseno-visual` (los PR de las entregas van 
   Tareas: T-001…T-006 | Líneas estimadas: 400 | Rama: `feat/registro-diseno-visual-barra-idioma`
   Cómo probarlo: levantar el frontend, abrir `/register`, pulsar «ES» y elegir «English» con el
   ratón y con el teclado; el menú se cierra con Escape y al hacer clic fuera.
-  Excepción: 852 líneas reales (119 de ellas, borrado del selector antiguo); los tests de teclado
+  Excepción: 860 líneas reales (119 de ellas, borrado del selector antiguo); los tests de teclado
   del botón con menú ocupan más de lo estimado. Aceptado por el usuario el 2026-11-05.
 
 - E-02 El tema se elige desde la barra, se recuerda y no parpadea al recargar

@@ -1,7 +1,7 @@
 # Entrega E-01 · Barra superior con idioma
 
 Rama: `feat/registro-diseno-visual-barra-idioma` · PR: pendiente ·
-Líneas de código y tests: 852 (límite: 400; aceptado por el usuario, ver «Excepción» de E-01 en
+Líneas de código y tests: 860 (límite: 400; aceptado por el usuario, ver «Excepción» de E-01 en
 `tasks.md`).
 
 ## Qué se hizo

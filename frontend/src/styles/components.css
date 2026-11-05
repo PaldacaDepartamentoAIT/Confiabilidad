@@ -60,3 +60,11 @@
 .menu-button__option:focus {
   background: var(--color-support);
 }
+
+.top-bar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: var(--space-block);
+}
