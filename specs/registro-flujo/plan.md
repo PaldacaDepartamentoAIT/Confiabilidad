@@ -14,7 +14,7 @@ Estado: aprobado
 
 ### Backend
 
-### M-01 Servicio del flujo (`apps/accounts/registration.py`)
+### M-01 Servicio del flujo (`apps/accounts/registration.py`, `apps/accounts/processes.py`, `apps/accounts/tasks.py`)
 Responsabilidad: operaciones nuevas que usa la API, todas sobre `_locked_process` (las dos tablas,
 plaza primero; D-14 y D-18 de `procesos-pendientes`), para que un registro real y una plaza hagan las
 mismas consultas (RF-017):
@@ -25,7 +25,14 @@ mismas consultas (RF-017):
   intento) → lo valida (RF-007, RF-008; RF-009 de `procesos-pendientes`).
 - `resend_code(public_id)`: además de RF-016 de `procesos-pendientes`, rechaza antes de 60 s desde el
   último envío o tras el quinto reenvío, y con el código validado, con el mismo resultado `UNAVAILABLE`
-  en los tres casos (RF-010, C-04).
+  en los tres casos (RF-010, C-04). Al aceptar, fija también `code_expires_at` = ahora + duración
+  configurada en la misma actualización, igual en un registro real y en una plaza, y encola la
+  emisión con la tarea propia del flujo (RF-006, D-19).
+- Emisión del reenvío del flujo: la tarea `reissue_flow_code(public_id)` llama a
+  `reissue_code(public_id, keep_deadline=True)`, que emite el código y su correo con
+  `processes.renew_code(..., keep_deadline=True)` sin mover `code_expires_at`. Sin el indicador (el
+  valor por defecto), `renew_code` y `reissue_code` siguen fijando el plazo al emitir: la consola y
+  el cambio de contraseña no cambian (C-03).
 - `complete_with_code(public_id, code, password)`: orden no existe → caducado → bloqueado → no
   coincide (suma intento) → no validado (suma intento, mismo resultado que no coincide; C-03) →
   política de contraseña (sin intento; RF-013) → `complete` existente, con la concesión de marketing
@@ -282,12 +289,27 @@ Descartada: añadir ahora el selector de tema recordado.
 Motivo: el selector es de la aplicación entera, no del registro; esta feature deja las variables
 listas para él.
 
+### D-19 Una tarea de emisión propia para el reenvío del flujo
+Elegida: `resend_code` fija el plazo al aceptar y encola `reissue_flow_code`, que emite sin mover el
+plazo (`keep_deadline=True`); la tarea compartida `reissue_code(purpose, public_id)` no cambia.
+Descartada: añadir el indicador como argumento de la tarea compartida, o deducir en la tarea si debe
+conservar el plazo mirando el estado del proceso.
+Motivo: la tarea compartida despacha también el cambio de contraseña (`REISSUE_FUNCTIONS`), que
+tendría que aceptar un argumento que no usa, y una tarea ya encolada con la firma anterior debe
+seguir valiendo. Deducirlo del estado no distingue un reenvío de consola de uno del flujo, porque los
+dos dejan la huella vacía. Si la cola se retrasa más que la duración del código, la tarea emite
+igualmente con el plazo ya vencido: el envío descarta un correo con el código caducado
+(`_code_expiry` de `correo-asincrono-plantillas`) y la pantalla, al llegar a cero, ofrece pedir otro
+(S-18).
+
 ## Estrategia de tests
 - Servicio (`backend/apps/accounts/tests/test_registration_flow.py`, pytest): cada rama de
   `verify_code`, `resend_code`, `complete_with_code` y `status` (RF-007…RF-014, RF-016), incluido el
   código validado presentado de nuevo con el código vigente y caducado; contadores de
-  reenvío al empezar, repetir, resolver la plaza y reenviar (RF-010); `purge_stale` con el borde de
-  24 h (RF-020). El tiempo se mueve con `update()` (D-07 de `procesos-pendientes`).
+  reenvío al empezar, repetir, resolver la plaza y reenviar (RF-010); el plazo completo desde la
+  aceptación del reenvío del flujo, que la tarea del flujo conserva y la de consola renueva (RF-006,
+  D-19); `purge_stale` con el borde de 24 h (RF-020). El tiempo se mueve con `update()` (D-07 de
+  `procesos-pendientes`).
 - Equivalencia (`test_registration_flow_equivalence.py`, pytest): un registro real cuyo código no se
   acierta y una plaza recorren consultar, verificar, reenviar, completar y caducar, con las mismas
   respuestas (estado, cuerpo, cabeceras y cookies), los mismos plazos y las mismas consultas
