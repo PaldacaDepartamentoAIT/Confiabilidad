@@ -1,7 +1,7 @@
 # Entrega E-02 · Tema guardado antes del primer pintado
 
 Rama: `feat/registro-diseno-visual-tema` (apilada sobre `feat/registro-diseno-visual-barra-idioma`,
-E-01) · PR: pendiente · Líneas de código y tests: 309 (límite: 400).
+E-01) · PR: [PaldacaDepartamentoAIT/Confiabilidad#61](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/61) · Líneas de código y tests: 309 (límite: 400).
 
 ## Qué se hizo
 - **Tema guardado y tema en uso** (`theme/theme.ts`, T-007): lee el tema elegido de
