@@ -1,5 +1,5 @@
 # Plan: desktop-tauri-seguro
-Estado: borrador
+Estado: aprobado
 
 ## Módulos
 ### M-01 Política base de producción
