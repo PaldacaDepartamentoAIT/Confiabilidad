@@ -34,7 +34,7 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   Decisiones: además de las claves previstas, `topBar.themeLabel` («Tema») para nombrar el menú de
   tema, como `language.label` nombra el de idioma — [Probable] — revertir: borrar la clave.
 
-- [ ] T-003 Botón con menú
+- [x] T-003 Botón con menú
   RF: RF-005 (M-04, D-05) | Depende de: — | Archivos: 4
   Archivos: `components/MenuButton.tsx`, `components/MenuButton.test.tsx`,
   `styles/components.css` (nuevo, con los estilos del botón circular y el menú), `main.tsx`
@@ -46,6 +46,11 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   cierran sin elegir; con dos menús, abrir el segundo cierra el primero; suite verde.
   Excepción: `components.css` nace aquí y hay que importarlo una vez en `main.tsx`; separar la
   importación dejaría un archivo de estilos sin cargar.
+  Decisiones: el menú se cierra solo con `focusout` (sin escucha de clics en el documento ni rama
+  para Tab): con el menú abierto el foco está siempre en una opción, y un clic fuera, Tab o mover
+  el foco lo sacan — [Probable] — revertir: añadir un escucha de `mousedown` en el documento. El
+  clic en el botón también abre con el foco en la opción marcada, como el teclado — [Probable] —
+  revertir: abrir sin mover el foco.
 
 - [ ] T-004 Menú de idioma
   RF: RF-002 (M-05, D-05) | Depende de: T-002, T-003 | Archivos: 2
