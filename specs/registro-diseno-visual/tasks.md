@@ -231,13 +231,17 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   Excepción: `i18n/locales/locales.test.ts` fija la lista de grupos de textos y debe cambiar con
   cada grupo nuevo (aprobado por el usuario al implementar T-002).
 
-- [ ] T-020 Botón «?» con globo
+- [x] T-020 Botón «?» con globo
   RF: RF-014 (M-07, D-08) | Depende de: T-019 | Archivos: 3
   Archivos: `components/fields/HelpTip.tsx`, `components/fields/HelpTip.test.tsx`,
   `styles/components.css`.
   Hecho cuando: el botón se llama «Ayuda (<campo>)»; el globo `role="tooltip"` se muestra al pasar
   el puntero, al enfocar y al tocar, y se oculta al irse el puntero o el foco, al volver a tocar y
   con Escape; su texto está siempre en el DOM; suite verde.
+  Decisiones: con el ratón, el globo lo abre y cierra el puntero y el clic no lo alterna; con un
+  toque, el clic lo alterna y el foco que trae el toque no lo abre por su cuenta. Con el teclado,
+  el foco lo abre e Intro lo alterna — [Probable] — revertir: alternar con cualquier clic. Cerrado
+  lleva `hidden`, que no impide que el campo lo use como descripción — [Cierto].
 
 - [ ] T-021 El campo lleva su «?» y lee su descripción
   RF: RF-014 (M-06, M-07) | Depende de: T-020, T-013 | Archivos: 3
