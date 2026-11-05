@@ -1,7 +1,7 @@
 # Entrega E-05 · Mensajes de cada paso en su sitio reservado
 
 Rama: `feat/registro-diseno-visual-mensajes` (apilada sobre `feat/registro-diseno-visual-campos`,
-E-04) · PR: pendiente · Líneas de código y tests: 142 (límite: 400).
+E-04) · PR: [PaldacaDepartamentoAIT/Confiabilidad#64](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/64) · Líneas de código y tests: 150 (límite: 400).
 
 ## Qué se hizo
 - **Zona de mensajes** (`MessageZone`, T-016): un hueco de una línea, siempre presente, justo encima
