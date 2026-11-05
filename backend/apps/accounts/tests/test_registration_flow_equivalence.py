@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from datetime import timedelta
 from typing import Any
+from unittest import mock
 
 import pytest
 from django.db import connection
@@ -8,7 +9,7 @@ from django.test import Client
 from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 
-from apps.accounts import registration
+from apps.accounts import conf, registration
 from apps.accounts.models import PendingRegistration, PhantomProcess
 from apps.accounts.tests.factories import DEFAULT_PROFILE, make_pending, make_user
 
@@ -90,7 +91,11 @@ def _journey(public_id: str) -> list[Step]:
     steps.append(_post("status", ident))
     steps.append(_post("complete", {**wrong, "password": PASSWORD}))
     _pin(public_id, last_sent_at=now - timedelta(minutes=2))
-    steps.append(_post("resend", ident))
+    # Entre el reenvío aceptado y la emisión (que aquí no corre), el estado ya da el plazo completo
+    # (RF-006). El reloj se fija para que los segundos no dependan de lo que tarda cada recorrido.
+    with mock.patch.object(timezone, "now", return_value=timezone.now()):
+        steps.append(_post("resend", ident))
+        steps.append(_post("status", ident))
     _pin(public_id, code_expires_at=now + timedelta(minutes=10), last_sent_at=now)
     steps.append(_post("status", ident))
     steps.append(_post("verify", wrong))
@@ -111,6 +116,7 @@ def test_a_phantom_and_a_real_registration_answer_the_same_through_the_whole_flo
 
     assert real == phantom
     assert real[8][1]["locked"] is True
+    assert real[11][1]["code_expires_in"] == conf.code_ttl().total_seconds()
     codes = [step[1].get("code", step[0]) for step in real]
     assert codes == [
         200,
@@ -120,6 +126,7 @@ def test_a_phantom_and_a_real_registration_answer_the_same_through_the_whole_flo
         200,
         "locked",
         202,
+        200,
         200,
         "wrong_code",
         "resend_unavailable",

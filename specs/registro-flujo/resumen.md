@@ -16,6 +16,9 @@ contraseña. Cada entrega tiene su propio resumen en `entregas/`.
 - API en `/api/app/v1/registration/…` y `/api/browser/v1/registration/…` (esta con CSRF): `options`
   (países, términos y marketing vigentes; da la cookie CSRF), `status`, `verify`, `resend` y
   `complete`, con un límite de 60 peticiones por hora e IP para todo el flujo salvo `status`.
+- Al aceptar un reenvío de la pantalla o de la API, el plazo del código nuevo cuenta desde ese
+  momento, aunque el correo salga después (una tarea de emisión propia lo conserva); el reenvío de
+  consola no cambia.
 - Limpieza (`purge_stale`): los registros sin verificar se borran 24 h después de caducar su último
   código, con una tarea de Celery cada hora y el subcomando `registration purge-stale`.
 
@@ -55,6 +58,7 @@ contraseña. Cada entrega tiene su propio resumen en `entregas/`.
 | E-22 Correcciones de la validación | [#55](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/55) |
 | E-23 Correcciones de la segunda validación | [#56](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/56) |
 | E-24 Correcciones de la tercera validación | [#57](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/57) |
+| E-25 Plazo del código nuevo al reenviar | [#58](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/58) |
 
 ### Límites conocidos
 - La pantalla de cuenta creada no ofrece salida: el inicio de sesión no es de esta feature (S-07).

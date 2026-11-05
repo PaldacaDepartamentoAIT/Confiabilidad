@@ -5,7 +5,7 @@ import pytest
 from allauth.account.models import EmailAddress
 from django.utils import timezone
 
-from apps.accounts import registration
+from apps.accounts import conf, registration
 from apps.accounts.models import PendingRegistration, PhantomProcess, User
 from apps.accounts.tests.factories import DEFAULT_PROFILE, StartedWithCode, make_pending, make_user
 
@@ -261,6 +261,53 @@ def test_resend_of_an_expired_or_unknown_process_is_refused() -> None:
 
     assert registration.resend_code(public_id=started.public_id) is Refusal.EXPIRED
     assert registration.resend_code(public_id="unknown") is Refusal.NOT_FOUND
+
+
+def _deadline(public_id: str) -> object:
+    process = PendingRegistration.objects.filter(
+        public_id=public_id
+    ).first() or PhantomProcess.objects.get(public_id=public_id)
+    return process.code_expires_at
+
+
+@pytest.mark.parametrize("source", [_phantom, _real], ids=["phantom", "real"])
+def test_an_accepted_resend_gives_the_full_time_before_the_code_is_sent(
+    source: Callable[[], str],
+) -> None:
+    public_id = source()
+    _pin(code_in=-60, sent_ago=61)
+
+    assert isinstance(registration.resend_code(public_id=public_id), registration.Resent)
+
+    current = registration.status(public_id=public_id)
+    assert current is not None
+    full = conf.code_ttl().total_seconds()
+    assert full - 1 <= current.code_expires_in <= full
+
+
+@pytest.mark.parametrize("source", [_phantom, _real], ids=["phantom", "real"])
+def test_sending_the_resent_code_of_the_flow_keeps_its_deadline(source: Callable[[], str]) -> None:
+    public_id = source()
+    _pin(code_in=300, sent_ago=61)
+    registration.resend_code(public_id=public_id)
+    _pin(code_in=300, sent_ago=0, resends=1)
+    deadline = _deadline(public_id)
+
+    registration.reissue_code(public_id, keep_deadline=True)
+
+    assert _deadline(public_id) == deadline
+
+
+def test_sending_a_code_resent_from_the_console_sets_a_new_deadline() -> None:
+    public_id = _real()
+    assert isinstance(registration.resend(public_id=public_id), registration.Resent)
+    _pin(code_in=300, sent_ago=0)
+    before = timezone.now()
+
+    registration.reissue_code(public_id)
+
+    assert _stored().code_expires_at >= before + conf.code_ttl()
+    assert _stored().code_hash != ""
 
 
 def _resend_journey(public_id: str) -> list[object]:
