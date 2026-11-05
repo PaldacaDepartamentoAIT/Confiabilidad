@@ -131,7 +131,7 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   y que no falla con el almacenamiento bloqueado; el script está antes de la carga de estilos y usa
   la misma clave que `theme.ts`; suite verde.
 
-- [ ] T-010 Menú de tema
+- [x] T-010 Menú de tema
   RF: RF-003 (M-02, M-05) | Depende de: T-002, T-003, T-007 | Archivos: 3
   Archivos: `components/ThemeMenu.tsx`, `components/ThemeMenu.test.tsx`, `components/icons.tsx`
   (nuevo: sol y luna).
