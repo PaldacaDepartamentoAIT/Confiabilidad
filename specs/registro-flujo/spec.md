@@ -366,3 +366,8 @@ similitud, las comunes ni las filtradas.
   de emisión el plazo del reenvío del flujo sin cambiar la consola) y tareas nuevas de servicio y de
   equivalencia en una entrega nueva; aprobado por el usuario — RF: RF-006 — Estado: impacto
   analizado
+- 2026-11-05 — Validación: CUMPLIDA (4.ª, tras E-25 con T-064…T-066): RF-001…RF-024 con evidencia,
+  2021 tests de pytest (1 omitido por diseño, cobertura 99,61 %) y 373 de Vitest (cobertura 99,86 %)
+  en verde, `mypy`/`ruff`/`black`/`tsc`/ESLint limpios, Prettier limpio en los archivos de la
+  feature y migraciones al día; RF-006 comprobado además en Chromium sin worker — validado por
+  subagente con contexto limpio — RF: RF-001…RF-024 — Estado: aprobada
