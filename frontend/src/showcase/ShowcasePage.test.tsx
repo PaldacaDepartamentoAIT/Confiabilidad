@@ -43,12 +43,13 @@ test("shows the sample form with its required fields and the asterisk legend", (
   expect(code).toHaveAttribute("aria-required", "true");
 });
 
-test("the tab order goes through the language menu and then each field in order", async () => {
+test("the tab order goes through the top bar menus and then each field in order", async () => {
   const user = userEvent.setup();
   renderPage();
 
   const expected = [
     screen.getByRole("button", { name: "Idioma: Español (ES)" }),
+    screen.getByRole("button", { name: "Tema: Claro" }),
     screen.getByRole("textbox", { name: "Nombre completo" }),
     screen.getByRole("textbox", { name: "Correo electrónico" }),
     screen.getByLabelText(/^Contraseña/),

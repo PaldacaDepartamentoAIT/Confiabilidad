@@ -131,7 +131,7 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   y que no falla con el almacenamiento bloqueado; el script está antes de la carga de estilos y usa
   la misma clave que `theme.ts`; suite verde.
 
-- [ ] T-010 Menú de tema
+- [x] T-010 Menú de tema
   RF: RF-003 (M-02, M-05) | Depende de: T-002, T-003, T-007 | Archivos: 3
   Archivos: `components/ThemeMenu.tsx`, `components/ThemeMenu.test.tsx`, `components/icons.tsx`
   (nuevo: sol y luna).
@@ -139,10 +139,13 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   cuando viene del sistema); el menú ofrece «Claro» y «Oscuro» con el activo marcado; elegir aplica
   el tema, lo guarda, cierra el menú, deja el foco en el botón y conserva lo escrito; suite verde.
 
-- [ ] T-011 Tema en la barra superior
+- [x] T-011 Tema en la barra superior
   RF: RF-001, RF-003 (M-05) | Depende de: T-005, T-010 | Archivos: 3
   Archivos: `components/TopBar.tsx`, `App.test.tsx`, `styles/components.css`.
   Hecho cuando: la barra de todas las pantallas tiene el menú de idioma y el de tema; suite verde.
+  Decisiones: `components.css` no cambia (la barra ya se alineó en E-01) y se toca
+  `showcase/ShowcasePage.test.tsx`, cuyo orden de tabulación incluye ahora el botón de tema —
+  [Cierto] — revertir: no aplica.
 
 ## E-04 y E-05 Campos con hueco de error, ojo y zona de mensajes
 
