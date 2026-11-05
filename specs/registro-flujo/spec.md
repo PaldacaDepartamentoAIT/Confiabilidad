@@ -1,5 +1,5 @@
 # Spec: registro-flujo
-Estado: aprobada
+Estado: borrador
 Aprobación: ligera
 
 ## Objetivo (por qué)
@@ -72,7 +72,10 @@ posterior al formulario deberá mostrar el correo electrónico.
 ### RF-006 Temporizador de caducidad
 Mientras la pantalla de verificación esté abierta, el sistema deberá mostrar el tiempo restante del
 código vigente según el servidor, también tras recargar la página. Cuando llegue a cero, el sistema
-deberá indicar que el código ha caducado y que puede pedirse otro.
+deberá indicar que el código ha caducado y que puede pedirse otro. Desde que el servidor acepta un
+reenvío (RF-010), el tiempo restante que devuelve deberá ser el del código nuevo, completo, aunque el
+correo con ese código aún no haya salido: la pantalla nunca deberá indicar que un código recién
+pedido ha caducado.
 
 ### RF-007 Verificación del código
 Cuando se envíe un código desde la pantalla de verificación, el sistema deberá comprobarlo en el
@@ -348,3 +351,6 @@ similitud, las comunes ni las filtradas.
   añadido; S-03, S-06, S-13 y S-15 ajustados; S-16 y S-17, los casos compartidos de contraseña y CF-8
   añadidos — Estado: clarificado
 - 2026-10-30 — Aprobación por el usuario — Estado: aprobada
+- 2026-11-05 — Cambio: tras un reenvío aceptado, el tiempo restante es el del código nuevo aunque el
+  correo aún no haya salido (observación 2 de la tercera validación) — RF: RF-006 — Estado:
+  pendiente de clarificar
