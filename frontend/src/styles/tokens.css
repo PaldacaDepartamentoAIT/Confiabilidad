@@ -1,4 +1,5 @@
-/* Paleta Niebla marina de docs/identidad-visual.md. El tema sigue al sistema operativo (D-13). */
+/* Paleta Niebla marina de docs/identidad-visual.md. Sin tema elegido sigue al sistema operativo;
+   el elegido llega como `data-theme` en <html> (D-04, D-13). */
 :root {
   color-scheme: light;
   --color-canvas: #dbe5eb;
@@ -29,7 +30,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     color-scheme: dark;
     --color-canvas: #0c161d;
     --color-block: #162631;
@@ -47,4 +48,23 @@
     --color-alarm-p2: #d29a76;
     --color-warning: #c4b07a;
   }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-canvas: #0c161d;
+  --color-block: #162631;
+  --color-support: #1f313d;
+  --color-line: #293e4c;
+  --color-line-strong: #627d90;
+  --color-text-secondary: #b3c5d0;
+  --color-ink: #eaf1f6;
+  --color-fill-strong: #344855;
+  --color-action: #9cc9e8;
+  --color-on-action: #0c161d;
+  --color-accent-1: #4f95c4;
+  --color-accent-2: #9cc9e8;
+  --color-alarm-p1: #d97f87;
+  --color-alarm-p2: #d29a76;
+  --color-warning: #c4b07a;
 }

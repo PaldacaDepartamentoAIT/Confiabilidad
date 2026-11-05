@@ -47,10 +47,11 @@ function variables(block: string): Record<string, string> {
   );
 }
 
-function darkBlock(css: string): string {
-  const start = css.indexOf("@media (prefers-color-scheme: dark)");
+// Devuelve las declaraciones de la primera regla cuyo selector es exactamente `selector`.
+function rule(css: string, selector: string): string {
+  const start = css.indexOf(`${selector} {`);
   expect(start).toBeGreaterThan(-1);
-  return css.slice(start);
+  return css.slice(start, css.indexOf("}", start));
 }
 
 describe("identidad visual", () => {
@@ -59,7 +60,16 @@ describe("identidad visual", () => {
     expect(variables(light)).toEqual(LIGHT);
   });
 
-  it("define la paleta del tema oscuro según el sistema operativo", () => {
-    expect(variables(darkBlock(tokens))).toEqual(DARK);
+  it("aplica la paleta oscura con el sistema en oscuro, salvo si se eligió el claro", () => {
+    const media = tokens.slice(tokens.indexOf("@media (prefers-color-scheme: dark)"));
+    const system = rule(media, ':root:not([data-theme="light"])');
+    expect(variables(system)).toEqual(DARK);
+    expect(system).toContain("color-scheme: dark;");
+  });
+
+  it("aplica la paleta oscura cuando se eligió el oscuro", () => {
+    const chosen = rule(tokens, ':root[data-theme="dark"]');
+    expect(variables(chosen)).toEqual(DARK);
+    expect(chosen).toContain("color-scheme: dark;");
   });
 });
