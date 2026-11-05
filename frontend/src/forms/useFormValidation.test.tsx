@@ -458,3 +458,54 @@ test("leaving a field with the pointer pressed validates it once the click ends"
   await user.pointer({ keys: "[/MouseLeft]", target: code });
   await waitFor(() => expect(latestErrors).toEqual({ name: { key: "required" } }));
 });
+
+function ButtonValueForm({
+  onValid,
+  initial,
+}: {
+  onValid: (values: unknown) => void;
+  initial: string;
+}) {
+  const { errors, onBlur, handleSubmit } = useFormValidation({ country: [notEmpty] });
+  return (
+    <form onSubmit={handleSubmit(onValid)}>
+      <button type="button" name="country" value={initial} onBlur={onBlur("country")}>
+        País
+      </button>
+      {errors.country && <p>error de país</p>}
+      <button type="submit">Enviar</button>
+    </form>
+  );
+}
+
+test("a button with a value is read like a field", async () => {
+  const user = userEvent.setup();
+  const onValid = vi.fn();
+  renderInSpanish(<ButtonValueForm onValid={onValid} initial="ES" />);
+
+  await user.click(screen.getByRole("button", { name: "Enviar" }));
+
+  expect(onValid).toHaveBeenCalledWith({ country: "ES" });
+});
+
+test("an empty button value is an error that takes the focus", async () => {
+  const user = userEvent.setup();
+  const onValid = vi.fn();
+  renderInSpanish(<ButtonValueForm onValid={onValid} initial="" />);
+
+  await user.click(screen.getByRole("button", { name: "Enviar" }));
+
+  expect(onValid).not.toHaveBeenCalled();
+  expect(screen.getByRole("button", { name: "País" })).toHaveFocus();
+  expect(screen.getByText("error de país")).toBeInTheDocument();
+});
+
+test("leaving a button with a value validates it", async () => {
+  const user = userEvent.setup();
+  renderInSpanish(<ButtonValueForm onValid={vi.fn()} initial="" />);
+
+  await user.tab();
+  await user.tab();
+
+  expect(screen.getByText("error de país")).toBeInTheDocument();
+});

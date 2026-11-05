@@ -287,7 +287,7 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   ni tildes («peru» → «Perú»), acumula las teclas en menos de 500 ms y vuelve a empezar después;
   repetir una misma letra recorre las opciones que empiezan por ella; suite verde.
 
-- [ ] T-026 La validación lee un botón con valor
+- [x] T-026 La validación lee un botón con valor
   RF: RF-017 (M-09, D-06) | Depende de: — | Archivos: 2
   Archivos: `forms/useFormValidation.ts`, `forms/useFormValidation.test.tsx`.
   Hecho cuando: `readValue` y `onBlur` aceptan un `<button name value>`, el envío lee su valor y,

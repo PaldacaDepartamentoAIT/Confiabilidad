@@ -43,7 +43,12 @@ function readValue(element: unknown): string {
   if (element instanceof HTMLInputElement && element.type === "checkbox") {
     return element.checked ? "true" : "";
   }
-  if (element instanceof HTMLInputElement || element instanceof HTMLSelectElement) {
+  // El selector propio es un botón con `name` y `value` (D-06).
+  if (
+    element instanceof HTMLInputElement ||
+    element instanceof HTMLSelectElement ||
+    element instanceof HTMLButtonElement
+  ) {
     return element.value;
   }
   return "";
@@ -126,7 +131,7 @@ export function useFormValidation<Field extends string>(
   }
 
   function onBlur(name: Field) {
-    return (event: FocusEvent<HTMLInputElement | HTMLSelectElement>) => {
+    return (event: FocusEvent<HTMLInputElement | HTMLSelectElement | HTMLButtonElement>) => {
       const value = readValue(event.target);
       if (pointerPressed) afterClick.push(() => validateField(name, value));
       else validateField(name, value);
