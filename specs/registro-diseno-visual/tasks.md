@@ -22,12 +22,17 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   fondo opaco de la ventana (D-10), asterisco y errores de campo en P1 (D-11) y radio de 4 px
   (D-12), elegidos por el usuario — [Cierto] — revertir: editar la sección «Componentes» de la guía.
 
-- [ ] T-002 Textos de la barra superior
-  RF: RF-002, RF-003 (M-14) | Depende de: — | Archivos: 3
-  Archivos: `i18n/locales/es.ts`, `i18n/locales/en.ts`, `i18n/locales/pt-BR.ts`.
+- [x] T-002 Textos de la barra superior
+  RF: RF-002, RF-003 (M-14) | Depende de: — | Archivos: 4
+  Archivos: `i18n/locales/es.ts`, `i18n/locales/en.ts`, `i18n/locales/pt-BR.ts`,
+  `i18n/locales/locales.test.ts`.
   Hecho cuando: existen `topBar.label`, `topBar.language`, `topBar.theme`, `topBar.light` y
   `topBar.dark` en los tres idiomas y `locales.test.ts` sigue en verde (mismas claves en todos);
   suite verde.
+  Excepción: `i18n/locales/locales.test.ts` fija la lista de grupos de textos y debe cambiar con
+  cada grupo nuevo (aprobado por el usuario al implementar T-002).
+  Decisiones: además de las claves previstas, `topBar.themeLabel` («Tema») para nombrar el menú de
+  tema, como `language.label` nombra el de idioma — [Probable] — revertir: borrar la clave.
 
 - [ ] T-003 Botón con menú
   RF: RF-005 (M-04, D-05) | Depende de: — | Archivos: 4
@@ -163,10 +168,13 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
 ## E-04 Ayuda «?» en los campos del registro
 
 - [ ] T-019 Descripciones de los campos
-  RF: RF-014 (M-14, S-03) | Depende de: — | Archivos: 3
-  Archivos: `i18n/locales/es.ts`, `i18n/locales/en.ts`, `i18n/locales/pt-BR.ts`.
+  RF: RF-014 (M-14, S-03) | Depende de: — | Archivos: 4
+  Archivos: `i18n/locales/es.ts`, `i18n/locales/en.ts`, `i18n/locales/pt-BR.ts`,
+  `i18n/locales/locales.test.ts`.
   Hecho cuando: existen `help.label` y una descripción por campo (nombre, fecha, correo, país,
   código y contraseña) en los tres idiomas, con los textos en español del plan; suite verde.
+  Excepción: `i18n/locales/locales.test.ts` fija la lista de grupos de textos y debe cambiar con
+  cada grupo nuevo (aprobado por el usuario al implementar T-002).
 
 - [ ] T-020 Botón «?» con globo
   RF: RF-014 (M-07, D-08) | Depende de: T-019 | Archivos: 3
@@ -239,10 +247,13 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
 ## E-06 Términos y marketing en ventana
 
 - [ ] T-029 Textos de las casillas y de la ventana
-  RF: RF-019, RF-020 (M-14) | Depende de: — | Archivos: 3
-  Archivos: `i18n/locales/es.ts`, `i18n/locales/en.ts`, `i18n/locales/pt-BR.ts`.
+  RF: RF-019, RF-020 (M-14) | Depende de: — | Archivos: 4
+  Archivos: `i18n/locales/es.ts`, `i18n/locales/en.ts`, `i18n/locales/pt-BR.ts`,
+  `i18n/locales/locales.test.ts`.
   Hecho cuando: `register.termsLabel` y `register.marketingLabel` llevan la marca `<doc>` alrededor
   del nombre del documento en los tres idiomas y existe `dialog.close`; suite verde.
+  Excepción: `i18n/locales/locales.test.ts` fija la lista de grupos de textos y debe cambiar con
+  cada grupo nuevo (aprobado por el usuario al implementar T-002).
 
 - [ ] T-030 Ventana de documento
   RF: RF-021 (M-10, D-07) | Depende de: T-029 | Archivos: 3
@@ -264,11 +275,14 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
 ## E-07 Asistente con indicador de pasos
 
 - [ ] T-032 Textos de los pasos
-  RF: RF-006 (M-14) | Depende de: — | Archivos: 3
-  Archivos: `i18n/locales/es.ts`, `i18n/locales/en.ts`, `i18n/locales/pt-BR.ts`.
+  RF: RF-006 (M-14) | Depende de: — | Archivos: 4
+  Archivos: `i18n/locales/es.ts`, `i18n/locales/en.ts`, `i18n/locales/pt-BR.ts`,
+  `i18n/locales/locales.test.ts`.
   Hecho cuando: existen los nombres de los tres pasos, «Paso {{current}} de {{total}}: {{name}}»,
   «completado» y «pendiente», y el nombre accesible del indicador, en los tres idiomas; suite
   verde.
+  Excepción: `i18n/locales/locales.test.ts` fija la lista de grupos de textos y debe cambiar con
+  cada grupo nuevo (aprobado por el usuario al implementar T-002).
 
 - [ ] T-033 Indicador de pasos
   RF: RF-006, RF-008 (M-11) | Depende de: T-032 | Archivos: 3
