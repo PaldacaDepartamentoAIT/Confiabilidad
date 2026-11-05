@@ -280,7 +280,7 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
 
 ## E-07 Selector propio
 
-- [ ] T-025 Búsqueda al teclear
+- [x] T-025 Búsqueda al teclear
   RF: RF-017 (M-09) | Depende de: — | Archivos: 2
   Archivos: `forms/typeahead.ts`, `forms/typeahead.test.ts`.
   Hecho cuando: encuentra la primera opción que empieza por lo tecleado sin distinguir mayúsculas
