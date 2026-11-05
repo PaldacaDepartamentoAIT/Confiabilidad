@@ -47,6 +47,7 @@ function renderStep(fetcher: typeof fetch) {
 }
 
 const field = () => screen.getByLabelText(/^Contraseña/);
+const zone = () => document.querySelector(".message-zone");
 
 async function submit(user: ReturnType<typeof userEvent.setup>, password: string) {
   await user.type(field(), password);
@@ -139,6 +140,9 @@ test("over the limit, counts down and allows sending again at zero", async () =>
   expect(
     await screen.findByText("Demasiados intentos. Vuelve a intentarlo en 2 s."),
   ).toBeInTheDocument();
+  expect(zone()).toContainElement(
+    screen.getByText("Demasiados intentos. Vuelve a intentarlo en 2 s."),
+  );
   expect(screen.getByRole("button", { name: "Crear cuenta" })).toBeDisabled();
   await act(() => vi.advanceTimersByTimeAsync(2000));
   expect(screen.getByRole("button", { name: "Crear cuenta" })).toBeEnabled();
@@ -156,7 +160,15 @@ test.each([
   await submit(user, "turbina-compresor-7");
 
   expect(await screen.findByText(text)).toHaveFocus();
+  expect(zone()).toContainElement(screen.getByText(text));
   expect(field()).toHaveValue("turbina-compresor-7");
+});
+
+test("the message zone is right above the button, also without a message", () => {
+  renderStep(replies().fetcher);
+
+  expect(zone()).toBeEmptyDOMElement();
+  expect(zone()?.nextElementSibling).toBe(screen.getByRole("button", { name: "Crear cuenta" }));
 });
 
 test("while waiting for the answer, a second submission sends nothing", async () => {

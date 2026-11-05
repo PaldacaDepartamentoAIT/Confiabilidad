@@ -11,6 +11,7 @@ import {
 } from "../api/registration";
 import { Button } from "../components/Button";
 import { FormMessage } from "../components/FormMessage";
+import { MessageZone } from "../components/MessageZone";
 import { Checkbox } from "../components/fields/Checkbox";
 import { RequiredLegend } from "../components/fields/RequiredLegend";
 import { SelectField } from "../components/fields/SelectField";
@@ -150,12 +151,6 @@ function RegisterForm({ client, options, terms, language, titleId }: RegisterFor
   return (
     <>
       <RequiredLegend />
-      {wait.remaining > 0 && (
-        <p role="status">{t("validation.retryIn", { seconds: wait.remaining })}</p>
-      )}
-      {message && (
-        <FormMessage ref={messageRef} type={message.type} messageKey={message.messageKey} />
-      )}
       <form
         ref={formRef}
         aria-labelledby={titleId}
@@ -217,6 +212,14 @@ function RegisterForm({ client, options, terms, language, titleId }: RegisterFor
             <Checkbox label={t("register.marketingLabel")} name="marketing" />
           </>
         )}
+        <MessageZone>
+          {wait.remaining > 0 && (
+            <p role="status">{t("validation.retryIn", { seconds: wait.remaining })}</p>
+          )}
+          {message && (
+            <FormMessage ref={messageRef} type={message.type} messageKey={message.messageKey} />
+          )}
+        </MessageZone>
         <Button
           type="submit"
           keepFocusOnMouseDown

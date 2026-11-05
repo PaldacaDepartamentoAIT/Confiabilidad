@@ -199,7 +199,7 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   `styles/components.css`.
   Hecho cuando: la zona existe siempre, vacía o con sus hijos; suite verde.
 
-- [ ] T-017 Mensajes del formulario y de la contraseña en la zona
+- [x] T-017 Mensajes del formulario y de la contraseña en la zona
   RF: RF-023 (M-13) | Depende de: T-016 | Archivos: 3
   Archivos: `registration/RegisterPage.tsx`, `registration/PasswordStep.tsx`,
   `registration/PasswordStep.test.tsx`.
