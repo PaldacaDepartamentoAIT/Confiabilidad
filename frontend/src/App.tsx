@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 
 import { createClient, environmentConfig, type ApiClient } from "./api/client";
 import { LiveAnnouncer } from "./components/LiveAnnouncer";
+import { TopBar } from "./components/TopBar";
 import type { LanguageStorage } from "./i18n/language";
 import { useDocumentLanguage } from "./i18n/useDocumentLanguage";
 import { DonePage } from "./registration/DonePage";
@@ -29,6 +30,7 @@ export function App({ storage, client }: AppProps) {
   const route = matchRoute(useLocation().path, ROUTES, "/");
   return (
     <LiveAnnouncer>
+      <TopBar storage={storage} />
       {route === "/" && <ShowcasePage storage={storage} />}
       {route === "/register" && <RegisterPage client={api} storage={storage} />}
       {route === "/register/continue" && <VerifyPage client={api} storage={storage} />}

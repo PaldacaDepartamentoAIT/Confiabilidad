@@ -67,7 +67,7 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   accesible del botón es «Idioma: Español (ES)», con la abreviatura visible dentro (WCAG 2.5.3) —
   [Probable] — revertir: pasar solo el nombre del idioma a `topBar.language`.
 
-- [ ] T-005 Barra superior en toda la aplicación
+- [x] T-005 Barra superior en toda la aplicación
   RF: RF-001 (M-05) | Depende de: T-004 | Archivos: 3
   Archivos: `components/TopBar.tsx`, `App.tsx`, `App.test.tsx`.
   Hecho cuando: en `/`, `/register`, `/register/continue` y `/register/done` hay un único
