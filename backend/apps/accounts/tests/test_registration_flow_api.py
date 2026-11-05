@@ -1,5 +1,7 @@
+import time
 from datetime import timedelta
 from typing import Any
+from unittest import mock
 
 import pytest
 from allauth.account.models import EmailAddress
@@ -159,6 +161,19 @@ def test_too_many_requests_from_an_ip_are_rejected_without_evaluating(
     assert PendingRegistration.objects.get().code_validated_at is None
 
 
+@override_settings(REGISTRATION_RATE_FLOW_IP_PER_HOUR=1)
+def test_over_the_ip_limit_every_identifier_gets_the_same_answer(started: StartedWithCode) -> None:
+    identifiers = ["unknown", "x" * 500, started.public_id]
+    # El reloj se fija para que la espera indicada no cambie de un segundo a otro entre peticiones.
+    with mock.patch.object(time, "time", return_value=time.time()):
+        assert _app(VERIFY, {"public_id": "unknown", "code": "000000"}).status_code == 404
+        answers = [_app(VERIFY, {"public_id": ident, "code": "000000"}) for ident in identifiers]
+
+    seen = {(r.status_code, r.headers["Retry-After"], str(r.json())) for r in answers}
+    assert len(seen) == 1 and answers[0].status_code == 429
+    assert PendingRegistration.objects.get().failed_attempts == 0
+
+
 def _ready_to_resend() -> None:
     PendingRegistration.objects.update(last_sent_at=timezone.now() - timedelta(seconds=61))
 
@@ -315,6 +330,20 @@ def test_complete_from_the_app_creates_the_account_with_a_verified_email(
     user = User.objects.get(email="ana@example.com")
     assert user.check_password(GOOD_PASSWORD) and EmailAddress.objects.get(user=user).verified
     assert not PendingRegistration.objects.exists()
+
+
+def test_complete_ignores_the_account_data_sent_by_the_client(started: StartedWithCode) -> None:
+    _validate(started)
+    pending = PendingRegistration.objects.get()
+
+    response = _app(
+        COMPLETE, _completion(started, email="otro@x.com", name="Intruso", country="BR")
+    )
+
+    assert response.status_code == 201
+    user = User.objects.get()
+    assert (user.email, user.name, user.country) == (pending.email, pending.name, pending.country)
+    assert not User.objects.filter(email="otro@x.com").exists()
 
 
 def test_complete_from_the_browser_needs_csrf(
