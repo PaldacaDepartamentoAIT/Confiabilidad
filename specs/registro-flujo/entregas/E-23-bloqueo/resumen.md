@@ -1,6 +1,7 @@
 # Entrega E-23 · Correcciones de la segunda validación
 
-Rama: `feat/registro-flujo-bloqueo` · PR: pendiente ·
+Rama: `feat/registro-flujo-bloqueo` · PR:
+[PaldacaDepartamentoAIT/Confiabilidad#56](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/56) ·
 Líneas de código y tests: 95 (límite: 400).
 
 La segunda validación de la feature (subagente sin contexto, 2026-11-04) dio NO CUMPLIDA por RF-009
