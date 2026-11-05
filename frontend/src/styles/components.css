@@ -206,6 +206,7 @@
 .help-tip {
   position: relative;
   display: inline-flex;
+  margin-left: auto;
 }
 
 .help-tip__button {
@@ -226,7 +227,7 @@
 .help-tip__bubble {
   position: absolute;
   bottom: calc(100% + 8px);
-  left: -8px;
+  right: -4px;
   z-index: 5;
   width: max-content;
   max-width: 280px;
