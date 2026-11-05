@@ -1,6 +1,7 @@
 # Entrega E-01 · Barra superior con idioma
 
-Rama: `feat/registro-diseno-visual-barra-idioma` · PR: pendiente ·
+Rama: `feat/registro-diseno-visual-barra-idioma` · PR:
+[PaldacaDepartamentoAIT/Confiabilidad#60](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/60) ·
 Líneas de código y tests: 860 (límite: 400; aceptado por el usuario, ver «Excepción» de E-01 en
 `tasks.md`).
 
