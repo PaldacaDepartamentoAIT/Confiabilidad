@@ -64,6 +64,7 @@ export function PasswordStep({
       <form ref={formRef} noValidate onSubmit={handleSubmit((values) => void send(values))}>
         <PasswordField
           label={t("register.passwordLabel")}
+          help={t("help.password")}
           name="password"
           kind="new"
           required

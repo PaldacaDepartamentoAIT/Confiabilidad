@@ -267,13 +267,16 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   Decisiones: los tests existentes que comparaban la descripción exacta con el error comprueban
   ahora que el error va detrás de la ayuda (`afterHelp`) — [Cierto] — revertir: no aplica.
 
-- [ ] T-024 «?» en el código y la contraseña
+- [x] T-024 «?» en el código y la contraseña
   RF: RF-014, RF-015 | Depende de: T-021 | Archivos: 3
   Archivos: `registration/VerifyPage.tsx`, `registration/PasswordStep.tsx`,
   `registration/a11y.test.tsx`.
   Hecho cuando: el código y la contraseña tienen su «?»; la contraseña sigue mostrando sus reglas;
   la página de muestra no tiene ningún «?»; las auditorías de `axe-core` siguen en verde; suite
   verde.
+  Decisiones: se toca también `registration/VerifyPage.test.tsx` (cuarto archivo): sus tests
+  comparaban la descripción exacta del código y ahora empieza por su ayuda — [Cierto] — revertir:
+  no aplica.
 
 ## E-07 Selector propio
 

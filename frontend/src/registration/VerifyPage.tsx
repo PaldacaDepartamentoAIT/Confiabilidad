@@ -251,6 +251,7 @@ function CodeForm({
       <form ref={formRef} noValidate onSubmit={handleSubmit((values) => void send(values))}>
         <CodeField
           label={t("register.codeLabel")}
+          help={t("help.code")}
           name="code"
           required
           error={errorText(errors.code)}

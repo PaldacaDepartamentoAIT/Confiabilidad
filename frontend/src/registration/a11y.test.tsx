@@ -108,3 +108,30 @@ test("the account created screen has no violations and no email", async () => {
   expect(await violations()).toEqual([]);
   expect(document.body.textContent).not.toContain("@");
 });
+
+test("the code and the password have their «?» and the password keeps its rules", async () => {
+  const user = userEvent.setup();
+  renderAt("/register/continue#pid-1", { status: ok(STATUS), verify: ok({ result: "verified" }) });
+
+  const code = await screen.findByRole("textbox", { name: "Código de verificación" });
+  expect(screen.getByRole("button", { name: "Ayuda (Código de verificación)" })).toBeVisible();
+  expect(code).toHaveAccessibleDescription(
+    "Los 6 dígitos del correo de verificación. Puedes pegarlo entero.",
+  );
+  await user.type(code, "123456");
+  await user.click(screen.getByRole("button", { name: "Verificar" }));
+
+  await screen.findByRole("heading", { level: 2, name: "Elige tu contraseña" });
+  expect(screen.getByRole("button", { name: "Ayuda (Contraseña)" })).toBeVisible();
+  expect(screen.getByText("Al menos 12 caracteres, no solo números.")).toBeVisible();
+  expect(screen.getByLabelText(/^Contraseña/)).toHaveAccessibleDescription(
+    "La usarás para iniciar sesión. Debajo del campo tienes las reglas que debe cumplir. Al menos 12 caracteres, no solo números.",
+  );
+  expect(await violations()).toEqual([]);
+});
+
+test("the sample page has no «?»", () => {
+  renderAt("/", {});
+
+  expect(screen.queryByRole("button", { name: /^Ayuda/ })).not.toBeInTheDocument();
+});
