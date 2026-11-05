@@ -1,7 +1,7 @@
 # Entrega E-06 · Ayuda «?» en los campos del registro
 
 Rama: `feat/registro-diseno-visual-ayuda` (apilada sobre `feat/registro-diseno-visual-mensajes`,
-E-05) · PR: pendiente · Líneas de código y tests: 365 (límite: 400).
+E-05) · PR: [PaldacaDepartamentoAIT/Confiabilidad#65](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/65) · Líneas de código y tests: 367 (límite: 400).
 
 ## Qué se hizo
 - **Descripciones** (T-019): una por campo (nombre, fecha de nacimiento, correo, país, código y
