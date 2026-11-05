@@ -169,12 +169,15 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   Hecho cuando: `TextField` (y con él `CodeField` y `PasswordField`) usa `FieldShell`; el hueco
   está presente con y sin error; los tests existentes de los tres siguen en verde; suite verde.
 
-- [ ] T-014 Casilla y selector con el envoltorio
+- [x] T-014 Casilla y selector con el envoltorio
   RF: RF-016 (M-06) | Depende de: T-012 | Archivos: 3
   Archivos: `components/fields/Checkbox.tsx`, `components/fields/SelectField.tsx`,
   `components/fields/ChoiceFields.test.tsx`.
   Hecho cuando: la casilla y el selector tienen el hueco del error siempre presente, con y sin
   error; suite verde.
+  Decisiones: la casilla usa solo el hueco de error (`ErrorSlot`), no todo el envoltorio, porque su
+  etiqueta va a la derecha de la casilla; sus estilos van en `components.css`, un cuarto archivo —
+  [Cierto] — revertir: no aplica.
 
 - [ ] T-015 Ojo dentro del campo de contraseña
   RF: RF-015, RF-018 (M-02, M-08) | Depende de: T-013 | Archivos: 3

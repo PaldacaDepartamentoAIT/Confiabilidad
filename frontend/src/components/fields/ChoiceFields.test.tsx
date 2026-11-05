@@ -53,6 +53,26 @@ describe("casilla", () => {
   });
 });
 
+it.each([
+  ["casilla", (error?: string) => <Checkbox label="I accept" error={error} />],
+  [
+    "selector",
+    (error?: string) => (
+      <SelectField label="Country" placeholder="Choose" options={options} error={error} />
+    ),
+  ],
+])("%s reserva el hueco del error con y sin error", (_, field) => {
+  const { container, rerender } = render(field());
+
+  const slot = container.querySelector(".field__error-slot");
+  expect(slot).toBeEmptyDOMElement();
+
+  rerender(field("Required."));
+
+  expect(container.querySelector(".field__error-slot")).toBe(slot);
+  expect(slot).toHaveTextContent("Required.");
+});
+
 describe("selector", () => {
   it("se nombra por su etiqueta, ofrece las opciones y una vacía para elegir", () => {
     render(

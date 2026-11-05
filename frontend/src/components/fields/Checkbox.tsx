@@ -1,5 +1,7 @@
 import { forwardRef, useId, type InputHTMLAttributes, type ReactNode } from "react";
 
+import { ErrorSlot } from "./FieldShell";
+
 type CheckboxProps = Omit<InputHTMLAttributes<HTMLInputElement>, "type" | "required"> & {
   label: ReactNode;
   required?: boolean;
@@ -12,27 +14,34 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
   ref,
 ) {
   const id = useId();
-  const errorId = `${id}-error`;
   const hintId = `${id}-hint`;
-  const describedBy = [hint && hintId, error && errorId].filter(Boolean).join(" ") || undefined;
+  const describedBy =
+    [hint && hintId, error && `${id}-error`].filter(Boolean).join(" ") || undefined;
 
   return (
-    <div>
-      <input
-        {...inputProps}
-        ref={ref}
-        id={id}
-        type="checkbox"
-        aria-required={required || undefined}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={describedBy}
-      />
-      <label htmlFor={id}>
-        {label}
-        {required && <span aria-hidden="true"> *</span>}
-      </label>
+    <div className="checkbox">
+      <div className="checkbox__row">
+        <input
+          {...inputProps}
+          ref={ref}
+          id={id}
+          type="checkbox"
+          aria-required={required || undefined}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={describedBy}
+        />
+        <label htmlFor={id}>
+          {label}
+          {required && (
+            <span className="field__required" aria-hidden="true">
+              {" "}
+              *
+            </span>
+          )}
+        </label>
+      </div>
       {hint && <p id={hintId}>{hint}</p>}
-      {error && <p id={errorId}>{error}</p>}
+      <ErrorSlot id={id} error={error} />
     </div>
   );
 });

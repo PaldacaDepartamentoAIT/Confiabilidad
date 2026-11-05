@@ -155,3 +155,20 @@
   margin: 0;
   color: var(--color-alarm-p1);
 }
+
+.checkbox__row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.checkbox__row > input {
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+  flex: none;
+}
+
+.checkbox__row > label {
+  color: var(--color-ink);
+}
