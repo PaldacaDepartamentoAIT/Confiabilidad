@@ -1,5 +1,7 @@
 import { forwardRef, useId, type InputHTMLAttributes, type ReactNode } from "react";
 
+import { FieldShell } from "./FieldShell";
+
 type TextFieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, "type" | "required"> & {
   label: string;
   type?: "text" | "email" | "password" | "date";
@@ -14,30 +16,29 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(function T
   ref,
 ) {
   const id = useId();
-  const errorId = `${id}-error`;
-  const hintId = `${id}-hint`;
-  const describedBy = [hint && hintId, error && errorId].filter(Boolean).join(" ") || undefined;
   const emailProps = type === "email" ? { autoComplete: "email", inputMode: "email" as const } : {};
 
   return (
-    <div>
-      <label htmlFor={id}>
-        {label}
-        {required && <span aria-hidden="true"> *</span>}
-      </label>
-      <input
-        {...emailProps}
-        {...inputProps}
-        ref={ref}
-        id={id}
-        type={type}
-        aria-required={required || undefined}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={describedBy}
-      />
-      {adornment}
-      {hint && <p id={hintId}>{hint}</p>}
-      {error && <p id={errorId}>{error}</p>}
-    </div>
+    <FieldShell
+      id={id}
+      label={label}
+      required={required}
+      hint={hint}
+      error={error}
+      adornment={adornment}
+    >
+      {(describedBy) => (
+        <input
+          {...emailProps}
+          {...inputProps}
+          ref={ref}
+          id={id}
+          type={type}
+          aria-required={required || undefined}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={describedBy}
+        />
+      )}
+    </FieldShell>
   );
 });

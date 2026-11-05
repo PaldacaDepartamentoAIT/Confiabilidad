@@ -163,7 +163,7 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   casilla (T-014). Mutante equivalente: quitar el espacio antes del asterisco no cambia nada que
   compruebe un test (solo el aspecto) — [Cierto].
 
-- [ ] T-013 Texto, código y contraseña con el envoltorio
+- [x] T-013 Texto, código y contraseña con el envoltorio
   RF: RF-013, RF-016 (M-06) | Depende de: T-012 | Archivos: 2
   Archivos: `components/fields/TextField.tsx`, `components/fields/TextField.test.tsx`.
   Hecho cuando: `TextField` (y con él `CodeField` y `PasswordField`) usa `FieldShell`; el hueco

@@ -93,3 +93,25 @@ test("a date field keeps its type and its label", () => {
   expect(input).toHaveAttribute("type", "date");
   expect(input).toHaveAccessibleName("Birthdate");
 });
+
+test("reserves the error room with and without an error", () => {
+  const { container, rerender } = render(<TextField label="Email" type="email" />);
+
+  const slot = container.querySelector(".field__error-slot");
+  expect(slot).toBeEmptyDOMElement();
+
+  rerender(<TextField label="Email" type="email" error="Enter an email." />);
+
+  expect(container.querySelector(".field__error-slot")).toBe(slot);
+  expect(slot).toHaveTextContent("Enter an email.");
+});
+
+test("an inside control goes in the same box as the input", () => {
+  const { container } = render(
+    <TextField label="Code" adornment={<button type="button">Paste</button>} />,
+  );
+
+  const box = container.querySelector(".field__control--adorned");
+  expect(box).toContainElement(screen.getByRole("textbox", { name: "Code" }));
+  expect(box).toContainElement(screen.getByRole("button", { name: "Paste" }));
+});
