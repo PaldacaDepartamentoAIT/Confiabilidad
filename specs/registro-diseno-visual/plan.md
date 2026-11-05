@@ -1,5 +1,5 @@
 # Plan: registro-diseno-visual
-Estado: borrador
+Estado: aprobado
 
 Feature solo de `frontend/` (y de `docs/identidad-visual.md`). No toca el backend ni la API: los
 datos, las validaciones y las respuestas siguen siendo los de `registro-flujo`. No añade
