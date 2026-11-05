@@ -243,13 +243,15 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   el foco lo abre e Intro lo alterna — [Probable] — revertir: alternar con cualquier clic. Cerrado
   lleva `hidden`, que no impide que el campo lo use como descripción — [Cierto].
 
-- [ ] T-021 El campo lleva su «?» y lee su descripción
+- [x] T-021 El campo lleva su «?» y lee su descripción
   RF: RF-014 (M-06, M-07) | Depende de: T-020, T-013 | Archivos: 3
   Archivos: `components/fields/FieldShell.tsx`, `components/fields/FieldShell.test.tsx`,
   `components/fields/TextField.tsx`.
   Hecho cuando: con `help`, el «?» va junto al nombre y la descripción entra en el
   `aria-describedby` del control junto a la ayuda visible y el error; sin `help`, no hay «?»;
   suite verde.
+  Decisiones: que `TextField` pase `help` al envoltorio no tiene test en esta tarea (su archivo de
+  tests no está entre los tres); lo comprueban T-023 y T-024 con los campos reales — [Cierto].
 
 - [ ] T-022 «?» en el selector
   RF: RF-014 | Depende de: T-021, T-014 | Archivos: 2
