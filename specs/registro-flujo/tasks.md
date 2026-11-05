@@ -741,6 +741,31 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   código guarda su valor en el estado de React y el siguiente render lo repone. La aserción protege
   igualmente contra un cambio que vuelva a montar el formulario — [Cierto] — revertir: no aplica.
 
+- [ ] T-064 El reenvío del flujo fija el plazo al aceptar
+  RF: RF-006 (M-01, D-19) | Depende de: T-010 | Archivos: 3
+  Archivos: `backend/apps/accounts/processes.py`, `backend/apps/accounts/registration.py`,
+  `backend/apps/accounts/tests/test_registration_flow.py`.
+  Hecho cuando: tras un `resend_code` aceptado, sin ejecutar la emisión, `status` devuelve
+  `code_expires_in` igual a la duración configurada (±1 s), igual en un registro real y en una
+  plaza; `reissue_code(public_id, keep_deadline=True)` emite el código sin mover `code_expires_at`;
+  `reissue_code(public_id)` y `renew_code` sin el indicador siguen fijando el plazo al emitir (la
+  consola no cambia); suite verde.
+
+- [ ] T-065 Tarea de emisión propia del reenvío del flujo
+  RF: RF-006 (M-01, D-19) | Depende de: T-064 | Archivos: 3
+  Archivos: `backend/apps/accounts/tasks.py`, `backend/apps/accounts/registration.py`,
+  `backend/apps/accounts/tests/test_registration_background.py`.
+  Hecho cuando: `resend_code` encola `reissue_flow_code` con el identificador; esa tarea llama a
+  `reissue_code(public_id, keep_deadline=True)`; el reenvío de consola sigue encolando la tarea
+  compartida `reissue_code`; suite verde.
+
+- [ ] T-066 La equivalencia cubre el estado entre el reenvío y la emisión
+  RF: RF-006, RF-017 | Depende de: T-065 | Archivos: 1
+  Archivos: `backend/apps/accounts/tests/test_registration_flow_equivalence.py`.
+  Hecho cuando: en el recorrido, una consulta de estado justo después de un reenvío aceptado, sin
+  ejecutar la emisión, da la misma respuesta en la plaza y en el registro real, con
+  `code_expires_in` igual a la duración configurada (±1 s); suite verde.
+
 ## Entregas
 Rama de integración: feat/registro-flujo (los PR de las entregas van contra ella; ver `AGENTS.md`)
 
@@ -881,6 +906,12 @@ entrega (`entregas/E-XX-<descripcion>/resumen.md`).
 - E-24 Correcciones de la tercera validación
   Tareas: T-061, T-062, T-063 | Líneas estimadas: 90 | Rama: feat/registro-flujo-tests-finales
   Cómo probarlo: los tests de `PasswordStep`, `RegisterPage`, `VerifyPage` y de la API del flujo.
+
+- E-25 Plazo del código nuevo al reenviar
+  Tareas: T-064, T-065, T-066 | Líneas estimadas: 150 | Rama: feat/registro-flujo-plazo-reenvio
+  Cómo probarlo: los tests del servicio, de la emisión y de la equivalencia; con el worker de
+  Celery parado, reenviar desde http://localhost:5173/register/continue muestra «El código caduca
+  en 15:00» en vez de «El código ha caducado».
 
 ## RF sin tarea
 Ninguno.
