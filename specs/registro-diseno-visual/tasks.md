@@ -10,7 +10,7 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
 
 ## E-01 Barra superior con idioma
 
-- [ ] T-001 Guía visual ampliada
+- [x] T-001 Guía visual ampliada
   RF: RF-022 (M-01, D-10, D-11, D-12, D-14) | Depende de: — | Archivos: 1
   Archivos: `docs/identidad-visual.md`.
   Hecho cuando: la guía describe la barra superior, el botón con menú, el indicador de pasos, el
@@ -18,6 +18,9 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   mensajes, el hueco de error, el asterisco (D-11), el radio de los campos (D-12), la transición
   entre pasos y el tema elegido; el usuario aprueba el texto (parada obligatoria: es una decisión de
   diseño que el plan deja abierta).
+  Decisiones: indicador en relleno fuerte y no en color de acción (M-11 actualizado en el plan),
+  fondo opaco de la ventana (D-10), asterisco y errores de campo en P1 (D-11) y radio de 4 px
+  (D-12), elegidos por el usuario — [Cierto] — revertir: editar la sección «Componentes» de la guía.
 
 - [ ] T-002 Textos de la barra superior
   RF: RF-002, RF-003 (M-14) | Depende de: — | Archivos: 3

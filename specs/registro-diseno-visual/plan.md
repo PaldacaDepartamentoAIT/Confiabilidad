@@ -104,10 +104,9 @@ RF: RF-019, RF-020, RF-021
 
 ### M-11 Indicador de pasos
 Responsabilidad: `frontend/src/registration/StepIndicator.tsx`, una lista `<ol>` de tres
-elementos (número o check en un círculo, nombre visible del paso y línea de unión). Estados:
-completado (círculo relleno de acción con check), actual (círculo relleno de acción con su número
-y nombre en peso 600, `aria-current="step"`) y pendiente (círculo con borde de línea fuerte y su
-número). Un texto oculto a la vista da «Paso 2 de 3: Verificación», y cada elemento lleva el estado
+elementos (número o check en un círculo, nombre visible del paso y línea de unión). Estados (colores de `docs/identidad-visual.md`, «Indicador de pasos»): completado (círculo en
+relleno fuerte con check), actual (círculo en relleno fuerte con su número y nombre en peso 600,
+`aria-current="step"`) y pendiente (círculo con borde de línea fuerte y su número). Un texto oculto a la vista da «Paso 2 de 3: Verificación», y cada elemento lleva el estado
 en texto oculto («completado», «pendiente»). Recibe `current: 1 | 2 | 3 | "done"`; con `"done"`
 los tres están completados. La línea se colorea con una transición de `transform: scaleX` y el
 círculo con una de `background-color` y `border-color`.
@@ -266,8 +265,9 @@ una desviación de la guía que debe aprobar en M-01.
 Elegida: el asterisco junto al nombre, en el color de alarma P1, como en la imagen.
 Descartada: asterisco en texto secundario.
 Motivo: la imagen lo pinta en rojo, y alarma P1 es el único rojo de la paleta. Choca con «los
-colores de alarma no se usan para nada más»; si el usuario no acepta la excepción en M-01, el
-asterisco va en tinta. La obligatoriedad no depende del color: está el asterisco y la leyenda.
+colores de alarma no se usan para nada más»: aceptado por el usuario en T-001, junto con los errores
+de campo en P1, como excepción escrita en la guía. La obligatoriedad no depende del color: está el
+asterisco y la leyenda.
 
 ### D-12 Campos con radio de 4 px
 Elegida: mantener el radio de 4 px que ya tienen los campos.
