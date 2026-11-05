@@ -254,8 +254,10 @@ def resend_code(*, public_id: str) -> Resent | FlowResendRefusal:
             or process.code_validated_at is not None
         ):
             return FlowResendRefusal.UNAVAILABLE
+        # El plazo del código nuevo cuenta desde aquí, aunque el correo salga después (RF-006).
         type(process).objects.filter(pk=process.pk).update(
             code_hash="",
+            code_expires_at=now + conf.code_ttl(),
             failed_attempts=0,
             resend_count=process.resend_count + 1,
             last_sent_at=now,
@@ -267,13 +269,13 @@ def resend_code(*, public_id: str) -> Resent | FlowResendRefusal:
         return Resent(public_id=public_id)
 
 
-def reissue_code(public_id: str) -> None:
+def reissue_code(public_id: str, *, keep_deadline: bool = False) -> None:
     # La plaza recibe también un código nuevo, que nunca se envía (D-13).
     with transaction.atomic():
         process = _locked_process(public_id)
         if process is None or process.is_expired or process.code_validated_at is not None:
             return
-        code = processes.renew_code(process, _PURPOSE)
+        code = processes.renew_code(process, _PURPOSE, keep_deadline=keep_deadline)
         if isinstance(process, PendingRegistration):
             outbox.enqueue(
                 kind="registration_code",
