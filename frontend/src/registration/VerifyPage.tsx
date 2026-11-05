@@ -1,4 +1,4 @@
-import { useEffect, useState, type MouseEvent } from "react";
+import { useEffect, useState, type MouseEvent, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 import type { ApiClient } from "../api/client";
@@ -11,6 +11,7 @@ import {
 } from "../api/registration";
 import { Button } from "../components/Button";
 import { FormMessage } from "../components/FormMessage";
+import { MessageZone } from "../components/MessageZone";
 import { CodeField } from "../components/fields/CodeField";
 import {
   useFormValidation,
@@ -143,12 +144,6 @@ export function VerifyPage({ client }: VerifyPageProps) {
       )}
       {loaded === "ready" && status && !acceptedCode && (
         <>
-          {rejection && <FormMessage type="error" messageKey={`validation.${rejection}`} />}
-          <p>
-            {expiry.remaining > 0
-              ? t("register.codeExpiresIn", { time: minutesAndSeconds(expiry.remaining) })
-              : t("register.codeExpiredNotice")}
-          </p>
           <CodeForm
             key={loads}
             client={client}
@@ -156,6 +151,16 @@ export function VerifyPage({ client }: VerifyPageProps) {
             initiallyLocked={status.locked}
             onVerified={setAcceptedCode}
             onNotFound={() => setLoaded("notFound")}
+            notices={
+              <>
+                {rejection && <FormMessage type="error" messageKey={`validation.${rejection}`} />}
+                <p>
+                  {expiry.remaining > 0
+                    ? t("register.codeExpiresIn", { time: minutesAndSeconds(expiry.remaining) })
+                    : t("register.codeExpiredNotice")}
+                </p>
+              </>
+            }
           />
           {resendMessage && (
             <FormMessage type={resendMessage.type} messageKey={resendMessage.messageKey} />
@@ -191,9 +196,18 @@ type CodeFormProps = {
   initiallyLocked: boolean;
   onVerified: (code: string) => void;
   onNotFound: () => void;
+  // Avisos de la pantalla que van en la zona de mensajes del formulario (RF-023).
+  notices: ReactNode;
 };
 
-function CodeForm({ client, publicId, initiallyLocked, onVerified, onNotFound }: CodeFormProps) {
+function CodeForm({
+  client,
+  publicId,
+  initiallyLocked,
+  onVerified,
+  onNotFound,
+  notices,
+}: CodeFormProps) {
   const { t } = useTranslation();
   const [processing, setProcessing] = useState(false);
   const [locked, setLocked] = useState(initiallyLocked);
@@ -234,13 +248,6 @@ function CodeForm({ client, publicId, initiallyLocked, onVerified, onNotFound }:
 
   return (
     <>
-      {locked && <p>{t("register.lockedNotice")}</p>}
-      {wait.remaining > 0 && (
-        <p role="status">{t("validation.retryIn", { seconds: wait.remaining })}</p>
-      )}
-      {message && (
-        <FormMessage ref={messageRef} type={message.type} messageKey={message.messageKey} />
-      )}
       <form ref={formRef} noValidate onSubmit={handleSubmit((values) => void send(values))}>
         <CodeField
           label={t("register.codeLabel")}
@@ -249,6 +256,16 @@ function CodeForm({ client, publicId, initiallyLocked, onVerified, onNotFound }:
           error={errorText(errors.code)}
           onBlur={onBlur("code")}
         />
+        <MessageZone>
+          {notices}
+          {locked && <p>{t("register.lockedNotice")}</p>}
+          {wait.remaining > 0 && (
+            <p role="status">{t("validation.retryIn", { seconds: wait.remaining })}</p>
+          )}
+          {message && (
+            <FormMessage ref={messageRef} type={message.type} messageKey={message.messageKey} />
+          )}
+        </MessageZone>
         <Button
           type="submit"
           keepFocusOnMouseDown

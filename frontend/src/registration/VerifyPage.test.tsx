@@ -83,6 +83,16 @@ test("asks for the status of the identifier in the fragment and shows the fixed 
   expect(container.textContent).not.toContain("@");
 });
 
+test("the remaining time is in the message zone, right above the Verify button", async () => {
+  openAt("/register/continue#pid-1");
+  renderPage(replies(reply(200, STATUS)).fetcher);
+
+  const remaining = await screen.findByText("El código caduca en 15:00.");
+  const zone = document.querySelector(".message-zone");
+  expect(zone).toContainElement(remaining);
+  expect(zone?.nextElementSibling).toBe(screen.getByRole("button", { name: "Verificar" }));
+});
+
 test("the remaining time counts down and says when the code has expired", async () => {
   vi.useFakeTimers({ shouldAdvanceTime: true });
   openAt("/register/continue#pid-1");
@@ -267,6 +277,9 @@ describe("verifying the code", () => {
         "Has agotado los intentos con este código. Pide uno nuevo para continuar.",
       ),
     ).toBeInTheDocument();
+    expect(document.querySelector(".message-zone")).toContainElement(
+      screen.getByText(/^Has agotado los intentos/),
+    );
     expect(screen.getByRole("button", { name: "Verificar" })).toBeDisabled();
   });
 

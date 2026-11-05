@@ -207,12 +207,16 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   encima del botón principal, que existe también sin mensaje; los tests de `RegisterPage` y
   `PasswordStep` siguen en verde (mismo foco y anuncios); suite verde.
 
-- [ ] T-018 Mensajes de la verificación en la zona
+- [x] T-018 Mensajes de la verificación en la zona
   RF: RF-023 (M-13) | Depende de: T-016 | Archivos: 2
   Archivos: `registration/VerifyPage.tsx`, `registration/VerifyPage.test.tsx`.
   Hecho cuando: el tiempo restante, el código caducado, el bloqueo, el aviso de espera y el
   mensaje general van en la zona, encima del botón de verificar; los tests de `VerifyPage` siguen
   en verde; suite verde.
+  Decisiones: el tiempo restante y el rechazo del código, que viven en `VerifyPage`, llegan a la zona
+  de `CodeForm` por una propiedad `notices`. Los avisos del reenvío (enviado, espera por límite)
+  quedan junto a su botón, que no es el principal — [Probable] — revertir: llevarlos también a la
+  zona.
 
 ## E-06 Ayuda «?» en los campos del registro
 
