@@ -31,10 +31,10 @@ export function App({ storage, client }: AppProps) {
   return (
     <LiveAnnouncer>
       <TopBar storage={storage} />
-      {route === "/" && <ShowcasePage storage={storage} />}
-      {route === "/register" && <RegisterPage client={api} storage={storage} />}
-      {route === "/register/continue" && <VerifyPage client={api} storage={storage} />}
-      {route === "/register/done" && <DonePage storage={storage} />}
+      {route === "/" && <ShowcasePage />}
+      {route === "/register" && <RegisterPage client={api} />}
+      {route === "/register/continue" && <VerifyPage client={api} />}
+      {route === "/register/done" && <DonePage />}
     </LiveAnnouncer>
   );
 }

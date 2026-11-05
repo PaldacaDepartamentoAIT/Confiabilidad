@@ -119,6 +119,7 @@ test.each(["/", "/register", "/register/continue#pid-1", "/register/done"])(
     ).toBeInTheDocument();
     expect(banner.closest("main")).toBeNull();
     expect(await screen.findByRole("heading", { level: 1 })).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /English/ })).toHaveLength(1);
     window.history.replaceState(null, "", "/");
     document.cookie = "csrftoken=; expires=Thu, 01 Jan 1970 00:00:00 GMT";
   },

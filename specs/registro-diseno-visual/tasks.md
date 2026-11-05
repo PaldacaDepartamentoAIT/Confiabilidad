@@ -73,7 +73,7 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   Hecho cuando: en `/`, `/register`, `/register/continue` y `/register/done` hay un único
   `<header>` con el menú de idioma, fuera de `<main>`; suite verde.
 
-- [ ] T-006 Las pantallas dejan de pintar su selector
+- [x] T-006 Las pantallas dejan de pintar su selector
   RF: RF-001 (M-05) | Depende de: T-005 | Archivos: 4
   Archivos: `registration/RegisterPage.tsx`, `registration/VerifyPage.tsx`,
   `registration/DonePage.tsx`, `showcase/ShowcasePage.tsx`.
@@ -81,6 +81,11 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   los tests de las pantallas y de accesibilidad siguen en verde con la barra de `App`; suite verde.
   Excepción: es la retirada del mismo componente en las cuatro pantallas que lo usan; dividirla
   dejaría pantallas con dos selectores de idioma en la rama.
+  Decisiones: además de las cuatro pantallas, se tocan `App.tsx` (deja de pasarles `storage`),
+  `App.test.tsx` (un solo selector por pantalla), `showcase/ShowcasePage.test.tsx` (cambia el
+  idioma desde la barra, montada en el test como en la aplicación) y se borra
+  `LanguageSwitcher.tsx` con su test (ver T-004): nueve archivos, todos por la misma retirada —
+  [Cierto] — revertir: no aplica.
 
 ## E-02 Tema claro y oscuro
 
