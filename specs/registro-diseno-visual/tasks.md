@@ -89,6 +89,19 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   `LanguageSwitcher.tsx` con su test (ver T-004): nueve archivos, todos por la misma retirada —
   [Cierto] — revertir: no aplica.
 
+- [ ] T-044 Texto de la pista de teclado
+  RF: RF-005 (M-04, M-14) | Depende de: T-002 | Archivos: 3
+  Archivos: `i18n/locales/es.ts`, `i18n/locales/en.ts`, `i18n/locales/pt-BR.ts`.
+  Hecho cuando: existen `topBar.hintMove`, `topBar.hintChoose`, `topBar.hintClose` y
+  `topBar.enterKey` («Intro» / «Enter» / «Enter») en los tres idiomas; suite verde.
+
+- [ ] T-045 Pista de teclado en el menú
+  RF: RF-005 (M-04) | Depende de: T-003, T-044 | Archivos: 3
+  Archivos: `components/MenuButton.tsx`, `components/MenuButton.test.tsx`,
+  `styles/components.css`.
+  Hecho cuando: con el menú abierto aparece la pista en el idioma activo, fuera del `role="menu"` y
+  con `aria-hidden="true"`; con el menú cerrado no está; suite verde.
+
 ## E-02 y E-03 Tema claro y oscuro
 
 - [ ] T-007 Tema guardado y tema en uso
@@ -393,7 +406,7 @@ Rama de integración: `feat/registro-diseno-visual` (los PR de las entregas van 
 `AGENTS.md`).
 
 - E-01 La barra superior aparece en todas las pantallas y cambia el idioma desde su menú
-  Tareas: T-001…T-006 | Líneas estimadas: 400 | Rama: `feat/registro-diseno-visual-barra-idioma`
+  Tareas: T-001…T-006, T-044, T-045 | Líneas estimadas: 400 | Rama: `feat/registro-diseno-visual-barra-idioma`
   Cómo probarlo: levantar el frontend, abrir `/register`, pulsar «ES» y elegir «English» con el
   ratón y con el teclado; el menú se cierra con Escape y al hacer clic fuera.
   Excepción: 860 líneas reales (119 de ellas, borrado del selector antiguo); los tests de teclado

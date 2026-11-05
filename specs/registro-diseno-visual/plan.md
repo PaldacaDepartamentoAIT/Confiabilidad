@@ -39,7 +39,10 @@ Responsabilidad: `frontend/src/components/MenuButton.tsx`, botón circular con
 opción marcada; las flechas, Inicio y Fin recorren; Intro o Espacio eligen; Escape cierra y
 devuelve el foco al botón; Tab cierra. Se cierra sin cambios al hacer clic fuera o al salir el
 foco (`focusout` con `relatedTarget` fuera del componente). Como abrir otro menú mueve el foco
-fuera del primero, nunca hay dos abiertos (RF-005) sin un estado compartido.
+fuera del primero, nunca hay dos abiertos (RF-005) sin un estado compartido. Al desplegarse,
+muestra bajo las opciones, fuera de `role="menu"` y con `aria-hidden="true"`, una pista de teclado
+traducida: «↑ ↓ moverte · Intro elegir · Esc cerrar». El lector de pantalla no la lee porque ya
+anuncia cómo se usa un menú.
 RF: RF-002, RF-003, RF-005
 
 ### M-05 Barra superior
@@ -105,8 +108,9 @@ RF: RF-019, RF-020, RF-021
 ### M-11 Indicador de pasos
 Responsabilidad: `frontend/src/registration/StepIndicator.tsx`, una lista `<ol>` de tres
 elementos (número o check en un círculo, nombre visible del paso y línea de unión). Estados (colores de `docs/identidad-visual.md`, «Indicador de pasos»): completado (círculo en
-relleno fuerte con check), actual (círculo en relleno fuerte con su número y nombre en peso 600,
-`aria-current="step"`) y pendiente (círculo con borde de línea fuerte y su número). Un texto oculto a la vista da «Paso 2 de 3: Verificación», y cada elemento lleva el estado
+relleno fuerte con check y borde de 2 px en tinta), actual (círculo en relleno fuerte con su número,
+borde de 2 px en tinta y nombre en peso 600, `aria-current="step"`) y pendiente (círculo con borde
+punteado de línea fuerte y su número). Un texto oculto a la vista da «Paso 2 de 3: Verificación», y cada elemento lleva el estado
 en texto oculto («completado», «pendiente»). Recibe `current: 1 | 2 | 3 | "done"`; con `"done"`
 los tres están completados. La línea se colorea con una transición de `transform: scaleX` y el
 círculo con una de `background-color` y `border-color`.

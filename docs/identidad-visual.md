@@ -136,13 +136,16 @@ iconos y formas).
 - El menú es un bloque con radio 12 px y borde de línea, sin sombra, bajo su botón. Cada opción es
   una fila con el texto en tinta; la activa lleva un check en color de acción delante y peso 600.
   La opción resaltada con el teclado o el puntero tiene fondo de apoyo.
+- Bajo las opciones, separada por una línea, una pista de teclado en texto secundario de 11,5 px con
+  las teclas en JetBrains Mono: «↑ ↓ moverte · Intro elegir · Esc cerrar».
 
 ### Indicador de pasos
 - Tres círculos numerados unidos por una línea de 2 px, con el nombre de cada paso debajo.
 - Los pasos solo informan, así que **no usan el color de acción**: el actual y los completados van
   en relleno fuerte (en claro, tinta con el número en blanco; en oscuro, `#344855` con el número en
-  tinta), los completados con un check en lugar del número, y los pendientes con borde de línea
-  fuerte, sin relleno y con el número en texto secundario. El nombre del paso actual va en peso 600.
+  tinta), los completados con un check en lugar del número; el actual y los completados llevan
+  además un borde de 2 px en tinta. Los pendientes tienen borde punteado de línea fuerte, sin
+  relleno y con el número en texto secundario. El nombre del paso actual va en peso 600.
 - La línea entre dos pasos completados va en relleno fuerte; el resto, en línea.
 - **Excepción de forma:** son círculos aunque informen, por ser la convención reconocible de un
   indicador de pasos, igual que las casillas son cuadradas. No se confunden con botones porque no
