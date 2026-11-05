@@ -104,13 +104,17 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
 
 ## E-02 y E-03 Tema claro y oscuro
 
-- [ ] T-007 Tema guardado y tema en uso
+- [x] T-007 Tema guardado y tema en uso
   RF: RF-003, RF-004 (M-03, D-13) | Depende de: — | Archivos: 2
   Archivos: `theme/theme.ts`, `theme/theme.test.ts`.
   Hecho cuando: se lee el tema guardado y uno no válido se borra y se ignora; elegir lo guarda y
   pone `data-theme` en `<html>`; con el almacenamiento bloqueado no falla; `useTheme` devuelve el
   elegido o, sin elección, el de `matchMedia`, y se actualiza cuando cambia el del sistema; suite
   verde.
+  Decisiones: sin `matchMedia` (jsdom o un entorno antiguo), el tema del sistema se toma como claro
+  — [Probable] — revertir: lanzar un error en `systemTheme`. `useTheme` no aplica `data-theme` al
+  montarse: lo hace el script de `index.html` (T-009) — [Cierto] — revertir: un efecto que llame a
+  `applyTheme(chosen)`.
 
 - [ ] T-008 Paleta oscura por elección o por sistema
   RF: RF-003, RF-004 (M-03) | Depende de: — | Archivos: 2
