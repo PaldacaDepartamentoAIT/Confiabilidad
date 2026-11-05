@@ -224,7 +224,7 @@ describe("verifying the code", () => {
   it("an expired code asks for another one under the field", async () => {
     const user = userEvent.setup();
     openAt("/register/continue#pid-1");
-    const { fetcher } = replies(
+    const { calls, fetcher } = replies(
       reply(200, STATUS),
       reply(400, { code: "code_expired", message: "x" }),
     );
@@ -237,6 +237,7 @@ describe("verifying the code", () => {
         screen.getByRole("textbox", { name: "Código de verificación" }),
       ).toHaveAccessibleDescription("El código ha caducado. Pide uno nuevo."),
     );
+    expect(calls).toHaveLength(2);
   });
 
   it("an incomplete code is not sent", async () => {
@@ -267,6 +268,60 @@ describe("verifying the code", () => {
       ),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Verificar" })).toBeDisabled();
+  });
+
+  it("the fifth wrong code shows the lock without another attempt", async () => {
+    const user = userEvent.setup();
+    openAt("/register/continue#pid-1");
+    const { calls, fetcher } = replies(
+      reply(200, STATUS),
+      reply(400, { code: "wrong_code", message: "x" }),
+      reply(200, { ...STATUS, locked: true }),
+    );
+    renderPage(fetcher);
+
+    await typeCode(user, "123456");
+
+    expect(await screen.findByText(/^Has agotado los intentos/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Verificar" })).toBeDisabled();
+    expect(calls.map((call) => call.url.split("/").pop())).toEqual(["status", "verify", "status"]);
+  });
+
+  it("if the identifier disappears after a wrong code, the link is not valid", async () => {
+    const user = userEvent.setup();
+    openAt("/register/continue#pid-1");
+    const { fetcher } = replies(
+      reply(200, STATUS),
+      reply(400, { code: "wrong_code", message: "x" }),
+      reply(404, { code: "not_found", message: "x" }),
+    );
+    renderPage(fetcher);
+
+    await typeCode(user, "123456");
+
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Enlace no válido" }),
+    ).toBeVisible();
+  });
+
+  it("a wrong code that does not lock keeps its message under the field", async () => {
+    const user = userEvent.setup();
+    openAt("/register/continue#pid-1");
+    const { calls, fetcher } = replies(
+      reply(200, STATUS),
+      reply(400, { code: "wrong_code", message: "x" }),
+      reply(200, STATUS),
+    );
+    renderPage(fetcher);
+
+    await typeCode(user, "123456");
+
+    await waitFor(() => expect(calls).toHaveLength(3));
+    expect(
+      screen.getByRole("textbox", { name: "Código de verificación" }),
+    ).toHaveAccessibleDescription("El código no es correcto. Revísalo e inténtalo de nuevo.");
+    expect(screen.getByRole("button", { name: "Verificar" })).toBeEnabled();
+    expect(screen.queryByText(/^Has agotado los intentos/)).toBeNull();
   });
 
   it("a locked process stays locked after reloading", async () => {

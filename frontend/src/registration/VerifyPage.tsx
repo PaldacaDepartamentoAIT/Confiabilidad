@@ -205,6 +205,14 @@ function CodeForm({ client, publicId, initiallyLocked, onVerified, onNotFound }:
   const { errors, onBlur, handleSubmit, showResult, message, formRef, messageRef } =
     useFormValidation(CODE_FIELDS, { processing });
 
+  // El servidor responde `wrong_code` al intento que agota los cinco y `locked` solo después: el
+  // estado dice si este ya bloqueó el código (RF-009, S-10). Consultarlo no cuenta para el límite.
+  async function checkLock() {
+    const current = await fetchStatus(client, publicId);
+    if (current.kind === "ok" && current.data.locked) setLocked(true);
+    else if (current.kind === "notFound") onNotFound();
+  }
+
   async function send({ code }: { code: string }) {
     setProcessing(true);
     const result = await verifyCode(client, publicId, code);
@@ -215,6 +223,7 @@ function CodeForm({ client, publicId, initiallyLocked, onVerified, onNotFound }:
     else if (result.kind === "refused" && result.code === "locked") setLocked(true);
     else if (result.kind === "refused" && CODE_ERRORS.has(result.code)) {
       showResult({ fieldErrors: { code: translateCode(result.code) } });
+      if (result.code === "wrong_code") await checkLock();
     } else if (result.kind === "refused") {
       showResult({
         message: { type: "error", messageKey: `validation.${translateCode(result.code).key}` },
