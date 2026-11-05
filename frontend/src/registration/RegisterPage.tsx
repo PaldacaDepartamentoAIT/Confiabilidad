@@ -159,6 +159,7 @@ function RegisterForm({ client, options, terms, language, titleId }: RegisterFor
       >
         <TextField
           label={t("register.nameLabel")}
+          help={t("help.name")}
           name="name"
           autoComplete="name"
           required
@@ -167,6 +168,7 @@ function RegisterForm({ client, options, terms, language, titleId }: RegisterFor
         />
         <TextField
           label={t("register.birthdateLabel")}
+          help={t("help.birthdate")}
           name="birthdate"
           type="date"
           autoComplete="bday"
@@ -176,6 +178,7 @@ function RegisterForm({ client, options, terms, language, titleId }: RegisterFor
         />
         <TextField
           label={t("register.emailLabel")}
+          help={t("help.email")}
           name="email"
           type="email"
           required
@@ -184,6 +187,7 @@ function RegisterForm({ client, options, terms, language, titleId }: RegisterFor
         />
         <SelectField
           label={t("register.countryLabel")}
+          help={t("help.country")}
           placeholder={t("register.countryPlaceholder")}
           name="country"
           options={countries}

@@ -259,11 +259,13 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   Hecho cuando: el selector acepta `help` como los demás campos; la casilla no lo acepta; suite
   verde.
 
-- [ ] T-023 «?» en el formulario de registro
+- [x] T-023 «?» en el formulario de registro
   RF: RF-014 | Depende de: T-022 | Archivos: 2
   Archivos: `registration/RegisterPage.tsx`, `registration/RegisterPage.test.tsx`.
   Hecho cuando: nombre, fecha, correo y país tienen su «?» con su descripción; las casillas no;
   suite verde.
+  Decisiones: los tests existentes que comparaban la descripción exacta con el error comprueban
+  ahora que el error va detrás de la ayuda (`afterHelp`) — [Cierto] — revertir: no aplica.
 
 - [ ] T-024 «?» en el código y la contraseña
   RF: RF-014, RF-015 | Depende de: T-021 | Archivos: 3
