@@ -107,6 +107,63 @@ ERRORS: dict[str, dict[str, str]] = {
         "pt-BR": "Os termos mudaram. Revise-os e aceite-os novamente.",
         "en": "The terms have changed. Review them and accept them again.",
     },
+    # Verificar, reenviar y completar (registro-flujo).
+    "wrong_code": {
+        "es": "El código no es correcto. Revísalo e inténtalo de nuevo.",
+        "pt-BR": "O código não está correto. Verifique-o e tente novamente.",
+        "en": "The code is not correct. Check it and try again.",
+    },
+    "locked": {
+        "es": "Has agotado los intentos con este código. Pide uno nuevo.",
+        "pt-BR": "Você esgotou as tentativas com este código. Peça um novo.",
+        "en": "You have used up the attempts for this code. Request a new one.",
+    },
+    "code_expired": {
+        "es": "El código ha caducado. Pide uno nuevo.",
+        "pt-BR": "O código expirou. Peça um novo.",
+        "en": "The code has expired. Request a new one.",
+    },
+    "expired": {
+        "es": "El registro ha caducado. Vuelve a empezarlo.",
+        "pt-BR": "O cadastro expirou. Comece-o novamente.",
+        "en": "The registration has expired. Start it again.",
+    },
+    "resend_unavailable": {
+        "es": "Ahora no se puede enviar otro código.",
+        "pt-BR": "No momento não é possível enviar outro código.",
+        "en": "Another code cannot be sent right now.",
+    },
+    "not_found": {
+        "es": "El enlace no es válido o ha caducado.",
+        "pt-BR": "O link não é válido ou expirou.",
+        "en": "The link is not valid or has expired.",
+    },
+    # Política de contraseñas (RF-022 de procesos-pendientes), con los códigos de sus validadores.
+    "password_too_short": {
+        "es": "La contraseña debe tener al menos %(min_length)d caracteres.",
+        "pt-BR": "A senha deve ter pelo menos %(min_length)d caracteres.",
+        "en": "The password must be at least %(min_length)d characters long.",
+    },
+    "password_too_similar": {
+        "es": "La contraseña se parece demasiado a tu nombre o a tu correo.",
+        "pt-BR": "A senha é parecida demais com seu nome ou seu e-mail.",
+        "en": "The password is too similar to your name or email address.",
+    },
+    "password_too_common": {
+        "es": "Esta contraseña es demasiado común.",
+        "pt-BR": "Esta senha é comum demais.",
+        "en": "This password is too common.",
+    },
+    "password_entirely_numeric": {
+        "es": "La contraseña no puede tener solo números.",
+        "pt-BR": "A senha não pode ter apenas números.",
+        "en": "The password cannot be entirely numeric.",
+    },
+    "password_pwned": {
+        "es": "Esta contraseña ha aparecido en filtraciones de datos. Elige otra.",
+        "pt-BR": "Esta senha apareceu em vazamentos de dados. Escolha outra.",
+        "en": "This password has appeared in data breaches. Choose another one.",
+    },
 }
 
 FIELD_ERRORS: dict[str, dict[str, str]] = {

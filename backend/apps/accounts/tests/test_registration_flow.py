@@ -1,0 +1,553 @@
+from collections.abc import Callable
+from datetime import timedelta
+
+import pytest
+from allauth.account.models import EmailAddress
+from django.utils import timezone
+
+from apps.accounts import conf, registration
+from apps.accounts.models import PendingRegistration, PhantomProcess, User
+from apps.accounts.tests.factories import DEFAULT_PROFILE, StartedWithCode, make_pending, make_user
+
+pytestmark = pytest.mark.django_db
+
+EMAIL = "ana@x.com"
+Result = registration.VerifyResult
+
+
+def _wrong(code: str) -> str:
+    return "000000" if code != "000000" else "111111"
+
+
+def _validated() -> StartedWithCode:
+    started = make_pending(EMAIL)
+    assert registration.verify_code(public_id=started.public_id, code=started.code) is (
+        Result.VERIFIED
+    )
+    return started
+
+
+def _stored() -> PendingRegistration:
+    return PendingRegistration.objects.get()
+
+
+def _age(**minutes_ago: int) -> None:
+    changes = {field: timezone.now() - timedelta(minutes=m) for field, m in minutes_ago.items()}
+    PendingRegistration.objects.update(**changes)
+    PhantomProcess.objects.update(**changes)
+
+
+def test_right_code_validates_the_registration() -> None:
+    started = make_pending(EMAIL)
+
+    result = registration.verify_code(public_id=started.public_id, code=started.code)
+
+    assert result is Result.VERIFIED
+    assert _stored().code_validated_at is not None
+
+
+def test_a_validated_code_is_accepted_again_without_changes() -> None:
+    started = _validated()
+    before = _stored()
+
+    result = registration.verify_code(public_id=started.public_id, code=started.code)
+
+    after = _stored()
+    assert result is Result.VERIFIED
+    assert (after.failed_attempts, after.code_validated_at) == (0, before.code_validated_at)
+
+
+def test_a_validated_code_is_accepted_again_during_the_grace_period() -> None:
+    started = _validated()
+    _age(code_expires_at=1)
+
+    result = registration.verify_code(public_id=started.public_id, code=started.code)
+
+    assert result is Result.VERIFIED
+
+
+def test_a_wrong_code_on_a_validated_registration_counts_an_attempt() -> None:
+    started = _validated()
+
+    result = registration.verify_code(public_id=started.public_id, code=_wrong(started.code))
+
+    assert result is Result.WRONG_CODE
+    assert _stored().failed_attempts == 1
+
+
+def test_a_wrong_code_on_a_validated_registration_with_an_expired_code_is_not_counted() -> None:
+    started = _validated()
+    _age(code_expires_at=1)
+
+    result = registration.verify_code(public_id=started.public_id, code=_wrong(started.code))
+
+    assert result is Result.CODE_EXPIRED
+    assert _stored().failed_attempts == 0
+
+
+def test_a_locked_validated_registration_rejects_even_the_right_code() -> None:
+    started = _validated()
+    PendingRegistration.objects.update(failed_attempts=5)
+
+    result = registration.verify_code(public_id=started.public_id, code=started.code)
+
+    assert result is Result.LOCKED
+
+
+def test_an_expired_validated_registration_rejects_even_the_right_code() -> None:
+    started = _validated()
+    _age(code_expires_at=20)
+
+    result = registration.verify_code(public_id=started.public_id, code=started.code)
+
+    assert result is Result.EXPIRED
+
+
+def test_an_unknown_public_id_is_not_found() -> None:
+    assert registration.verify_code(public_id="unknown", code="123456") is Result.NOT_FOUND
+
+
+def _phantom() -> str:
+    make_user(email=EMAIL)
+    started = registration.start(email=EMAIL, **DEFAULT_PROFILE)
+    registration.resolve_registration(started.public_id)
+    return started.public_id
+
+
+def _real() -> str:
+    started = make_pending(EMAIL)
+    assert started.code != "000000"
+    return started.public_id
+
+
+def _journey(public_id: str) -> list[Result]:
+    results = [registration.verify_code(public_id=public_id, code="000000") for _ in range(6)]
+    _age(code_expires_at=1)
+    results.append(registration.verify_code(public_id=public_id, code="000000"))
+    PendingRegistration.objects.update(failed_attempts=0)
+    PhantomProcess.objects.update(failed_attempts=0)
+    results.append(registration.verify_code(public_id=public_id, code="000000"))
+    _age(code_expires_at=20)
+    results.append(registration.verify_code(public_id=public_id, code="000000"))
+    return results
+
+
+@pytest.mark.parametrize("source", [_phantom, _real], ids=["phantom", "real"])
+def test_a_phantom_answers_like_a_registration_whose_code_is_never_guessed(
+    source: Callable[[], str],
+) -> None:
+    assert _journey(source()) == [
+        *[Result.WRONG_CODE] * 5,
+        Result.LOCKED,
+        Result.LOCKED,
+        Result.CODE_EXPIRED,
+        Result.EXPIRED,
+    ]
+
+
+def test_a_new_slot_is_sent_now_without_resends() -> None:
+    before = timezone.now()
+
+    started = registration.start(email=EMAIL, **DEFAULT_PROFILE)
+
+    slot = PhantomProcess.objects.get(public_id=started.public_id)
+    assert slot.resend_count == 0
+    assert slot.last_sent_at is not None and before <= slot.last_sent_at <= timezone.now()
+
+
+def _resolved() -> PendingRegistration | PhantomProcess:
+    # Envejece los contadores antes de resolver para ver que la resolución los pone al día.
+    started = registration.start(email=EMAIL, **DEFAULT_PROFILE)
+    PhantomProcess.objects.update(resend_count=3, last_sent_at=timezone.now() - timedelta(hours=1))
+    PendingRegistration.objects.update(
+        resend_count=3, last_sent_at=timezone.now() - timedelta(hours=1)
+    )
+    before = timezone.now()
+    registration.resolve_registration(started.public_id)
+    process = PendingRegistration.objects.filter(
+        public_id=started.public_id
+    ).first() or PhantomProcess.objects.get(public_id=started.public_id)
+    assert process.last_sent_at is not None and before <= process.last_sent_at
+    return process
+
+
+def _with_account() -> str:
+    make_user(email=EMAIL)
+    return EMAIL
+
+
+def _with_pending() -> str:
+    make_pending(EMAIL)
+    return EMAIL
+
+
+@pytest.mark.parametrize(
+    "prepare",
+    [lambda: EMAIL, _with_pending, _with_account],
+    ids=["new", "repeated", "account"],
+)
+def test_resolving_resets_the_resend_counters(prepare: Callable[[], str]) -> None:
+    prepare()
+
+    process = _resolved()
+
+    assert process.resend_count == 0
+
+
+Refusal = registration.FlowResendRefusal
+
+
+def _sent(seconds_ago: int, resends: int = 0) -> None:
+    changes = {
+        "last_sent_at": timezone.now() - timedelta(seconds=seconds_ago),
+        "resend_count": resends,
+    }
+    PendingRegistration.objects.update(**changes)
+    PhantomProcess.objects.update(**changes)
+
+
+def test_resend_after_the_interval_issues_a_new_code_and_counts_it() -> None:
+    started = make_pending(EMAIL)
+    PendingRegistration.objects.update(failed_attempts=2)
+    _sent(61)
+    before = timezone.now()
+
+    result = registration.resend_code(public_id=started.public_id)
+
+    stored = _stored()
+    assert result == registration.Resent(public_id=started.public_id)
+    assert (stored.resend_count, stored.failed_attempts, stored.code_hash) == (1, 0, "")
+    assert stored.last_sent_at is not None and before <= stored.last_sent_at
+
+
+def test_resend_without_a_recorded_send_is_allowed() -> None:
+    started = make_pending(EMAIL)
+    PendingRegistration.objects.update(last_sent_at=None)
+
+    assert isinstance(registration.resend_code(public_id=started.public_id), registration.Resent)
+
+
+@pytest.mark.parametrize(
+    ("seconds_ago", "resends", "validated"),
+    [
+        pytest.param(30, 0, False, id="before-the-interval"),
+        pytest.param(61, 5, False, id="after-the-last-resend"),
+        pytest.param(61, 0, True, id="validated"),
+    ],
+)
+def test_resend_is_unavailable_without_changing_anything(
+    seconds_ago: int, resends: int, validated: bool
+) -> None:
+    started = make_pending(EMAIL)
+    if validated:
+        registration.verify_code(public_id=started.public_id, code=started.code)
+    _sent(seconds_ago, resends)
+    before = _stored()
+
+    result = registration.resend_code(public_id=started.public_id)
+
+    after = _stored()
+    assert result is Refusal.UNAVAILABLE
+    assert (after.code_hash, after.resend_count, after.last_sent_at) == (
+        before.code_hash,
+        before.resend_count,
+        before.last_sent_at,
+    )
+
+
+def test_resend_of_an_expired_or_unknown_process_is_refused() -> None:
+    started = make_pending(EMAIL)
+    _age(created_at=120)
+
+    assert registration.resend_code(public_id=started.public_id) is Refusal.EXPIRED
+    assert registration.resend_code(public_id="unknown") is Refusal.NOT_FOUND
+
+
+def _deadline(public_id: str) -> object:
+    process = PendingRegistration.objects.filter(
+        public_id=public_id
+    ).first() or PhantomProcess.objects.get(public_id=public_id)
+    return process.code_expires_at
+
+
+@pytest.mark.parametrize("source", [_phantom, _real], ids=["phantom", "real"])
+def test_an_accepted_resend_gives_the_full_time_before_the_code_is_sent(
+    source: Callable[[], str],
+) -> None:
+    public_id = source()
+    _pin(code_in=-60, sent_ago=61)
+
+    assert isinstance(registration.resend_code(public_id=public_id), registration.Resent)
+
+    current = registration.status(public_id=public_id)
+    assert current is not None
+    full = conf.code_ttl().total_seconds()
+    assert full - 1 <= current.code_expires_in <= full
+
+
+@pytest.mark.parametrize("source", [_phantom, _real], ids=["phantom", "real"])
+def test_sending_the_resent_code_of_the_flow_keeps_its_deadline(source: Callable[[], str]) -> None:
+    public_id = source()
+    _pin(code_in=300, sent_ago=61)
+    registration.resend_code(public_id=public_id)
+    _pin(code_in=300, sent_ago=0, resends=1)
+    deadline = _deadline(public_id)
+
+    registration.reissue_code(public_id, keep_deadline=True)
+
+    assert _deadline(public_id) == deadline
+
+
+def test_sending_a_code_resent_from_the_console_sets_a_new_deadline() -> None:
+    public_id = _real()
+    assert isinstance(registration.resend(public_id=public_id), registration.Resent)
+    _pin(code_in=300, sent_ago=0)
+    before = timezone.now()
+
+    registration.reissue_code(public_id)
+
+    assert _stored().code_expires_at >= before + conf.code_ttl()
+    assert _stored().code_hash != ""
+
+
+def _resend_journey(public_id: str) -> list[object]:
+    results: list[object] = [registration.resend_code(public_id=public_id)]
+    for _ in range(6):
+        last_send = timezone.now() - timedelta(seconds=61)
+        PendingRegistration.objects.update(last_sent_at=last_send)
+        PhantomProcess.objects.update(last_sent_at=last_send)
+        result = registration.resend_code(public_id=public_id)
+        results.append("resent" if isinstance(result, registration.Resent) else result)
+    return results
+
+
+@pytest.mark.parametrize("source", [_phantom, _real], ids=["phantom", "real"])
+def test_a_phantom_resends_like_a_real_registration(source: Callable[[], str]) -> None:
+    assert _resend_journey(source()) == [
+        Refusal.UNAVAILABLE,
+        *["resent"] * 5,
+        Refusal.UNAVAILABLE,
+    ]
+
+
+def _pin(code_in: int, sent_ago: int, resends: int = 0) -> None:
+    # Fija los instantes para comparar estados sin depender de los segundos que tarda el test.
+    now = timezone.now()
+    changes = {
+        "code_expires_at": now + timedelta(seconds=code_in),
+        "last_sent_at": now - timedelta(seconds=sent_ago),
+        "resend_count": resends,
+    }
+    PendingRegistration.objects.update(**changes)
+    PhantomProcess.objects.update(**changes)
+
+
+def test_status_of_a_fresh_registration() -> None:
+    started = make_pending(EMAIL)
+    _pin(code_in=600, sent_ago=20, resends=2)
+
+    status = registration.status(public_id=started.public_id)
+
+    assert status is not None
+    assert 599 <= status.code_expires_in <= 600
+    assert 39 <= status.resend_in <= 40
+    assert (status.resends_left, status.locked, status.expired) == (3, False, False)
+
+
+def test_status_never_goes_below_zero() -> None:
+    started = make_pending(EMAIL)
+    _pin(code_in=-60, sent_ago=600, resends=9)
+
+    status = registration.status(public_id=started.public_id)
+
+    assert status is not None
+    assert (status.code_expires_in, status.resend_in, status.resends_left) == (0, 0, 0)
+
+
+def test_status_without_a_recorded_send_can_resend_now() -> None:
+    started = make_pending(EMAIL)
+    PendingRegistration.objects.update(last_sent_at=None)
+
+    status = registration.status(public_id=started.public_id)
+
+    assert status is not None and status.resend_in == 0
+
+
+def test_status_reports_locked_and_expired() -> None:
+    started = make_pending(EMAIL)
+    PendingRegistration.objects.update(failed_attempts=5)
+    _age(created_at=120)
+
+    status = registration.status(public_id=started.public_id)
+
+    assert status is not None and (status.locked, status.expired) == (True, True)
+
+
+def test_status_does_not_reveal_a_validated_code() -> None:
+    started = make_pending(EMAIL)
+    _pin(code_in=600, sent_ago=20)
+    before = registration.status(public_id=started.public_id)
+    registration.verify_code(public_id=started.public_id, code=started.code)
+
+    assert registration.status(public_id=started.public_id) == before
+
+
+def test_status_of_an_unknown_public_id_is_none() -> None:
+    assert registration.status(public_id="unknown") is None
+
+
+@pytest.mark.parametrize("source", [_phantom, _real], ids=["phantom", "real"])
+def test_a_phantom_has_the_same_status_as_a_real_registration(source: Callable[[], str]) -> None:
+    public_id = source()
+    _pin(code_in=600, sent_ago=20)
+
+    assert registration.status(public_id=public_id) == registration.Status(
+        code_expires_in=600, resend_in=40, resends_left=5, locked=False, expired=False
+    )
+
+
+GOOD_PASSWORD = "Kq7#mZ2!vR9p"
+
+
+def _complete(
+    started: StartedWithCode, *, code: str | None = None, password: str = GOOD_PASSWORD
+) -> object:
+    return registration.complete_with_code(
+        public_id=started.public_id, code=started.code if code is None else code, password=password
+    )
+
+
+def test_right_validated_code_and_good_password_create_the_account() -> None:
+    started = _validated()
+
+    result = _complete(started)
+
+    assert isinstance(result, registration.Completed)
+    assert result.user.email == EMAIL and result.user.check_password(GOOD_PASSWORD)
+    assert EmailAddress.objects.get(user=result.user).verified
+    assert not PendingRegistration.objects.exists()
+
+
+def test_completing_during_the_grace_period_works() -> None:
+    started = _validated()
+    _age(code_expires_at=1)
+
+    assert isinstance(_complete(started), registration.Completed)
+
+
+@pytest.mark.parametrize("validated", [True, False], ids=["validated", "not-validated"])
+def test_a_wrong_code_counts_an_attempt_without_judging_the_password(validated: bool) -> None:
+    started = _validated() if validated else make_pending(EMAIL)
+
+    result = _complete(started, code=_wrong(started.code), password="short")
+
+    assert result is Result.WRONG_CODE
+    assert _stored().failed_attempts == 1
+    assert not User.objects.filter(email=EMAIL).exists()
+
+
+def test_a_right_code_never_validated_counts_an_attempt_like_a_wrong_one() -> None:
+    started = make_pending(EMAIL)
+
+    result = _complete(started)
+
+    assert result is Result.WRONG_CODE
+    assert (_stored().failed_attempts, _stored().code_validated_at) == (1, None)
+    assert not User.objects.filter(email=EMAIL).exists()
+
+
+def test_a_weak_password_is_rejected_rule_by_rule_and_keeps_the_code() -> None:
+    started = _validated()
+
+    result = _complete(started, password="12345")
+
+    assert isinstance(result, registration.PasswordRejected)
+    assert {"password_too_short", "password_entirely_numeric"} <= set(result.codes)
+    assert _stored().failed_attempts == 0
+    assert isinstance(_complete(started), registration.Completed)
+
+
+@pytest.mark.parametrize(
+    ("change", "expected"),
+    [
+        pytest.param({"failed_attempts": 5}, Result.LOCKED, id="locked"),
+        pytest.param({"created_at": 120}, Result.EXPIRED, id="expired"),
+    ],
+)
+def test_a_locked_or_expired_registration_never_completes(
+    change: dict[str, int], expected: Result
+) -> None:
+    started = _validated()
+    if "failed_attempts" in change:
+        PendingRegistration.objects.update(**change)
+    else:
+        _age(**change)
+
+    assert _complete(started) is expected
+    assert not User.objects.filter(email=EMAIL).exists()
+
+
+def test_an_unknown_public_id_never_completes() -> None:
+    result = registration.complete_with_code(
+        public_id="unknown", code="123456", password=GOOD_PASSWORD
+    )
+
+    assert result is Result.NOT_FOUND
+
+
+def test_a_phantom_never_completes_and_counts_the_attempt() -> None:
+    public_id = _phantom()
+    PhantomProcess.objects.update(code_validated_at=timezone.now())
+
+    result = registration.complete_with_code(
+        public_id=public_id, code="123456", password=GOOD_PASSWORD
+    )
+
+    assert result is Result.WRONG_CODE
+    assert PhantomProcess.objects.get().failed_attempts == 1
+
+
+def _code_expired(
+    minutes_ago: int, *, model: type[PendingRegistration] | type[PhantomProcess]
+) -> None:
+    model.objects.update(code_expires_at=timezone.now() - timedelta(minutes=minutes_ago))
+
+
+def test_purge_stale_deletes_registrations_whose_code_expired_a_day_ago() -> None:
+    _validated()
+    _code_expired(24 * 60 + 1, model=PendingRegistration)
+
+    assert registration.purge_stale() == 1
+    assert not PendingRegistration.objects.exists()
+
+
+def test_purge_stale_keeps_registrations_whose_code_expired_less_than_a_day_ago() -> None:
+    make_pending(EMAIL)
+    _code_expired(24 * 60 - 1, model=PendingRegistration)
+
+    assert registration.purge_stale() == 0
+    assert PendingRegistration.objects.exists()
+
+
+def test_purge_stale_deletes_registration_slots_but_not_password_reset_ones() -> None:
+    _phantom()
+    make_user(email="bea@x.com")
+    other = registration.start(email="bea@x.com", **DEFAULT_PROFILE)
+    registration.resolve_registration(other.public_id)
+    PhantomProcess.objects.filter(public_id=other.public_id).update(
+        purpose=PhantomProcess.Purpose.PASSWORD_RESET
+    )
+    _code_expired(24 * 60 + 1, model=PhantomProcess)
+
+    assert registration.purge_stale() == 1
+    assert list(PhantomProcess.objects.values_list("purpose", flat=True)) == [
+        PhantomProcess.Purpose.PASSWORD_RESET
+    ]
+
+
+def test_purge_stale_follows_the_configured_hours(settings: object) -> None:
+    make_pending(EMAIL)
+    _code_expired(2 * 60 + 1, model=PendingRegistration)
+    settings.REGISTRATION_PURGE_AFTER_HOURS = 2  # type: ignore[attr-defined]
+
+    assert registration.purge_stale() == 1

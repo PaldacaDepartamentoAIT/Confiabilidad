@@ -124,14 +124,14 @@ def test_locked_code_is_recorded_as_failed_verification(audit_key: None) -> None
     assert _verifications() == [False] * (limit + 1)
 
 
-def test_already_verified_code_is_recorded_as_failed_verification(audit_key: None) -> None:
+def test_already_verified_code_presented_again_is_recorded_as_verified(audit_key: None) -> None:
     started = _started_registration()
     registration.verify(public_id=started.public_id, code=started.code)
 
     result = registration.verify(public_id=started.public_id, code=started.code)
 
-    assert result is VerifyResult.ALREADY_VERIFIED
-    assert _verifications() == [True, False]
+    assert result is VerifyResult.VERIFIED
+    assert _verifications() == [True, True]
 
 
 def test_unknown_registration_leaves_no_verification_row(audit_key: None) -> None:

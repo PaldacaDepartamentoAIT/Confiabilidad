@@ -3,6 +3,7 @@ from datetime import date
 import pytest
 from django.core.exceptions import ValidationError
 
+from apps.accounts import validators
 from apps.accounts.registration import validate_registration_data
 from apps.accounts.validators import (
     PLACEHOLDER_COUNTRY,
@@ -178,3 +179,12 @@ def test_valid_local_part_gets_only_the_domain_error(email: str, code: str) -> N
     with pytest.raises(ValidationError) as excinfo:
         validate_registration_email(email)
     assert [error.code for error in excinfo.value.error_list] == [code]
+
+
+def test_country_codes_are_public_sorted_and_all_accepted() -> None:
+    codes = validators.COUNTRY_CODES
+
+    assert list(codes) == sorted(codes) and len(codes) == len(set(codes))
+    assert "ES" in codes and "BR" in codes and "XX" not in codes
+    for code in codes:
+        validators.validate_country(code)

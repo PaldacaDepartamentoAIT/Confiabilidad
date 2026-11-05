@@ -12,6 +12,8 @@ ISSUED_FIELDS = [
     "code_expires_at",
     "failed_attempts",
     "code_validated_at",
+    "resend_count",
+    "last_sent_at",
 ]
 
 
@@ -29,12 +31,18 @@ def issue_code(process: CodeProcess, purpose: codes.Purpose, public_id: str | No
     process.public_id = public_id or codes.generate_public_id()
     process.failed_attempts = 0
     process.code_validated_at = None
+    process.resend_count = 0
+    process.last_sent_at = timezone.now()
     return _set_new_code(process, purpose)
 
 
-def renew_code(process: CodeProcess, purpose: codes.Purpose) -> str:
+def renew_code(process: CodeProcess, purpose: codes.Purpose, *, keep_deadline: bool = False) -> str:
+    # Con keep_deadline se conserva el plazo que fijó el reenvío aceptado (D-19 de registro-flujo).
+    deadline = process.code_expires_at
     process.failed_attempts = 0
     code = _set_new_code(process, purpose)
+    if keep_deadline:
+        process.code_expires_at = deadline
     process.save(update_fields=["code_hash", "code_expires_at", "failed_attempts"])
     return code
 

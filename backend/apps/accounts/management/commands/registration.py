@@ -53,7 +53,7 @@ def _birthdate(value: str) -> date:
 class Command(BaseCommand):
     help = (
         "Run the pending registration from the console: "
-        "start, verify, resend, complete and purge."
+        "start, verify, resend, complete, purge and purge-stale."
     )
 
     def add_arguments(self, parser: CommandParser) -> None:
@@ -77,9 +77,12 @@ class Command(BaseCommand):
         complete.add_argument("public_id")
         complete.add_argument("--password", help="Visible in the shell history; avoid it.")
         actions.add_parser("purge", help="Delete expired registrations.")
+        actions.add_parser(
+            "purge-stale", help="Delete registrations whose code expired a day ago or more."
+        )
 
     def handle(self, *args: Any, **options: Any) -> None:
-        getattr(self, f"_{options['action']}")(options)
+        getattr(self, f"_{options['action'].replace('-', '_')}")(options)
 
     def _start(self, options: dict[str, Any]) -> None:
         try:
@@ -119,3 +122,7 @@ class Command(BaseCommand):
 
     def _purge(self, options: dict[str, Any]) -> None:
         self.stdout.write(f"deleted: {registration.purge_expired()}")
+
+    def _purge_stale(self, options: dict[str, Any]) -> None:
+        # Lo mismo que hace cada hora la tarea programada (RF-020 de registro-flujo).
+        self.stdout.write(f"deleted: {registration.purge_stale()}")

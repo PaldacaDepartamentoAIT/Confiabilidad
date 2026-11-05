@@ -10,7 +10,7 @@ from django.utils import timezone
 
 from apps.accounts import codes, conf, registration, tasks
 from apps.accounts.models import PendingRegistration, PhantomProcess
-from apps.accounts.tests.factories import make_user
+from apps.accounts.tests.factories import make_pending, make_user
 from apps.core import fingerprints
 from apps.emails.models import OutboundEmail
 
@@ -376,3 +376,54 @@ def test_the_sweep_runs_every_minute() -> None:
     ]
 
     assert [entry["schedule"] for entry in entries] == [60.0]
+
+
+def test_the_purge_task_deletes_stale_registrations() -> None:
+    with mock.patch.object(registration, "purge_stale", return_value=3) as purge:
+        assert tasks.purge_stale_registrations() == 3
+
+    purge.assert_called_once_with()
+
+
+def test_the_purge_runs_every_hour() -> None:
+    entries = [
+        entry
+        for entry in settings.CELERY_BEAT_SCHEDULE.values()
+        if entry["task"] == "apps.accounts.tasks.purge_stale_registrations"
+    ]
+
+    assert [entry["schedule"] for entry in entries] == [3600.0]
+
+
+def test_a_resend_of_the_flow_queues_its_own_sending_task(
+    send_task: Any, django_capture_on_commit_callbacks: Any
+) -> None:
+    started = make_pending("ana@x.com")
+    PendingRegistration.objects.update(last_sent_at=timezone.now() - timedelta(seconds=61))
+
+    with django_capture_on_commit_callbacks(execute=True):
+        registration.resend_code(public_id=started.public_id)
+
+    send_task.assert_called_once_with(
+        "apps.accounts.tasks.reissue_flow_code", args=[started.public_id]
+    )
+
+
+def test_a_resend_from_the_console_keeps_the_shared_task(
+    send_task: Any, django_capture_on_commit_callbacks: Any
+) -> None:
+    started = make_pending("ana@x.com")
+
+    with django_capture_on_commit_callbacks(execute=True):
+        registration.resend(public_id=started.public_id)
+
+    send_task.assert_called_once_with(
+        "apps.accounts.tasks.reissue_code", args=["registration", started.public_id]
+    )
+
+
+def test_the_sending_task_of_the_flow_keeps_the_deadline() -> None:
+    with mock.patch.object(registration, "reissue_code") as reissue:
+        tasks.reissue_flow_code("pid")
+
+    reissue.assert_called_once_with("pid", keep_deadline=True)

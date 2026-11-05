@@ -43,9 +43,11 @@ contraseña, se comparte con `procesos-pendientes` y su entrada está en
   para acertar un código y **tomar la cuenta ajena**. En consola no hay riesgo; decide el límite
   (por correo y por IP, para pedir y para reenviar) al especificar la API. Es bloqueante.
   El formulario de registro ya tiene el suyo (`registro-api`, RF-010 y RF-011: por correo e IP y
-  por IP, en `apps/accounts/throttling.py`), que puede servir de modelo. Siguen sin límite el
-  reenvío y la verificación del código, en el registro y en el cambio de contraseña, y pedir el
-  cambio de contraseña.
+  por IP, en `apps/accounts/throttling.py`), que puede servir de modelo. El reenvío y la
+  verificación del código del registro ya tienen límites (`registro-flujo`, RF-010 y RF-019: espera
+  de 60 s y 5 reenvíos por proceso, y 60 peticiones por hora e IP para todo el flujo, en
+  `check_flow_ip` de `apps/accounts/throttling.py`), que también pueden servir de modelo. Siguen sin
+  límite el reenvío y la verificación del código del cambio de contraseña, y pedir el cambio.
 
 - [ ] **Mensaje neutro en la API de cambio de contraseña** (feature `cambio-contrasena`, S-01,
   RF-004). El servicio ya responde lo mismo, con el mismo trabajo, tenga o no cuenta el correo

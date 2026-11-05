@@ -19,7 +19,7 @@ from apps.accounts.tests.factories import (
     make_user,
 )
 from apps.consents import services as consents
-from apps.consents.models import UserTerms
+from apps.consents.models import MarketingConsent, Terms, UserTerms
 from apps.consents.tests.factories import publish_version
 from apps.core import fingerprints
 from apps.emails.models import OutboundEmail
@@ -332,14 +332,46 @@ def test_expired_code_or_process_is_rejected_without_counting(
     assert (_stored().failed_attempts, _stored().code_validated_at) == (0, None)
 
 
-def test_already_validated_code_rejects_any_code_without_counting() -> None:
+def test_already_validated_code_is_accepted_again_without_changes() -> None:
     started = _start()
     registration.verify(public_id=started.public_id, code=started.code)
+    validated_at = _stored().code_validated_at
 
-    for code in (started.code, _wrong(started.code)):
-        result = registration.verify(public_id=started.public_id, code=code)
-        assert result == registration.VerifyResult.ALREADY_VERIFIED
-    assert _stored().failed_attempts == 0
+    result = registration.verify(public_id=started.public_id, code=started.code)
+
+    assert result == registration.VerifyResult.VERIFIED
+    assert (_stored().failed_attempts, _stored().code_validated_at) == (0, validated_at)
+
+
+@pytest.mark.parametrize(
+    ("code_expired", "expected", "attempts"),
+    [
+        pytest.param(False, registration.VerifyResult.WRONG_CODE, 1, id="code-in-force"),
+        pytest.param(True, registration.VerifyResult.CODE_EXPIRED, 0, id="code-expired-in-grace"),
+    ],
+)
+def test_wrong_code_on_an_already_validated_code_is_treated_as_unvalidated(
+    code_expired: bool, expected: registration.VerifyResult, attempts: int
+) -> None:
+    started = _start()
+    registration.verify(public_id=started.public_id, code=started.code)
+    if code_expired:
+        PendingRegistration.objects.update(code_expires_at=timezone.now() - timedelta(minutes=1))
+
+    result = registration.verify(public_id=started.public_id, code=_wrong(started.code))
+
+    assert result == expected
+    assert _stored().failed_attempts == attempts
+
+
+def test_already_validated_code_is_accepted_again_during_the_grace_period() -> None:
+    started = _start()
+    registration.verify(public_id=started.public_id, code=started.code)
+    PendingRegistration.objects.update(code_expires_at=timezone.now() - timedelta(minutes=1))
+
+    result = registration.verify(public_id=started.public_id, code=started.code)
+
+    assert result == registration.VerifyResult.VERIFIED
 
 
 def test_unknown_public_id_is_rejected() -> None:
@@ -834,3 +866,156 @@ def test_failure_after_the_acceptance_leaves_neither_account_nor_acceptance(
 
     assert not User.objects.exists()
     assert not UserTerms.objects.exists()
+
+
+def test_failure_after_the_marketing_leaves_nothing_behind(monkeypatch: pytest.MonkeyPatch) -> None:
+    publish_version(version="v2")
+    publish_version(kind=Terms.Kind.MARKETING, version="m2")
+    started = _start(
+        "ana@x.com",
+        terms_version="v2",
+        terms_locale="es",
+        marketing_version="m2",
+        marketing_locale="pt-BR",
+    )
+    assert registration.verify(public_id=started.public_id, code=started.code) == "verified"
+    assert PendingRegistration.objects.get().marketing_version == "m2"
+
+    def broken_delete(self: PendingRegistration, *args: Any, **kwargs: Any) -> None:
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(PendingRegistration, "delete", broken_delete)
+
+    with pytest.raises(RuntimeError):
+        registration.complete(public_id=started.public_id, password=GOOD_PASSWORD)
+
+    assert not User.objects.exists()
+    assert not EmailAddress.objects.exists()
+    assert not UserTerms.objects.exists()
+    assert not MarketingConsent.objects.exists()
+    assert PendingRegistration.objects.filter(public_id=started.public_id).exists()
+
+
+MARKETING: dict[str, Any] = {"marketing_version": "m2", "marketing_locale": "pt-BR"}
+
+
+@pytest.fixture
+def marketing_in_force() -> None:
+    publish_version(kind=Terms.Kind.MARKETING, version="m2")
+
+
+@pytest.mark.usefixtures("marketing_in_force")
+def test_start_keeps_a_marketing_document_in_force_in_the_slot() -> None:
+    registration.start(email="ana@x.com", **DATA, **MARKETING)
+
+    payload = PhantomProcess.objects.get().payload
+    assert payload is not None
+    assert (payload["marketing_version"], payload["marketing_locale"]) == ("m2", "pt-BR")
+
+
+@pytest.mark.parametrize(
+    "marketing",
+    [
+        pytest.param({"marketing_version": "m9", "marketing_locale": "es"}, id="unknown"),
+        pytest.param({"marketing_version": "old", "marketing_locale": "es"}, id="not-in-force"),
+        pytest.param({"marketing_version": "m2", "marketing_locale": "fr"}, id="other-locale"),
+    ],
+)
+@pytest.mark.usefixtures("marketing_in_force")
+def test_start_discards_a_marketing_document_not_in_force(marketing: dict[str, Any]) -> None:
+    publish_version(
+        kind=Terms.Kind.MARKETING,
+        version="old",
+        published_at=timezone.now() - timedelta(days=30),
+    )
+
+    registration.start(email="ana@x.com", **DATA, **marketing)
+
+    payload = PhantomProcess.objects.get().payload
+    assert payload is not None and "marketing_version" not in payload
+
+
+@pytest.mark.usefixtures("marketing_in_force")
+def test_new_registration_stores_the_marketing_document() -> None:
+    _start("ana@x.com", **MARKETING)
+
+    pending = PendingRegistration.objects.get()
+    assert (pending.marketing_version, pending.marketing_locale) == ("m2", "pt-BR")
+
+
+@pytest.mark.usefixtures("marketing_in_force")
+def test_repeat_keeps_the_absence_of_marketing_of_the_first_registration() -> None:
+    _start("ana@x.com")
+
+    _start("ANA@x.com", **MARKETING)
+
+    pending = PendingRegistration.objects.get()
+    assert (pending.marketing_version, pending.marketing_locale) == ("", "")
+
+
+@pytest.mark.usefixtures("marketing_in_force")
+def test_start_with_marketing_and_an_account_stores_no_registration() -> None:
+    make_user(email="ana@x.com")
+
+    result = registration.start(email="ana@x.com", **DATA, **MARKETING)
+    registration.resolve_registration(result.public_id)
+
+    assert not PendingRegistration.objects.exists()
+
+
+def _verified_with_marketing(version: str = "m2", locale: str = "pt-BR") -> StartedWithCode:
+    started = _start("ana@x.com", marketing_version=version, marketing_locale=locale)
+    assert registration.verify(public_id=started.public_id, code=started.code) == "verified"
+    return started
+
+
+def test_complete_grants_the_stored_marketing_with_the_completion_date() -> None:
+    documents = publish_version(kind=Terms.Kind.MARKETING, version="m2")
+    started = _verified_with_marketing()
+    before = timezone.now()
+
+    user = _complete(started.public_id).user
+
+    consent = MarketingConsent.objects.get()
+    assert (consent.user, consent.terms, consent.granted) == (user, documents["pt-BR"], True)
+    assert consent.granted_at >= before
+
+
+def test_complete_with_marketing_no_longer_in_force_creates_the_account_without_it() -> None:
+    publish_version(
+        kind=Terms.Kind.MARKETING, version="m2", published_at=timezone.now() - timedelta(days=3)
+    )
+    started = _verified_with_marketing()
+    publish_version(kind=Terms.Kind.MARKETING, version="m3")
+
+    _complete(started.public_id)
+
+    assert User.objects.filter(email="ana@x.com").exists()
+    assert not MarketingConsent.objects.exists()
+
+
+@pytest.mark.parametrize("change", ["deleted", "other-kind"])
+def test_complete_with_a_broken_marketing_document_creates_the_account_silently(
+    change: str,
+) -> None:
+    documents = publish_version(kind=Terms.Kind.MARKETING, version="m2")
+    publish_version(version="v2")
+    started = _verified_with_marketing()
+    if change == "deleted":
+        documents["pt-BR"].delete()
+    else:
+        PendingRegistration.objects.update(marketing_version="v2")
+
+    _complete(started.public_id)
+
+    assert User.objects.filter(email="ana@x.com").exists()
+    assert not MarketingConsent.objects.exists()
+
+
+def test_complete_without_stored_marketing_grants_nothing() -> None:
+    publish_version(kind=Terms.Kind.MARKETING, version="m2")
+    started = _verified()
+
+    _complete(started.public_id)
+
+    assert not MarketingConsent.objects.exists()

@@ -1,0 +1,50 @@
+/* Paleta Niebla marina de docs/identidad-visual.md. El tema sigue al sistema operativo (D-13). */
+:root {
+  color-scheme: light;
+  --color-canvas: #dbe5eb;
+  --color-block: #ffffff;
+  --color-support: #edf3f7;
+  --color-line: #d1dde5;
+  --color-line-strong: #768c9b;
+  --color-text-secondary: #384d5c;
+  --color-ink: #0f222e;
+  --color-fill-strong: #0f222e;
+  --color-action: #1b5983;
+  --color-on-action: #ffffff;
+  --color-accent-1: #6aafdc;
+  --color-accent-2: #c9e2f2;
+  --color-alarm-p1: #8a2f3a;
+  --color-alarm-p2: #80442b;
+  --color-warning: #655423;
+
+  --radius-pill: 999px;
+  --radius-card: 12px;
+  --radius-tag: 4px;
+  --space-block: 10px;
+  --space-card-y: 14px;
+  --space-card-x: 16px;
+  --space-page: 22px;
+  --font-text: "Manrope Variable", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --color-canvas: #0c161d;
+    --color-block: #162631;
+    --color-support: #1f313d;
+    --color-line: #293e4c;
+    --color-line-strong: #627d90;
+    --color-text-secondary: #b3c5d0;
+    --color-ink: #eaf1f6;
+    --color-fill-strong: #344855;
+    --color-action: #9cc9e8;
+    --color-on-action: #0c161d;
+    --color-accent-1: #4f95c4;
+    --color-accent-2: #9cc9e8;
+    --color-alarm-p1: #d97f87;
+    --color-alarm-p2: #d29a76;
+    --color-warning: #c4b07a;
+  }
+}

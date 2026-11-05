@@ -1,0 +1,94 @@
+/* Reglas generales de docs/identidad-visual.md: lienzo plano, bloques opacos, lo que se pulsa es
+   redondo y usa el color de acción, foco visible de 3 px separado 2 px. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: var(--space-page);
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-text);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+main,
+form,
+section {
+  background: var(--color-block);
+  border-radius: var(--radius-card);
+  padding: var(--space-card-y) var(--space-card-x);
+}
+
+h1,
+h2 {
+  font-weight: 600;
+}
+
+label,
+small {
+  color: var(--color-text-secondary);
+}
+
+button {
+  border: 1px solid var(--color-action);
+  border-radius: var(--radius-pill);
+  background: var(--color-action);
+  color: var(--color-on-action);
+  font: inherit;
+  font-weight: 600;
+  padding: 6px 16px;
+  cursor: pointer;
+}
+
+button[aria-pressed="false"],
+button[data-variant="secondary"] {
+  background: transparent;
+  color: var(--color-action);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+input,
+select {
+  border: 1px solid var(--color-line-strong);
+  border-radius: var(--radius-tag);
+  background: var(--color-block);
+  color: var(--color-ink);
+  font: inherit;
+  padding: 6px 8px;
+}
+
+input[type="checkbox"] {
+  accent-color: var(--color-action);
+}
+
+input[inputmode="numeric"] {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-action);
+  outline-offset: 2px;
+}
+
+a {
+  color: var(--color-action);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

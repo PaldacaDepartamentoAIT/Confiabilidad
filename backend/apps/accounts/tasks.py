@@ -52,6 +52,12 @@ def reissue_code(purpose: str, public_id: str) -> None:
     REISSUE_FUNCTIONS[PhantomProcess.Purpose(purpose)](public_id)
 
 
+@shared_task(name="apps.accounts.tasks.reissue_flow_code")  # type: ignore[untyped-decorator]
+def reissue_flow_code(public_id: str) -> None:
+    # El reenvío del flujo ya fijó el plazo al aceptarse: se emite sin moverlo (D-19).
+    registration.reissue_code(public_id, keep_deadline=True)
+
+
 @shared_task(name="apps.accounts.tasks.sweep_unresolved")  # type: ignore[untyped-decorator]
 def sweep_unresolved() -> int:
     # Recoge las plazas cuyo encolado se perdió (por ejemplo, con la cola caída) (D-15).
@@ -66,6 +72,12 @@ def sweep_unresolved() -> int:
     for slot in unresolved.filter(created_at__lte=limit):
         _give_up(slot.public_id, None)
     return queued
+
+
+@shared_task(name="apps.accounts.tasks.purge_stale_registrations")  # type: ignore[untyped-decorator]
+def purge_stale_registrations() -> int:
+    # Cada hora: un registro se borra entre 24 y 25 h después de caducar su código (RF-020).
+    return registration.purge_stale()
 
 
 def _unresolved_after_window(public_id: str) -> bool:

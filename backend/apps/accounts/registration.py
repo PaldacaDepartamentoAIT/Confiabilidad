@@ -1,6 +1,7 @@
 import logging
+import math
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime
 from enum import StrEnum
 
 from allauth.account.models import EmailAddress
@@ -15,6 +16,8 @@ from apps.accounts.models import PendingRegistration, PhantomProcess, User
 from apps.accounts.processes import VerifyResult as VerifyResult
 from apps.accounts.validators import normalize_country, normalize_name
 from apps.consents import services as consents
+from apps.consents.models import Terms
+from apps.core import fingerprints
 from apps.emails import locales, outbox
 
 _PURPOSE = codes.Purpose.REGISTRATION
@@ -23,6 +26,7 @@ logger = logging.getLogger(__name__)
 
 RESOLVE_TASK = "apps.accounts.tasks.resolve_registration"
 REISSUE_TASK = "apps.accounts.tasks.reissue_code"
+REISSUE_FLOW_TASK = "apps.accounts.tasks.reissue_flow_code"
 
 
 @dataclass(frozen=True)
@@ -53,6 +57,8 @@ def start(
     language: str = locales.DEFAULT,
     terms_version: str = "",
     terms_locale: str = "",
+    marketing_version: str = "",
+    marketing_locale: str = "",
 ) -> Started:
     # La respuesta hace el mismo trabajo tenga o no cuenta el correo: valida los datos y deja una
     # plaza que se resuelve fuera de la respuesta (D-11).
@@ -65,12 +71,15 @@ def start(
     }
     if terms_version:
         payload.update(terms_version=terms_version, terms_locale=terms_locale)
+    if marketing_version:
+        payload.update(_marketing_in_force(marketing_version, marketing_locale))
     slot = PhantomProcess(
         purpose=_PURPOSE,
         email=email,
         public_id=codes.generate_public_id(),
         code_hash="",
         code_expires_at=timezone.now() + conf.code_ttl(),
+        last_sent_at=timezone.now(),
         payload=payload,
     )
     with transaction.atomic():
@@ -82,6 +91,18 @@ def start(
     )
     signals.registration_code_sent.send(sender=PendingRegistration, email=email, success=True)
     return Started(public_id=slot.public_id)
+
+
+def _marketing_in_force(version: str, locale: str) -> dict[str, str]:
+    # Un documento que no existe o no es de la versión vigente se descarta sin error (C-03 de
+    # procesos-pendientes): el marketing es opcional y no impide el registro.
+    try:
+        document = consents.current_document_shown(
+            Terms.Kind.MARKETING, version=version, locale=locale
+        )
+    except ValidationError:
+        return {}
+    return {"marketing_version": document.version, "marketing_locale": document.locale}
 
 
 def _queue(task: str, args: list[str]) -> None:
@@ -106,22 +127,77 @@ def _locked_process(public_id: str) -> PendingRegistration | PhantomProcess | No
 
 
 def verify(*, public_id: str, code: str) -> VerifyResult:
+    # La consola aplica la misma regla que la API (D-01).
+    return verify_code(public_id=public_id, code=code)
+
+
+@dataclass(frozen=True)
+class Status:
+    code_expires_in: int
+    resend_in: int
+    resends_left: int
+    locked: bool
+    expired: bool
+
+
+def status(*, public_id: str) -> Status | None:
+    # Nada de la validación: una plaza nunca está validada y la diferencia la delataría (D-05).
+    with transaction.atomic():
+        process = _locked_process(public_id)
+        if process is None:
+            return None
+        now = timezone.now()
+        resend_at = (
+            now if process.last_sent_at is None else process.last_sent_at + conf.resend_interval()
+        )
+        return Status(
+            code_expires_in=_seconds_until(process.code_expires_at, now),
+            resend_in=_seconds_until(resend_at, now),
+            resends_left=max(0, conf.max_resends() - process.resend_count),
+            locked=process.is_locked,
+            expired=process.is_expired,
+        )
+
+
+def _seconds_until(moment: datetime, now: datetime) -> int:
+    return max(0, math.ceil((moment - now).total_seconds()))
+
+
+def verify_code(*, public_id: str, code: str) -> VerifyResult:
     with transaction.atomic():
         process = _locked_process(public_id)
         if process is None:
             return VerifyResult.NOT_FOUND
-        if process.is_expired:
-            signals.registration_code_verified.send(
-                sender=PendingRegistration, email=process.email, success=False
-            )
-            return VerifyResult.EXPIRED
-        result = processes.check_code(process, _PURPOSE, code)
+        result = _check_registration_code(process, code)
         signals.registration_code_verified.send(
             sender=PendingRegistration,
             email=process.email,
             success=result is VerifyResult.VERIFIED,
         )
         return result
+
+
+def _check_registration_code(
+    process: PendingRegistration | PhantomProcess, code: str
+) -> VerifyResult:
+    # El código se compara antes de mirar si está validado: rechazar sin comparar delataría que el
+    # registro es real, porque una plaza nunca está validada (D-02, RF-009 de procesos-pendientes).
+    if process.is_expired:
+        return VerifyResult.EXPIRED
+    if process.is_locked:
+        return VerifyResult.LOCKED
+    matches = fingerprints.code_matches(_PURPOSE, process.public_id, code, process.code_hash)
+    if matches and process.code_validated_at is not None:
+        return VerifyResult.VERIFIED
+    if timezone.now() >= process.code_expires_at:
+        return VerifyResult.CODE_EXPIRED
+    if not matches:
+        process.failed_attempts += 1
+        process.save(update_fields=["failed_attempts"])
+        return VerifyResult.WRONG_CODE
+    process.code_validated_at = timezone.now()
+    process.save(update_fields=["code_validated_at"])
+    return VerifyResult.VERIFIED
 
 
 @dataclass(frozen=True)
@@ -154,13 +230,53 @@ def resend(*, public_id: str) -> Resent | ResendRefusal:
         return Resent(public_id=public_id)
 
 
-def reissue_code(public_id: str) -> None:
+class FlowResendRefusal(StrEnum):
+    NOT_FOUND = "not_found"
+    EXPIRED = "expired"
+    UNAVAILABLE = "resend_unavailable"
+
+
+def resend_code(*, public_id: str) -> Resent | FlowResendRefusal:
+    # Como resend, con la espera y el tope de la pantalla (RF-010 de registro-flujo). Esperar,
+    # agotar los reenvíos o tener el código validado dan el mismo rechazo (C-04).
+    with transaction.atomic():
+        process = _locked_process(public_id)
+        if process is None:
+            return FlowResendRefusal.NOT_FOUND
+        if process.is_expired:
+            return FlowResendRefusal.EXPIRED
+        now = timezone.now()
+        waiting = (
+            process.last_sent_at is not None and now < process.last_sent_at + conf.resend_interval()
+        )
+        if (
+            waiting
+            or process.resend_count >= conf.max_resends()
+            or process.code_validated_at is not None
+        ):
+            return FlowResendRefusal.UNAVAILABLE
+        # El plazo del código nuevo cuenta desde aquí, aunque el correo salga después (RF-006).
+        type(process).objects.filter(pk=process.pk).update(
+            code_hash="",
+            code_expires_at=now + conf.code_ttl(),
+            failed_attempts=0,
+            resend_count=process.resend_count + 1,
+            last_sent_at=now,
+        )
+        transaction.on_commit(lambda: _queue(REISSUE_FLOW_TASK, [public_id]))
+        signals.registration_code_sent.send(
+            sender=PendingRegistration, email=process.email, success=True
+        )
+        return Resent(public_id=public_id)
+
+
+def reissue_code(public_id: str, *, keep_deadline: bool = False) -> None:
     # La plaza recibe también un código nuevo, que nunca se envía (D-13).
     with transaction.atomic():
         process = _locked_process(public_id)
         if process is None or process.is_expired or process.code_validated_at is not None:
             return
-        code = processes.renew_code(process, _PURPOSE)
+        code = processes.renew_code(process, _PURPOSE, keep_deadline=keep_deadline)
         if isinstance(process, PendingRegistration):
             outbox.enqueue(
                 kind="registration_code",
@@ -209,9 +325,61 @@ def complete(*, public_id: str, password: str) -> Completed | CompleteRefusal:
         user.save()
         EmailAddress.objects.create(user=user, email=user.email, verified=True, primary=True)
         _accept_stored_terms(user, pending)
+        _grant_stored_marketing(user, pending)
         pending.delete()
         signals.account_created.send(sender=User, email=user.email, success=True)
         return Completed(user=user)
+
+
+@dataclass(frozen=True)
+class PasswordRejected:
+    codes: tuple[str, ...]
+
+
+def complete_with_code(
+    *, public_id: str, code: str, password: str
+) -> Completed | VerifyResult | PasswordRejected:
+    # El código se comprueba de nuevo en cada petición y nada del cliente salvo la contraseña llega
+    # a la cuenta (RF-012). Un código no validado cuenta igual que uno incorrecto (C-03).
+    with transaction.atomic():
+        process = _locked_process(public_id)
+        if process is None:
+            return VerifyResult.NOT_FOUND
+        if process.is_expired:
+            return VerifyResult.EXPIRED
+        if process.is_locked:
+            return VerifyResult.LOCKED
+        matches = fingerprints.code_matches(_PURPOSE, process.public_id, code, process.code_hash)
+        if not matches or process.code_validated_at is None:
+            process.failed_attempts += 1
+            process.save(update_fields=["failed_attempts"])
+            signals.registration_code_verified.send(
+                sender=PendingRegistration, email=process.email, success=False
+            )
+            return VerifyResult.WRONG_CODE
+        try:
+            with transaction.atomic():
+                result = complete(public_id=public_id, password=password)
+        except ValidationError as error:
+            # La contraseña no gasta intentos y el código sigue valiendo (RF-013).
+            return PasswordRejected(codes=tuple(str(item.code) for item in error.error_list))
+        if isinstance(result, Completed):
+            return result
+        return VerifyResult.NOT_FOUND
+
+
+def _grant_stored_marketing(user: User, pending: PendingRegistration) -> None:
+    # Cualquier rechazo de consentimientos deja la cuenta sin concesión y sin rastro (C-01 de
+    # procesos-pendientes, riesgo aceptado).
+    if not pending.marketing_version:
+        return
+    try:
+        with transaction.atomic():
+            consents.grant_marketing(
+                user, version=pending.marketing_version, locale=pending.marketing_locale
+            )
+    except (ValidationError, IntegrityError):
+        return
 
 
 def _accept_stored_terms(user: User, pending: PendingRegistration) -> None:
@@ -282,6 +450,8 @@ def _leave_as_issued(slot: PhantomProcess, previous: PhantomProcess | None) -> N
     slot.payload = None
     slot.failed_attempts = 0
     slot.code_validated_at = None
+    slot.resend_count = 0
+    slot.last_sent_at = timezone.now()
     slot.code_expires_at = timezone.now() + conf.code_ttl()
     slot.resolved_at = timezone.now()
     if previous is not None and not previous.is_expired:
@@ -296,6 +466,8 @@ def _leave_as_issued(slot: PhantomProcess, previous: PhantomProcess | None) -> N
             "code_validated_at",
             "code_expires_at",
             "created_at",
+            "resend_count",
+            "last_sent_at",
         ]
     )
 
@@ -313,6 +485,8 @@ def _register_or_repeat(
             language=str(data["language"]),
             terms_version=str(data.get("terms_version", "")),
             terms_locale=str(data.get("terms_locale", "")),
+            marketing_version=str(data.get("marketing_version", "")),
+            marketing_locale=str(data.get("marketing_locale", "")),
         )
         code = processes.issue_code(pending, _PURPOSE, public_id)
         try:
@@ -329,6 +503,20 @@ def _register_or_repeat(
     code = processes.issue_code(existing, _PURPOSE, public_id)
     existing.save(update_fields=processes.ISSUED_FIELDS)
     return existing, code
+
+
+def purge_stale() -> int:
+    # Mismo criterio y misma operación para registros y plazas: pasan a "no encontrado" a la vez
+    # (RF-017 y RF-020 de registro-flujo, D-07).
+    cutoff = timezone.now() - conf.purge_after()
+    with transaction.atomic():
+        pending, _by_model = PendingRegistration.objects.filter(
+            code_expires_at__lte=cutoff
+        ).delete()
+        slots, _by_model = PhantomProcess.objects.filter(
+            purpose=_PURPOSE, code_expires_at__lte=cutoff
+        ).delete()
+    return pending + slots
 
 
 def purge_expired() -> int:

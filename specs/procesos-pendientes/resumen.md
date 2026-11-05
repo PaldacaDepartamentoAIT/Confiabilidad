@@ -39,6 +39,11 @@ acceso al correo con un código y se fija una contraseña. Todo se puede recorre
   servidor y atada al `public_id`); el código en claro solo viaja en el correo (RF-007, RF-008). El
   secreto se puede rotar sin invalidar los códigos en curso (RF-015).
 - **Verificación**: 5 intentos fallidos bloquean el código hasta pedir otro (RF-009, RF-010).
+  Desde el cambio del 2026-10-30 (pedido por `registro-flujo`), un código ya validado se puede
+  presentar de nuevo: el correcto se acepta otra vez sin cambiar nada mientras el proceso no haya
+  caducado, aunque el código sí; uno incorrecto suma un intento con el código vigente, o da «código
+  caducado» sin sumar si ya no lo está. Así responde igual que un identificador sin registro
+  detrás, que nunca está validado. El cambio de contraseña conserva la regla anterior.
 - **Caducidad**: el proceso muere 15 min después de caducar su código o 1 h después del alta, lo
   que llegue antes (RF-011). La gracia sirve para completar tras validar el código.
 - **Reenvío en dos tiempos** (RF-016): la respuesta anula el código vigente y pone los intentos a
@@ -56,6 +61,14 @@ acceso al correo con un código y se fija una contraseña. Todo se puede recorre
   aceptación y figura con los términos sin aceptar. Esto pasa con todo registro empezado desde
   consola (`registration start` no pide documento) o antes del cambio. Un registro repetido conserva
   el documento del primero, igual que el resto de sus datos.
+- **Marketing aceptado** (cambio del 2026-10-30, pedido por `registro-flujo`; RF-001, RF-005,
+  RF-020, RF-024). El registro pendiente guarda también el documento de marketing marcado en el
+  formulario (`marketing_version` y `marketing_locale`, migración `0014`). Al empezar, uno que no
+  existe o no es de la versión vigente se descarta sin error. Al completar, si sigue siendo vigente,
+  la concesión se registra en la misma operación que crea la cuenta, con la fecha de compleción; si
+  no, o si `consentimientos` la rechaza por cualquier otro motivo, la cuenta se crea sin concesión y
+  sin rastro (riesgo aceptado, C-01). Un registro repetido conserva la elección del primero, también
+  si no marcó el marketing. La consola no indica marketing.
 - **Política de contraseñas** de todo el proyecto: 12 caracteres o más, no parecida al correo ni
   al nombre, no común y no filtrada según Have I Been Pwned, consultado sin enviar la contraseña.
   Si el servicio no responde, se acepta y se registra un aviso (RF-022, S-09).
@@ -151,7 +164,13 @@ proveedor de correo configurado, los correos salen por la consola del worker: ah
    ```bash
    docker compose -f docker/docker-compose.yml run --rm backend python manage.py registration verify <PUBLIC_ID> <CODE>
    ```
-   Deberías ver `Code verified.`
+   Deberías ver `Code verified.` Si repites el mismo comando, verás otra vez `Code verified.`: el
+   código ya validado se acepta de nuevo. Con un código incorrecto, en cambio, el intento cuenta
+   para el bloqueo:
+   ```bash
+   docker compose -f docker/docker-compose.yml run --rm backend python manage.py registration verify <PUBLIC_ID> 000000
+   ```
+   Deberías ver `Wrong code.`
 7. Completa el registro. Primero con una contraseña débil, para ver cada regla incumplida:
    ```bash
    docker compose -f docker/docker-compose.yml run --rm backend python manage.py registration complete <PUBLIC_ID> --password 12345678

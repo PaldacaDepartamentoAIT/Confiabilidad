@@ -40,6 +40,16 @@ def check_ip(ip: str, *, now: float | None = None, record: bool = True) -> Verdi
     )
 
 
+def check_flow_ip(ip: str, *, now: float | None = None) -> Verdict:
+    # Verificar, reenviar y completar comparten un límite propio, aparte del formulario (RF-019).
+    return _check(
+        f"registration-rate:flow-ip:{ip}",
+        per_hour=conf.rate_flow_ip_per_hour(),
+        interval=0.0,
+        now=time.time() if now is None else now,
+    )
+
+
 def record_ip(ip: str, *, now: float | None = None) -> None:
     key = _ip_key(ip)
     moment = time.time() if now is None else now

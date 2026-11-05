@@ -1,0 +1,932 @@
+# Tareas: registro-flujo
+Estado: aprobado
+
+Rutas del backend relativas a `backend/apps/accounts/` y del frontend a `frontend/src/`, salvo que
+se indique otra. «Suite verde» = `cd backend && pytest -q` + `mypy .` + `ruff check .` +
+`black --check .` en el backend, y `pnpm --filter frontend test` + `typecheck` + `lint` +
+`prettier --check` en el frontend, sin errores. En cada tarea, antes de marcarla, se prueba al menos
+un mutante del código que introduce, que debe hacer fallar sus tests (archivo de tests completo,
+nunca con `-k`).
+
+Las pantallas se construyen sin ruta (E-12…E-14) y se enlazan todas a la vez en E-15, para no
+exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
+
+## Backend
+
+- [x] T-001 Verificar de nuevo un código validado
+  RF: RF-007, RF-008 (RF-009 de `procesos-pendientes`; M-01, D-02) | Depende de: — | Archivos: 2
+  Archivos: `registration.py`, `tests/test_registration_flow.py`.
+  Hecho cuando: `verify_code` valida un código correcto; con el código ya validado, el correcto se
+  acepta sin cambiar `failed_attempts` ni `code_validated_at`, también con el código caducado y el
+  proceso en la gracia; uno incorrecto suma un intento con el código vigente y da `CODE_EXPIRED` sin
+  sumar con el código caducado; bloqueado o caducado se rechaza; una plaza da los mismos resultados
+  que un registro sin validar cuyo código no se acierta; suite verde.
+  Decisiones: la comprobación vive en `registration._check_registration_code` y no en
+  `processes.py`, porque solo el registro cambia de regla y `check_code` sigue sirviendo a
+  `cambio-contrasena` — [Cierto] — revertir: añadir a `check_code` un parámetro por propósito.
+  `verify_code` envía la señal de auditoría en todos los casos salvo «no existe», igual que hacía
+  `verify` — [Cierto] — revertir: no aplica.
+
+- [x] T-002 La consola usa la regla nueva
+  RF: RF-008 (RF-009 de `procesos-pendientes`; D-01) | Depende de: T-001 | Archivos: 3
+  Archivos: `registration.py`, `tests/test_registration_service.py`,
+  `backend/apps/audit/tests/test_registration_events.py`.
+  Hecho cuando: `verify` delega en `verify_code`;
+  `test_already_validated_code_rejects_any_code_without_counting` se sustituye por los casos de
+  T-001 a través de `verify`; el test de auditoría espera `[True, True]`; suite verde.
+
+- [x] T-003 Resumen de `procesos-pendientes`: código validado
+  RF: RF-008 | Depende de: T-002 | Archivos: 1
+  Archivos: `specs/procesos-pendientes/resumen.md`.
+  Hecho cuando: el resumen explica que repetir `registration verify` con el código correcto ya
+  validado lo acepta de nuevo y que uno incorrecto suma un intento.
+
+- [x] T-004 Valores configurables del flujo
+  RF: RF-023 (M-04) | Depende de: — | Archivos: 4
+  Archivos: `backend/config/settings.py`, `backend/.env.example`, `conf.py`,
+  `tests/test_registration_conf.py`.
+  Hecho cuando: `conf` expone la espera entre reenvíos (60 s), el máximo de reenvíos (5), el límite
+  por IP del flujo (60/h) y el plazo de borrado (24 h), leídos de variables de entorno, y rechaza un
+  valor menor que 1 como los límites existentes; suite verde.
+  Excepción: la configuración está repartida por diseño entre `settings.py`, `.env.example` y
+  `conf.py`; separarla dejaría un ajuste sin lector o un lector sin ajuste.
+
+- [x] T-005 Límite por IP del flujo
+  RF: RF-019 (M-04) | Depende de: T-004 | Archivos: 2
+  Archivos: `throttling.py`, `tests/test_registration_throttling.py`.
+  Hecho cuando: `check_flow_ip` permite 60 peticiones por hora y rechaza la siguiente con los
+  segundos de espera, con una clave distinta de las del formulario (no se suman); suite verde.
+
+- [x] T-006 Textos del flujo en tres idiomas
+  RF: RF-022 (M-03) | Depende de: — | Archivos: 2
+  Archivos: `api/messages.py`, `tests/test_registration_api_messages.py`.
+  Hecho cuando: `wrong_code`, `locked`, `code_expired`, `expired`, `resend_unavailable` y
+  `not_found` tienen texto en `es`, `pt-BR` y `en`, y el test de completitud los incluye; suite
+  verde.
+
+- [x] T-007 Ruta de verificación
+  RF: RF-007, RF-016, RF-019, RF-021, RF-022 (M-03, D-03) | Depende de: T-001, T-005, T-006 |
+  Archivos: 4
+  Archivos: `api/flow_serializers.py`, `api/flow_views.py`, `api/urls.py`,
+  `tests/test_registration_flow_api.py`.
+  Hecho cuando: `POST /api/{browser,app}/v1/registration/verify` con `{public_id, code}` da `200`
+  con el código correcto, `400` con `{"code": …}` y su texto en el idioma pedido para cada rechazo,
+  `404` con un identificador desconocido de cualquier formato, `403` sin CSRF en la ruta web, y
+  `429` con `Retry-After` al superar el límite por IP; un cuerpo ilegible da `400`, nunca `500`;
+  suite verde.
+  Excepción: una ruta nueva solo es observable con su serializador, su vista y su entrada en
+  `urls.py` a la vez.
+  Decisiones: las vistas del flujo reutilizan `_enforce_csrf`, `_read_body`, `_limited`, `_render`
+  y `_unreadable` de `api/views.py` en vez de copiarlas, para que el formulario y el flujo respondan
+  igual — [Cierto] — revertir: hacerlas públicas en un módulo común. Un identificador que no cabe en
+  la columna (más de 64 caracteres), vacío o con un nulo o un sustituto suelto da `404` sin consultar,
+  porque Postgres no los admite y daría `500` — [Cierto] — revertir: no aplica. El `200` lleva
+  `{"result": "verified"}` y una petición mal formada da `400` con `{"errors": …}` como el
+  formulario — [Probable] — revertir: cambiar el cuerpo en `flow_views.py`. La suite completa se
+  ejecutó una vez para T-004…T-007 juntas (1867 pasan): las ejecuciones por tarea se cortaron por el
+  entorno (procesos de Postgres y Redis detenidos) — [Cierto] — revertir: no aplica.
+
+- [x] T-008 Contadores de reenvío en el modelo
+  RF: RF-010 (M-02, D-04) | Depende de: — | Archivos: 3
+  Archivos: `models.py`, `migrations/0013_codeprocess_resend.py`,
+  `tests/test_pending_registration_model.py`.
+  Hecho cuando: `CodeProcess` tiene `resend_count` (0) y `last_sent_at` (nulo) en las tres tablas;
+  la migración se aplica sobre datos existentes; `python manage.py makemigrations --check` no
+  propone nada; suite verde.
+
+- [x] T-009 Contadores al emitir el código
+  RF: RF-010, RF-017 (M-02) | Depende de: T-008 | Archivos: 3
+  Archivos: `processes.py`, `registration.py`, `tests/test_registration_flow.py`.
+  Hecho cuando: la plaza nace con `last_sent_at`; un registro nuevo, uno repetido y una plaza con
+  cuenta al resolverse quedan con `resend_count` 0 y `last_sent_at` del momento de la resolución,
+  igual en los tres casos; suite verde.
+
+- [x] T-010 Reenvío con espera y tope
+  RF: RF-010 (M-01) | Depende de: T-004, T-009 | Archivos: 2
+  Archivos: `registration.py`, `tests/test_registration_flow.py`.
+  Hecho cuando: `resend_code` reenvía pasados 60 s y suma uno a `resend_count`; antes de 60 s, tras
+  el quinto reenvío o con el código validado devuelve `UNAVAILABLE` sin cambiar nada; una plaza se
+  comporta igual que un registro real sin validar; suite verde.
+  Decisiones: un proceso caducado da su propio rechazo, `expired`, y no `UNAVAILABLE`, como el resto
+  del flujo — [Probable] — revertir: devolver `UNAVAILABLE` también al caducar. `resend_code` tiene
+  su propio enumerado (`FlowResendRefusal`) para no añadir un valor a `ResendRefusal`, que la consola
+  traduce caso a caso — [Cierto] — revertir: no aplica.
+
+- [x] T-011 Ruta de reenvío
+  RF: RF-010, RF-016, RF-019, RF-021 (M-03) | Depende de: T-007, T-010 | Archivos: 3
+  Archivos: `api/flow_views.py`, `api/urls.py`, `tests/test_registration_flow_api.py`.
+  Hecho cuando: `POST …/registration/resend` da `202`, `400` `{"code": "resend_unavailable"}`,
+  `404`, `403` sin CSRF y `429`, y cuenta para el límite por IP; suite verde.
+  Decisiones: las vistas del flujo pasan a una vista base común (`_FlowView`) con el idioma, el
+  límite, la lectura del cuerpo y el «no encontrado», y `PublicIdSerializer` vive en `flow_views.py`
+  importando `_Text`, para no tocar un cuarto archivo — [Cierto] — revertir: moverlo a
+  `flow_serializers.py`. La suite completa se ejecutó una vez para T-008…T-011 (1889 pasan) —
+  [Cierto] — revertir: no aplica.
+
+- [x] T-012 Estado del proceso
+  RF: RF-006, RF-009, RF-010 (M-01, D-05) | Depende de: T-010 | Archivos: 2
+  Archivos: `registration.py`, `tests/test_registration_flow.py`.
+  Hecho cuando: `status` devuelve los segundos del código, los segundos hasta poder reenviar, los
+  reenvíos restantes, bloqueado y caducado; no incluye ningún dato de la validación; un registro
+  validado y uno sin validar dan el mismo estado; `None` si no existe; suite verde.
+  Decisiones: los segundos se redondean hacia arriba y nunca bajan de 0; sin último envío
+  registrado, el reenvío está disponible ya (0 s) — [Cierto] — revertir: cambiar `_seconds_until`.
+  `status` bloquea las filas como el resto del flujo (`_locked_process`), para hacer las mismas
+  consultas en un registro real y en una plaza — [Cierto] — revertir: no aplica.
+
+- [x] T-013 Ruta de estado
+  RF: RF-006, RF-016, RF-021 (M-03, D-03) | Depende de: T-011, T-012 | Archivos: 3
+  Archivos: `api/flow_views.py`, `api/urls.py`, `tests/test_registration_flow_api.py`.
+  Hecho cuando: `POST …/registration/status` da `200` con el estado o `404`, exige CSRF en la ruta
+  web y no cuenta para el límite por IP (61 consultas seguidas dan `200`); suite verde.
+
+- [x] T-014 Lista pública de países
+  RF: RF-001 (M-06) | Depende de: — | Archivos: 2
+  Archivos: `validators.py`, `tests/test_validators.py`.
+  Hecho cuando: `COUNTRY_CODES` es pública, ordenada y es la misma que usa `validate_country`, sin
+  cambiar ninguna validación; suite verde.
+
+- [x] T-015 Ruta de opciones del formulario
+  RF: RF-001, RF-021 (M-06, D-09) | Depende de: T-013, T-014 | Archivos: 3
+  Archivos: `api/flow_views.py`, `api/urls.py`, `tests/test_registration_flow_api.py`.
+  Hecho cuando: `GET …/registration/options?language=pt-BR` da los países y los documentos vigentes
+  de términos y de marketing en ese idioma, o `null` si no hay; la ruta web pone la cookie
+  `csrftoken`; suite verde.
+  Decisiones: el idioma de las opciones sale del parámetro `language` y, si no es válido, de
+  `Accept-Language`, como en el formulario — [Cierto] — revertir: no aplica. La suite completa se
+  ejecutó una vez para T-012…T-015 (1906 pasan) — [Cierto] — revertir: no aplica.
+
+- [x] T-016 Completar con código y contraseña
+  RF: RF-012, RF-013, RF-014 (M-01, D-02; C-03) | Depende de: T-001 | Archivos: 2
+  Archivos: `registration.py`, `tests/test_registration_flow.py`.
+  Hecho cuando: `complete_with_code` crea la cuenta solo con el código correcto y validado; un código
+  incorrecto o no validado suma un intento y no evalúa la contraseña; una contraseña que incumple la
+  política devuelve cada regla sin sumar intento y conserva el código; bloqueado, caducado o
+  inexistente se rechaza; una plaza nunca crea cuenta; suite verde.
+  Decisiones: un código incorrecto o no validado en la compleción envía la misma señal de auditoría
+  que una verificación fallida — [Probable] — revertir: quitar la señal. La compleción delega en
+  `complete` dentro de un punto de guardado y traduce su `ValidationError` en las reglas
+  incumplidas; si `complete` rechaza por otro motivo (por ejemplo, el correo consiguió cuenta
+  entretanto y borra el registro), responde «no encontrado» — [Probable] — revertir: devolver un
+  rechazo propio.
+
+- [x] T-017 Textos de la política de contraseña
+  RF: RF-013, RF-022 | Depende de: T-006 | Archivos: 2
+  Archivos: `api/messages.py`, `tests/test_registration_api_messages.py`.
+  Hecho cuando: `password_too_short`, `password_too_similar`, `password_too_common`,
+  `password_entirely_numeric` y el código de contraseña filtrada tienen texto en los tres idiomas;
+  suite verde.
+
+- [x] T-018 Ruta de compleción
+  RF: RF-012, RF-013, RF-014, RF-016, RF-019, RF-021 (M-03) | Depende de: T-011, T-016, T-017 |
+  Archivos: 4
+  Archivos: `api/flow_serializers.py`, `api/flow_views.py`, `api/urls.py`,
+  `tests/test_registration_flow_api.py`.
+  Hecho cuando: `POST …/registration/complete` con `{public_id, code, password}` da `201` y crea la
+  cuenta con el correo verificado; `400` con el código de rechazo, o con
+  `{"errors": {"password": […]}}`; `404`; `403` sin CSRF; `429`; completar sin código, con uno
+  incorrecto o con uno no validado nunca crea la cuenta (CF-3); suite verde.
+  Excepción: igual que T-007, la ruta no es observable sin serializador, vista y `urls.py`.
+  Decisiones: la longitud mínima del texto de la contraseña sale del `MinimumLengthValidator`
+  configurado — [Cierto] — revertir: no aplica. La contraseña no tiene longitud máxima: la spec no
+  la pide, y una muy larga cuesta CPU al hashearla; el límite por IP lo frena — [Cierto] — revertir:
+  añadir un tope por `sdd-cambio`.
+
+- [x] T-019 Casos compartidos de contraseña en el servidor
+  RF: RF-013 (CF-8, S-17) | Depende de: — | Archivos: 1
+  Archivos: `tests/test_password_shared_cases.py`.
+  Hecho cuando: un test recorre la tabla de la spec con los validadores de longitud y de solo
+  números del servidor y obtiene el resultado de cada fila; suite verde.
+  Decisiones: el test pasa desde el principio porque fija un comportamiento que ya existía; su
+  mutante es quitar `NumericPasswordValidator` de la configuración — [Cierto] — revertir: no
+  aplica. La suite completa se ejecutó una vez para T-016…T-019 (1950 pasan) — [Cierto] —
+  revertir: no aplica.
+
+- [x] T-020 Marketing en el modelo
+  RF: RF-018 (M-05) | Depende de: T-008 | Archivos: 3
+  Archivos: `models.py`, `migrations/0014_pendingregistration_marketing.py`,
+  `tests/test_pending_registration_model.py`.
+  Hecho cuando: `PendingRegistration` guarda `marketing_version` y `marketing_locale`, vacíos por
+  defecto; `makemigrations --check` no propone nada; suite verde.
+
+- [x] T-021 Marketing al empezar y al repetir
+  RF: RF-018 (RF-005 y RF-024 de `procesos-pendientes`) | Depende de: T-020 | Archivos: 2
+  Archivos: `registration.py`, `tests/test_registration_service.py`.
+  Hecho cuando: `start` guarda en la plaza un documento de marketing vigente y descarta sin error uno
+  inexistente o no vigente; un registro nuevo lo copia; uno repetido conserva el del primero, también
+  su ausencia; un correo con cuenta no guarda nada; suite verde.
+
+- [x] T-022 Concesión de marketing al completar
+  RF: RF-014, RF-018 (RF-020 de `procesos-pendientes`; C-01) | Depende de: T-021 | Archivos: 2
+  Archivos: `registration.py`, `tests/test_registration_service.py`.
+  Hecho cuando: completar registra la concesión con la fecha de compleción en la misma operación;
+  un documento que ya no es vigente, borrado o de otro tipo crea la cuenta sin concesión y sin
+  error; suite verde.
+
+- [x] T-023 Marketing en la API del formulario
+  RF: RF-018 (RF-015 de `registro-api`; D-06) | Depende de: T-021 | Archivos: 3
+  Archivos: `api/serializers.py`, `api/views.py`, `tests/test_registration_api.py`.
+  Hecho cuando: `marketing` vigente llega a la plaza; ausente, no vigente, inexistente, sin documento
+  vigente o mal formado (no objeto, tipos erróneos, longitudes, nulos, sustitutos, anidamiento) da la
+  misma respuesta `202` sin error de campo ni `500`; `pt-br` concede `pt-BR` (CF-8 de
+  `registro-api`); suite verde.
+  Decisiones: el campo no tiene valor por defecto y solo aparece en los datos validados si llega
+  en la petición, para no cambiar un test existente de `registro-api` que compara esos datos —
+  [Cierto] — revertir: `default=None` y ajustar ese test. Un idioma que no es una variante de
+  `es`, `pt-BR` o `en` se deja tal cual (no se convierte en `es` como en `locales.normalize`), para
+  que el documento no exista y se descarte — [Cierto] — revertir: no aplica. La suite completa
+  falló una vez en `test_template_syntax_is_checked_quickly[closed-blocks]` (`apps/emails`, que esta
+  entrega no toca: exige menos de 1 s de reloj y la máquina iba cargada); el archivo pasó 3 de 3
+  veces por separado y la suite repetida pasó entera (1981 pasan) — [Probable] — revertir: no
+  aplica.
+
+- [x] T-024 Resúmenes de `procesos-pendientes` y `registro-api`: marketing
+  RF: RF-018 | Depende de: T-022, T-023 | Archivos: 2
+  Archivos: `specs/procesos-pendientes/resumen.md`, `specs/registro-api/resumen.md`.
+  Hecho cuando: los dos resúmenes describen el marketing aceptado, con un `curl` del formulario con
+  `marketing`.
+
+- [x] T-025 Borrado de procesos antiguos
+  RF: RF-020, RF-017 (M-01, D-07) | Depende de: T-004 | Archivos: 2
+  Archivos: `registration.py`, `tests/test_registration_flow.py`.
+  Hecho cuando: `purge_stale` borra en una transacción los registros pendientes y las plazas de
+  registro cuyo código caducó hace 24 h o más, conserva los de menos, no toca las plazas de cambio
+  de contraseña y devuelve cuántos borró; suite verde.
+
+- [x] T-026 Tarea programada de borrado
+  RF: RF-020 (M-07) | Depende de: T-025 | Archivos: 3
+  Archivos: `tasks.py`, `backend/config/settings.py`, `tests/test_registration_background.py`.
+  Hecho cuando: `purge_stale_registrations` llama a `purge_stale` y está en `CELERY_BEAT_SCHEDULE`
+  cada 3600 s; `celery -A config call apps.accounts.tasks.purge_stale_registrations` la dispara;
+  suite verde.
+
+- [x] T-027 Borrado desde consola
+  RF: RF-020 (M-07, P-03) | Depende de: T-025 | Archivos: 2
+  Archivos: `management/commands/registration.py`, `tests/test_registration_command.py`.
+  Hecho cuando: `python manage.py registration purge-stale` borra y muestra cuántos; suite verde.
+  Decisiones: el despachador del comando convierte el guion del subcomando en guion bajo para
+  llamar a `_purge_stale` — [Cierto] — revertir: no aplica. Un test con un registro caducado hace
+  30 min distingue `purge-stale` de `purge`, porque el primer test no mataba el mutante que
+  cambia una orden por la otra — [Cierto] — revertir: no aplica.
+
+- [x] T-028 Equivalencia de plaza y registro real en el flujo
+  RF: RF-016, RF-017, RF-020 (CF-2) | Depende de: T-013, T-018, T-023, T-026 | Archivos: 1
+  Archivos: `tests/test_registration_flow_equivalence.py`.
+  Hecho cuando: un registro real cuyo código no se acierta y una plaza dan las mismas respuestas
+  (estado, cuerpo, cabeceras y cookies) y las mismas consultas (`django_assert_num_queries`) al
+  consultar, verificar, reenviar, completar y caducar, con bloqueo y tope de reenvíos; pasan a `404`
+  a la vez al repetir el registro y con `purge_stale`; un identificador desconocido da `404` sin
+  escribir nada; suite verde.
+  Decisiones: el recorrido fija los instantes del proceso antes de cada consulta del estado, para
+  que los segundos no dependan de lo que tarda el test; compara las respuestas por la API de la
+  aplicación (sin CSRF) — [Cierto] — revertir: no aplica. Se añadió una consulta del estado con el
+  proceso bloqueado porque el mutante que oculta el bloqueo en la plaza sobrevivía. La suite
+  completa se ejecutó una vez para T-025…T-028 (2009 pasan) — [Cierto] — revertir: no aplica.
+
+## Frontend
+
+- [x] T-029 Variables de la identidad visual
+  RF: RF-001, RF-005 (M-13, D-13; S-14) | Depende de: — | Archivos: 4
+  Archivos: `styles/tokens.css`, `styles/base.css`, `styles/tokens.test.ts`,
+  `frontend/vite.config.ts`.
+  Hecho cuando: `tokens.css` define los 13 colores de cada tema de `docs/identidad-visual.md`, el
+  oscuro bajo `prefers-color-scheme: dark`; `base.css` aplica lienzo, tinta, formas y foco visible;
+  el test lee el CSS y comprueba cada valor de las dos tablas; suite verde.
+  Excepción: Vitest no procesa CSS por defecto; para que el test lea la paleta hace falta
+  `test.css.include` en `frontend/vite.config.ts`, y sin él no se puede comprobar el CSS (aprobada
+  por el usuario el 2026-11-02).
+  Decisiones: además de los 13 colores, `--color-fill-strong` (la tinta en claro) y
+  `--color-on-action` (blanco en claro, el lienzo en oscuro) dan nombre a los dos usos que el
+  documento describe en texto — [Cierto] — revertir: quitarlas y usar los colores directos.
+
+- [x] T-030 Fuentes y estilos cargados
+  RF: RF-001 (M-13) | Depende de: T-029 | Archivos: 3
+  Archivos: `frontend/package.json`, `pnpm-lock.yaml` (raíz), `main.tsx`.
+  Hecho cuando: `@fontsource-variable/manrope` y `@fontsource-variable/jetbrains-mono` están
+  instaladas; `main.tsx` importa fuentes y estilos; `pnpm --filter frontend build` termina sin
+  errores; la página de muestra se ve con Manrope y los colores de la paleta; suite verde.
+  Decisiones: la comprobación visual se hizo con Playwright y Chromium en los dos temas (fuente
+  cargada, lienzo y botones en píldora) en vez de con un test, porque `main.tsx` no se prueba —
+  [Cierto] — revertir: no aplica. Las fuentes instaladas son la versión 5.3.0 — [Cierto] — revertir:
+  no aplica.
+
+- [x] T-031 Proxy de la API en desarrollo
+  RF: RF-021 (M-14) | Depende de: — | Archivos: 2
+  Archivos: `frontend/vite.config.ts`, `docker/docker-compose.yml`.
+  Hecho cuando: con Docker levantado, `curl http://localhost:5173/api/health/` responde lo mismo que
+  el backend; el destino sale de `VITE_BACKEND_URL`; suite verde.
+  Decisiones: el destino se lee con `loadEnv` de Vite y no con `process.env`, que no tiene tipos sin
+  `@types/node` — [Cierto] — revertir: no aplica. Se comprobó con el backend local y Vite apuntando
+  a otro puerto; el contenedor de Docker no se pudo levantar (límite de Docker Hub) — [Probable] —
+  revertir: no aplica.
+
+- [x] T-032 Enrutador
+  RF: RF-004 (M-09, D-08) | Depende de: — | Archivos: 2
+  Archivos: `routing/router.ts`, `routing/router.test.ts`.
+  Hecho cuando: `navigate` cambia la ruta sin recargar, `popstate` la actualiza, el fragmento se lee
+  aparte y una ruta desconocida da la de reserva; suite verde.
+
+- [x] T-033 Aplicación con rutas
+  RF: RF-004 (M-09) | Depende de: T-032 | Archivos: 2
+  Archivos: `App.tsx`, `App.test.tsx`.
+  Hecho cuando: `/` y cualquier ruta desconocida muestran la página de muestra a través del
+  enrutador, como hoy; suite verde.
+  Decisiones: el test pasa desde el principio porque conserva el comportamiento; su mutante (que
+  la página de muestra no responda a `/`) lo hace fallar — [Cierto] — revertir: no aplica.
+
+- [x] T-034 Cliente de la API
+  RF: RF-021, RF-022, RF-024 (M-08, D-10) | Depende de: — | Archivos: 2
+  Archivos: `api/client.ts`, `api/client.test.ts`.
+  Hecho cuando: con `fetch` simulado, el cliente usa `/api/browser/v1` y `X-CSRFToken` de la cookie
+  en el navegador y `VITE_API_BASE_URL` + `/api/app/v1` en Tauri; envía `Accept-Language` y
+  `language`; distingue éxito, errores de campo, código de error, `404`, `429` con `retry_after` y
+  fallo de red; suite verde.
+  Decisiones: `environmentConfig` reúne el tipo de cliente (`__TAURI_INTERNALS__`) y
+  `VITE_API_BASE_URL` para que las pantallas no lean el entorno; un `429` toma la espera de
+  `retry_after` y, si falta, de la cabecera `Retry-After`; cualquier otra respuesta sin JSON es un
+  fallo sin código — [Cierto] — revertir: no aplica. Mutantes (`404` por `410`; otro nombre de
+  cookie) detectados.
+
+- [x] T-035 Llamadas del registro
+  RF: RF-001, RF-004, RF-006…RF-012 (M-08) | Depende de: T-034 | Archivos: 2
+  Archivos: `api/registration.ts`, `api/registration.test.ts`.
+  Hecho cuando: hay funciones tipadas para opciones, formulario, estado, verificar, reenviar y
+  completar, con el cuerpo de cada ruta y `public_id` siempre en el cuerpo; `marketing` solo se
+  incluye si se pasa; suite verde.
+  Decisiones: `submitRegistration` añade `accepted: true` a los términos, porque el formulario solo
+  se envía con la casilla marcada; el test exige que la clave `marketing` no exista (no basta con
+  que valga `undefined`, que `toEqual` daba por igual) — [Cierto] — revertir: no aplica. Mutantes
+  (`marketing` siempre presente; términos sin `accepted`) detectados.
+
+- [x] T-036 Casilla y selector accesibles
+  RF: RF-001, RF-003 (M-12) | Depende de: — | Archivos: 3
+  Archivos: `components/fields/Checkbox.tsx`, `components/fields/SelectField.tsx`,
+  `components/fields/ChoiceFields.test.tsx`.
+  Hecho cuando: los dos tienen etiqueta asociada, asterisco de obligatorio, `aria-invalid`, y error y
+  ayuda en `aria-describedby`, como `TextField`; `axe-core` no encuentra fallos; suite verde.
+  Decisiones: la etiqueta de la casilla va detrás de ella y admite contenido (`ReactNode`) para
+  poder enlazar los términos; el selector lleva siempre una primera opción vacía con el texto
+  `placeholder`, para que «sin elegir» valga `""` como un campo vacío — [Cierto] — revertir: no
+  aplica. El test de axe excluye `color-contrast` de forma explícita: en jsdom axe no puede medirlo
+  (no hay canvas) y lo dejaba como incompleto, sin que el test lo notara; el contraste queda
+  pendiente de comprobarse en un navegador real (2026-11-03, tras el PR #45). Mutantes (casilla sin `aria-invalid`; selector sin opción vacía; `aria-required` fijo)
+  detectados.
+
+- [x] T-037 Campo de fecha
+  RF: RF-001 (M-12) | Depende de: — | Archivos: 2
+  Archivos: `components/fields/TextField.tsx`, `components/fields/TextField.test.tsx`.
+  Hecho cuando: `TextField` acepta `type="date"` y los tests existentes siguen sin cambios; suite
+  verde.
+  Decisiones: el rojo es de tipos (`tsc` rechazaba `"date"`), porque React ya pasaba el atributo
+  tal cual; el mutante es quitar `"date"` del tipo, y `tsc` lo detecta — [Cierto] — revertir: no
+  aplica.
+
+- [x] T-038 Validación con selectores, casillas y varios errores
+  RF: RF-002, RF-003 (M-12) | Depende de: T-036 | Archivos: 2
+  Archivos: `forms/useFormValidation.ts`, `forms/useFormValidation.test.tsx`.
+  Hecho cuando: el hook lee `<select>` y casillas (`"true"` o `""`), un campo puede tener varios
+  errores de servidor a la vez y la opción `scrollToError` llama a `scrollIntoView` antes de llevar
+  el foco; sin la opción, los tests existentes pasan sin cambios; suite verde.
+  Decisiones: `errors` sigue dando un error por campo (el primero) y `allErrors` da la lista
+  completa, para no cambiar a quien ya usa el hook; el desplazamiento también se aplica a los
+  errores del servidor (`showResult`). Los casos de test existentes no cambian; su formulario
+  auxiliar acepta `scrollToError` opcional y expone `allErrors` — [Cierto] — revertir: no aplica.
+  Mutantes (casilla leída por `value`; foco antes del desplazamiento; selector no leído; error
+  local fuera de la lista) detectados; uno que conservaba solo el primer error del servidor
+  sobrevivía y se mató comprobando `allErrors`.
+
+- [x] T-039 Dígitos como el servidor
+  RF: RF-013 (M-12, D-12; CF-8) | Depende de: — | Archivos: 3
+  Archivos: `forms/digits.ts`, `forms/passwordRules.ts`, `forms/passwordRules.test.ts`.
+  Hecho cuando: «solo números» rechaza también los caracteres con `Numeric_Type=Digit`
+  (`²²²²²²²²²²²²`), con la lista generada por `unicodedata` y su comando de generación en un
+  comentario; un test recorre la tabla de casos compartidos de la spec; suite verde.
+  Decisiones: la lista sale de Python 3.12 (Unicode 15.0, el de la imagen del backend) agrupada en
+  20 rangos; las reglas `minimumLength` y `notOnlyDigits` se exportan para que el test compruebe
+  cada columna de la tabla por separado. Comparado carácter a carácter con `str.isdigit()`: ningún
+  dígito del servidor se le escapa al navegador; al revés, 80 caracteres de escrituras añadidas en
+  Unicode 16 (Garay, Kirat Rai…) cuentan como dígito en un navegador con Unicode 16 y no en el
+  servidor, así que el navegador rechaza de más una contraseña hecha solo de ellos. Riesgo residual
+  aceptado por el usuario el 2026-11-03; desaparece cuando el backend use un Python con Unicode 16 — [Cierto] —
+  revertir: no aplica. Mutantes (quitar `²`, el rango de `🄀`, el etíope o los rodeados) detectados.
+
+- [x] T-040 Cuenta atrás
+  RF: RF-006, RF-010, RF-024 (M-11) | Depende de: — | Archivos: 2
+  Archivos: `registration/useCountdown.ts`, `registration/useCountdown.test.ts`.
+  Hecho cuando: con temporizadores simulados, el hook cuenta hacia atrás desde los segundos dados,
+  avisa al llegar a cero y se reinicia con un valor nuevo; suite verde.
+  Decisiones: `useCountdown(onZero)` devuelve `{ remaining, start(seconds) }`; `start` reinicia
+  aunque el valor sea el mismo. Cuenta contra una hora límite (`Date.now()`) y no por ticks, para que
+  una pestaña dormida muestre al volver lo que falta de verdad — [Cierto] — revertir: no aplica.
+  Mutantes (sin parar al llegar a cero; sin limpiar al desmontar; contar ticks; contar antes de
+  empezar) detectados; uno que no reiniciaba tras llegar a cero sobrevivía y se mató con un test.
+
+- [x] T-041 Textos del formulario y errores del servidor
+  RF: RF-001, RF-003, RF-022 (D-11) | Depende de: — | Archivos: 3
+  Archivos: `i18n/locales/es.ts`, `i18n/locales/en.ts`, `i18n/locales/pt-BR.ts`.
+  Hecho cuando: existen en los tres idiomas las etiquetas del formulario, los textos de los
+  términos y del marketing, una clave por cada código de error del servidor y el texto genérico;
+  `locales.test.ts` pasa; suite verde.
+  Excepción: añadir el grupo `register` obliga a incluirlo en la lista de grupos de
+  `i18n/locales/locales.test.ts`, un cuarto archivo; aprobada por el usuario el 2026-11-03.
+  Decisiones: los errores van en el grupo `validation`, que es el que pinta `useFormValidation`, y
+  copian los textos de `backend/apps/accounts/api/messages.py` con `{{max}}`, `{{years}}` y `{{days}}`;
+  dos se adaptan a la pantalla: `countryInvalid` pide elegir de la lista (no un código ISO) y
+  `birthdateInvalid` no menciona el formato `AAAA-MM-DD`, porque el campo es un selector de fecha.
+  También `retryIn`, `networkError` y `unknownError` (genérico de D-11). Test nuevo: cada texto usa
+  los mismos parámetros en los tres idiomas — [Cierto] — revertir: no aplica. Mutantes (un
+  parámetro renombrado en `es`; una clave quitada en `pt-BR`) detectados.
+
+- [x] T-042 Traducción de los errores del servidor
+  RF: RF-003, RF-022 (D-11) | Depende de: T-041 | Archivos: 2
+  Archivos: `registration/serverErrors.ts`, `registration/serverErrors.test.ts`.
+  Hecho cuando: cada código de M-04 de `registro-api`, de la contraseña y del flujo se traduce a su
+  clave con sus parámetros, y uno desconocido al genérico; suite verde.
+  Decisiones: el servidor envía solo el código, no los valores, así que `max` (150), `years` (18) y
+  `days` (5) se copian de `backend/apps/accounts/validators.py`; `email:invalid`,
+  `email:max_length` y `birthdate:invalid` tienen clave propia, como en el servidor; `required`,
+  `null` y `blank` comparten el texto de campo obligatorio — [Cierto] — revertir: no aplica.
+  Mutantes (la clave general antes que la del campo; `locked` mal traducido; un valor de edad
+  cambiado) detectados; `params: undefined` en lugar de omitirlo es equivalente (mismo texto).
+
+- [x] T-043 Pantalla del formulario: campos y comprobaciones
+  RF: RF-001, RF-002, RF-003 (M-10) | Depende de: T-035, T-036, T-037, T-038, T-041 | Archivos: 2
+  Archivos: `registration/RegisterPage.tsx`, `registration/RegisterPage.test.tsx`.
+  Hecho cuando: con `fetch` simulado, la pantalla carga las opciones, muestra los países por nombre en
+  el idioma activo, el texto de los términos y la casilla de marketing solo si hay documento; al
+  enviar vacío muestra cada error bajo su campo, desplaza y enfoca el primero y no llama al servidor;
+  suite verde.
+  Decisiones: la pantalla recibe el cliente de la API como propiedad (la ruta lo creará en T-051) y
+  reutiliza `required` y `email` de `showcase/validators.ts`; los países se nombran con
+  `Intl.DisplayNames` y se ordenan en el idioma activo; los términos y el marketing van en
+  desplegables (`<details>`); sin términos vigentes se muestra `termsUnavailable` y no el formulario.
+  El texto de los documentos es Markdown sin HTML (S-14 de `consentimientos`), un caso que ni la
+  spec ni el plan cubrían: el usuario eligió el 2026-11-03 renderizarlo con `react-markdown`
+  (dependencia nueva aprobada, `^10.1.0`), que descarta el HTML por defecto. El envío al servidor
+  queda para T-044 — [Cierto] — revertir: no aplica. Mutantes (sin ordenar; idioma fijo; marketing
+  siempre; sin desplazamiento; país como obligatorio genérico; formulario sin términos; fecha no
+  obligatoria; términos o marketing como texto plano) detectados; `skipHtml` resultó equivalente
+  al comportamiento por defecto y se quitó.
+
+- [x] T-044 Pantalla del formulario: envío
+  RF: RF-003, RF-004, RF-018, RF-024 (M-10) | Depende de: T-040, T-042, T-043 | Archivos: 2
+  Archivos: `registration/RegisterPage.tsx`, `registration/RegisterPage.test.tsx`.
+  Hecho cuando: un `400` pinta cada error bajo su campo con desplazamiento y foco al primero; un
+  `429` muestra la cuenta atrás y reactiva el envío al llegar a cero; un fallo de red da el mensaje
+  general sin perder los datos; `marketing` solo se envía con la casilla marcada; un `202` navega a
+  `/register/continue#<public_id>`; suite verde.
+  Decisiones: el formulario recibe los términos ya comprobados como propiedad; `marketing` entra en
+  los campos del hook sin reglas, para leer la casilla como `"true"` o `""`; todos los errores del
+  servidor de un campo se pintan juntos bajo él (`allErrors`); un error de un campo que la pantalla
+  no tiene (`non_field_errors`) da el mensaje genérico, y también un rechazo con código; un `500` da
+  `serverError` y un fallo de red `networkError`. Con `429`, el botón se desactiva y la espera se
+  muestra en un `role="status"` hasta llegar a cero — [Cierto] — revertir: no aplica. Mutantes
+  (marketing siempre; sin identificador en la URL; botón activo durante la espera; solo el primer
+  error; fallo de red como fallo del servidor) detectados; tres sobrevivían (`every` por `some` en
+  los campos conocidos, sin `processing` en el hook, rechazo como fallo del servidor) y se mataron
+  con tests de errores mezclados, doble envío y `400` con código.
+
+- [x] T-045 Textos de verificación, contraseña y cuenta creada
+  RF: RF-005, RF-009, RF-010, RF-015, RF-016, RF-022 | Depende de: T-041 | Archivos: 3
+  Archivos: `i18n/locales/es.ts`, `i18n/locales/en.ts`, `i18n/locales/pt-BR.ts`.
+  Hecho cuando: existen en los tres idiomas el texto fijo de la verificación (sin afirmar que llegó
+  un código), el temporizador, el reenvío, el bloqueo, el enlace no válido, el paso de contraseña y
+  la cuenta creada; `locales.test.ts` pasa; suite verde.
+  Decisiones: los textos van en el grupo `register`; el de la verificación repite la idea del
+  mensaje neutro del servidor («si puedes registrarte…, recibirás»), sin afirmar que el correo
+  existe ni que llegó un código. Sin fase roja propia: añadir textos no rompe ningún test; los
+  vigila `locales.test.ts` (mutante: quitar `lockedNotice` en `es`, detectado por el test y por
+  `tsc`) — [Cierto] — revertir: no aplica.
+
+- [x] T-046 Pantalla de verificación: estado y enlace no válido
+  RF: RF-005, RF-006, RF-016 (M-11, D-09) | Depende de: T-035, T-040, T-045 | Archivos: 2
+  Archivos: `registration/VerifyPage.tsx`, `registration/VerifyPage.test.tsx`.
+  Hecho cuando: la pantalla lee el identificador del fragmento, pide la cookie CSRF si falta, consulta
+  el estado y muestra el texto fijo y el tiempo restante contando; al recargar vuelve a pedirlo; con
+  `404` muestra el enlace no válido con acceso al formulario; nunca muestra un correo; suite verde.
+  Decisiones: la cookie se comprueba por su nombre (`csrftoken`) y, si falta, se pide con la
+  consulta de opciones (D-09); en Tauri tampoco hay cookie, así que esa petición se repite sin
+  efecto, un coste aceptado frente a pasar el tipo de cliente a la pantalla. Sin identificador en el
+  fragmento, el enlace no es válido sin llamar al servidor. El tiempo se muestra como `m:ss`, no es
+  una región viva (anunciar cada segundo saturaría el lector), y al llegar a cero, o con
+  `expired`, dice que el código ha caducado. Si el identificador cambia en mitad de una consulta, la
+  respuesta antigua se descarta. Un fallo de red da `networkError` y otro fallo `serverError` —
+  [Cierto] — revertir: no aplica. Mutantes (sin pedir la cookie; pedirla siempre; segundos sin
+  ceros; cero como tiempo restante; sin identificador; enlace sin navegar) detectados; dos
+  sobrevivían (respuesta obsoleta, `500` como fallo de red) y se mataron con un test cada uno.
+
+- [x] T-047 Pantalla de verificación: código y bloqueo
+  RF: RF-007, RF-009, RF-024 (M-11) | Depende de: T-046 | Archivos: 2
+  Archivos: `registration/VerifyPage.tsx`, `registration/VerifyPage.test.tsx`.
+  Hecho cuando: un código incorrecto muestra el mensaje bajo el campo; con `locked` se desactiva el
+  envío y solo queda el reenvío; con `code_expired` se indica que se pida otro; un `429` muestra la
+  cuenta atrás; suite verde.
+  Decisiones: el formulario del código es un componente aparte que recibe el bloqueo del estado,
+  así que un proceso bloqueado sigue bloqueado al recargar; `wrong_code` y `code_expired` van bajo
+  el campo y los demás rechazos (`expired`…) como mensaje general; un `404` lleva al enlace no
+  válido. Si el servidor acepta el código, de momento no pasa nada visible: el paso de contraseña
+  llega en T-050. El test de la cuenta atrás de T-046 pasa a `advanceTimersByTimeAsync`, porque con
+  la pantalla más grande el reloj se adelantaba antes de crear el intervalo — [Cierto] — revertir:
+  no aplica. Mutantes (`code_expired` como mensaje general; sin bloqueo inicial; botón activo
+  bloqueado o en espera; sin enlace no válido; código sin 6 dígitos) detectados; dos sobrevivían
+  (fallo de red como fallo del servidor y rechazo con el texto genérico) y se mataron con un test.
+
+- [x] T-048 Pantalla de verificación: reenvío
+  RF: RF-010, RF-024 (M-11) | Depende de: T-047 | Archivos: 2
+  Archivos: `registration/VerifyPage.tsx`, `registration/VerifyPage.test.tsx`.
+  Hecho cuando: el botón muestra la cuenta atrás y se activa al llegar a cero; tras reenviar consulta
+  de nuevo el estado; sin reenvíos restantes se desactiva y ofrece volver al formulario;
+  `resend_unavailable` da el mensaje genérico; suite verde.
+  Decisiones: la espera del botón sale de `resend_in` y, con un `429`, de `retry_after`; tras un
+  reenvío correcto se pide de nuevo el estado y el formulario del código se vuelve a montar con
+  cada estado recibido, para tomar su bloqueo (montarlo al reenviar, antes del estado nuevo,
+  conservaba el bloqueo antiguo: fallo encontrado y corregido con su test). El enlace al formulario
+  es un componente común con el del enlace no válido — [Cierto] — revertir: no aplica. Mutantes
+  (sin espera inicial; sin volver a pedir el estado; sin volver a montar; botón activo sin
+  reenvíos; sin espera por `429`; mensajes cambiados) detectados; dos sobrevivían (no borrar el
+  mensaje anterior, `404` al reenviar) y se mataron con un test cada uno.
+
+- [x] T-049 Paso de contraseña
+  RF: RF-011, RF-012, RF-013, RF-024 (M-11) | Depende de: T-039, T-042, T-045 | Archivos: 2
+  Archivos: `registration/PasswordStep.tsx`, `registration/PasswordStep.test.tsx`.
+  Hecho cuando: el paso valida longitud y solo números en el navegador sin llamar al servidor si
+  fallan; envía el código recibido y la contraseña; pinta bajo el campo cada regla que devuelve el
+  servidor; con un rechazo del código avisa a quien lo contiene; con `201` avisa del éxito; un `429`
+  muestra la cuenta atrás; suite verde.
+  Decisiones: el paso recibe el identificador y el código como propiedades y avisa con
+  `onCreated` y `onCodeRejected(código)`; un `404` se pasa como `not_found`, para que quien guarda el
+  código decida (T-050). Todas las reglas que rechaza el servidor se pintan juntas bajo el campo;
+  la contraseña escrita se conserva tras un fallo de red o del servidor — [Cierto] — revertir: no
+  aplica. Mutantes (sin las reglas del navegador; otro código enviado; sin avisar del éxito; solo la
+  primera regla; código rechazado cambiado; `404` como otro código; botón activo en la espera; fallo
+  de red como fallo del servidor) detectados; uno sobrevivía (sin `processing`, doble envío) y se
+  mató con un test.
+
+- [x] T-050 Verificación con paso de contraseña y cuenta creada
+  RF: RF-008, RF-011, RF-015 (M-11, S-08) | Depende de: T-048, T-049 | Archivos: 3
+  Archivos: `registration/VerifyPage.tsx`, `registration/DonePage.tsx`,
+  `registration/VerifyPage.test.tsx`.
+  Hecho cuando: un código aceptado muestra el paso de contraseña con el código solo en el estado de
+  React; un rechazo del código vuelve a la verificación con su mensaje y sin el código; recargar
+  vuelve a la verificación; `201` navega a `/register/done`, que muestra la cuenta creada sin
+  iniciar sesión; suite verde.
+  Decisiones: el código aceptado se guarda en el estado de la pantalla de verificación y el paso de
+  contraseña ocupa el lugar del código y del reenvío. Si el servidor rechaza el código al crear la
+  cuenta, se olvida el código, se muestra su mensaje como mensaje general y se vuelve a pedir el
+  estado (por si quedó bloqueado o caducado); un `404` lleva al enlace no válido. La pantalla de
+  cuenta creada se prueba en `VerifyPage.test.tsx`, el único archivo de tests de la tarea — [Cierto]
+  — revertir: no aplica. Mutantes (conservar el código; sin mensaje; sin volver a pedir el estado;
+  otra ruta al terminar; `404` como rechazo; otro código al paso) detectados. Quitar el borrado del
+  mensaje al aceptar el código era equivalente (el mensaje no se ve con el paso de contraseña) y se
+  quitó del código.
+
+- [x] T-051 Rutas del registro
+  RF: RF-004, RF-005, RF-015, RF-016 (M-09) | Depende de: T-033, T-044, T-050 | Archivos: 2
+  Archivos: `App.tsx`, `App.test.tsx`.
+  Hecho cuando: `/register`, `/register/continue` y `/register/done` muestran sus pantallas, y `/`
+  sigue con la página de muestra; suite verde.
+  Decisiones: la aplicación crea el cliente de la API con `environmentConfig` y lo acepta como
+  propiedad para los tests; navegar entre pantallas no recarga la página — [Cierto] — revertir: no
+  aplica. Mutantes (sin la ruta de verificación; sin la de cuenta creada; sin cliente por defecto)
+  detectados; el último sobrevivía y se mató con un test sin cliente.
+
+- [x] T-052 Accesibilidad de las pantallas del registro
+  RF: RF-003, RF-005 (CF-5) | Depende de: T-051 | Archivos: 1
+  Archivos: `registration/a11y.test.tsx`.
+  Hecho cuando: `axe-core` no encuentra fallos en el formulario (vacío y con errores), la
+  verificación (normal, bloqueada y enlace no válido), el paso de contraseña y la cuenta creada;
+  ninguna contiene un correo; suite verde.
+  Decisiones: las pantallas se montan desde la aplicación con un cliente que responde según la
+  ruta; `color-contrast` se excluye de forma explícita porque jsdom no puede medirlo. Sin fase roja
+  (solo tests); mutantes en el código vigilado (selector sin etiqueta, un correo en la
+  verificación, encabezado de cuenta creada como `h3`) detectados — [Cierto] — revertir: no aplica.
+
+- [x] T-053 Resumen de la feature y límites pendientes
+  RF: RF-021 (CF-7, M-14) | Depende de: T-028, T-052 | Archivos: 2
+  Archivos: `specs/registro-flujo/resumen.md`, `specs/cambio-contrasena/HUMAN_TODO.md`.
+  Hecho cuando: `resumen.md` explica qué se hizo, el recorrido en la web y con `curl` (con el código
+  del correo del proveedor local), cómo disparar la limpieza y su marco teórico; el `HUMAN_TODO.md`
+  de `cambio-contrasena` indica que los límites de reenvío y verificación del registro ya existen.
+  Decisiones: los pasos de la web y de `curl` se ejecutaron el 2026-11-04 contra el backend local
+  (código leído de la consola del worker) antes de escribirlos; los límites conocidos y los riesgos
+  aceptados quedan en `resumen.md`, incluida la pantalla de cuenta creada sin salida (S-07) —
+  [Cierto] — revertir: no aplica. Commit: `b6619df`.
+
+- [x] T-054 Proxy de desarrollo que conserva el origen
+  RF: RF-004, RF-021 (M-14) | Depende de: T-031 | Archivos: 1
+  Archivos: `frontend/vite.config.ts`.
+  Hecho cuando: el proxy de `/api` conserva la cabecera `Host` del navegador (`changeOrigin:
+  false`); con el backend y Vite levantados, pedir las opciones por `http://localhost:5173` y
+  después consultar el estado con la cookie `csrftoken`, su cabecera `X-CSRFToken` y `Origin:
+  http://localhost:5173` responde `404` (identificador inventado) y no `403`; suite verde.
+  Corrección: T-031 se comprobó solo con un GET; los POST de las rutas web fallaban por CSRF.
+  Decisiones: rojo reproducido con `curl` (`403`) y verde tras el cambio (`404`); también en
+  Chromium, con el registro completo. Sin test unitario ni mutante: es configuración del servidor
+  de desarrollo, que Vitest no ejecuta. En Docker el `Host` reescrito (`backend:8000`) tampoco
+  estaba en `ALLOWED_HOSTS`, así que el proxy de T-031 no funcionaba allí ni para `GET` — [Probable]
+  — revertir: no aplica.
+
+- [x] T-055 Validación al salir que no mueve un clic en curso
+  RF: RF-002, RF-003 (M-12) | Depende de: T-038 | Archivos: 2
+  Archivos: `forms/useFormValidation.ts`, `forms/useFormValidation.test.tsx`.
+  Hecho cuando: si un campo pierde el foco con un botón del puntero pulsado, su validación se
+  aplica al soltarlo y no antes; sin puntero pulsado (teclado), se aplica al salir como hasta
+  ahora; los tests existentes pasan sin cambios; suite verde.
+  Corrección: al pulsar una casilla, el error retirado del campo anterior desplazaba la casilla
+  antes de soltar el botón y el clic se perdía.
+  Decisiones: la validación pendiente se aplica tras la tarea del clic (`setTimeout` desde
+  `pointerup`/`pointercancel`), no en `pointerup`, porque React aplicaría el cambio antes de que el
+  navegador decida dónde cae el `mouseup`. Comprobado en Chromium en las dos direcciones (error que
+  desaparece y error que aparece) — [Cierto] — revertir: no aplica. Mutantes (sin aplazar; sin
+  marcar el puntero; sin soltarlo; sin aplicar lo pendiente) detectados.
+
+- [x] T-056 Mensaje general al rechazar el reenvío por límite
+  RF: RF-024 (M-11) | Depende de: T-048 | Archivos: 2
+  Archivos: `registration/VerifyPage.tsx`, `registration/VerifyPage.test.tsx`.
+  Hecho cuando: un `429` al reenviar muestra «Demasiados intentos. Vuelve a intentarlo en N s.» en
+  un `role="status"` con la cuenta atrás, que desaparece al llegar a cero con el botón de nuevo
+  activo; suite verde.
+  Corrección: validación de RF-024; T-048 solo contaba la espera en la etiqueta del botón.
+  Decisiones: una marca indica que la espera del botón viene de un `429`, y solo entonces se
+  anuncia; se borra en cada reenvío, para que la espera normal de un código nuevo no se anuncie como
+  límite. El test que daba por buena la conducta anterior se sustituye — [Cierto] — revertir: no
+  aplica. Mutantes (sin marca; mensaje que no desaparece a cero; marca sin borrar) detectados; el
+  último sobrevivía y se mató con un test.
+
+- [x] T-057 La equivalencia compara también las cookies
+  RF: RF-017 (CF-2) | Depende de: — | Archivos: 1
+  Archivos: `backend/apps/accounts/tests/test_registration_flow_equivalence.py`.
+  Hecho cuando: cada paso del recorrido compara además las cookies de la respuesta (nombre, valor
+  y atributos) y al menos un paso se repite por la ruta `browser` con CSRF, con el mismo resultado
+  para la plaza y el registro real; suite verde.
+  Corrección: validación de RF-017; `response.headers` de Django no incluye `Set-Cookie`.
+  Decisiones: cada paso compara `(estado, cuerpo, cabeceras, cookies, consultas)`; la primera
+  consulta de estado y el primer código incorrecto van por la ruta `browser` con CSRF, sin cambiar
+  la secuencia de códigos esperada. Mutantes en el código vigilado (una cookie solo para la plaza;
+  una cabecera solo en su ruta `browser`) detectados; el primero pasaba con el test anterior —
+  [Cierto] — revertir: no aplica.
+
+- [x] T-058 Todo o nada al completar, también con el marketing
+  RF: RF-014 (CF-4) | Depende de: — | Archivos: 1
+  Archivos: `backend/apps/accounts/tests/test_registration_service.py`.
+  Hecho cuando: con términos y marketing guardados y un fallo al borrar el registro pendiente, no
+  quedan `User`, `EmailAddress`, `UserTerms` ni `MarketingConsent`, y el registro pendiente sigue
+  existiendo; suite verde.
+  Corrección: validación de RF-014; el test de fallo no preparaba ni comprobaba el marketing.
+  Decisiones: test nuevo junto al de fallo existente, con términos y marketing guardados y la
+  comprobación de que el marketing quedó en el registro pendiente antes de fallar (para que el test
+  no pase en vacío). Mutante en el código vigilado (`complete` sin su transacción) detectado —
+  [Cierto] — revertir: no aplica.
+
+- [x] T-059 El bloqueo se muestra al quinto intento fallido
+  RF: RF-009 (S-10, M-11) | Depende de: T-047 | Archivos: 2
+  Archivos: `registration/VerifyPage.tsx`, `registration/VerifyPage.test.tsx`.
+  Hecho cuando: tras un `wrong_code`, la pantalla vuelve a pedir el estado (no cuenta para el
+  límite por IP); si viene `locked: true`, muestra «Has agotado los intentos…» y desactiva
+  «Verificar» sin otro envío; si no, conserva el mensaje de código incorrecto bajo el campo; suite
+  verde.
+  Corrección: validación de RF-009; el servidor responde `wrong_code` al quinto intento y la
+  pantalla solo se bloqueaba con `locked`, que llega al sexto.
+  Decisiones: el formulario del código consulta el estado él mismo tras un `wrong_code`, sin pedir
+  a la página que vuelva a cargarlo: así no se vuelve a montar y conserva el mensaje bajo el campo.
+  Con `code_expired` no se consulta. Si la consulta da `404`, enlace no válido; otros fallos se
+  ignoran (queda el mensaje de código incorrecto). No se cambia el servidor ni la equivalencia.
+  Comprobado en Chromium contra el backend local: aviso y botón desactivado al quinto intento —
+  [Cierto] — revertir: no aplica. Mutantes (sin consultar; bloquear siempre) detectados; dos
+  sobrevivían (`404` tras el código incorrecto, consultar también con `code_expired`) y se mataron
+  con un test cada uno.
+
+- [x] T-060 Tests de los datos del cliente al completar y del límite con cualquier identificador
+  RF: RF-012, RF-019 | Depende de: — | Archivos: 1
+  Archivos: `backend/apps/accounts/tests/test_registration_flow_api.py`.
+  Hecho cuando: completar con `email`, `name` y `country` añadidos crea la cuenta con los datos del
+  registro pendiente y no existe la del correo enviado; superado el límite, un identificador
+  desconocido, uno con formato inválido y uno real reciben el mismo `429` con el mismo
+  `Retry-After`; suite verde.
+  Corrección: validación de RF-012 y RF-019; faltaban esas aserciones.
+  Decisiones: el reloj del limitador se fija con `mock.patch` durante las peticiones, para que el
+  `Retry-After` no cambie de un segundo a otro; el primer `404` con un identificador desconocido ya
+  consume el límite, lo que prueba que también cuenta. Mutantes en el código vigilado (comprobar el
+  formato del identificador antes del límite; usar el nombre enviado por el cliente) detectados —
+  [Cierto] — revertir: no aplica.
+
+- [x] T-061 Validación de la contraseña al salir del campo
+  RF: RF-013 | Depende de: T-049 | Archivos: 1
+  Archivos: `registration/PasswordStep.test.tsx`.
+  Hecho cuando: escribir `corta` y salir del campo muestra «Usa al menos 12 caracteres.» sin
+  llamar al servidor; el mutante sin `onBlur` se detecta; suite verde.
+  Corrección: validación de RF-013; no había test de la comprobación al salir del campo.
+  Decisiones: el test sale del campo y de su botón de mostrar (dos tabulaciones), porque cuentan
+  como uno solo (RF-025 de `componentes-base-accesibles`). Mutante sin `onBlur` detectado —
+  [Cierto] — revertir: no aplica.
+
+- [x] T-062 Un identificador completado da «no encontrado»
+  RF: RF-015 | Depende de: — | Archivos: 1
+  Archivos: `backend/apps/accounts/tests/test_registration_flow_api.py`.
+  Hecho cuando: tras un `201`, `status`, `verify`, `resend` y `complete` de ese identificador dan
+  `404 not_found`; suite verde.
+  Corrección: validación de RF-015; faltaba la aserción directa.
+  Decisiones: mutante en el código vigilado (no borrar el registro pendiente al crear la cuenta)
+  detectado — [Cierto] — revertir: no aplica.
+
+- [x] T-063 El límite superado conserva lo escrito
+  RF: RF-024 | Depende de: — | Archivos: 3
+  Archivos: `registration/RegisterPage.test.tsx`, `registration/VerifyPage.test.tsx`,
+  `registration/PasswordStep.test.tsx`.
+  Hecho cuando: tras un `429` al enviar el formulario, verificar y completar, los campos conservan
+  lo escrito; un mutante que vacíe el formulario se detecta; suite verde.
+  Corrección: validación de RF-024; los tests de `429` no comprobaban los valores.
+  Decisiones: mutantes que vacían el formulario con `reset()` tras el `429` detectados en el
+  formulario y en el paso de contraseña; en la verificación es equivalente, porque el campo del
+  código guarda su valor en el estado de React y el siguiente render lo repone. La aserción protege
+  igualmente contra un cambio que vuelva a montar el formulario — [Cierto] — revertir: no aplica.
+
+- [x] T-064 El reenvío del flujo fija el plazo al aceptar
+  RF: RF-006 (M-01, D-19) | Depende de: T-010 | Archivos: 3
+  Archivos: `backend/apps/accounts/processes.py`, `backend/apps/accounts/registration.py`,
+  `backend/apps/accounts/tests/test_registration_flow.py`.
+  Hecho cuando: tras un `resend_code` aceptado, sin ejecutar la emisión, `status` devuelve
+  `code_expires_in` igual a la duración configurada (±1 s), igual en un registro real y en una
+  plaza; `reissue_code(public_id, keep_deadline=True)` emite el código sin mover `code_expires_at`;
+  `reissue_code(public_id)` y `renew_code` sin el indicador siguen fijando el plazo al emitir (la
+  consola no cambia); suite verde.
+  Decisiones: `resend_code` fija `code_expires_at` en la misma actualización que vacía la huella;
+  `renew_code` guarda el plazo y lo repone tras generar el código cuando recibe `keep_deadline`. Un
+  test protege que la emisión de consola sigue fijando el plazo al emitir — [Cierto] — revertir: no
+  aplica. Mutantes (sin fijar el plazo al aceptar; sin conservarlo; conservarlo siempre; no pasar el
+  indicador) detectados.
+
+- [x] T-065 Tarea de emisión propia del reenvío del flujo
+  RF: RF-006 (M-01, D-19) | Depende de: T-064 | Archivos: 3
+  Archivos: `backend/apps/accounts/tasks.py`, `backend/apps/accounts/registration.py`,
+  `backend/apps/accounts/tests/test_registration_background.py`.
+  Hecho cuando: `resend_code` encola `reissue_flow_code` con el identificador; esa tarea llama a
+  `reissue_code(public_id, keep_deadline=True)`; el reenvío de consola sigue encolando la tarea
+  compartida `reissue_code`; suite verde.
+  Decisiones: la tarea nueva llama a `registration.reissue_code` a través del módulo, para que el
+  test la sustituya; el cambio de contraseña no se toca. Comprobado en Chromium con el worker de
+  Celery parado: tras reenviar un código caducado, la pantalla muestra «El código caduca en 15:00.»
+  — [Cierto] — revertir: no aplica. Mutantes (encolar la tarea compartida; emitir sin el indicador)
+  detectados.
+
+- [x] T-066 La equivalencia cubre el estado entre el reenvío y la emisión
+  RF: RF-006, RF-017 | Depende de: T-065 | Archivos: 1
+  Archivos: `backend/apps/accounts/tests/test_registration_flow_equivalence.py`.
+  Hecho cuando: en el recorrido, una consulta de estado justo después de un reenvío aceptado, sin
+  ejecutar la emisión, da la misma respuesta en la plaza y en el registro real, con
+  `code_expires_in` igual a la duración configurada (±1 s); suite verde.
+  Decisiones: el reloj (`timezone.now`) se fija durante el reenvío y la consulta, para que los
+  segundos no dependan de lo que tarda cada recorrido; así el plazo es exactamente la duración
+  configurada. Mutantes en el código vigilado (sin fijar el plazo; un plazo distinto en la plaza)
+  detectados; un primer mutante que fallaba por un `NameError` se descartó por inválido — [Cierto]
+  — revertir: no aplica.
+
+## Entregas
+Rama de integración: feat/registro-flujo (los PR de las entregas van contra ella; ver `AGENTS.md`)
+
+Para el «Cómo probarlo» de cada entrega, desde la raíz del repositorio, levanta los servicios:
+```bash
+docker compose -f docker/docker-compose.yml up -d
+```
+Los códigos de verificación se leen en la salida del worker:
+```bash
+docker compose -f docker/docker-compose.yml logs -f worker
+```
+Los tests del backend y del frontend se ejecutan con:
+```bash
+docker compose -f docker/docker-compose.yml exec backend pytest -q
+```
+```bash
+pnpm --filter frontend test
+```
+Los pasos concretos de cada entrega, con sus comandos listos para copiar, van en su resumen de
+entrega (`entregas/E-XX-<descripcion>/resumen.md`).
+
+- E-01 Volver a presentar un código validado (consola)
+  Tareas: T-001, T-002, T-003 | Líneas estimadas: 200 | Rama: feat/registro-flujo-codigo-validado
+  Cómo probarlo: empezar un registro con el comando `registration start`, verificarlo dos veces con
+  `registration verify` y el código del worker (la segunda también se acepta) y una tercera con un
+  código incorrecto (suma un intento).
+
+- E-02 Verificar el código por la API, con límite por IP
+  Tareas: T-004, T-005, T-006, T-007 | Líneas estimadas: 380 | Rama:
+  feat/registro-flujo-verificar-api
+  Cómo probarlo: con `curl`, empezar un registro por la API de `registro-api`, y llamar a la ruta de
+  verificación con el código bueno, uno malo, un identificador inventado (`404`) y 61 veces seguidas
+  (`429`).
+  Excepción: 402 líneas reales, aprobadas por el usuario el 2026-10-30. La configuración, el límite
+  y los textos solo son observables a través de la ruta; separarlos daría un PR que no se puede
+  probar con `curl`.
+
+- E-03 Reenviar el código con espera y tope
+  Tareas: T-008, T-009, T-010, T-011 | Líneas estimadas: 350 | Rama: feat/registro-flujo-reenvio
+  Cómo probarlo: con `curl`, reenviar antes de 60 s (`resend_unavailable`), después (`202` y código
+  nuevo en el worker) y por sexta vez (`resend_unavailable`).
+
+- E-04 Estado del proceso y opciones del formulario
+  Tareas: T-012, T-013, T-014, T-015 | Líneas estimadas: 340 | Rama: feat/registro-flujo-estado
+  Cómo probarlo: con `curl`, pedir las opciones (países, términos y marketing vigentes y la cookie
+  `csrftoken`) y el estado de un registro antes y después de reenviar y de bloquearlo.
+
+- E-05 Completar el registro con código y contraseña
+  Tareas: T-016, T-017, T-018, T-019 | Líneas estimadas: 390 | Rama: feat/registro-flujo-completar
+  Cómo probarlo: con `curl`, completar sin validar, con un código malo, con una contraseña corta y,
+  por último, bien: la cuenta existe con el correo verificado y el registro pendiente desaparece.
+
+- E-06 Consentimiento de marketing en el registro
+  Tareas: T-020, T-021, T-022, T-023, T-024 | Líneas estimadas: 390 | Rama:
+  feat/registro-flujo-marketing
+  Cómo probarlo: con `curl`, registrarse con `marketing` vigente y completar (la cuenta tiene el
+  consentimiento en el panel); repetir con un documento inexistente (la respuesta no cambia y la
+  cuenta queda sin consentimiento).
+
+- E-07 Limpieza programada y equivalencia completa
+  Tareas: T-025, T-026, T-027, T-028 | Líneas estimadas: 370 | Rama: feat/registro-flujo-limpieza
+  Cómo probarlo: envejecer un registro desde el shell de Django, ejecutar el subcomando
+  `registration purge-stale` y ver que desaparece; ejecutar el test de equivalencia del flujo.
+
+- E-08 Identidad visual, proxy y enrutador
+  Tareas: T-029, T-030, T-031, T-032, T-033 | Líneas estimadas: 320 | Rama:
+  feat/registro-flujo-identidad-visual
+  Cómo probarlo: abrir http://localhost:5173/ con el sistema en tema claro y en oscuro y ver la
+  página de muestra con Manrope y la paleta; pedir la salud de la API a través del puerto 5173.
+
+- E-09 Cliente de la API
+  Tareas: T-034 | Líneas estimadas: 320 | Rama: feat/registro-flujo-cliente-api
+  Cómo probarlo: los tests del frontend de `src/api/client`.
+  Dividida: con T-035 medía 488 líneas, por encima de `sdd.max_lineas_pr`.
+
+- E-16 Llamadas del registro
+  Tareas: T-035 | Líneas estimadas: 195 | Rama: feat/registro-flujo-llamadas-registro
+  Cómo probarlo: los tests del frontend de `src/api/registration`.
+  Sale de E-09; va después de E-09 y antes de E-12.
+
+- E-10 Casilla, selector, fecha y validación ampliada
+  Tareas: T-036, T-037, T-038 | Líneas estimadas: 380 | Rama: feat/registro-flujo-campos
+  Cómo probarlo: los tests del frontend de `src/components` y `src/forms`.
+  Excepción: 409 líneas reales, aprobadas por el usuario el 2026-11-03. T-038 se podía separar en
+  su propia entrega; el usuario prefirió no partirla por 9 líneas de exceso.
+
+- E-11 Contraseña como el servidor y cuenta atrás
+  Tareas: T-039, T-040 | Líneas estimadas: 200 | Rama: feat/registro-flujo-digitos-cuenta-atras
+  Cómo probarlo: los tests del frontend de `src/forms` y de la cuenta atrás; en la página de
+  muestra, `²²²²²²²²²²²²` como contraseña nueva da el error de solo números.
+
+- E-12 Textos del registro y errores del servidor
+  Tareas: T-041, T-042, T-045 | Líneas estimadas: 350 | Rama: feat/registro-flujo-textos
+  Cómo probarlo: los tests del frontend de `src/i18n` y de `src/registration/serverErrors`.
+  Reorganizada el 2026-11-03: E-12 a E-14 se re-estimaron por tarea y pasan a E-12, E-18, E-19,
+  E-13, E-20, E-14 y E-21, en este orden.
+
+- E-18 Pantalla del formulario: campos y comprobaciones (sin ruta)
+  Tareas: T-043 | Líneas estimadas: 370 | Rama: feat/registro-flujo-formulario
+  Cómo probarlo: los tests del frontend de `src/registration/RegisterPage`.
+
+- E-19 Pantalla del formulario: envío (sin ruta)
+  Tareas: T-044 | Líneas estimadas: 260 | Rama: feat/registro-flujo-formulario-envio
+  Cómo probarlo: los tests del frontend de `src/registration/RegisterPage`.
+
+- E-13 Pantalla de verificación: estado y enlace no válido (sin ruta)
+  Tareas: T-046 | Líneas estimadas: 320 | Rama: feat/registro-flujo-verificacion
+  Cómo probarlo: los tests del frontend de `src/registration/VerifyPage`.
+
+- E-20 Pantalla de verificación: código, bloqueo y reenvío (sin ruta)
+  Tareas: T-047, T-048 | Líneas estimadas: 300 | Rama: feat/registro-flujo-verificacion-codigo
+  Cómo probarlo: los tests del frontend de `src/registration/VerifyPage`.
+  Excepción: 431 líneas reales, aprobadas por el usuario el 2026-11-04. T-048 se podía separar en
+  su propia entrega; el usuario prefirió no partirla.
+
+- E-14 Paso de contraseña (sin ruta)
+  Tareas: T-049 | Líneas estimadas: 300 | Rama: feat/registro-flujo-contrasena
+  Cómo probarlo: los tests del frontend de `src/registration/PasswordStep`.
+
+- E-21 Verificación con paso de contraseña y cuenta creada (sin ruta)
+  Tareas: T-050 | Líneas estimadas: 220 | Rama: feat/registro-flujo-cuenta-creada
+  Cómo probarlo: los tests del frontend de `src/registration`.
+
+- E-15 Registro completo en la web
+  Tareas: T-051, T-052, T-054, T-055, T-053 | Líneas estimadas: 220 | Rama: feat/registro-flujo-rutas
+  Cómo probarlo: registrarse en http://localhost:5173/register de principio a fin con el código del
+  correo del proveedor local, siguiendo `resumen.md`.
+
+- E-22 Correcciones de la validación
+  Tareas: T-056, T-057, T-058 | Líneas estimadas: 120 | Rama: feat/registro-flujo-correcciones
+  Cómo probarlo: los tests de `VerifyPage`, de la equivalencia y del servicio del registro.
+
+- E-23 Correcciones de la segunda validación
+  Tareas: T-059, T-060 | Líneas estimadas: 120 | Rama: feat/registro-flujo-bloqueo
+  Cómo probarlo: los tests de `VerifyPage` y de la API del flujo; cinco códigos incorrectos en
+  http://localhost:5173/register/continue muestran el bloqueo al quinto.
+
+- E-24 Correcciones de la tercera validación
+  Tareas: T-061, T-062, T-063 | Líneas estimadas: 90 | Rama: feat/registro-flujo-tests-finales
+  Cómo probarlo: los tests de `PasswordStep`, `RegisterPage`, `VerifyPage` y de la API del flujo.
+
+- E-25 Plazo del código nuevo al reenviar
+  Tareas: T-064, T-065, T-066 | Líneas estimadas: 150 | Rama: feat/registro-flujo-plazo-reenvio
+  Cómo probarlo: los tests del servicio, de la emisión y de la equivalencia; con el worker de
+  Celery parado, reenviar desde http://localhost:5173/register/continue muestra «El código caduca
+  en 15:00» en vez de «El código ha caducado».
+
+## RF sin tarea
+Ninguno.

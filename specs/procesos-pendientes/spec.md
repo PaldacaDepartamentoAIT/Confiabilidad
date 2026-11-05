@@ -25,7 +25,8 @@ Los diagramas aportados por el usuario son la referencia:
 El sistema deberá guardar, para cada registro pendiente, el correo, el nombre completo, la fecha de
 nacimiento, el país, un identificador público, la huella del código vigente, su caducidad, el
 número de intentos fallidos, si el código ya se validó (y cuándo), la fecha de alta y, si se
-indicó al empezarlo, el documento de términos aceptado (su versión y su idioma).
+indicaron al empezarlo, el documento de términos aceptado y el documento de marketing aceptado (cada
+uno con su versión y su idioma).
 
 ### RF-002 Datos del registro pendiente válidos
 Cuando se guarde un registro pendiente, el sistema deberá normalizar y validar correo, nombre,
@@ -43,8 +44,8 @@ existente (activa o no), entonces el sistema no deberá guardar el registro pend
 
 ### RF-005 Registro repetido
 Cuando se solicite un registro para un correo que ya tiene un registro pendiente vigente, el
-sistema deberá conservar los datos existentes, incluido el documento de términos aceptado,
-descartar los nuevos, asignar un identificador
+sistema deberá conservar los datos existentes, incluidos los documentos de términos y de marketing
+aceptados (o la ausencia de este último), descartar los nuevos, asignar un identificador
 público nuevo, emitir un código nuevo, poner los intentos a 0 y anular la validación del código
 (S-06).
 
@@ -68,7 +69,11 @@ Cuando se presente un código para un proceso, el sistema deberá aceptarlo solo
 caducado y no se han agotado los intentos, y al aceptarlo deberá marcar el código del proceso como
 validado. Si el código no coincide, entonces el sistema deberá sumar un intento fallido. Si el
 proceso ya tiene el código validado, entonces el sistema deberá rechazar cualquier código que se
-presente.
+presente, salvo en un registro pendiente. Ahí, si el código coincide y no se han agotado los
+intentos, el sistema deberá aceptarlo de nuevo sin cambiar nada mientras el proceso no haya caducado
+(RF-011), aunque el código sí haya caducado; si no coincide, deberá tratarlo igual que en un
+proceso sin validar: sumar un intento fallido mientras el código esté vigente, o rechazarlo por
+código caducado si ya no lo está (S-12).
 
 ### RF-010 Bloqueo por intentos
 Si un proceso acumula el máximo de intentos fallidos (5 por defecto, RF-019), entonces el sistema
@@ -125,8 +130,12 @@ el país guardados, la contraseña indicada y el correo marcado como verificado,
 registro pendiente. Si el registro pendiente tiene un documento de términos aceptado que pertenece
 a la versión vigente, entonces el sistema deberá registrar en esa misma operación su aceptación
 (RF-006 de `consentimientos`), con la fecha de compleción; si no lo tiene o ya no es de la versión
-vigente, deberá crear la cuenta sin registrar ninguna aceptación. Si la contraseña no cumple la
-política de RF-022, entonces deberá rechazarlo
+vigente, deberá crear la cuenta sin registrar ninguna aceptación. Si el registro pendiente tiene un
+documento de marketing aceptado que pertenece a la versión vigente, entonces el sistema deberá
+registrar en esa misma operación la concesión de marketing (RF-008 de `consentimientos`), con la
+fecha de compleción; si no lo tiene, ya no es de la versión vigente o `consentimientos` rechaza la
+concesión por cualquier otro motivo, deberá crear la cuenta sin registrar ninguna concesión. Si
+la contraseña no cumple la política de RF-022, entonces deberá rechazarlo
 indicando cada regla incumplida y conservar el registro pendiente.
 
 ### RF-021 OBSOLETO — Completar el cambio de contraseña
@@ -152,10 +161,12 @@ con cuenta que sin ella (RF-024, RF-025); nunca el código.
 
 ### RF-024 Empezar el registro
 Cuando se solicite un registro con datos válidos (RF-002) y, opcionalmente, el documento de
-términos aceptado, el sistema deberá devolver de inmediato
+términos aceptado y el documento de marketing aceptado, el sistema deberá devolver de inmediato
 un identificador público nuevo, con el mismo formato tenga o no cuenta el correo, y hacer fuera de
 la respuesta todo el trabajo que depende de ello: comprobar cuentas y registros pendientes (RF-004,
 RF-005, RF-017), crear o reemplazar el registro pendiente con ese identificador y emitir el código.
+Si el documento de marketing indicado no existe o no pertenece a la versión vigente, entonces el
+sistema deberá descartarlo, sin error, y guardar el registro pendiente sin marketing.
 Si el nombre, la fecha de nacimiento, el país o el formato del correo no son válidos, entonces el
 sistema deberá rechazarlos en la propia respuesta, indicando cada error. Que el correo pertenezca a
 una cuenta o tenga un registro pendiente nunca se indicará en la respuesta. Si el trabajo de fuera
@@ -185,7 +196,14 @@ igual que RF-005 con un registro real.
   guarda el documento de términos aceptado en el formulario y su aceptación se registra al
   completar el registro (cambio del 2026-10-21, pedido por `registro-api`, S-03 y RF-009). Los
   registros empezados desde consola o antes de este cambio no tienen documento y se completan sin
-  aceptación (S-12 y C-13 de `registro-api`).
+  aceptación (S-12 y C-13 de `registro-api`). Del mismo modo, guarda el documento de marketing si
+  se marcó en el formulario, y su concesión se registra al completar el registro (cambio del
+  2026-10-30, pedido por `registro-flujo`, S-06 y RF-018); sin documento, o si ya no es de la
+  versión vigente, la cuenta se crea sin concesión, sin error. Un documento de marketing que no
+  existe o no es vigente al empezar se descarta (C-03), y la consola no indica el de marketing,
+  igual que el de términos (C-02). *Riesgo aceptado (C-01):* si `consentimientos` rechaza la
+  concesión al completar por cualquier motivo, la cuenta se crea sin ella y sin dejar rastro, como
+  hoy con los términos; un consentimiento que la persona dio puede perderse sin que nadie lo note.
 - S-04 La gracia de 15 minutos tras caducar el código (diagrama de registro) permite completar el
   registro tras validar el código y cerrar la ventana.
 - S-05 Crear la cuenta se hace aquí (RF-020). Los correos de código y el aviso "ya tienes cuenta"
@@ -212,6 +230,17 @@ igual que RF-005 con un registro real.
   borrado al borrar la cuenta (antes RF-014); una cuenta inactiva no puede pedirla y la que tenga
   en curso muere al caducar (C-05, antes RF-018); completar fija la contraseña y borra la
   solicitud (antes RF-021); cerrar sesiones y avisar por correo, en su flujo.
+- S-12 En el registro, un código ya validado se puede presentar de nuevo (cambio del 2026-10-30,
+  pedido por `registro-flujo`, S-01, RF-008 y RF-012). *Por qué:* el paso de contraseña vuelve a
+  enviar el código, y recargar la pantalla obliga a escribirlo otra vez. Además, rechazar sin
+  comparar delataría que el registro es real, porque un identificador sin registro detrás (RF-025)
+  nunca está validado y siempre suma un intento. El cambio de contraseña conserva la regla anterior.
+  Se acepta de nuevo hasta que caduca el proceso, no el código (C-01), para que recargar la pantalla
+  durante la gracia de S-04 no deje a la persona sin forma de continuar. Si un registro validado se
+  bloquea por intentos, el reenvío sigue prohibido (RF-016) y la salida es repetir el formulario
+  (RF-005), que anula la validación y da un identificador y un código nuevos (C-02). *Riesgo
+  aceptado:* quien tenga el enlace puede bloquear un registro ya validado con 5 códigos incorrectos y
+  obligar a su dueño a repetir el formulario.
 
 ## Fuera de alcance
 - API y pantallas (ver S-01). El envío de correos es de `correo-asincrono-plantillas`.
@@ -270,3 +299,15 @@ igual que RF-005 con un registro real.
 - 2026-10-22 — Validación del cambio del 2026-10-21: CUMPLIDA, dentro de la 6.ª validación de
   `registro-api` (RF-001, RF-005, RF-020 y RF-024 cumplidos con la suite en verde) — RF: ninguno
   modificado
+- 2026-10-30 — Cambio por `registro-flujo` (S-06, RF-018): el registro pendiente guarda el
+  documento de marketing aceptado, lo conserva al repetirse el registro y completar el registro
+  registra su concesión — RF: RF-001, RF-005, RF-020 y RF-024 modificados; S-03 ajustado.
+  Clarificado (C-01…C-03): RF-020 y RF-024 ajustados; S-03 ajustado. Impacto: sin cambios en el
+  plan; lo implementan el plan y las tareas de `registro-flujo`, que actualizan también
+  `resumen.md` — Estado: impacto analizado
+- 2026-10-30 — Cambio por `registro-flujo` (S-01, RF-008, RF-012): en un registro pendiente, un
+  código ya validado se compara de nuevo; si coincide se acepta sin cambios y si no, suma un intento
+  — RF: RF-009 modificado; S-12 añadido. Clarificado (C-01, C-02): RF-009 y S-12 ajustados.
+  Impacto: sin cambios en este plan; cambian M-01, D-01 y D-02 del plan de `registro-flujo`, que lo
+  implementa, y los tests del código validado del servicio y de la auditoría — Estado: impacto
+  analizado

@@ -14,6 +14,7 @@ from apps.accounts.validators import (
 )
 from apps.consents.models import Terms
 from apps.consents.services import current_document_shown
+from apps.emails import locales
 
 
 class _NormalizedEmailField(serializers.CharField):
@@ -31,6 +32,35 @@ class _BoundedJSONField(serializers.JSONField):
             self.fail("invalid")
 
 
+class _TolerantMarketingField(serializers.Field):  # type: ignore[type-arg]
+    # Nunca da error: lo mal formado o inexistente se trata como ausente (RF-015 de registro-api,
+    # D-06 de registro-flujo). La vigencia la comprueba el servicio al empezar el registro.
+    def __init__(self, **kwargs: Any) -> None:
+        super().__init__(required=False, allow_null=True, **kwargs)
+
+    def validate_empty_values(self, data: Any) -> tuple[bool, Any]:
+        if data is None:
+            return (True, None)
+        return super().validate_empty_values(data)
+
+    def to_internal_value(self, data: Any) -> dict[str, str] | None:
+        if not isinstance(data, dict):
+            return None
+        version, locale = data.get("version"), data.get("locale")
+        if not isinstance(version, str) or not isinstance(locale, str):
+            return None
+        locale = _LOCALES.get(locale.strip().replace("_", "-").lower(), locale)
+        if len(version) > 20 or len(locale) > 5 or _forbidden_characters(version + locale):
+            return None
+        return {"version": version, "locale": locale}
+
+    def to_representation(self, value: Any) -> Any:
+        return value
+
+
+_LOCALES = {code.lower(): code for code in locales.SUPPORTED}
+
+
 class RegistrationSerializer(serializers.Serializer[dict[str, Any]]):
     # Solo reglas que no consultan cuentas ni registros pendientes (RF-024 de procesos-pendientes).
     name = serializers.CharField(validators=[validate_name])
@@ -38,6 +68,7 @@ class RegistrationSerializer(serializers.Serializer[dict[str, Any]]):
     email = _NormalizedEmailField(max_length=254, validators=[validate_registration_email])
     country = serializers.CharField()
     terms = _BoundedJSONField()
+    marketing = _TolerantMarketingField()
     language = serializers.CharField(
         required=False, allow_null=True, allow_blank=True, default=None
     )
