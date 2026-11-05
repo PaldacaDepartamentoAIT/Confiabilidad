@@ -741,7 +741,7 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   código guarda su valor en el estado de React y el siguiente render lo repone. La aserción protege
   igualmente contra un cambio que vuelva a montar el formulario — [Cierto] — revertir: no aplica.
 
-- [ ] T-064 El reenvío del flujo fija el plazo al aceptar
+- [x] T-064 El reenvío del flujo fija el plazo al aceptar
   RF: RF-006 (M-01, D-19) | Depende de: T-010 | Archivos: 3
   Archivos: `backend/apps/accounts/processes.py`, `backend/apps/accounts/registration.py`,
   `backend/apps/accounts/tests/test_registration_flow.py`.
@@ -750,21 +750,36 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   plaza; `reissue_code(public_id, keep_deadline=True)` emite el código sin mover `code_expires_at`;
   `reissue_code(public_id)` y `renew_code` sin el indicador siguen fijando el plazo al emitir (la
   consola no cambia); suite verde.
+  Decisiones: `resend_code` fija `code_expires_at` en la misma actualización que vacía la huella;
+  `renew_code` guarda el plazo y lo repone tras generar el código cuando recibe `keep_deadline`. Un
+  test protege que la emisión de consola sigue fijando el plazo al emitir — [Cierto] — revertir: no
+  aplica. Mutantes (sin fijar el plazo al aceptar; sin conservarlo; conservarlo siempre; no pasar el
+  indicador) detectados.
 
-- [ ] T-065 Tarea de emisión propia del reenvío del flujo
+- [x] T-065 Tarea de emisión propia del reenvío del flujo
   RF: RF-006 (M-01, D-19) | Depende de: T-064 | Archivos: 3
   Archivos: `backend/apps/accounts/tasks.py`, `backend/apps/accounts/registration.py`,
   `backend/apps/accounts/tests/test_registration_background.py`.
   Hecho cuando: `resend_code` encola `reissue_flow_code` con el identificador; esa tarea llama a
   `reissue_code(public_id, keep_deadline=True)`; el reenvío de consola sigue encolando la tarea
   compartida `reissue_code`; suite verde.
+  Decisiones: la tarea nueva llama a `registration.reissue_code` a través del módulo, para que el
+  test la sustituya; el cambio de contraseña no se toca. Comprobado en Chromium con el worker de
+  Celery parado: tras reenviar un código caducado, la pantalla muestra «El código caduca en 15:00.»
+  — [Cierto] — revertir: no aplica. Mutantes (encolar la tarea compartida; emitir sin el indicador)
+  detectados.
 
-- [ ] T-066 La equivalencia cubre el estado entre el reenvío y la emisión
+- [x] T-066 La equivalencia cubre el estado entre el reenvío y la emisión
   RF: RF-006, RF-017 | Depende de: T-065 | Archivos: 1
   Archivos: `backend/apps/accounts/tests/test_registration_flow_equivalence.py`.
   Hecho cuando: en el recorrido, una consulta de estado justo después de un reenvío aceptado, sin
   ejecutar la emisión, da la misma respuesta en la plaza y en el registro real, con
   `code_expires_in` igual a la duración configurada (±1 s); suite verde.
+  Decisiones: el reloj (`timezone.now`) se fija durante el reenvío y la consulta, para que los
+  segundos no dependan de lo que tarda cada recorrido; así el plazo es exactamente la duración
+  configurada. Mutantes en el código vigilado (sin fijar el plazo; un plazo distinto en la plaza)
+  detectados; un primer mutante que fallaba por un `NameError` se descartó por inválido — [Cierto]
+  — revertir: no aplica.
 
 ## Entregas
 Rama de integración: feat/registro-flujo (los PR de las entregas van contra ella; ver `AGENTS.md`)
