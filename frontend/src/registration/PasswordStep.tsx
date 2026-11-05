@@ -5,6 +5,7 @@ import type { ApiClient } from "../api/client";
 import { completeRegistration } from "../api/registration";
 import { Button } from "../components/Button";
 import { FormMessage } from "../components/FormMessage";
+import { MessageZone } from "../components/MessageZone";
 import { PasswordField } from "../components/fields/PasswordField";
 import { newPasswordRules } from "../forms/passwordRules";
 import { useFormValidation, type FieldError } from "../forms/useFormValidation";
@@ -60,12 +61,6 @@ export function PasswordStep({
   return (
     <section aria-labelledby={titleId}>
       <h2 id={titleId}>{t("register.passwordTitle")}</h2>
-      {wait.remaining > 0 && (
-        <p role="status">{t("validation.retryIn", { seconds: wait.remaining })}</p>
-      )}
-      {message && (
-        <FormMessage ref={messageRef} type={message.type} messageKey={message.messageKey} />
-      )}
       <form ref={formRef} noValidate onSubmit={handleSubmit((values) => void send(values))}>
         <PasswordField
           label={t("register.passwordLabel")}
@@ -75,6 +70,14 @@ export function PasswordStep({
           error={errorText(allErrors.password)}
           onBlur={onBlur("password")}
         />
+        <MessageZone>
+          {wait.remaining > 0 && (
+            <p role="status">{t("validation.retryIn", { seconds: wait.remaining })}</p>
+          )}
+          {message && (
+            <FormMessage ref={messageRef} type={message.type} messageKey={message.messageKey} />
+          )}
+        </MessageZone>
         <Button
           type="submit"
           keepFocusOnMouseDown

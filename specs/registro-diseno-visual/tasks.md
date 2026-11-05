@@ -193,13 +193,13 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   texto visible; su nombre accesible sigue siendo «Mostrar contraseña (<campo>)» con `aria-pressed`
   (D-10 de `componentes-base-accesibles`) — [Cierto] — revertir: no aplica.
 
-- [ ] T-016 Zona de mensajes
+- [x] T-016 Zona de mensajes
   RF: RF-023 (M-13) | Depende de: — | Archivos: 3
   Archivos: `components/MessageZone.tsx`, `components/MessageZone.test.tsx`,
   `styles/components.css`.
   Hecho cuando: la zona existe siempre, vacía o con sus hijos; suite verde.
 
-- [ ] T-017 Mensajes del formulario y de la contraseña en la zona
+- [x] T-017 Mensajes del formulario y de la contraseña en la zona
   RF: RF-023 (M-13) | Depende de: T-016 | Archivos: 3
   Archivos: `registration/RegisterPage.tsx`, `registration/PasswordStep.tsx`,
   `registration/PasswordStep.test.tsx`.
@@ -207,12 +207,18 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   encima del botón principal, que existe también sin mensaje; los tests de `RegisterPage` y
   `PasswordStep` siguen en verde (mismo foco y anuncios); suite verde.
 
-- [ ] T-018 Mensajes de la verificación en la zona
+- [x] T-018 Mensajes de la verificación en la zona
   RF: RF-023 (M-13) | Depende de: T-016 | Archivos: 2
   Archivos: `registration/VerifyPage.tsx`, `registration/VerifyPage.test.tsx`.
   Hecho cuando: el tiempo restante, el código caducado, el bloqueo, el aviso de espera y el
   mensaje general van en la zona, encima del botón de verificar; los tests de `VerifyPage` siguen
   en verde; suite verde.
+  Decisiones: el tiempo restante y el rechazo del código, que viven en `VerifyPage`, llegan a la zona
+  de `CodeForm` por una propiedad `notices`. Los avisos del reenvío (enviado, espera por límite)
+  quedan junto a su botón, que no es el principal — [Probable] — revertir: llevarlos también a la
+  zona.
+  Cambio pedido por el usuario al revisar E-05: 12 px de separación entre campos (`.field` y
+  `.checkbox`), anotado en la guía visual — [Cierto] — revertir: quitar el margen.
 
 ## E-06 Ayuda «?» en los campos del registro
 

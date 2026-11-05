@@ -96,6 +96,12 @@
   min-width: 0;
 }
 
+/* Separación entre campos, además del hueco del error (docs/identidad-visual.md, «Campos»). */
+.field,
+.checkbox {
+  margin-block-end: 12px;
+}
+
 .field__label-row {
   display: flex;
   align-items: center;
@@ -184,4 +190,15 @@
   border-radius: 50%;
   background: transparent;
   color: var(--color-action);
+}
+
+.message-zone {
+  display: grid;
+  gap: 4px;
+  min-height: 1.5em;
+  margin-block: 6px 2px;
+}
+
+.message-zone > * {
+  margin: 0;
 }
