@@ -1,7 +1,7 @@
 # Entrega E-04 · Campos con hueco de error y ojo en la contraseña
 
 Rama: `feat/registro-diseno-visual-campos` (apilada sobre `feat/registro-diseno-visual-menu-tema`,
-E-03) · PR: pendiente · Líneas de código y tests: 473 (límite: 400; ver «Excepción» de E-04 en
+E-03) · PR: [PaldacaDepartamentoAIT/Confiabilidad#63](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/63) · Líneas de código y tests: 473 (límite: 400; ver «Excepción» de E-04 en
 `tasks.md`).
 
 ## Qué se hizo
