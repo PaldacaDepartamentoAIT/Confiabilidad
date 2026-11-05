@@ -1,5 +1,5 @@
 # Spec: registro-flujo
-Estado: borrador
+Estado: aprobada
 Aprobación: ligera
 
 ## Objetivo (por qué)
@@ -73,9 +73,11 @@ posterior al formulario deberá mostrar el correo electrónico.
 Mientras la pantalla de verificación esté abierta, el sistema deberá mostrar el tiempo restante del
 código vigente según el servidor, también tras recargar la página. Cuando llegue a cero, el sistema
 deberá indicar que el código ha caducado y que puede pedirse otro. Desde que el servidor acepta un
-reenvío (RF-010), el tiempo restante que devuelve deberá ser el del código nuevo, completo, aunque el
-correo con ese código aún no haya salido: la pantalla nunca deberá indicar que un código recién
-pedido ha caducado.
+reenvío de la pantalla o de la API (RF-010), el tiempo restante que devuelve deberá ser el del código
+nuevo: la duración de validez configurada (hoy 15 minutos) contada desde esa aceptación, con un
+segundo de tolerancia, aunque el correo con ese código aún no haya salido o no llegue a salir. Así,
+la pantalla nunca deberá indicar que un código recién pedido ha caducado. El reenvío desde la
+consola (RF-016 de `procesos-pendientes`) no cambia.
 
 ### RF-007 Verificación del código
 Cuando se envíe un código desde la pantalla de verificación, el sistema deberá comprobarlo en el
@@ -285,6 +287,9 @@ permitir la acción al llegar a cero.
   números (`str.isdigit()`) y el navegador lo acepta (solo cuenta la categoría `Nd`). Que el test del
   frontend pase obliga a corregir `frontend/src/forms/passwordRules.ts`, de
   `componentes-base-accesibles`: el plan decide cómo hacerlo dentro de las reglas de `AGENTS.md`.
+- S-18 Si el correo con el código nuevo no llega a salir, la pantalla cuenta el plazo igualmente y
+  no avisa del fallo: la persona puede pedir otro código cuando se cumpla la espera de RF-010
+  (C-02 del 2026-11-05).
 
 ## Casos compartidos de contraseña
 Resultado de las dos reglas que comprueban el navegador y el servidor (S-15); no incluye la
@@ -354,3 +359,6 @@ similitud, las comunes ni las filtradas.
 - 2026-11-05 — Cambio: tras un reenvío aceptado, el tiempo restante es el del código nuevo aunque el
   correo aún no haya salido (observación 2 de la tercera validación) — RF: RF-006 — Estado:
   pendiente de clarificar
+- 2026-11-05 — Clarificación del cambio (C-01…C-04): el plazo del código nuevo cuenta desde la
+  aceptación del reenvío, con la duración configurada y un segundo de tolerancia; solo el reenvío
+  de la pantalla y la API; S-18 añadido — RF: RF-006 — Estado: clarificado
