@@ -31,6 +31,16 @@ export const es: Messages = {
     showPassword: "Mostrar contraseña",
     newPasswordHint: "Al menos 12 caracteres, no solo números.",
   },
+  help: {
+    label: "Ayuda ({{field}})",
+    name: "Tal como quieres que aparezca en tu cuenta.",
+    birthdate: "Se usa para comprobar que tienes la edad mínima para registrarte.",
+    email:
+      "Lo usarás para iniciar sesión. Si puedes registrarte con él, recibirás en él un código de verificación.",
+    country: "El país donde resides.",
+    code: "Los 6 dígitos del correo de verificación. Puedes pegarlo entero.",
+    password: "La usarás para iniciar sesión. Debajo del campo tienes las reglas que debe cumplir.",
+  },
   message: {
     error: "Error:",
     success: "Éxito:",

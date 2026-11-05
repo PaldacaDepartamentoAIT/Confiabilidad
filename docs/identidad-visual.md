@@ -164,10 +164,10 @@ iconos y formas).
   acción, en el extremo derecho, y el texto del campo nunca queda debajo de él.
 
 ### Botón de ayuda «?» y su globo
-- Botón de icono circular de 18 px junto al nombre del campo, con el «?» y el borde en color de
-  acción.
+- Botón de icono circular de 18 px en la fila del nombre del campo, alineado a la derecha, con el
+  borde derecho del campo; el «?» y el borde en color de acción.
 - El globo es un bloque de relleno fuerte con el texto en `#eaf1f6` (en claro) o en tinta (en
-  oscuro), radio 4 px, ancho máximo 280 px, sin sombra, sobre el botón.
+  oscuro), radio 4 px, ancho máximo 280 px, sin sombra, a la izquierda del botón y centrado con él.
 
 ### Selector
 - Mismo aspecto que un campo de texto, con una flecha hacia abajo en texto secundario a la derecha,

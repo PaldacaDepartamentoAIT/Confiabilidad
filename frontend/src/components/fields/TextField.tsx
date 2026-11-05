@@ -8,11 +8,12 @@ type TextFieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, "type" | "requ
   required?: boolean;
   error?: string;
   hint?: string;
+  help?: string;
   adornment?: ReactNode;
 };
 
 export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(function TextField(
-  { label, type = "text", required = false, error, hint, adornment, ...inputProps },
+  { label, type = "text", required = false, error, hint, help, adornment, ...inputProps },
   ref,
 ) {
   const id = useId();
@@ -23,6 +24,7 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(function T
       id={id}
       label={label}
       required={required}
+      help={help}
       hint={hint}
       error={error}
       adornment={adornment}

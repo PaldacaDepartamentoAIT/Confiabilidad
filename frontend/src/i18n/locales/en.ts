@@ -28,6 +28,16 @@ export const en = {
     showPassword: "Show password",
     newPasswordHint: "At least 12 characters, not only numbers.",
   },
+  help: {
+    label: "Help ({{field}})",
+    name: "As you want it to appear on your account.",
+    birthdate: "Used to check that you are old enough to sign up.",
+    email:
+      "You will use it to sign in. If you can sign up with it, you will receive a verification code there.",
+    country: "The country where you live.",
+    code: "The 6 digits from the verification email. You can paste it whole.",
+    password: "You will use it to sign in. The rules it must meet are under the field.",
+  },
   message: {
     error: "Error:",
     success: "Success:",

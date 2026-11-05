@@ -44,6 +44,12 @@ function renderPage(fetcher: typeof fetch, language = "es") {
   );
 }
 
+// La descripción de un campo con «?» empieza por su ayuda; el error va detrás (RF-014).
+function afterHelp(error: string): string {
+  const escaped = error.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return expect.stringMatching(new RegExp(`\\. ${escaped}$`)) as unknown as string;
+}
+
 const scrolled: Element[] = [];
 
 beforeEach(() => {
@@ -86,6 +92,33 @@ test("loads the options and shows every field, with the countries by name in ord
   const marketing = screen.getByRole("checkbox", { name: /^Quiero recibir novedades/ });
   expect(marketing).not.toBeChecked();
   expect(marketing).not.toHaveAttribute("aria-required");
+});
+
+test("each field has its «?» with its description and the checkboxes do not", async () => {
+  const { fetcher } = fakeFetch(respondWith(OPTIONS));
+  renderPage(fetcher);
+
+  const name = await screen.findByRole("textbox", { name: "Nombre completo" });
+  expect(name).toHaveAccessibleDescription("Tal como quieres que aparezca en tu cuenta.");
+  expect(screen.getByLabelText(/^Fecha de nacimiento/)).toHaveAccessibleDescription(
+    "Se usa para comprobar que tienes la edad mínima para registrarte.",
+  );
+  expect(screen.getByRole("textbox", { name: "Correo electrónico" })).toHaveAccessibleDescription(
+    /^Lo usarás para iniciar sesión/,
+  );
+  expect(screen.getByRole("combobox", { name: "País" })).toHaveAccessibleDescription(
+    "El país donde resides.",
+  );
+  expect(
+    screen
+      .getAllByRole("button", { name: /^Ayuda/ })
+      .map((button) => button.getAttribute("aria-label")),
+  ).toEqual([
+    "Ayuda (Nombre completo)",
+    "Ayuda (Fecha de nacimiento)",
+    "Ayuda (Correo electrónico)",
+    "Ayuda (País)",
+  ]);
 });
 
 test("names the countries in the active language", async () => {
@@ -166,15 +199,15 @@ test("submitting it empty shows every error, scrolls to the first one and sends 
   await user.click(screen.getByRole("button", { name: "Continuar" }));
 
   const name = screen.getByRole("textbox", { name: "Nombre completo" });
-  expect(name).toHaveAccessibleDescription("Completa este campo.");
+  expect(name).toHaveAccessibleDescription(afterHelp("Completa este campo."));
   expect(screen.getByLabelText(/^Fecha de nacimiento/)).toHaveAccessibleDescription(
-    "Completa este campo.",
+    afterHelp("Completa este campo."),
   );
   expect(screen.getByRole("textbox", { name: "Correo electrónico" })).toHaveAccessibleDescription(
-    "Completa este campo.",
+    afterHelp("Completa este campo."),
   );
   expect(screen.getByRole("combobox", { name: "País" })).toHaveAccessibleDescription(
-    "Elige un país de la lista.",
+    afterHelp("Elige un país de la lista."),
   );
   expect(
     screen.getByRole("checkbox", { name: "Acepto los términos y condiciones" }),
@@ -193,7 +226,7 @@ test("an email without the shape of an address is rejected before sending", asyn
   await user.tab();
 
   expect(screen.getByRole("textbox", { name: "Correo electrónico" })).toHaveAccessibleDescription(
-    "Escribe un correo como nombre@empresa.com.",
+    afterHelp("Escribe un correo como nombre@empresa.com."),
   );
 });
 
@@ -291,10 +324,12 @@ describe("sending the form", () => {
     const name = screen.getByRole("textbox", { name: "Nombre completo" });
     await waitFor(() => expect(name).toHaveFocus());
     expect(name).toHaveAccessibleDescription(
-      "El nombre no puede tener tabuladores, saltos de línea ni caracteres de control. El nombre no puede tener espacios seguidos.",
+      afterHelp(
+        "El nombre no puede tener tabuladores, saltos de línea ni caracteres de control. El nombre no puede tener espacios seguidos.",
+      ),
     );
     expect(screen.getByRole("textbox", { name: "Correo electrónico" })).toHaveAccessibleDescription(
-      "El dominio del correo no puede ser una dirección IP.",
+      afterHelp("El dominio del correo no puede ser una dirección IP."),
     );
     expect(scrolled[scrolled.length - 1]).toBe(name);
   });
@@ -327,7 +362,7 @@ describe("sending the form", () => {
 
     const country = screen.getByRole("combobox", { name: "País" });
     await waitFor(() => expect(country).toHaveFocus());
-    expect(country).toHaveAccessibleDescription("Elige un país de la lista.");
+    expect(country).toHaveAccessibleDescription(afterHelp("Elige un país de la lista."));
     const shown = screen.getAllByText(/Algo no ha funcionado/);
     expect(shown.some((element) => element.getAttribute("tabindex") === "-1")).toBe(true);
   });

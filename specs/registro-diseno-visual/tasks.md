@@ -222,7 +222,7 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
 
 ## E-06 Ayuda «?» en los campos del registro
 
-- [ ] T-019 Descripciones de los campos
+- [x] T-019 Descripciones de los campos
   RF: RF-014 (M-14, S-03) | Depende de: — | Archivos: 4
   Archivos: `i18n/locales/es.ts`, `i18n/locales/en.ts`, `i18n/locales/pt-BR.ts`,
   `i18n/locales/locales.test.ts`.
@@ -231,41 +231,52 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   Excepción: `i18n/locales/locales.test.ts` fija la lista de grupos de textos y debe cambiar con
   cada grupo nuevo (aprobado por el usuario al implementar T-002).
 
-- [ ] T-020 Botón «?» con globo
+- [x] T-020 Botón «?» con globo
   RF: RF-014 (M-07, D-08) | Depende de: T-019 | Archivos: 3
   Archivos: `components/fields/HelpTip.tsx`, `components/fields/HelpTip.test.tsx`,
   `styles/components.css`.
   Hecho cuando: el botón se llama «Ayuda (<campo>)»; el globo `role="tooltip"` se muestra al pasar
   el puntero, al enfocar y al tocar, y se oculta al irse el puntero o el foco, al volver a tocar y
   con Escape; su texto está siempre en el DOM; suite verde.
+  Decisiones: con el ratón, el globo lo abre y cierra el puntero y el clic no lo alterna; con un
+  toque, el clic lo alterna y el foco que trae el toque no lo abre por su cuenta. Con el teclado,
+  el foco lo abre e Intro lo alterna — [Probable] — revertir: alternar con cualquier clic. Cerrado
+  lleva `hidden`, que no impide que el campo lo use como descripción — [Cierto].
 
-- [ ] T-021 El campo lleva su «?» y lee su descripción
+- [x] T-021 El campo lleva su «?» y lee su descripción
   RF: RF-014 (M-06, M-07) | Depende de: T-020, T-013 | Archivos: 3
   Archivos: `components/fields/FieldShell.tsx`, `components/fields/FieldShell.test.tsx`,
   `components/fields/TextField.tsx`.
   Hecho cuando: con `help`, el «?» va junto al nombre y la descripción entra en el
   `aria-describedby` del control junto a la ayuda visible y el error; sin `help`, no hay «?»;
   suite verde.
+  Decisiones: que `TextField` pase `help` al envoltorio no tiene test en esta tarea (su archivo de
+  tests no está entre los tres); lo comprueban T-023 y T-024 con los campos reales — [Cierto].
 
-- [ ] T-022 «?» en el selector
+- [x] T-022 «?» en el selector
   RF: RF-014 | Depende de: T-021, T-014 | Archivos: 2
   Archivos: `components/fields/SelectField.tsx`, `components/fields/ChoiceFields.test.tsx`.
   Hecho cuando: el selector acepta `help` como los demás campos; la casilla no lo acepta; suite
   verde.
 
-- [ ] T-023 «?» en el formulario de registro
+- [x] T-023 «?» en el formulario de registro
   RF: RF-014 | Depende de: T-022 | Archivos: 2
   Archivos: `registration/RegisterPage.tsx`, `registration/RegisterPage.test.tsx`.
   Hecho cuando: nombre, fecha, correo y país tienen su «?» con su descripción; las casillas no;
   suite verde.
+  Decisiones: los tests existentes que comparaban la descripción exacta con el error comprueban
+  ahora que el error va detrás de la ayuda (`afterHelp`) — [Cierto] — revertir: no aplica.
 
-- [ ] T-024 «?» en el código y la contraseña
+- [x] T-024 «?» en el código y la contraseña
   RF: RF-014, RF-015 | Depende de: T-021 | Archivos: 3
   Archivos: `registration/VerifyPage.tsx`, `registration/PasswordStep.tsx`,
   `registration/a11y.test.tsx`.
   Hecho cuando: el código y la contraseña tienen su «?»; la contraseña sigue mostrando sus reglas;
   la página de muestra no tiene ningún «?»; las auditorías de `axe-core` siguen en verde; suite
   verde.
+  Decisiones: se toca también `registration/VerifyPage.test.tsx` (cuarto archivo): sus tests
+  comparaban la descripción exacta del código y ahora empieza por su ayuda — [Cierto] — revertir:
+  no aplica.
 
 ## E-07 Selector propio
 

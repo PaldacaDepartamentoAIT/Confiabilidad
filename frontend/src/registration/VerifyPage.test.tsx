@@ -9,6 +9,9 @@ import { createI18n } from "../i18n";
 import { DonePage } from "./DonePage";
 import { VerifyPage } from "./VerifyPage";
 
+// La descripción del código empieza por su ayuda; el error va detrás (RF-014).
+const CODE_HELP = "Los 6 dígitos del correo de verificación. Puedes pegarlo entero.";
+
 const STATUS: RegistrationStatus = {
   code_expires_in: 900,
   resend_in: 60,
@@ -221,7 +224,7 @@ describe("verifying the code", () => {
     const field = screen.getByRole("textbox", { name: "Código de verificación" });
     await waitFor(() =>
       expect(field).toHaveAccessibleDescription(
-        "El código no es correcto. Revísalo e inténtalo de nuevo.",
+        `${CODE_HELP} El código no es correcto. Revísalo e inténtalo de nuevo.`,
       ),
     );
     expect(calls[1]).toEqual({
@@ -245,7 +248,7 @@ describe("verifying the code", () => {
     await waitFor(() =>
       expect(
         screen.getByRole("textbox", { name: "Código de verificación" }),
-      ).toHaveAccessibleDescription("El código ha caducado. Pide uno nuevo."),
+      ).toHaveAccessibleDescription(`${CODE_HELP} El código ha caducado. Pide uno nuevo.`),
     );
     expect(calls).toHaveLength(2);
   });
@@ -260,7 +263,7 @@ describe("verifying the code", () => {
 
     expect(
       screen.getByRole("textbox", { name: "Código de verificación" }),
-    ).toHaveAccessibleDescription("Escribe los 6 dígitos del código.");
+    ).toHaveAccessibleDescription(`${CODE_HELP} Escribe los 6 dígitos del código.`);
     expect(calls).toHaveLength(1);
   });
 
@@ -332,7 +335,9 @@ describe("verifying the code", () => {
     await waitFor(() => expect(calls).toHaveLength(3));
     expect(
       screen.getByRole("textbox", { name: "Código de verificación" }),
-    ).toHaveAccessibleDescription("El código no es correcto. Revísalo e inténtalo de nuevo.");
+    ).toHaveAccessibleDescription(
+      `${CODE_HELP} El código no es correcto. Revísalo e inténtalo de nuevo.`,
+    );
     expect(screen.getByRole("button", { name: "Verificar" })).toBeEnabled();
     expect(screen.queryByText(/^Has agotado los intentos/)).toBeNull();
   });

@@ -1,13 +1,20 @@
 import type { ReactNode } from "react";
 
+import { HelpTip } from "./HelpTip";
+
 type Descriptions = {
+  help?: string;
   hint?: string;
   error?: string;
 };
 
-// La ayuda visible y el error se leen al llegar al control, en ese orden.
-function describedBy(id: string, { hint, error }: Descriptions): string | undefined {
-  return [hint && `${id}-hint`, error && `${id}-error`].filter(Boolean).join(" ") || undefined;
+// La descripción del «?», la ayuda visible y el error se leen al llegar al control, en ese orden.
+function describedBy(id: string, { help, hint, error }: Descriptions): string | undefined {
+  return (
+    [help && `${id}-help`, hint && `${id}-hint`, error && `${id}-error`]
+      .filter(Boolean)
+      .join(" ") || undefined
+  );
 }
 
 // Hueco de una línea siempre presente, para que un error no cambie el alto del formulario (D-09).
@@ -36,6 +43,7 @@ export function FieldShell({
   id,
   label,
   required = false,
+  help,
   hint,
   error,
   adornment,
@@ -53,9 +61,10 @@ export function FieldShell({
             </span>
           )}
         </label>
+        {help && <HelpTip id={`${id}-help`} field={label} description={help} />}
       </div>
       <div className={adornment ? "field__control field__control--adorned" : "field__control"}>
-        {children(describedBy(id, { hint, error }))}
+        {children(describedBy(id, { help, hint, error }))}
         {adornment}
       </div>
       {hint && (

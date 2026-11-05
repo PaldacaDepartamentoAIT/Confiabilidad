@@ -1,4 +1,7 @@
 import { render, screen } from "@testing-library/react";
+import { I18nextProvider } from "react-i18next";
+
+import { createI18n } from "../../i18n";
 
 import { FieldShell } from "./FieldShell";
 
@@ -79,4 +82,26 @@ test("without a control inside, the box has no room reserved for it", () => {
   const { container } = renderShell();
 
   expect(container.querySelector(".field__control")).not.toHaveClass("field__control--adorned");
+});
+
+test("with help, a «?» goes next to the name and its text describes the control", () => {
+  render(
+    <I18nextProvider i18n={createI18n("es")}>
+      <FieldShell id="f" label="Nombre" help="Como en tu cuenta." hint="Visible." error="Falta.">
+        {(description) => <input id="f" aria-describedby={description} />}
+      </FieldShell>
+    </I18nextProvider>,
+  );
+
+  const help = screen.getByRole("button", { name: "Ayuda (Nombre)" });
+  expect(help.closest(".field__label-row")).not.toBeNull();
+  expect(screen.getByRole("textbox", { name: "Nombre" })).toHaveAccessibleDescription(
+    "Como en tu cuenta. Visible. Falta.",
+  );
+});
+
+test("without help there is no «?»", () => {
+  renderShell();
+
+  expect(screen.queryByRole("button")).not.toBeInTheDocument();
 });

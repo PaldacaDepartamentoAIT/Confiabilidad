@@ -1,6 +1,9 @@
 import { render, screen } from "@testing-library/react";
 import axe from "axe-core";
 import { createRef } from "react";
+import { I18nextProvider } from "react-i18next";
+
+import { createI18n } from "../../i18n";
 
 import { Checkbox } from "./Checkbox";
 import { SelectField } from "./SelectField";
@@ -140,3 +143,22 @@ it("axe no encuentra fallos en la casilla ni en el selector con error", async ()
   const results = await axe.run(container, { rules: { "color-contrast": { enabled: false } } });
   expect(results.violations.map((violation) => violation.id)).toEqual([]);
 });
+
+it("el selector lleva su «?» y lee su descripción", () => {
+  render(
+    <I18nextProvider i18n={createI18n("es")}>
+      <SelectField label="País" placeholder="Elige" options={options} help="Donde resides." />
+    </I18nextProvider>,
+  );
+
+  expect(screen.getByRole("button", { name: "Ayuda (País)" })).toBeInTheDocument();
+  expect(screen.getByRole("combobox", { name: "País" })).toHaveAccessibleDescription(
+    "Donde resides.",
+  );
+});
+
+// Nunca se ejecuta: solo comprueba en compilación que la casilla no admite «?» (RF-014).
+export function checkboxHasNoHelp() {
+  // @ts-expect-error: the checkbox has no help
+  return <Checkbox label="I accept" help="x" />;
+}
