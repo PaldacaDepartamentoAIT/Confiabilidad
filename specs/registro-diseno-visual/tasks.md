@@ -149,7 +149,7 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
 
 ## E-04 y E-05 Campos con hueco de error, ojo y zona de mensajes
 
-- [ ] T-012 Envoltorio de campo
+- [x] T-012 Envoltorio de campo
   RF: RF-013, RF-016 (M-06, D-09) | Depende de: — | Archivos: 3
   Archivos: `components/fields/FieldShell.tsx`, `components/fields/FieldShell.test.tsx`,
   `styles/components.css`.
@@ -157,21 +157,29 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   el hueco del error existe siempre, vacío sin error y con el mensaje con error; la ayuda visible y
   el error se unen en `aria-describedby`; hay una ranura para un control dentro del campo, a la
   derecha; suite verde.
+  Decisiones: el control se pasa como función que recibe su `aria-describedby`, en lugar de
+  exportar un ayudante desde el archivo del componente (lo pide la regla de recarga rápida de ESLint)
+  — [Cierto] — revertir: mover el ayudante a un archivo propio. `ErrorSlot` se exporta para la
+  casilla (T-014). Mutante equivalente: quitar el espacio antes del asterisco no cambia nada que
+  compruebe un test (solo el aspecto) — [Cierto].
 
-- [ ] T-013 Texto, código y contraseña con el envoltorio
+- [x] T-013 Texto, código y contraseña con el envoltorio
   RF: RF-013, RF-016 (M-06) | Depende de: T-012 | Archivos: 2
   Archivos: `components/fields/TextField.tsx`, `components/fields/TextField.test.tsx`.
   Hecho cuando: `TextField` (y con él `CodeField` y `PasswordField`) usa `FieldShell`; el hueco
   está presente con y sin error; los tests existentes de los tres siguen en verde; suite verde.
 
-- [ ] T-014 Casilla y selector con el envoltorio
+- [x] T-014 Casilla y selector con el envoltorio
   RF: RF-016 (M-06) | Depende de: T-012 | Archivos: 3
   Archivos: `components/fields/Checkbox.tsx`, `components/fields/SelectField.tsx`,
   `components/fields/ChoiceFields.test.tsx`.
   Hecho cuando: la casilla y el selector tienen el hueco del error siempre presente, con y sin
   error; suite verde.
+  Decisiones: la casilla usa solo el hueco de error (`ErrorSlot`), no todo el envoltorio, porque su
+  etiqueta va a la derecha de la casilla; sus estilos van en `components.css`, un cuarto archivo —
+  [Cierto] — revertir: no aplica.
 
-- [ ] T-015 Ojo dentro del campo de contraseña
+- [x] T-015 Ojo dentro del campo de contraseña
   RF: RF-015, RF-018 (M-02, M-08) | Depende de: T-013 | Archivos: 3
   Archivos: `components/icons.tsx` (ojo, ojo tachado y la flecha abajo que usará T-027),
   `components/fields/PasswordField.tsx`,
@@ -180,6 +188,10 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   si la contraseña está oculta y el ojo tachado y `aria-pressed="true"` si está visible; el nombre
   accesible sigue siendo «Mostrar contraseña (<campo>)»; las reglas de la contraseña nueva siguen
   visibles; suite verde.
+  Decisiones: el estilo del botón de icono (`.icon-button`, círculo de 32 px en color de acción) va
+  en `components.css`, un cuarto archivo — [Cierto] — revertir: no aplica. El botón ya no tiene
+  texto visible; su nombre accesible sigue siendo «Mostrar contraseña (<campo>)» con `aria-pressed`
+  (D-10 de `componentes-base-accesibles`) — [Cierto] — revertir: no aplica.
 
 - [ ] T-016 Zona de mensajes
   RF: RF-023 (M-13) | Depende de: — | Archivos: 3
@@ -439,6 +451,7 @@ sin dejar algo a medias llevan su excepción. Las tareas no cambian. Las líneas
   Tareas: T-012…T-015 | Líneas estimadas: 450 | Rama: `feat/registro-diseno-visual-campos`
   Cómo probarlo: en `/register`, salir de un campo vacío y ver que el error aparece sin mover el
   resto; en la contraseña, pulsar el ojo.
+  Excepción: 473 líneas reales (96 de CSS de los campos); aceptado por el usuario el 2026-11-05.
 
 - E-05 Los mensajes de cada paso tienen su sitio reservado
   Tareas: T-016…T-018 | Líneas estimadas: 250 | Rama: `feat/registro-diseno-visual-mensajes`

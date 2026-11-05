@@ -1,6 +1,7 @@
 import { forwardRef, useRef, useState, type ComponentProps, type FocusEvent } from "react";
 import { useTranslation } from "react-i18next";
 
+import { EyeIcon, EyeOffIcon } from "../icons";
 import { TextField } from "./TextField";
 
 type PasswordFieldProps = Omit<ComponentProps<typeof TextField>, "type" | "adornment" | "hint"> & {
@@ -43,12 +44,13 @@ export const PasswordField = forwardRef<HTMLInputElement, PasswordFieldProps>(
           <button
             ref={toggleRef}
             type="button"
+            className="icon-button"
             aria-pressed={visible}
             aria-label={`${t("field.showPassword")} (${fieldProps.label})`}
             onClick={() => setVisible(!visible)}
             onBlur={handleLeave}
           >
-            {t("field.showPassword")}
+            {visible ? <EyeOffIcon /> : <EyeIcon />}
           </button>
         }
       />

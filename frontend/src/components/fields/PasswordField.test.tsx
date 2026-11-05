@@ -150,9 +150,22 @@ test("a current password has no hint", () => {
   expect(screen.getByLabelText("Password")).not.toHaveAttribute("aria-describedby");
 });
 
-test("the toggle names its field while showing only its own text", () => {
-  renderWithI18n(<PasswordField label="New password" kind="new" />);
+test("the toggle is an eye inside the field, crossed out while the password is shown", async () => {
+  const user = userEvent.setup();
+  const { container } = renderWithI18n(<PasswordField label="New password" kind="new" />);
 
   const toggle = screen.getByRole("button", { name: "Show password (New password)" });
-  expect(toggle).toHaveTextContent(/^Show password$/);
+  const icon = () => toggle.querySelector("svg");
+  expect(container.querySelector(".field__control--adorned")).toContainElement(toggle);
+  expect(container.querySelector(".field__control--adorned")).toContainElement(
+    screen.getByLabelText("New password"),
+  );
+  expect(toggle).toHaveTextContent("");
+  expect(icon()).toHaveAttribute("data-icon", "eye");
+  expect(icon()).toHaveAttribute("aria-hidden", "true");
+
+  await user.click(toggle);
+
+  expect(icon()).toHaveAttribute("data-icon", "eye-off");
+  expect(screen.getByText("At least 12 characters, not only numbers.")).toBeVisible();
 });
