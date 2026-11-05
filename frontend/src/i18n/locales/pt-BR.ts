@@ -30,6 +30,16 @@ export const ptBR: Messages = {
     showPassword: "Mostrar senha",
     newPasswordHint: "Pelo menos 12 caracteres, não só números.",
   },
+  help: {
+    label: "Ajuda ({{field}})",
+    name: "Como você quer que apareça na sua conta.",
+    birthdate: "Usada para verificar se você tem a idade mínima para se cadastrar.",
+    email:
+      "Você o usará para entrar. Se puder se cadastrar com ele, receberá nele um código de verificação.",
+    country: "O país onde você mora.",
+    code: "Os 6 dígitos do e-mail de verificação. Você pode colá-lo inteiro.",
+    password: "Você a usará para entrar. As regras que ela deve cumprir estão abaixo do campo.",
+  },
   message: {
     error: "Erro:",
     success: "Sucesso:",

@@ -222,7 +222,7 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
 
 ## E-06 Ayuda «?» en los campos del registro
 
-- [ ] T-019 Descripciones de los campos
+- [x] T-019 Descripciones de los campos
   RF: RF-014 (M-14, S-03) | Depende de: — | Archivos: 4
   Archivos: `i18n/locales/es.ts`, `i18n/locales/en.ts`, `i18n/locales/pt-BR.ts`,
   `i18n/locales/locales.test.ts`.
