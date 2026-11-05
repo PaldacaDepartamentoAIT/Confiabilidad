@@ -22,6 +22,8 @@ recogerá como variables CSS en `frontend/`, y `desktop/` los hereda al cargar e
 - **Lienzo plano** y **bloques opacos** sin sombra, separados por el lienzo (composición en
   bloques o *bento*).
 - **Barra lateral flotante** con iconos; el elemento activo usa el color de acción.
+- **Barra superior** en todas las pantallas, sobre el lienzo y sin fondo propio, con los botones
+  de icono de idioma y de tema alineados a la derecha.
 - Sin degradado de fondo, sin transparencias y sin animación de fondo.
 
 ## Temas
@@ -29,6 +31,11 @@ recogerá como variables CSS en `frontend/`, y `desktop/` los hereda al cargar e
 Dos temas de igual rango, claro y oscuro: la aplicación la usan tanto ingenieros en oficina como
 operadores en sala de control. Al arrancar se usa el tema del sistema operativo; si el usuario
 elige uno, se recuerda, igual que el idioma.
+
+- Se elige desde el botón de tema de la barra superior (sol con el tema claro en uso, luna con el
+  oscuro), con dos opciones: claro y oscuro.
+- El tema elegido se aplica antes de pintar la primera pantalla: nunca se ve el otro ni un
+  instante.
 
 ## Paleta: Niebla marina
 
@@ -99,6 +106,10 @@ iconos y formas).
 - Los colores son atenuados (carmín, terracota y ocre oscuros) y no se usan para nada más.
 - Normal y mantenimiento van en texto secundario con icono (círculo y llave), sin color propio.
 - El color de marca nunca es rojo, naranja ni amarillo.
+- **Excepción en formularios:** el asterisco de los campos obligatorios y los errores de campo (su
+  texto y el borde del campo con error) usan el color de alarma P1. Es el único uso de P1 fuera de
+  las alarmas, y nunca va solo: el asterisco se acompaña de la leyenda de obligatorios y el error,
+  de su texto.
 
 ## Interacción y forma
 
@@ -109,10 +120,79 @@ iconos y formas).
 | Casillas de verificación | Cuadradas, radio 4 px (convención reconocible) |
 | Tarjetas y paneles | Radio 12 px |
 | Etiquetas, criticidad, franjas del calendario, barra de tiempo | Radio 4 px |
+| Campos de texto, selector y su lista de opciones, globo de ayuda | Radio 4 px |
+| Ventana de documento | Radio 12 px, como las tarjetas |
+| Pasos del indicador de pasos | Círculo (convención reconocible; ver «Componentes») |
 
 - **Foco visible:** contorno de 3 px en color de acción, separado 2 px del elemento.
 - La criticidad A va rellena en relleno fuerte; B con borde de tinta; C con borde de texto
   secundario.
+
+## Componentes
+
+### Botón con menú (idioma y tema)
+- Botón de icono circular, con borde y contenido en color de acción. El de idioma muestra la
+  abreviatura del idioma activo («ES», «EN», «PT»); el de tema, el sol o la luna.
+- El menú es un bloque con radio 12 px y borde de línea, sin sombra, bajo su botón. Cada opción es
+  una fila con el texto en tinta; la activa lleva un check en color de acción delante y peso 600.
+  La opción resaltada con el teclado o el puntero tiene fondo de apoyo.
+
+### Indicador de pasos
+- Tres círculos numerados unidos por una línea de 2 px, con el nombre de cada paso debajo.
+- Los pasos solo informan, así que **no usan el color de acción**: el actual y los completados van
+  en relleno fuerte (en claro, tinta con el número en blanco; en oscuro, `#344855` con el número en
+  tinta), los completados con un check en lugar del número, y los pendientes con borde de línea
+  fuerte, sin relleno y con el número en texto secundario. El nombre del paso actual va en peso 600.
+- La línea entre dos pasos completados va en relleno fuerte; el resto, en línea.
+- **Excepción de forma:** son círculos aunque informen, por ser la convención reconocible de un
+  indicador de pasos, igual que las casillas son cuadradas. No se confunden con botones porque no
+  usan el color de acción.
+
+### Campos
+- El nombre va encima del campo, en texto secundario; los obligatorios llevan detrás un asterisco
+  en alarma P1 (ver «Alarmas»).
+- Campo de 40 px de alto, fondo de bloque, borde de 1 px en línea fuerte y radio 4 px. Con error,
+  el borde pasa a 2 px en alarma P1.
+- Bajo cada campo hay siempre un hueco de una línea para el error, aunque no haya error, para que
+  el formulario no cambie de alto. El error va en alarma P1, en 12 px. Si no cabe en una línea, se
+  muestra completo y el hueco crece mientras esté visible.
+- Un control dentro del campo (el ojo de la contraseña) es un botón de icono circular en color de
+  acción, en el extremo derecho, y el texto del campo nunca queda debajo de él.
+
+### Botón de ayuda «?» y su globo
+- Botón de icono circular de 18 px junto al nombre del campo, con el «?» y el borde en color de
+  acción.
+- El globo es un bloque de relleno fuerte con el texto en `#eaf1f6` (en claro) o en tinta (en
+  oscuro), radio 4 px, ancho máximo 280 px, sin sombra, sobre el botón.
+
+### Selector
+- Mismo aspecto que un campo de texto, con una flecha hacia abajo en texto secundario a la derecha,
+  la misma con o sin el puntero encima.
+- Al desplegarse, la flecha gira 180° y debajo aparece la lista: un bloque con radio 4 px, borde de
+  línea fuerte y altura máxima de 8 opciones, con desplazamiento. La opción resaltada tiene fondo
+  de apoyo; la elegida, un check en color de acción.
+
+### Ventana de documento
+- Tarjeta centrada (radio 12 px, fondo de bloque, ancho máximo 720 px), con el título arriba, el
+  texto con desplazamiento propio y un botón de icono circular para cerrar.
+- Detrás, el lienzo opaco: el formulario no se ve mientras la ventana está abierta (sin
+  transparencias).
+- El enlace que la abre va en el texto de la casilla, subrayado y en color de acción.
+
+### Zona de mensajes
+- Cada paso de un formulario reserva encima de su botón principal un hueco de una línea para los
+  mensajes generales y los avisos (espera, bloqueo, caducidad), haya o no mensaje, que crece si el
+  mensaje no cabe.
+
+### Asistente por pasos
+- Indicador fijo arriba; debajo, el título del paso y su tarjeta.
+- Un solo botón principal por paso, abajo a la derecha, con una flecha hacia la derecha tras el
+  texto. Los botones secundarios (por ejemplo, reenviar el código) llevan borde y texto en color de
+  acción y sin relleno.
+- Al cambiar de paso, el título y la tarjeta se desplazan en horizontal (280 ms, `ease-out`): al
+  avanzar, el paso nuevo entra por la derecha y el anterior sale por la izquierda; al retroceder,
+  al revés. La barra superior y el indicador no se mueven; el indicador solo anima el cambio de
+  color.
 
 ## Tipografía
 
@@ -139,4 +219,5 @@ iconos y formas).
 
 - Contrastes de esta paleta: ver tablas; todo texto supera 4,5:1, y toda forma de estado y todo borde de control, 3:1.
 - Ningún estado se comunica solo con color (forma + texto).
-- Si el sistema pide reducir el movimiento, no se anima nada que no sea imprescindible.
+- Si el sistema pide reducir el movimiento, no se anima nada que no sea imprescindible: los pasos
+  cambian sin desplazarse y la flecha del selector y el indicador cambian sin transición.
