@@ -710,27 +710,36 @@ exponer en la interfaz nada que aún no funcione (`AGENTS.md`).
   formato del identificador antes del límite; usar el nombre enviado por el cliente) detectados —
   [Cierto] — revertir: no aplica.
 
-- [ ] T-061 Validación de la contraseña al salir del campo
+- [x] T-061 Validación de la contraseña al salir del campo
   RF: RF-013 | Depende de: T-049 | Archivos: 1
   Archivos: `registration/PasswordStep.test.tsx`.
   Hecho cuando: escribir `corta` y salir del campo muestra «Usa al menos 12 caracteres.» sin
   llamar al servidor; el mutante sin `onBlur` se detecta; suite verde.
   Corrección: validación de RF-013; no había test de la comprobación al salir del campo.
+  Decisiones: el test sale del campo y de su botón de mostrar (dos tabulaciones), porque cuentan
+  como uno solo (RF-025 de `componentes-base-accesibles`). Mutante sin `onBlur` detectado —
+  [Cierto] — revertir: no aplica.
 
-- [ ] T-062 Un identificador completado da «no encontrado»
+- [x] T-062 Un identificador completado da «no encontrado»
   RF: RF-015 | Depende de: — | Archivos: 1
   Archivos: `backend/apps/accounts/tests/test_registration_flow_api.py`.
   Hecho cuando: tras un `201`, `status`, `verify`, `resend` y `complete` de ese identificador dan
   `404 not_found`; suite verde.
   Corrección: validación de RF-015; faltaba la aserción directa.
+  Decisiones: mutante en el código vigilado (no borrar el registro pendiente al crear la cuenta)
+  detectado — [Cierto] — revertir: no aplica.
 
-- [ ] T-063 El límite superado conserva lo escrito
+- [x] T-063 El límite superado conserva lo escrito
   RF: RF-024 | Depende de: — | Archivos: 3
   Archivos: `registration/RegisterPage.test.tsx`, `registration/VerifyPage.test.tsx`,
   `registration/PasswordStep.test.tsx`.
   Hecho cuando: tras un `429` al enviar el formulario, verificar y completar, los campos conservan
   lo escrito; un mutante que vacíe el formulario se detecta; suite verde.
   Corrección: validación de RF-024; los tests de `429` no comprobaban los valores.
+  Decisiones: mutantes que vacían el formulario con `reset()` tras el `429` detectados en el
+  formulario y en el paso de contraseña; en la verificación es equivalente, porque el campo del
+  código guarda su valor en el estado de React y el siguiente render lo repone. La aserción protege
+  igualmente contra un cambio que vuelva a montar el formulario — [Cierto] — revertir: no aplica.
 
 ## Entregas
 Rama de integración: feat/registro-flujo (los PR de las entregas van contra ella; ver `AGENTS.md`)
