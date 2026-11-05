@@ -1,5 +1,5 @@
 # Tareas: registro-diseno-visual
-Estado: borrador
+Estado: aprobado
 
 Rutas relativas a `frontend/src/`, salvo que se indique otra. «Suite verde» =
 `pnpm --filter frontend test` + `pnpm --filter frontend typecheck` + `pnpm lint` +
