@@ -1,7 +1,7 @@
 # Entrega E-03 · Menú de tema en la barra superior
 
 Rama: `feat/registro-diseno-visual-menu-tema` (apilada sobre `feat/registro-diseno-visual-tema`,
-E-02) · PR: pendiente · Líneas de código y tests: 174 (límite: 400).
+E-02) · PR: [PaldacaDepartamentoAIT/Confiabilidad#62](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/62) · Líneas de código y tests: 174 (límite: 400).
 
 ## Qué se hizo
 - **Menú de tema** (`ThemeMenu` e `icons.tsx`, T-010): botón circular con un sol mientras está el
