@@ -102,7 +102,7 @@ test.each([
 });
 
 test.each(["/", "/register", "/register/continue#pid-1", "/register/done"])(
-  "shows a single top bar with the language menu outside the main content at %s",
+  "shows a single top bar with the language and theme menus outside the main content at %s",
   async (path) => {
     window.history.replaceState(null, "", path);
     document.cookie = "csrftoken=token";
@@ -115,8 +115,10 @@ test.each(["/", "/register", "/register/continue#pid-1", "/register/done"])(
     const banner = screen.getByRole("banner", { name: "Display preferences" });
     expect(screen.getAllByRole("banner")).toHaveLength(1);
     expect(
-      within(banner).getByRole("button", { name: "Language: English (EN)" }),
-    ).toBeInTheDocument();
+      within(banner)
+        .getAllByRole("button")
+        .map((button) => button.getAttribute("aria-label")),
+    ).toEqual(["Language: English (EN)", "Theme: Light"]);
     expect(banner.closest("main")).toBeNull();
     expect(await screen.findByRole("heading", { level: 1 })).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: /English/ })).toHaveLength(1);
