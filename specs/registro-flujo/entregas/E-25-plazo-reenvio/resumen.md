@@ -1,6 +1,7 @@
 # Entrega E-25 · Plazo del código nuevo al reenviar
 
-Rama: `feat/registro-flujo-plazo-reenvio` · PR: pendiente ·
+Rama: `feat/registro-flujo-plazo-reenvio` · PR:
+[PaldacaDepartamentoAIT/Confiabilidad#58](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/58) ·
 Líneas de código y tests: 117 (límite: 400).
 
 Implementa el cambio de RF-006 del 2026-11-05 (observación 2 de la tercera validación), con su
