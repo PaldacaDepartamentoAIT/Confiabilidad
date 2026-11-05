@@ -10,7 +10,7 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
 
 ## E-01 Barra superior con idioma
 
-- [ ] T-001 Guía visual ampliada
+- [x] T-001 Guía visual ampliada
   RF: RF-022 (M-01, D-10, D-11, D-12, D-14) | Depende de: — | Archivos: 1
   Archivos: `docs/identidad-visual.md`.
   Hecho cuando: la guía describe la barra superior, el botón con menú, el indicador de pasos, el
@@ -18,15 +18,23 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   mensajes, el hueco de error, el asterisco (D-11), el radio de los campos (D-12), la transición
   entre pasos y el tema elegido; el usuario aprueba el texto (parada obligatoria: es una decisión de
   diseño que el plan deja abierta).
+  Decisiones: indicador en relleno fuerte y no en color de acción (M-11 actualizado en el plan),
+  fondo opaco de la ventana (D-10), asterisco y errores de campo en P1 (D-11) y radio de 4 px
+  (D-12), elegidos por el usuario — [Cierto] — revertir: editar la sección «Componentes» de la guía.
 
-- [ ] T-002 Textos de la barra superior
-  RF: RF-002, RF-003 (M-14) | Depende de: — | Archivos: 3
-  Archivos: `i18n/locales/es.ts`, `i18n/locales/en.ts`, `i18n/locales/pt-BR.ts`.
+- [x] T-002 Textos de la barra superior
+  RF: RF-002, RF-003 (M-14) | Depende de: — | Archivos: 4
+  Archivos: `i18n/locales/es.ts`, `i18n/locales/en.ts`, `i18n/locales/pt-BR.ts`,
+  `i18n/locales/locales.test.ts`.
   Hecho cuando: existen `topBar.label`, `topBar.language`, `topBar.theme`, `topBar.light` y
   `topBar.dark` en los tres idiomas y `locales.test.ts` sigue en verde (mismas claves en todos);
   suite verde.
+  Excepción: `i18n/locales/locales.test.ts` fija la lista de grupos de textos y debe cambiar con
+  cada grupo nuevo (aprobado por el usuario al implementar T-002).
+  Decisiones: además de las claves previstas, `topBar.themeLabel` («Tema») para nombrar el menú de
+  tema, como `language.label` nombra el de idioma — [Probable] — revertir: borrar la clave.
 
-- [ ] T-003 Botón con menú
+- [x] T-003 Botón con menú
   RF: RF-005 (M-04, D-05) | Depende de: — | Archivos: 4
   Archivos: `components/MenuButton.tsx`, `components/MenuButton.test.tsx`,
   `styles/components.css` (nuevo, con los estilos del botón circular y el menú), `main.tsx`
@@ -38,8 +46,13 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   cierran sin elegir; con dos menús, abrir el segundo cierra el primero; suite verde.
   Excepción: `components.css` nace aquí y hay que importarlo una vez en `main.tsx`; separar la
   importación dejaría un archivo de estilos sin cargar.
+  Decisiones: el menú se cierra solo con `focusout` (sin escucha de clics en el documento ni rama
+  para Tab): con el menú abierto el foco está siempre en una opción, y un clic fuera, Tab o mover
+  el foco lo sacan — [Probable] — revertir: añadir un escucha de `mousedown` en el documento. El
+  clic en el botón también abre con el foco en la opción marcada, como el teclado — [Probable] —
+  revertir: abrir sin mover el foco.
 
-- [ ] T-004 Menú de idioma
+- [x] T-004 Menú de idioma
   RF: RF-002 (M-05, D-05) | Depende de: T-002, T-003 | Archivos: 2
   Archivos: `components/LanguageSwitcher.tsx` → `components/LanguageMenu.tsx`,
   `components/LanguageSwitcher.test.tsx` → `components/LanguageMenu.test.tsx` (renombrados).
@@ -48,14 +61,21 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   elegir una cambia el idioma sin recargar, la guarda (RF-005 de `componentes-base-accesibles`),
   cierra el menú, deja el foco en el botón y conserva lo escrito en un campo; recorrer con las
   flechas no cambia el idioma; suite verde.
+  Decisiones: `LanguageMenu` se crea como archivo nuevo y `LanguageSwitcher` se borra en T-006, en
+  lugar de renombrarlo aquí: renombrar rompía las cuatro pantallas que lo importan y dejaba este
+  commit en rojo. El diff de la entrega es el mismo — [Cierto] — revertir: no aplica. El nombre
+  accesible del botón es «Idioma: Español (ES)», con la abreviatura visible dentro (WCAG 2.5.3) —
+  [Probable] — revertir: pasar solo el nombre del idioma a `topBar.language`.
 
-- [ ] T-005 Barra superior en toda la aplicación
+- [x] T-005 Barra superior en toda la aplicación
   RF: RF-001 (M-05) | Depende de: T-004 | Archivos: 3
   Archivos: `components/TopBar.tsx`, `App.tsx`, `App.test.tsx`.
   Hecho cuando: en `/`, `/register`, `/register/continue` y `/register/done` hay un único
   `<header>` con el menú de idioma, fuera de `<main>`; suite verde.
+  Decisiones: el estilo de la barra (botones alineados a la derecha), previsto en T-011, se adelanta
+  a E-01 a petición del usuario al revisar la entrega — [Cierto] — revertir: no aplica.
 
-- [ ] T-006 Las pantallas dejan de pintar su selector
+- [x] T-006 Las pantallas dejan de pintar su selector
   RF: RF-001 (M-05) | Depende de: T-005 | Archivos: 4
   Archivos: `registration/RegisterPage.tsx`, `registration/VerifyPage.tsx`,
   `registration/DonePage.tsx`, `showcase/ShowcasePage.tsx`.
@@ -63,8 +83,26 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   los tests de las pantallas y de accesibilidad siguen en verde con la barra de `App`; suite verde.
   Excepción: es la retirada del mismo componente en las cuatro pantallas que lo usan; dividirla
   dejaría pantallas con dos selectores de idioma en la rama.
+  Decisiones: además de las cuatro pantallas, se tocan `App.tsx` (deja de pasarles `storage`),
+  `App.test.tsx` (un solo selector por pantalla), `showcase/ShowcasePage.test.tsx` (cambia el
+  idioma desde la barra, montada en el test como en la aplicación) y se borra
+  `LanguageSwitcher.tsx` con su test (ver T-004): nueve archivos, todos por la misma retirada —
+  [Cierto] — revertir: no aplica.
 
-## E-02 Tema claro y oscuro
+- [x] T-044 Texto de la pista de teclado
+  RF: RF-005 (M-04, M-14) | Depende de: T-002 | Archivos: 3
+  Archivos: `i18n/locales/es.ts`, `i18n/locales/en.ts`, `i18n/locales/pt-BR.ts`.
+  Hecho cuando: existen `topBar.hintMove`, `topBar.hintChoose`, `topBar.hintClose` y
+  `topBar.enterKey` («Intro» / «Enter» / «Enter») en los tres idiomas; suite verde.
+
+- [x] T-045 Pista de teclado en el menú
+  RF: RF-005 (M-04) | Depende de: T-003, T-044 | Archivos: 3
+  Archivos: `components/MenuButton.tsx`, `components/MenuButton.test.tsx`,
+  `styles/components.css`.
+  Hecho cuando: con el menú abierto aparece la pista en el idioma activo, fuera del `role="menu"` y
+  con `aria-hidden="true"`; con el menú cerrado no está; suite verde.
+
+## E-02 y E-03 Tema claro y oscuro
 
 - [ ] T-007 Tema guardado y tema en uso
   RF: RF-003, RF-004 (M-03, D-13) | Depende de: — | Archivos: 2
@@ -102,7 +140,7 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   Archivos: `components/TopBar.tsx`, `App.test.tsx`, `styles/components.css`.
   Hecho cuando: la barra de todas las pantallas tiene el menú de idioma y el de tema; suite verde.
 
-## E-03 Campos con hueco de error, ojo y zona de mensajes
+## E-04 y E-05 Campos con hueco de error, ojo y zona de mensajes
 
 - [ ] T-012 Envoltorio de campo
   RF: RF-013, RF-016 (M-06, D-09) | Depende de: — | Archivos: 3
@@ -157,13 +195,16 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   mensaje general van en la zona, encima del botón de verificar; los tests de `VerifyPage` siguen
   en verde; suite verde.
 
-## E-04 Ayuda «?» en los campos del registro
+## E-06 Ayuda «?» en los campos del registro
 
 - [ ] T-019 Descripciones de los campos
-  RF: RF-014 (M-14, S-03) | Depende de: — | Archivos: 3
-  Archivos: `i18n/locales/es.ts`, `i18n/locales/en.ts`, `i18n/locales/pt-BR.ts`.
+  RF: RF-014 (M-14, S-03) | Depende de: — | Archivos: 4
+  Archivos: `i18n/locales/es.ts`, `i18n/locales/en.ts`, `i18n/locales/pt-BR.ts`,
+  `i18n/locales/locales.test.ts`.
   Hecho cuando: existen `help.label` y una descripción por campo (nombre, fecha, correo, país,
   código y contraseña) en los tres idiomas, con los textos en español del plan; suite verde.
+  Excepción: `i18n/locales/locales.test.ts` fija la lista de grupos de textos y debe cambiar con
+  cada grupo nuevo (aprobado por el usuario al implementar T-002).
 
 - [ ] T-020 Botón «?» con globo
   RF: RF-014 (M-07, D-08) | Depende de: T-019 | Archivos: 3
@@ -201,7 +242,7 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   la página de muestra no tiene ningún «?»; las auditorías de `axe-core` siguen en verde; suite
   verde.
 
-## E-05 Selector propio
+## E-07 Selector propio
 
 - [ ] T-025 Búsqueda al teclear
   RF: RF-017 (M-09) | Depende de: — | Archivos: 2
@@ -233,13 +274,16 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   Hecho cuando: los tests de `RegisterPage` eligen el país con el selector nuevo (clic y teclado),
   el envío lleva el código del país, el error de país lleva el foco al selector; suite verde.
 
-## E-06 Términos y marketing en ventana
+## E-08 Términos y marketing en ventana
 
 - [ ] T-029 Textos de las casillas y de la ventana
-  RF: RF-019, RF-020 (M-14) | Depende de: — | Archivos: 3
-  Archivos: `i18n/locales/es.ts`, `i18n/locales/en.ts`, `i18n/locales/pt-BR.ts`.
+  RF: RF-019, RF-020 (M-14) | Depende de: — | Archivos: 4
+  Archivos: `i18n/locales/es.ts`, `i18n/locales/en.ts`, `i18n/locales/pt-BR.ts`,
+  `i18n/locales/locales.test.ts`.
   Hecho cuando: `register.termsLabel` y `register.marketingLabel` llevan la marca `<doc>` alrededor
   del nombre del documento en los tres idiomas y existe `dialog.close`; suite verde.
+  Excepción: `i18n/locales/locales.test.ts` fija la lista de grupos de textos y debe cambiar con
+  cada grupo nuevo (aprobado por el usuario al implementar T-002).
 
 - [ ] T-030 Ventana de documento
   RF: RF-021 (M-10, D-07) | Depende de: T-029 | Archivos: 3
@@ -258,14 +302,17 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   sin marcar la casilla; con marketing vigente, su casilla igual y sin asterisco; sin marketing,
   no hay casilla; lo escrito se conserva al cerrar la ventana; suite verde.
 
-## E-07 Asistente con indicador de pasos
+## E-09 y E-10 Asistente con indicador de pasos
 
 - [ ] T-032 Textos de los pasos
-  RF: RF-006 (M-14) | Depende de: — | Archivos: 3
-  Archivos: `i18n/locales/es.ts`, `i18n/locales/en.ts`, `i18n/locales/pt-BR.ts`.
+  RF: RF-006 (M-14) | Depende de: — | Archivos: 4
+  Archivos: `i18n/locales/es.ts`, `i18n/locales/en.ts`, `i18n/locales/pt-BR.ts`,
+  `i18n/locales/locales.test.ts`.
   Hecho cuando: existen los nombres de los tres pasos, «Paso {{current}} de {{total}}: {{name}}»,
   «completado» y «pendiente», y el nombre accesible del indicador, en los tres idiomas; suite
   verde.
+  Excepción: `i18n/locales/locales.test.ts` fija la lista de grupos de textos y debe cambiar con
+  cada grupo nuevo (aprobado por el usuario al implementar T-002).
 
 - [ ] T-033 Indicador de pasos
   RF: RF-006, RF-008 (M-11) | Depende de: T-032 | Archivos: 3
@@ -313,7 +360,7 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   el enlace no válido muestra el paso 2; el botón principal lleva flecha y el de reenvío es
   secundario; suite verde.
 
-## E-08 Transición lateral entre pasos
+## E-11 y E-12 Transición lateral entre pasos
 
 - [ ] T-039 Transición entre pasos
   RF: RF-009, RF-010, RF-011 (M-12, D-01, D-02) | Depende de: — | Archivos: 2
@@ -359,50 +406,78 @@ Rama de integración: `feat/registro-diseno-visual` (los PR de las entregas van 
 `AGENTS.md`).
 
 - E-01 La barra superior aparece en todas las pantallas y cambia el idioma desde su menú
-  Tareas: T-001…T-006 | Líneas estimadas: 400 | Rama: `feat/registro-diseno-visual-barra-idioma`
+  Tareas: T-001…T-006, T-044, T-045 | Líneas estimadas: 400 | Rama: `feat/registro-diseno-visual-barra-idioma`
   Cómo probarlo: levantar el frontend, abrir `/register`, pulsar «ES» y elegir «English» con el
   ratón y con el teclado; el menú se cierra con Escape y al hacer clic fuera.
+  Excepción: 935 líneas reales (119 de ellas, borrado del selector antiguo); los tests de teclado
+  del botón con menú ocupan más de lo estimado. Aceptado por el usuario el 2026-11-05.
 
-- E-02 El tema se elige desde la barra, se recuerda y no parpadea al recargar
-  Tareas: T-007…T-011 | Líneas estimadas: 330 | Rama: `feat/registro-diseno-visual-tema`
-  Cómo probarlo: elegir «Oscuro» con el sol y recargar: la página sale oscura desde el primer
-  instante y el botón muestra la luna; borrar `confiabilidad.theme` en el almacenamiento del
-  navegador y cambiar el tema del sistema operativo: la página lo sigue.
+Reagrupación del 2026-11-05, aprobada por el usuario: con la proporción real de E-01 (unas 1,8
+veces lo estimado), las entregas que pasaban de 500 líneas se dividen y las que no se pueden partir
+sin dejar algo a medias llevan su excepción. Las tareas no cambian. Las líneas son estimaciones.
 
-- E-03 Los campos tienen el nombre arriba, el error no los mueve y la contraseña se muestra con un
+- E-02 El tema guardado se aplica antes del primer pintado
+  Tareas: T-007…T-009 | Líneas estimadas: 320 | Rama: `feat/registro-diseno-visual-tema`
+  Cómo probarlo: en las herramientas del navegador, guardar `confiabilidad.theme` = `dark` en el
+  almacenamiento local y recargar: la página sale oscura desde el primer instante; borrar la clave y
+  cambiar el tema del sistema operativo: la página lo sigue.
+
+- E-03 El tema se elige desde la barra superior
+  Tareas: T-010, T-011 | Líneas estimadas: 280 | Rama: `feat/registro-diseno-visual-menu-tema`
+  Cómo probarlo: pulsar el sol, elegir «Oscuro» con el ratón y con el teclado y recargar: se
+  mantiene y el botón muestra la luna.
+
+- E-04 Los campos tienen el nombre arriba, el error no los mueve y la contraseña se muestra con un
   ojo
-  Tareas: T-012…T-018 | Líneas estimadas: 360 | Rama: `feat/registro-diseno-visual-campos`
+  Tareas: T-012…T-015 | Líneas estimadas: 450 | Rama: `feat/registro-diseno-visual-campos`
   Cómo probarlo: en `/register`, salir de un campo vacío y ver que el error aparece sin mover el
   resto; en la contraseña, pulsar el ojo.
 
-- E-04 Cada campo del registro tiene su «?» con una descripción
-  Tareas: T-019…T-024 | Líneas estimadas: 300 | Rama: `feat/registro-diseno-visual-ayuda`
-  Cómo probarlo: pasar el puntero, tabular y tocar el «?» de cada campo del registro.
+- E-05 Los mensajes de cada paso tienen su sitio reservado
+  Tareas: T-016…T-018 | Líneas estimadas: 250 | Rama: `feat/registro-diseno-visual-mensajes`
+  Cómo probarlo: en `/register`, enviar con el backend apagado y ver el mensaje general encima del
+  botón sin que el formulario salte; en la verificación, ver el tiempo restante en el mismo sitio.
 
-- E-05 El país se elige en una lista propia con flecha que gira
-  Tareas: T-025…T-028 | Líneas estimadas: 470 | Rama: `feat/registro-diseno-visual-selector`
+- E-06 Cada campo del registro tiene su «?» con una descripción
+  Tareas: T-019…T-024 | Líneas estimadas: 550 | Rama: `feat/registro-diseno-visual-ayuda`
+  Cómo probarlo: pasar el puntero, tabular y tocar el «?» de cada campo del registro.
+  Excepción: partirla deja un «?» que no aparece en ninguna pantalla, sin nada que probar.
+
+- E-07 El país se elige en una lista propia con flecha que gira
+  Tareas: T-025…T-028 | Líneas estimadas: 850 | Rama: `feat/registro-diseno-visual-selector`
   Cómo probarlo: en `/register`, abrir el país con el ratón y con el teclado, teclear «pe» y elegir
   con Intro.
   Excepción: el patrón de combobox no se puede partir sin dejar en la rama un selector con el
-  teclado incompleto, peor que el `<select>` nativo al que sustituye.
+  teclado incompleto, peor que el `<select>` nativo al que sustituye; aceptada por el usuario por
+  encima de 500 líneas.
 
-- E-06 Los términos y el marketing se leen en una ventana desde su casilla
-  Tareas: T-029…T-031 | Líneas estimadas: 260 | Rama: `feat/registro-diseno-visual-documentos`
+- E-08 Los términos y el marketing se leen en una ventana desde su casilla
+  Tareas: T-029…T-031 | Líneas estimadas: 480 | Rama: `feat/registro-diseno-visual-documentos`
   Cómo probarlo: en `/register`, pulsar «términos y condiciones», desplazar el texto y cerrar con
   Escape, con el botón y haciendo clic fuera; la casilla no cambia.
+  Excepción: la ventana y su uso en las casillas forman un único comportamiento que probar.
 
-- E-07 El registro se ve como un asistente de tres pasos con su indicador
-  Tareas: T-032…T-038 | Líneas estimadas: 420 | Rama: `feat/registro-diseno-visual-indicador`
+- E-09 El registro muestra el indicador de pasos
+  Tareas: T-032…T-036 | Líneas estimadas: 450 | Rama: `feat/registro-diseno-visual-indicador`
+  Cómo probarlo: abrir `/register`, `/register/continue#<PUBLIC_ID>` y `/register/done` y ver el
+  indicador fijo arriba del contenido.
+  Excepción: el armazón y el indicador no se pueden probar por separado.
+
+- E-10 Cada pantalla del registro es un paso del asistente
+  Tareas: T-037, T-038 | Líneas estimadas: 350 | Rama: `feat/registro-diseno-visual-pasos`
   Cómo probarlo: completar un registro de extremo a extremo (con el backend levantado y el código
-  del correo de desarrollo) y ver el indicador en 1, 2, 3 y completado.
-  Excepción: reorganizar las cuatro pantallas dentro del armazón cambia sus tests a la vez; partirlo
-  dejaría pantallas fuera del asistente y otras dentro en la rama.
+  del correo de desarrollo) y ver el indicador en 1, 2, 3 y completado, con un título por paso.
 
-- E-08 Los pasos cambian deslizándose sin recargar
-  Tareas: T-039…T-043 | Líneas estimadas: 330 | Rama: `feat/registro-diseno-visual-transicion`
+- E-11 Los pasos cambian deslizándose sin recargar
+  Tareas: T-039…T-041 | Líneas estimadas: 480 | Rama: `feat/registro-diseno-visual-transicion`
   Cómo probarlo: repetir el registro y ver el desplazamiento al avanzar, al rechazar el código en
   la contraseña y con «Atrás»; activar «reducir movimiento» en el sistema y ver que cambia sin
   animar.
+  Excepción: la transición y sus puntos de uso forman un único comportamiento que probar.
+
+- E-12 Auditoría de accesibilidad en ambos temas y revisión manual
+  Tareas: T-042, T-043 | Líneas estimadas: 150 | Rama: `feat/registro-diseno-visual-auditoria`
+  Cómo probarlo: ejecutar `pnpm --filter frontend test` y seguir la lista de `HUMAN_TODO.md`.
 
 ## RF sin tarea
 Ninguno.

@@ -7,6 +7,18 @@ export const en = {
   language: {
     label: "Language",
   },
+  topBar: {
+    label: "Display preferences",
+    language: "Language: {{name}}",
+    theme: "Theme: {{name}}",
+    themeLabel: "Theme",
+    light: "Light",
+    dark: "Dark",
+    hintMove: "move",
+    hintChoose: "choose",
+    hintClose: "close",
+    enterKey: "Enter",
+  },
   button: {
     processing: "Processing…",
     processingAnnouncement: "Processing",

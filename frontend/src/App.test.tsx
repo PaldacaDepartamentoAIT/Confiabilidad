@@ -1,4 +1,4 @@
-import { act, render, screen } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { I18nextProvider } from "react-i18next";
 
@@ -24,7 +24,7 @@ test.each([
   expect(document.documentElement.lang).toBe(language);
 });
 
-test("switches the whole page language from the keyboard and remembers it", async () => {
+test("switches the whole page language from the top bar and remembers it", async () => {
   const user = userEvent.setup();
   const values = new Map<string, string>();
   const storage: LanguageStorage = {
@@ -39,14 +39,13 @@ test("switches the whole page language from the keyboard and remembers it", asyn
   );
 
   await user.tab();
-  await user.tab();
-  await user.keyboard("{Enter}");
+  await user.keyboard("{Enter}{ArrowDown}{Enter}");
 
-  const portuguese = screen.getByRole("button", { name: "Português (Brasil)" });
+  const button = screen.getByRole("button", { name: "Idioma: Português (Brasil) (PT)" });
   expect(screen.getByRole("heading", { level: 1, name: "Confiabilidade" })).toBeInTheDocument();
   expect(document.documentElement.lang).toBe("pt-BR");
   expect(document.title).toBe("Confiabilidade — Componentes");
-  expect(portuguese).toHaveFocus();
+  expect(button).toHaveFocus();
   expect(storage.getItem(LANGUAGE_STORAGE_KEY)).toBe("pt-BR");
 });
 
@@ -101,6 +100,30 @@ test.each([
   window.history.replaceState(null, "", "/");
   document.cookie = "csrftoken=; expires=Thu, 01 Jan 1970 00:00:00 GMT";
 });
+
+test.each(["/", "/register", "/register/continue#pid-1", "/register/done"])(
+  "shows a single top bar with the language menu outside the main content at %s",
+  async (path) => {
+    window.history.replaceState(null, "", path);
+    document.cookie = "csrftoken=token";
+    render(
+      <I18nextProvider i18n={createI18n("en")}>
+        <App client={fakeClient()} />
+      </I18nextProvider>,
+    );
+
+    const banner = screen.getByRole("banner", { name: "Display preferences" });
+    expect(screen.getAllByRole("banner")).toHaveLength(1);
+    expect(
+      within(banner).getByRole("button", { name: "Language: English (EN)" }),
+    ).toBeInTheDocument();
+    expect(banner.closest("main")).toBeNull();
+    expect(await screen.findByRole("heading", { level: 1 })).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /English/ })).toHaveLength(1);
+    window.history.replaceState(null, "", "/");
+    document.cookie = "csrftoken=; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+  },
+);
 
 test("moving between screens does not reload the page", async () => {
   window.history.replaceState(null, "", "/register/done");

@@ -11,7 +11,6 @@ import {
 } from "../api/registration";
 import { Button } from "../components/Button";
 import { FormMessage } from "../components/FormMessage";
-import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import { Checkbox } from "../components/fields/Checkbox";
 import { RequiredLegend } from "../components/fields/RequiredLegend";
 import { SelectField } from "../components/fields/SelectField";
@@ -22,7 +21,6 @@ import {
   type SubmitResult,
   type Validator,
 } from "../forms/useFormValidation";
-import type { LanguageStorage } from "../i18n/language";
 import { navigate } from "../routing/router";
 import { email, required } from "../showcase/validators";
 import { translateFieldErrors } from "./serverErrors";
@@ -60,10 +58,9 @@ type Loaded =
 
 type RegisterPageProps = {
   client: ApiClient;
-  storage?: LanguageStorage;
 };
 
-export function RegisterPage({ client, storage }: RegisterPageProps) {
+export function RegisterPage({ client }: RegisterPageProps) {
   const { t, i18n } = useTranslation();
   const titleId = useId();
   const [loaded, setLoaded] = useState<Loaded>({ status: "loading" });
@@ -83,7 +80,6 @@ export function RegisterPage({ client, storage }: RegisterPageProps) {
 
   return (
     <main>
-      <LanguageSwitcher storage={storage} />
       <h1 id={titleId}>{t("register.title")}</h1>
       {loaded.status === "failed" && (
         <FormMessage type="error" messageKey="validation.networkError" />

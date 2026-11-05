@@ -11,7 +11,6 @@ import {
 } from "../api/registration";
 import { Button } from "../components/Button";
 import { FormMessage } from "../components/FormMessage";
-import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import { CodeField } from "../components/fields/CodeField";
 import {
   useFormValidation,
@@ -19,7 +18,6 @@ import {
   type GeneralMessage,
   type ValidationKey,
 } from "../forms/useFormValidation";
-import type { LanguageStorage } from "../i18n/language";
 import { navigate, useLocation } from "../routing/router";
 import { required, sixDigitCode } from "../showcase/validators";
 import { PasswordStep } from "./PasswordStep";
@@ -44,10 +42,9 @@ function minutesAndSeconds(total: number): string {
 
 type VerifyPageProps = {
   client: ApiClient;
-  storage?: LanguageStorage;
 };
 
-export function VerifyPage({ client, storage }: VerifyPageProps) {
+export function VerifyPage({ client }: VerifyPageProps) {
   const { t } = useTranslation();
   const publicId = useLocation().hash;
   const [loaded, setLoaded] = useState<Loaded>(publicId ? "loading" : "notFound");
@@ -125,11 +122,10 @@ export function VerifyPage({ client, storage }: VerifyPageProps) {
     setGeneration((current) => current + 1);
   }
 
-  if (loaded === "notFound") return <InvalidLink storage={storage} />;
+  if (loaded === "notFound") return <InvalidLink />;
 
   return (
     <main>
-      <LanguageSwitcher storage={storage} />
       <h1>{t("register.verifyTitle")}</h1>
       <p>{t("register.verifyText")}</p>
       {loaded === "networkError" && (
@@ -281,11 +277,10 @@ function FormLink() {
   );
 }
 
-function InvalidLink({ storage }: { storage?: LanguageStorage }) {
+function InvalidLink() {
   const { t } = useTranslation();
   return (
     <main>
-      <LanguageSwitcher storage={storage} />
       <h1>{t("register.invalidLinkTitle")}</h1>
       <p>{t("validation.linkNotFound")}</p>
       <FormLink />

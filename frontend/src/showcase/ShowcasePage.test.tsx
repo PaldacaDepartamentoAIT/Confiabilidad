@@ -3,15 +3,23 @@ import userEvent from "@testing-library/user-event";
 import { I18nextProvider } from "react-i18next";
 
 import { App } from "../App";
+import { TopBar } from "../components/TopBar";
 import { createI18n } from "../i18n";
 import { ShowcasePage } from "./ShowcasePage";
 
+// Como en la aplicación, el idioma se cambia desde la barra superior.
 function renderPage(language = "es") {
   render(
     <I18nextProvider i18n={createI18n(language)}>
+      <TopBar />
       <ShowcasePage />
     </I18nextProvider>,
   );
+}
+
+async function chooseEnglish(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole("button", { name: "Idioma: Español (ES)" }));
+  await user.click(screen.getByRole("menuitemradio", { name: "English" }));
 }
 
 test("shows the sample form with its required fields and the asterisk legend", () => {
@@ -35,14 +43,12 @@ test("shows the sample form with its required fields and the asterisk legend", (
   expect(code).toHaveAttribute("aria-required", "true");
 });
 
-test("the tab order goes through the language selector and then each field in order", async () => {
+test("the tab order goes through the language menu and then each field in order", async () => {
   const user = userEvent.setup();
   renderPage();
 
   const expected = [
-    screen.getByRole("button", { name: "Español" }),
-    screen.getByRole("button", { name: "Português (Brasil)" }),
-    screen.getByRole("button", { name: "English" }),
+    screen.getByRole("button", { name: "Idioma: Español (ES)" }),
     screen.getByRole("textbox", { name: "Nombre completo" }),
     screen.getByRole("textbox", { name: "Correo electrónico" }),
     screen.getByLabelText(/^Contraseña/),
@@ -65,7 +71,7 @@ test("keeps typed values when the language changes", async () => {
 
   await user.type(screen.getByRole("textbox", { name: "Nombre completo" }), "Ana Pérez");
   await user.type(screen.getByRole("textbox", { name: "Correo electrónico" }), "ana@planta.com");
-  await user.click(screen.getByRole("button", { name: "English" }));
+  await chooseEnglish(user);
 
   expect(screen.getByRole("textbox", { name: "Full name" })).toHaveValue("Ana Pérez");
   expect(screen.getByRole("textbox", { name: "Email" })).toHaveValue("ana@planta.com");
@@ -118,7 +124,7 @@ test("a visible error follows the language change and keeps the field invalid", 
 
   await user.type(screen.getByRole("textbox", { name: "Correo electrónico" }), "a@");
   await user.tab();
-  await user.click(screen.getByRole("button", { name: "English" }));
+  await chooseEnglish(user);
 
   const email = screen.getByRole("textbox", { name: "Email" });
   expect(email).toHaveAttribute("aria-invalid", "true");
@@ -348,7 +354,7 @@ test("the sample error follows the language change and the next submission remov
   renderPage();
 
   await user.click(screen.getByRole("button", { name: "Mostrar error general de ejemplo" }));
-  await user.click(screen.getByRole("button", { name: "English" }));
+  await chooseEnglish(user);
 
   expect(screen.getByText("Too many attempts", { exact: false }).closest("div")).toHaveTextContent(
     "Error: Too many attempts. Wait a few minutes and try again.",

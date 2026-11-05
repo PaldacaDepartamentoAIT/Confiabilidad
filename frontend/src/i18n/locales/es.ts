@@ -10,6 +10,18 @@ export const es: Messages = {
   language: {
     label: "Idioma",
   },
+  topBar: {
+    label: "Preferencias de visualización",
+    language: "Idioma: {{name}}",
+    theme: "Tema: {{name}}",
+    themeLabel: "Tema",
+    light: "Claro",
+    dark: "Oscuro",
+    hintMove: "moverte",
+    hintChoose: "elegir",
+    hintClose: "cerrar",
+    enterKey: "Intro",
+  },
   button: {
     processing: "Procesando…",
     processingAnnouncement: "Procesando",

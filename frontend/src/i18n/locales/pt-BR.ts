@@ -9,6 +9,18 @@ export const ptBR: Messages = {
   language: {
     label: "Idioma",
   },
+  topBar: {
+    label: "Preferências de exibição",
+    language: "Idioma: {{name}}",
+    theme: "Tema: {{name}}",
+    themeLabel: "Tema",
+    light: "Claro",
+    dark: "Escuro",
+    hintMove: "mover",
+    hintChoose: "escolher",
+    hintClose: "fechar",
+    enterKey: "Enter",
+  },
   button: {
     processing: "Processando…",
     processingAnnouncement: "Processando",

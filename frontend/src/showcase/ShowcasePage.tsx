@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next";
 
 import { Button } from "../components/Button";
 import { FormMessage } from "../components/FormMessage";
-import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import { CodeField } from "../components/fields/CodeField";
 import { PasswordField } from "../components/fields/PasswordField";
 import { RequiredLegend } from "../components/fields/RequiredLegend";
@@ -15,7 +14,6 @@ import {
   type FieldError,
   type GeneralMessage,
 } from "../forms/useFormValidation";
-import type { LanguageStorage } from "../i18n/language";
 import { email, required, sixDigitCode } from "./validators";
 
 const FIELDS = {
@@ -32,11 +30,7 @@ const SIMULATED_DELAY_MS = 3000;
 const DEMO_INFO: GeneralMessage = { type: "info", messageKey: "showcase.demoInfo" };
 const SAMPLE_ERROR: GeneralMessage = { type: "error", messageKey: "validation.tooManyAttempts" };
 
-type ShowcasePageProps = {
-  storage?: LanguageStorage;
-};
-
-export function ShowcasePage({ storage }: ShowcasePageProps) {
+export function ShowcasePage() {
   const { t } = useTranslation();
   const formTitleId = useId();
   const [processing, setProcessing] = useState(false);
@@ -59,7 +53,6 @@ export function ShowcasePage({ storage }: ShowcasePageProps) {
 
   return (
     <main>
-      <LanguageSwitcher storage={storage} />
       <h1>{t("app.heading")}</h1>
       <p>{t("app.intro")}</p>
       <h2 id={formTitleId}>{t("showcase.formTitle")}</h2>
