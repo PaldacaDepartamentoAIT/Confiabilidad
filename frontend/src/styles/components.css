@@ -89,3 +89,69 @@
   gap: 8px;
   margin-bottom: var(--space-block);
 }
+
+.field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.field__label-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.field__label {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.field__required {
+  color: var(--color-alarm-p1);
+  font-weight: 700;
+}
+
+.field__control {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.field__control > input,
+.field__control > select {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+}
+
+.field__control > [aria-invalid="true"] {
+  border: 2px solid var(--color-alarm-p1);
+  padding: 0 11px;
+}
+
+.field__control--adorned > input {
+  padding-right: 44px;
+}
+
+.field__control--adorned > button {
+  position: absolute;
+  right: 4px;
+}
+
+.field__hint {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+.field__error-slot {
+  min-height: 1.5em;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.field__error {
+  margin: 0;
+  color: var(--color-alarm-p1);
+}

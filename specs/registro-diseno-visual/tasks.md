@@ -149,7 +149,7 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
 
 ## E-04 y E-05 Campos con hueco de error, ojo y zona de mensajes
 
-- [ ] T-012 Envoltorio de campo
+- [x] T-012 Envoltorio de campo
   RF: RF-013, RF-016 (M-06, D-09) | Depende de: — | Archivos: 3
   Archivos: `components/fields/FieldShell.tsx`, `components/fields/FieldShell.test.tsx`,
   `styles/components.css`.
@@ -157,6 +157,11 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   el hueco del error existe siempre, vacío sin error y con el mensaje con error; la ayuda visible y
   el error se unen en `aria-describedby`; hay una ranura para un control dentro del campo, a la
   derecha; suite verde.
+  Decisiones: el control se pasa como función que recibe su `aria-describedby`, en lugar de
+  exportar un ayudante desde el archivo del componente (lo pide la regla de recarga rápida de ESLint)
+  — [Cierto] — revertir: mover el ayudante a un archivo propio. `ErrorSlot` se exporta para la
+  casilla (T-014). Mutante equivalente: quitar el espacio antes del asterisco no cambia nada que
+  compruebe un test (solo el aspecto) — [Cierto].
 
 - [ ] T-013 Texto, código y contraseña con el envoltorio
   RF: RF-013, RF-016 (M-06) | Depende de: T-012 | Archivos: 2
