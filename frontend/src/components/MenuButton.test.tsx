@@ -1,6 +1,9 @@
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { useState } from "react";
+import { useState, type ReactElement } from "react";
+import { I18nextProvider } from "react-i18next";
+
+import { createI18n } from "../i18n";
 
 import { MenuButton } from "./MenuButton";
 
@@ -30,9 +33,14 @@ function Menu({ name, onSelect }: { name: string; onSelect: (value: Value) => vo
   );
 }
 
+function renderIn(language: string, ui: ReactElement) {
+  return render(<I18nextProvider i18n={createI18n(language)}>{ui}</I18nextProvider>);
+}
+
 function renderMenus() {
   const onSelect = vi.fn();
-  render(
+  renderIn(
+    "es",
     <>
       <Menu name="Uno" onSelect={onSelect} />
       <Menu name="Dos" onSelect={vi.fn()} />
@@ -207,7 +215,8 @@ test("a second click on the button closes the menu", async () => {
 
 test("an option can declare its language", async () => {
   const user = userEvent.setup();
-  render(
+  renderIn(
+    "es",
     <MenuButton
       label="Idioma"
       menuLabel="Idioma"
@@ -223,3 +232,27 @@ test("an option can declare its language", async () => {
 
   expect(screen.getByRole("menuitemradio", { name: "English" })).toHaveAttribute("lang", "en");
 });
+
+test.each([
+  ["es", "↑ ↓ moverte · Intro elegir · Esc cerrar"],
+  ["en", "↑ ↓ move · Enter choose · Esc close"],
+])(
+  "in %s, the open menu shows a keyboard hint hidden from screen readers",
+  async (language, hint) => {
+    const user = userEvent.setup();
+    renderIn(
+      language,
+      <MenuButton label="Menú" menuLabel="Menú" options={OPTIONS} value="a" onSelect={vi.fn()}>
+        A
+      </MenuButton>,
+    );
+    expect(document.querySelector(".menu-button__hint")).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "Menú" }));
+
+    const element = document.querySelector<HTMLElement>(".menu-button__hint");
+    expect(element).toHaveTextContent(hint);
+    expect(element).toHaveAttribute("aria-hidden", "true");
+    expect(screen.getByRole("menu")).not.toContainElement(element);
+  },
+);

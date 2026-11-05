@@ -7,6 +7,7 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from "react";
+import { useTranslation } from "react-i18next";
 
 export type MenuOption<Value extends string> = {
   value: Value;
@@ -32,6 +33,7 @@ export function MenuButton<Value extends string>({
   onSelect,
   children,
 }: MenuButtonProps<Value>) {
+  const { t } = useTranslation();
   const menuId = useId();
   const [active, setActive] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -106,30 +108,37 @@ export function MenuButton<Value extends string>({
         {children}
       </button>
       {open && (
-        <ul
-          id={menuId}
-          role="menu"
-          aria-label={menuLabel}
-          className="menu-button__menu"
-          onKeyDown={onMenuKeyDown}
-        >
-          {options.map((option, index) => (
-            <li
-              key={option.value}
-              ref={(node) => {
-                itemRefs.current[index] = node;
-              }}
-              role="menuitemradio"
-              aria-checked={index === checked}
-              tabIndex={-1}
-              lang={option.lang}
-              className="menu-button__option"
-              onClick={() => choose(index)}
-            >
-              {option.label}
-            </li>
-          ))}
-        </ul>
+        <div className="menu-button__popup">
+          <ul
+            id={menuId}
+            role="menu"
+            aria-label={menuLabel}
+            className="menu-button__menu"
+            onKeyDown={onMenuKeyDown}
+          >
+            {options.map((option, index) => (
+              <li
+                key={option.value}
+                ref={(node) => {
+                  itemRefs.current[index] = node;
+                }}
+                role="menuitemradio"
+                aria-checked={index === checked}
+                tabIndex={-1}
+                lang={option.lang}
+                className="menu-button__option"
+                onClick={() => choose(index)}
+              >
+                {option.label}
+              </li>
+            ))}
+          </ul>
+          {/* El lector de pantalla ya anuncia cómo se usa un menú; la pista es solo visual (M-04). */}
+          <p className="menu-button__hint" aria-hidden="true">
+            <kbd>↑</kbd> <kbd>↓</kbd> {t("topBar.hintMove")} · <kbd>{t("topBar.enterKey")}</kbd>{" "}
+            {t("topBar.hintChoose")} · <kbd>Esc</kbd> {t("topBar.hintClose")}
+          </p>
+        </div>
       )}
     </div>
   );

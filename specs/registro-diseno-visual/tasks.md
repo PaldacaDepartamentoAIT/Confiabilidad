@@ -95,7 +95,7 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   Hecho cuando: existen `topBar.hintMove`, `topBar.hintChoose`, `topBar.hintClose` y
   `topBar.enterKey` («Intro» / «Enter» / «Enter») en los tres idiomas; suite verde.
 
-- [ ] T-045 Pista de teclado en el menú
+- [x] T-045 Pista de teclado en el menú
   RF: RF-005 (M-04) | Depende de: T-003, T-044 | Archivos: 3
   Archivos: `components/MenuButton.tsx`, `components/MenuButton.test.tsx`,
   `styles/components.css`.
