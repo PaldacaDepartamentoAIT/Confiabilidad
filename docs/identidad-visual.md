@@ -18,7 +18,8 @@ Versión 2. Sustituye a la versión 1 (paleta Niebla marina, bloques bento, boto
 3. **Lo que se pulsa se reconoce.** Todo elemento interactivo tiene hover, foco visible y un radio
    mayor que el de las zonas que solo informan.
 4. **Un color por función.** Cada color tiene un único papel; si dos elementos comparten color,
-   comparten significado.
+   comparten significado. Única excepción: el error de formulario usa el rojo de P1, porque también
+   bloquea.
 5. **Nada depende solo del color.** Cada estado lleva también forma y texto.
 
 ## Estructura de la aplicación
@@ -33,24 +34,30 @@ Hay dos estructuras, según se haya iniciado sesión o no.
 
 Elementos comunes y de las pantallas con sesión:
 
-- **Fondo único.** Lienzo y bloques usan el mismo color; los bloques se separan con borde.
-- **Menú lateral** (solo con sesión) a la izquierda, con fondo del color secundario:
+- **Fondo único.** Lienzo y bloques usan el mismo color; los bloques se separan con borde. Única
+  excepción: un bloque destacado puede llevar el fondo secundario.
+- **Menú lateral** (solo con sesión) a la izquierda, con la altura de la pantalla y fondo del color
+  secundario, separado del contenido por un borde de 1 px:
   - abierto mide 232 px y contraído 60 px; pasa de uno a otro con animación;
   - cabecera de 64 px con el nombre del sistema a la izquierda y el botón de abrir y cerrar a la
     derecha; contraído, solo el botón, centrado;
-  - navegación con icono y etiqueta;
-  - pie con los botones de tema e idioma en una fila (apilados al contraer) y el de usuario debajo,
-    a todo el ancho.
-- **Barra superior** de 64 px, alineada con la cabecera del menú: secciones de la pantalla en
-  pestañas a la izquierda y buscador a la derecha.
-- **Contenido** con margen de 22 px y separación de 18 px entre bloques.
-- **Móvil.** El menú lateral se oculta y se abre como panel superpuesto.
+  - navegación con icono y etiqueta; contraída, solo el icono, con la etiqueta como `title`;
+  - pie con el botón de tema y, debajo, el de idioma, siempre uno encima del otro; debajo, el de
+    usuario (avatar con iniciales, nombre y flechas), a todo el ancho.
+- **Barra superior** de 64 px: secciones de la pantalla en pestañas a la izquierda y buscador a la
+  derecha. Su línea inferior continúa por la cabecera del menú lateral, de modo que se ve como una
+  sola línea.
+- **Contenido** con margen de 22 px y separación de 18 px entre bloques; el título de la página va
+  al principio del contenido.
+- **Móvil** (menos de 768 px). El menú lateral se oculta y se abre como panel superpuesto desde un
+  botón a la izquierda de la barra superior; se cierra con un clic fuera o con Escape, sin velo. En
+  móvil no existe el estado contraído.
 
 ## Temas
 
 Dos temas de igual rango, claro y oscuro. Al arrancar se usa el tema del sistema operativo; el
-botón de tema lo cambia y la elección se recuerda, igual que el idioma. Sustituye a la decisión
-D-13 de `registro-flujo`.
+botón de tema lo cambia y la elección se recuerda, igual que el idioma. El botón muestra el tema
+actual. Sustituye a la decisión D-13 de `registro-flujo`.
 
 ## Paleta: Pizarra
 
@@ -63,12 +70,12 @@ y 3:1 para iconos, formas y bordes de controles).
 |---|---|---|---|
 | Fondo | `#f8f9f9` | Lienzo y bloques | — |
 | Tinta | `#1b1e22` | Texto y relleno negro | 15,9:1 |
-| Texto secundario | `#61656b` | Etiquetas, ayudas, ejes, pestañas no activas | 5,6:1 |
-| Gris | `#c3c5c7` | Líneas, bordes de zonas, rellenos neutros | 1,6:1 |
+| Texto secundario | `#61656b` | Etiquetas, ayudas, ejes, placeholder, pestañas no activas | 5,6:1 |
+| Gris | `#c3c5c7` | Líneas, bordes de zonas, rellenos neutros, contadores | 1,6:1 |
 | Cuadrícula | `#d8dadb` | Cuadrícula de las gráficas | — |
-| Borde de control | `#8d9094` | Borde de campos y casillas | 3,0:1 |
-| Principal | `#546c8c` | Todo lo interactivo; texto blanco encima | 5,1:1 (5,4:1 con blanco) |
-| Secundario | `#d8dbdf` | Menú lateral y bloques destacados; texto en tinta | 12,0:1 con tinta |
+| Borde de control | `#8d9094` | Borde de campos, casillas y menús desplegables | 3,0:1 |
+| Principal | `#546c8c` | Acento de lo interactivo; texto blanco encima | 5,1:1 (5,4:1 con blanco) |
+| Secundario | `#d8dbdf` | Menú lateral y bloque destacado; texto en tinta | 12,0:1 con tinta |
 
 ### Tema oscuro
 
@@ -76,15 +83,19 @@ y 3:1 para iconos, formas y bordes de controles).
 |---|---|---|---|
 | Fondo | `#111213` | Lienzo, bloques y relleno negro | — |
 | Tinta | `#eeeff1` | Texto | 16,3:1 |
-| Texto secundario | `#aaadb0` | Etiquetas, ayudas, ejes, pestañas no activas | 8,3:1 |
-| Gris | `#47484a` | Líneas, bordes de zonas, rellenos neutros | 2,0:1 |
+| Texto secundario | `#aaadb0` | Etiquetas, ayudas, ejes, placeholder, pestañas no activas | 8,3:1 |
+| Gris | `#47484a` | Líneas, bordes de zonas, rellenos neutros, contadores | 2,0:1 |
 | Cuadrícula | `#313234` | Cuadrícula de las gráficas | — |
-| Borde de control | `#5f6163` | Borde de campos y casillas | 3,0:1 |
-| Principal | `#9fafc6` | Todo lo interactivo; texto en color de fondo encima | 8,4:1 |
-| Secundario | `#535a65` | Menú lateral y bloques destacados; texto en tinta | 6,0:1 con tinta |
+| Borde de control | `#5f6163` | Borde de campos, casillas y menús desplegables | 3,0:1 |
+| Principal | `#9fafc6` | Acento de lo interactivo; texto en color de fondo encima | 8,4:1 |
+| Secundario | `#535a65` | Menú lateral y bloque destacado; texto en tinta | 6,0:1 con tinta |
 | Botón de menú | `#ffffff` | Fondo del botón de abrir y cerrar; icono en secundario | 7,0:1 |
 
-En el tema claro, el botón de abrir y cerrar usa la tinta de fondo y el secundario en el icono.
+- En el tema claro, el botón de abrir y cerrar usa la tinta como fondo y el secundario en el icono.
+- Sobre el color secundario solo se escribe en tinta: el texto secundario no llega a 4,5:1 encima.
+- «Principal» es el acento de lo interactivo (botón principal, botón secundario, casilla marcada,
+  hover y foco de campos, línea del elemento activo, contorno de foco). Lo demás que se pulsa
+  (pestañas, navegación, botones del menú lateral) va en tinta o en texto secundario.
 
 ### Estados de alarma
 
@@ -99,45 +110,63 @@ Un solo color por prioridad en toda la aplicación.
 
 - **Color solo en la forma.** El texto del estado va en tinta y el color queda en el icono, porque
   el rojo de P1 no llega a 4,5:1 en el tema claro.
-- **Aviso.** Bloque con borde izquierdo de 4 px en el color de la prioridad.
+- **Aviso.** Bloque con borde de 1 px y borde izquierdo de 4 px en el color de la prioridad.
 - **Bloque en alerta.** Fondo en relleno negro; la cifra principal en el color de la prioridad y
   el texto pequeño en blanco.
-- **Error de formulario.** Borde del campo y mensaje en el rojo de P1; el mensaje lleva además un
-  icono.
+- **Error de formulario.** Borde del campo e icono `circle-alert` en el rojo de P1; el texto del
+  mensaje, en tinta.
+- **Información y confirmación.** No tienen color propio: aviso con borde izquierdo de 4 px en texto
+  secundario e icono `info`.
 
 ## Forma
 
 | Elemento | Radio |
 |---|---|
 | Zonas: bloques, avisos, menús desplegables | 4 px |
-| Interactivos: botones, campos, buscador, hover de pestañas, opciones de menú, elementos del menú lateral | 6 px |
-| Casillas, contadores, etiquetas | 4 px |
-| Subrayado del elemento activo | 0 (línea recta) |
+| Interactivos: botones, campos, buscador, pestañas, opciones de menú, elementos del menú lateral | 6 px |
+| Casillas, contadores, etiquetas (chips), avatar | 4 px |
+| Línea del elemento activo | 0 (línea recta) |
+
+| Elemento | Tamaño |
+|---|---|
+| Botones y campos | 36 px de alto |
+| Opciones de menú desplegable | 34 px de alto |
+| Elementos del menú lateral (navegación, tema, idioma, usuario) | 36 px de alto, abierto o contraído |
+| Botón de abrir y cerrar | 40 × 37 px |
+| Casilla | 18 × 18 px |
+| Avatar | 24 × 24 px |
 
 - Bordes de 1 px en todas las zonas.
-- Elementos del menú lateral: 36 px de alto, abierto o contraído. Botón de abrir y cerrar: 40 × 37 px.
 - Los iconos del menú lateral no se desplazan al abrir o cerrar; solo aparecen o desaparecen las
   etiquetas.
 
 ## Interacción
 
-- **Hover.** Elementos sin relleno: fondo con el 9 % de la tinta. Elementos rellenos con el
-  principal (botón principal, casilla marcada): el principal oscurecido (78 % principal, 22 %
-  negro), en ambos temas.
+- **Hover.** Elementos sin relleno: fondo opaco que mezcla un 9 % de la tinta con el fondo de su
+  contenedor. Elementos rellenos con el principal (botón principal, casilla marcada): el principal
+  oscurecido (78 % principal, 22 % `#000`), en ambos temas.
 - **Transición del hover.** Entra en 0,08 s y sale en 0,35 s.
+- **Botón principal:** relleno en el principal, texto en peso 600. **Botón secundario:** sin
+  relleno, borde y texto en el principal.
 - **Campos de texto** (incluido el buscador): sin cambio de fondo; hover con borde de 1 px y foco
   con borde de 2 px, ambos en el principal (en el rojo de P1 si el campo tiene error). El foco
-  siempre es más grueso que el hover.
-- **Foco de teclado** del resto de elementos: contorno de 2 px en el principal.
-- **Elemento activo** (pestaña, día de un calendario): sin relleno, en tinta, con una línea recta
-  de 2 px en el principal por debajo.
-- **Pestañas que no caben.** Se desvanecen y aparece un selector pegado a la izquierda del
-  buscador: el texto de la pestaña activa con una flecha, sin subrayado. Se recalcula al cambiar de
-  pestaña, al abrir o cerrar el menú y al redimensionar la ventana.
-- **Menús de selección.** Mismo fondo, borde y tipografía que los campos; la opción activa en
-  negrita con un chevron «>» a la izquierda. Accesibles con teclado (flechas, Inicio, Fin, Escape,
-  búsqueda por letra).
-- **Buscador.** Ancho fijo de 220 px.
+  siempre es más grueso que el hover; el relleno interior compensa el grosor para que el texto no se
+  mueva. Los obligatorios llevan «*» y una leyenda «* Campo obligatorio».
+- **Foco de teclado** del resto de elementos: contorno de 2 px en el principal, separado 2 px.
+- **Elemento activo** (pestaña, elemento de la navegación lateral, día de un calendario): sin
+  relleno, en tinta, con una línea recta de 2 px en el principal por debajo. En la barra superior,
+  la línea se desplaza de la pestaña anterior a la nueva al cambiar de sección.
+- **Pestañas que no caben.** Se desvanecen todas y aparece un selector pegado a la izquierda del
+  buscador: el texto de la pestaña activa con un chevron hacia abajo, sin borde ni subrayado. Se
+  recalcula al cambiar de pestaña, al abrir o cerrar el menú y al redimensionar la ventana.
+- **Menús de selección.** Mismo fondo, borde de control y tipografía que los campos; la opción
+  seleccionada en negrita con un chevron «>» a la izquierda; la resaltada con el teclado usa el fondo
+  del hover. Siguen el patrón de combobox con `listbox`: flechas, Inicio, Fin, RePág, AvPág, Enter,
+  Espacio, Tab, Escape y búsqueda por letra (sin distinguir tildes).
+- **Botón de abrir y cerrar el menú:** chevron «<» con el menú abierto y «>» con el menú contraído.
+- **Buscador.** Ancho fijo de 220 px. Por debajo de 560 px se convierte en un botón con lupa que
+  despliega el campo sobre las pestañas.
+- **Estado del menú lateral.** No se recuerda: cada sesión empieza con el menú abierto.
 
 ## Movimiento
 
@@ -145,11 +174,14 @@ Un solo color por prioridad en toda la aplicación.
 |---|---|
 | Abrir y cerrar el menú lateral (sin rebote) | 0,25 s, salida suave |
 | Etiquetas del menú lateral al abrir o cerrar | 0,15–0,2 s de fundido |
-| Pestañas a selector y al revés | 0,15 s de salida, 0,2 s de entrada |
-| Aparición de un menú desplegable | 0,18 s (fundido y 6 px de desplazamiento) |
-| Cambio de tema | 0,4 s en todos los colores |
+| Desplazamiento de la línea de la pestaña activa | 0,25 s, salida suave |
+| Cambio del contenido al cambiar de sección | 0,2 s de fundido |
+| Pestañas a selector y al revés | 0,15 s de salida y, a continuación, 0,2 s de entrada |
+| Aparición de un menú desplegable | 0,18 s (fundido y 6 px de desplazamiento hacia abajo); se cierra sin animación |
+| Panel lateral en móvil | 0,25 s de deslizamiento |
+| Cambio de tema | 0,4 s en todos los colores, solo durante el cambio |
 
-Si el sistema pide reducir el movimiento, no se anima nada.
+Si el sistema pide reducir el movimiento, no se anima nada, incluidos el hover y el cambio de tema.
 
 ## Datos
 
@@ -159,29 +191,31 @@ Si el sistema pide reducir el movimiento, no se anima nada.
   alarma en su color; el estado neutro, como cuadrado vacío.
 - **Tablas.** Cabecera en texto secundario, filas separadas por línea de 1 px, códigos y fechas en
   monoespaciada.
+- **Contadores.** Relleno gris, texto en tinta, monoespaciada de 12 px.
 
 ## Tipografía
 
 | Uso | Fuente | Tamaño y peso |
 |---|---|---|
-| Nombre del sistema (menú lateral) | Manrope | 18 px, 700, línea inferior de 2,5 px a 6 px |
+| Nombre del sistema | Manrope | 18 px, 700, subrayado en tinta de 2,5 px de grosor y 6 px de separación |
 | Título de página | Manrope | 24 px, 600 |
 | Título de bloque | Manrope | 15 px, 600 |
 | Cifra destacada | Manrope | 28 px, 600 |
-| Texto | Manrope | 14 px, 400–500 |
-| Etiquetas y ayudas | Manrope | 12–12,5 px |
-| Códigos, fechas, contadores | JetBrains Mono | 12–13 px, 400–500 |
+| Texto y pestañas | Manrope | 14 px, 400–500 (las pestañas en 500, activas o no) |
+| Etiquetas de campo | Manrope | 12,5 px, 500, en texto secundario |
+| Ayudas | Manrope | 12 px |
+| Códigos, fechas, contadores, avatar | JetBrains Mono | 12–13 px, 400–500 (13 px dentro de los campos) |
 
 Paquetes npm `@fontsource-variable/manrope` y `@fontsource-variable/jetbrains-mono` (licencia OFL).
 Las cifras en columna usan `font-variant-numeric: tabular-nums`.
 
 ## Iconos y gráficos
 
-- Iconos de la librería `lucide-react`, de trazo, a 16 px.
+- Iconos de la librería `lucide-react`, de trazo 2, a 16 px (14 px dentro de las casillas).
 - Gráficas en SVG propio, sin librería.
 
 ## Accesibilidad
 
 - Todo texto supera 4,5:1; formas de estado, iconos y bordes de controles, 3:1.
 - Ningún estado se comunica solo con color.
-- Los selectores propios se comportan como un `listbox` accesible.
+- Los selectores propios se comportan como un combobox con `listbox` accesible.
