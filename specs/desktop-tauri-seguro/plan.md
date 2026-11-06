@@ -13,16 +13,19 @@ cuando no hay backend definido. No se declara `devCsp`, porque en escritorio Tau
 RF: RF-001, RF-002, RF-003, RF-010
 
 ### M-02 Origen del backend
-Responsabilidad: `desktop/src-tauri/src/backend_origin.rs` lee la variable de compilación
-`CONFIABILIDAD_BACKEND_ORIGIN`, la valida (esquema `http`/`https`, host, puerto opcional, sin ruta,
-consulta ni fragmento) y deriva el origen WebSocket equivalente (`ws`/`wss`). `build.rs` incluye el
-mismo archivo, hace fallar la compilación si el valor es inválido y declara
-`cargo:rerun-if-env-changed`.
+Responsabilidad: `desktop/src-tauri/src/backend_origin.rs` valida el valor de `VITE_API_BASE_URL`
+que resuelve M-09 (esquema `http`/`https`, host y puerto opcional; se admite una ruta, pero no una
+consulta ni un fragmento) y extrae su origen y el origen WebSocket equivalente (`ws`/`wss`).
+`build.rs` incluye el archivo con `#[path]`, hace fallar la compilación si el valor es inválido y
+exporta el origen a la app con `cargo:rustc-env=CONFIABILIDAD_BACKEND_ORIGIN=<origen>`, que es un
+nombre interno y nadie lo define a mano. Un valor ausente o vacío significa «sin backend» y la
+compilación sigue.
 RF: RF-004, RF-010
 
 ### M-03 Aplicación de la política en arranque
 Responsabilidad: `desktop/src-tauri/src/csp.rs` añade a `connect-src` los dos orígenes de M-02
-cuando existen. `lib.rs` lo aplica sobre `Context::config_mut()` antes de arrancar. Tauri lee la
+cuando existen. `lib.rs` lo aplica sobre `Context::config_mut()` antes de arrancar, con el valor de
+`option_env!("CONFIABILIDAD_BACKEND_ORIGIN")` que exporta `build.rs`. Tauri lee la
 política de su configuración en tiempo de ejecución (`AppManager::csp`) y le suma los hashes de los
 recursos.
 RF: RF-004, RF-010
@@ -46,8 +49,8 @@ permiso.
 RF: RF-005
 
 ### M-06 Política de desarrollo
-Responsabilidad: `frontend/config/desktopDevCsp.ts` construye la política de M-01 + el origen del
-backend + `http://localhost:5173` y `ws://localhost:5173` + el nonce fijo en `script-src` y
+Responsabilidad: `frontend/config/desktopDevCsp.ts` construye la política de M-01 + el origen de
+`VITE_API_BASE_URL` tal como lo carga Vite en el modo de desarrollo (`loadEnv`) + `http://localhost:5173` y `ws://localhost:5173` + el nonce fijo en `script-src` y
 `style-src`. `frontend/vite.config.ts` la envía como cabecera `Content-Security-Policy` del
 servidor de desarrollo y activa `html.cspNonce`, solo cuando Vite sirve (`command === "serve"`) y
 existe `TAURI_ENV_PLATFORM`, que la CLI de Tauri define para `beforeDevCommand`. El desarrollo web
@@ -72,20 +75,30 @@ una navegación a un origen reservado (`https://report.invalid/…`). El gancho 
 test la lee.
 RF: RF-002, RF-003, RF-004, RF-007, RF-010
 
+### M-09 Lector de la configuración de la interfaz
+Responsabilidad: `desktop/src-tauri/src/frontend_env.rs`, incluido por `build.rs`. Resuelve
+`VITE_API_BASE_URL` con la prioridad de Vite en modo producción: entorno del proceso, después
+`.env.production.local`, `.env.production`, `.env.local` y `.env`, todos de `frontend/`. Lee líneas
+`CLAVE=valor`, con `export` opcional, comillas simples o dobles y comentarios de línea completa.
+Rechaza, con un error que nombra el archivo y la línea, los valores con `$` (Vite los expande), los
+valores multilínea y las comillas sin cerrar. Declara `cargo:rerun-if-changed` para cada uno de esos
+archivos.
+RF: RF-004, RF-010, RF-012
+
 ## Modelo de datos
 No aplica: la feature no persiste datos.
 
 ## Decisiones
 ### D-01 Política base en `tauri.conf.json` y origen del backend añadido en arranque
-Elegida: la política base fija en `tauri.conf.json` (M-01), y el origen del backend leído al
-compilar con `option_env!` y añadido a la configuración en tiempo de ejecución (M-03).
+Elegida: la política base fija en `tauri.conf.json` (M-01), y el origen del backend resuelto por `build.rs`
+desde `VITE_API_BASE_URL` (M-09), exportado a la app y leído con `option_env!` y añadido a la configuración en tiempo de ejecución (M-03).
 Descartada: generar `tauri.conf.json` o pasar `--config`/`TAURI_CONFIG` con un script por entorno.
 Motivo: el JSON de fusión reemplaza listas enteras, así que habría que repetir toda la política en
 cada entorno. Además, el script sería JS sin tipos dentro de `desktop/` (P-07). La función de Rust
 se prueba con tests unitarios (P-04).
 
 ### D-02 Validación del origen en `build.rs`
-Elegida: validar `CONFIABILIDAD_BACKEND_ORIGIN` al compilar y fallar si es inválido, compartiendo el
+Elegida: resolver y validar `VITE_API_BASE_URL` al compilar y fallar si es inválido, compartiendo el
 archivo con la app mediante `#[path]`.
 Descartada: validar en el arranque y cerrar la app.
 Motivo: un error de configuración se ve en el CI o en la máquina de quien compila, nunca en la del
@@ -145,6 +158,23 @@ Descartada: un nonce aleatorio por arranque.
 Motivo: lo decidiste en C-08 (nonce fijo o de un solo uso). El test de M-01 comprueba que la
 política de producción no contiene ningún `'nonce-…'` (C-09, verificación solo sobre la política).
 
+### D-10 Resolución propia con rechazo de lo ambiguo
+Elegida: un lector mínimo propio que rechaza todo lo que Vite podría interpretar de otra forma, como
+la expansión, el multilínea y las comillas sin cerrar.
+Descartada: preguntarle a Vite el valor, ejecutando Node desde `build.rs`.
+Motivo: `build.rs` dependería de Node y de `node_modules` en cada `cargo build`, incluido
+`cargo clippy`. Además, no hay que añadir dependencias de Rust (un crate `dotenvy`, que tampoco
+expande igual que `dotenv-expand`).
+Coste: si alguien usa una sintaxis de `.env` válida para Vite pero rechazada por el lector, la
+compilación falla, aunque nunca acepta un valor distinto. Si el frontend se compila por separado
+con otra configuración y se empaqueta ese `dist`, no se detecta (riesgo aceptado en `sdd-cambio`).
+
+### D-11 `desktop/` lee los `.env*` de `frontend/`
+Elegida: `build.rs` lee esos archivos como datos de configuración.
+Descartada: exigir que el backend se defina solo en el entorno (C-11).
+Motivo: lo decidiste en C-11. No se comparte código entre carpetas: es lectura de configuración y
+no contradice P-08, que prohíbe compartir código y duplicar React.
+
 ## Estrategia de tests
 - **Unitarios en Rust** (`cargo test`, los tres sistemas):
   - `backend_origin`: aceptados, rechazados, derivación `ws`/`wss` y ausencia.
@@ -154,6 +184,11 @@ política de producción no contiene ningún `'nonce-…'` (C-09, verificación 
   - Configuración: se lee `tauri.conf.json` y se comprueba cada directiva de M-01, la ausencia de
     `'unsafe-inline'`, `'unsafe-eval'` y `'nonce-…'`, la ausencia de `devCsp` y que no hay
     capabilities ni permisos.
+  - `backend_origin` además: admite una ruta (`https://api.example.com/base`) y extrae el origen;
+    rechaza una consulta o un fragmento.
+  - `frontend_env`: la prioridad entre el entorno y los cuatro archivos; las comillas, `export` y
+    comentarios; el rechazo de `$`, del multilínea y de las comillas sin cerrar, con el nombre del
+    archivo y la línea; y la ausencia del valor en todas las fuentes. Cubre RF-010 y RF-012.
   Cubren RF-001 a RF-005, RF-007, RF-010 y RF-011 (lógica).
 - **Unitarios en TS** (Vitest): `desktopDevCsp` produce la base + el origen del servidor de
   desarrollo + el nonce, con y sin backend, y Vite solo la activa bajo `serve` con
@@ -173,14 +208,15 @@ política de producción no contiene ningún `'nonce-…'` (C-09, verificación 
 | RF-001 | M-01 | Unitario Rust (configuración) |
 | RF-002 | M-01, M-08 | Unitario Rust (configuración) + integración webview |
 | RF-003 | M-01, M-08 | Unitario Rust (configuración) + integración webview |
-| RF-004 | M-02, M-03, M-08 | Unitario Rust + integración webview |
+| RF-004 | M-02, M-03, M-08, M-09 | Unitario Rust + integración webview |
 | RF-005 | M-05 | Unitario Rust (configuración) |
 | RF-006 | M-06 | Unitario TS + manual en `tauri dev` |
 | RF-007 | M-04, M-08 | Unitario Rust + integración webview |
 | RF-008 | M-07 | CI (matriz de 3 sistemas) |
 | RF-009 | M-07 | Manual con el artefacto de depuración (3 sistemas) |
-| RF-010 | M-01, M-02, M-03, M-08 | Unitario Rust + integración webview |
+| RF-010 | M-01, M-02, M-03, M-08, M-09 | Unitario Rust + integración webview |
 | RF-011 | M-04 | Unitario Rust + manual (3 sistemas) |
+| RF-012 | M-09 | Unitario Rust + comprobación con `cargo build` que falla con un `.env` que usa `$` |
 
 ## RF sin cobertura
 Ninguno.
