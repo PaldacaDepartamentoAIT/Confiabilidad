@@ -293,7 +293,7 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   Hecho cuando: `readValue` y `onBlur` aceptan un `<button name value>`, el envío lee su valor y,
   con error, le da el foco como al primer campo no válido; suite verde.
 
-- [ ] T-027 Selector con lista propia
+- [x] T-027 Selector con lista propia
   RF: RF-017 (M-02, M-09) | Depende de: T-025, T-026, T-014, T-015 | Archivos: 3
   Archivos: `components/fields/SelectField.tsx`, `components/fields/ChoiceFields.test.tsx`,
   `styles/components.css` (la flecha abajo es la de `icons.tsx`, creada en T-015).
@@ -303,12 +303,23 @@ ese CSS, así que lo visual se comprueba en la revisión manual de cada entrega.
   Alt+flecha abajo; recorren las flechas, Inicio, Fin, Re Pág y Av Pág; teclear salta (T-025);
   Intro elige; Escape cierra sin cambios; Tab elige la resaltada y sale; el clic elige sin quitar
   el foco; al cerrar, el foco está en el control; suite verde.
+  Decisiones: el selector es un `<button>` con `role="combobox"` (D-06), así que `readValue` lee su
+  `value` (T-026); la lista es un `<ul role="listbox">` que solo existe mientras está abierta, y el
+  foco siempre queda en el botón con `aria-activedescendant` — [Cierto] — revertir: no aplica. Un
+  clic fuera cierra la lista sin elegir; Tab elige la resaltada y deja salir el foco — [Probable] —
+  revertir: Tab cierra sin elegir. Los tests de `RegisterPage` que usaban `selectOptions` pasan a
+  clic en el control y en la opción; el formulario de prueba de `useFormValidation` sigue con un
+  `<select>` nativo a propósito, para comprobar que el hook lee también los nativos — [Cierto].
 
-- [ ] T-028 País con el selector propio
+- [x] T-028 País con el selector propio
   RF: RF-017 | Depende de: T-027 | Archivos: 2
   Archivos: `registration/RegisterPage.tsx`, `registration/RegisterPage.test.tsx`.
   Hecho cuando: los tests de `RegisterPage` eligen el país con el selector nuevo (clic y teclado),
   el envío lleva el código del país, el error de país lleva el foco al selector; suite verde.
+  Decisiones: el teclado del selector se prueba en `ChoiceFields.test.tsx` (T-027); aquí basta el
+  clic y el envío del código — [Probable] — revertir: repetir el teclado en `RegisterPage.test.tsx`.
+  Se quita `autoComplete="country"` del selector: un botón no lo admite, y el navegador ya no
+  ofrece el país guardado — [Cierto].
 
 ## E-08 Términos y marketing en ventana
 
