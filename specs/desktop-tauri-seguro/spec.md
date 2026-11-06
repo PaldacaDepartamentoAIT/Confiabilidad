@@ -1,5 +1,5 @@
 # Spec: desktop-tauri-seguro
-Estado: borrador
+Estado: aprobada
 Aprobación: ligera
 
 ## Objetivo (por qué)
@@ -55,16 +55,18 @@ macOS, mostrar la interfaz web completa y no registrar ninguna violación de la 
 seguridad en la consola de las herramientas de desarrollo.
 
 ### RF-010 Backend no definido al compilar
-Si no se define el origen del backend al compilar, entonces la aplicación de escritorio deberá
-permitir conexiones de red únicamente con la propia app.
+Si no se define el origen del backend al compilar, ni en el entorno ni en los archivos de
+configuración que la interfaz carga al compilar en producción, entonces la aplicación de escritorio
+deberá compilar igualmente y permitir conexiones de red únicamente con la propia app.
 
 ### RF-011 Descarga de archivos generados por la app
 Cuando la interfaz ofrezca al usuario un archivo que la propia app ha generado en memoria, la
 aplicación de escritorio deberá permitir guardarlo en el equipo en Linux, Windows y macOS.
 
 ### RF-012 Configuración del backend incoherente
-Si la configuración del backend que usará la interfaz no coincide con la que recibe la política de
-seguridad al compilar, entonces la compilación de la aplicación de escritorio deberá fallar e
+Si la configuración del backend que usará la interfaz (la del entorno y la de los archivos de
+configuración que la interfaz carga al compilar en producción, con la misma prioridad con la que los
+aplica) no coincide con la que recibe la política de seguridad al compilar, entonces la compilación de la aplicación de escritorio deberá fallar e
 indicar la discrepancia.
 
 ## Supuestos
@@ -98,4 +100,4 @@ indicar la discrepancia.
 - 2026-11-05 — Creación de la spec — RF: RF-001 a RF-009 — Estado: impacto analizado
 - 2026-11-05 — Clarificación C-01 a C-07 — RF: RF-003, RF-004, RF-007, RF-008, RF-009, RF-010, RF-011 — Estado: impacto analizado
 - 2026-11-05 — En desarrollo se permite un nonce fijo para lo que inserta el servidor de desarrollo — RF: RF-006 — Estado: impacto analizado
-- 2026-11-06 — Una sola configuración del backend para la interfaz y la política — RF: RF-004, RF-012 — Estado: pendiente de clarificar
+- 2026-11-06 — Una sola configuración del backend para la interfaz y la política — RF: RF-004, RF-010, RF-012 — Estado: clarificado
