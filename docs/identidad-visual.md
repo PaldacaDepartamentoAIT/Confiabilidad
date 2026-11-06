@@ -23,8 +23,17 @@ Versión 2. Sustituye a la versión 1 (paleta Niebla marina, bloques bento, boto
 
 ## Estructura de la aplicación
 
+Hay dos estructuras, según se haya iniciado sesión o no.
+
+- **Pantallas públicas** (inicio de sesión, registro, recuperación de contraseña y cualquier otra a
+  la que se accede sin sesión): sin menú lateral. Solo una barra superior de 64 px con el botón de
+  idioma y el de tema a la derecha; el contenido va debajo.
+- **Pantallas con sesión iniciada:** menú lateral y barra superior, descritos a continuación.
+
+Elementos comunes y de las pantallas con sesión:
+
 - **Fondo único.** Lienzo y bloques usan el mismo color; los bloques se separan con borde.
-- **Menú lateral** a la izquierda, con fondo del color secundario:
+- **Menú lateral** (solo con sesión) a la izquierda, con fondo del color secundario:
   - abierto mide 232 px y contraído 60 px; pasa de uno a otro con animación;
   - cabecera de 64 px con el nombre del sistema a la izquierda y el botón de abrir y cerrar a la
     derecha; contraído, solo el botón, centrado;
