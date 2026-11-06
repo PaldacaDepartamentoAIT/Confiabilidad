@@ -23,13 +23,16 @@ código que introduce y debe hacer fallar sus tests.
   revertir: comparar el valor literal del JSON. El test de `devCsp` pasa desde el principio porque
   hoy no existe; se mantiene como guarda de regresión — [Cierto] — revertir: borrar el test.
 
-- [ ] T-002 Cero permisos nativos
+- [x] T-002 Cero permisos nativos
   RF: RF-005 | Depende de: T-001 | Archivos: 2
   Archivos: `capabilities/default.json` (se elimina), `tests/config_policy.rs`.
   Hecho cuando: un test comprueba que `capabilities/` no existe o no contiene archivos, y que
   `tauri.conf.json` no declara `app.security.capabilities` con contenido. El test falla con
   `core:default` y pasa tras eliminar el archivo. `cargo build` sigue compilando. Suite verde
   desktop.
+  Decisiones: además del test, se comprobó que el ACL que resuelve Tauri
+  (`gen/schemas/capabilities.json`) queda en `{}`; no se versiona porque `gen/schemas` está en
+  `.gitignore` — [Cierto] — revertir: no aplica.
 
 - [ ] T-003 Validación del origen del backend
   RF: RF-004, RF-010 | Depende de: — | Archivos: 2

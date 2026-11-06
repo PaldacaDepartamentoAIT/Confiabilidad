@@ -82,3 +82,23 @@ fn csp_has_no_permissive_sources() {
 fn dev_csp_is_not_declared() {
     assert!(security(&tauri_config()).get("devCsp").is_none());
 }
+
+#[test]
+fn no_capability_grants_permissions() {
+    let directory = Path::new(env!("CARGO_MANIFEST_DIR")).join("capabilities");
+    let files: Vec<_> = match std::fs::read_dir(&directory) {
+        Ok(entries) => entries
+            .map(|entry| entry.expect("capability entry is readable").path())
+            .collect(),
+        Err(_) => Vec::new(),
+    };
+    assert!(files.is_empty(), "capabilities found: {files:?}");
+}
+
+#[test]
+fn config_declares_no_inline_capabilities() {
+    let config = tauri_config();
+    let capabilities = &security(&config)["capabilities"];
+    let declared = capabilities.as_array().is_some_and(|list| !list.is_empty());
+    assert!(!declared, "app.security.capabilities: {capabilities}");
+}
