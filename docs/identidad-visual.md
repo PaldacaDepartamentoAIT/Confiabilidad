@@ -26,8 +26,9 @@ Versión 2. Sustituye a la versión 1 (paleta Niebla marina, bloques bento, boto
 Hay dos estructuras, según se haya iniciado sesión o no.
 
 - **Pantallas públicas** (inicio de sesión, registro, recuperación de contraseña y cualquier otra a
-  la que se accede sin sesión): sin menú lateral. Solo una barra superior de 64 px con el botón de
-  idioma y el de tema a la derecha; el contenido va debajo.
+  la que se accede sin sesión): sin menú lateral. Solo una barra superior de 64 px con el nombre
+  del sistema a la izquierda (mismo estilo que en el menú lateral) y el botón de idioma y el de tema
+  a la derecha; el contenido va debajo.
 - **Pantallas con sesión iniciada:** menú lateral y barra superior, descritos a continuación.
 
 Elementos comunes y de las pantallas con sesión:
