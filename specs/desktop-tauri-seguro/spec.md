@@ -100,4 +100,4 @@ indicar la discrepancia.
 - 2026-11-05 — Creación de la spec — RF: RF-001 a RF-009 — Estado: impacto analizado
 - 2026-11-05 — Clarificación C-01 a C-07 — RF: RF-003, RF-004, RF-007, RF-008, RF-009, RF-010, RF-011 — Estado: impacto analizado
 - 2026-11-05 — En desarrollo se permite un nonce fijo para lo que inserta el servidor de desarrollo — RF: RF-006 — Estado: impacto analizado
-- 2026-11-06 — Una sola configuración del backend para la interfaz y la política — RF: RF-004, RF-010, RF-012 — Estado: clarificado
+- 2026-11-06 — Una sola configuración del backend para la interfaz y la política — RF: RF-004, RF-010, RF-012 — Estado: impacto analizado
