@@ -1,5 +1,5 @@
 # Spec: desktop-tauri-seguro
-Estado: aprobada
+Estado: borrador
 Aprobación: ligera
 
 ## Objetivo (por qué)
@@ -26,8 +26,8 @@ scripts.
 
 ### RF-004 Conexiones solo con la app y el backend
 La aplicación de escritorio deberá permitir conexiones de red (peticiones HTTP y WebSocket)
-únicamente con la propia app y con el origen del backend definido al compilarla, y bloquear
-cualquier otra.
+únicamente con la propia app y con el origen del backend definido al compilarla, que será el
+mismo que usa la interfaz para llamar al backend, y bloquear cualquier otra.
 
 ### RF-005 Sin permisos nativos
 La aplicación de escritorio deberá conceder cero permisos nativos a la interfaz.
@@ -62,11 +62,17 @@ permitir conexiones de red únicamente con la propia app.
 Cuando la interfaz ofrezca al usuario un archivo que la propia app ha generado en memoria, la
 aplicación de escritorio deberá permitir guardarlo en el equipo en Linux, Windows y macOS.
 
+### RF-012 Configuración del backend incoherente
+Si la configuración del backend que usará la interfaz no coincide con la que recibe la política de
+seguridad al compilar, entonces la compilación de la aplicación de escritorio deberá fallar e
+indicar la discrepancia.
+
 ## Supuestos
 - S-01 La interfaz actual no usa ninguna función nativa de escritorio, por lo que retirar todos
   los permisos no rompe nada. Cada feature futura que necesite uno lo añadirá y lo justificará.
-- S-02 El backend se sirve desde un único origen (el mismo para HTTP y WebSocket), que se define
-  al compilar con un valor distinto por entorno.
+- S-02 El backend se sirve desde un único origen (el mismo para HTTP y WebSocket). Se define al
+  compilar con un valor distinto por entorno, en la misma configuración con la que la interfaz
+  construye sus llamadas al backend, que puede incluir una ruta.
 - S-03 Las comprobaciones de RF-009 y RF-011 son manuales: en cada sistema operativo, una persona
   arranca la compilación de depuración, revisa la consola y guarda un archivo generado por la app.
   Se anotan en el `HUMAN_TODO.md` de la feature.
@@ -76,8 +82,8 @@ aplicación de escritorio deberá permitir guardarlo en el equipo en Linux, Wind
 - Firma de código, notarización e instaladores distribuibles.
 - Actualizaciones automáticas.
 - Versiones móviles.
-- Conectar la interfaz con el backend (solo se permite la conexión; no se implementa ninguna
-  llamada).
+- Cambiar cómo la interfaz llama al backend: ya existe en `main` y esta feature solo lo permite y
+  lo restringe.
 
 ## Criterios de finalización
 - RF-001 a RF-008 y RF-010 verificados en la integración continua con dos tipos de evidencia: un
@@ -92,3 +98,4 @@ aplicación de escritorio deberá permitir guardarlo en el equipo en Linux, Wind
 - 2026-11-05 — Creación de la spec — RF: RF-001 a RF-009 — Estado: impacto analizado
 - 2026-11-05 — Clarificación C-01 a C-07 — RF: RF-003, RF-004, RF-007, RF-008, RF-009, RF-010, RF-011 — Estado: impacto analizado
 - 2026-11-05 — En desarrollo se permite un nonce fijo para lo que inserta el servidor de desarrollo — RF: RF-006 — Estado: impacto analizado
+- 2026-11-06 — Una sola configuración del backend para la interfaz y la política — RF: RF-004, RF-012 — Estado: pendiente de clarificar
