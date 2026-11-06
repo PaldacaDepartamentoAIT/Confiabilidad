@@ -191,7 +191,6 @@ function RegisterForm({ client, options, terms, language, titleId }: RegisterFor
           placeholder={t("register.countryPlaceholder")}
           name="country"
           options={countries}
-          autoComplete="country"
           required
           error={errorText(allErrors.country)}
           onBlur={onBlur("country")}

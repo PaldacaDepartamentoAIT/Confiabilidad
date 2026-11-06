@@ -80,8 +80,8 @@ test("loads the options and shows every field, with the countries by name in ord
     "email",
   );
   expect(country).toHaveAttribute("aria-required", "true");
+  await userEvent.setup().click(country);
   expect(screen.getAllByRole("option").map((option) => option.textContent)).toEqual([
-    "Elige un país",
     "Brasil",
     "Chile",
     "España",
@@ -125,8 +125,11 @@ test("names the countries in the active language", async () => {
   const { fetcher } = fakeFetch(respondWith(OPTIONS));
   renderPage(fetcher, "pt-BR");
 
-  await screen.findByRole("combobox", { name: "País" });
-  expect(screen.getByRole("option", { name: "Espanha" })).toHaveValue("ES");
+  const user = userEvent.setup();
+  await user.click(await screen.findByRole("combobox", { name: "País" }));
+  await user.click(screen.getByRole("option", { name: "Espanha" }));
+
+  expect(screen.getByRole("combobox", { name: "País" })).toHaveValue("ES");
 });
 
 test("gives access to the text of the terms and of the marketing consent", async () => {
@@ -253,7 +256,8 @@ async function fillValidForm(user: ReturnType<typeof userEvent.setup>) {
     target: { value: "1990-04-02" },
   });
   await user.type(screen.getByRole("textbox", { name: "Correo electrónico" }), "ana@planta.com");
-  await user.selectOptions(screen.getByRole("combobox", { name: "País" }), "BR");
+  await user.click(screen.getByRole("combobox", { name: "País" }));
+  await user.click(screen.getByRole("option", { name: "Brasil" }));
   await user.click(screen.getByRole("checkbox", { name: "Acepto los términos y condiciones" }));
 }
 
