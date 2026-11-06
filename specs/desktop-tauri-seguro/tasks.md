@@ -1,5 +1,5 @@
 # Tareas: desktop-tauri-seguro
-Estado: borrador
+Estado: aprobado
 
 Rutas relativas a `desktop/src-tauri/` salvo que se indique. "Suite verde desktop" =
 `pnpm --filter frontend build` (genera `frontend/dist`, que necesita `generate_context!`) +
