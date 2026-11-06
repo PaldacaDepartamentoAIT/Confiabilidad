@@ -10,7 +10,7 @@ Rutas relativas a `desktop/src-tauri/` salvo que se indique. "Suite verde deskto
 `pnpm --filter frontend lint`. En cada tarea, antes de marcarla, se prueba al menos un mutante del
 código que introduce y debe hacer fallar sus tests.
 
-- [ ] T-001 Política base estricta en `tauri.conf.json`
+- [x] T-001 Política base estricta en `tauri.conf.json`
   RF: RF-001, RF-002, RF-003, RF-010 | Depende de: — | Archivos: 2
   Archivos: `tauri.conf.json`, `tests/config_policy.rs`.
   Hecho cuando: `tests/config_policy.rs` lee `tauri.conf.json` y comprueba que `app.security.csp`
@@ -18,6 +18,10 @@ código que introduce y debe hacer fallar sus tests.
   contiene `'unsafe-inline'`, `'unsafe-eval'`, `'nonce-` ni `*`; que no existe `devCsp`; y que
   `connect-src` no contiene orígenes fuera de `'self' ipc: http://ipc.localhost`. El test falla con
   el `"csp": null` actual y pasa tras el cambio. Suite verde desktop.
+  Decisiones: el test compara las directivas como conjuntos de fuentes y acepta en el JSON tanto
+  una cadena separada por espacios como una lista, porque Tauri admite las dos formas — [Cierto] —
+  revertir: comparar el valor literal del JSON. El test de `devCsp` pasa desde el principio porque
+  hoy no existe; se mantiene como guarda de regresión — [Cierto] — revertir: borrar el test.
 
 - [ ] T-002 Cero permisos nativos
   RF: RF-005 | Depende de: T-001 | Archivos: 2
