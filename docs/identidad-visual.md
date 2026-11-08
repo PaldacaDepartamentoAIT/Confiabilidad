@@ -129,7 +129,7 @@ Un solo color por prioridad en toda la aplicación.
 
 | Elemento | Tamaño |
 |---|---|
-| Botones y campos | 36 px de alto |
+| Botones, campos y pestañas | 36 px de alto |
 | Opciones de menú desplegable | 34 px de alto |
 | Elementos del menú lateral (navegación, tema, idioma, usuario) | 36 px de alto, abierto o contraído |
 | Botón de abrir y cerrar | 40 × 37 px |
@@ -208,6 +208,104 @@ Si el sistema pide reducir el movimiento, no se anima nada, incluidos el hover y
 
 Paquetes npm `@fontsource-variable/manrope` y `@fontsource-variable/jetbrains-mono` (licencia OFL).
 Las cifras en columna usan `font-variant-numeric: tabular-nums`.
+
+## Especificación de componentes
+
+Valores exactos tomados de la pantalla de referencia «Crear empresa»
+(`docs/referencia/crear-empresa.html`). Todas las pantallas deben reproducirlos tal cual; esta
+sección manda sobre las descripciones generales de arriba.
+
+### Menú lateral
+
+| Parte | Valor |
+|---|---|
+| Contenedor | `position: sticky; top: 0; height: 100vh`; ancho 232 px (60 px contraído); borde derecho de 1 px en gris; transición de ancho 0,25 s `ease-out` |
+| Cabecera | 64 px de alto, relleno horizontal de 10 px, borde inferior de 1 px en gris |
+| Nombre del sistema | posicionado a 22 px del borde izquierdo y centrado en vertical; 18 px, 700, `letter-spacing: -0,01em`; subrayado en tinta de 2,5 px con 6 px de separación |
+| Botón de abrir y cerrar | 40 × 37 px, radio 6 px, a la derecha de la cabecera |
+| Navegación | relleno de 10 px, separación de 2 px entre elementos |
+| Elemento de navegación | 36 px de alto, relleno horizontal de 12 px, separación de 10 px entre icono y etiqueta, radio 6 px, peso 500, icono de 16 px |
+| Elemento activo | línea de 2 px en el principal, a 3 px del borde inferior del elemento y con 12 px de margen a cada lado |
+| Contador | 20 px de alto, ancho mínimo de 20 px, relleno horizontal de 5 px, fondo gris, texto en tinta, JetBrains Mono 12 px, 500, radio 4 px |
+| Pie | borde superior de 1 px en gris, relleno de 10 px, separación de 8 px entre botones |
+| Botones del pie | 36 px de alto, relleno horizontal de 12 px, separación de 10 px, peso 500 |
+| Botón de usuario | relleno horizontal de 8 px; avatar de 24 × 24 px (radio 4 px, fondo gris, JetBrains Mono 12 px 500), nombre y chevrons arriba y abajo |
+
+### Barra superior
+
+| Parte | Valor |
+|---|---|
+| Contenedor | `position: sticky; top: 0`, 64 px de alto, relleno horizontal de 22 px, separación de 12 px, borde inferior de 1 px en gris, fondo del lienzo |
+| Pestaña | 36 px de alto, relleno horizontal de 12 px, radio 6 px, 14 px, peso 500; inactiva en texto secundario, activa en tinta |
+| Línea de la pestaña activa | 2 px en el principal, pegada al borde inferior de la pestaña con 12 px de margen a cada lado; se desplaza entre pestañas |
+| Buscador | 220 × 36 px, icono de lupa a 11 px del borde izquierdo en texto secundario, relleno izquierdo de 34 px; placeholder «Buscar…» |
+| Selector de pestañas | alto de 36 px, relleno de 0 10 px 0 12 px, radio 6 px, separación de 6 px entre texto y chevron, peso 500, menú alineado a la derecha con ancho mínimo de 200 px |
+
+### Contenido
+
+| Parte | Valor |
+|---|---|
+| Contenedor | relleno de 22 px, separación de 18 px entre bloques |
+| Título de página | 24 px, 600, `letter-spacing: -0,01em`, interlineado 1,25 |
+| Descripción de página | texto secundario, 14 px, a 4 px del título |
+| Formulario | dos columnas: contenido flexible y un bloque lateral de 280 px, con 18 px entre ellas; a menos de 1100 px, una sola columna |
+| Rejilla de campos | columnas automáticas de 240 px como mínimo, separación de 16 px en vertical y 18 px en horizontal; un campo puede ocupar toda la fila |
+| Acciones del formulario | alineadas a la derecha, separación de 10 px; el secundario («Cancelar») antes que el principal |
+| Leyenda de obligatorios | «* Campo obligatorio», 12 px, texto secundario, debajo de las acciones |
+
+### Bloque
+
+| Parte | Valor |
+|---|---|
+| Contenedor | borde de 1 px en gris, radio 4 px, relleno de 18 px arriba, 20 px a los lados y 20 px abajo, fondo del lienzo |
+| Título | 15 px, 600, margen inferior de 14 px |
+| Bloque destacado | fondo secundario; todo el texto en tinta, incluidas las ayudas |
+
+### Campos
+
+| Parte | Valor |
+|---|---|
+| Etiqueta | 12,5 px, 500, texto secundario, a 6 px del campo; el «*» en texto secundario |
+| Campo | 36 px de alto, relleno horizontal de 11 px, borde de 1 px en borde de control, radio 6 px, 14 px, fondo del lienzo |
+| Campo de códigos | JetBrains Mono 13 px |
+| Hover | borde de 1 px en el principal |
+| Foco o menú abierto | borde de 2 px en el principal; el relleno horizontal baja a 10 px para que el texto no se mueva |
+| Área de texto | 92 px de alto mínimo, relleno de 8 px arriba y 11 px a los lados (7 px y 10 px con foco), redimensionable en vertical |
+| Ayuda | 12 px, texto secundario |
+| Contador de caracteres | JetBrains Mono 12 px, texto secundario, a la derecha de la ayuda |
+| Error | borde en P1; debajo, el icono `circle-alert` en P1 y el mensaje en tinta, 12,5 px, con 6 px de separación; `aria-invalid` activo |
+
+### Menú de selección
+
+| Parte | Valor |
+|---|---|
+| Disparador | igual que un campo; texto a la izquierda y chevron hacia abajo a la derecha; sin valor, «Selecciona una opción» en texto secundario |
+| Menú | aparece a 4 px bajo el disparador, ancho mínimo igual al del disparador, alto máximo de 260 px con desplazamiento, relleno de 4 px, fondo del lienzo, borde de 1 px en borde de control, radio 4 px |
+| Opción | 34 px de alto, relleno de 0 10 px 0 6 px, separación de 6 px, radio 6 px; la seleccionada en peso 700 y con un chevron «>» a la izquierda; el resto reserva el mismo hueco |
+| Opción resaltada u opción bajo el cursor | fondo con el 9 % de la tinta mezclado con el lienzo |
+
+### Casilla
+
+| Parte | Valor |
+|---|---|
+| Caja | 18 × 18 px, borde de 1 px en borde de control, radio 4 px |
+| Marcada | fondo y borde en el principal, check de 14 px de trazo 3 en el color de texto sobre el principal |
+| Hover | sin marcar: fondo con el 9 % de la tinta; marcada: el principal oscurecido |
+| Fila | caja y texto separados 10 px; texto de 14 px con la ayuda de 12 px debajo |
+
+### Botones
+
+| Parte | Valor |
+|---|---|
+| Medidas | 36 px de alto, relleno horizontal de 16 px, radio 6 px, 14 px, peso 600, separación de 8 px entre icono y texto |
+| Principal | fondo y borde en el principal, texto en el color de texto sobre el principal; hover con el principal oscurecido |
+| Secundario | sin relleno, borde de 1 px y texto en el principal; hover con el 9 % de la tinta |
+
+### Aviso
+
+Borde de 1 px en gris y de 4 px a la izquierda, radio 4 px, relleno de 12 px arriba y abajo y 14 px a
+los lados, separación de 10 px entre icono y texto, texto en tinta. El borde izquierdo y el icono
+usan el color de la prioridad; en un aviso informativo, el texto secundario.
 
 ## Iconos y gráficos
 
