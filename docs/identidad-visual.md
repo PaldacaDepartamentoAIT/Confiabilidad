@@ -307,6 +307,32 @@ Borde de 1 px en gris y de 4 px a la izquierda, radio 4 px, relleno de 12 px arr
 los lados, separación de 10 px entre icono y texto, texto en tinta. El borde izquierdo y el icono
 usan el color de la prioridad; en un aviso informativo, el texto secundario.
 
+### Datos
+
+Valores exactos tomados de la pantalla «Activos» (`docs/referencia/activos.html`).
+
+| Parte | Valor |
+|---|---|
+| Rejilla de indicadores | columnas automáticas de 190 px como mínimo, separación de 18 px |
+| Indicador | bloque de 16 px de relleno; etiqueta de 12,5 px, 500, texto secundario; cifra de 28 px, 600, interlineado 1,2, `tabular-nums`, con 2 px de margen arriba y abajo; ayuda de 12 px |
+| Indicador destacado | fondo secundario; etiqueta y ayuda en tinta |
+| Indicador en alerta | fondo en relleno negro; etiqueta y ayuda en blanco `#ffffff`; cifra en el color de la prioridad (28 px) |
+| Cabecera de bloque | elementos en fila con 10 px de separación, 14 px de margen inferior; título de 15 px, 600; contador a continuación; acciones alineadas a la derecha |
+| Aviso de alarma | relleno de 12 px arriba y abajo y 16 px a los lados, separación de 12 px entre icono, texto y acción; el título en peso 600; puede llevar un botón secundario a la derecha |
+| Estado | icono de forma de 16 px y texto en tinta, a 8 px; el estado normal no lleva icono pero reserva el mismo hueco de 16 px |
+| Chip (criticidad y similares) | fondo gris, texto en tinta, 12 px, 500, relleno horizontal de 8 px, interlineado de 22 px, radio 4 px |
+| Gráfica de barras | lienzo SVG de 640 × 240 que se escala al ancho del bloque; área de trazado de 576 × 192 con la cuadrícula de 16 px detrás de las barras; eje vertical con marcas cada 30 y números de 12 px en JetBrains Mono, texto secundario, a 8 px del área; meses debajo, centrados y a 20 px |
+| Barras | 30 px de ancho, 4 px de separación entre las dos series, 96 px por grupo; primera serie en secundario y segunda en gris, sólidas y sin borde |
+| Leyenda de gráfica | separación de 16 px entre elementos; muestras de 12 × 12 px sin borde; 12 px, texto secundario |
+| Rejilla de estado | cuadros de 24 × 24 px con radio 0 y separación de 4 px, que continúan en la fila siguiente; los normales en gris; los de P1, P2 y advertencia en su color con el glifo de su forma (12 px, en color del lienzo) dentro, para no depender solo del color; el neutro, con borde de 2 px en texto secundario; cada cuadro con `title` y `aria-label` |
+| Leyenda de la rejilla | iconos de forma de 16 px y etiquetas de 12 px en tinta, 14 px por debajo de la rejilla |
+| Tabla | ancho completo con desplazamiento horizontal desde 640 px; cabecera de 12,5 px, 500, texto secundario, relleno de 8 px arriba y abajo y 12 px a los lados, borde inferior de 1 px en gris; filas de 44 px de alto con relleno horizontal de 12 px y borde inferior de 1 px en gris; códigos y fechas en JetBrains Mono 13 px |
+| Fila bajo el cursor o seleccionada | fondo con el 9 % de la tinta; la seleccionada lleva además una línea de 2 px en el principal a su izquierda, para distinguirla del hover |
+| Pie de tabla | 12 px, texto secundario, a 12 px por debajo; muestra el número de filas seleccionadas |
+
+Regla de estado: **el texto del estado va siempre en tinta**; solo el icono de forma lleva el color de
+la prioridad.
+
 ## Iconos y gráficos
 
 - Iconos de la librería `lucide-react`, de trazo 2, a 16 px (14 px dentro de las casillas).
