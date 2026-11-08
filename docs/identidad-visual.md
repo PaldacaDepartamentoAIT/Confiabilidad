@@ -185,7 +185,7 @@ Si el sistema pide reducir el movimiento, no se anima nada, incluidos el hover y
 
 ## Datos
 
-- **Gráficas de barras.** Series en secundario y en gris, sólidas y sin borde; cuadrícula de fondo
+- **Gráficas de barras.** Primera serie en el principal y segunda en gris, sólidas y sin borde; cuadrícula de fondo
   de 16 px en color de cuadrícula.
 - **Rejillas de estado.** Cuadros separados 4 px; los normales en gris y los que tienen un estado de
   alarma en su color; el estado neutro, como cuadrado vacío.
@@ -309,7 +309,8 @@ usan el color de la prioridad; en un aviso informativo, el texto secundario.
 
 ### Datos
 
-Valores exactos tomados de la pantalla «Activos» (`docs/referencia/activos.html`).
+Valores exactos tomados de la pantalla «Activos» de prueba (pendiente de que el usuario la apruebe
+como referencia; todavía no está en el repositorio).
 
 | Parte | Valor |
 |---|---|
@@ -322,7 +323,7 @@ Valores exactos tomados de la pantalla «Activos» (`docs/referencia/activos.htm
 | Estado | icono de forma de 16 px y texto en tinta, a 8 px; el estado normal no lleva icono pero reserva el mismo hueco de 16 px |
 | Chip (criticidad y similares) | fondo gris, texto en tinta, 12 px, 500, relleno horizontal de 8 px, interlineado de 22 px, radio 4 px |
 | Gráfica de barras | lienzo SVG de 640 × 240 que se escala al ancho del bloque; área de trazado de 576 × 192 con la cuadrícula de 16 px detrás de las barras; eje vertical con marcas cada 30 y números de 12 px en JetBrains Mono, texto secundario, a 8 px del área; meses debajo, centrados y a 20 px |
-| Barras | 30 px de ancho, 4 px de separación entre las dos series, 96 px por grupo; primera serie en secundario y segunda en gris, sólidas y sin borde |
+| Barras | 30 px de ancho, 4 px de separación entre las dos series, 96 px por grupo; primera serie en el principal y segunda en gris, sólidas y sin borde |
 | Leyenda de gráfica | separación de 16 px entre elementos; muestras de 12 × 12 px sin borde; 12 px, texto secundario |
 | Rejilla de estado | cuadros de 24 × 24 px con radio 0 y separación de 4 px, que continúan en la fila siguiente; los normales en gris; los de P1, P2 y advertencia en su color con el glifo de su forma (12 px, en color del lienzo) dentro, para no depender solo del color; el neutro, con borde de 2 px en texto secundario; cada cuadro con `title` y `aria-label` |
 | Leyenda de la rejilla | iconos de forma de 16 px y etiquetas de 12 px en tinta, 14 px por debajo de la rejilla |
