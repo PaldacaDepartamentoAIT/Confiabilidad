@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { I18nextProvider } from "react-i18next";
 
@@ -405,4 +405,24 @@ test("the catalog adds no extra stops to the keyboard order", async () => {
   const catalog = screen.getByRole("region", { name: "Bloques, etiquetas y formas de alarma" });
   for (let i = 0; i < 12; i += 1) await user.tab();
   expect(catalog.contains(document.activeElement)).toBe(false);
+});
+
+test("the catalog shows buttons in both variants and while processing, and the notices", () => {
+  renderPage("en");
+
+  const catalog = screen.getByRole("region", { name: "Botones y avisos" });
+  expect(catalog).toHaveAttribute("lang", "es");
+  expect(catalog.querySelectorAll("[data-ui='button-primary']").length).toBeGreaterThanOrEqual(2);
+  expect(catalog.querySelectorAll("[data-ui='button-secondary']").length).toBeGreaterThanOrEqual(1);
+  expect(catalog.querySelector("[aria-disabled='true']")).toBeInTheDocument();
+  expect(catalog.querySelectorAll("[data-ui='notice']")).toHaveLength(2);
+  expect(catalog.querySelector("[data-ui='notice'] .lucide-check")).toBeInTheDocument();
+  expect(catalog.querySelector("[data-ui='notice'] .lucide-info")).toBeInTheDocument();
+  const shapes = [...catalog.querySelectorAll("[data-ui='alarm-notice'] [data-shape]")].map(
+    (shape) => shape.getAttribute("data-shape"),
+  );
+  expect(shapes.sort()).toEqual(["diamond", "hollow-square", "square", "triangle"]);
+  expect(
+    within(catalog).getByRole("button", { name: "Ver alarma" }).closest("[data-ui='alarm-notice']"),
+  ).toBeInTheDocument();
 });

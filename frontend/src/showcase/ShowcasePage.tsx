@@ -11,6 +11,7 @@ import { RequiredLegend } from "../components/fields/RequiredLegend";
 import { TextField } from "../components/fields/TextField";
 import { ThemeButton } from "../theme/ThemeButton";
 import { BlocksSection } from "./sections/BlocksSection";
+import { ButtonsSection } from "./sections/ButtonsSection";
 import { newPasswordRules } from "../forms/passwordRules";
 import {
   useFormValidation,
@@ -123,6 +124,7 @@ export function ShowcasePage({ storage }: ShowcasePageProps) {
         </Button>
       </form>
       <BlocksSection />
+      <ButtonsSection />
     </main>
   );
 }
