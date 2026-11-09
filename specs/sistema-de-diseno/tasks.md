@@ -84,12 +84,23 @@ transitorias hasta T-051 (D-12).
   no pasar el almacenamiento al botón.
 
 ## E-03 Bloques, chips y formas
-- [ ] T-006 `lucide-react` y módulo de iconos
+- [x] T-006 `lucide-react` y módulo de iconos
   RF: RF-020 | Depende de: — | Archivos: 4
   Archivos: `frontend/package.json`, `pnpm-lock.yaml`, `icons/index.ts`, `icons/icons.test.ts`.
   Hecho cuando: `lucide-react` está en `dependencies`; el módulo reexporta por nombre los iconos
   de la guía a 16 px y trazo 2; suite verde.
   Excepción: `pnpm-lock.yaml` lo regenera `pnpm add`.
+  Decisiones: se instaló `lucide-react` 1.70.0 (aprobada por el usuario en la definición de la
+  feature). El módulo exporta 22 componentes `IconXxx` (los de las referencias) que envuelven los de
+  lucide con `size` 16, `strokeWidth` 2 y `aria-hidden`, sustituibles por props — [Probable] —
+  revertir: importar directamente de `lucide-react`. Nombres: `Building2` para edificio, `FileText`
+  para archivo, `CircleAlert` para alerta, `ChevronsUpDown` para los chevrons dobles,
+  `PanelLeftClose`/`PanelLeftOpen` para el panel — [Suposición], no comparé el dibujo con el de las
+  referencias — revertir: cambiar el icono de lucide en `icons/index.ts`. El test es `.tsx`, no `.ts`
+  como decía la tarea, porque renderiza componentes — [Cierto]. Mutante equivalente: quitar
+  `aria-hidden` no cambia nada porque lucide ya lo añade cuando el icono no lleva etiqueta; se
+  mantiene explícito para no depender de ese detalle. Mutantes muertos: tamaño, trazo, orden de
+  `props`.
 - [ ] T-007 Formas de alarma
   RF: RF-020, RF-025 | Depende de: T-006 | Archivos: 2
   Archivos: `icons/shapes.tsx`, `icons/shapes.test.tsx`.
