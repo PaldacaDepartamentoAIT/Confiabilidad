@@ -101,11 +101,17 @@ transitorias hasta T-051 (D-12).
   `aria-hidden` no cambia nada porque lucide ya lo añade cuando el icono no lleva etiqueta; se
   mantiene explícito para no depender de ese detalle. Mutantes muertos: tamaño, trazo, orden de
   `props`.
-- [ ] T-007 Formas de alarma
+- [x] T-007 Formas de alarma
   RF: RF-020, RF-025 | Depende de: T-006 | Archivos: 2
   Archivos: `icons/shapes.tsx`, `icons/shapes.test.tsx`.
   Hecho cuando: P1 es un cuadrado, P2 un triángulo, advertencia un rombo y neutro un cuadrado
   vacío, con nombre accesible y sin depender del color; suite verde.
+  Decisiones: componente `AlarmShape` con `kind` (`p1`, `p2`, `warning`, `neutral`), `label`
+  opcional (con él es `role="img"`; sin él, `aria-hidden`), `size`, `className` y `style`; cada
+  forma lleva su color por defecto (`--p1`, `--p2`, `--warn`, `--text2`) y `data-shape` — [Probable] —
+  revertir: cambiar `shapes.tsx`. La geometría se copió de los símbolos `s-p1`, `s-p2`, `s-wn` y
+  `s-nu` de `activos.html` — [Cierto]. Mutantes muertos: triángulo por rombo, color de P2, `aria-hidden`
+  fijo, orden de `style`.
 - [ ] T-008 Bloque
   RF: RF-014 | Depende de: T-001 | Archivos: 3
   Archivos: `components/Block.tsx`, `Block.css`, `Block.test.tsx`.
