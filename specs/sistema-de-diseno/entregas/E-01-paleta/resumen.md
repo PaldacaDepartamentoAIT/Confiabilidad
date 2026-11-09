@@ -1,6 +1,6 @@
 # Entrega E-01 · Paleta Pizarra
 
-Rama: `feat/sistema-de-diseno-paleta` · PR: pendiente ·
+Rama: `feat/sistema-de-diseno-paleta` · PR: [PaldacaDepartamentoAIT/Confiabilidad#66](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/66) ·
 Líneas de código y tests: 352 (límite: 400).
 
 ## Qué se hizo
