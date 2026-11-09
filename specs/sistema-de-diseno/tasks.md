@@ -31,11 +31,18 @@ transitorias hasta T-051 (D-12).
   test.
 
 ## E-02 Tema con botón
-- [ ] T-002 Módulo de tema
+- [x] T-002 Módulo de tema
   RF: RF-001, RF-003 | Depende de: T-001 | Archivos: 2
   Archivos: `theme/theme.ts`, `theme/theme.test.ts`.
   Hecho cuando: sin valor guardado devuelve el tema del sistema; con `light` u `oscuro-inválido` se
   ignora y se borra; `toggle` guarda y aplica `data-theme` en `<html>`; suite verde.
+  Decisiones: `initTheme` solo escribe `data-theme` si hay un tema guardado válido; sin él, el CSS
+  sigue al sistema operativo con la regla de `tokens.css` — [Cierto] — revertir: escribir siempre el
+  atributo. `toggleTheme` añade la clase `theme-anim` a `<html>` durante 0,4 s (el CSS que la usa va
+  en T-004) y un segundo cambio reinicia ese plazo — [Probable] — revertir: quitar la clase y su
+  temporizador. La clave guardada es `confiabilidad.theme`, como la del idioma — [Probable] —
+  revertir: cambiar `THEME_STORAGE_KEY`. Mutantes muertos: duración 500 ms, no borrar el valor
+  inválido, no alternar, no reiniciar el plazo.
 - [ ] T-003 Textos del tema en tres idiomas
   RF: RF-030 | Depende de: T-001 | Archivos: 3
   Archivos: `i18n/locales/en.ts`, `es.ts`, `pt-BR.ts`.
