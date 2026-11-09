@@ -20,8 +20,8 @@ export default defineConfig(({ mode }) => ({
     environment: "jsdom",
     globals: true,
     setupFiles: "./src/setupTests.ts",
-    // El test de la paleta lee el CSS; los demás estilos no se procesan en los tests.
-    css: { include: [/src\/styles\/tokens\.css/] },
+    // Los tests de la identidad visual leen estos dos CSS; los demás estilos no se procesan en los tests.
+    css: { include: [/src\/styles\/(tokens|base)\.css/] },
     coverage: {
       provider: "v8",
       include: ["src/**/*.{ts,tsx}"],

@@ -1,27 +1,46 @@
-/* Reglas generales de docs/identidad-visual.md: lienzo plano, bloques opacos, lo que se pulsa es
-   redondo y usa el color de acción, foco visible de 3 px separado 2 px. */
+/* Reglas generales de docs/identidad-visual.md. Las reglas de elementos sueltos de «Transitorio»
+   se retiran en T-051, cuando cada pieza trae sus propias clases. */
 *,
 *::before,
 *::after {
   box-sizing: border-box;
 }
 
+html,
 body {
   margin: 0;
-  padding: var(--space-page);
-  background: var(--color-canvas);
-  color: var(--color-ink);
-  font-family: var(--font-text);
-  font-size: 13.5px;
-  line-height: 1.5;
 }
 
-main,
-form,
-section {
-  background: var(--color-block);
-  border-radius: var(--radius-card);
-  padding: var(--space-card-y) var(--space-card-x);
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font: 400 14px/1.45 var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.mono {
+  font-family: var(--mono);
+}
+
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+a {
+  color: var(--primary);
 }
 
 h1,
@@ -31,57 +50,7 @@ h2 {
 
 label,
 small {
-  color: var(--color-text-secondary);
-}
-
-button {
-  border: 1px solid var(--color-action);
-  border-radius: var(--radius-pill);
-  background: var(--color-action);
-  color: var(--color-on-action);
-  font: inherit;
-  font-weight: 600;
-  padding: 6px 16px;
-  cursor: pointer;
-}
-
-button[aria-pressed="false"],
-button[data-variant="secondary"] {
-  background: transparent;
-  color: var(--color-action);
-}
-
-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-input,
-select {
-  border: 1px solid var(--color-line-strong);
-  border-radius: var(--radius-tag);
-  background: var(--color-block);
-  color: var(--color-ink);
-  font: inherit;
-  padding: 6px 8px;
-}
-
-input[type="checkbox"] {
-  accent-color: var(--color-action);
-}
-
-input[inputmode="numeric"] {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-}
-
-:focus-visible {
-  outline: 3px solid var(--color-action);
-  outline-offset: 2px;
-}
-
-a {
-  color: var(--color-action);
+  color: var(--text2);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -91,4 +60,55 @@ a {
     animation: none !important;
     transition: none !important;
   }
+}
+
+/* Transitorio: estilos de las piezas de componentes-base-accesibles hasta que se restilicen. */
+body {
+  padding: 22px;
+}
+
+main,
+form,
+section {
+  background: var(--bg);
+  border: 1px solid var(--gray);
+  border-radius: 4px;
+  padding: 14px 16px;
+}
+
+button {
+  border: 1px solid var(--primary);
+  border-radius: 6px;
+  background: var(--primary);
+  color: var(--on-primary);
+  font-weight: 600;
+  padding: 6px 16px;
+}
+
+button[aria-pressed="false"],
+button[data-variant="secondary"] {
+  background: transparent;
+  color: var(--primary);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+input,
+select {
+  border: 1px solid var(--ctrl);
+  border-radius: 6px;
+  background: var(--bg);
+  padding: 6px 8px;
+}
+
+input[type="checkbox"] {
+  accent-color: var(--primary);
+}
+
+input[inputmode="numeric"] {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
 }
