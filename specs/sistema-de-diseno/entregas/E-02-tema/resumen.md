@@ -1,6 +1,6 @@
 # Entrega E-02 · Módulo de tema y textos
 
-Rama: `feat/sistema-de-diseno-modulo-tema` · PR: pendiente ·
+Rama: `feat/sistema-de-diseno-modulo-tema` · PR: [PaldacaDepartamentoAIT/Confiabilidad#67](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/67) ·
 Líneas de código y tests: 252 (límite: 400).
 
 ## Qué se hizo
