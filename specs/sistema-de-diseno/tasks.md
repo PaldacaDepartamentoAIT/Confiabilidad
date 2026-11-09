@@ -1,5 +1,5 @@
 # Tareas: sistema-de-diseno
-Estado: borrador
+Estado: aprobado
 
 Rutas relativas a `frontend/src/` salvo que se indique. Los tests van junto al archivo que prueban.
 «Suite verde» = `pnpm --filter frontend test:coverage` (líneas ≥ 80 %), `typecheck`, `lint` y
