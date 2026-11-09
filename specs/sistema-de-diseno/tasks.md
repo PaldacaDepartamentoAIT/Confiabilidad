@@ -112,11 +112,20 @@ transitorias hasta T-051 (D-12).
   revertir: cambiar `shapes.tsx`. La geometría se copió de los símbolos `s-p1`, `s-p2`, `s-wn` y
   `s-nu` de `activos.html` — [Cierto]. Mutantes muertos: triángulo por rombo, color de P2, `aria-hidden`
   fijo, orden de `style`.
-- [ ] T-008 Bloque
+- [x] T-008 Bloque
   RF: RF-014 | Depende de: T-001 | Archivos: 3
   Archivos: `components/Block.tsx`, `Block.css`, `Block.test.tsx`.
   Hecho cuando: variantes normal, destacado y en alerta, con cabecera opcional (título, contador,
   acciones); suite verde.
+  Decisiones: `Block` admite `variant` (`default`, `featured`, `alert`), `as` (`div`, `section`,
+  `aside`; los dos últimos quedan etiquetados por su título), `title`, `headingLevel` (2 a 4),
+  `count` con `countLabel` y `actions`; la cabecera `.blk-h` solo aparece si hay título, contador o
+  acciones — [Probable] — revertir: simplificar `Block.tsx`. `Counter` se exporta desde `Block.tsx`
+  porque el menú lateral (T-029) lo reutiliza — [Probable] — revertir: moverlo a su propio archivo.
+  El bloque en alerta pone fondo `--black-fill` y texto blanco; la cifra en el color de la prioridad
+  es del indicador (T-043) — [Cierto]. Los títulos de nivel 3 y 4 usan el mismo estilo que el de
+  nivel 2 — [Suposición] — revertir: estilar solo `h2`. Mutantes muertos: contador en cero, `sp`,
+  `data-ui`, `aria-labelledby`, clase `default`, `div` etiquetado.
 - [ ] T-009 Chip
   RF: RF-023 | Depende de: T-001 | Archivos: 3
   Archivos: `components/Chip.tsx`, `Chip.css`, `Chip.test.tsx`.
