@@ -1,6 +1,6 @@
 # Entrega E-02b · Botón de tema
 
-Rama: `feat/sistema-de-diseno-boton-tema` (sale de `feat/sistema-de-diseno-modulo-tema`) · PR: pendiente ·
+Rama: `feat/sistema-de-diseno-boton-tema` · PR: [PaldacaDepartamentoAIT/Confiabilidad#68](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/68) ·
 Líneas de código y tests: 263 (límite: 400).
 
 ## Qué se hizo
