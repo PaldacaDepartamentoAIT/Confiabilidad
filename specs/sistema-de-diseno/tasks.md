@@ -166,10 +166,16 @@ transitorias hasta T-051 (D-12).
   provisional anterior porque la guía no los define — [Suposición] — revertir: quitar la regla
   `.btn[aria-disabled]`. Los botones existentes de las pantallas siguen siendo principales.
   Mutantes muertos: variantes intercambiadas, `data-ui` fijo, variante por defecto, `className`.
-- [ ] T-012 Aviso
+- [x] T-012 Aviso
   RF: RF-019 | Depende de: T-006 | Archivos: 3
   Archivos: `components/Notice.tsx`, `Notice.css`, `Notice.test.tsx`.
   Hecho cuando: borde izquierdo de 4 px, icono e interlineado de la guía; suite verde.
+  Decisiones: `Notice` es un `div` con rol `status` por defecto (cambiable con `role`), clase `notice`
+  y `data-ui="notice"`; `kind` elige el icono (`info` por defecto, `success` con verificación) y
+  ambos usan el color de texto secundario — [Probable] — revertir: simplificar `Notice.tsx`. La
+  referencia de «Crear empresa» no marca su aviso con `data-ui` (está oculto); no se añadió a la
+  referencia — [Cierto]. Mutantes muertos: iconos intercambiados, rol por defecto, atributos extra,
+  `data-ui`, clase base.
 - [ ] T-013 Aviso de alarma
   RF: RF-019, RF-020 | Depende de: T-007, T-011 | Archivos: 3
   Archivos: `components/AlarmNotice.tsx`, `AlarmNotice.css`, `AlarmNotice.test.tsx`.
