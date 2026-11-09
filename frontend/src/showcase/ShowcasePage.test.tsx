@@ -4,6 +4,7 @@ import { I18nextProvider } from "react-i18next";
 
 import { App } from "../App";
 import { createI18n } from "../i18n";
+import { THEME_STORAGE_KEY } from "../theme/theme";
 import { ShowcasePage } from "./ShowcasePage";
 
 function renderPage(language = "es") {
@@ -35,7 +36,7 @@ test("shows the sample form with its required fields and the asterisk legend", (
   expect(code).toHaveAttribute("aria-required", "true");
 });
 
-test("the tab order goes through the language selector and then each field in order", async () => {
+test("the tab order goes through the language selector, the theme button and then each field in order", async () => {
   const user = userEvent.setup();
   renderPage();
 
@@ -43,6 +44,7 @@ test("the tab order goes through the language selector and then each field in or
     screen.getByRole("button", { name: "Español" }),
     screen.getByRole("button", { name: "Português (Brasil)" }),
     screen.getByRole("button", { name: "English" }),
+    screen.getByRole("button", { name: /^Tema (claro|oscuro)\. Cambiar tema$/ }),
     screen.getByRole("textbox", { name: "Nombre completo" }),
     screen.getByRole("textbox", { name: "Correo electrónico" }),
     screen.getByLabelText(/^Contraseña/),
@@ -357,4 +359,25 @@ test("the sample error follows the language change and the next submission remov
   await user.click(screen.getByRole("button", { name: "Verify" }));
 
   expect(screen.queryByText("Too many attempts", { exact: false })).not.toBeInTheDocument();
+});
+
+test("has a theme button that saves the chosen theme in the storage it receives", async () => {
+  const user = userEvent.setup();
+  const values = new Map<string, string>();
+  const storage = {
+    getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => void values.set(key, value),
+    removeItem: (key: string) => void values.delete(key),
+  };
+  render(
+    <I18nextProvider i18n={createI18n("es")}>
+      <ShowcasePage storage={storage} />
+    </I18nextProvider>,
+  );
+
+  await user.click(screen.getByRole("button", { name: /^Tema (claro|oscuro)\. Cambiar tema$/ }));
+
+  expect(["light", "dark"]).toContain(values.get(THEME_STORAGE_KEY));
+  expect(document.documentElement).toHaveAttribute("data-theme", values.get(THEME_STORAGE_KEY));
+  document.documentElement.removeAttribute("data-theme");
 });
