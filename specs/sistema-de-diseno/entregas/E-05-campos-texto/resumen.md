@@ -1,6 +1,6 @@
 # Entrega E-05 · Campos de texto, contraseña y código
 
-Rama: `feat/sistema-de-diseno-campos-texto` · PR: pendiente ·
+Rama: `feat/sistema-de-diseno-campos-texto` · PR: [PaldacaDepartamentoAIT/Confiabilidad#73](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/73) ·
 Líneas de código y tests: 205 (límite: 400).
 
 ## Qué se hizo
