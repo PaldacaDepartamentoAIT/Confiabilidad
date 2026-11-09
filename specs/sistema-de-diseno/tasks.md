@@ -166,6 +166,10 @@ transitorias hasta T-051 (D-12).
   provisional anterior porque la guía no los define — [Suposición] — revertir: quitar la regla
   `.btn[aria-disabled]`. Los botones existentes de las pantallas siguen siendo principales.
   Mutantes muertos: variantes intercambiadas, `data-ui` fijo, variante por defecto, `className`.
+  Corrección: `.hov` de `ThemeButton.css` (que se carga después) quitaba el borde del botón
+  secundario; el borde usa la especificidad `.btn.btn-ghost`, comprobado en un navegador real
+  (borde de 1 px, 36 px de alto, radio 6 px) — [Cierto]. Los estilos no se prueban en jsdom; lo
+  cubrirá la comprobación visual (T-053).
 - [x] T-012 Aviso
   RF: RF-019 | Depende de: T-006 | Archivos: 3
   Archivos: `components/Notice.tsx`, `Notice.css`, `Notice.test.tsx`.
