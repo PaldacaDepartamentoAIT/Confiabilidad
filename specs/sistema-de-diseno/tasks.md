@@ -11,13 +11,24 @@ Las tareas de «Catálogo» añaden una sección en `showcase/sections/` y la re
 transitorias hasta T-051 (D-12).
 
 ## E-01 Paleta Pizarra
-- [ ] T-001 Tokens v2 y base transitoria
-  RF: RF-001, RF-004, RF-029 | Depende de: — | Archivos: 3
-  Archivos: `styles/tokens.css`, `styles/tokens.test.ts`, `styles/base.css`.
+- [x] T-001 Tokens v2 y base transitoria
+  RF: RF-001, RF-004, RF-029 | Depende de: — | Archivos: 4
+  Archivos: `styles/tokens.css`, `styles/tokens.test.ts`, `styles/base.css`, `vite.config.ts`.
   Hecho cuando: `tokens.test.ts` compara cada variable con las tablas claro y oscuro de la guía
   (falla al cambiar un valor) y comprueba la regla de movimiento reducido; ya no existe ningún
   `--color-*`; `base.css` usa los tokens nuevos; suite verde; la página de muestra se ve en Pizarra
   con `pnpm --filter frontend dev`.
+  Excepción: `vite.config.ts` solo añade `base.css` a los CSS que Vitest procesa, para que
+  `tokens.test.ts` pueda leerlo (aprobada por el usuario al detenerse la tarea).
+  Decisiones: `--font` y `--mono` nombran las familias de las fuentes de npm («Manrope Variable»,
+  «JetBrains Mono Variable») con la familia sin sufijo y la del sistema como reserva — [Probable] —
+  revertir: dejar solo «Manrope» y «JetBrains Mono» (no cargarían con el paquete variable). Las
+  reglas de elementos de `base.css` (`button`, `input`, `main`, `form`, `section`) se reescriben con
+  los tokens nuevos y se marcan como transitorias; el aspecto temporal de las piezas existentes
+  (bloque con borde gris de 1 px, botón de radio 6 px) es una aproximación mía hasta T-011/T-015 —
+  [Suposición] — revertir: restaurar `base.css` del commit anterior (usaba `--color-*`, que ya no
+  existen). Mutantes: cambiar `--grid` oscuro y sustituir `transition: none !important` fallan el
+  test.
 
 ## E-02 Tema con botón
 - [ ] T-002 Módulo de tema
