@@ -10,6 +10,7 @@ import { PasswordField } from "../components/fields/PasswordField";
 import { RequiredLegend } from "../components/fields/RequiredLegend";
 import { TextField } from "../components/fields/TextField";
 import { ThemeButton } from "../theme/ThemeButton";
+import { BlocksSection } from "./sections/BlocksSection";
 import { newPasswordRules } from "../forms/passwordRules";
 import {
   useFormValidation,
@@ -121,6 +122,7 @@ export function ShowcasePage({ storage }: ShowcasePageProps) {
           {t("showcase.showExampleError")}
         </Button>
       </form>
+      <BlocksSection />
     </main>
   );
 }

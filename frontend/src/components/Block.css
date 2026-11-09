@@ -1,0 +1,60 @@
+.block {
+  border: 1px solid var(--gray);
+  border-radius: 4px;
+  padding: 18px 20px 20px;
+  background: var(--bg);
+}
+
+.block.featured {
+  --surface: var(--secondary);
+  background: var(--secondary);
+}
+
+.block.alert {
+  background: var(--black-fill);
+  color: #ffffff;
+}
+
+.block :is(h2, h3, h4) {
+  margin: 0 0 14px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.block p {
+  margin: 0;
+}
+
+.sp {
+  flex: 1;
+}
+
+.blk-h {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.blk-h h2,
+.blk-h h3,
+.blk-h h4 {
+  margin: 0;
+}
+
+.counter {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  background: var(--gray);
+  color: var(--ink);
+}
