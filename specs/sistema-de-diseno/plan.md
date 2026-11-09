@@ -1,5 +1,5 @@
 # Plan: sistema-de-diseno
-Estado: borrador
+Estado: aprobado
 
 ## Módulos
 Todos viven en `frontend/src/`; no se toca `backend/` ni `desktop/`.
