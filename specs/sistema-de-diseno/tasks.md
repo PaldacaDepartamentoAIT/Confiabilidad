@@ -150,16 +150,37 @@ transitorias hasta T-051 (D-12).
   `section` de `base.css` — [Cierto]. Verificado en un navegador real en claro y oscuro. Mutantes
   muertos: sin `lang`, sin variante de alerta, sin una forma, sin chips.
 
-## E-04 Botón y avisos
-- [ ] T-011 Botón restilizado
+## E-04 Botón y aviso
+- [x] T-011 Botón restilizado
   RF: RF-018 | Depende de: T-001 | Archivos: 3
   Archivos: `components/Button.tsx`, `Button.css`, `Button.test.tsx`.
   Hecho cuando: variantes principal y secundario con hover, foco y procesando de la guía; los
   tests previos de `Button` siguen pasando; suite verde.
-- [ ] T-012 Aviso
+  Decisiones: `Button` recibe `variant` (`primary` por defecto, `secondary`) y `className`; pone las
+  clases `btn btn-primary` o `btn btn-ghost hov` y `data-ui="button-primary"` o
+  `"button-secondary"` de las referencias — [Probable] — revertir: quitar la prop y las clases. El
+  hover del secundario (`.hov`) se duplica en `Button.css` porque `ThemeButton.css` solo se carga si
+  hay un botón de tema; el menú lateral (T-029) lo moverá a un archivo compartido — [Suposición] —
+  revertir: importar `ThemeButton.css` desde `Button.tsx`. El estado «procesando»
+  (`aria-disabled`) se ve con `cursor: not-allowed` y opacidad 0,6, valores heredados del estilo
+  provisional anterior porque la guía no los define — [Suposición] — revertir: quitar la regla
+  `.btn[aria-disabled]`. Los botones existentes de las pantallas siguen siendo principales.
+  Mutantes muertos: variantes intercambiadas, `data-ui` fijo, variante por defecto, `className`.
+  Corrección: `.hov` de `ThemeButton.css` (que se carga después) quitaba el borde del botón
+  secundario; el borde usa la especificidad `.btn.btn-ghost`, comprobado en un navegador real
+  (borde de 1 px, 36 px de alto, radio 6 px) — [Cierto]. Los estilos no se prueban en jsdom; lo
+  cubrirá la comprobación visual (T-053).
+- [x] T-012 Aviso
   RF: RF-019 | Depende de: T-006 | Archivos: 3
   Archivos: `components/Notice.tsx`, `Notice.css`, `Notice.test.tsx`.
   Hecho cuando: borde izquierdo de 4 px, icono e interlineado de la guía; suite verde.
+  Decisiones: `Notice` es un `div` con rol `status` por defecto (cambiable con `role`), clase `notice`
+  y `data-ui="notice"`; `kind` elige el icono (`info` por defecto, `success` con verificación) y
+  ambos usan el color de texto secundario — [Probable] — revertir: simplificar `Notice.tsx`. La
+  referencia de «Crear empresa» no marca su aviso con `data-ui` (está oculto); no se añadió a la
+  referencia — [Cierto]. Mutantes muertos: iconos intercambiados, rol por defecto, atributos extra,
+  `data-ui`, clase base.
+## E-04b Aviso de alarma y catálogo
 - [ ] T-013 Aviso de alarma
   RF: RF-019, RF-020 | Depende de: T-007, T-011 | Archivos: 3
   Archivos: `components/AlarmNotice.tsx`, `AlarmNotice.css`, `AlarmNotice.test.tsx`.
@@ -421,9 +442,15 @@ Rama de integración: `feat/sistema-de-diseno` (los PR de las entregas van contr
 - E-03b La página de muestra exhibe bloques, chips y formas de alarma.
   Tareas: T-008, T-010 | Líneas estimadas: 350 | Rama: feat/sistema-de-diseno-bloque-catalogo
   Cómo probarlo: abrir la página de muestra y ver la sección de bloques en ambos temas.
-- E-04 Botones y avisos con la identidad nueva.
-  Tareas: T-011, T-012, T-013, T-014 | Líneas estimadas: 350 | Rama: feat/sistema-de-diseno-botones-avisos
-  Cómo probarlo: página de muestra, sección de botones y avisos; `/register` mantiene su flujo.
+- E-04 Botón con variantes y aviso informativo (sin nada visible aún, salvo los botones del formulario).
+  Tareas: T-011, T-012 | Líneas estimadas: 210 | Rama: feat/sistema-de-diseno-boton-aviso
+  Cómo probarlo: `pnpm --filter frontend test`; en la página de muestra y en `/register` los botones
+  usan el estilo nuevo.
+  Nota: E-04 se dividió en E-04 y E-04b porque la entrega completa medía 428 líneas (límite 400);
+  el usuario lo aprobó al detenerse la cadena.
+- E-04b Aviso de alarma y sección de botones y avisos en el catálogo.
+  Tareas: T-013, T-014 | Líneas estimadas: 220 | Rama: feat/sistema-de-diseno-aviso-alarma
+  Cómo probarlo: página de muestra, sección «Botones y avisos», en ambos temas.
 - E-05 Campos de texto, contraseña, código y casilla con la identidad nueva.
   Tareas: T-015, T-016, T-017, T-018 | Líneas estimadas: 360 | Rama: feat/sistema-de-diseno-campos
   Cómo probarlo: página de muestra y `/register`: hover, foco y error de cada campo.

@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { I18nextProvider } from "react-i18next";
 import userEvent from "@testing-library/user-event";
+import axe from "axe-core";
 
 import { createI18n } from "../i18n";
 import { AnnouncerContext } from "./announcer";
@@ -166,4 +167,56 @@ test("entering the processing state is announced once, leaving it is not", () =>
   rerender(<Button>Verificar</Button>);
   expect(screen.getByRole("button", { name: "Verificar" })).not.toHaveAttribute("aria-disabled");
   expect(announce).toHaveBeenCalledTimes(1);
+});
+
+test("is a primary button by default, marked for the design system", () => {
+  render(<Button>Save</Button>);
+
+  const button = screen.getByRole("button", { name: "Save" });
+  expect(button).toHaveClass("btn", "btn-primary");
+  expect(button).not.toHaveClass("btn-ghost", "hov");
+  expect(button).toHaveAttribute("data-ui", "button-primary");
+});
+
+test("the secondary variant is an outlined button with the hover of the design system", () => {
+  render(<Button variant="secondary">Cancel</Button>);
+
+  const button = screen.getByRole("button", { name: "Cancel" });
+  expect(button).toHaveClass("btn", "btn-ghost", "hov");
+  expect(button).not.toHaveClass("btn-primary");
+  expect(button).toHaveAttribute("data-ui", "button-secondary");
+});
+
+test("extra class names and attributes reach the button, but not over the variant", () => {
+  render(
+    <Button className="wide" id="b1" variant="secondary">
+      Cancel
+    </Button>,
+  );
+
+  const button = screen.getByRole("button", { name: "Cancel" });
+  expect(button).toHaveClass("btn", "btn-ghost", "wide");
+  expect(button).toHaveAttribute("id", "b1");
+});
+
+test("the processing state keeps the variant", () => {
+  renderInSpanish(
+    <Button variant="secondary" processing>
+      Cancelar
+    </Button>,
+  );
+
+  expect(screen.getByRole("button", { name: "Procesando…" })).toHaveClass("btn-ghost");
+});
+
+test("has no accessibility violations in either variant or while processing", async () => {
+  const { container } = render(
+    <div>
+      <Button>One</Button>
+      <Button variant="secondary">Two</Button>
+      <Button processing>Three</Button>
+    </div>,
+  );
+  const results = await axe.run(container, { rules: { "color-contrast": { enabled: false } } });
+  expect(results.violations).toEqual([]);
 });

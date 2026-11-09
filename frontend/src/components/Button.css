@@ -1,0 +1,51 @@
+.btn {
+  height: 36px;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  white-space: nowrap;
+  transition:
+    background-color 0.35s ease,
+    border-color 0.35s ease;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: var(--on-primary);
+  border: 1px solid var(--primary);
+}
+
+.btn-primary:hover {
+  background: color-mix(in srgb, var(--primary) 78%, #000);
+  border-color: color-mix(in srgb, var(--primary) 78%, #000);
+  transition-duration: 0.08s;
+}
+
+.btn.btn-ghost {
+  border: 1px solid var(--primary);
+  color: var(--primary);
+}
+
+.btn[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Hover de 9 % de la tinta, compartido con el resto de elementos interactivos de las referencias. */
+.btn-ghost.hov {
+  background: transparent;
+  transition:
+    background-color 0.35s ease,
+    border-color 0.35s ease,
+    color 0.35s ease;
+}
+
+.btn-ghost.hov:hover {
+  background: color-mix(in srgb, var(--ink) 9%, var(--surface));
+  transition-duration: 0.08s;
+}
