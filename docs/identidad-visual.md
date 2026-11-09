@@ -309,8 +309,10 @@ usan el color de la prioridad; en un aviso informativo, el texto secundario.
 
 ### Datos
 
-Valores exactos tomados de la pantalla «Activos» de prueba (pendiente de que el usuario la apruebe
-como referencia; todavía no está en el repositorio).
+Valores exactos tomados de la pantalla «Activos», aprobada como referencia
+(`docs/referencia/activos.html`). Los componentes de las páginas de referencia llevan `data-ui`, y
+`docs/referencia/comparar.cjs` comprueba que una página candidata coincida con ellas (ver
+`docs/referencia/README.md`).
 
 | Parte | Valor |
 |---|---|

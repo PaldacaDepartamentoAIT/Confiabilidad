@@ -407,17 +407,17 @@ textarea.field:focus { padding: 7px 10px; }
 </svg>
 
 <div class="app">
-  <aside class="sidebar" id="sidebar" aria-label="Menú principal">
-    <div class="sb-head">
-      <p class="brand">Confiabilidad</p>
-      <button type="button" class="menu-btn" id="sbToggle" aria-controls="sidebar" aria-expanded="true" aria-label="Contraer menú">
+  <aside data-ui="sidebar" class="sidebar" id="sidebar" aria-label="Menú principal">
+    <div data-ui="sidebar-header" class="sb-head">
+      <p data-ui="brand" class="brand">Confiabilidad</p>
+      <button data-ui="menu-toggle" type="button" class="menu-btn" id="sbToggle" aria-controls="sidebar" aria-expanded="true" aria-label="Contraer menú">
         <svg class="i"><use href="#i-chev-left"/></svg>
       </button>
     </div>
 
     <nav class="sb-nav" aria-label="Secciones">
-      <a class="nav-item hov" href="#"><svg class="i"><use href="#i-house"/></svg><span class="label fade">Inicio</span></a>
-      <a class="nav-item hov" href="#" aria-current="page"><svg class="i"><use href="#i-building"/></svg><span class="label fade">Empresas</span></a>
+      <a data-ui="nav-item" class="nav-item hov" href="#"><svg class="i"><use href="#i-house"/></svg><span class="label fade">Inicio</span></a>
+      <a data-ui="nav-item-active" class="nav-item hov" href="#" aria-current="page"><svg class="i"><use href="#i-building"/></svg><span class="label fade">Empresas</span></a>
       <a class="nav-item hov" href="#"><svg class="i"><use href="#i-factory"/></svg><span class="label fade">Plantas</span></a>
       <a class="nav-item hov" href="#"><svg class="i"><use href="#i-package"/></svg><span class="label fade">Activos</span></a>
       <a class="nav-item hov" href="#"><svg class="i"><use href="#i-wrench"/></svg><span class="label fade">Mantenimiento</span></a>
@@ -428,7 +428,7 @@ textarea.field:focus { padding: 7px 10px; }
 
     <div class="sb-foot" id="sbFoot">
       <div class="sb-row">
-        <button type="button" class="sb-btn hov" id="themeBtn" aria-label="Cambiar a tema oscuro">
+        <button data-ui="sidebar-button" type="button" class="sb-btn hov" id="themeBtn" aria-label="Cambiar a tema oscuro">
           <svg class="i" id="themeIcon"><use href="#i-sun"/></svg><span class="label fade" id="themeLabel">Claro</span>
         </button>
         <button type="button" class="sb-btn hov" id="langBtn" aria-label="Idioma: español. Cambiar a inglés">
@@ -436,21 +436,21 @@ textarea.field:focus { padding: 7px 10px; }
         </button>
       </div>
       <button type="button" class="sb-btn hov user-btn" aria-label="Cuenta de Laura Gómez">
-        <span class="avatar" aria-hidden="true">LG</span><span class="label fade">Laura Gómez</span><svg class="i fade"><use href="#i-chevs"/></svg>
+        <span data-ui="avatar" class="avatar" aria-hidden="true">LG</span><span class="label fade">Laura Gómez</span><svg class="i fade"><use href="#i-chevs"/></svg>
       </button>
     </div>
   </aside>
 
   <div class="main">
-    <header class="topbar" id="topbar">
+    <header data-ui="topbar" class="topbar" id="topbar">
       <button type="button" class="menu-btn mobile-only" id="mobileMenuBtn" aria-controls="sidebar" aria-expanded="false" aria-label="Abrir menú">
         <svg class="i"><use href="#i-menu"/></svg>
       </button>
       <div class="tabs-area" id="tabsArea">
         <div class="tabs-clip">
         <div class="tablist" role="tablist" aria-label="Secciones del formulario" id="tablist">
-          <button type="button" class="tab hov" role="tab" id="tab-general" aria-controls="panel-general" aria-selected="true" tabindex="0">Datos generales</button>
-          <button type="button" class="tab hov" role="tab" id="tab-location" aria-controls="panel-location" aria-selected="false" tabindex="-1">Ubicación</button>
+          <button data-ui="tab-active" type="button" class="tab hov" role="tab" id="tab-general" aria-controls="panel-general" aria-selected="true" tabindex="0">Datos generales</button>
+          <button data-ui="tab" type="button" class="tab hov" role="tab" id="tab-location" aria-controls="panel-location" aria-selected="false" tabindex="-1">Ubicación</button>
           <button type="button" class="tab hov" role="tab" id="tab-contact" aria-controls="panel-contact" aria-selected="false" tabindex="-1">Contacto</button>
           <button type="button" class="tab hov" role="tab" id="tab-settings" aria-controls="panel-settings" aria-selected="false" tabindex="-1">Configuración</button>
           <span class="tab-ink" id="tabInk" aria-hidden="true"></span>
@@ -464,13 +464,13 @@ textarea.field:focus { padding: 7px 10px; }
       <div class="search" id="searchBox" role="search">
         <svg class="i"><use href="#i-search"/></svg>
         <label for="q" class="sr-only">Buscar en Confiabilidad</label>
-        <input id="q" class="field" type="search" placeholder="Buscar…" autocomplete="off">
+        <input data-ui="search" id="q" class="field" type="search" placeholder="Buscar…" autocomplete="off">
       </div>
     </header>
 
-    <main class="content">
+    <main data-ui="content" class="content">
       <div class="page-head">
-        <h1>Crear empresa</h1>
+        <h1 data-ui="page-title">Crear empresa</h1>
         <p>Registra una empresa para organizar después sus plantas, áreas y activos.</p>
       </div>
 
@@ -478,8 +478,8 @@ textarea.field:focus { padding: 7px 10px; }
         <div class="stack">
           <!-- Datos generales -->
           <section class="stack" role="tabpanel" id="panel-general" aria-labelledby="tab-general">
-            <div class="block">
-              <h2>Identificación</h2>
+            <div data-ui="block" class="block">
+              <h2 data-ui="block-title">Identificación</h2>
               <div class="grid">
                 <div class="fld">
                   <label for="legalName">Razón social <span class="req" aria-hidden="true">*</span></label>
@@ -487,8 +487,8 @@ textarea.field:focus { padding: 7px 10px; }
                   <p class="error-msg" id="legalName-err" hidden><svg class="i"><use href="#i-alert"/></svg><span></span></p>
                 </div>
                 <div class="fld">
-                  <label for="tradeName">Nombre comercial</label>
-                  <input class="field" id="tradeName" name="tradeName" value="Hidronorte">
+                  <label data-ui="field-label" for="tradeName">Nombre comercial</label>
+                  <input data-ui="field" class="field" id="tradeName" name="tradeName" value="Hidronorte">
                 </div>
                 <div class="fld">
                   <label for="taxId">NIF/CIF <span class="req" aria-hidden="true">*</span></label>
@@ -498,7 +498,7 @@ textarea.field:focus { padding: 7px 10px; }
                 <div class="fld">
                   <label for="code">Código interno</label>
                   <input class="field mono" id="code" name="code" placeholder="EMP-0000" aria-describedby="code-help" spellcheck="false">
-                  <p class="help" id="code-help">Si lo dejas vacío, se genera automáticamente.</p>
+                  <p data-ui="help" class="help" id="code-help">Si lo dejas vacío, se genera automáticamente.</p>
                 </div>
               </div>
             </div>
@@ -527,7 +527,7 @@ textarea.field:focus { padding: 7px 10px; }
               <h2>Opciones</h2>
               <div class="checks">
                 <label class="check">
-                  <span class="cb"><input type="checkbox" name="active" checked><svg class="i"><use href="#i-check"/></svg></span>
+                  <span class="cb"><input data-ui="checkbox" type="checkbox" name="active" checked><svg class="i"><use href="#i-check"/></svg></span>
                   <span class="txt"><span>Empresa activa</span><span class="help">Las empresas inactivas no aparecen al registrar activos.</span></span>
                 </label>
                 <label class="check">
@@ -609,8 +609,8 @@ textarea.field:focus { padding: 7px 10px; }
           </div>
 
           <div class="actions">
-            <button type="button" class="btn btn-ghost hov" id="cancelBtn">Cancelar</button>
-            <button type="submit" class="btn btn-primary">Guardar empresa</button>
+            <button data-ui="button-secondary" type="button" class="btn btn-ghost hov" id="cancelBtn">Cancelar</button>
+            <button data-ui="button-primary" type="submit" class="btn btn-primary">Guardar empresa</button>
           </div>
           <p class="legend"><span aria-hidden="true">*</span> Campo obligatorio.</p>
         </div>
@@ -618,7 +618,7 @@ textarea.field:focus { padding: 7px 10px; }
         <aside class="block featured summary" aria-labelledby="summary-title">
           <div class="summary-row">
             <h2 id="summary-title" style="margin:0">Resumen</h2>
-            <span class="counter" id="reqCounter" aria-label="Campos obligatorios completos">2/3</span>
+            <span data-ui="counter" class="counter" id="reqCounter" aria-label="Campos obligatorios completos">2/3</span>
           </div>
           <dl>
             <dt>Razón social</dt><dd id="sumName">—</dd>
