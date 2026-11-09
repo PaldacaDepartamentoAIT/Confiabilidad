@@ -401,7 +401,7 @@ Rama de integración: `feat/sistema-de-diseno` (los PR de las entregas van contr
   Nota: E-03 se dividió en E-03 y E-03b porque la entrega completa medía 665 líneas (límite 400);
   el usuario lo aprobó al detenerse la cadena.
 - E-03b La página de muestra exhibe bloques, chips y formas de alarma.
-  Tareas: T-008, T-010 | Líneas estimadas: 350 | Rama: feat/sistema-de-diseno-bloques
+  Tareas: T-008, T-010 | Líneas estimadas: 350 | Rama: feat/sistema-de-diseno-bloque-catalogo
   Cómo probarlo: abrir la página de muestra y ver la sección de bloques en ambos temas.
 - E-04 Botones y avisos con la identidad nueva.
   Tareas: T-011, T-012, T-013, T-014 | Líneas estimadas: 350 | Rama: feat/sistema-de-diseno-botones-avisos
