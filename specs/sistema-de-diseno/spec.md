@@ -1,5 +1,5 @@
 # Spec: sistema-de-diseno
-Estado: borrador
+Estado: aprobada
 Aprobación: ligera
 
 ## Objetivo (por qué)
@@ -33,7 +33,7 @@ los cambios (transiciones, fundidos, desplazamientos de la línea de pestañas y
 
 ### RF-005 Diseño público
 El sistema deberá ofrecer un diseño para pantallas sin sesión con una barra superior de 64 px que
-muestre el nombre del sistema a la izquierda y, a la derecha, el botón de idioma y el botón de tema,
+muestre el nombre del sistema a la izquierda y, a la derecha, el botón de idioma (que muestra el código del idioma activo y abre el selector de idioma de RF-003 a RF-005 de `componentes-base-accesibles`) y el botón de tema,
 sin menú lateral, y con el contenido debajo.
 
 ### RF-006 Diseño con sesión
@@ -44,7 +44,7 @@ márgenes de la guía.
 ### RF-007 Menú lateral
 El sistema deberá ofrecer un menú lateral con cabecera (nombre del sistema y botón de abrir y cerrar),
 elementos de navegación con icono y etiqueta, el elemento de la página actual marcado, y un pie con
-el botón de tema, el de idioma y el del usuario. Los elementos de navegación se reciben como datos y
+el botón de tema, el de idioma (igual que en RF-005) y el del usuario. El botón del usuario muestra su avatar y nombre; si la pantalla le pasa una acción, es pulsable y la ejecuta, y si no, no es pulsable. Los elementos de navegación se reciben como datos y
 cada elemento puede mostrar un contador.
 
 ### RF-008 Contraer y expandir el menú
@@ -56,19 +56,19 @@ Cuando el usuario pulse el botón de abrir y cerrar del menú, el sistema deber�
 Mientras la pantalla sea más estrecha que 768 px, el sistema deberá ocultar el menú lateral y
 ofrecer en la barra superior un botón que lo abra como panel superpuesto con un velo detrás; el panel
 deberá cerrarse al pulsar el velo, al pulsar Escape o al elegir un elemento, y no deberá existir el
-estado contraído.
+estado contraído. Cuando el panel se cierre, el foco deberá volver al botón que lo abrió.
 
 ### RF-010 Barra superior con pestañas
 El sistema deberá ofrecer una barra superior con pestañas a la izquierda y un buscador a la derecha;
 la pestaña activa lleva una línea de 2 px que se desplaza hasta la nueva pestaña (0,25 s) cuando
-cambia la selección, y las pestañas se manejan con el teclado (flechas, Inicio y Fin).
+cambia la selección, y las pestañas se manejan con el teclado (flechas, Inicio y Fin). El buscador es solo visual: no filtra ni emite búsquedas; el comportamiento lo define la feature de cada pantalla que lo use.
 
 ### RF-011 Pestañas que no caben
 Si las pestañas no caben en la barra, entonces el sistema deberá sustituirlas por un selector con el
 nombre de la pestaña activa que despliegue las demás, con la animación de la guía.
 
 ### RF-012 Buscador en pantallas pequeñas
-Mientras la pantalla sea más estrecha que 768 px, el sistema deberá reducir el buscador a un botón
+Mientras la pantalla sea más estrecha que 560 px, el sistema deberá reducir el buscador a un botón
 que despliegue el campo sobre las pestañas y lo cierre con Escape.
 
 ### RF-013 Cambio de sección
@@ -83,14 +83,14 @@ variantes: normal, destacado y en alerta (fondo negro, texto blanco).
 El sistema deberá mostrar los campos de texto, de contraseña y de código con el aspecto de la guía:
 etiqueta, ayuda, marca de obligatorio, borde de 1 px al pasar el cursor, de 2 px con el foco (sin
 mover el resto del contenido) y borde y mensaje de error con el icono de forma cuando el campo sea
-inválido, conservando los comportamientos de RF-009 a RF-016 de `componentes-base-accesibles`.
+inválido, conservando los comportamientos de RF-011 a RF-016 de `componentes-base-accesibles`.
 
 ### RF-016 Selector propio
 El sistema deberá ofrecer un selector que sustituya al nativo, con un disparador igual a un campo y
 un menú de opciones con la animación de la guía, que se abra y cierre con el ratón y el teclado
 (Enter, Espacio, flechas, Inicio, Fin, Escape y escritura para saltar a una opción), marque la opción
 seleccionada, muestre el error de campo y comunique al lector de pantalla su valor, su estado
-abierto o cerrado y la opción resaltada.
+abierto o cerrado y la opción resaltada. Esto rige en dispositivos cuyo puntero principal no es táctil; en los táctiles se aplica RF-031.
 
 ### RF-017 Casilla de verificación
 El sistema deberá ofrecer una casilla de verificación con etiqueta y texto de ayuda opcional, con el
@@ -125,7 +125,7 @@ El sistema deberá ofrecer un chip de 12 px para etiquetas como la criticidad.
 ### RF-024 Gráfica de barras
 El sistema deberá ofrecer una gráfica de barras de dos series (la primera en el color principal, la
 segunda en gris) con cuadrícula, ejes, leyenda y un texto alternativo que describa los datos, que se
-escale al ancho de su bloque; si no recibe datos, entonces deberá mostrar un mensaje de vacío.
+escale al ancho de su bloque. El eje vertical deberá ir de 0 al siguiente múltiplo de 30 que cubra el mayor valor (mínimo 30), con marcas cada 30, y el ancho de cada grupo se ajustará al número de grupos recibidos. Si algún valor es negativo o no es un número, entonces deberá tratarlo como datos no válidos y mostrar el mensaje de vacío; si no recibe datos, entonces deberá mostrar un mensaje de vacío.
 
 ### RF-025 Rejilla de estado
 El sistema deberá ofrecer una rejilla de cuadros de estado con su leyenda, donde cada cuadro lleve el
@@ -142,7 +142,7 @@ esta feature en sus variantes y estados, en ambos temas y en ambos diseños, con
 
 ### RF-028 Comprobación contra la referencia
 El sistema deberá comprobar de forma automática, en tema claro y oscuro, que los estilos calculados
-de cada pieza coinciden con los de las pantallas de referencia, y deberá fallar si alguna difiere.
+de cada pieza coinciden, con igualdad exacta y sin tolerancia, con los de las pantallas de referencia en tamaño de fuente, peso, familia, interlineado, espaciado de letras, color, fondo, grosor y color de bordes, radio y relleno, y además en alto (y ancho en las de tamaño fijo). Deberá fallar si alguna propiedad difiere. Cada pieza deberá existir en al menos una referencia; las que no existan en la comparada se omiten.
 
 ### RF-029 Accesibilidad
 El sistema deberá permitir usar todas las piezas solo con el teclado, mostrar siempre un foco
@@ -153,6 +153,9 @@ estado.
 El sistema deberá mostrar los textos de las piezas (etiquetas de botones, contadores, estados vacíos,
 nombres accesibles) en español, portugués de Brasil e inglés, según RF-001 a RF-008 de
 `componentes-base-accesibles`.
+
+### RF-031 Selector en dispositivos táctiles
+Mientras el dispositivo tenga un puntero principal táctil, el sistema deberá mostrar el selector nativo del sistema con la misma etiqueta, valor, opciones y error de RF-016 y el aspecto de campo de la guía.
 
 ## Supuestos
 - S-01 El botón de tema tiene solo dos estados (claro y oscuro); una vez pulsado, no hay forma de
@@ -182,6 +185,8 @@ nombres accesibles) en español, portugués de Brasil e inglés, según RF-001 a
 - El test de comparación (RF-028) pasa en tema claro y oscuro para todas las piezas.
 - No hay violaciones de accesibilidad automáticas en el catálogo en ambos temas.
 - El catálogo exhibe todas las piezas y los dos diseños.
+- Los selectores nativo y propio muestran el mismo valor y error según el tipo de puntero.
 
 ## Historial de cambios
-- 2026-11-09 — Spec inicial — RF: RF-001 a RF-030 — Estado: pendiente de clarificar
+- 2026-11-09 — Spec inicial — RF: RF-001 a RF-030 — Estado: clarificado
+- 2026-11-09 — Clarificación: C-01 a C-09 — RF: RF-005, RF-007, RF-009, RF-010, RF-012, RF-015, RF-016, RF-024, RF-028, RF-031 — Estado: clarificado
