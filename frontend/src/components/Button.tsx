@@ -2,17 +2,21 @@ import { useEffect, useRef, type ButtonHTMLAttributes } from "react";
 import { useTranslation } from "react-i18next";
 
 import { useAnnouncer } from "./announcer";
+import "./Button.css";
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   type?: "button" | "submit";
   keepFocusOnMouseDown?: boolean;
   processing?: boolean;
+  variant?: "primary" | "secondary";
 };
 
 export function Button({
   type = "button",
   keepFocusOnMouseDown = false,
   processing = false,
+  variant = "primary",
+  className,
   onMouseDown,
   onClick,
   children,
@@ -33,6 +37,10 @@ export function Button({
     <button
       {...buttonProps}
       type={type}
+      className={["btn", variant === "primary" ? "btn-primary" : "btn-ghost hov", className]
+        .filter(Boolean)
+        .join(" ")}
+      data-ui={`button-${variant}`}
       // `aria-disabled` en lugar de `disabled`: el botón sigue en el orden de Tab y no pierde el foco (D-07).
       aria-disabled={processing || undefined}
       onMouseDown={(event) => {

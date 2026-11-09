@@ -151,11 +151,21 @@ transitorias hasta T-051 (D-12).
   muertos: sin `lang`, sin variante de alerta, sin una forma, sin chips.
 
 ## E-04 Botón y avisos
-- [ ] T-011 Botón restilizado
+- [x] T-011 Botón restilizado
   RF: RF-018 | Depende de: T-001 | Archivos: 3
   Archivos: `components/Button.tsx`, `Button.css`, `Button.test.tsx`.
   Hecho cuando: variantes principal y secundario con hover, foco y procesando de la guía; los
   tests previos de `Button` siguen pasando; suite verde.
+  Decisiones: `Button` recibe `variant` (`primary` por defecto, `secondary`) y `className`; pone las
+  clases `btn btn-primary` o `btn btn-ghost hov` y `data-ui="button-primary"` o
+  `"button-secondary"` de las referencias — [Probable] — revertir: quitar la prop y las clases. El
+  hover del secundario (`.hov`) se duplica en `Button.css` porque `ThemeButton.css` solo se carga si
+  hay un botón de tema; el menú lateral (T-029) lo moverá a un archivo compartido — [Suposición] —
+  revertir: importar `ThemeButton.css` desde `Button.tsx`. El estado «procesando»
+  (`aria-disabled`) se ve con `cursor: not-allowed` y opacidad 0,6, valores heredados del estilo
+  provisional anterior porque la guía no los define — [Suposición] — revertir: quitar la regla
+  `.btn[aria-disabled]`. Los botones existentes de las pantallas siguen siendo principales.
+  Mutantes muertos: variantes intercambiadas, `data-ui` fijo, variante por defecto, `className`.
 - [ ] T-012 Aviso
   RF: RF-019 | Depende de: T-006 | Archivos: 3
   Archivos: `components/Notice.tsx`, `Notice.css`, `Notice.test.tsx`.
