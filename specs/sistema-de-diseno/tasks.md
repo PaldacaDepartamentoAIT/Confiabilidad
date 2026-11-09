@@ -83,7 +83,7 @@ transitorias hasta T-051 (D-12).
   recargar y un valor guardado inválido se borra — [Cierto] — revertir: no aplica. Mutante muerto:
   no pasar el almacenamiento al botón.
 
-## E-03 Bloques, chips y formas
+## E-03 Iconos, formas y chip
 - [x] T-006 `lucide-react` y módulo de iconos
   RF: RF-020 | Depende de: — | Archivos: 4
   Archivos: `frontend/package.json`, `pnpm-lock.yaml`, `icons/index.ts`, `icons/icons.test.ts`.
@@ -112,15 +112,19 @@ transitorias hasta T-051 (D-12).
   revertir: cambiar `shapes.tsx`. La geometría se copió de los símbolos `s-p1`, `s-p2`, `s-wn` y
   `s-nu` de `activos.html` — [Cierto]. Mutantes muertos: triángulo por rombo, color de P2, `aria-hidden`
   fijo, orden de `style`.
+- [x] T-009 Chip
+  RF: RF-023 | Depende de: T-001 | Archivos: 3
+  Archivos: `components/Chip.tsx`, `Chip.css`, `Chip.test.tsx`.
+  Hecho cuando: renderiza el texto en el chip de la guía y pasa `axe-core`; suite verde.
+  Decisiones: `Chip` es un `span` con la clase `chip` y `data-ui="chip"` que acepta los atributos
+  de `span` — [Cierto] — revertir: cambiar `Chip.tsx`. Mutantes muertos: `data-ui`, atributos extra,
+  clase base.
+## E-03b Bloque y catálogo
 - [ ] T-008 Bloque
   RF: RF-014 | Depende de: T-001 | Archivos: 3
   Archivos: `components/Block.tsx`, `Block.css`, `Block.test.tsx`.
   Hecho cuando: variantes normal, destacado y en alerta, con cabecera opcional (título, contador,
   acciones); suite verde.
-- [ ] T-009 Chip
-  RF: RF-023 | Depende de: T-001 | Archivos: 3
-  Archivos: `components/Chip.tsx`, `Chip.css`, `Chip.test.tsx`.
-  Hecho cuando: renderiza el texto en el chip de la guía y pasa `axe-core`; suite verde.
 - [ ] T-010 Catálogo: bloques, chips y formas
   RF: RF-027 | Depende de: T-007, T-008, T-009 | Archivos: 3
   Archivos: `showcase/sections/BlocksSection.tsx`, `showcase/ShowcasePage.tsx`,
@@ -391,8 +395,13 @@ Rama de integración: `feat/sistema-de-diseno` (los PR de las entregas van contr
 - E-02b Botón de tema que alterna claro y oscuro y se recuerda.
   Tareas: T-004, T-005 | Líneas estimadas: 265 | Rama: feat/sistema-de-diseno-boton-tema
   Cómo probarlo: pulsar el botón en la página de muestra, recargar y comprobar que se conserva.
-- E-03 La página de muestra exhibe bloques, chips y formas de alarma.
-  Tareas: T-006, T-007, T-008, T-009, T-010 | Líneas estimadas: 380 | Rama: feat/sistema-de-diseno-bloques
+- E-03 Iconos, formas de alarma y chip (sin nada visible aún).
+  Tareas: T-006, T-007, T-009 | Líneas estimadas: 315 | Rama: feat/sistema-de-diseno-iconos
+  Cómo probarlo: `pnpm --filter frontend test`; los tests de `icons/` y `components/Chip.test.tsx`.
+  Nota: E-03 se dividió en E-03 y E-03b porque la entrega completa medía 665 líneas (límite 400);
+  el usuario lo aprobó al detenerse la cadena.
+- E-03b La página de muestra exhibe bloques, chips y formas de alarma.
+  Tareas: T-008, T-010 | Líneas estimadas: 350 | Rama: feat/sistema-de-diseno-bloques
   Cómo probarlo: abrir la página de muestra y ver la sección de bloques en ambos temas.
 - E-04 Botones y avisos con la identidad nueva.
   Tareas: T-011, T-012, T-013, T-014 | Líneas estimadas: 350 | Rama: feat/sistema-de-diseno-botones-avisos
