@@ -220,11 +220,20 @@ transitorias hasta T-051 (D-12).
   con borde de 1 px, hover en el principal, foco con borde de 2 px y relleno de 10 px sin mover el
   texto, y error con borde, icono y mensaje en tinta — [Cierto]. Mutantes muertos: `className`,
   `data-ui`, icono de error, clase `req`, clase `fld`, clase `help`.
-- [ ] T-016 Contraseña, código y leyenda de obligatorios
-  RF: RF-015 | Depende de: T-015 | Archivos: 3
-  Archivos: `components/fields/PasswordField.tsx`, `CodeField.tsx`, `RequiredLegend.tsx`.
+- [x] T-016 Contraseña, código y leyenda de obligatorios
+  RF: RF-015 | Depende de: T-015 | Archivos: 4
+  Archivos: `components/fields/PasswordField.tsx`, `CodeField.tsx`, `RequiredLegend.tsx`,
+  `TextField.test.tsx`.
   Hecho cuando: usan las clases de `field.css`; los tests previos de ambos campos siguen pasando
   sin cambios; suite verde.
+  Excepción: se añadió `TextField.test.tsx` (un bloque con tres tests nuevos de estas tres piezas)
+  para respetar el test primero; no cabía en los tests previos, que se conservan sin cambios. Lo
+  añadí sin detenerme — [Suposición] — revertir: pedir una Excepción aparte.
+  Decisiones: el botón de mostrar contraseña es un botón secundario (`btn btn-ghost hov`) dentro del
+  campo, a su ancho natural — [Probable]; el código de verificación usa `mono`; la leyenda de
+  obligatorios usa la clase `help` (12 px, texto secundario) y conserva su texto —  [Cierto] —
+  revertir: quitar las clases. `PasswordField.tsx` importa `Button.css` para no depender de que otro
+  componente cargue los estilos del botón — [Cierto]. Mutantes muertos: sin las tres clases.
 - [ ] T-017 Casilla de verificación
   RF: RF-017 | Depende de: T-006 | Archivos: 3
   Archivos: `components/fields/Checkbox.tsx`, `Checkbox.css`, `Checkbox.test.tsx`.
