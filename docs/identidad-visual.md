@@ -1,6 +1,6 @@
 # Identidad visual
 
-Estado: borrador
+Estado: aprobado
 
 Reglas de estilo de la interfaz de Confiabilidad (web y escritorio): colores, tipografía, formas,
 interacción y movimiento. El código las recoge como variables CSS y componentes reutilizables en
@@ -81,7 +81,8 @@ y 3:1 para iconos, formas y bordes de controles).
 
 | Rol | Color | Uso | Contraste |
 |---|---|---|---|
-| Fondo | `#111213` | Lienzo, bloques y relleno negro | — |
+| Fondo | `#111213` | Lienzo y bloques | — |
+| Relleno negro | `#000000` | Bloque en alerta (el tema claro usa la tinta) | — |
 | Tinta | `#eeeff1` | Texto | 16,3:1 |
 | Texto secundario | `#aaadb0` | Etiquetas, ayudas, ejes, placeholder, pestañas no activas | 8,3:1 |
 | Gris | `#47484a` | Líneas, bordes de zonas, rellenos neutros, contadores | 2,0:1 |
@@ -221,8 +222,8 @@ sección manda sobre las descripciones generales de arriba.
 |---|---|
 | Contenedor | `position: sticky; top: 0; height: 100vh`; ancho 232 px (60 px contraído); borde derecho de 1 px en gris; transición de ancho 0,25 s `ease-out` |
 | Cabecera | 64 px de alto, relleno horizontal de 10 px, borde inferior de 1 px en gris |
-| Nombre del sistema | posicionado a 22 px del borde izquierdo y centrado en vertical; 18 px, 700, `letter-spacing: -0,01em`; subrayado en tinta de 2,5 px con 6 px de separación |
-| Botón de abrir y cerrar | 40 × 37 px, radio 6 px, a la derecha de la cabecera |
+| Nombre del sistema | posicionado a 22 px del borde izquierdo y centrado en vertical; 18 px, 700, `line-height: 1,25`, `letter-spacing: -0,01em`; subrayado en tinta de 2,5 px con 6 px de separación |
+| Botón de abrir y cerrar | 40 × 37 px, radio 6 px, a la derecha de la cabecera; icono de chevron de 22 px (la excepción al icono de 16 px); al pasar el cursor, fondo en 80 % del fondo del botón y 20 % del texto secundario |
 | Navegación | relleno de 10 px, separación de 2 px entre elementos |
 | Elemento de navegación | 36 px de alto, relleno horizontal de 12 px, separación de 10 px entre icono y etiqueta, radio 6 px, peso 500, icono de 16 px |
 | Elemento activo | línea de 2 px en el principal, a 3 px del borde inferior del elemento y con 12 px de margen a cada lado |
@@ -237,6 +238,7 @@ sección manda sobre las descripciones generales de arriba.
 |---|---|
 | Contenedor | `position: sticky; top: 0`, 64 px de alto, relleno horizontal de 22 px, separación de 12 px, borde inferior de 1 px en gris, fondo del lienzo |
 | Pestaña | 36 px de alto, relleno horizontal de 12 px, radio 6 px, 14 px, peso 500; inactiva en texto secundario, activa en tinta |
+| Separación entre pestañas | 4 px |
 | Línea de la pestaña activa | 2 px en el principal, pegada al borde inferior de la pestaña con 12 px de margen a cada lado; se desplaza entre pestañas |
 | Buscador | 220 × 36 px, icono de lupa a 11 px del borde izquierdo en texto secundario, relleno izquierdo de 34 px; placeholder «Buscar…» |
 | Selector de pestañas | alto de 36 px, relleno de 0 10 px 0 12 px, radio 6 px, separación de 6 px entre texto y chevron, peso 500, menú alineado a la derecha con ancho mínimo de 200 px |
@@ -251,7 +253,7 @@ sección manda sobre las descripciones generales de arriba.
 | Formulario | dos columnas: contenido flexible y un bloque lateral de 280 px, con 18 px entre ellas; a menos de 1100 px, una sola columna |
 | Rejilla de campos | columnas automáticas de 240 px como mínimo, separación de 16 px en vertical y 18 px en horizontal; un campo puede ocupar toda la fila |
 | Acciones del formulario | alineadas a la derecha, separación de 10 px; el secundario («Cancelar») antes que el principal |
-| Leyenda de obligatorios | «* Campo obligatorio», 12 px, texto secundario, debajo de las acciones |
+| Leyenda de obligatorios | «* Campo obligatorio», 12 px, texto secundario, debajo de las acciones y alineada a la derecha, igual que ellas |
 
 ### Bloque
 
@@ -324,7 +326,7 @@ Valores exactos tomados de la pantalla «Activos», aprobada como referencia
 | Aviso de alarma | relleno de 12 px arriba y abajo y 16 px a los lados, separación de 12 px entre icono, texto y acción; el título en peso 600; puede llevar un botón secundario a la derecha |
 | Estado | icono de forma de 16 px y texto en tinta, a 8 px; el estado normal no lleva icono pero reserva el mismo hueco de 16 px |
 | Chip (criticidad y similares) | fondo gris, texto en tinta, 12 px, 500, relleno horizontal de 8 px, interlineado de 22 px, radio 4 px |
-| Gráfica de barras | lienzo SVG de 640 × 240 que se escala al ancho del bloque; área de trazado de 576 × 192 con la cuadrícula de 16 px detrás de las barras; eje vertical con marcas cada 30 y números de 12 px en JetBrains Mono, texto secundario, a 8 px del área; meses debajo, centrados y a 20 px |
+| Gráfica de barras | lienzo SVG de 640 × 240 que se escala al ancho del bloque; área de trazado de 576 × 192 situada en x = 40, y = 8, con la cuadrícula de 16 px detrás de las barras; eje vertical con marcas cada 30 y números de 12 px en JetBrains Mono, texto secundario, a 8 px del área; meses debajo, centrados y a 20 px, en Manrope 12 px, texto secundario |
 | Barras | 30 px de ancho, 4 px de separación entre las dos series, 96 px por grupo; primera serie en el principal y segunda en gris, sólidas y sin borde |
 | Leyenda de gráfica | separación de 16 px entre elementos; muestras de 12 × 12 px sin borde; 12 px, texto secundario |
 | Rejilla de estado | cuadros de 24 × 24 px con radio 0 y separación de 4 px, que continúan en la fila siguiente; los normales en gris; los de P1, P2 y advertencia en su color con el glifo de su forma (12 px, en color del lienzo) dentro, para no depender solo del color; el neutro, con borde de 2 px en texto secundario; cada cuadro con `title` y `aria-label` |

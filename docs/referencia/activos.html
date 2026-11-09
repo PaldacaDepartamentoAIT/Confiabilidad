@@ -40,7 +40,7 @@
     --secondary: #535a65;
     --menu-btn-bg: #ffffff;
     --menu-btn-icon: #535a65;
-    --black-fill: #111213;
+    --black-fill: #000000;
     --p1: #a47070;
     --p2: #d9977a;
     --warn: #c9bd8c;
@@ -59,7 +59,7 @@
   --secondary: #535a65;
   --menu-btn-bg: #ffffff;
   --menu-btn-icon: #535a65;
-  --black-fill: #111213;
+  --black-fill: #000000;
   --p1: #a47070;
   --p2: #d9977a;
   --warn: #c9bd8c;
@@ -118,7 +118,7 @@ svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor;
 .brand {
   position: absolute; left: 22px; top: 50%; transform: translateY(-50%);
   margin: 0;
-  font-size: 18px; font-weight: 700; letter-spacing: -.01em; white-space: nowrap;
+  font-size: 18px; font-weight: 700; line-height: 1.25; letter-spacing: -.01em; white-space: nowrap;
   text-decoration: underline; text-decoration-thickness: 2.5px; text-underline-offset: 6px;
   text-decoration-color: var(--ink);
   transition: opacity .18s ease;
@@ -133,7 +133,8 @@ svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor;
   background: var(--menu-btn-bg); color: var(--menu-btn-icon);
   transition: background-color .35s ease;
 }
-.menu-btn:hover { background: color-mix(in srgb, var(--menu-btn-bg) 82%, var(--secondary)); transition-duration: .08s; }
+.menu-btn svg.i.lg, #sbToggle svg.i { width: 22px; height: 22px; }
+.menu-btn:hover { background: color-mix(in srgb, var(--menu-btn-bg) 80%, var(--text2)); transition-duration: .08s; }
 
 .sb-nav { padding: 10px; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; overflow-x: hidden; }
 .nav-item {
@@ -352,6 +353,7 @@ textarea.field:focus { padding: 7px 10px; }
 .summary dd.mono { font-family: var(--mono); font-size: 12px; }
 
 .legend { font-size: 12px; color: var(--text2); }
+.actions + .legend { text-align: right; margin: 0; }
 
 
 /* ---------- Datos ---------- */
@@ -378,6 +380,7 @@ textarea.field:focus { padding: 7px 10px; }
 .legend i { width: 12px; height: 12px; display: inline-block; }
 .cells-legend { margin-top: 14px; color: var(--ink); }
 .chart text { font: 400 12px var(--mono); fill: var(--text2); font-variant-numeric: tabular-nums; }
+.chart text.m { font-family: var(--font); }
 .cells { display: flex; flex-wrap: wrap; gap: 4px; }
 .cell { width: 24px; height: 24px; border-radius: 0; background: var(--gray); display: grid; place-items: center; }
 .cell.p1 { background: var(--p1); } .cell.p2 { background: var(--p2); } .cell.wn { background: var(--warn); }
@@ -943,7 +946,7 @@ textarea.field:focus { padding: 7px 10px; }
   var ns = "http://www.w3.org/2000/svg";
   (function chart() {
     var months = ["Jun", "Jul", "Ago", "Sep", "Oct", "Nov"], a = [62, 70, 78, 84, 90, 96], b = [48, 44, 38, 30, 26, 22];
-    var X0 = 48, Y0 = 16, W = 576, H = 192, max = 120, h = "";
+    var X0 = 40, Y0 = 8, W = 576, H = 192, max = 120, h = "";
     h += '<defs><pattern id="g" x="' + X0 + '" y="' + Y0 + '" width="16" height="16" patternUnits="userSpaceOnUse"><path d="M16 0V16M0 16H16" fill="none" stroke="var(--grid)" stroke-width="1"/></pattern></defs>';
     h += '<rect x="' + X0 + '" y="' + Y0 + '" width="' + W + '" height="' + H + '" fill="url(#g)"/>';
     for (var v = 0; v <= max; v += 30) { var y = Y0 + H - v / max * H; h += '<text x="' + (X0 - 8) + '" y="' + (y + 4) + '" text-anchor="end">' + v + '</text>'; }
@@ -951,7 +954,7 @@ textarea.field:focus { padding: 7px 10px; }
       var x = X0 + i * 96, ha = a[i] / max * H, hb = b[i] / max * H;
       h += '<rect x="' + (x + 16) + '" y="' + (Y0 + H - ha) + '" width="30" height="' + ha + '" fill="var(--primary)"/>';
       h += '<rect x="' + (x + 50) + '" y="' + (Y0 + H - hb) + '" width="30" height="' + hb + '" fill="var(--gray)"/>';
-      h += '<text x="' + (x + 48) + '" y="' + (Y0 + H + 20) + '" text-anchor="middle">' + m + '</text>';
+      h += '<text x="' + (x + 48) + '" y="' + (Y0 + H + 20) + '" class="m" text-anchor="middle">' + m + '</text>';
     });
     document.getElementById("chart").innerHTML = h;
   })();
