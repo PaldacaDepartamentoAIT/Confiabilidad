@@ -150,7 +150,7 @@ transitorias hasta T-051 (D-12).
   `section` de `base.css` — [Cierto]. Verificado en un navegador real en claro y oscuro. Mutantes
   muertos: sin `lang`, sin variante de alerta, sin una forma, sin chips.
 
-## E-04 Botón y avisos
+## E-04 Botón y aviso
 - [x] T-011 Botón restilizado
   RF: RF-018 | Depende de: T-001 | Archivos: 3
   Archivos: `components/Button.tsx`, `Button.css`, `Button.test.tsx`.
@@ -176,6 +176,7 @@ transitorias hasta T-051 (D-12).
   referencia de «Crear empresa» no marca su aviso con `data-ui` (está oculto); no se añadió a la
   referencia — [Cierto]. Mutantes muertos: iconos intercambiados, rol por defecto, atributos extra,
   `data-ui`, clase base.
+## E-04b Aviso de alarma y catálogo
 - [ ] T-013 Aviso de alarma
   RF: RF-019, RF-020 | Depende de: T-007, T-011 | Archivos: 3
   Archivos: `components/AlarmNotice.tsx`, `AlarmNotice.css`, `AlarmNotice.test.tsx`.
@@ -437,9 +438,15 @@ Rama de integración: `feat/sistema-de-diseno` (los PR de las entregas van contr
 - E-03b La página de muestra exhibe bloques, chips y formas de alarma.
   Tareas: T-008, T-010 | Líneas estimadas: 350 | Rama: feat/sistema-de-diseno-bloque-catalogo
   Cómo probarlo: abrir la página de muestra y ver la sección de bloques en ambos temas.
-- E-04 Botones y avisos con la identidad nueva.
-  Tareas: T-011, T-012, T-013, T-014 | Líneas estimadas: 350 | Rama: feat/sistema-de-diseno-botones-avisos
-  Cómo probarlo: página de muestra, sección de botones y avisos; `/register` mantiene su flujo.
+- E-04 Botón con variantes y aviso informativo (sin nada visible aún, salvo los botones del formulario).
+  Tareas: T-011, T-012 | Líneas estimadas: 210 | Rama: feat/sistema-de-diseno-boton-aviso
+  Cómo probarlo: `pnpm --filter frontend test`; en la página de muestra y en `/register` los botones
+  usan el estilo nuevo.
+  Nota: E-04 se dividió en E-04 y E-04b porque la entrega completa medía 428 líneas (límite 400);
+  el usuario lo aprobó al detenerse la cadena.
+- E-04b Aviso de alarma y sección de botones y avisos en el catálogo.
+  Tareas: T-013, T-014 | Líneas estimadas: 220 | Rama: feat/sistema-de-diseno-aviso-alarma
+  Cómo probarlo: página de muestra, sección «Botones y avisos», en ambos temas.
 - E-05 Campos de texto, contraseña, código y casilla con la identidad nueva.
   Tareas: T-015, T-016, T-017, T-018 | Líneas estimadas: 360 | Rama: feat/sistema-de-diseno-campos
   Cómo probarlo: página de muestra y `/register`: hover, foco y error de cada campo.
