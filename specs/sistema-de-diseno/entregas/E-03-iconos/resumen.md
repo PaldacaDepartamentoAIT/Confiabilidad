@@ -1,6 +1,6 @@
 # Entrega E-03 · Iconos, formas de alarma y chip
 
-Rama: `feat/sistema-de-diseno-iconos` · PR: pendiente ·
+Rama: `feat/sistema-de-diseno-iconos` · PR: [PaldacaDepartamentoAIT/Confiabilidad#69](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/69) ·
 Líneas de código y tests: 315 (límite: 400).
 
 ## Qué se hizo
