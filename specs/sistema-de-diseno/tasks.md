@@ -207,11 +207,19 @@ transitorias hasta T-051 (D-12).
   sin aviso de éxito.
 
 ## E-05 Campos de texto y casilla
-- [ ] T-015 Campo de texto restilizado
+- [x] T-015 Campo de texto restilizado
   RF: RF-015 | Depende de: T-006 | Archivos: 3
   Archivos: `components/fields/TextField.tsx`, `fields/field.css`, `TextField.test.tsx`.
   Hecho cuando: borde de 1 px al pasar el cursor, de 2 px con foco sin mover el contenido y error
   con icono; los tests previos de `TextField` siguen pasando; suite verde.
+  Decisiones: `TextField` usa la estructura de las referencias (`.fld` con `label`, `input.field`,
+  `.help` y `.error-msg` con icono de alerta), añade `data-ui="field-label"` y `"field"` y suma
+  `className` a la clase `field` — [Probable] — revertir: volver al marcado anterior. Las reglas de
+  `field.css` para `form > .fld + .fld` y `form > .btn` son transitorias (separación en formularios
+  sin rejilla) y se retiran en T-051 — [Suposición]. Verificado en un navegador real: reposo 36 px
+  con borde de 1 px, hover en el principal, foco con borde de 2 px y relleno de 10 px sin mover el
+  texto, y error con borde, icono y mensaje en tinta — [Cierto]. Mutantes muertos: `className`,
+  `data-ui`, icono de error, clase `req`, clase `fld`, clase `help`.
 - [ ] T-016 Contraseña, código y leyenda de obligatorios
   RF: RF-015 | Depende de: T-015 | Archivos: 3
   Archivos: `components/fields/PasswordField.tsx`, `CodeField.tsx`, `RequiredLegend.tsx`.
