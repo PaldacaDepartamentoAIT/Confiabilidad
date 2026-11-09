@@ -234,10 +234,17 @@ transitorias hasta T-051 (D-12).
   obligatorios usa la clase `help` (12 px, texto secundario) y conserva su texto —  [Cierto] —
   revertir: quitar las clases. `PasswordField.tsx` importa `Button.css` para no depender de que otro
   componente cargue los estilos del botón — [Cierto]. Mutantes muertos: sin las tres clases.
-- [ ] T-017 Casilla de verificación
+- [x] T-017 Casilla de verificación
   RF: RF-017 | Depende de: T-006 | Archivos: 3
   Archivos: `components/fields/Checkbox.tsx`, `Checkbox.css`, `Checkbox.test.tsx`.
   Hecho cuando: icono de verificación centrado, etiqueta y ayuda opcional; suite verde.
+  Decisiones: `Checkbox` envuelve la caja y el icono de verificación en `label.check`; la ayuda y el
+  error van fuera de la etiqueta, bajo el texto, para que el nombre accesible de la casilla sea solo
+  su etiqueta (como pedían los tests previos) — [Probable] — revertir: meter la ayuda en `.txt`. El
+  icono de verificación mide 14 px con trazo 3 y la caja es nativa con `appearance: none` —
+  [Cierto]. Los estilos no se verificaron aún en un navegador: `/register` necesita el backend para
+  cargar los términos; se verifica en el catálogo (T-018) — [Cierto]. Mutantes muertos: `data-ui`,
+  tamaño del icono, clase de la nota, clase `check`, asterisco.
 - [ ] T-018 Catálogo: campos
   RF: RF-027 | Depende de: T-016, T-017 | Archivos: 3
   Archivos: `showcase/sections/FieldsSection.tsx`, `showcase/ShowcasePage.tsx`,
