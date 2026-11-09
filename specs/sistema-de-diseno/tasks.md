@@ -188,11 +188,20 @@ transitorias hasta T-051 (D-12).
   [Suposición] — revertir: poner `role="status"` por defecto. Un `style` externo manda sobre `--c`
   — [Probable] — revertir: invertir el orden. Mutantes muertos: color de P2, acción, negrita,
   `data-ui`, orden del estilo, forma.
-- [ ] T-014 Catálogo: botones y avisos
+- [x] T-014 Catálogo: botones y avisos
   RF: RF-027 | Depende de: T-012, T-013 | Archivos: 3
   Archivos: `showcase/sections/ButtonsSection.tsx`, `showcase/ShowcasePage.tsx`,
   `showcase/ShowcasePage.test.tsx`.
   Hecho cuando: el catálogo exhibe botones y avisos en todos sus estados; suite verde.
+  Excepción: sin cambios; `sections.css` ya existe desde T-010.
+  Decisiones: la sección «Botones y avisos» va en español con `lang="es"` (como la de bloques); sus
+  avisos informativos llevan `role="note"` para no añadir regiones `status` que choquen con el
+  anunciador de la aplicación — [Probable] — revertir: dejar el rol por defecto y ajustar
+  `ShowcasePage.test.tsx`. Verificado en un navegador real: el botón secundario perdía su borde
+  porque la regla `.hov` de `ThemeButton.css` se cargaba después; se corrigió con la especificidad
+  `.btn.btn-ghost` en `Button.css` — [Cierto]. Los estilos no se prueban en jsdom; lo cubrirá la
+  comprobación visual (T-053). Mutantes muertos: sin `lang`, sin botón procesando, forma cambiada,
+  sin aviso de éxito.
 
 ## E-05 Campos de texto y casilla
 - [ ] T-015 Campo de texto restilizado
