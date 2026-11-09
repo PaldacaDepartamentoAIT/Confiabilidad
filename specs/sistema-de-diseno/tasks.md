@@ -206,7 +206,7 @@ transitorias hasta T-051 (D-12).
   comprobación visual (T-053). Mutantes muertos: sin `lang`, sin botón procesando, forma cambiada,
   sin aviso de éxito.
 
-## E-05 Campos de texto y casilla
+## E-05 Campos de texto
 - [x] T-015 Campo de texto restilizado
   RF: RF-015 | Depende de: T-006 | Archivos: 3
   Archivos: `components/fields/TextField.tsx`, `fields/field.css`, `TextField.test.tsx`.
@@ -234,6 +234,7 @@ transitorias hasta T-051 (D-12).
   obligatorios usa la clase `help` (12 px, texto secundario) y conserva su texto —  [Cierto] —
   revertir: quitar las clases. `PasswordField.tsx` importa `Button.css` para no depender de que otro
   componente cargue los estilos del botón — [Cierto]. Mutantes muertos: sin las tres clases.
+## E-05b Casilla y catálogo de campos
 - [ ] T-017 Casilla de verificación
   RF: RF-017 | Depende de: T-006 | Archivos: 3
   Archivos: `components/fields/Checkbox.tsx`, `Checkbox.css`, `Checkbox.test.tsx`.
@@ -483,9 +484,14 @@ Rama de integración: `feat/sistema-de-diseno` (los PR de las entregas van contr
 - E-04b Aviso de alarma y sección de botones y avisos en el catálogo.
   Tareas: T-013, T-014 | Líneas estimadas: 220 | Rama: feat/sistema-de-diseno-aviso-alarma
   Cómo probarlo: página de muestra, sección «Botones y avisos», en ambos temas.
-- E-05 Campos de texto, contraseña, código y casilla con la identidad nueva.
-  Tareas: T-015, T-016, T-017, T-018 | Líneas estimadas: 360 | Rama: feat/sistema-de-diseno-campos
+- E-05 Campos de texto, contraseña y código con la identidad nueva.
+  Tareas: T-015, T-016 | Líneas estimadas: 205 | Rama: feat/sistema-de-diseno-campos-texto
   Cómo probarlo: página de muestra y `/register`: hover, foco y error de cada campo.
+  Nota: E-05 se dividió en E-05 y E-05b porque la entrega completa medía 467 líneas (límite 400);
+  se aplicó la regla de AGENTS.md sobre entregas que rebasan el límite.
+- E-05b Casilla de verificación y sección «Campos» del catálogo.
+  Tareas: T-017, T-018 | Líneas estimadas: 262 | Rama: feat/sistema-de-diseno-casilla
+  Cómo probarlo: página de muestra, sección «Campos»: marcar y desmarcar las casillas, en ambos temas.
 - E-06 Botón de idioma con menú.
   Tareas: T-019, T-020, T-021 | Líneas estimadas: 400 | Rama: feat/sistema-de-diseno-idioma
   Cómo probarlo: abrir el botón de idioma en el catálogo y cambiar de idioma con ratón y teclado.
