@@ -1,6 +1,6 @@
 # Entrega E-03b · Bloque y catálogo
 
-Rama: `feat/sistema-de-diseno-bloque-catalogo` (sale de `feat/sistema-de-diseno-iconos`) · PR: pendiente ·
+Rama: `feat/sistema-de-diseno-bloque-catalogo` · PR: [PaldacaDepartamentoAIT/Confiabilidad#70](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/70) ·
 Líneas de código y tests: 350 (límite: 400).
 
 ## Qué se hizo
