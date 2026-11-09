@@ -9,6 +9,13 @@ export const ptBR: Messages = {
   language: {
     label: "Idioma",
   },
+  theme: {
+    light: "Claro",
+    dark: "Escuro",
+    toggle: "Alternar tema",
+    announceLight: "Tema claro",
+    announceDark: "Tema escuro",
+  },
   button: {
     processing: "Processando…",
     processingAnnouncement: "Processando",

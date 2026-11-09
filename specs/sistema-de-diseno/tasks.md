@@ -43,12 +43,19 @@ transitorias hasta T-051 (D-12).
   temporizador. La clave guardada es `confiabilidad.theme`, como la del idioma — [Probable] —
   revertir: cambiar `THEME_STORAGE_KEY`. Mutantes muertos: duración 500 ms, no borrar el valor
   inválido, no alternar, no reiniciar el plazo.
-- [ ] T-003 Textos del tema en tres idiomas
-  RF: RF-030 | Depende de: T-001 | Archivos: 3
-  Archivos: `i18n/locales/en.ts`, `es.ts`, `pt-BR.ts`.
+- [x] T-003 Textos del tema en tres idiomas
+  RF: RF-030 | Depende de: T-001 | Archivos: 4
+  Archivos: `i18n/locales/en.ts`, `es.ts`, `pt-BR.ts`, `locales.test.ts`.
   Hecho cuando: existen `theme.light`, `theme.dark` y `theme.toggle` en los tres idiomas y
   `locales.test.ts` y `keys.test.ts` pasan; suite verde.
-  Excepción: los tres archivos son una unidad (`es` y `pt-BR` se tipan contra `en`).
+  Excepción: los tres archivos de idioma son una unidad (`es` y `pt-BR` se tipan contra `en`), y
+  `locales.test.ts` lista los grupos de claves de esos mismos archivos y debe añadir `theme`.
+  Decisiones: claves `theme.light`, `theme.dark`, `theme.toggle` (nombre accesible del botón),
+  `theme.announceLight` y `theme.announceDark` (aviso al lector tras cambiar) — [Probable] — revertir:
+  borrar el grupo `theme` de los tres idiomas y de `locales.test.ts`. Mutante muerto: quitar una
+  clave de `es` falla `locales.test.ts` y `tsc`. Se amplió el texto de la Excepción a
+  `locales.test.ts` sin detenerme, por ser el mismo conjunto de archivos — [Suposición] — revertir:
+  pedir una Excepción aparte.
 - [ ] T-004 Botón de tema
   RF: RF-002 | Depende de: T-002, T-003 | Archivos: 3
   Archivos: `theme/ThemeButton.tsx`, `ThemeButton.css`, `ThemeButton.test.tsx`.

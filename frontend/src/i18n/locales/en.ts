@@ -7,6 +7,13 @@ export const en = {
   language: {
     label: "Language",
   },
+  theme: {
+    light: "Light",
+    dark: "Dark",
+    toggle: "Switch theme",
+    announceLight: "Light theme",
+    announceDark: "Dark theme",
+  },
   button: {
     processing: "Processing…",
     processingAnnouncement: "Processing",

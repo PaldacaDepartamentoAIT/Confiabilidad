@@ -10,6 +10,13 @@ export const es: Messages = {
   language: {
     label: "Idioma",
   },
+  theme: {
+    light: "Claro",
+    dark: "Oscuro",
+    toggle: "Cambiar tema",
+    announceLight: "Tema claro",
+    announceDark: "Tema oscuro",
+  },
   button: {
     processing: "Procesando…",
     processingAnnouncement: "Procesando",
