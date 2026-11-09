@@ -120,17 +120,35 @@ transitorias hasta T-051 (D-12).
   de `span` — [Cierto] — revertir: cambiar `Chip.tsx`. Mutantes muertos: `data-ui`, atributos extra,
   clase base.
 ## E-03b Bloque y catálogo
-- [ ] T-008 Bloque
+- [x] T-008 Bloque
   RF: RF-014 | Depende de: T-001 | Archivos: 3
   Archivos: `components/Block.tsx`, `Block.css`, `Block.test.tsx`.
   Hecho cuando: variantes normal, destacado y en alerta, con cabecera opcional (título, contador,
   acciones); suite verde.
-- [ ] T-010 Catálogo: bloques, chips y formas
-  RF: RF-027 | Depende de: T-007, T-008, T-009 | Archivos: 3
+  Decisiones: `Block` admite `variant` (`default`, `featured`, `alert`), `as` (`div`, `section`,
+  `aside`; los dos últimos quedan etiquetados por su título), `title`, `headingLevel` (2 a 4),
+  `count` con `countLabel` y `actions`; la cabecera `.blk-h` solo aparece si hay título, contador o
+  acciones — [Probable] — revertir: simplificar `Block.tsx`. `Counter` se exporta desde `Block.tsx`
+  porque el menú lateral (T-029) lo reutiliza — [Probable] — revertir: moverlo a su propio archivo.
+  El bloque en alerta pone fondo `--black-fill` y texto blanco; la cifra en el color de la prioridad
+  es del indicador (T-043) — [Cierto]. Los títulos de nivel 3 y 4 usan el mismo estilo que el de
+  nivel 2 — [Suposición] — revertir: estilar solo `h2`. Mutantes muertos: contador en cero, `sp`,
+  `data-ui`, `aria-labelledby`, clase `default`, `div` etiquetado.
+- [x] T-010 Catálogo: bloques, chips y formas
+  RF: RF-027 | Depende de: T-007, T-008, T-009 | Archivos: 4
   Archivos: `showcase/sections/BlocksSection.tsx`, `showcase/ShowcasePage.tsx`,
   `showcase/ShowcasePage.test.tsx`.
   Hecho cuando: la página de muestra exhibe las tres variantes de bloque, chips y las cuatro
   formas en ambos temas; suite verde.
+  Excepción: `showcase/sections/sections.css` (espaciado del catálogo) es un archivo más; lo
+  reutilizan todas las tareas de catálogo siguientes. Lo añadí sin detenerme, por ser el único
+  archivo de estilo que necesitan todas — [Suposición] — revertir: pedir una Excepción aparte.
+  Decisiones: el contenido de ejemplo del catálogo va escrito en español con `lang="es"` en su
+  contenedor, porque son textos inventados (S-03) y traducirlos exigiría añadir claves a los tres
+  idiomas en cada tarea de catálogo — [Suposición] — revertir: moverlos a las claves de idioma. El
+  contenedor es `div role="region"` y no `section`, para no heredar la regla transitoria de
+  `section` de `base.css` — [Cierto]. Verificado en un navegador real en claro y oscuro. Mutantes
+  muertos: sin `lang`, sin variante de alerta, sin una forma, sin chips.
 
 ## E-04 Botón y avisos
 - [ ] T-011 Botón restilizado

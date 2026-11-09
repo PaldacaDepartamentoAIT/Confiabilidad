@@ -1,0 +1,26 @@
+.catalog-section {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 22px;
+}
+
+.catalog-section h2 {
+  margin: 0;
+}
+
+.catalog-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.catalog-row li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
