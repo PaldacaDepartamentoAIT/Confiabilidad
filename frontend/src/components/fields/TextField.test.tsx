@@ -4,6 +4,8 @@ import { createRef } from "react";
 import { I18nextProvider } from "react-i18next";
 
 import { createI18n } from "../../i18n";
+import { CodeField } from "./CodeField";
+import { PasswordField } from "./PasswordField";
 import { RequiredLegend } from "./RequiredLegend";
 import { TextField } from "./TextField";
 
@@ -132,4 +134,34 @@ test("has no accessibility violations with a hint and an error", async () => {
   );
   const results = await axe.run(container, { rules: { "color-contrast": { enabled: false } } });
   expect(results.violations).toEqual([]);
+});
+
+describe("the fields built on TextField keep the design system look", () => {
+  test("the password field's toggle is a secondary-style button inside the field", () => {
+    const { container } = render(
+      <I18nextProvider i18n={createI18n("en")}>
+        <PasswordField label="Password" kind="current" />
+      </I18nextProvider>,
+    );
+
+    const toggle = screen.getByRole("button", { name: "Show password (Password)" });
+    expect(toggle).toHaveClass("btn", "btn-ghost", "hov");
+    expect(container.firstElementChild).toHaveClass("fld");
+    expect(container.firstElementChild).toContainElement(toggle);
+    expect(screen.getByLabelText(/^Password/)).toHaveClass("field");
+  });
+
+  test("the verification code is written in the monospace font of the field", () => {
+    render(<CodeField label="Code" />);
+    expect(screen.getByRole("textbox", { name: "Code" })).toHaveClass("field", "mono");
+  });
+
+  test("the legend uses the help text style", () => {
+    render(
+      <I18nextProvider i18n={createI18n("en")}>
+        <RequiredLegend />
+      </I18nextProvider>,
+    );
+    expect(screen.getByText("Fields marked with * are required.")).toHaveClass("help");
+  });
 });
