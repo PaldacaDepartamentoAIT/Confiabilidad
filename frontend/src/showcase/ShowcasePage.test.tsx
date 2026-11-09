@@ -426,3 +426,20 @@ test("the catalog shows buttons in both variants and while processing, and the n
     within(catalog).getByRole("button", { name: "Ver alarma" }).closest("[data-ui='alarm-notice']"),
   ).toBeInTheDocument();
 });
+
+test("the catalog shows text, password and code fields, a field with an error and the checkbox", () => {
+  renderPage("en");
+
+  const catalog = screen.getByRole("region", { name: "Campos" });
+  expect(catalog).toHaveAttribute("lang", "es");
+  expect(within(catalog).getByRole("textbox", { name: "Razón social" })).toBeInTheDocument();
+  expect(within(catalog).getByLabelText(/^Clave de acceso/)).toHaveAttribute("type", "password");
+  expect(within(catalog).getByRole("textbox", { name: "Código" })).toHaveClass("mono");
+  const invalid = catalog.querySelectorAll("[data-ui='field'][aria-invalid='true']");
+  expect(invalid).toHaveLength(1);
+  expect(invalid[0]).toHaveAccessibleDescription("El NIF/CIF debe tener 9 caracteres.");
+  const boxes = within(catalog).getAllByRole("checkbox");
+  expect(boxes).toHaveLength(3);
+  expect(boxes.filter((box) => (box as HTMLInputElement).checked)).toHaveLength(1);
+  expect(catalog.querySelector("[data-ui='checkbox'][aria-invalid='true']")).toBeInTheDocument();
+});

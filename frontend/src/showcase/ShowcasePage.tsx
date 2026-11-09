@@ -12,6 +12,7 @@ import { TextField } from "../components/fields/TextField";
 import { ThemeButton } from "../theme/ThemeButton";
 import { BlocksSection } from "./sections/BlocksSection";
 import { ButtonsSection } from "./sections/ButtonsSection";
+import { FieldsSection } from "./sections/FieldsSection";
 import { newPasswordRules } from "../forms/passwordRules";
 import {
   useFormValidation,
@@ -125,6 +126,7 @@ export function ShowcasePage({ storage }: ShowcasePageProps) {
       </form>
       <BlocksSection />
       <ButtonsSection />
+      <FieldsSection />
     </main>
   );
 }
