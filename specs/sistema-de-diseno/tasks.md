@@ -56,11 +56,20 @@ transitorias hasta T-051 (D-12).
   clave de `es` falla `locales.test.ts` y `tsc`. Se amplió el texto de la Excepción a
   `locales.test.ts` sin detenerme, por ser el mismo conjunto de archivos — [Suposición] — revertir:
   pedir una Excepción aparte.
-- [ ] T-004 Botón de tema
+- [x] T-004 Botón de tema
   RF: RF-002 | Depende de: T-002, T-003 | Archivos: 3
   Archivos: `theme/ThemeButton.tsx`, `ThemeButton.css`, `ThemeButton.test.tsx`.
   Hecho cuando: pulsarlo alterna el tema, cambia su icono y etiqueta, anuncia el estado al lector
   y pasa `axe-core`; suite verde.
+  Decisiones: el botón usa `data-ui="sidebar-button"`, la clase `sb-btn hov` de las referencias y
+  muestra la etiqueta del tema activo con el nombre accesible «Tema claro. Cambiar tema» — [Probable]
+  — revertir: cambiar los textos de `theme.*`. Las clases comunes `hov`, `sb-btn`, `svg.i` y la
+  transición `theme-anim` viven por ahora en `ThemeButton.css`; el menú lateral (T-029) las moverá a
+  un archivo compartido — [Suposición] — revertir: moverlas antes. Sol y luna están dibujados en el
+  componente hasta que exista el módulo de iconos (T-006); migrarlos queda para una tarea de
+  limpieza — [Suposición] — revertir: importar los iconos de `icons/` y borrar los dibujos. El
+  contraste no se prueba en jsdom (lo hará T-054). Mutantes muertos: sin aviso, sin estado, icono
+  cambiado, sin `data-ui`.
 - [ ] T-005 Aplicar el tema al arrancar y mostrar el botón
   RF: RF-001, RF-002, RF-027 | Depende de: T-004 | Archivos: 3
   Archivos: `main.tsx`, `showcase/ShowcasePage.tsx`, `showcase/ShowcasePage.test.tsx`.
