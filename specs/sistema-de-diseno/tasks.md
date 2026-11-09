@@ -30,7 +30,7 @@ transitorias hasta T-051 (D-12).
   existen). Mutantes: cambiar `--grid` oscuro y sustituir `transition: none !important` fallan el
   test.
 
-## E-02 Tema con botón
+## E-02 Módulo de tema y textos
 - [x] T-002 Módulo de tema
   RF: RF-001, RF-003 | Depende de: T-001 | Archivos: 2
   Archivos: `theme/theme.ts`, `theme/theme.test.ts`.
@@ -56,6 +56,7 @@ transitorias hasta T-051 (D-12).
   clave de `es` falla `locales.test.ts` y `tsc`. Se amplió el texto de la Excepción a
   `locales.test.ts` sin detenerme, por ser el mismo conjunto de archivos — [Suposición] — revertir:
   pedir una Excepción aparte.
+## E-02b Botón de tema
 - [ ] T-004 Botón de tema
   RF: RF-002 | Depende de: T-002, T-003 | Archivos: 3
   Archivos: `theme/ThemeButton.tsx`, `ThemeButton.css`, `ThemeButton.test.tsx`.
@@ -350,8 +351,13 @@ Rama de integración: `feat/sistema-de-diseno` (los PR de las entregas van contr
   Tareas: T-001 | Líneas estimadas: 330 | Rama: feat/sistema-de-diseno-paleta
   Cómo probarlo: `pnpm --filter frontend dev`, abrir http://localhost:5173/ y cambiar el tema del
   sistema operativo; `pnpm --filter frontend test`.
-- E-02 Botón de tema que alterna claro y oscuro y se recuerda.
-  Tareas: T-002, T-003, T-004, T-005 | Líneas estimadas: 370 | Rama: feat/sistema-de-diseno-tema
+- E-02 Módulo de tema y textos (sin botón visible aún).
+  Tareas: T-002, T-003 | Líneas estimadas: 250 | Rama: feat/sistema-de-diseno-modulo-tema
+  Cómo probarlo: `pnpm --filter frontend test`; los tests de `theme/theme.test.ts` cubren RF-001 a RF-003.
+  Nota: E-02 se dividió en E-02 y E-02b porque la entrega completa medía 515 líneas (límite 400);
+  el usuario lo aprobó al detenerse la cadena.
+- E-02b Botón de tema que alterna claro y oscuro y se recuerda.
+  Tareas: T-004, T-005 | Líneas estimadas: 265 | Rama: feat/sistema-de-diseno-boton-tema
   Cómo probarlo: pulsar el botón en la página de muestra, recargar y comprobar que se conserva.
 - E-03 La página de muestra exhibe bloques, chips y formas de alarma.
   Tareas: T-006, T-007, T-008, T-009, T-010 | Líneas estimadas: 380 | Rama: feat/sistema-de-diseno-bloques
