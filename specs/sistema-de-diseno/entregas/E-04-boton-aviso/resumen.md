@@ -1,6 +1,6 @@
 # Entrega E-04 · Botón con variantes y aviso informativo
 
-Rama: `feat/sistema-de-diseno-boton-aviso` · PR: pendiente ·
+Rama: `feat/sistema-de-diseno-boton-aviso` · PR: [PaldacaDepartamentoAIT/Confiabilidad#71](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/71) ·
 Líneas de código y tests: 209 (límite: 400).
 
 ## Qué se hizo
