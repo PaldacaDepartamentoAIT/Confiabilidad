@@ -30,18 +30,33 @@ transitorias hasta T-051 (D-12).
   existen). Mutantes: cambiar `--grid` oscuro y sustituir `transition: none !important` fallan el
   test.
 
-## E-02 Tema con botón
-- [ ] T-002 Módulo de tema
+## E-02 Módulo de tema y textos
+- [x] T-002 Módulo de tema
   RF: RF-001, RF-003 | Depende de: T-001 | Archivos: 2
   Archivos: `theme/theme.ts`, `theme/theme.test.ts`.
   Hecho cuando: sin valor guardado devuelve el tema del sistema; con `light` u `oscuro-inválido` se
   ignora y se borra; `toggle` guarda y aplica `data-theme` en `<html>`; suite verde.
-- [ ] T-003 Textos del tema en tres idiomas
-  RF: RF-030 | Depende de: T-001 | Archivos: 3
-  Archivos: `i18n/locales/en.ts`, `es.ts`, `pt-BR.ts`.
+  Decisiones: `initTheme` solo escribe `data-theme` si hay un tema guardado válido; sin él, el CSS
+  sigue al sistema operativo con la regla de `tokens.css` — [Cierto] — revertir: escribir siempre el
+  atributo. `toggleTheme` añade la clase `theme-anim` a `<html>` durante 0,4 s (el CSS que la usa va
+  en T-004) y un segundo cambio reinicia ese plazo — [Probable] — revertir: quitar la clase y su
+  temporizador. La clave guardada es `confiabilidad.theme`, como la del idioma — [Probable] —
+  revertir: cambiar `THEME_STORAGE_KEY`. Mutantes muertos: duración 500 ms, no borrar el valor
+  inválido, no alternar, no reiniciar el plazo.
+- [x] T-003 Textos del tema en tres idiomas
+  RF: RF-030 | Depende de: T-001 | Archivos: 4
+  Archivos: `i18n/locales/en.ts`, `es.ts`, `pt-BR.ts`, `locales.test.ts`.
   Hecho cuando: existen `theme.light`, `theme.dark` y `theme.toggle` en los tres idiomas y
   `locales.test.ts` y `keys.test.ts` pasan; suite verde.
-  Excepción: los tres archivos son una unidad (`es` y `pt-BR` se tipan contra `en`).
+  Excepción: los tres archivos de idioma son una unidad (`es` y `pt-BR` se tipan contra `en`), y
+  `locales.test.ts` lista los grupos de claves de esos mismos archivos y debe añadir `theme`.
+  Decisiones: claves `theme.light`, `theme.dark`, `theme.toggle` (nombre accesible del botón),
+  `theme.announceLight` y `theme.announceDark` (aviso al lector tras cambiar) — [Probable] — revertir:
+  borrar el grupo `theme` de los tres idiomas y de `locales.test.ts`. Mutante muerto: quitar una
+  clave de `es` falla `locales.test.ts` y `tsc`. Se amplió el texto de la Excepción a
+  `locales.test.ts` sin detenerme, por ser el mismo conjunto de archivos — [Suposición] — revertir:
+  pedir una Excepción aparte.
+## E-02b Botón de tema
 - [ ] T-004 Botón de tema
   RF: RF-002 | Depende de: T-002, T-003 | Archivos: 3
   Archivos: `theme/ThemeButton.tsx`, `ThemeButton.css`, `ThemeButton.test.tsx`.
@@ -336,8 +351,13 @@ Rama de integración: `feat/sistema-de-diseno` (los PR de las entregas van contr
   Tareas: T-001 | Líneas estimadas: 330 | Rama: feat/sistema-de-diseno-paleta
   Cómo probarlo: `pnpm --filter frontend dev`, abrir http://localhost:5173/ y cambiar el tema del
   sistema operativo; `pnpm --filter frontend test`.
-- E-02 Botón de tema que alterna claro y oscuro y se recuerda.
-  Tareas: T-002, T-003, T-004, T-005 | Líneas estimadas: 370 | Rama: feat/sistema-de-diseno-tema
+- E-02 Módulo de tema y textos (sin botón visible aún).
+  Tareas: T-002, T-003 | Líneas estimadas: 250 | Rama: feat/sistema-de-diseno-modulo-tema
+  Cómo probarlo: `pnpm --filter frontend test`; los tests de `theme/theme.test.ts` cubren RF-001 a RF-003.
+  Nota: E-02 se dividió en E-02 y E-02b porque la entrega completa medía 515 líneas (límite 400);
+  el usuario lo aprobó al detenerse la cadena.
+- E-02b Botón de tema que alterna claro y oscuro y se recuerda.
+  Tareas: T-004, T-005 | Líneas estimadas: 265 | Rama: feat/sistema-de-diseno-boton-tema
   Cómo probarlo: pulsar el botón en la página de muestra, recargar y comprobar que se conserva.
 - E-03 La página de muestra exhibe bloques, chips y formas de alarma.
   Tareas: T-006, T-007, T-008, T-009, T-010 | Líneas estimadas: 380 | Rama: feat/sistema-de-diseno-bloques
