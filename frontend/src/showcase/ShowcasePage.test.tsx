@@ -381,3 +381,28 @@ test("has a theme button that saves the chosen theme in the storage it receives"
   expect(document.documentElement).toHaveAttribute("data-theme", values.get(THEME_STORAGE_KEY));
   document.documentElement.removeAttribute("data-theme");
 });
+
+test("the catalog shows the three block variants, the chips and the four alarm shapes", () => {
+  renderPage("en");
+
+  const catalog = screen.getByRole("region", { name: "Bloques, etiquetas y formas de alarma" });
+  expect(catalog).toHaveAttribute("lang", "es");
+  const blocks = catalog.querySelectorAll("[data-ui='block']");
+  expect(blocks).toHaveLength(3);
+  expect(catalog.querySelector(".block.featured")).toBeInTheDocument();
+  expect(catalog.querySelector(".block.alert")).toBeInTheDocument();
+  expect(catalog.querySelectorAll("[data-ui='chip']").length).toBeGreaterThanOrEqual(3);
+  const shapes = [...catalog.querySelectorAll("[data-shape]")].map((shape) =>
+    shape.getAttribute("data-shape"),
+  );
+  expect(shapes.sort()).toEqual(["diamond", "hollow-square", "square", "triangle"]);
+  expect(catalog.querySelector("[data-ui='counter']")).toBeInTheDocument();
+});
+
+test("the catalog adds no extra stops to the keyboard order", async () => {
+  const user = userEvent.setup();
+  renderPage();
+  const catalog = screen.getByRole("region", { name: "Bloques, etiquetas y formas de alarma" });
+  for (let i = 0; i < 12; i += 1) await user.tab();
+  expect(catalog.contains(document.activeElement)).toBe(false);
+});
