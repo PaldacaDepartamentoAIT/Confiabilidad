@@ -70,11 +70,17 @@ transitorias hasta T-051 (D-12).
   limpieza — [Suposición] — revertir: importar los iconos de `icons/` y borrar los dibujos. El
   contraste no se prueba en jsdom (lo hará T-054). Mutantes muertos: sin aviso, sin estado, icono
   cambiado, sin `data-ui`.
-- [ ] T-005 Aplicar el tema al arrancar y mostrar el botón
+- [x] T-005 Aplicar el tema al arrancar y mostrar el botón
   RF: RF-001, RF-002, RF-027 | Depende de: T-004 | Archivos: 3
   Archivos: `main.tsx`, `showcase/ShowcasePage.tsx`, `showcase/ShowcasePage.test.tsx`.
   Hecho cuando: la página de muestra tiene el botón y el tema elegido sobrevive a recargar; suite
   verde.
+  Decisiones: el botón se coloca bajo el selector de idioma, a todo el ancho, porque la página de
+  muestra aún no tiene barra superior ni menú (E-08 y siguientes la colocan en su sitio) —
+  [Cierto] — revertir: quitar la línea de `ShowcasePage.tsx`. `main.tsx` no tiene test (está fuera de
+  la cobertura); se comprobó en un navegador real con Playwright: el tema alterna, sobrevive a
+  recargar y un valor guardado inválido se borra — [Cierto] — revertir: no aplica. Mutante muerto:
+  no pasar el almacenamiento al botón.
 
 ## E-03 Bloques, chips y formas
 - [ ] T-006 `lucide-react` y módulo de iconos
