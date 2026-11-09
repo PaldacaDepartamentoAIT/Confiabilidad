@@ -9,6 +9,7 @@ import { CodeField } from "../components/fields/CodeField";
 import { PasswordField } from "../components/fields/PasswordField";
 import { RequiredLegend } from "../components/fields/RequiredLegend";
 import { TextField } from "../components/fields/TextField";
+import { ThemeButton } from "../theme/ThemeButton";
 import { newPasswordRules } from "../forms/passwordRules";
 import {
   useFormValidation,
@@ -60,6 +61,7 @@ export function ShowcasePage({ storage }: ShowcasePageProps) {
   return (
     <main>
       <LanguageSwitcher storage={storage} />
+      <ThemeButton storage={storage} />
       <h1>{t("app.heading")}</h1>
       <p>{t("app.intro")}</p>
       <h2 id={formTitleId}>{t("showcase.formTitle")}</h2>
