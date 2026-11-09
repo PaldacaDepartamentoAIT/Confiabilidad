@@ -1,6 +1,6 @@
 # Entrega E-04b · Aviso de alarma y sección de botones y avisos
 
-Rama: `feat/sistema-de-diseno-aviso-alarma` (sale de `feat/sistema-de-diseno-boton-aviso`) · PR: pendiente ·
+Rama: `feat/sistema-de-diseno-aviso-alarma` · PR: [PaldacaDepartamentoAIT/Confiabilidad#72](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/72) ·
 Líneas de código y tests: 219 (límite: 400).
 
 ## Qué se hizo
