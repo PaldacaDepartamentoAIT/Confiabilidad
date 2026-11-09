@@ -176,10 +176,18 @@ transitorias hasta T-051 (D-12).
   referencia de «Crear empresa» no marca su aviso con `data-ui` (está oculto); no se añadió a la
   referencia — [Cierto]. Mutantes muertos: iconos intercambiados, rol por defecto, atributos extra,
   `data-ui`, clase base.
-- [ ] T-013 Aviso de alarma
+- [x] T-013 Aviso de alarma
   RF: RF-019, RF-020 | Depende de: T-007, T-011 | Archivos: 3
   Archivos: `components/AlarmNotice.tsx`, `AlarmNotice.css`, `AlarmNotice.test.tsx`.
   Hecho cuando: muestra la forma de su prioridad, título, texto y una acción opcional; suite verde.
+  Decisiones: `AlarmNotice` recibe `kind` (`p1`, `p2`, `warning`, `neutral`), `title` en negrita,
+  texto y `action` opcional; pone el color en la variable `--c` (borde izquierdo) y en la forma, y el
+  texto queda en tinta — [Cierto]. La forma va oculta al lector porque el título o el texto ya dicen
+  la prioridad — [Probable] — revertir: pasar `label` a `AlarmShape`. No lleva rol por defecto, para
+  que una lista de alarmas no se anuncie de golpe; quien lo use puede pasar `role="alert"` —
+  [Suposición] — revertir: poner `role="status"` por defecto. Un `style` externo manda sobre `--c`
+  — [Probable] — revertir: invertir el orden. Mutantes muertos: color de P2, acción, negrita,
+  `data-ui`, orden del estilo, forma.
 - [ ] T-014 Catálogo: botones y avisos
   RF: RF-027 | Depende de: T-012, T-013 | Archivos: 3
   Archivos: `showcase/sections/ButtonsSection.tsx`, `showcase/ShowcasePage.tsx`,
