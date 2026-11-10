@@ -1,6 +1,6 @@
 # Entrega E-11 · Pestañas en la barra superior
 
-Rama: `feat/sistema-de-diseno-pestanas` · PR: pendiente ·
+Rama: `feat/sistema-de-diseno-pestanas` · PR: [PaldacaDepartamentoAIT/Confiabilidad#88](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/88) ·
 Líneas de código y tests: 375 (límite: 400).
 
 ## Qué se hizo
