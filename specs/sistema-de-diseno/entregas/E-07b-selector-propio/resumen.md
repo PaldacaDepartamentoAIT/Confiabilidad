@@ -1,6 +1,6 @@
 # Entrega E-07b · Selector propio y su sección en el catálogo
 
-Rama: `feat/sistema-de-diseno-selector-propio` (sale de `feat/sistema-de-diseno-escritura-menu`) · PR: pendiente ·
+Rama: `feat/sistema-de-diseno-selector-propio` · PR: [PaldacaDepartamentoAIT/Confiabilidad#79](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/79) ·
 Líneas de código y tests: 322 (límite: 400).
 
 ## Qué se hizo
