@@ -1,6 +1,6 @@
 # Entrega E-07 · Escritura para saltar a una opción en los menús
 
-Rama: `feat/sistema-de-diseno-escritura-menu` · PR: pendiente ·
+Rama: `feat/sistema-de-diseno-escritura-menu` · PR: [PaldacaDepartamentoAIT/Confiabilidad#78](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/78) ·
 Líneas de código y tests: 186 (límite: 400).
 
 ## Qué se hizo
