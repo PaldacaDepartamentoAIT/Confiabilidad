@@ -696,11 +696,24 @@ transitorias hasta T-051 (D-12).
   del selector, alineación, nombre, observador y clase `overflow`.
 
 ## E-12c Buscador reducido en pantallas pequeñas
-- [ ] T-041 Buscador reducido en pantallas pequeñas
+- [x] T-041 Buscador reducido en pantallas pequeñas
   RF: RF-012 | Depende de: T-036, T-031 | Archivos: 3
   Archivos: `layouts/SearchBox.tsx`, `SearchBox.css`, `SearchBox.test.tsx`.
   Hecho cuando: bajo 560 px es un botón con lupa que despliega el campo sobre las pestañas y lo
   cierra con Escape; suite verde.
+  Decisiones: bajo 560 px (`useMediaQuery`) el buscador pinta un botón con lupa (`search-toggle`, con
+  `aria-expanded` y `aria-controls`) y el campo pasa a `narrow`, oculto hasta que se pulsa; abierto
+  se coloca sobre las pestañas (`position: absolute`, que ocultan con `:has()`), recibe el foco y
+  Escape lo cierra devolviendo el foco al botón; si la pantalla se ensancha se cierra — [Probable].
+  El botón se llama como el campo salvo que se pase `openLabel` — [Probable] — revertir: hacerlo
+  obligatorio. Se corrigió un fallo que solo veía el navegador: el botón está oculto
+  (`visibility`) mientras el campo está abierto y el foco no puede llegar a un elemento oculto, así que
+  el foco vuelve después de renderizar, con un efecto — [Cierto]. Verificado en un navegador real a
+  500 px: cerrado es un botón de 36 × 36 px; abierto, el campo de 220 px cubre las pestañas; Escape
+  lo cierra y el foco queda en el botón. Mutante equivalente: el estado `expanded` ya ignora un
+  `open` rancio, así que `aria-expanded={open}` no cambia nada visible (el test de «se ensancha y se
+  estrecha» mata la versión sin limpiar el estado). Mutantes muertos: foco dentro, foco al botón,
+  nombre del botón, clases `narrow` y `open`, `aria-controls`.
 
 ## E-13 Indicadores y tabla
 - [ ] T-043 Indicador y su rejilla
