@@ -1,0 +1,36 @@
+.app {
+  display: flex;
+  min-height: 100vh;
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  height: 64px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 22px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--gray);
+}
+
+/* El borde y el fondo anulan la caja transitoria que base.css pone a `main` (se retira con T-051). */
+.content {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
