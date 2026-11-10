@@ -424,6 +424,7 @@ transitorias hasta T-051 (D-12).
   en un navegador real con la API simulada: barra de 64 px a todo el ancho, borde inferior de 1 px,
   menú de idioma alineado a la derecha, en claro y oscuro. Mutantes muertos: sin el diseño en cada
   una de las tres pantallas.
+## E-08b Página de muestra en el diseño público
 - [ ] T-028 Página de muestra en el diseño público
   RF: RF-026, RF-027 | Depende de: T-026 | Archivos: 2
   Archivos: `showcase/ShowcasePage.tsx`, `showcase/ShowcasePage.test.tsx`.
@@ -683,9 +684,14 @@ Rama de integración: `feat/sistema-de-diseno` (los PR de las entregas van contr
   Tareas: T-022, T-024 | Líneas estimadas: 250 | Rama: feat/sistema-de-diseno-selector-tactil
   Cómo probarlo: `/register`, campo «País»: elegir con teclado; emular puntero táctil y comprobar
   que sale el selector nativo.
-- E-08 Registro y acceso con el diseño público.
-  Tareas: T-026, T-027, T-028 | Líneas estimadas: 250 | Rama: feat/sistema-de-diseno-publico
+- E-08 Diseño público y pantallas de registro y acceso con él.
+  Tareas: T-026, T-027 | Líneas estimadas: 373 | Rama: feat/sistema-de-diseno-publico-registro
   Cómo probarlo: recorrer `/register`, `/register/continue` y `/register/done`.
+  Nota: E-08 se dividió en E-08 y E-08b porque la entrega completa medía 531 líneas (casi todas de
+  reindentar las páginas al envolverlas); se aplicó la regla de AGENTS.md.
+- E-08b Página de muestra con el diseño público.
+  Tareas: T-028 | Líneas estimadas: 158 | Rama: feat/sistema-de-diseno-publico-muestra
+  Cómo probarlo: abrir la página de muestra y ver la barra superior con idioma y tema.
 - E-09 Menú lateral en el catálogo.
   Tareas: T-029, T-030 | Líneas estimadas: 340 | Rama: feat/sistema-de-diseno-menu-lateral
   Cómo probarlo: catálogo; contraer y expandir el menú.
