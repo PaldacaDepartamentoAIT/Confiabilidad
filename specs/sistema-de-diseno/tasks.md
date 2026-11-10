@@ -452,12 +452,23 @@ transitorias hasta T-051 (D-12).
   de la región, nombre de la navegación y los dos nombres del botón de contraer) que no estaban en
   la lista de tareas aprobada — [Cierto] — revertir: pasarlos por props. Mutante muerto: quitar una
   clave de `es`.
-- [ ] T-029 Menú lateral
+- [x] T-029 Menú lateral
   RF: RF-007, RF-008 | Depende de: T-004, T-020 | Archivos: 3
   Archivos: `layouts/Sidebar.tsx`, `Sidebar.css`, `Sidebar.test.tsx`.
   Hecho cuando: recibe los elementos como datos, marca el activo, muestra contador, pie con tema,
   idioma y usuario (acción opcional) y contrae de 232 a 60 px con `aria-expanded` y «<»/«>»;
   suite verde.
+  Decisiones: `Sidebar` recibe `items` (`id`, `label`, `href`, `icon`, `counter`, `counterLabel`),
+  `activeId`, `user` (`name`, `initials`, `onClick` opcional), `storage` y `defaultCollapsed`; el estado
+  de contraído es interno y sin recordar (S-02) — [Probable] — revertir: elevarlo con props. Los
+  elementos son enlaces `<a href>` — [Suposición]: la navegación real llegará con las rutas de cada
+  feature. El usuario es un botón solo si trae `onClick` (C-05); sin acción es un `div` con el mismo
+  aspecto. Las clases comunes `hov`, `sb-btn` y `svg.i` se siguen importando de `ThemeButton.css`
+  (`Sidebar.tsx` lo importa), sin moverlas a un archivo común — [Suposición] — revertir: crear
+  `styles/interactive.css` y quitar las importaciones cruzadas; queda para la limpieza (T-051).
+  `.brand` se duplica en `Sidebar.css` y `PublicLayout.css` — [Suposición]. Mutantes muertos:
+  `aria-expanded`, `title`, elemento activo, tamaño del icono, `data-ui`, `aria-controls`, usuario
+  pulsable, estado inicial, contador, botón de idioma, textos traducidos.
 - [ ] T-030 Catálogo: menú lateral
   RF: RF-027 | Depende de: T-029 | Archivos: 3
   Archivos: `showcase/sections/SidebarSection.tsx`, `showcase/ShowcasePage.tsx`,
