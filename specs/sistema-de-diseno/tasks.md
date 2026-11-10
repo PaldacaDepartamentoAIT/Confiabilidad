@@ -544,11 +544,18 @@ transitorias hasta T-051 (D-12).
   `addEventListener`; se completó la simulación — [Cierto]. Mutantes muertos: `aria-hidden`,
   contraído en móvil, foco, Escape, clic dentro y en el botón de apertura, elegir un elemento,
   ensanchar, botón de cerrar, `aria-expanded`, clase `mobile-open`.
-- [ ] T-033 Diseño con sesión
+- [x] T-033 Diseño con sesión
   RF: RF-006 | Depende de: T-032 | Archivos: 3
   Archivos: `layouts/AppLayout.tsx`, `AppLayout.css`, `AppLayout.test.tsx`.
   Hecho cuando: compone menú, barra superior (hueco) y contenido con las medidas de la guía;
   suite verde.
+  Decisiones: `AppLayout` recibe `items`, `activeId`, `user`, `storage`, un hueco `topBar` y los hijos;
+  guarda si el panel móvil está abierto y a quién vuelve el foco (el botón de la barra que lo abre,
+  de clase `menu-btn mobile-only`, que el CSS enseña solo bajo 768 px) — [Probable] — revertir:
+  subir el estado a quien use el diseño. La barra superior lleva el botón de menú y después el hueco
+  `topBar` (las pestañas y el buscador llegan en E-11); el contenido es el `<main>` — [Cierto]. El
+  CSS anula el borde y el fondo que `base.css` pone transitoriamente a `main` — [Cierto]. Mutantes
+  muertos: foco, `aria-expanded`, alternar, hueco, `aria-controls`, usuario, `header` y `main`.
 - [ ] T-034 Catálogo: diseño con sesión
   RF: RF-027 | Depende de: T-033 | Archivos: 3
   Archivos: `showcase/sections/AppLayoutSection.tsx`, `showcase/ShowcasePage.tsx`,
