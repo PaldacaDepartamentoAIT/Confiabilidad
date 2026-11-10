@@ -319,28 +319,41 @@ transitorias hasta T-051 (D-12).
   300 px en un contenedor de 300 px). Los estilos no se prueban en jsdom; lo cubrirá la
   comprobación visual (T-053) — [Cierto].
 
-## E-07 Selector propio
-- [ ] T-022 Detección de puntero táctil
-  RF: RF-031 | Depende de: — | Archivos: 2
-  Archivos: `components/fields/useCoarsePointer.ts`, `useCoarsePointer.test.ts`.
-  Hecho cuando: devuelve verdadero si `matchMedia("(pointer: coarse)")` coincide y reacciona a su
-  cambio; suite verde.
+## E-07 Escritura en el menú
+- [x] T-058 Escritura para saltar a una opción en el menú
+  RF: RF-016 | Depende de: T-019 | Archivos: 2
+  Archivos: `components/menu/Menu.tsx`, `menu/Menu.test.tsx`.
+  Hecho cuando: con el menú abierto o cerrado, escribir una o varias letras resalta la siguiente
+  opción cuyo texto empieza por ellas (por su valor si la etiqueta no es texto); repetir una letra
+  recorre las que empiezan por ella; una pausa de 0,7 s las olvida; las combinaciones con Ctrl, Alt
+  o Meta no cuentan como texto; suite verde.
+  Decisiones: nació de T-023 al dividir E-07 por tamaño; se hizo sobre el menú compartido porque el
+  selector (T-023), el botón de idioma y el selector de pestañas la comparten — [Cierto]. Mutantes
+  muertos: ciclar, temporizador, olvidar tras la pausa, mayúsculas, Ctrl, abrir al escribir, texto
+  frente a valor.
+## E-07b Selector propio
 - [ ] T-023 Selector propio
-  RF: RF-016 | Depende de: T-015, T-019 | Archivos: 3
+  RF: RF-016 | Depende de: T-015, T-019, T-058 | Archivos: 3
   Archivos: `components/fields/SelectField.tsx`, `SelectField.css`, `ChoiceFields.test.tsx`.
   Hecho cuando: el disparador `<button role="combobox" name value>` abre la lista, se maneja con
   Enter, Espacio, flechas, Inicio, Fin, Escape y escritura, marca la opción, muestra el error y
   anuncia valor y estado; `useFormValidation` lo lee y enfoca; suite verde con `RegisterPage`.
-- [ ] T-024 Selector nativo en dispositivos táctiles
-  RF: RF-031 | Depende de: T-022, T-023 | Archivos: 2
-  Archivos: `components/fields/SelectField.tsx`, `ChoiceFields.test.tsx`.
-  Hecho cuando: con puntero táctil se muestra el `<select>` nativo con la misma etiqueta, valor,
-  opciones y error; suite verde.
 - [ ] T-025 Catálogo: selector
   RF: RF-027 | Depende de: T-024 | Archivos: 3
   Archivos: `showcase/sections/FieldsSection.tsx`, `showcase/ShowcasePage.tsx`,
   `showcase/ShowcasePage.test.tsx`.
   Hecho cuando: el catálogo exhibe el selector con valor y con error; suite verde.
+## E-07c Selector nativo en dispositivos táctiles
+- [ ] T-022 Detección de puntero táctil
+  RF: RF-031 | Depende de: — | Archivos: 2
+  Archivos: `components/fields/useCoarsePointer.ts`, `useCoarsePointer.test.ts`.
+  Hecho cuando: devuelve verdadero si `matchMedia("(pointer: coarse)")` coincide y reacciona a su
+  cambio; suite verde.
+- [ ] T-024 Selector nativo en dispositivos táctiles
+  RF: RF-031 | Depende de: T-022, T-023 | Archivos: 2
+  Archivos: `components/fields/SelectField.tsx`, `ChoiceFields.test.tsx`.
+  Hecho cuando: con puntero táctil se muestra el `<select>` nativo con la misma etiqueta, valor,
+  opciones y error; suite verde.
 
 ## E-08 Diseño público en el registro
 - [ ] T-026 Diseño público
@@ -600,10 +613,18 @@ Rama de integración: `feat/sistema-de-diseno` (los PR de las entregas van contr
 - E-06b Botón de idioma con menú y su sección en el catálogo.
   Tareas: T-020, T-021 | Líneas estimadas: 251 | Rama: feat/sistema-de-diseno-boton-idioma
   Cómo probarlo: abrir el botón de idioma en el catálogo y cambiar de idioma con ratón y teclado.
-- E-07 Selector propio (nativo en dispositivos táctiles).
-  Tareas: T-022, T-023, T-024, T-025 | Líneas estimadas: 380 | Rama: feat/sistema-de-diseno-selector
-  Cómo probarlo: `/register`, campo «país»: abrir y elegir con teclado; emular puntero táctil y
-  comprobar que sale el selector nativo.
+- E-07 Escritura para saltar a una opción en los menús desplegables.
+  Tareas: T-058 | Líneas estimadas: 186 | Rama: feat/sistema-de-diseno-escritura-menu
+  Cómo probarlo: página de muestra, «Menú e idioma»: abrir el menú de plantas y escribir «s» o «e».
+  Nota: E-07 se dividió en tres (E-07, E-07b y E-07c) porque la entrega completa medía 594 líneas y
+  faltaba T-024; se aplicó la regla de AGENTS.md. T-058 nació de T-023 en esa división.
+- E-07b Selector propio con su sección en el catálogo.
+  Tareas: T-023, T-025 | Líneas estimadas: 330 | Rama: feat/sistema-de-diseno-selector-propio
+  Cómo probarlo: página de muestra, «Campos»: abrir «Sector» y elegir con ratón, flechas y escribiendo.
+- E-07c Selector nativo en dispositivos táctiles y selector propio en el registro.
+  Tareas: T-022, T-024 | Líneas estimadas: 250 | Rama: feat/sistema-de-diseno-selector-tactil
+  Cómo probarlo: `/register`, campo «País»: elegir con teclado; emular puntero táctil y comprobar
+  que sale el selector nativo.
 - E-08 Registro y acceso con el diseño público.
   Tareas: T-026, T-027, T-028 | Líneas estimadas: 250 | Rama: feat/sistema-de-diseno-publico
   Cómo probarlo: recorrer `/register`, `/register/continue` y `/register/done`.
