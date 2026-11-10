@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import axe from "axe-core";
 import { useState } from "react";
@@ -181,4 +181,136 @@ test("the keys it handles do not also scroll the page, and the others are left a
   expect(fireEvent.keyDown(tab, { key: "ArrowRight" })).toBe(false);
   expect(fireEvent.keyDown(tab, { key: "Home" })).toBe(false);
   expect(fireEvent.keyDown(tab, { key: "a" })).toBe(true);
+});
+
+describe("pestañas que no caben", () => {
+  let areaWidth = 1000;
+  let tabsWidth = 400;
+
+  beforeEach(() => {
+    areaWidth = 1000;
+    tabsWidth = 400;
+    vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockImplementation(function (
+      this: HTMLElement,
+    ) {
+      return this.classList.contains("tabs-area") ? areaWidth : 0;
+    });
+    vi.spyOn(HTMLElement.prototype, "scrollWidth", "get").mockImplementation(function (
+      this: HTMLElement,
+    ) {
+      return this.classList.contains("tablist") ? tabsWidth : 0;
+    });
+  });
+
+  function resize(area: number) {
+    areaWidth = area;
+    act(() => {
+      window.dispatchEvent(new Event("resize"));
+    });
+  }
+
+  const area = () => document.querySelector(".tabs-area") as HTMLElement;
+
+  it("si caben, enseña las pestañas y esconde el selector", () => {
+    render(<Harness />);
+
+    expect(area()).not.toHaveClass("overflow");
+    expect(screen.getAllByRole("tab")).toHaveLength(4);
+    expect(area().querySelector(".tab-select")).toHaveAttribute("inert");
+    expect(screen.getByRole("tablist")).not.toHaveAttribute("inert");
+  });
+
+  it("si no caben, esconden las pestañas y enseñan un selector con la pestaña activa", () => {
+    render(<Harness initial="location" />);
+
+    resize(300);
+
+    expect(area()).toHaveClass("overflow");
+    expect(area().querySelector(".tablist")).toHaveAttribute("inert");
+    expect(area().querySelector(".tab-select")).not.toHaveAttribute("inert");
+    const select = screen.getByRole("combobox", { name: "Secciones del formulario: Ubicación" });
+    expect(select).toHaveClass("trigger-tab", "hov");
+    expect(select).toHaveTextContent("Ubicación");
+    expect(select.querySelector("svg")).toHaveClass("lucide-chevron-down");
+  });
+
+  it("el selector despliega las demás pestañas y elegir una la activa", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<Harness onChange={onChange} />);
+    resize(300);
+
+    await user.click(screen.getByRole("combobox"));
+    expect(screen.getAllByRole("option").map((option) => option.textContent)).toEqual(
+      TABS.map((tab) => tab.label),
+    );
+    expect(screen.getByRole("listbox")).toHaveClass("menu-right");
+    await user.click(screen.getByRole("option", { name: "Contacto" }));
+
+    expect(onChange).toHaveBeenCalledWith("contact");
+    expect(screen.getByRole("combobox")).toHaveTextContent("Contacto");
+  });
+
+  it("vuelve a las pestañas cuando hay sitio otra vez", () => {
+    render(<Harness />);
+    resize(300);
+    expect(area()).toHaveClass("overflow");
+
+    resize(1000);
+
+    expect(area()).not.toHaveClass("overflow");
+    expect(area().querySelector(".tablist")).not.toHaveAttribute("inert");
+    expect(area().querySelector(".tab-select")).toHaveAttribute("inert");
+  });
+
+  it("el foco pasa de las pestañas al selector y de vuelta, según cuál se vea", async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+    await user.tab();
+    expect(screen.getByRole("tab", { name: "Datos generales" })).toHaveFocus();
+
+    resize(300);
+    expect(screen.getByRole("combobox")).toHaveFocus();
+
+    resize(1000);
+    expect(screen.getByRole("tab", { name: "Datos generales" })).toHaveFocus();
+  });
+
+  it("sin el foco en ellos, el cambio no se lo quita a nadie", () => {
+    render(<Harness />);
+    resize(300);
+    resize(1000);
+    expect(document.body).toHaveFocus();
+  });
+
+  it("también se recalcula cuando cambia el tamaño del área, si el navegador lo avisa", () => {
+    let notify: () => void = () => undefined;
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        constructor(callback: () => void) {
+          notify = callback;
+        }
+        observe() {}
+        disconnect() {}
+      },
+    );
+    render(<Harness />);
+    expect(area()).not.toHaveClass("overflow");
+
+    areaWidth = 300;
+    act(() => notify());
+
+    expect(area()).toHaveClass("overflow");
+    vi.unstubAllGlobals();
+  });
+
+  it("no tiene violaciones de accesibilidad con las pestañas ni con el selector", async () => {
+    const { container } = render(<Harness />);
+    const run = () => axe.run(container, { rules: { "color-contrast": { enabled: false } } });
+    expect((await run()).violations).toEqual([]);
+
+    resize(300);
+    expect((await run()).violations).toEqual([]);
+  });
 });
