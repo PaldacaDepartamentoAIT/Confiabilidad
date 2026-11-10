@@ -395,11 +395,20 @@ transitorias hasta T-051 (D-12).
   lectura del valor de un botón en `useFormValidation`.
 
 ## E-08 Diseño público en el registro
-- [ ] T-026 Diseño público
+- [x] T-026 Diseño público
   RF: RF-005 | Depende de: T-004, T-020 | Archivos: 3
   Archivos: `layouts/PublicLayout.tsx`, `PublicLayout.css`, `PublicLayout.test.tsx`.
   Hecho cuando: barra de 64 px con nombre del sistema, botón de idioma y de tema, sin menú lateral;
   suite verde.
+  Decisiones: `PublicLayout` pinta `header` (`data-ui="topbar"`) con el nombre del sistema
+  (`app.heading`, que se traduce) y, a la derecha, el botón de idioma y el de tema; el contenido va
+  en un `div` debajo y las páginas siguen poniendo su propio `<main>` — [Probable] — revertir:
+  hacer que el diseño pinte el `<main>`. El menú de idioma se abre alineado a la derecha. El
+  `margin: -22px` de `.public-app` compensa el relleno transitorio del `body` de `base.css` y se
+  retira en T-051 — [Suposición]. La barra usa las medidas de la barra superior de la guía (64 px,
+  borde inferior, relleno de 22 px); `.brand` se define aquí y el menú lateral (T-029) lo reutilizará
+  — [Suposición]. Mutantes muertos: alineación, `data-ui`, nombre, `header`, contenedor, orden de
+  los botones.
 - [ ] T-027 Registro y acceso usan el diseño público
   RF: RF-026 | Depende de: T-026, T-011, T-016, T-023 | Archivos: 3
   Archivos: `registration/RegisterPage.tsx`, `VerifyPage.tsx`, `DonePage.tsx`.
