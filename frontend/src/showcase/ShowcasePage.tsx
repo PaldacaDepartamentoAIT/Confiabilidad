@@ -13,6 +13,7 @@ import { ThemeButton } from "../theme/ThemeButton";
 import { BlocksSection } from "./sections/BlocksSection";
 import { ButtonsSection } from "./sections/ButtonsSection";
 import { FieldsSection } from "./sections/FieldsSection";
+import { MenuSection } from "./sections/MenuSection";
 import { newPasswordRules } from "../forms/passwordRules";
 import {
   useFormValidation,
@@ -127,6 +128,7 @@ export function ShowcasePage({ storage }: ShowcasePageProps) {
       <BlocksSection />
       <ButtonsSection />
       <FieldsSection />
+      <MenuSection storage={storage} />
     </main>
   );
 }
