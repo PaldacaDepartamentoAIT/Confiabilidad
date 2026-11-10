@@ -1,6 +1,6 @@
 # Entrega E-10 · Diseño con sesión
 
-Rama: `feat/sistema-de-diseno-con-sesion-base` · PR: pendiente ·
+Rama: `feat/sistema-de-diseno-con-sesion-base` · PR: [PaldacaDepartamentoAIT/Confiabilidad#85](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/85) ·
 Líneas de código y tests: 259 (límite: 400).
 
 ## Qué se hizo
