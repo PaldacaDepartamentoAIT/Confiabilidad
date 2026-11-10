@@ -443,3 +443,25 @@ test("the catalog shows text, password and code fields, a field with an error an
   expect(boxes.filter((box) => (box as HTMLInputElement).checked)).toHaveLength(1);
   expect(catalog.querySelector("[data-ui='checkbox'][aria-invalid='true']")).toBeInTheDocument();
 });
+
+test("the catalog shows the language button and a generic menu that keeps its choice", async () => {
+  const user = userEvent.setup();
+  renderPage("en");
+
+  const catalog = screen.getByRole("region", { name: "Menú e idioma" });
+  expect(catalog).toHaveAttribute("lang", "es");
+  expect(within(catalog).getAllByRole("combobox")).toHaveLength(2);
+
+  await user.click(within(catalog).getByRole("combobox", { name: "Language: English" }));
+  expect(
+    within(catalog)
+      .getAllByRole("option")
+      .map((option) => option.textContent),
+  ).toEqual(["Español", "Português (Brasil)", "English"]);
+  await user.keyboard("{Escape}");
+
+  const plants = within(catalog).getByRole("combobox", { name: "Planta: Norte" });
+  await user.click(plants);
+  await user.click(within(catalog).getByRole("option", { name: "Sur" }));
+  expect(within(catalog).getByRole("combobox", { name: "Planta: Sur" })).toBeInTheDocument();
+});

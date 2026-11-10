@@ -297,11 +297,18 @@ transitorias hasta T-051 (D-12).
   y `hov` hasta que el menú lateral (T-029) los mueva a un archivo común — [Suposición]. Mutantes
   muertos: sin guardar, código del idioma, `lang`, `data-ui`, opción seleccionada, sin cambio de
   idioma, nombre accesible.
-- [ ] T-021 Catálogo: menú e idioma
+- [x] T-021 Catálogo: menú e idioma
   RF: RF-027 | Depende de: T-020 | Archivos: 3
   Archivos: `showcase/sections/MenuSection.tsx`, `showcase/ShowcasePage.tsx`,
   `showcase/ShowcasePage.test.tsx`.
   Hecho cuando: el catálogo exhibe el botón de idioma; suite verde.
+  Excepción: `showcase/sections/sections.css` (ya existente) recibe la clase `catalog-narrow`; no es
+  un archivo nuevo.
+  Decisiones: la sección «Menú e idioma» va en español con `lang="es"`; muestra el botón de idioma
+  real y un menú genérico de plantas con elección guardada en el propio estado — [Probable] —
+  revertir: quitar el menú genérico. Verificado en un navegador real en claro y oscuro: el menú se
+  abre bajo el disparador a 4 px, con la opción activa en negrita con chevron y resaltada. Mutantes
+  muertos: sin `lang`, sin guardar la elección, sin botón de idioma.
 
 ## E-07 Selector propio
 - [ ] T-022 Detección de puntero táctil
