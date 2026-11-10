@@ -506,26 +506,62 @@ transitorias hasta T-051 (D-12).
   en un navegador real: pie apilado, usuario con avatar y flechas en claro y oscuro; contraído
   quedan los iconos y el avatar.
 
-## E-10 Diseño con sesión y menú en pantallas pequeñas
+## E-10 Diseño con sesión
+- [x] T-033 Diseño con sesión
+  RF: RF-006 | Depende de: T-029, T-060, T-061 | Archivos: 3
+  Archivos: `layouts/AppLayout.tsx`, `AppLayout.css`, `AppLayout.test.tsx`.
+  Hecho cuando: compone menú, barra superior (hueco) y contenido con las medidas de la guía;
+  suite verde.
+  Decisiones: `AppLayout` recibe `items`, `activeId`, `user`, `storage`, un hueco `topBar` y los
+  hijos; la barra superior es el `header` y el contenido el `<main>` — [Cierto]. `embedded` los
+  convierte en bloques sin significado de zona para enseñar el diseño dentro de otra página que ya
+  tiene su `banner` y su `main` (catálogo) — [Probable] — revertir: quitar la propiedad. El CSS
+  anula el borde y el fondo que `base.css` pone transitoriamente a `main` — [Cierto]. El botón de
+  menú de la barra y el panel móvil llegan en E-10b y E-10c. Mutantes muertos: hueco, usuario,
+  `header` y `main` embebidos.
+- [x] T-034 Catálogo: diseño con sesión
+  RF: RF-027 | Depende de: T-033 | Archivos: 5
+  Archivos: `showcase/sections/AppLayoutSection.tsx`, `showcase/ShowcasePage.tsx`,
+  `showcase/ShowcasePage.test.tsx`, `showcase/sections/SidebarSection.tsx` (se elimina),
+  `showcase/sections/sections.css`.
+  Hecho cuando: el catálogo exhibe una pantalla con sesión de ejemplo; suite verde.
+  Excepción: la sección sustituye a `SidebarSection` (el menú suelto), de modo que se elimina un
+  archivo y cambia el marco de `sections.css`. Lo añadí sin detenerme — [Suposición] — revertir:
+  pedir una Excepción aparte.
+  Decisiones: la sección «Diseño con sesión» sustituye a la del menú lateral suelto, porque con el
+  panel móvil (E-10b y E-10c) el menú suelto quedaría oculto en una ventana estrecha sin botón que
+  lo abra — [Probable]. Verificado en un navegador real: menú de 232 px, barra de 64 px y contenido a
+  su lado, en claro y oscuro — [Cierto]. Mutantes muertos: sin `lang`, sin `embedded`, elemento
+  activo y contenido.
+## E-10b Panel superpuesto del menú
 - [ ] T-031 `useMediaQuery`
   RF: RF-009 | Depende de: — | Archivos: 2
   Archivos: `layouts/useMediaQuery.ts`, `useMediaQuery.test.ts`.
   Hecho cuando: devuelve y actualiza el resultado de una consulta; suite verde.
+- [ ] T-062 Textos del panel móvil del menú en tres idiomas
+  RF: RF-030 | Depende de: T-059 | Archivos: 3
+  Archivos: `i18n/locales/en.ts`, `es.ts`, `pt-BR.ts`.
+  Hecho cuando: existen `sidebar.open` y `sidebar.close` en los tres idiomas y los tests de claves y
+  locales pasan; suite verde.
+  Excepción: los tres archivos de idioma son una unidad (`es` y `pt-BR` se tipan contra `en`).
 - [ ] T-032 Panel superpuesto del menú
-  RF: RF-009 | Depende de: T-029, T-031 | Archivos: 3
+  RF: RF-009 | Depende de: T-060, T-061, T-062, T-031 | Archivos: 3
   Archivos: `layouts/Sidebar.tsx`, `Sidebar.css`, `Sidebar.test.tsx`.
-  Hecho cuando: bajo 768 px se oculta, se abre con velo, se cierra con velo, Escape o al elegir
+  Hecho cuando: bajo 768 px se oculta, se abre como panel sin velo, se cierra al pulsar fuera, con Escape o al elegir
   un elemento, sin estado contraído y devolviendo el foco al botón que lo abrió; suite verde.
-- [ ] T-033 Diseño con sesión
-  RF: RF-006 | Depende de: T-032 | Archivos: 3
-  Archivos: `layouts/AppLayout.tsx`, `AppLayout.css`, `AppLayout.test.tsx`.
-  Hecho cuando: compone menú, barra superior (hueco) y contenido con las medidas de la guía;
-  suite verde.
-- [ ] T-034 Catálogo: diseño con sesión
-  RF: RF-027 | Depende de: T-033 | Archivos: 3
-  Archivos: `showcase/sections/AppLayoutSection.tsx`, `showcase/ShowcasePage.tsx`,
+## E-10c Botón de menú en la barra
+- [ ] T-063 Botón de menú en la barra y apertura del panel
+  RF: RF-009 | Depende de: T-033, T-032 | Archivos: 4
+  Archivos: `layouts/AppLayout.tsx`, `AppLayout.css`, `AppLayout.test.tsx`,
   `showcase/ShowcasePage.test.tsx`.
-  Hecho cuando: el catálogo exhibe una pantalla con sesión de ejemplo; suite verde.
+  Hecho cuando: la barra superior tiene, a la izquierda y solo bajo 768 px, un botón «Abrir menú» que
+  señala al menú con `aria-controls` y `aria-expanded`; al pulsarlo el menú se abre como panel, el
+  foco pasa a «Cerrar menú» y Escape, un clic fuera, el botón de la cabecera o elegir un elemento lo
+  cierran devolviendo el foco al botón de la barra salvo en los dos últimos casos; el catálogo lo
+  permite en una ventana estrecha; suite verde.
+  Excepción: `ShowcasePage.test.tsx` suma el test de la ventana estrecha del catálogo.
+  Decisiones: tarea nueva, nacida de dividir E-10 por tamaño (la entrega completa medía 752 líneas):
+  el botón y el estado del panel son lo que hace usable E-10b — [Cierto].
 
 ## E-11 Barra superior
 - [ ] T-035 Pestañas
@@ -763,9 +799,18 @@ Rama de integración: `feat/sistema-de-diseno` (los PR de las entregas van contr
 - E-09b Contraer el menú lateral y su pie con tema, idioma y usuario.
   Tareas: T-060, T-061 | Líneas estimadas: 262 | Rama: feat/sistema-de-diseno-menu-lateral-pie
   Cómo probarlo: catálogo: contraer y expandir el menú y ver el pie.
-- E-10 Diseño con sesión y panel de menú en pantallas pequeñas.
-  Tareas: T-031, T-032, T-033, T-034 | Líneas estimadas: 390 | Rama: feat/sistema-de-diseno-con-sesion
-  Cómo probarlo: catálogo, ventana de menos de 768 px y abrir el panel del menú.
+- E-10 Diseño con sesión con menú lateral, barra superior y contenido.
+  Tareas: T-033, T-034 | Líneas estimadas: 259 | Rama: feat/sistema-de-diseno-con-sesion-base
+  Cómo probarlo: catálogo, sección «Diseño con sesión».
+  Nota: E-10 se dividió en tres (E-10, E-10b y E-10c) porque la entrega completa medía 752 líneas; se
+  aplicó la regla de AGENTS.md. La parte del panel (E-10b) no se ve sola: no hay botón que lo abra
+  hasta E-10c. T-062 y T-063 son tareas nuevas de esa división.
+- E-10b Panel superpuesto del menú en pantallas pequeñas (hook, textos y menú).
+  Tareas: T-031, T-062, T-032 | Líneas estimadas: 360 | Rama: feat/sistema-de-diseno-con-sesion-panel
+  Cómo probarlo: `pnpm --filter frontend test`; los tests del panel de `Sidebar.test.tsx`.
+- E-10c Botón de menú de la barra que abre el panel.
+  Tareas: T-063 | Líneas estimadas: 150 | Rama: feat/sistema-de-diseno-con-sesion-boton
+  Cómo probarlo: catálogo en una ventana de menos de 768 px: pulsar «Abrir menú».
 - E-11 Barra superior con pestañas y buscador.
   Tareas: T-035, T-036, T-037, T-038 | Líneas estimadas: 400 | Rama: feat/sistema-de-diseno-barra-superior
   Cómo probarlo: catálogo, pantalla de ejemplo: moverse por las pestañas con teclado.
