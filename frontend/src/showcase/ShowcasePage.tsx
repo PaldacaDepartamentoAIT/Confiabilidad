@@ -9,7 +9,7 @@ import { CodeField } from "../components/fields/CodeField";
 import { PasswordField } from "../components/fields/PasswordField";
 import { RequiredLegend } from "../components/fields/RequiredLegend";
 import { TextField } from "../components/fields/TextField";
-import { ThemeButton } from "../theme/ThemeButton";
+import { PublicLayout } from "../layouts/PublicLayout";
 import { BlocksSection } from "./sections/BlocksSection";
 import { ButtonsSection } from "./sections/ButtonsSection";
 import { FieldsSection } from "./sections/FieldsSection";
@@ -63,72 +63,73 @@ export function ShowcasePage({ storage }: ShowcasePageProps) {
     error && t(`validation.${error.key}`, error.params);
 
   return (
-    <main>
-      <LanguageSwitcher storage={storage} />
-      <ThemeButton storage={storage} />
-      <h1>{t("app.heading")}</h1>
-      <p>{t("app.intro")}</p>
-      <h2 id={formTitleId}>{t("showcase.formTitle")}</h2>
-      <RequiredLegend />
-      {message && (
-        <FormMessage ref={messageRef} type={message.type} messageKey={message.messageKey} />
-      )}
-      <form
-        ref={formRef}
-        aria-labelledby={formTitleId}
-        noValidate
-        onSubmit={handleSubmit(simulateSending)}
-      >
-        <TextField
-          label={t("showcase.nameLabel")}
-          name="name"
-          autoComplete="name"
-          required
-          error={errorText(errors.name)}
-          onBlur={onBlur("name")}
-        />
-        <TextField
-          label={t("showcase.emailLabel")}
-          name="email"
-          type="email"
-          required
-          error={errorText(errors.email)}
-          onBlur={onBlur("email")}
-        />
-        <PasswordField
-          label={t("showcase.passwordLabel")}
-          name="password"
-          kind="current"
-          required
-          error={errorText(errors.password)}
-          onBlur={onBlur("password")}
-        />
-        <PasswordField
-          label={t("showcase.newPasswordLabel")}
-          name="newPassword"
-          kind="new"
-          required
-          error={errorText(errors.newPassword)}
-          onBlur={onBlur("newPassword")}
-        />
-        <CodeField
-          label={t("showcase.codeLabel")}
-          name="code"
-          required
-          error={errorText(errors.code)}
-          onBlur={onBlur("code")}
-        />
-        <Button type="submit" keepFocusOnMouseDown processing={processing}>
-          {t("showcase.submit")}
-        </Button>
-        <Button keepFocusOnMouseDown onClick={() => showResult({ message: SAMPLE_ERROR })}>
-          {t("showcase.showExampleError")}
-        </Button>
-      </form>
-      <BlocksSection />
-      <ButtonsSection />
-      <FieldsSection />
-      <MenuSection storage={storage} />
-    </main>
+    <PublicLayout storage={storage}>
+      <main>
+        <LanguageSwitcher storage={storage} />
+        <h1>{t("app.heading")}</h1>
+        <p>{t("app.intro")}</p>
+        <h2 id={formTitleId}>{t("showcase.formTitle")}</h2>
+        <RequiredLegend />
+        {message && (
+          <FormMessage ref={messageRef} type={message.type} messageKey={message.messageKey} />
+        )}
+        <form
+          ref={formRef}
+          aria-labelledby={formTitleId}
+          noValidate
+          onSubmit={handleSubmit(simulateSending)}
+        >
+          <TextField
+            label={t("showcase.nameLabel")}
+            name="name"
+            autoComplete="name"
+            required
+            error={errorText(errors.name)}
+            onBlur={onBlur("name")}
+          />
+          <TextField
+            label={t("showcase.emailLabel")}
+            name="email"
+            type="email"
+            required
+            error={errorText(errors.email)}
+            onBlur={onBlur("email")}
+          />
+          <PasswordField
+            label={t("showcase.passwordLabel")}
+            name="password"
+            kind="current"
+            required
+            error={errorText(errors.password)}
+            onBlur={onBlur("password")}
+          />
+          <PasswordField
+            label={t("showcase.newPasswordLabel")}
+            name="newPassword"
+            kind="new"
+            required
+            error={errorText(errors.newPassword)}
+            onBlur={onBlur("newPassword")}
+          />
+          <CodeField
+            label={t("showcase.codeLabel")}
+            name="code"
+            required
+            error={errorText(errors.code)}
+            onBlur={onBlur("code")}
+          />
+          <Button type="submit" keepFocusOnMouseDown processing={processing}>
+            {t("showcase.submit")}
+          </Button>
+          <Button keepFocusOnMouseDown onClick={() => showResult({ message: SAMPLE_ERROR })}>
+            {t("showcase.showExampleError")}
+          </Button>
+        </form>
+        <BlocksSection />
+        <ButtonsSection />
+        <FieldsSection />
+        <MenuSection storage={storage} />
+      </main>
+    </PublicLayout>
   );
 }
