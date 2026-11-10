@@ -11,7 +11,6 @@ import {
 } from "../api/registration";
 import { Button } from "../components/Button";
 import { FormMessage } from "../components/FormMessage";
-import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import { Checkbox } from "../components/fields/Checkbox";
 import { RequiredLegend } from "../components/fields/RequiredLegend";
 import { SelectField } from "../components/fields/SelectField";
@@ -23,6 +22,7 @@ import {
   type Validator,
 } from "../forms/useFormValidation";
 import type { LanguageStorage } from "../i18n/language";
+import { PublicLayout } from "../layouts/PublicLayout";
 import { navigate } from "../routing/router";
 import { email, required } from "../showcase/validators";
 import { translateFieldErrors } from "./serverErrors";
@@ -82,25 +82,26 @@ export function RegisterPage({ client, storage }: RegisterPageProps) {
   }, [client]);
 
   return (
-    <main>
-      <LanguageSwitcher storage={storage} />
-      <h1 id={titleId}>{t("register.title")}</h1>
-      {loaded.status === "failed" && (
-        <FormMessage type="error" messageKey="validation.networkError" />
-      )}
-      {loaded.status === "ready" &&
-        (loaded.options.terms ? (
-          <RegisterForm
-            client={client}
-            options={loaded.options}
-            terms={loaded.options.terms}
-            language={i18n.language}
-            titleId={titleId}
-          />
-        ) : (
-          <FormMessage type="error" messageKey="validation.termsUnavailable" />
-        ))}
-    </main>
+    <PublicLayout storage={storage}>
+      <main>
+        <h1 id={titleId}>{t("register.title")}</h1>
+        {loaded.status === "failed" && (
+          <FormMessage type="error" messageKey="validation.networkError" />
+        )}
+        {loaded.status === "ready" &&
+          (loaded.options.terms ? (
+            <RegisterForm
+              client={client}
+              options={loaded.options}
+              terms={loaded.options.terms}
+              language={i18n.language}
+              titleId={titleId}
+            />
+          ) : (
+            <FormMessage type="error" messageKey="validation.termsUnavailable" />
+          ))}
+      </main>
+    </PublicLayout>
   );
 }
 

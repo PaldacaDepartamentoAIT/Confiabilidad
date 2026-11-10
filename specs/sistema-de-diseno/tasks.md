@@ -395,16 +395,36 @@ transitorias hasta T-051 (D-12).
   lectura del valor de un botón en `useFormValidation`.
 
 ## E-08 Diseño público en el registro
-- [ ] T-026 Diseño público
+- [x] T-026 Diseño público
   RF: RF-005 | Depende de: T-004, T-020 | Archivos: 3
   Archivos: `layouts/PublicLayout.tsx`, `PublicLayout.css`, `PublicLayout.test.tsx`.
   Hecho cuando: barra de 64 px con nombre del sistema, botón de idioma y de tema, sin menú lateral;
   suite verde.
-- [ ] T-027 Registro y acceso usan el diseño público
-  RF: RF-026 | Depende de: T-026, T-011, T-016, T-023 | Archivos: 3
-  Archivos: `registration/RegisterPage.tsx`, `VerifyPage.tsx`, `DonePage.tsx`.
+  Decisiones: `PublicLayout` pinta `header` (`data-ui="topbar"`) con el nombre del sistema
+  (`app.heading`, que se traduce) y, a la derecha, el botón de idioma y el de tema; el contenido va
+  en un `div` debajo y las páginas siguen poniendo su propio `<main>` — [Probable] — revertir:
+  hacer que el diseño pinte el `<main>`. El menú de idioma se abre alineado a la derecha. El
+  `margin: -22px` de `.public-app` compensa el relleno transitorio del `body` de `base.css` y se
+  retira en T-051 — [Suposición]. La barra usa las medidas de la barra superior de la guía (64 px,
+  borde inferior, relleno de 22 px); `.brand` se define aquí y el menú lateral (T-029) lo reutilizará
+  — [Suposición]. Mutantes muertos: alineación, `data-ui`, nombre, `header`, contenedor, orden de
+  los botones.
+- [x] T-027 Registro y acceso usan el diseño público
+  RF: RF-026 | Depende de: T-026, T-011, T-016, T-023 | Archivos: 4
+  Archivos: `registration/RegisterPage.tsx`, `VerifyPage.tsx`, `DonePage.tsx`, `a11y.test.tsx`.
   Hecho cuando: las tres pantallas se ven con el diseño público y los tests previos de registro
   siguen pasando sin cambios; suite verde.
+  Excepción: se añadió `registration/a11y.test.tsx` (cuatro tests nuevos de la barra pública) para
+  respetar el test primero; los tests previos de registro se conservan sin cambios. Lo añadí sin
+  detenerme — [Suposición] — revertir: pedir una Excepción aparte.
+  Decisiones: las pantallas de registro dejan de pintar el selector de idioma de tres botones
+  (`LanguageSwitcher`) porque el botón de idioma de la barra lo sustituye; el componente sigue
+  existiendo para la página de muestra — [Probable] — revertir: volver a pintarlo en las páginas.
+  `VerifyPage` envuelve sus dos `<main>` (verificación y enlace no válido) — [Cierto]. Verificado
+  en un navegador real con la API simulada: barra de 64 px a todo el ancho, borde inferior de 1 px,
+  menú de idioma alineado a la derecha, en claro y oscuro. Mutantes muertos: sin el diseño en cada
+  una de las tres pantallas.
+## E-08b Página de muestra en el diseño público
 - [ ] T-028 Página de muestra en el diseño público
   RF: RF-026, RF-027 | Depende de: T-026 | Archivos: 2
   Archivos: `showcase/ShowcasePage.tsx`, `showcase/ShowcasePage.test.tsx`.
@@ -664,9 +684,14 @@ Rama de integración: `feat/sistema-de-diseno` (los PR de las entregas van contr
   Tareas: T-022, T-024 | Líneas estimadas: 250 | Rama: feat/sistema-de-diseno-selector-tactil
   Cómo probarlo: `/register`, campo «País»: elegir con teclado; emular puntero táctil y comprobar
   que sale el selector nativo.
-- E-08 Registro y acceso con el diseño público.
-  Tareas: T-026, T-027, T-028 | Líneas estimadas: 250 | Rama: feat/sistema-de-diseno-publico
+- E-08 Diseño público y pantallas de registro y acceso con él.
+  Tareas: T-026, T-027 | Líneas estimadas: 373 | Rama: feat/sistema-de-diseno-publico-registro
   Cómo probarlo: recorrer `/register`, `/register/continue` y `/register/done`.
+  Nota: E-08 se dividió en E-08 y E-08b porque la entrega completa medía 531 líneas (casi todas de
+  reindentar las páginas al envolverlas); se aplicó la regla de AGENTS.md.
+- E-08b Página de muestra con el diseño público.
+  Tareas: T-028 | Líneas estimadas: 158 | Rama: feat/sistema-de-diseno-publico-muestra
+  Cómo probarlo: abrir la página de muestra y ver la barra superior con idioma y tema.
 - E-09 Menú lateral en el catálogo.
   Tareas: T-029, T-030 | Líneas estimadas: 340 | Rama: feat/sistema-de-diseno-menu-lateral
   Cómo probarlo: catálogo; contraer y expandir el menú.
