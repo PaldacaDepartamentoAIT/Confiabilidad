@@ -674,11 +674,27 @@ transitorias hasta T-051 (D-12).
   panel nuevo pasa de 0 a 1 en unos 0,2 s y solo queda un panel visible — [Cierto]. Mutantes muertos:
   paneles siempre activos.
 ## E-12b Pestañas que no caben
-- [ ] T-039 Pestañas que no caben
-  RF: RF-011 | Depende de: T-035, T-019 | Archivos: 3
-  Archivos: `layouts/Tabs.tsx`, `Tabs.css`, `Tabs.test.tsx`.
+- [x] T-039 Pestañas que no caben
+  RF: RF-011 | Depende de: T-035, T-019 | Archivos: 5
+  Archivos: `layouts/Tabs.tsx`, `Tabs.css`, `Tabs.test.tsx`, `TopBar.tsx`, `TopBar.css`.
   Hecho cuando: si no caben se desvanecen y aparece el selector con la pestaña activa que
   despliega las demás (medidas simuladas); suite verde.
+  Excepción: el área de pestañas (`tabs-area` y `tabs-clip`) pasa de `TopBar` a `Tabs`, porque el selector
+  debe vivir fuera del recorte para que su menú no se corte; eso toca `TopBar.tsx` y elimina
+  `TopBar.css`. Lo añadí sin detenerme — [Suposición] — revertir: pedir una Excepción aparte.
+  Decisiones: `Tabs` mide con `scrollWidth` frente a `clientWidth` del área, al montarse, al cambiar el
+  tamaño (`ResizeObserver` si existe y el evento `resize`) y al cambiar las pestañas; si no caben,
+  esconde la lista (`visibility`, `opacity` y `inert`) y enseña un selector sobre `Menu`, alineado a
+  la derecha, cuyo nombre es «etiqueta: pestaña activa» y que muestra la pestaña activa con un
+  chevron — [Probable]. El foco salta al control que pasa a verse si estaba en el que se esconde.
+  jsdom no calcula el diseño: los tests simulan `scrollWidth`, `clientWidth` y el aviso del
+  `ResizeObserver` — [Cierto]. Verificado en un navegador real: a 1200 px caben (área 612 px, pestañas
+  261 px); a 820 px no caben (área 232 px) y aparece el selector con el menú alineado a su borde
+  derecho, que lista las tres pestañas y al elegir «Alarmas» muestra su panel — [Cierto]. Mutante
+  equivalente: quitar la salida anticipada cuando no cambia el desbordamiento no cambia el
+  comportamiento visible. Mutantes muertos: umbral, evento `resize`, foco, `inert` de la lista y
+  del selector, alineación, nombre, observador y clase `overflow`.
+
 ## E-12c Buscador reducido en pantallas pequeñas
 - [ ] T-041 Buscador reducido en pantallas pequeñas
   RF: RF-012 | Depende de: T-036, T-031 | Archivos: 3
