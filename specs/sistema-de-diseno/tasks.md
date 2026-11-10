@@ -329,12 +329,27 @@ transitorias hasta T-051 (D-12).
   porque el nativo funciona en cualquier sitio; en la práctica solo ocurre en jsdom, de modo que los
   tests existentes de registro, que usan el `<select>` nativo, no cambian — [Probable] — revertir:
   devolver falso. Mutantes muertos: sin escucha, sin limpieza, valor de reserva, consulta, cambio.
-- [ ] T-023 Selector propio
-  RF: RF-016 | Depende de: T-015, T-019 | Archivos: 3
-  Archivos: `components/fields/SelectField.tsx`, `SelectField.css`, `ChoiceFields.test.tsx`.
+- [x] T-023 Selector propio
+  RF: RF-016 | Depende de: T-015, T-019 | Archivos: 5
+  Archivos: `components/fields/CustomSelect.tsx`, `CustomSelect.css`, `ChoiceFields.test.tsx`,
+  `menu/Menu.tsx`, `menu/Menu.test.tsx`.
   Hecho cuando: el disparador `<button role="combobox" name value>` abre la lista, se maneja con
   Enter, Espacio, flechas, Inicio, Fin, Escape y escritura, marca la opción, muestra el error y
   anuncia valor y estado; `useFormValidation` lo lee y enfoca; suite verde con `RegisterPage`.
+  Excepción: la escritura para saltar a una opción (RF-016) tenía que vivir en el menú compartido
+  (`Menu.tsx` y su test), no en el selector; sumados a los tres archivos del selector son cinco.
+  Lo añadí sin detenerme — [Suposición] — revertir: pedir una Excepción aparte.
+  Decisiones (desvío del orden previsto): el selector propio se escribió en un componente nuevo,
+  `CustomSelect`, y no sobre `SelectField`; `SelectField` pasa a elegir entre el propio y el nativo en
+  T-024, donde se reescriben sus tests. Así `SelectField`, `RegisterPage` y sus tests siguen en verde
+  entre una tarea y otra — [Probable] — revertir: mover el contenido a `SelectField.tsx`. El
+  disparador es un `<button name value>` con `role="combobox"` etiquetado con un `<label htmlFor>`;
+  no hay opción vacía en la lista, el texto de reserva solo se ve sin valor — [Suposición] —
+  revertir: añadir una primera opción vacía. Escribir salta a la opción cuyo texto empieza por lo
+  escrito (por su valor si la etiqueta no es texto); repetir una letra recorre las que empiezan por
+  ella, y una pausa de 0,7 s olvida lo escrito — [Probable]. Mutantes muertos: `value`, `name`,
+  valor controlado, aviso de cambio, `onBlur`, `ref`, texto de reserva, estado interno; del
+  menú: ciclar, temporizador, mayúsculas, Ctrl, abrir al escribir, texto frente a valor.
 - [ ] T-024 Selector nativo en dispositivos táctiles
   RF: RF-031 | Depende de: T-022, T-023 | Archivos: 2
   Archivos: `components/fields/SelectField.tsx`, `ChoiceFields.test.tsx`.
