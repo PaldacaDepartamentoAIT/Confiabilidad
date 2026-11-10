@@ -12,16 +12,29 @@ type AppLayoutProps = {
   user?: SidebarUser;
   storage?: LanguageStorage;
   topBar?: ReactNode;
+  // Para enseñar el diseño dentro de otra página que ya tiene su `<main>` y su barra (catálogo):
+  // la barra y el contenido pasan a ser bloques sin significado de zona.
+  embedded?: boolean;
   children: ReactNode;
 };
 
 // Diseño de las pantallas con sesión: menú lateral a la altura de la pantalla, barra superior y
 // contenido. En pantallas de menos de 768 px el menú es un panel que abre el botón de la barra.
-export function AppLayout({ items, activeId, user, storage, topBar, children }: AppLayoutProps) {
+export function AppLayout({
+  items,
+  activeId,
+  user,
+  storage,
+  topBar,
+  embedded = false,
+  children,
+}: AppLayoutProps) {
   const { t } = useTranslation();
   const sidebarId = useId();
   const opener = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
+  const Bar = embedded ? "div" : "header";
+  const Content = embedded ? "div" : "main";
 
   const close = useCallback((restoreFocus: boolean) => {
     setOpen(false);
@@ -40,7 +53,7 @@ export function AppLayout({ items, activeId, user, storage, topBar, children }: 
         onMobileClose={close}
       />
       <div className="main">
-        <header className="topbar" data-ui="topbar">
+        <Bar className="topbar" data-ui="topbar">
           <button
             ref={opener}
             type="button"
@@ -53,10 +66,10 @@ export function AppLayout({ items, activeId, user, storage, topBar, children }: 
             <IconMenu />
           </button>
           {topBar}
-        </header>
-        <main className="content" data-ui="content">
+        </Bar>
+        <Content className="content" data-ui="content">
           {children}
-        </main>
+        </Content>
       </div>
     </div>
   );

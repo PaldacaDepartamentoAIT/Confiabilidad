@@ -37,16 +37,29 @@
   gap: 14px;
 }
 
-/* El menú lateral real ocupa toda la altura de la pantalla; en el catálogo cabe en un marco. */
+/* Con sesión, el diseño real ocupa toda la pantalla; en el catálogo cabe en un marco (solo en pantallas
+   anchas: en las estrechas el menú es un panel superpuesto, como en la aplicación). */
 .catalog-frame {
-  height: 440px;
+  height: 480px;
   display: flex;
   border: 1px solid var(--gray);
   border-radius: 4px;
   overflow: hidden;
 }
 
-.catalog-frame .sidebar {
-  position: relative;
-  height: 100%;
+.catalog-frame .app {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.catalog-frame .main {
+  overflow-y: auto;
+}
+
+@media (min-width: 768px) {
+  .catalog-frame .sidebar {
+    position: relative;
+    height: 100%;
+  }
 }

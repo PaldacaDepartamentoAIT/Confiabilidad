@@ -556,11 +556,24 @@ transitorias hasta T-051 (D-12).
   `topBar` (las pestañas y el buscador llegan en E-11); el contenido es el `<main>` — [Cierto]. El
   CSS anula el borde y el fondo que `base.css` pone transitoriamente a `main` — [Cierto]. Mutantes
   muertos: foco, `aria-expanded`, alternar, hueco, `aria-controls`, usuario, `header` y `main`.
-- [ ] T-034 Catálogo: diseño con sesión
-  RF: RF-027 | Depende de: T-033 | Archivos: 3
+- [x] T-034 Catálogo: diseño con sesión
+  RF: RF-027 | Depende de: T-033 | Archivos: 5
   Archivos: `showcase/sections/AppLayoutSection.tsx`, `showcase/ShowcasePage.tsx`,
-  `showcase/ShowcasePage.test.tsx`.
+  `showcase/ShowcasePage.test.tsx`, `layouts/AppLayout.tsx`, `layouts/AppLayout.test.tsx`.
   Hecho cuando: el catálogo exhibe una pantalla con sesión de ejemplo; suite verde.
+  Excepción: la sección sustituye a `SidebarSection` (el menú suelto) y `sections.css` cambia el
+  marco; además, mostrar el diseño dentro de la página de muestra obliga a una propiedad nueva,
+  `embedded`, en `AppLayout.tsx` (y su test): la barra y el contenido pasan a ser bloques sin
+  significado de zona, porque la página ya tiene su `banner` y su `main`. Lo añadí sin detenerme —
+  [Suposición] — revertir: pedir una Excepción aparte.
+  Decisiones: la sección «Diseño con sesión» sustituye a la del menú lateral suelto, porque en una
+  ventana estrecha el menú suelto quedaba oculto sin botón que lo abriera; en pantallas anchas el
+  menú cabe en el marco y en las estrechas es un panel fijo sobre toda la página, como en la
+  aplicación — [Probable]. Verificado en un navegador real: ancho, menú de 232 px, barra de 64 px y
+  contenido a su lado; estrecho (420 px), menú oculto a 232 px a la izquierda, al pulsar «Abrir menú»
+  entra con el foco en «Cerrar menú», Escape lo cierra devolviendo el foco al botón y un clic fuera
+  lo cierra — [Cierto]. Mutantes muertos: sin `lang`, sin `embedded`, elemento activo, contenido y
+  la barra embebida.
 
 ## E-11 Barra superior
 - [ ] T-035 Pestañas

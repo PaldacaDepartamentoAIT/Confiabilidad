@@ -10,11 +10,12 @@ import { PasswordField } from "../components/fields/PasswordField";
 import { RequiredLegend } from "../components/fields/RequiredLegend";
 import { TextField } from "../components/fields/TextField";
 import { PublicLayout } from "../layouts/PublicLayout";
+import { AppLayoutSection } from "./sections/AppLayoutSection";
 import { BlocksSection } from "./sections/BlocksSection";
 import { ButtonsSection } from "./sections/ButtonsSection";
 import { FieldsSection } from "./sections/FieldsSection";
 import { MenuSection } from "./sections/MenuSection";
-import { SidebarSection } from "./sections/SidebarSection";
+
 import { newPasswordRules } from "../forms/passwordRules";
 import {
   useFormValidation,
@@ -130,7 +131,7 @@ export function ShowcasePage({ storage }: ShowcasePageProps) {
         <ButtonsSection />
         <FieldsSection />
         <MenuSection storage={storage} />
-        <SidebarSection storage={storage} />
+        <AppLayoutSection storage={storage} />
       </main>
     </PublicLayout>
   );

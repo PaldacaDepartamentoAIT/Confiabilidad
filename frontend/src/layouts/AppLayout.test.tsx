@@ -167,3 +167,16 @@ test("has no accessibility violations on a wide and on a narrow screen", async (
       .violations,
   ).toEqual([]);
 });
+
+test("embedded, the bar and the content are plain blocks, for a page that already has its own main and banner", () => {
+  stubScreen(false);
+  const { container } = renderLayout({ embedded: true });
+
+  expect(screen.queryByRole("main")).not.toBeInTheDocument();
+  expect(screen.queryByRole("banner")).not.toBeInTheDocument();
+  expect(container.querySelector("[data-ui='topbar']")?.tagName).toBe("DIV");
+  const content = container.querySelector("[data-ui='content']");
+  expect(content?.tagName).toBe("DIV");
+  expect(content).toHaveClass("content");
+  expect(content).toHaveTextContent("Page");
+});
