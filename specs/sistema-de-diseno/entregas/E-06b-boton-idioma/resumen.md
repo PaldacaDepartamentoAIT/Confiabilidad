@@ -1,6 +1,6 @@
 # Entrega E-06b · Botón de idioma y catálogo
 
-Rama: `feat/sistema-de-diseno-boton-idioma` (sale de `feat/sistema-de-diseno-menu`) · PR: pendiente ·
+Rama: `feat/sistema-de-diseno-boton-idioma` · PR: [PaldacaDepartamentoAIT/Confiabilidad#77](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/77) ·
 Líneas de código y tests: 251 (límite: 400).
 
 ## Qué se hizo
