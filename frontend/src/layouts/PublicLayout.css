@@ -1,0 +1,46 @@
+/* Transitorio: compensa el relleno del `body` de base.css (se retira con T-051). */
+.public-app {
+  margin: -22px;
+}
+
+.public-bar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  height: 64px;
+  padding: 0 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--gray);
+  background: var(--bg);
+}
+
+.brand {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  text-decoration: underline;
+  text-decoration-thickness: 2.5px;
+  text-underline-offset: 6px;
+  text-decoration-color: var(--ink);
+}
+
+.public-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.public-actions .select,
+.public-actions .sb-btn {
+  width: auto;
+}
+
+.public-content {
+  padding: 22px;
+}
