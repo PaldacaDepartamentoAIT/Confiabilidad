@@ -44,12 +44,12 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
         </span>
       </label>
       {hint && (
-        <p className="help check-note" id={hintId}>
+        <p className="help" id={hintId}>
           {hint}
         </p>
       )}
       {error && (
-        <p className="error-msg check-note" id={errorId}>
+        <p className="error-msg" id={errorId}>
           <IconAlert />
           <span>{error}</span>
         </p>

@@ -32,14 +32,16 @@ test("toggles with a click on the label and with the space bar", async () => {
   expect(box).not.toBeChecked();
 });
 
-test("a hint and an error go under the text with their own style and describe the box", () => {
+test("a hint and an error go under the box row with their own style, without an indent, and describe the box", () => {
   render(<Checkbox label="Accept" hint="Read them first." error="Accept the terms." />);
 
   const box = screen.getByRole("checkbox", { name: "Accept" });
   expect(box).toHaveAccessibleDescription("Read them first. Accept the terms.");
-  expect(screen.getByText("Read them first.")).toHaveClass("help", "check-note");
+  expect(screen.getByText("Read them first.")).toHaveClass("help");
+  expect(screen.getByText("Read them first.")).not.toHaveClass("check-note");
   const error = screen.getByText("Accept the terms.").closest("p");
-  expect(error).toHaveClass("error-msg", "check-note");
+  expect(error).toHaveClass("error-msg");
+  expect(error).not.toHaveClass("check-note");
   expect(error?.querySelector("svg")).toHaveClass("lucide-circle-alert");
 });
 

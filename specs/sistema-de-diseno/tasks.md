@@ -241,7 +241,9 @@ transitorias hasta T-051 (D-12).
   Hecho cuando: icono de verificación centrado, etiqueta y ayuda opcional; suite verde.
   Decisiones: `Checkbox` envuelve la caja y el icono de verificación en `label.check`; la ayuda y el
   error van fuera de la etiqueta, bajo el texto, para que el nombre accesible de la casilla sea solo
-  su etiqueta (como pedían los tests previos) — [Probable] — revertir: meter la ayuda en `.txt`. El
+  su etiqueta (como pedían los tests previos) — [Probable] — revertir: meter la ayuda en `.txt`. Por petición del usuario durante la revisión de E-05b, la ayuda y el error no llevan sangría
+  (sin margen izquierdo): quedan alineados con el borde de la caja — [Cierto] — revertir: añadir de
+  nuevo `margin-left: 28px` a esas dos clases dentro de `.check-field`. El
   icono de verificación mide 14 px con trazo 3 y la caja es nativa con `appearance: none` —
   [Cierto]. Los estilos no se verificaron aún en un navegador: `/register` necesita el backend para
   cargar los términos; se verifica en el catálogo (T-018) — [Cierto]. Mutantes muertos: `data-ui`,

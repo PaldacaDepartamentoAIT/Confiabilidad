@@ -7,7 +7,7 @@ Líneas de código y tests: 262 (límite: 400).
 - La casilla de verificación tiene la identidad nueva: caja de 18 px con borde de 1 px y esquinas de
   4 px; al marcarla se rellena con el color principal y muestra un icono de verificación de 14 px
   centrado; al pasar el cursor sin marcar se tiñe con el 9 % de la tinta, y marcada se oscurece. La
-  etiqueta y la ayuda quedan a su lado, y el error, con icono, debajo del texto.
+  etiqueta queda a su lado, y la ayuda y el error (con icono) debajo de la fila, alineados con el borde de la caja, sin sangría.
 - La casilla de las pantallas de registro (términos y avisos) se ve así sin cambiar su comportamiento.
 - La página de muestra tiene una sección nueva, «Campos», que exhibe campos de texto (con ayuda, con
   error y obligatorio), de contraseña y de código, y tres casillas (marcada, sin marcar y con error),
