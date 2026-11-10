@@ -54,9 +54,9 @@ Cuando el usuario pulse el botón de abrir y cerrar del menú, el sistema deber�
 
 ### RF-009 Menú en pantallas pequeñas
 Mientras la pantalla sea más estrecha que 768 px, el sistema deberá ocultar el menú lateral y
-ofrecer en la barra superior un botón que lo abra como panel superpuesto con un velo detrás; el panel
-deberá cerrarse al pulsar el velo, al pulsar Escape o al elegir un elemento, y no deberá existir el
-estado contraído. Cuando el panel se cierre, el foco deberá volver al botón que lo abrió.
+ofrecer en la barra superior un botón que lo abra como panel superpuesto, sin velo detrás; el panel
+deberá cerrarse al pulsar fuera de él, al pulsar Escape o al elegir un elemento, y no deberá existir
+el estado contraído. Cuando el panel se cierre, el foco deberá volver al botón que lo abrió.
 
 ### RF-010 Barra superior con pestañas
 El sistema deberá ofrecer una barra superior con pestañas a la izquierda y un buscador a la derecha;
@@ -190,3 +190,4 @@ Mientras el dispositivo tenga un puntero principal táctil, el sistema deberá m
 ## Historial de cambios
 - 2026-11-09 — Spec inicial — RF: RF-001 a RF-030 — Estado: clarificado
 - 2026-11-09 — Clarificación: C-01 a C-09 — RF: RF-005, RF-007, RF-009, RF-010, RF-012, RF-015, RF-016, RF-024, RF-028, RF-031 — Estado: clarificado
+- 2026-11-10 — Corrección de RF-009: sin velo, según la guía y las referencias — RF: RF-009 — Estado: clarificado
