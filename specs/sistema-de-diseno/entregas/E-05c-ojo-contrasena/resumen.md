@@ -1,6 +1,6 @@
 # Entrega E-05c · Botón de ojo dentro del campo de contraseña
 
-Rama: `feat/sistema-de-diseno-ojo-contrasena` (sale de `feat/sistema-de-diseno-campos-texto`) · PR: pendiente ·
+Rama: `feat/sistema-de-diseno-ojo-contrasena` · PR: [PaldacaDepartamentoAIT/Confiabilidad#75](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/75) ·
 Líneas de código y tests: 92 (límite: 400).
 
 ## Qué se hizo
