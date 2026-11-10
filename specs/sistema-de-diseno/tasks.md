@@ -452,6 +452,29 @@ transitorias hasta T-051 (D-12).
   Hecho cuando: un trabajo nuevo instala Chromium y ejecuta `test:visual`; el CI queda en verde en
   el PR.
 
+## E-05c Botón de ojo en la contraseña (cambio aprobado por el usuario)
+- [x] T-056 Iconos de ojo en el módulo de iconos
+  RF: RF-015 | Depende de: T-006 | Archivos: 2
+  Archivos: `icons/index.ts`, `icons/icons.test.tsx`.
+  Hecho cuando: el módulo exporta `IconEye` y `IconEyeOff` a 16 px y trazo 2, y su test los
+  incluye; suite verde.
+  Decisiones: se añadió además un test que distingue el ojo abierto del tachado, porque el test de
+  contrato no detectaba que `IconEyeOff` dibujara el ojo abierto — [Cierto]. Mutante muerto: `EyeOff`
+  sustituido por `Eye`.
+- [ ] T-057 Botón de ojo dentro del campo de contraseña
+  RF: RF-015 | Depende de: T-056, T-016 | Archivos: 4
+  Archivos: `components/fields/PasswordField.tsx`, `field.css`, `PasswordField.test.tsx`,
+  `TextField.test.tsx`.
+  Hecho cuando: el botón es un `<button>` real dentro del campo, a la derecha, con `IconEye`
+  (contraseña oculta) o `IconEyeOff` (visible) y sin texto visible; mantiene el nombre accesible
+  («Mostrar contraseña (Contraseña)») y `aria-pressed`; su área pulsable es de al menos 32 × 32 px;
+  el foco, el teclado y la regla de que campo y botón cuentan como uno al validar al salir no
+  cambian; los tests previos pasan salvo los que miran el texto visible del botón, que se
+  actualizan; suite verde.
+  Excepción: `TextField.test.tsx` contiene un test de T-016 que afirma que el botón es secundario
+  con texto; deja de ser cierto y hay que cambiarlo en el mismo cambio. Lo añadí sin detenerme —
+  [Suposición] — revertir: pedir una Excepción aparte.
+
 ## Entregas
 Rama de integración: `feat/sistema-de-diseno` (los PR de las entregas van contra ella; ver `AGENTS.md`)
 
@@ -492,6 +515,9 @@ Rama de integración: `feat/sistema-de-diseno` (los PR de las entregas van contr
 - E-05b Casilla de verificación y sección «Campos» del catálogo.
   Tareas: T-017, T-018 | Líneas estimadas: 262 | Rama: feat/sistema-de-diseno-casilla
   Cómo probarlo: página de muestra, sección «Campos»: marcar y desmarcar las casillas, en ambos temas.
+- E-05c Botón de ojo dentro del campo de contraseña (cambio aprobado por el usuario después de E-05).
+  Tareas: T-056, T-057 | Líneas estimadas: 80 | Rama: feat/sistema-de-diseno-ojo-contrasena
+  Cómo probarlo: página de muestra, campo «Clave de acceso»: pulsar el ojo para mostrar y ocultar.
 - E-06 Botón de idioma con menú.
   Tareas: T-019, T-020, T-021 | Líneas estimadas: 400 | Rama: feat/sistema-de-diseno-idioma
   Cómo probarlo: abrir el botón de idioma en el catálogo y cambiar de idioma con ratón y teclado.
