@@ -586,11 +586,21 @@ transitorias hasta T-051 (D-12).
   el botón y el estado del panel son lo que hace usable E-10b — [Cierto].
 
 ## E-11 Barra superior
-- [ ] T-035 Pestañas
+- [x] T-035 Pestañas
   RF: RF-010 | Depende de: T-001 | Archivos: 3
   Archivos: `layouts/Tabs.tsx`, `Tabs.css`, `Tabs.test.tsx`.
   Hecho cuando: se manejan con flechas, Inicio y Fin, y la línea de 2 px se desplaza a la pestaña
   nueva en 0,25 s (medidas simuladas); suite verde.
+  Decisiones: `Tabs` recibe `label`, `tabs` (`id`, `label`), `activeId`, `onChange` e `idPrefix`; las
+  pestañas son botones con `role="tab"`, solo la activa está en el orden del teclado y se activan al
+  moverse con las flechas (con vuelta al principio y al final, como la referencia), Inicio y Fin —
+  [Probable] — revertir: activación manual con Intro. Las funciones `tabId` y `tabPanelId` dan los
+  identificadores que los paneles (T-040) usarán. La línea de 2 px se coloca midiendo la pestaña
+  activa (ancho −24 px y margen de 12 px) con una transición de 0,25 s; jsdom no calcula el diseño,
+  así que los tests simulan `offsetWidth` y `offsetLeft` — [Cierto]. `axe` exige que `aria-controls`
+  apunte a un panel existente: el test monta paneles — [Cierto]. Mutantes muertos: vuelta de las
+  flechas, Inicio, Fin, orden del teclado, `preventDefault`, ancho y margen de la línea, foco,
+  actualización de la línea, `data-ui` y `aria-controls`.
 - [ ] T-036 Buscador
   RF: RF-010 | Depende de: T-006, T-015 | Archivos: 3
   Archivos: `layouts/SearchBox.tsx`, `SearchBox.css`, `SearchBox.test.tsx`.
