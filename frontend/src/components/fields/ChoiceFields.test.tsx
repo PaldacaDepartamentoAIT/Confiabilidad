@@ -269,3 +269,137 @@ describe("selector propio", () => {
     expect((await run()).violations.map((violation) => violation.id)).toEqual([]);
   });
 });
+
+describe("selector según el puntero", () => {
+  function pointer(coarse: boolean) {
+    vi.stubGlobal("matchMedia", () => ({
+      matches: coarse,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+    }));
+  }
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("con puntero fino muestra el selector propio, con la misma etiqueta, opciones y error", async () => {
+    pointer(false);
+    const user = userEvent.setup();
+    render(
+      <SelectField
+        label="Country"
+        placeholder="Choose"
+        options={options}
+        name="c"
+        required
+        hint="Where you live."
+        error="Choose one."
+      />,
+    );
+
+    const field = screen.getByRole("combobox", { name: "Country" });
+    expect(field.tagName).toBe("BUTTON");
+    expect(field).toHaveAttribute("name", "c");
+    expect(field).toHaveAttribute("aria-required", "true");
+    expect(field).toHaveAttribute("aria-invalid", "true");
+    expect(field).toHaveAccessibleDescription("Where you live. Choose one.");
+    expect(field).toHaveTextContent("Choose");
+    await user.click(field);
+    expect(screen.getAllByRole("option").map((option) => option.textContent)).toEqual([
+      "Brazil",
+      "Chile",
+    ]);
+  });
+
+  it("con puntero táctil muestra el selector nativo, con la misma etiqueta, opciones y error", () => {
+    pointer(true);
+    render(
+      <SelectField
+        label="Country"
+        placeholder="Choose"
+        options={options}
+        name="c"
+        required
+        hint="Where you live."
+        error="Choose one."
+      />,
+    );
+
+    const field = screen.getByRole("combobox", { name: "Country" });
+    expect(field.tagName).toBe("SELECT");
+    expect(field).toHaveAttribute("name", "c");
+    expect(field).toHaveAttribute("aria-required", "true");
+    expect(field).toHaveAttribute("aria-invalid", "true");
+    expect(field).toHaveAccessibleDescription("Where you live. Choose one.");
+    expect(field).toHaveValue("");
+    expect(screen.getAllByRole("option").map((option) => option.textContent)).toEqual([
+      "Choose",
+      "Brazil",
+      "Chile",
+    ]);
+  });
+
+  it("el selector nativo tiene el aspecto de campo de la guía", () => {
+    pointer(true);
+    const { container } = render(
+      <SelectField label="Country" placeholder="Choose" options={options} error="Choose one." />,
+    );
+
+    expect(container.firstElementChild).toHaveClass("fld");
+    expect(screen.getByRole("combobox")).toHaveClass("field");
+    expect(screen.getByRole("combobox")).toHaveAttribute("data-ui", "field");
+    expect(screen.getByText("Choose one.").closest("p")).toHaveClass("error-msg");
+  });
+
+  it("cambia de uno a otro si el puntero cambia con la página abierta", () => {
+    type Listener = (event: { matches: boolean }) => void;
+    const listeners = new Set<Listener>();
+    vi.stubGlobal("matchMedia", () => ({
+      matches: false,
+      addEventListener: (_type: string, listener: Listener) => listeners.add(listener),
+      removeEventListener: (_type: string, listener: Listener) => listeners.delete(listener),
+    }));
+    render(<SelectField label="Country" placeholder="Choose" options={options} />);
+    expect(screen.getByRole("combobox").tagName).toBe("BUTTON");
+
+    act(() => listeners.forEach((listener) => listener({ matches: true })));
+
+    expect(screen.getByRole("combobox").tagName).toBe("SELECT");
+  });
+
+  it("pasa su ref al control que se muestre", () => {
+    const ref = createRef<HTMLSelectElement | HTMLButtonElement>();
+    pointer(false);
+    const { unmount } = render(
+      <SelectField ref={ref} label="Country" placeholder="Choose" options={options} />,
+    );
+    expect(ref.current).toBe(screen.getByRole("combobox"));
+    unmount();
+
+    pointer(true);
+    render(<SelectField ref={ref} label="Country" placeholder="Choose" options={options} />);
+    expect(ref.current).toBe(screen.getByRole("combobox"));
+  });
+
+  it("con puntero fino lee el valor inicial y avisa del cambio", async () => {
+    pointer(false);
+    const user = userEvent.setup();
+    const onValueChange = vi.fn();
+    render(
+      <SelectField
+        label="Country"
+        placeholder="Choose"
+        options={options}
+        defaultValue="CL"
+        onValueChange={onValueChange}
+      />,
+    );
+    expect(screen.getByRole("combobox")).toHaveTextContent("Chile");
+
+    await user.click(screen.getByRole("combobox"));
+    await user.click(screen.getByRole("option", { name: "Brazil" }));
+
+    expect(onValueChange).toHaveBeenCalledWith("BR");
+  });
+});

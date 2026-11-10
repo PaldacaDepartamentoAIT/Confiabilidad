@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { I18nextProvider } from "react-i18next";
 
 import { FormMessage } from "../components/FormMessage";
+import { CustomSelect } from "../components/fields/CustomSelect";
 import { AnnouncerContext } from "../components/announcer";
 import { createI18n } from "../i18n";
 import {
@@ -457,4 +458,54 @@ test("leaving a field with the pointer pressed validates it once the click ends"
 
   await user.pointer({ keys: "[/MouseLeft]", target: code });
   await waitFor(() => expect(latestErrors).toEqual({ name: { key: "required" } }));
+});
+
+function CustomSelectForm({ onValid }: { onValid: (values: Record<string, string>) => void }) {
+  const { errors, onBlur, handleSubmit } = useFormValidation({ country: [notEmpty] });
+  return (
+    <form onSubmit={handleSubmit(onValid)}>
+      <CustomSelect
+        label="Country"
+        placeholder="Choose"
+        options={[
+          { value: "BR", label: "Brazil" },
+          { value: "CL", label: "Chile" },
+        ]}
+        name="country"
+        onBlur={onBlur("country")}
+        error={errors.country ? "Elige un país." : undefined}
+      />
+      <button type="submit">Send</button>
+    </form>
+  );
+}
+
+test("reads the value of the own select, focuses it when empty and validates when it is left", async () => {
+  const user = userEvent.setup();
+  const onValid = vi.fn();
+  renderInSpanish(<CustomSelectForm onValid={onValid} />);
+  const select = screen.getByRole("combobox", { name: "Country" });
+
+  await user.click(screen.getByRole("button", { name: "Send" }));
+  expect(onValid).not.toHaveBeenCalled();
+  expect(select).toHaveFocus();
+  expect(select).toHaveAccessibleDescription("Elige un país.");
+
+  await user.click(select);
+  await user.click(screen.getByRole("option", { name: "Brazil" }));
+  await user.click(screen.getByRole("button", { name: "Send" }));
+
+  expect(onValid).toHaveBeenCalledWith({ country: "BR" });
+});
+
+test("leaving the own select without choosing shows the required error", async () => {
+  const user = userEvent.setup();
+  renderInSpanish(<CustomSelectForm onValid={vi.fn()} />);
+  const select = screen.getByRole("combobox", { name: "Country" });
+
+  await user.click(select);
+  await user.keyboard("{Escape}");
+  await user.tab();
+
+  expect(select).toHaveAccessibleDescription("Elige un país.");
 });
