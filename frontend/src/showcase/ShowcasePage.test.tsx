@@ -556,13 +556,14 @@ test("on a narrow screen the menu button of the catalog opens the side menu as a
   vi.unstubAllGlobals();
 });
 
-test("the screen with session of the catalog has tabs, and choosing a tab shows its section", async () => {
+test("the screen with session of the catalog has tabs and a search, and choosing a tab shows its section", async () => {
   const user = userEvent.setup();
   renderPage("en");
 
   const catalog = screen.getByRole("region", { name: "Diseño con sesión" });
   const tabs = within(catalog).getAllByRole("tab");
   expect(tabs.map((tab) => tab.textContent)).toEqual(["Resumen", "Inventario", "Alarmas"]);
+  expect(within(catalog).getByRole("searchbox", { name: "Buscar" })).toBeInTheDocument();
   const visible = () =>
     within(catalog)
       .getAllByRole("tabpanel")

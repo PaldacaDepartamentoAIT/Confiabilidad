@@ -6,7 +6,7 @@ import { IconBell, IconFactory, IconHouse, IconPackage } from "../../icons";
 import { AppLayout } from "../../layouts/AppLayout";
 import type { SidebarItem } from "../../layouts/Sidebar";
 import { tabId, tabPanelId } from "../../layouts/tabIds";
-import { Tabs } from "../../layouts/Tabs";
+import { TopBar } from "../../layouts/TopBar";
 import "./sections.css";
 
 const ITEMS: SidebarItem[] = [
@@ -58,12 +58,14 @@ export function AppLayoutSection({ storage }: AppLayoutSectionProps) {
           storage={storage}
           embedded
           topBar={
-            <Tabs
-              label="Secciones de la pantalla"
+            <TopBar
+              tabsLabel="Secciones de la pantalla"
               tabs={TABS}
               activeId={active}
               onChange={setActive}
               idPrefix="demo"
+              searchLabel="Buscar"
+              searchPlaceholder="Buscar…"
             />
           }
         >
