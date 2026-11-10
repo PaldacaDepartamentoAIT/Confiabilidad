@@ -378,7 +378,11 @@ test("has a theme button that saves the chosen theme in the storage it receives"
     </I18nextProvider>,
   );
 
-  await user.click(screen.getByRole("button", { name: /^Tema (claro|oscuro)\. Cambiar tema$/ }));
+  await user.click(
+    within(screen.getByRole("banner")).getByRole("button", {
+      name: /^Tema (claro|oscuro)\. Cambiar tema$/,
+    }),
+  );
 
   expect(["light", "dark"]).toContain(values.get(THEME_STORAGE_KEY));
   expect(document.documentElement).toHaveAttribute("data-theme", values.get(THEME_STORAGE_KEY));
@@ -486,7 +490,7 @@ test("the catalog shows the own select with a value and with an error, and choos
   expect(sector).toHaveTextContent("Transmisión");
 });
 
-test("the page uses the public layout and its bar holds the only theme button", () => {
+test("the page uses the public layout and its bar holds one theme button", () => {
   renderPage();
 
   const bar = screen.getByRole("banner");
@@ -494,6 +498,24 @@ test("the page uses the public layout and its bar holds the only theme button", 
   expect(
     within(bar).getByRole("button", { name: /^Tema (claro|oscuro)\. Cambiar tema$/ }),
   ).toBeInTheDocument();
-  expect(screen.getAllByRole("button", { name: /Cambiar tema$/ })).toHaveLength(1);
+  expect(within(bar).getAllByRole("button", { name: /Cambiar tema$/ })).toHaveLength(1);
   expect(screen.getAllByRole("main")).toHaveLength(1);
+});
+
+test("the catalog shows the side menu with its sections, the current one marked and a counter", () => {
+  renderPage("en");
+
+  const catalog = screen.getByRole("region", { name: "Menú lateral" });
+  expect(catalog).toHaveAttribute("lang", "es");
+  const sidebar = within(catalog).getByRole("complementary");
+  expect(sidebar).not.toHaveClass("collapsed");
+  expect(
+    within(sidebar)
+      .getAllByRole("link")
+      .map((link) => link.textContent),
+  ).toEqual(["Inicio", "Plantas", "Activos", "Alarmas3"]);
+  expect(within(sidebar).getByRole("link", { name: "Activos" })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
 });

@@ -441,17 +441,58 @@ transitorias hasta T-051 (D-12).
   público.
 
 ## E-09 Menú lateral
-- [ ] T-029 Menú lateral
-  RF: RF-007, RF-008 | Depende de: T-004, T-020 | Archivos: 3
+- [x] T-059 Textos del menú lateral en tres idiomas
+  RF: RF-030 | Depende de: T-001 | Archivos: 4
+  Archivos: `i18n/locales/en.ts`, `es.ts`, `pt-BR.ts`, `locales.test.ts`.
+  Hecho cuando: existen `sidebar.label`, `sidebar.sections`, `sidebar.collapse` y `sidebar.expand`
+  en los tres idiomas y los tests de claves y locales pasan; suite verde.
+  Excepción: los tres archivos de idioma son una unidad (`es` y `pt-BR` se tipan contra `en`) y
+  `locales.test.ts` lista los grupos de esos mismos archivos.
+  Decisiones: tarea nueva, como T-003 para el tema: el menú necesita cuatro textos propios (nombre
+  de la región, nombre de la navegación y los dos nombres del botón de contraer) que no estaban en
+  la lista de tareas aprobada — [Cierto] — revertir: pasarlos por props. Mutante muerto: quitar una
+  clave de `es`.
+- [x] T-029 Menú lateral: cabecera y navegación
+  RF: RF-006, RF-007 | Depende de: T-059 | Archivos: 3
   Archivos: `layouts/Sidebar.tsx`, `Sidebar.css`, `Sidebar.test.tsx`.
-  Hecho cuando: recibe los elementos como datos, marca el activo, muestra contador, pie con tema,
-  idioma y usuario (acción opcional) y contrae de 232 a 60 px con `aria-expanded` y «<»/«>»;
-  suite verde.
-- [ ] T-030 Catálogo: menú lateral
+  Hecho cuando: el menú tiene cabecera de 64 px con el nombre del sistema y una navegación con los
+  elementos recibidos como datos (icono y etiqueta), el activo marcado y un contador opcional en los
+  que lo tengan; suite verde.
+  Decisiones: `Sidebar` recibe `items` (`id`, `label`, `href`, `icon`, `counter`, `counterLabel`) y
+  `activeId`; los elementos son enlaces `<a href>` — [Suposición]: la navegación real llegará con las
+  rutas de cada feature. El contraer y el pie (tema, idioma y usuario) son T-060 y T-061; la tarea
+  original se dividió en tres por tamaño — [Cierto]. Las clases comunes `hov` y `svg.i` se siguen
+  importando de `ThemeButton.css` (`Sidebar.tsx` lo importa), sin moverlas a un archivo común —
+  [Suposición] — revertir: crear `styles/interactive.css` y quitar las importaciones cruzadas; queda
+  para la limpieza (T-051). `.brand` se duplica en `Sidebar.css` y `PublicLayout.css` —
+  [Suposición]. Mutantes muertos: elemento activo, contador, textos traducidos.
+- [x] T-030 Catálogo: menú lateral
   RF: RF-027 | Depende de: T-029 | Archivos: 3
   Archivos: `showcase/sections/SidebarSection.tsx`, `showcase/ShowcasePage.tsx`,
   `showcase/ShowcasePage.test.tsx`.
-  Hecho cuando: el catálogo exhibe el menú abierto y contraído; suite verde.
+  Hecho cuando: el catálogo exhibe el menú lateral con sus secciones; suite verde.
+  Excepción: `showcase/sections/sections.css` (ya existente) recibe la clase `catalog-frame`.
+  Decisiones: el catálogo muestra un solo menú lateral (una región con el mismo nombre repetida la
+  marca `axe`) — [Cierto]. El marco `catalog-frame` anula el `sticky` y los 100 vh del menú real para
+  que quepa en 440 px — [Probable]. Verificado en un navegador real en claro y oscuro: 232 px,
+  cabecera de 64 px, elementos de 36 px y línea bajo el activo. Mutantes muertos: sin `lang`,
+  activo cambiado.
+
+## E-09b Contraer el menú lateral y su pie
+- [ ] T-060 Contraer y expandir el menú lateral
+  RF: RF-008 | Depende de: T-029 | Archivos: 3
+  Archivos: `layouts/Sidebar.tsx`, `Sidebar.css`, `Sidebar.test.tsx`.
+  Hecho cuando: un botón de abrir y cerrar con chevron de 22 px («<» con el menú abierto, «>» con
+  él contraído, `aria-expanded` y su nombre) alterna el menú entre 232 y 60 px con animación; contraído
+  solo se ven los iconos, que no se desplazan, con la etiqueta como `title`; suite verde.
+- [ ] T-061 Pie del menú lateral: tema, idioma y usuario
+  RF: RF-007 | Depende de: T-029, T-060 | Archivos: 5
+  Archivos: `layouts/Sidebar.tsx`, `Sidebar.css`, `Sidebar.test.tsx`, `showcase/sections/SidebarSection.tsx`,
+  `showcase/ShowcasePage.test.tsx`.
+  Hecho cuando: el pie apila el botón de tema, el de idioma y el del usuario (avatar con iniciales,
+  nombre y flechas; pulsable solo si trae acción); el catálogo exhibe el menú con usuario y se
+  puede contraer; suite verde.
+  Excepción: el pie y su sección del catálogo (dos archivos más) forman un solo cambio visible.
 
 ## E-10 Diseño con sesión y menú en pantallas pequeñas
 - [ ] T-031 `useMediaQuery`
@@ -703,8 +744,13 @@ Rama de integración: `feat/sistema-de-diseno` (los PR de las entregas van contr
   Tareas: T-028 | Líneas estimadas: 158 | Rama: feat/sistema-de-diseno-publico-muestra
   Cómo probarlo: abrir la página de muestra y ver la barra superior con idioma y tema.
 - E-09 Menú lateral en el catálogo.
-  Tareas: T-029, T-030 | Líneas estimadas: 340 | Rama: feat/sistema-de-diseno-menu-lateral
-  Cómo probarlo: catálogo; contraer y expandir el menú.
+  Tareas: T-059, T-029, T-030 | Líneas estimadas: 332 | Rama: feat/sistema-de-diseno-menu-lateral-base
+  Cómo probarlo: catálogo, sección «Menú lateral»: el menú con sus secciones.
+  Nota: E-09 se dividió en E-09 y E-09b porque la entrega completa medía 594 líneas; se aplicó la
+  regla de AGENTS.md. T-060 y T-061 nacieron de dividir T-029.
+- E-09b Contraer el menú lateral y su pie con tema, idioma y usuario.
+  Tareas: T-060, T-061 | Líneas estimadas: 262 | Rama: feat/sistema-de-diseno-menu-lateral-pie
+  Cómo probarlo: catálogo: contraer y expandir el menú y ver el pie.
 - E-10 Diseño con sesión y panel de menú en pantallas pequeñas.
   Tareas: T-031, T-032, T-033, T-034 | Líneas estimadas: 390 | Rama: feat/sistema-de-diseno-con-sesion
   Cómo probarlo: catálogo, ventana de menos de 768 px y abrir el panel del menú.
