@@ -651,26 +651,40 @@ transitorias hasta T-051 (D-12).
   suma un archivo a T-035 — [Cierto]. Mutantes muertos: paneles ocultos, cambio de pestaña, una
   pestaña y el nombre del buscador.
 
-## E-12 Pestañas que no caben y cambio de sección
+## E-12 Fundido entre secciones
+- [x] T-040 Cambio de sección con fundido
+  RF: RF-013 | Depende de: T-035 | Archivos: 3
+  Archivos: `layouts/TabPanel.tsx`, `TabPanel.css`, `TabPanel.test.tsx`.
+  Hecho cuando: solo una sección es visible y la nueva aparece con fundido de 0,2 s; suite verde.
+  Decisiones: `TabPanel` recibe `idPrefix`, `id` y `active`; es `role="tabpanel"` con el
+  identificador y el `aria-labelledby` de `tabIds.ts`, oculto con `hidden` si no está activo, y con la
+  clase `entering` (fundido de 0,2 s) solo cuando pasa a activo después de montarse; la regla
+  `[role="tabpanel"][hidden]` evita que un `display: flex` lo deje visible — [Cierto]. Con movimiento
+  reducido no hay fundido porque `base.css` quita todas las animaciones (RF-004) — [Cierto]. `axe`
+  exige que la pestaña esté dentro de un `tablist`: el test lo monta — [Cierto]. Mutantes muertos:
+  fundido al montar, fundido al salir, oculto, nombre, atributos extra e identificador.
+- [x] T-042 Catálogo: pestañas completas
+  RF: RF-027 | Depende de: T-039, T-040, T-041 | Archivos: 3
+  Archivos: `showcase/sections/AppLayoutSection.tsx`, `showcase/ShowcasePage.tsx`,
+  `showcase/ShowcasePage.test.tsx`.
+  Hecho cuando: la pantalla de ejemplo cambia de sección con fundido; suite verde.
+  Decisiones: los paneles de la pantalla de ejemplo del catálogo son `TabPanel`: al cambiar de
+  pestaña el nuevo aparece con fundido y solo uno es visible; el selector de pestañas y el buscador
+  reducido salen solos al estrechar la ventana. Verificado en un navegador real: la opacidad del
+  panel nuevo pasa de 0 a 1 en unos 0,2 s y solo queda un panel visible — [Cierto]. Mutantes muertos:
+  paneles siempre activos.
+## E-12b Pestañas que no caben
 - [ ] T-039 Pestañas que no caben
   RF: RF-011 | Depende de: T-035, T-019 | Archivos: 3
   Archivos: `layouts/Tabs.tsx`, `Tabs.css`, `Tabs.test.tsx`.
   Hecho cuando: si no caben se desvanecen y aparece el selector con la pestaña activa que
   despliega las demás (medidas simuladas); suite verde.
-- [ ] T-040 Cambio de sección con fundido
-  RF: RF-013 | Depende de: T-035 | Archivos: 3
-  Archivos: `layouts/TabPanel.tsx`, `TabPanel.css`, `TabPanel.test.tsx`.
-  Hecho cuando: solo una sección es visible y la nueva aparece con fundido de 0,2 s; suite verde.
+## E-12c Buscador reducido en pantallas pequeñas
 - [ ] T-041 Buscador reducido en pantallas pequeñas
   RF: RF-012 | Depende de: T-036, T-031 | Archivos: 3
   Archivos: `layouts/SearchBox.tsx`, `SearchBox.css`, `SearchBox.test.tsx`.
   Hecho cuando: bajo 560 px es un botón con lupa que despliega el campo sobre las pestañas y lo
   cierra con Escape; suite verde.
-- [ ] T-042 Catálogo: pestañas completas
-  RF: RF-027 | Depende de: T-039, T-040, T-041 | Archivos: 3
-  Archivos: `showcase/sections/AppLayoutSection.tsx`, `showcase/ShowcasePage.tsx`,
-  `showcase/ShowcasePage.test.tsx`.
-  Hecho cuando: la pantalla de ejemplo cambia de sección con fundido; suite verde.
 
 ## E-13 Indicadores y tabla
 - [ ] T-043 Indicador y su rejilla
@@ -887,9 +901,17 @@ Rama de integración: `feat/sistema-de-diseno` (los PR de las entregas van contr
 - E-11b Buscador y barra superior completa con pestañas y buscador.
   Tareas: T-036, T-037, T-038 | Líneas estimadas: 290 | Rama: feat/sistema-de-diseno-barra-superior-buscador
   Cómo probarlo: catálogo, «Diseño con sesión»: el buscador a la derecha de las pestañas.
-- E-12 Pestañas que no caben, fundido y buscador reducido.
-  Tareas: T-039, T-040, T-041, T-042 | Líneas estimadas: 380 | Rama: feat/sistema-de-diseno-pestanas-adaptables
-  Cómo probarlo: estrechar la ventana hasta que las pestañas pasen a un selector y el buscador a un botón.
+- E-12 Fundido entre secciones de las pestañas.
+  Tareas: T-040, T-042 | Líneas estimadas: 180 | Rama: feat/sistema-de-diseno-fundido
+  Cómo probarlo: catálogo, «Diseño con sesión»: cambiar de pestaña y ver cómo aparece su sección.
+  Nota: E-12 se dividió en tres (E-12, E-12b y E-12c) porque la entrega completa medía 796 líneas; se
+  aplicó la regla de AGENTS.md. El catálogo (T-042) enseña también lo de E-12b y E-12c sin cambios.
+- E-12b Pestañas que no caben: selector en lugar de pestañas.
+  Tareas: T-039 | Líneas estimadas: 380 | Rama: feat/sistema-de-diseno-pestanas-selector
+  Cómo probarlo: catálogo, «Diseño con sesión»: estrechar la ventana hasta que las pestañas pasen a un selector.
+- E-12c Buscador reducido a un botón en pantallas pequeñas.
+  Tareas: T-041 | Líneas estimadas: 240 | Rama: feat/sistema-de-diseno-buscador-reducido
+  Cómo probarlo: catálogo, ventana de menos de 560 px: pulsar la lupa y cerrar con Escape.
 - E-13 Indicadores y tabla.
   Tareas: T-043, T-044, T-045 | Líneas estimadas: 330 | Rama: feat/sistema-de-diseno-indicadores-tabla
   Cómo probarlo: sección de datos del catálogo.
