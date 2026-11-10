@@ -565,14 +565,14 @@ transitorias hasta T-051 (D-12).
   (el que tenga `aria-controls` con su id) no cuenta como «fuera» — [Cierto]. En pantalla estrecha
   la cabecera muestra «Cerrar menú» sin `aria-expanded` y nunca hay estado contraído. Si la
   pantalla se ensancha con el panel abierto, avisa de que se cierra — [Probable]. No hay velo
-  (corrección de RF-009 aprobada). Hasta T-063 (E-10c) nada abre el panel, así que el menú del
-  catálogo queda oculto en una ventana de menos de 768 px — [Cierto]. Los tests
+  (corrección de RF-009 aprobada). Hasta T-034 no hay nada en el catálogo que abra el panel, así que
+  la sección «Menú lateral» queda oculta en una ventana de menos de 768 px — [Cierto]. Los tests
   ya existentes de `Sidebar` dejaron de funcionar con la simulación de `matchMedia` sin
   `addEventListener`; se completó la simulación — [Cierto]. Mutantes muertos: `aria-hidden`,
   contraído en móvil, foco, Escape, clic dentro y en el botón de apertura, elegir un elemento,
   ensanchar, botón de cerrar, `aria-expanded`, clase `mobile-open`.
 ## E-10c Botón de menú en la barra
-- [ ] T-063 Botón de menú en la barra y apertura del panel
+- [x] T-063 Botón de menú en la barra y apertura del panel
   RF: RF-009 | Depende de: T-033, T-032 | Archivos: 4
   Archivos: `layouts/AppLayout.tsx`, `AppLayout.css`, `AppLayout.test.tsx`,
   `showcase/ShowcasePage.test.tsx`.

@@ -539,3 +539,19 @@ test("the side menu of the catalog collapses and expands", async () => {
   await user.click(within(sidebar).getByRole("button", { name: "Expand menu" }));
   expect(sidebar).not.toHaveClass("collapsed");
 });
+
+test("on a narrow screen the menu button of the catalog opens the side menu as a panel", async () => {
+  vi.stubGlobal("matchMedia", (query: string) => ({
+    matches: query === "(max-width: 767px)",
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+  }));
+  const user = userEvent.setup();
+  renderPage("en");
+  const catalog = screen.getByRole("region", { name: "Diseño con sesión" });
+
+  await user.click(within(catalog).getByRole("button", { name: "Open menu" }));
+
+  expect(within(catalog).getByRole("complementary")).toHaveClass("mobile-open");
+  vi.unstubAllGlobals();
+});
