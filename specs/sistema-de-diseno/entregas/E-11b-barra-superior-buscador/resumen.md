@@ -1,6 +1,6 @@
 # Entrega E-11b · Buscador y barra superior completa
 
-Rama: `feat/sistema-de-diseno-barra-superior-buscador` (sale de `feat/sistema-de-diseno-pestanas`) · PR: pendiente ·
+Rama: `feat/sistema-de-diseno-barra-superior-buscador` · PR: [PaldacaDepartamentoAIT/Confiabilidad#89](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/89) ·
 Líneas de código y tests: 287 (límite: 400).
 
 ## Qué se hizo
