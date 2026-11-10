@@ -611,10 +611,15 @@ transitorias hasta T-051 (D-12).
   tres idiomas. Es un `input type="search"` con lupa a 11 px del borde izquierdo y relleno
   izquierdo de 34 px (33 px con foco), sin ningún manejador: escribir funciona y no se emite ni se
   envía nada (C-06) — [Cierto]. Mutantes muertos: tipo, `data-ui`, autocompletado, lupa, nombre y clase.
-- [ ] T-037 Barra superior
+- [x] T-037 Barra superior
   RF: RF-010 | Depende de: T-035, T-036, T-033 | Archivos: 3
   Archivos: `layouts/TopBar.tsx`, `TopBar.css`, `TopBar.test.tsx`.
   Hecho cuando: pestañas a la izquierda y buscador a la derecha; `AppLayout` la usa; suite verde.
+  Decisiones: `TopBar` es el contenido del hueco `topBar` de `AppLayout` (no sustituye a la barra):
+  un área de pestañas con recorte (`tabs-area` y `tabs-clip`) que ocupa el sitio que deja el
+  buscador, y el buscador a la derecha. `AppLayout` ya la usa por su hueco, sin cambios en él — [Cierto].
+  El test monta paneles porque `axe` exige que `aria-controls` apunte a un panel. Mutantes muertos:
+  prefijo de los identificadores, recorte, buscador, cambio de pestaña y nombre.
 - [ ] T-038 Catálogo: barra superior
   RF: RF-027 | Depende de: T-037 | Archivos: 3
   Archivos: `showcase/sections/AppLayoutSection.tsx`, `showcase/ShowcasePage.tsx`,
