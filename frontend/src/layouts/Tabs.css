@@ -34,3 +34,77 @@
     transform 0.25s ease-out,
     width 0.25s ease-out;
 }
+
+.tabs-area {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.tabs-clip {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.tablist {
+  transition: opacity 0.2s ease;
+}
+
+.tabs-area.overflow .tablist {
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.15s ease,
+    visibility 0s linear 0.15s;
+}
+
+.tabs-area .tab-select {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: auto;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.15s ease,
+    visibility 0s linear 0.15s;
+}
+
+.tabs-area.overflow .tab-select {
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity 0.2s ease 0.15s,
+    visibility 0s linear 0.15s;
+}
+
+.tab-select .select {
+  width: auto;
+}
+
+.tab-select .trigger-tab {
+  height: 36px;
+  padding: 0 10px 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: auto;
+  border-radius: 6px;
+  color: var(--ink);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.tab-select .menu {
+  left: auto;
+  right: 0;
+  min-width: 200px;
+}

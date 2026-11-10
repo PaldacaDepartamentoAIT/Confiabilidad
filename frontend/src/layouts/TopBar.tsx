@@ -1,6 +1,5 @@
 import { SearchBox } from "./SearchBox";
 import { Tabs, type TabItem } from "./Tabs";
-import "./TopBar.css";
 
 type TopBarProps = {
   tabsLabel: string;
@@ -25,17 +24,13 @@ export function TopBar({
 }: TopBarProps) {
   return (
     <>
-      <div className="tabs-area">
-        <div className="tabs-clip">
-          <Tabs
-            label={tabsLabel}
-            tabs={tabs}
-            activeId={activeId}
-            onChange={onChange}
-            idPrefix={idPrefix}
-          />
-        </div>
-      </div>
+      <Tabs
+        label={tabsLabel}
+        tabs={tabs}
+        activeId={activeId}
+        onChange={onChange}
+        idPrefix={idPrefix}
+      />
       <SearchBox label={searchLabel} placeholder={searchPlaceholder} />
     </>
   );
