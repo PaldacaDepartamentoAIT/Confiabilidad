@@ -1,6 +1,6 @@
 # Entrega E-08b · Página de muestra con el diseño público
 
-Rama: `feat/sistema-de-diseno-publico-muestra` (sale de `feat/sistema-de-diseno-publico-registro`) · PR: pendiente ·
+Rama: `feat/sistema-de-diseno-publico-muestra` · PR: [PaldacaDepartamentoAIT/Confiabilidad#82](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/82) ·
 Líneas de código y tests: 158 (límite: 400).
 
 ## Qué se hizo
