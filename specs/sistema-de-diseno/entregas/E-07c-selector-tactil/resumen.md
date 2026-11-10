@@ -1,6 +1,6 @@
 # Entrega E-07c · Selector nativo en táctiles y selector propio en el registro
 
-Rama: `feat/sistema-de-diseno-selector-tactil` · PR: pendiente ·
+Rama: `feat/sistema-de-diseno-selector-tactil` · PR: [PaldacaDepartamentoAIT/Confiabilidad#80](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/80) ·
 Líneas de código y tests: 360 (límite: 400).
 
 ## Qué se hizo
