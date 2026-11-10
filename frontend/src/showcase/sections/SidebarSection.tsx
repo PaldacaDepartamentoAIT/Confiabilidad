@@ -2,6 +2,7 @@ import { useId } from "react";
 
 import { IconBell, IconFactory, IconHouse, IconPackage } from "../../icons";
 import { Sidebar, type SidebarItem } from "../../layouts/Sidebar";
+import type { LanguageStorage } from "../../i18n/language";
 import "./sections.css";
 
 const ITEMS: SidebarItem[] = [
@@ -18,14 +19,23 @@ const ITEMS: SidebarItem[] = [
   },
 ];
 
+type SidebarSectionProps = {
+  storage?: LanguageStorage;
+};
+
 // Contenido de ejemplo del catálogo: inventado y en español (S-03), por eso lleva su propio `lang`.
-export function SidebarSection() {
+export function SidebarSection({ storage }: SidebarSectionProps) {
   const titleId = useId();
   return (
     <div role="region" aria-labelledby={titleId} lang="es" className="catalog-section">
       <h2 id={titleId}>Menú lateral</h2>
       <div className="catalog-frame">
-        <Sidebar items={ITEMS} activeId="assets" />
+        <Sidebar
+          items={ITEMS}
+          activeId="assets"
+          user={{ name: "Laura Gómez", initials: "LG" }}
+          storage={storage}
+        />
       </div>
     </div>
   );

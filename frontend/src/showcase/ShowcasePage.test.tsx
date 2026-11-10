@@ -502,7 +502,8 @@ test("the page uses the public layout and its bar holds one theme button", () =>
   expect(screen.getAllByRole("main")).toHaveLength(1);
 });
 
-test("the catalog shows the side menu with its sections, the current one marked and a counter", () => {
+test("the catalog shows the side menu, open at first, and its toggle collapses it", async () => {
+  const user = userEvent.setup();
   renderPage("en");
 
   const catalog = screen.getByRole("region", { name: "Menú lateral" });
@@ -518,4 +519,9 @@ test("the catalog shows the side menu with its sections, the current one marked 
     "aria-current",
     "page",
   );
+  expect(within(sidebar).getByText("Laura Gómez")).toBeInTheDocument();
+
+  await user.click(within(sidebar).getByRole("button", { name: "Collapse menu" }));
+
+  expect(sidebar).toHaveClass("collapsed");
 });
