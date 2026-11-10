@@ -435,7 +435,7 @@ test("the catalog shows text, password and code fields, a field with an error an
   expect(within(catalog).getByRole("textbox", { name: "Razón social" })).toBeInTheDocument();
   expect(within(catalog).getByLabelText(/^Clave de acceso/)).toHaveAttribute("type", "password");
   expect(within(catalog).getByRole("textbox", { name: "Código" })).toHaveClass("mono");
-  const invalid = catalog.querySelectorAll("[data-ui='field'][aria-invalid='true']");
+  const invalid = catalog.querySelectorAll("input[data-ui='field'][aria-invalid='true']");
   expect(invalid).toHaveLength(1);
   expect(invalid[0]).toHaveAccessibleDescription("El NIF/CIF debe tener 9 caracteres.");
   const boxes = within(catalog).getAllByRole("checkbox");
@@ -464,4 +464,21 @@ test("the catalog shows the language button and a generic menu that keeps its ch
   await user.click(plants);
   await user.click(within(catalog).getByRole("option", { name: "Sur" }));
   expect(within(catalog).getByRole("combobox", { name: "Planta: Sur" })).toBeInTheDocument();
+});
+
+test("the catalog shows the own select with a value and with an error, and choosing changes it", async () => {
+  const user = userEvent.setup();
+  renderPage("en");
+
+  const catalog = screen.getByRole("region", { name: "Campos" });
+  const sector = within(catalog).getByRole("combobox", { name: "Sector" });
+  expect(sector).toHaveTextContent("Generación");
+  const invalid = within(catalog).getByRole("combobox", { name: "Tipo de planta" });
+  expect(invalid).toHaveAttribute("aria-invalid", "true");
+  expect(invalid).toHaveAccessibleDescription("Elige un tipo de planta.");
+  expect(invalid).toHaveTextContent("Selecciona una opción");
+
+  await user.click(sector);
+  await user.click(within(catalog).getByRole("option", { name: "Transmisión" }));
+  expect(sector).toHaveTextContent("Transmisión");
 });
