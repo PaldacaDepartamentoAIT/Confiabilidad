@@ -19,6 +19,8 @@ export const en = {
     sections: "Sections",
     collapse: "Collapse menu",
     expand: "Expand menu",
+    open: "Open menu",
+    close: "Close menu",
   },
   button: {
     processing: "Processing…",

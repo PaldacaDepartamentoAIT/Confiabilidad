@@ -1,4 +1,4 @@
-import { useId, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Counter } from "../components/Block";
@@ -7,6 +7,7 @@ import type { LanguageStorage } from "../i18n/language";
 import { IconChevronLeft, IconChevronRight, IconChevronsUpDown } from "../icons";
 import { ThemeButton } from "../theme/ThemeButton";
 import "../theme/ThemeButton.css";
+import { useMediaQuery } from "./useMediaQuery";
 import "./Sidebar.css";
 
 export type SidebarItem = {
@@ -25,23 +26,63 @@ export type SidebarUser = {
 };
 
 type SidebarProps = {
+  id?: string;
   items: readonly SidebarItem[];
   activeId?: string;
   user?: SidebarUser;
   storage?: LanguageStorage;
   defaultCollapsed?: boolean;
+  // En pantallas de menos de 768 px el menú es un panel superpuesto que abre y cierra quien lo usa.
+  mobileOpen?: boolean;
+  onMobileClose?: (restoreFocus: boolean) => void;
 };
 
 export function Sidebar({
+  id: idProp,
   items,
   activeId,
   user,
   storage,
   defaultCollapsed = false,
+  mobileOpen = false,
+  onMobileClose,
 }: SidebarProps) {
   const { t } = useTranslation();
-  const id = useId();
-  const [collapsed, setCollapsed] = useState(defaultCollapsed);
+  const generatedId = useId();
+  const id = idProp ?? generatedId;
+  const [collapsedState, setCollapsed] = useState(defaultCollapsed);
+  const narrow = useMediaQuery("(max-width: 767px)");
+  const asideRef = useRef<HTMLElement>(null);
+  const toggleRef = useRef<HTMLButtonElement>(null);
+  // En pantallas pequeñas no existe el estado contraído.
+  const collapsed = !narrow && collapsedState;
+  const panelOpen = narrow && mobileOpen;
+
+  useEffect(() => {
+    if (panelOpen) toggleRef.current?.focus();
+  }, [panelOpen]);
+
+  useEffect(() => {
+    if (!narrow && mobileOpen) onMobileClose?.(false);
+  }, [narrow, mobileOpen, onMobileClose]);
+
+  useEffect(() => {
+    if (!panelOpen) return;
+    function closeWithEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") onMobileClose?.(true);
+    }
+    function closeOutside(event: MouseEvent) {
+      const target = event.target as Element;
+      const isOpener = target.closest("[aria-controls]")?.getAttribute("aria-controls") === id;
+      if (!asideRef.current?.contains(target) && !isOpener) onMobileClose?.(false);
+    }
+    document.addEventListener("keydown", closeWithEscape);
+    document.addEventListener("mousedown", closeOutside);
+    return () => {
+      document.removeEventListener("keydown", closeWithEscape);
+      document.removeEventListener("mousedown", closeOutside);
+    };
+  }, [panelOpen, id, onMobileClose]);
 
   const userContent = user && (
     <>
@@ -55,23 +96,30 @@ export function Sidebar({
 
   return (
     <aside
+      ref={asideRef}
       id={id}
-      className={["sidebar", collapsed && "collapsed"].filter(Boolean).join(" ")}
+      className={["sidebar", collapsed && "collapsed", panelOpen && "mobile-open"]
+        .filter(Boolean)
+        .join(" ")}
       data-ui="sidebar"
       aria-label={t("sidebar.label")}
+      aria-hidden={narrow && !mobileOpen ? true : undefined}
     >
       <div className="sb-head" data-ui="sidebar-header">
         <p className="brand" data-ui="brand">
           {t("app.heading")}
         </p>
         <button
+          ref={toggleRef}
           type="button"
           className="menu-btn"
           data-ui="menu-toggle"
           aria-controls={id}
-          aria-expanded={!collapsed}
-          aria-label={collapsed ? t("sidebar.expand") : t("sidebar.collapse")}
-          onClick={() => setCollapsed(!collapsed)}
+          aria-expanded={narrow ? undefined : !collapsed}
+          aria-label={
+            narrow ? t("sidebar.close") : collapsed ? t("sidebar.expand") : t("sidebar.collapse")
+          }
+          onClick={() => (narrow ? onMobileClose?.(true) : setCollapsed(!collapsed))}
         >
           {collapsed ? <IconChevronRight size={22} /> : <IconChevronLeft size={22} />}
         </button>
@@ -88,6 +136,7 @@ export function Sidebar({
               data-ui={current ? "nav-item-active" : "nav-item"}
               aria-current={current ? "page" : undefined}
               title={collapsed ? item.label : undefined}
+              onClick={() => narrow && onMobileClose?.(false)}
             >
               {item.icon}
               <span className="label">{item.label}</span>

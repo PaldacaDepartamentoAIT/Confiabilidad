@@ -21,6 +21,8 @@ export const ptBR: Messages = {
     sections: "Seções",
     collapse: "Recolher menu",
     expand: "Expandir menu",
+    open: "Abrir menu",
+    close: "Fechar menu",
   },
   button: {
     processing: "Processando…",

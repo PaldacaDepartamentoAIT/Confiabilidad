@@ -22,6 +22,8 @@ export const es: Messages = {
     sections: "Secciones",
     collapse: "Contraer menú",
     expand: "Expandir menú",
+    open: "Abrir menú",
+    close: "Cerrar menú",
   },
   button: {
     processing: "Procesando…",

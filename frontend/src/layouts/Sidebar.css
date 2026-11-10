@@ -169,3 +169,28 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* Menos de 768 px: el menú es un panel superpuesto, sin velo, que entra desde la izquierda. */
+@media (max-width: 767px) {
+  .sidebar,
+  .sidebar.collapsed {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    height: 100%;
+    width: 232px;
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition:
+      transform 0.25s ease-out,
+      visibility 0s linear 0.25s;
+    z-index: 70;
+  }
+
+  .sidebar.mobile-open {
+    transform: none;
+    visibility: visible;
+    transition: transform 0.25s ease-out;
+  }
+}
