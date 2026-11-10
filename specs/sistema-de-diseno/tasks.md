@@ -620,11 +620,20 @@ transitorias hasta T-051 (D-12).
   buscador, y el buscador a la derecha. `AppLayout` ya la usa por su hueco, sin cambios en él — [Cierto].
   El test monta paneles porque `axe` exige que `aria-controls` apunte a un panel. Mutantes muertos:
   prefijo de los identificadores, recorte, buscador, cambio de pestaña y nombre.
-- [ ] T-038 Catálogo: barra superior
+- [x] T-038 Catálogo: barra superior
   RF: RF-027 | Depende de: T-037 | Archivos: 3
   Archivos: `showcase/sections/AppLayoutSection.tsx`, `showcase/ShowcasePage.tsx`,
   `showcase/ShowcasePage.test.tsx`.
   Hecho cuando: la pantalla de ejemplo muestra la barra con pestañas; suite verde.
+  Decisiones: la pantalla de ejemplo del catálogo gana tres pestañas (Resumen, Inventario, Alarmas)
+  con su panel cada una (un bloque con su contador) y el buscador; el panel visible se decide con
+  el atributo `hidden`, sin fundido (el fundido es T-040) — [Cierto]. Verificado en un navegador real
+  en claro y oscuro: la línea de 2 px queda a 12 px del borde de la pestaña activa con su ancho
+  menos 24 px, y se mueve al cambiar con el ratón y con la flecha derecha; el buscador mide 220 × 36 px —
+  [Cierto]. Corrección: `tabId` y `tabPanelId` se movieron de `Tabs.tsx` a `tabIds.ts` porque
+  exportar funciones desde un archivo de componente da un aviso de lint (P-06 pide cero avisos); eso
+  suma un archivo a T-035 — [Cierto]. Mutantes muertos: paneles ocultos, cambio de pestaña, una
+  pestaña y el nombre del buscador.
 
 ## E-12 Pestañas que no caben y cambio de sección
 - [ ] T-039 Pestañas que no caben

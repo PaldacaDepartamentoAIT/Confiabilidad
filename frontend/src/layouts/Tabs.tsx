@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
 
 import "../theme/ThemeButton.css";
+import { tabId, tabPanelId } from "./tabIds";
 import "./Tabs.css";
 
 export type TabItem = { id: string; label: string };
@@ -12,14 +13,6 @@ type TabsProps = {
   onChange: (id: string) => void;
   idPrefix?: string;
 };
-
-export function tabId(prefix: string, id: string): string {
-  return `${prefix}-tab-${id}`;
-}
-
-export function tabPanelId(prefix: string, id: string): string {
-  return `${prefix}-panel-${id}`;
-}
 
 // Pestañas con activación al moverse con las flechas (docs/identidad-visual.md). La línea de 2 px
 // de la pestaña activa se coloca midiendo la pestaña y se desplaza con una transición de 0,25 s.

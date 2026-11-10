@@ -3,7 +3,8 @@ import userEvent from "@testing-library/user-event";
 import axe from "axe-core";
 import { useState } from "react";
 
-import { Tabs, tabPanelId, type TabItem } from "./Tabs";
+import { tabId, tabPanelId } from "./tabIds";
+import { Tabs, type TabItem } from "./Tabs";
 
 const TABS: TabItem[] = [
   { id: "general", label: "Datos generales" },
@@ -98,6 +99,7 @@ test("each tab points at its panel with an id the panels can use", () => {
   expect(tabs[1]).toHaveAttribute("id", "form-tab-location");
   expect(tabs[1]).toHaveAttribute("aria-controls", "form-panel-location");
   expect(tabPanelId("form", "location")).toBe("form-panel-location");
+  expect(tabId("form", "location")).toBe("form-tab-location");
 });
 
 test("a click selects a tab", async () => {

@@ -7,7 +7,7 @@ import { I18nextProvider } from "react-i18next";
 import { createI18n } from "../i18n";
 import { IconHouse } from "../icons";
 import { AppLayout } from "./AppLayout";
-import { tabPanelId } from "./Tabs";
+import { tabPanelId } from "./tabIds";
 import { TopBar } from "./TopBar";
 
 const TABS = [
