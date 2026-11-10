@@ -264,7 +264,7 @@ transitorias hasta T-051 (D-12).
   fondo del lienzo y el icono oculto. Mutantes muertos: sin `lang`, sin error del campo, sin casilla
   marcada, sin campo de código, sin error de la casilla.
 
-## E-06 Menú desplegable y botón de idioma
+## E-06 Menú desplegable
 - [x] T-019 Menú desplegable compartido
   RF: RF-011, RF-016 | Depende de: T-001 | Archivos: 3
   Archivos: `components/menu/Menu.tsx`, `Menu.css`, `Menu.test.tsx`.
@@ -283,6 +283,7 @@ transitorias hasta T-051 (D-12).
   texto — [Cierto]. Mutantes muertos: topes de las flechas, Escape, foco de las opciones, cierre al
   salir, alineación, opción inicial, animación, `aria-activedescendant`, clic fuera y soltar la barra
   espaciadora.
+## E-06b Botón de idioma y catálogo
 - [ ] T-020 Botón de idioma
   RF: RF-005, RF-007, RF-030 | Depende de: T-019 | Archivos: 3
   Archivos: `components/LanguageButton.tsx`, `LanguageButton.css`, `LanguageButton.test.tsx`.
@@ -564,8 +565,16 @@ Rama de integración: `feat/sistema-de-diseno` (los PR de las entregas van contr
 - E-05c Botón de ojo dentro del campo de contraseña (cambio aprobado por el usuario después de E-05).
   Tareas: T-056, T-057 | Líneas estimadas: 80 | Rama: feat/sistema-de-diseno-ojo-contrasena
   Cómo probarlo: página de muestra, campo «Clave de acceso»: pulsar el ojo para mostrar y ocultar.
-- E-06 Botón de idioma con menú.
-  Tareas: T-019, T-020, T-021 | Líneas estimadas: 400 | Rama: feat/sistema-de-diseno-idioma
+- E-06 Menú desplegable compartido (sin nada visible aún: se prueba con tests).
+  Tareas: T-019 | Líneas estimadas: 474 | Rama: feat/sistema-de-diseno-menu
+  Cómo probarlo: `pnpm --filter frontend test`; los 18 tests de `components/menu/Menu.test.tsx`.
+  Excepción: el menú con su teclado, su ratón, su animación y sus tests es un solo comportamiento
+  y no se puede dividir sin dejar una versión que no se pueda usar; supera las 400 líneas y se
+  queda en 474, por debajo de las 500 de la excepción. Nota: E-06 se dividió en E-06 y E-06b porque
+  la entrega completa medía 725 líneas; el menú por sí solo ya supera 400 y no deja nada visible
+  que enseñar dentro del límite.
+- E-06b Botón de idioma con menú y su sección en el catálogo.
+  Tareas: T-020, T-021 | Líneas estimadas: 251 | Rama: feat/sistema-de-diseno-boton-idioma
   Cómo probarlo: abrir el botón de idioma en el catálogo y cambiar de idioma con ratón y teclado.
 - E-07 Selector propio (nativo en dispositivos táctiles).
   Tareas: T-022, T-023, T-024, T-025 | Líneas estimadas: 380 | Rama: feat/sistema-de-diseno-selector
