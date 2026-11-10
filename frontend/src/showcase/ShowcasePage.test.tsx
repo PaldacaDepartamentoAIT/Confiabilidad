@@ -36,15 +36,18 @@ test("shows the sample form with its required fields and the asterisk legend", (
   expect(code).toHaveAttribute("aria-required", "true");
 });
 
-test("the tab order goes through the language selector, the theme button and then each field in order", async () => {
+test("the tab order goes through the top bar (language and theme), the language selector and then each field in order", async () => {
   const user = userEvent.setup();
   renderPage();
 
   const expected = [
+    within(screen.getByRole("banner")).getByRole("combobox", { name: "Idioma: Español" }),
+    within(screen.getByRole("banner")).getByRole("button", {
+      name: /^Tema (claro|oscuro)\. Cambiar tema$/,
+    }),
     screen.getByRole("button", { name: "Español" }),
     screen.getByRole("button", { name: "Português (Brasil)" }),
     screen.getByRole("button", { name: "English" }),
-    screen.getByRole("button", { name: /^Tema (claro|oscuro)\. Cambiar tema$/ }),
     screen.getByRole("textbox", { name: "Nombre completo" }),
     screen.getByRole("textbox", { name: "Correo electrónico" }),
     screen.getByLabelText(/^Contraseña/),
@@ -481,4 +484,16 @@ test("the catalog shows the own select with a value and with an error, and choos
   await user.click(sector);
   await user.click(within(catalog).getByRole("option", { name: "Transmisión" }));
   expect(sector).toHaveTextContent("Transmisión");
+});
+
+test("the page uses the public layout and its bar holds the only theme button", () => {
+  renderPage();
+
+  const bar = screen.getByRole("banner");
+  expect(bar).toHaveTextContent("Confiabilidad");
+  expect(
+    within(bar).getByRole("button", { name: /^Tema (claro|oscuro)\. Cambiar tema$/ }),
+  ).toBeInTheDocument();
+  expect(screen.getAllByRole("button", { name: /Cambiar tema$/ })).toHaveLength(1);
+  expect(screen.getAllByRole("main")).toHaveLength(1);
 });

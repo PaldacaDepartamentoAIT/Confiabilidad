@@ -425,10 +425,20 @@ transitorias hasta T-051 (D-12).
   menú de idioma alineado a la derecha, en claro y oscuro. Mutantes muertos: sin el diseño en cada
   una de las tres pantallas.
 ## E-08b Página de muestra en el diseño público
-- [ ] T-028 Página de muestra en el diseño público
-  RF: RF-026, RF-027 | Depende de: T-026 | Archivos: 2
-  Archivos: `showcase/ShowcasePage.tsx`, `showcase/ShowcasePage.test.tsx`.
+- [x] T-028 Página de muestra en el diseño público
+  RF: RF-026, RF-027 | Depende de: T-026 | Archivos: 3
+  Archivos: `showcase/ShowcasePage.tsx`, `showcase/ShowcasePage.test.tsx`, `App.test.tsx`.
   Hecho cuando: la página de muestra usa `PublicLayout`; suite verde.
+  Excepción: `App.test.tsx` tiene un test que cambia de idioma con el teclado contando las veces que
+  se pulsa Tab; al entrar dos paradas nuevas en la barra (idioma y tema) antes del selector de tres
+  botones, hay que contar cuatro. Lo añadí sin detenerme — [Suposición] — revertir: pedir una
+  Excepción aparte.
+  Decisiones: la página de muestra conserva el selector de idioma de tres botones (`LanguageSwitcher`)
+  porque es un componente que muestra y sus tests lo usan, y pierde su botón de tema propio porque
+  el de la barra lo sustituye (había que evitar dos botones de tema) — [Probable] — revertir: dejar
+  el de la barra y quitar el selector de tres botones. Se actualizaron dos tests: el orden del
+  teclado (barra primero) y el recuento de Tab de `App.test.tsx`. Mutantes muertos: sin el diseño
+  público.
 
 ## E-09 Menú lateral
 - [ ] T-029 Menú lateral
