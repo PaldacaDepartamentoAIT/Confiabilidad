@@ -1,6 +1,6 @@
 # Entrega E-05b · Casilla de verificación y sección «Campos» del catálogo
 
-Rama: `feat/sistema-de-diseno-casilla` (sale de `feat/sistema-de-diseno-campos-texto`) · PR: pendiente ·
+Rama: `feat/sistema-de-diseno-casilla` · PR: [PaldacaDepartamentoAIT/Confiabilidad#74](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/74) ·
 Líneas de código y tests: 262 (límite: 400).
 
 ## Qué se hizo
