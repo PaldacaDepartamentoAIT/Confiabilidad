@@ -320,11 +320,15 @@ transitorias hasta T-051 (D-12).
   comprobación visual (T-053) — [Cierto].
 
 ## E-07 Selector propio
-- [ ] T-022 Detección de puntero táctil
+- [x] T-022 Detección de puntero táctil
   RF: RF-031 | Depende de: — | Archivos: 2
   Archivos: `components/fields/useCoarsePointer.ts`, `useCoarsePointer.test.ts`.
   Hecho cuando: devuelve verdadero si `matchMedia("(pointer: coarse)")` coincide y reacciona a su
   cambio; suite verde.
+  Decisiones: si el navegador no tiene `matchMedia`, el hook devuelve verdadero (control nativo),
+  porque el nativo funciona en cualquier sitio; en la práctica solo ocurre en jsdom, de modo que los
+  tests existentes de registro, que usan el `<select>` nativo, no cambian — [Probable] — revertir:
+  devolver falso. Mutantes muertos: sin escucha, sin limpieza, valor de reserva, consulta, cambio.
 - [ ] T-023 Selector propio
   RF: RF-016 | Depende de: T-015, T-019 | Archivos: 3
   Archivos: `components/fields/SelectField.tsx`, `SelectField.css`, `ChoiceFields.test.tsx`.
