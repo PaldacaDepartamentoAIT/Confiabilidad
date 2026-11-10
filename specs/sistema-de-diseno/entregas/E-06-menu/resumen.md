@@ -1,6 +1,6 @@
 # Entrega E-06 · Menú desplegable compartido
 
-Rama: `feat/sistema-de-diseno-menu` · PR: pendiente ·
+Rama: `feat/sistema-de-diseno-menu` · PR: [PaldacaDepartamentoAIT/Confiabilidad#76](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/76) ·
 Líneas de código y tests: 474 (límite: 400; Excepción aprobada hasta 500, ver abajo).
 
 ## Qué se hizo
