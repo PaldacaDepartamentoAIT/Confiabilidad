@@ -297,7 +297,8 @@ sección manda sobre las descripciones generales de arriba.
 | Caja | 18 × 18 px, borde de 1 px en borde de control, radio 4 px |
 | Marcada | fondo y borde en el principal, check de 14 px de trazo 3 en el color de texto sobre el principal |
 | Hover | sin marcar: fondo con el 9 % de la tinta; marcada: el principal oscurecido |
-| Fila | caja y texto separados 10 px; texto de 14 px con la ayuda de 12 px debajo |
+| Fila | caja y texto separados 10 px; texto de 14 px |
+| Ayuda y error | debajo de la fila, a 2 px, alineados con el borde izquierdo de la caja (sin sangría); la ayuda de 12 px en texto secundario; el error con el icono `circle-alert` en P1 y el mensaje en tinta, como en un campo de texto |
 
 ### Botones
 

@@ -1,0 +1,71 @@
+.check-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.check .txt {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cb {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  flex: none;
+  margin-top: 1px;
+}
+
+.cb input {
+  appearance: none;
+  -webkit-appearance: none;
+  margin: 0;
+  width: 18px;
+  height: 18px;
+  display: block;
+  cursor: pointer;
+  border: 1px solid var(--ctrl);
+  border-radius: 4px;
+  background: var(--bg);
+  transition:
+    background-color 0.35s ease,
+    border-color 0.35s ease;
+}
+
+.check:hover .cb input:not(:checked) {
+  background: color-mix(in srgb, var(--ink) 9%, var(--bg));
+  transition-duration: 0.08s;
+}
+
+.cb input:checked {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.check:hover .cb input:checked {
+  background: color-mix(in srgb, var(--primary) 78%, #000);
+  border-color: color-mix(in srgb, var(--primary) 78%, #000);
+  transition-duration: 0.08s;
+}
+
+.cb svg {
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  color: var(--on-primary);
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.cb input:checked + svg {
+  visibility: visible;
+}
