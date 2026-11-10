@@ -515,6 +515,15 @@ transitorias hasta T-051 (D-12).
   consultas de medios, al contrario que `useCoarsePointer`, que asume «nativo»: aquí lo seguro es el
   menú de escritorio — [Probable] — revertir: devolver verdadero. Vuelve a leer la consulta cuando
   cambia. Mutantes muertos: escucha, limpieza, cambio de consulta, valor de reserva y relectura.
+- [x] T-062 Textos del panel móvil del menú en tres idiomas
+  RF: RF-030 | Depende de: T-059 | Archivos: 3
+  Archivos: `i18n/locales/en.ts`, `es.ts`, `pt-BR.ts`.
+  Hecho cuando: existen `sidebar.open` y `sidebar.close` en los tres idiomas y los tests de claves y
+  locales pasan; suite verde.
+  Excepción: los tres archivos de idioma son una unidad (`es` y `pt-BR` se tipan contra `en`).
+  Decisiones: tarea nueva, como T-003 y T-059: el panel móvil necesita dos nombres («Abrir menú» para
+  el botón de la barra y «Cerrar menú» para el de la cabecera) que no estaban en la lista aprobada —
+  [Cierto] — revertir: pasarlos por props. Mutante muerto: quitar una clave de `pt-BR`.
 - [ ] T-032 Panel superpuesto del menú
   RF: RF-009 | Depende de: T-029, T-031 | Archivos: 3
   Archivos: `layouts/Sidebar.tsx`, `Sidebar.css`, `Sidebar.test.tsx`.
