@@ -1,0 +1,26 @@
+.search {
+  position: relative;
+  flex: none;
+  width: 220px;
+}
+
+.search > svg {
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text2);
+  pointer-events: none;
+}
+
+.search .field {
+  padding-left: 34px;
+}
+
+.search .field:focus {
+  padding-left: 33px;
+}
+
+.search input::-webkit-search-cancel-button {
+  display: none;
+}

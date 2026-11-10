@@ -601,10 +601,16 @@ transitorias hasta T-051 (D-12).
   apunte a un panel existente: el test monta paneles — [Cierto]. Mutantes muertos: vuelta de las
   flechas, Inicio, Fin, orden del teclado, `preventDefault`, ancho y margen de la línea, foco,
   actualización de la línea, `data-ui` y `aria-controls`.
-- [ ] T-036 Buscador
+- [x] T-036 Buscador
   RF: RF-010 | Depende de: T-006, T-015 | Archivos: 3
   Archivos: `layouts/SearchBox.tsx`, `SearchBox.css`, `SearchBox.test.tsx`.
   Hecho cuando: campo de 220 × 36 px con lupa, solo visual (no filtra ni emite); suite verde.
+  Decisiones: `SearchBox` recibe `label` (nombre accesible) y `placeholder` como propiedades, no
+  como claves de idioma: es una pieza de presentación y cada pantalla pone sus textos traducidos
+  (así no hace falta otra tarea de textos) — [Probable] — revertir: añadir claves `search.*` a los
+  tres idiomas. Es un `input type="search"` con lupa a 11 px del borde izquierdo y relleno
+  izquierdo de 34 px (33 px con foco), sin ningún manejador: escribir funciona y no se emite ni se
+  envía nada (C-06) — [Cierto]. Mutantes muertos: tipo, `data-ui`, autocompletado, lupa, nombre y clase.
 - [ ] T-037 Barra superior
   RF: RF-010 | Depende de: T-035, T-036, T-033 | Archivos: 3
   Archivos: `layouts/TopBar.tsx`, `TopBar.css`, `TopBar.test.tsx`.
