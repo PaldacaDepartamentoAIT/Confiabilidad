@@ -479,13 +479,19 @@ transitorias hasta T-051 (D-12).
   activo cambiado.
 
 ## E-09b Contraer el menú lateral y su pie
-- [ ] T-060 Contraer y expandir el menú lateral
+- [x] T-060 Contraer y expandir el menú lateral
   RF: RF-008 | Depende de: T-029 | Archivos: 3
   Archivos: `layouts/Sidebar.tsx`, `Sidebar.css`, `Sidebar.test.tsx`.
   Hecho cuando: un botón de abrir y cerrar con chevron de 22 px («<» con el menú abierto, «>» con
   él contraído, `aria-expanded` y su nombre) alterna el menú entre 232 y 60 px con animación; contraído
   solo se ven los iconos, que no se desplazan, con la etiqueta como `title`; suite verde.
-- [ ] T-061 Pie del menú lateral: tema, idioma y usuario
+  Decisiones: el estado de contraído es interno y sin recordar (S-02); `defaultCollapsed` permite
+  empezar contraído — [Probable] — revertir: elevarlo con props. Verificado en un navegador real:
+  232 px abierto y 60 px contraído, con los iconos de 16 px en su sitio; se corrigió un fallo que solo
+  veía el navegador (los iconos de lucide se encogían a un punto con el menú contraído; `.sidebar
+  svg` lleva `flex: none`) — [Cierto]. Mutantes muertos: `aria-expanded`, `title`, tamaño del icono,
+  `data-ui` y `aria-controls` del botón, estado inicial.
+- [x] T-061 Pie del menú lateral: tema, idioma y usuario
   RF: RF-007 | Depende de: T-029, T-060 | Archivos: 5
   Archivos: `layouts/Sidebar.tsx`, `Sidebar.css`, `Sidebar.test.tsx`, `showcase/sections/SidebarSection.tsx`,
   `showcase/ShowcasePage.test.tsx`.
@@ -493,6 +499,12 @@ transitorias hasta T-051 (D-12).
   nombre y flechas; pulsable solo si trae acción); el catálogo exhibe el menú con usuario y se
   puede contraer; suite verde.
   Excepción: el pie y su sección del catálogo (dos archivos más) forman un solo cambio visible.
+  Decisiones: el pie apila el botón de tema y el de idioma y debajo el usuario; este es un botón solo
+  si trae `onClick` (C-05) y, sin acción, un `div` con el mismo aspecto — [Cierto]. Con él la página
+  tiene dos botones de tema (el de la barra y el del pie del menú); los tests que buscaban uno solo se
+  limitan a la barra — [Cierto]. Mutantes muertos: usuario pulsable, botón de idioma. Verificado
+  en un navegador real: pie apilado, usuario con avatar y flechas en claro y oscuro; contraído
+  quedan los iconos y el avatar.
 
 ## E-10 Diseño con sesión y menú en pantallas pequeñas
 - [ ] T-031 `useMediaQuery`

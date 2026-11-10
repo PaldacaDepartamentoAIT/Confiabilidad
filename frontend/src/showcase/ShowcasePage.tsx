@@ -130,7 +130,7 @@ export function ShowcasePage({ storage }: ShowcasePageProps) {
         <ButtonsSection />
         <FieldsSection />
         <MenuSection storage={storage} />
-        <SidebarSection />
+        <SidebarSection storage={storage} />
       </main>
     </PublicLayout>
   );
