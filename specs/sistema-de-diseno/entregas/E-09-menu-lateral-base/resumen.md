@@ -1,6 +1,6 @@
 # Entrega E-09 · Menú lateral: cabecera y navegación
 
-Rama: `feat/sistema-de-diseno-menu-lateral-base` · PR: pendiente ·
+Rama: `feat/sistema-de-diseno-menu-lateral-base` · PR: [PaldacaDepartamentoAIT/Confiabilidad#83](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/83) ·
 Líneas de código y tests: 329 (límite: 400).
 
 ## Qué se hizo
