@@ -265,11 +265,24 @@ transitorias hasta T-051 (D-12).
   marcada, sin campo de código, sin error de la casilla.
 
 ## E-06 Menú desplegable y botón de idioma
-- [ ] T-019 Menú desplegable compartido
+- [x] T-019 Menú desplegable compartido
   RF: RF-011, RF-016 | Depende de: T-001 | Archivos: 3
   Archivos: `components/menu/Menu.tsx`, `Menu.css`, `Menu.test.tsx`.
   Hecho cuando: abre con animación de 0,18 s, navega con flechas, Inicio y Fin, cierra con
   Escape y clic fuera y devuelve el foco al disparador; suite verde.
+  Decisiones: `Menu` sigue el patrón «select-only combobox»: el disparador lo pinta quien lo usa con
+  `renderTrigger` (recibe `role="combobox"`, `aria-expanded`, `aria-controls`,
+  `aria-activedescendant` y los manejadores del teclado) y el foco no sale de él; las opciones son
+  `li role="option"` con `lang` opcional y un chevron «>» que solo se ve en la seleccionada — [Probable]
+  — revertir: rehacer el componente. Las flechas se detienen en los extremos, sin dar la vuelta —
+  [Suposición] — revertir: usar módulo en `ArrowDown` y `ArrowUp`. La escritura para saltar a una
+  opción (RF-016) no está aquí: la añade T-023 sobre este menú — [Cierto]. Se cierra con Escape,
+  al salir del foco y con un clic fuera; abre con animación (la clase `open` aparece en el
+  siguiente fotograma) y cierra sin animación — [Cierto]. Un disparador con rol `combobox` necesita
+  nombre accesible propio (`aria-label`): `axe` lo exige porque ese rol no toma el nombre de su
+  texto — [Cierto]. Mutantes muertos: topes de las flechas, Escape, foco de las opciones, cierre al
+  salir, alineación, opción inicial, animación, `aria-activedescendant`, clic fuera y soltar la barra
+  espaciadora.
 - [ ] T-020 Botón de idioma
   RF: RF-005, RF-007, RF-030 | Depende de: T-019 | Archivos: 3
   Archivos: `components/LanguageButton.tsx`, `LanguageButton.css`, `LanguageButton.test.tsx`.
