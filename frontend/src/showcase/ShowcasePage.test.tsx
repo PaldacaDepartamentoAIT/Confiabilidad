@@ -502,14 +502,12 @@ test("the page uses the public layout and its bar holds one theme button", () =>
   expect(screen.getAllByRole("main")).toHaveLength(1);
 });
 
-test("the catalog shows the side menu, open at first, and its toggle collapses it", async () => {
-  const user = userEvent.setup();
+test("the catalog shows a screen with session: side menu, top bar and content", () => {
   renderPage("en");
 
-  const catalog = screen.getByRole("region", { name: "Menú lateral" });
+  const catalog = screen.getByRole("region", { name: "Diseño con sesión" });
   expect(catalog).toHaveAttribute("lang", "es");
   const sidebar = within(catalog).getByRole("complementary");
-  expect(sidebar).not.toHaveClass("collapsed");
   expect(
     within(sidebar)
       .getAllByRole("link")
@@ -520,8 +518,24 @@ test("the catalog shows the side menu, open at first, and its toggle collapses i
     "page",
   );
   expect(within(sidebar).getByText("Laura Gómez")).toBeInTheDocument();
+  expect(catalog.querySelector("[data-ui='topbar']")).toBeInTheDocument();
+  const content = catalog.querySelector("[data-ui='content']");
+  expect(content).toBeInTheDocument();
+  expect(
+    within(content as HTMLElement).getByRole("heading", { level: 3, name: "Activos" }),
+  ).toBeInTheDocument();
+  expect(screen.getAllByRole("main")).toHaveLength(1);
+});
+
+test("the side menu of the catalog collapses and expands", async () => {
+  const user = userEvent.setup();
+  renderPage("en");
+  const sidebar = within(screen.getByRole("region", { name: "Diseño con sesión" })).getByRole(
+    "complementary",
+  );
 
   await user.click(within(sidebar).getByRole("button", { name: "Collapse menu" }));
-
   expect(sidebar).toHaveClass("collapsed");
+  await user.click(within(sidebar).getByRole("button", { name: "Expand menu" }));
+  expect(sidebar).not.toHaveClass("collapsed");
 });

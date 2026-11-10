@@ -1,8 +1,10 @@
 import { useId } from "react";
 
-import { IconBell, IconFactory, IconHouse, IconPackage } from "../../icons";
-import { Sidebar, type SidebarItem } from "../../layouts/Sidebar";
+import { Block } from "../../components/Block";
 import type { LanguageStorage } from "../../i18n/language";
+import { IconBell, IconFactory, IconHouse, IconPackage } from "../../icons";
+import { AppLayout } from "../../layouts/AppLayout";
+import type { SidebarItem } from "../../layouts/Sidebar";
 import "./sections.css";
 
 const ITEMS: SidebarItem[] = [
@@ -19,23 +21,29 @@ const ITEMS: SidebarItem[] = [
   },
 ];
 
-type SidebarSectionProps = {
+type AppLayoutSectionProps = {
   storage?: LanguageStorage;
 };
 
 // Contenido de ejemplo del catálogo: inventado y en español (S-03), por eso lleva su propio `lang`.
-export function SidebarSection({ storage }: SidebarSectionProps) {
+export function AppLayoutSection({ storage }: AppLayoutSectionProps) {
   const titleId = useId();
   return (
     <div role="region" aria-labelledby={titleId} lang="es" className="catalog-section">
-      <h2 id={titleId}>Menú lateral</h2>
+      <h2 id={titleId}>Diseño con sesión</h2>
       <div className="catalog-frame">
-        <Sidebar
+        <AppLayout
           items={ITEMS}
           activeId="assets"
           user={{ name: "Laura Gómez", initials: "LG" }}
           storage={storage}
-        />
+          embedded
+        >
+          <h3>Activos</h3>
+          <Block title="Inventario" count={248}>
+            <p>Contenido de ejemplo de una pantalla con sesión.</p>
+          </Block>
+        </AppLayout>
       </div>
     </div>
   );
