@@ -47,6 +47,10 @@
   transition: opacity 0.18s ease;
 }
 
+.sidebar svg {
+  flex: none;
+}
+
 .sidebar .label,
 .sidebar .counter,
 .sidebar .user-chevrons {

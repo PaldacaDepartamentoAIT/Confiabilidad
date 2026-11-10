@@ -469,11 +469,21 @@ transitorias hasta T-051 (D-12).
   `.brand` se duplica en `Sidebar.css` y `PublicLayout.css` — [Suposición]. Mutantes muertos:
   `aria-expanded`, `title`, elemento activo, tamaño del icono, `data-ui`, `aria-controls`, usuario
   pulsable, estado inicial, contador, botón de idioma, textos traducidos.
-- [ ] T-030 Catálogo: menú lateral
+- [x] T-030 Catálogo: menú lateral
   RF: RF-027 | Depende de: T-029 | Archivos: 3
   Archivos: `showcase/sections/SidebarSection.tsx`, `showcase/ShowcasePage.tsx`,
   `showcase/ShowcasePage.test.tsx`.
   Hecho cuando: el catálogo exhibe el menú abierto y contraído; suite verde.
+  Excepción: `showcase/sections/sections.css` (ya existente) recibe la clase `catalog-frame`.
+  Decisiones: el catálogo muestra un solo menú lateral, abierto al principio, y su botón lo contrae
+  (así se ven los dos estados sin repetir una región con el mismo nombre, que `axe` marca) — [Cierto].
+  Con él la página tiene dos botones de tema (el de la barra y el del pie del menú); los tests que
+  buscaban uno solo se limitan a la barra — [Cierto]. El marco `catalog-frame` anula el `sticky` y los
+  100 vh del menú real para que quepa en 440 px — [Probable]. Verificado en un navegador real en
+  claro y oscuro: 232 px abierto y 60 px contraído, cabecera de 64 px, elementos de 36 px, línea
+  bajo el activo, pie apilado y usuario con avatar. Se corrigió un fallo que solo veía el navegador:
+  los iconos de lucide se encogían a un punto con el menú contraído; `.sidebar svg` lleva
+  `flex: none` (T-029) — [Cierto]. Mutantes muertos: sin `lang`, activo cambiado, sin usuario.
 
 ## E-10 Diseño con sesión y menú en pantallas pequeñas
 - [ ] T-031 `useMediaQuery`
