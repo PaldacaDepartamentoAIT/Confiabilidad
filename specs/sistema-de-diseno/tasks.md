@@ -310,6 +310,14 @@ transitorias hasta T-051 (D-12).
   revertir: quitar el menú genérico. Verificado en un navegador real en claro y oscuro: el menú se
   abre bajo el disparador a 4 px, con la opción activa en negrita con chevron y resaltada. Mutantes
   muertos: sin `lang`, sin guardar la elección, sin botón de idioma.
+  Corrección pedida por el usuario durante la revisión de E-06b: los disparadores de los menús de
+  selección ocupan todo el ancho de su contenedor. `Menu.css` da al contenedor `.select` el 100 % de
+  ancho y al disparador (`[role="combobox"]`) el 100 %; la sección del catálogo usa una rejilla en
+  lugar de anchos fijos de 200 px; el `<select>` nativo transitorio de `base.css` también ocupa el
+  100 %; la guía lo recoge en la tabla «Menú de selección». Comprobado en un navegador real
+  (disparador 402 px en un contenedor de 402 px, menú desplegado de 402 px y `<select>` nativo de
+  300 px en un contenedor de 300 px). Los estilos no se prueban en jsdom; lo cubrirá la
+  comprobación visual (T-053) — [Cierto].
 
 ## E-07 Selector propio
 - [ ] T-022 Detección de puntero táctil

@@ -286,6 +286,7 @@ sección manda sobre las descripciones generales de arriba.
 | Parte | Valor |
 |---|---|
 | Disparador | igual que un campo; texto a la izquierda y chevron hacia abajo a la derecha; sin valor, «Selecciona una opción» en texto secundario |
+| Ancho del disparador | todo el ancho disponible de su contenedor (100 %), sea un campo de formulario, un botón del menú lateral o un selector de la barra; el menú desplegado nunca es más estrecho que él |
 | Menú | aparece a 4 px bajo el disparador, ancho mínimo igual al del disparador, alto máximo de 260 px con desplazamiento, relleno de 4 px, fondo del lienzo, borde de 1 px en borde de control, radio 4 px |
 | Opción | 34 px de alto, relleno de 0 10 px 0 6 px, separación de 6 px, radio 6 px; la seleccionada en peso 700 y con un chevron «>» a la izquierda; el resto reserva el mismo hueco |
 | Opción resaltada u opción bajo el cursor | fondo con el 9 % de la tinta mezclado con el lienzo |

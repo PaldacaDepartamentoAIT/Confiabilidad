@@ -12,6 +12,9 @@ Líneas de código y tests: 251 (límite: 400).
 - La página de muestra tiene una sección nueva, «Menú e idioma», con el botón de idioma real y un
   menú genérico de plantas que recuerda la opción elegida, en claro y oscuro. Su contenido de
   ejemplo es inventado y está en español, marcado como tal.
+- Los disparadores de los menús de selección ocupan todo el ancho de su contenedor (también el
+  `<select>` nativo provisional), y el menú desplegado nunca es más estrecho que ellos; la guía lo
+  recoge. En el catálogo, el botón de idioma y el menú de plantas llenan su columna.
 - El selector de idioma de tres botones que ya existe se mantiene sin cambios; el botón de idioma es
   el que se usará en la barra superior y el menú lateral.
 

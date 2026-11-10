@@ -23,11 +23,11 @@ export function MenuSection({ storage }: MenuSectionProps) {
   return (
     <div role="region" aria-labelledby={titleId} lang="es" className="catalog-section">
       <h2 id={titleId}>Menú e idioma</h2>
-      <div className="catalog-row">
-        <div className="catalog-narrow">
+      <div className="catalog-grid">
+        <div>
           <LanguageButton storage={storage} />
         </div>
-        <div className="catalog-narrow">
+        <div>
           <Menu
             label="Planta"
             options={PLANTS}

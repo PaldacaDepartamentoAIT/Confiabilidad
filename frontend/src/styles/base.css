@@ -104,6 +104,11 @@ select {
   padding: 6px 8px;
 }
 
+select {
+  display: block;
+  width: 100%;
+}
+
 input[type="checkbox"] {
   accent-color: var(--primary);
 }
