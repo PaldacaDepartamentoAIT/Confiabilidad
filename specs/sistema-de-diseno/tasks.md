@@ -283,11 +283,20 @@ transitorias hasta T-051 (D-12).
   texto — [Cierto]. Mutantes muertos: topes de las flechas, Escape, foco de las opciones, cierre al
   salir, alineación, opción inicial, animación, `aria-activedescendant`, clic fuera y soltar la barra
   espaciadora.
-- [ ] T-020 Botón de idioma
+- [x] T-020 Botón de idioma
   RF: RF-005, RF-007, RF-030 | Depende de: T-019 | Archivos: 3
   Archivos: `components/LanguageButton.tsx`, `LanguageButton.css`, `LanguageButton.test.tsx`.
   Hecho cuando: muestra el código del idioma activo, abre un menú con los tres idiomas por su
   nombre y cambia y guarda el idioma como `LanguageSwitcher`; suite verde.
+  Decisiones: `LanguageButton` usa `Menu`; su nombre accesible es «Idioma: Español» (la clave
+  `language.label` más el nombre del idioma activo en su idioma), sin claves de texto nuevas, y
+  muestra el código de dos letras («ES», «PT», «EN») — [Probable] — revertir: cambiar
+  `LanguageButton.tsx`. Repite las cuatro líneas de `choose` de `LanguageSwitcher` en lugar de
+  compartirlas, para no tocar ese componente (fuera de la tarea) — [Suposición] — revertir: extraer
+  una función común a `i18n/language.ts`. Importa `ThemeButton.css` porque de ahí vienen `sb-btn`
+  y `hov` hasta que el menú lateral (T-029) los mueva a un archivo común — [Suposición]. Mutantes
+  muertos: sin guardar, código del idioma, `lang`, `data-ui`, opción seleccionada, sin cambio de
+  idioma, nombre accesible.
 - [ ] T-021 Catálogo: menú e idioma
   RF: RF-027 | Depende de: T-020 | Archivos: 3
   Archivos: `showcase/sections/MenuSection.tsx`, `showcase/ShowcasePage.tsx`,

@@ -1,0 +1,5 @@
+/* Hover, `sb-btn` y `.mono` vienen de ThemeButton.css y base.css; aquí solo lo propio del botón de idioma. */
+.sb-btn[data-ui="sidebar-button"][aria-haspopup="listbox"] .label {
+  flex: 1;
+  min-width: 0;
+}
