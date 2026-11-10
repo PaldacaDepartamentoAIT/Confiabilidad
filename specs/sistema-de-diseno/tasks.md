@@ -235,15 +235,34 @@ transitorias hasta T-051 (D-12).
   revertir: quitar las clases. `PasswordField.tsx` importa `Button.css` para no depender de que otro
   componente cargue los estilos del botón — [Cierto]. Mutantes muertos: sin las tres clases.
 ## E-05b Casilla y catálogo de campos
-- [ ] T-017 Casilla de verificación
+- [x] T-017 Casilla de verificación
   RF: RF-017 | Depende de: T-006 | Archivos: 3
   Archivos: `components/fields/Checkbox.tsx`, `Checkbox.css`, `Checkbox.test.tsx`.
   Hecho cuando: icono de verificación centrado, etiqueta y ayuda opcional; suite verde.
-- [ ] T-018 Catálogo: campos
+  Decisiones: `Checkbox` envuelve la caja y el icono de verificación en `label.check`; la ayuda y el
+  error van fuera de la etiqueta, bajo el texto, para que el nombre accesible de la casilla sea solo
+  su etiqueta (como pedían los tests previos) — [Probable] — revertir: meter la ayuda en `.txt`. Por petición del usuario durante la revisión de E-05b, la ayuda y el error no llevan sangría
+  (sin margen izquierdo): quedan alineados con el borde de la caja — [Cierto] — revertir: añadir de
+  nuevo `margin-left: 28px` a esas dos clases dentro de `.check-field`. El
+  icono de verificación mide 14 px con trazo 3 y la caja es nativa con `appearance: none` —
+  [Cierto]. Los estilos no se verificaron aún en un navegador: `/register` necesita el backend para
+  cargar los términos; se verifica en el catálogo (T-018) — [Cierto]. Mutantes muertos: `data-ui`,
+  tamaño del icono, clase de la nota, clase `check`, asterisco.
+- [x] T-018 Catálogo: campos
   RF: RF-027 | Depende de: T-016, T-017 | Archivos: 3
   Archivos: `showcase/sections/FieldsSection.tsx`, `showcase/ShowcasePage.tsx`,
   `showcase/ShowcasePage.test.tsx`.
   Hecho cuando: el catálogo exhibe campos, error y casilla; suite verde.
+  Excepción: `showcase/sections/sections.css` (ya existente) recibe dos clases más, `catalog-grid` y
+  `catalog-stack`; no es un archivo nuevo.
+  Decisiones: la sección «Campos» va en español con `lang="es"`; sus etiquetas son «Razón social»,
+  «Clave de acceso» y «Código» para no chocar con las de los tests existentes de la página —
+  [Cierto]. La casilla con error muestra el mensaje con icono pero su borde no cambia a rojo, porque
+  la guía solo define el borde de error para los campos de texto — [Suposición] — revertir: añadir
+  una regla para `.cb input[aria-invalid="true"]`. Verificado en un navegador real en claro y
+  oscuro: caja de 18 px con borde de 1 px, marcada con el principal y el icono visible; sin marcar con
+  fondo del lienzo y el icono oculto. Mutantes muertos: sin `lang`, sin error del campo, sin casilla
+  marcada, sin campo de código, sin error de la casilla.
 
 ## E-06 Menú desplegable y botón de idioma
 - [ ] T-019 Menú desplegable compartido

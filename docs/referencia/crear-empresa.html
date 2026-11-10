@@ -305,6 +305,7 @@ textarea.field:focus { padding: 7px 10px; }
 
 /* Casillas */
 .checks { display: flex; flex-direction: column; gap: 14px; }
+.check-field { display: flex; flex-direction: column; gap: 2px; }
 .check { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; }
 .check .txt { display: flex; flex-direction: column; gap: 2px; }
 .cb { position: relative; width: 18px; height: 18px; flex: none; margin-top: 1px; }
@@ -528,14 +529,20 @@ textarea.field:focus { padding: 7px 10px; }
             <div class="block">
               <h2>Opciones</h2>
               <div class="checks">
-                <label class="check">
-                  <span class="cb"><input data-ui="checkbox" type="checkbox" name="active" checked><svg class="i"><use href="#i-check"/></svg></span>
-                  <span class="txt"><span>Empresa activa</span><span class="help">Las empresas inactivas no aparecen al registrar activos.</span></span>
-                </label>
-                <label class="check">
-                  <span class="cb"><input type="checkbox" name="defaultCriticality"><svg class="i"><use href="#i-check"/></svg></span>
-                  <span class="txt"><span>Aplicar la matriz de criticidad por defecto</span><span class="help">Podrás ajustarla después en Configuración.</span></span>
-                </label>
+                <div class="check-field">
+                  <label class="check">
+                    <span class="cb"><input aria-describedby="active-help" data-ui="checkbox" type="checkbox" name="active" checked><svg class="i"><use href="#i-check"/></svg></span>
+                    <span class="txt"><span>Empresa activa</span></span>
+                  </label>
+                  <p class="help" id="active-help">Las empresas inactivas no aparecen al registrar activos.</p>
+                </div>
+                <div class="check-field">
+                  <label class="check">
+                    <span class="cb"><input aria-describedby="defaultCriticality-help" type="checkbox" name="defaultCriticality"><svg class="i"><use href="#i-check"/></svg></span>
+                    <span class="txt"><span>Aplicar la matriz de criticidad por defecto</span></span>
+                  </label>
+                  <p class="help" id="defaultCriticality-help">Podrás ajustarla después en Configuración.</p>
+                </div>
               </div>
             </div>
           </section>
@@ -597,10 +604,13 @@ textarea.field:focus { padding: 7px 10px; }
                 </div>
               </div>
               <div class="checks" style="margin-top:18px">
-                <label class="check">
-                  <span class="cb"><input type="checkbox" name="notify" checked><svg class="i"><use href="#i-check"/></svg></span>
-                  <span class="txt"><span>Notificar las alarmas P1 por correo</span><span class="help">Se envían a la persona de contacto.</span></span>
-                </label>
+                <div class="check-field">
+                  <label class="check">
+                    <span class="cb"><input aria-describedby="notify-help" type="checkbox" name="notify" checked><svg class="i"><use href="#i-check"/></svg></span>
+                    <span class="txt"><span>Notificar las alarmas P1 por correo</span></span>
+                  </label>
+                  <p class="help" id="notify-help">Se envían a la persona de contacto.</p>
+                </div>
               </div>
             </div>
           </section>
