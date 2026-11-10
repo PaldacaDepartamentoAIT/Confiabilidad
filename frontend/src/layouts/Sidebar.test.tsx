@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import axe from "axe-core";
 import { I18nextProvider } from "react-i18next";
@@ -21,7 +21,11 @@ const ITEMS: SidebarItem[] = [
 ];
 
 function renderSidebar(props: Partial<React.ComponentProps<typeof Sidebar>> = {}, language = "es") {
-  vi.stubGlobal("matchMedia", () => ({ matches: false }));
+  vi.stubGlobal("matchMedia", () => ({
+    matches: false,
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+  }));
   return render(
     <I18nextProvider i18n={createI18n(language)}>
       <Sidebar items={ITEMS} activeId="work" {...props} />
@@ -191,4 +195,161 @@ test("has no accessibility violations expanded, collapsed and with a user", asyn
   expect((await run()).violations).toEqual([]);
   await user.click(screen.getByRole("button", { name: "Contraer menú" }));
   expect((await run()).violations).toEqual([]);
+});
+
+describe("panel superpuesto en pantallas pequeñas", () => {
+  type Listener = (event: { matches: boolean }) => void;
+
+  function stubScreen(narrow: boolean) {
+    const listeners = new Set<Listener>();
+    vi.stubGlobal("matchMedia", (query: string) => ({
+      matches: query === "(max-width: 767px)" ? narrow : false,
+      addEventListener: (_type: string, listener: Listener) => {
+        if (query === "(max-width: 767px)") listeners.add(listener);
+      },
+      removeEventListener: (_type: string, listener: Listener) => listeners.delete(listener),
+    }));
+    return { resize: (matches: boolean) => listeners.forEach((listener) => listener({ matches })) };
+  }
+
+  function Harness({
+    open = false,
+    onClose = () => undefined,
+    defaultCollapsed,
+  }: {
+    open?: boolean;
+    onClose?: (restoreFocus: boolean) => void;
+    defaultCollapsed?: boolean;
+  }) {
+    return (
+      <I18nextProvider i18n={createI18n("es")}>
+        <button type="button" aria-controls="sb" aria-label="Abrir menú">
+          opener
+        </button>
+        <Sidebar
+          id="sb"
+          items={ITEMS}
+          activeId="work"
+          mobileOpen={open}
+          onMobileClose={onClose}
+          defaultCollapsed={defaultCollapsed}
+        />
+        <p>outside</p>
+      </I18nextProvider>
+    );
+  }
+
+  it("cerrado se oculta del teclado y del lector de pantalla", () => {
+    stubScreen(true);
+    render(<Harness />);
+
+    const sidebar = document.getElementById("sb");
+    expect(sidebar).toHaveAttribute("aria-hidden", "true");
+    expect(sidebar).not.toHaveClass("mobile-open");
+    expect(screen.queryByRole("navigation")).not.toBeInTheDocument();
+  });
+
+  it("abierto se muestra sin estado contraído, con un botón para cerrarlo que recibe el foco", () => {
+    stubScreen(true);
+    render(<Harness open defaultCollapsed />);
+
+    const sidebar = document.getElementById("sb");
+    expect(sidebar).not.toHaveAttribute("aria-hidden");
+    expect(sidebar).toHaveClass("mobile-open");
+    expect(sidebar).not.toHaveClass("collapsed");
+    screen.getAllByRole("link").forEach((link) => expect(link).not.toHaveAttribute("title"));
+    const close = screen.getByRole("button", { name: "Cerrar menú" });
+    expect(close).not.toHaveAttribute("aria-expanded");
+    expect(close.querySelector("svg")).toHaveClass("lucide-chevron-left");
+    expect(close).toHaveFocus();
+  });
+
+  it("el botón de la cabecera lo cierra devolviendo el foco", async () => {
+    stubScreen(true);
+    const onClose = vi.fn();
+    render(<Harness open onClose={onClose} />);
+
+    await userEvent.setup().click(screen.getByRole("button", { name: "Cerrar menú" }));
+
+    expect(onClose).toHaveBeenCalledWith(true);
+  });
+
+  it("Escape lo cierra devolviendo el foco, y solo si está abierto", async () => {
+    stubScreen(true);
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    const { unmount } = render(<Harness open onClose={onClose} />);
+
+    await user.keyboard("{Escape}");
+    expect(onClose).toHaveBeenCalledWith(true);
+    unmount();
+
+    const closed = vi.fn();
+    render(<Harness onClose={closed} />);
+    await user.keyboard("{Escape}");
+    expect(closed).not.toHaveBeenCalled();
+  });
+
+  it("un clic fuera lo cierra sin devolver el foco; dentro y en el botón que lo abre, no", async () => {
+    stubScreen(true);
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    render(<Harness open onClose={onClose} />);
+
+    await user.click(screen.getByText("Confiabilidad"));
+    await user.click(screen.getByRole("button", { name: "Abrir menú" }));
+    expect(onClose).not.toHaveBeenCalledWith(false);
+
+    await user.click(screen.getByText("outside"));
+    expect(onClose).toHaveBeenCalledWith(false);
+  });
+
+  it("elegir un elemento lo cierra", async () => {
+    stubScreen(true);
+    const onClose = vi.fn();
+    render(<Harness open onClose={onClose} />);
+
+    await userEvent.setup().click(screen.getByRole("link", { name: "Inicio" }));
+
+    expect(onClose).toHaveBeenCalledWith(false);
+  });
+
+  it("se cierra si la pantalla se ensancha con el panel abierto", () => {
+    const screenControl = stubScreen(true);
+    const onClose = vi.fn();
+    render(<Harness open onClose={onClose} />);
+
+    act(() => screenControl.resize(false));
+
+    expect(onClose).toHaveBeenCalledWith(false);
+  });
+
+  it("en pantalla ancha se comporta como antes: contraíble, sin aria-hidden y sin atender a Escape", async () => {
+    stubScreen(false);
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    render(<Harness open onClose={onClose} />);
+
+    const sidebar = document.getElementById("sb");
+    expect(sidebar).not.toHaveAttribute("aria-hidden");
+    expect(screen.getByRole("button", { name: "Contraer menú" })).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+    await user.keyboard("{Escape}");
+    await user.click(screen.getByText("outside"));
+    await user.click(screen.getByRole("link", { name: "Inicio" }));
+    // Solo la llamada de cuando la pantalla se ensancha con el panel abierto.
+    expect(onClose.mock.calls).toEqual([[false]]);
+  });
+
+  it("no tiene violaciones de accesibilidad abierto ni cerrado", async () => {
+    stubScreen(true);
+    const { container, rerender } = render(<Harness />);
+    const run = () => axe.run(container, { rules: { "color-contrast": { enabled: false } } });
+    expect((await run()).violations).toEqual([]);
+
+    rerender(<Harness open />);
+    expect((await run()).violations).toEqual([]);
+  });
 });

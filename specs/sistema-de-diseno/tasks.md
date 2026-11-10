@@ -524,12 +524,26 @@ transitorias hasta T-051 (D-12).
   Decisiones: tarea nueva, como T-003 y T-059: el panel móvil necesita dos nombres («Abrir menú» para
   el botón de la barra y «Cerrar menú» para el de la cabecera) que no estaban en la lista aprobada —
   [Cierto] — revertir: pasarlos por props. Mutante muerto: quitar una clave de `pt-BR`.
-- [ ] T-032 Panel superpuesto del menú
-  RF: RF-009 | Depende de: T-029, T-031 | Archivos: 3
+- [x] T-032 Panel superpuesto del menú
+  RF: RF-009 | Depende de: T-060, T-061, T-062, T-031 | Archivos: 3
   Archivos: `layouts/Sidebar.tsx`, `Sidebar.css`, `Sidebar.test.tsx`.
   Hecho cuando: bajo 768 px se oculta, se abre como panel sin velo, se cierra al pulsar fuera,
   con Escape o al elegir un elemento, sin estado contraído y devolviendo el foco al botón que lo
   abrió; suite verde.
+  Decisiones: `Sidebar` recibe `mobileOpen` y `onMobileClose(restoreFocus)` (quien lo usa decide
+  cuándo se abre y a dónde vuelve el foco) y un `id` opcional para que el botón que lo abre lo
+  señale con `aria-controls` — [Probable] — revertir: guardar el estado dentro del menú. Cerrado en
+  pantalla estrecha lleva `aria-hidden` y el CSS lo deja con `visibility: hidden` tras la
+  transición; el foco pasa al botón de la cabecera al abrirlo; un clic en el botón que abre el panel
+  (el que tenga `aria-controls` con su id) no cuenta como «fuera» — [Cierto]. En pantalla estrecha
+  la cabecera muestra «Cerrar menú» sin `aria-expanded` y nunca hay estado contraído. Si la
+  pantalla se ensancha con el panel abierto, avisa de que se cierra — [Probable]. No hay velo
+  (corrección de RF-009 aprobada). Hasta T-034 no hay nada en el catálogo que abra el panel, así que
+  la sección «Menú lateral» queda oculta en una ventana de menos de 768 px — [Cierto]. Los tests
+  ya existentes de `Sidebar` dejaron de funcionar con la simulación de `matchMedia` sin
+  `addEventListener`; se completó la simulación — [Cierto]. Mutantes muertos: `aria-hidden`,
+  contraído en móvil, foco, Escape, clic dentro y en el botón de apertura, elegir un elemento,
+  ensanchar, botón de cerrar, `aria-expanded`, clase `mobile-open`.
 - [ ] T-033 Diseño con sesión
   RF: RF-006 | Depende de: T-032 | Archivos: 3
   Archivos: `layouts/AppLayout.tsx`, `AppLayout.css`, `AppLayout.test.tsx`.
