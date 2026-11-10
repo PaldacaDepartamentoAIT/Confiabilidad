@@ -24,3 +24,35 @@
 .search input::-webkit-search-cancel-button {
   display: none;
 }
+
+/* Menos de 560 px: botón con lupa; el campo se despliega sobre las pestañas. */
+.search-toggle {
+  width: 36px;
+  height: 36px;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink);
+}
+
+.search.narrow:not(.open) {
+  display: none;
+}
+
+.search.narrow.open {
+  display: block;
+  position: absolute;
+  right: 22px;
+  top: 14px;
+  z-index: 5;
+}
+
+.topbar:has(.search.open) .search-toggle,
+.topbar:has(.search.open) .tabs-area {
+  visibility: hidden;
+}
