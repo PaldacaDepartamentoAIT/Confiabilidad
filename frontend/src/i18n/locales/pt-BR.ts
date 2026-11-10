@@ -16,6 +16,12 @@ export const ptBR: Messages = {
     announceLight: "Tema claro",
     announceDark: "Tema escuro",
   },
+  sidebar: {
+    label: "Menu principal",
+    sections: "Seções",
+    collapse: "Recolher menu",
+    expand: "Expandir menu",
+  },
   button: {
     processing: "Processando…",
     processingAnnouncement: "Processando",

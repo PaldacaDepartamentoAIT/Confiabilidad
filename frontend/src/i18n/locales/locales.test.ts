@@ -57,6 +57,7 @@ test("every language covers the groups used by the components", () => {
     "app",
     "language",
     "theme",
+    "sidebar",
     "button",
     "field",
     "message",

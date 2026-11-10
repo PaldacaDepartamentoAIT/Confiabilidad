@@ -17,6 +17,12 @@ export const es: Messages = {
     announceLight: "Tema claro",
     announceDark: "Tema oscuro",
   },
+  sidebar: {
+    label: "Menú principal",
+    sections: "Secciones",
+    collapse: "Contraer menú",
+    expand: "Expandir menú",
+  },
   button: {
     processing: "Procesando…",
     processingAnnouncement: "Procesando",
