@@ -1,6 +1,6 @@
 # Entrega E-10b · Panel superpuesto del menú en pantallas pequeñas
 
-Rama: `feat/sistema-de-diseno-con-sesion-panel` (sale de `feat/sistema-de-diseno-con-sesion-base`) · PR: pendiente ·
+Rama: `feat/sistema-de-diseno-con-sesion-panel` · PR: [PaldacaDepartamentoAIT/Confiabilidad#86](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/86) ·
 Líneas de código y tests: 358 (límite: 400).
 
 ## Qué se hizo
