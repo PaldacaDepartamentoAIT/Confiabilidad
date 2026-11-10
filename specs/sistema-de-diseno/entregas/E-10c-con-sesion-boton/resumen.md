@@ -1,6 +1,6 @@
 # Entrega E-10c · Botón de menú de la barra que abre el panel
 
-Rama: `feat/sistema-de-diseno-con-sesion-boton` (sale de `feat/sistema-de-diseno-con-sesion-panel`) · PR: pendiente ·
+Rama: `feat/sistema-de-diseno-con-sesion-boton` · PR: [PaldacaDepartamentoAIT/Confiabilidad#87](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/87) ·
 Líneas de código y tests: 143 (límite: 400).
 
 ## Qué se hizo
