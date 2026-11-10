@@ -206,17 +206,35 @@ transitorias hasta T-051 (D-12).
   comprobación visual (T-053). Mutantes muertos: sin `lang`, sin botón procesando, forma cambiada,
   sin aviso de éxito.
 
-## E-05 Campos de texto y casilla
-- [ ] T-015 Campo de texto restilizado
+## E-05 Campos de texto
+- [x] T-015 Campo de texto restilizado
   RF: RF-015 | Depende de: T-006 | Archivos: 3
   Archivos: `components/fields/TextField.tsx`, `fields/field.css`, `TextField.test.tsx`.
   Hecho cuando: borde de 1 px al pasar el cursor, de 2 px con foco sin mover el contenido y error
   con icono; los tests previos de `TextField` siguen pasando; suite verde.
-- [ ] T-016 Contraseña, código y leyenda de obligatorios
-  RF: RF-015 | Depende de: T-015 | Archivos: 3
-  Archivos: `components/fields/PasswordField.tsx`, `CodeField.tsx`, `RequiredLegend.tsx`.
+  Decisiones: `TextField` usa la estructura de las referencias (`.fld` con `label`, `input.field`,
+  `.help` y `.error-msg` con icono de alerta), añade `data-ui="field-label"` y `"field"` y suma
+  `className` a la clase `field` — [Probable] — revertir: volver al marcado anterior. Las reglas de
+  `field.css` para `form > .fld + .fld` y `form > .btn` son transitorias (separación en formularios
+  sin rejilla) y se retiran en T-051 — [Suposición]. Verificado en un navegador real: reposo 36 px
+  con borde de 1 px, hover en el principal, foco con borde de 2 px y relleno de 10 px sin mover el
+  texto, y error con borde, icono y mensaje en tinta — [Cierto]. Mutantes muertos: `className`,
+  `data-ui`, icono de error, clase `req`, clase `fld`, clase `help`.
+- [x] T-016 Contraseña, código y leyenda de obligatorios
+  RF: RF-015 | Depende de: T-015 | Archivos: 4
+  Archivos: `components/fields/PasswordField.tsx`, `CodeField.tsx`, `RequiredLegend.tsx`,
+  `TextField.test.tsx`.
   Hecho cuando: usan las clases de `field.css`; los tests previos de ambos campos siguen pasando
   sin cambios; suite verde.
+  Excepción: se añadió `TextField.test.tsx` (un bloque con tres tests nuevos de estas tres piezas)
+  para respetar el test primero; no cabía en los tests previos, que se conservan sin cambios. Lo
+  añadí sin detenerme — [Suposición] — revertir: pedir una Excepción aparte.
+  Decisiones: el botón de mostrar contraseña es un botón secundario (`btn btn-ghost hov`) dentro del
+  campo, a su ancho natural — [Probable]; el código de verificación usa `mono`; la leyenda de
+  obligatorios usa la clase `help` (12 px, texto secundario) y conserva su texto —  [Cierto] —
+  revertir: quitar las clases. `PasswordField.tsx` importa `Button.css` para no depender de que otro
+  componente cargue los estilos del botón — [Cierto]. Mutantes muertos: sin las tres clases.
+## E-05b Casilla y catálogo de campos
 - [ ] T-017 Casilla de verificación
   RF: RF-017 | Depende de: T-006 | Archivos: 3
   Archivos: `components/fields/Checkbox.tsx`, `Checkbox.css`, `Checkbox.test.tsx`.
@@ -466,9 +484,14 @@ Rama de integración: `feat/sistema-de-diseno` (los PR de las entregas van contr
 - E-04b Aviso de alarma y sección de botones y avisos en el catálogo.
   Tareas: T-013, T-014 | Líneas estimadas: 220 | Rama: feat/sistema-de-diseno-aviso-alarma
   Cómo probarlo: página de muestra, sección «Botones y avisos», en ambos temas.
-- E-05 Campos de texto, contraseña, código y casilla con la identidad nueva.
-  Tareas: T-015, T-016, T-017, T-018 | Líneas estimadas: 360 | Rama: feat/sistema-de-diseno-campos
+- E-05 Campos de texto, contraseña y código con la identidad nueva.
+  Tareas: T-015, T-016 | Líneas estimadas: 205 | Rama: feat/sistema-de-diseno-campos-texto
   Cómo probarlo: página de muestra y `/register`: hover, foco y error de cada campo.
+  Nota: E-05 se dividió en E-05 y E-05b porque la entrega completa medía 467 líneas (límite 400);
+  se aplicó la regla de AGENTS.md sobre entregas que rebasan el límite.
+- E-05b Casilla de verificación y sección «Campos» del catálogo.
+  Tareas: T-017, T-018 | Líneas estimadas: 262 | Rama: feat/sistema-de-diseno-casilla
+  Cómo probarlo: página de muestra, sección «Campos»: marcar y desmarcar las casillas, en ambos temas.
 - E-06 Botón de idioma con menú.
   Tareas: T-019, T-020, T-021 | Líneas estimadas: 400 | Rama: feat/sistema-de-diseno-idioma
   Cómo probarlo: abrir el botón de idioma en el catálogo y cambiar de idioma con ratón y teclado.
