@@ -534,21 +534,43 @@ transitorias hasta T-051 (D-12).
   su lado, en claro y oscuro — [Cierto]. Mutantes muertos: sin `lang`, sin `embedded`, elemento
   activo y contenido.
 ## E-10b Panel superpuesto del menú
-- [ ] T-031 `useMediaQuery`
+- [x] T-031 `useMediaQuery`
   RF: RF-009 | Depende de: — | Archivos: 2
   Archivos: `layouts/useMediaQuery.ts`, `useMediaQuery.test.ts`.
   Hecho cuando: devuelve y actualiza el resultado de una consulta; suite verde.
-- [ ] T-062 Textos del panel móvil del menú en tres idiomas
+  Decisiones: `useMediaQuery(consulta)` devuelve falso (pantalla ancha) si el navegador no tiene
+  consultas de medios, al contrario que `useCoarsePointer`, que asume «nativo»: aquí lo seguro es el
+  menú de escritorio — [Probable] — revertir: devolver verdadero. Vuelve a leer la consulta cuando
+  cambia. Mutantes muertos: escucha, limpieza, cambio de consulta, valor de reserva y relectura.
+- [x] T-062 Textos del panel móvil del menú en tres idiomas
   RF: RF-030 | Depende de: T-059 | Archivos: 3
   Archivos: `i18n/locales/en.ts`, `es.ts`, `pt-BR.ts`.
   Hecho cuando: existen `sidebar.open` y `sidebar.close` en los tres idiomas y los tests de claves y
   locales pasan; suite verde.
   Excepción: los tres archivos de idioma son una unidad (`es` y `pt-BR` se tipan contra `en`).
-- [ ] T-032 Panel superpuesto del menú
+  Decisiones: tarea nueva, como T-003 y T-059: el panel móvil necesita dos nombres («Abrir menú» para
+  el botón de la barra y «Cerrar menú» para el de la cabecera) que no estaban en la lista aprobada —
+  [Cierto] — revertir: pasarlos por props. Mutante muerto: quitar una clave de `pt-BR`.
+- [x] T-032 Panel superpuesto del menú
   RF: RF-009 | Depende de: T-060, T-061, T-062, T-031 | Archivos: 3
   Archivos: `layouts/Sidebar.tsx`, `Sidebar.css`, `Sidebar.test.tsx`.
-  Hecho cuando: bajo 768 px se oculta, se abre como panel sin velo, se cierra al pulsar fuera, con Escape o al elegir
-  un elemento, sin estado contraído y devolviendo el foco al botón que lo abrió; suite verde.
+  Hecho cuando: bajo 768 px se oculta, se abre como panel sin velo, se cierra al pulsar fuera,
+  con Escape o al elegir un elemento, sin estado contraído y devolviendo el foco al botón que lo
+  abrió; suite verde.
+  Decisiones: `Sidebar` recibe `mobileOpen` y `onMobileClose(restoreFocus)` (quien lo usa decide
+  cuándo se abre y a dónde vuelve el foco) y un `id` opcional para que el botón que lo abre lo
+  señale con `aria-controls` — [Probable] — revertir: guardar el estado dentro del menú. Cerrado en
+  pantalla estrecha lleva `aria-hidden` y el CSS lo deja con `visibility: hidden` tras la
+  transición; el foco pasa al botón de la cabecera al abrirlo; un clic en el botón que abre el panel
+  (el que tenga `aria-controls` con su id) no cuenta como «fuera» — [Cierto]. En pantalla estrecha
+  la cabecera muestra «Cerrar menú» sin `aria-expanded` y nunca hay estado contraído. Si la
+  pantalla se ensancha con el panel abierto, avisa de que se cierra — [Probable]. No hay velo
+  (corrección de RF-009 aprobada). Hasta T-063 (E-10c) nada abre el panel, así que el menú del
+  catálogo queda oculto en una ventana de menos de 768 px — [Cierto]. Los tests
+  ya existentes de `Sidebar` dejaron de funcionar con la simulación de `matchMedia` sin
+  `addEventListener`; se completó la simulación — [Cierto]. Mutantes muertos: `aria-hidden`,
+  contraído en móvil, foco, Escape, clic dentro y en el botón de apertura, elegir un elemento,
+  ensanchar, botón de cerrar, `aria-expanded`, clase `mobile-open`.
 ## E-10c Botón de menú en la barra
 - [ ] T-063 Botón de menú en la barra y apertura del panel
   RF: RF-009 | Depende de: T-033, T-032 | Archivos: 4
