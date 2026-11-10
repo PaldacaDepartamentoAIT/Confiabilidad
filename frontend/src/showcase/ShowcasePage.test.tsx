@@ -555,3 +555,26 @@ test("on a narrow screen the menu button of the catalog opens the side menu as a
   expect(within(catalog).getByRole("complementary")).toHaveClass("mobile-open");
   vi.unstubAllGlobals();
 });
+
+test("the screen with session of the catalog has tabs, and choosing a tab shows its section", async () => {
+  const user = userEvent.setup();
+  renderPage("en");
+
+  const catalog = screen.getByRole("region", { name: "Diseño con sesión" });
+  const tabs = within(catalog).getAllByRole("tab");
+  expect(tabs.map((tab) => tab.textContent)).toEqual(["Resumen", "Inventario", "Alarmas"]);
+  const visible = () =>
+    within(catalog)
+      .getAllByRole("tabpanel")
+      .filter((panel) => !panel.hidden)
+      .map((panel) => panel.getAttribute("aria-labelledby"));
+  expect(visible()).toEqual([tabs[0].id]);
+
+  await user.click(tabs[1]);
+  expect(visible()).toEqual([tabs[1].id]);
+
+  tabs[1].focus();
+  await user.keyboard("{ArrowRight}");
+  expect(tabs[2]).toHaveFocus();
+  expect(visible()).toEqual([tabs[2].id]);
+});

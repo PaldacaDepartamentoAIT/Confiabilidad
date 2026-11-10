@@ -1,0 +1,36 @@
+.tablist {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: max-content;
+  flex: none;
+}
+
+.tab {
+  position: relative;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 6px;
+  color: var(--text2);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.tab[aria-selected="true"] {
+  color: var(--ink);
+}
+
+.tab-ink {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  width: 0;
+  background: var(--primary);
+  border-radius: 0;
+  pointer-events: none;
+  transition:
+    transform 0.25s ease-out,
+    width 0.25s ease-out;
+}
