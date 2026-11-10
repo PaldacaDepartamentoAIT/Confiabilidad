@@ -137,7 +137,7 @@ test("has no accessibility violations with a hint and an error", async () => {
 });
 
 describe("the fields built on TextField keep the design system look", () => {
-  test("the password field's toggle is a secondary-style button inside the field", () => {
+  test("the password field's toggle is an icon button inside the field", () => {
     const { container } = render(
       <I18nextProvider i18n={createI18n("en")}>
         <PasswordField label="Password" kind="current" />
@@ -145,7 +145,7 @@ describe("the fields built on TextField keep the design system look", () => {
     );
 
     const toggle = screen.getByRole("button", { name: "Show password (Password)" });
-    expect(toggle).toHaveClass("btn", "btn-ghost", "hov");
+    expect(toggle).toHaveClass("field-action");
     expect(container.firstElementChild).toHaveClass("fld");
     expect(container.firstElementChild).toContainElement(toggle);
     expect(screen.getByLabelText(/^Password/)).toHaveClass("field");

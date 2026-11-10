@@ -12,6 +12,8 @@ const NAMES = [
   "IconChevronRight",
   "IconChevronsUpDown",
   "IconFactory",
+  "IconEye",
+  "IconEyeOff",
   "IconFile",
   "IconGlobe",
   "IconHouse",
@@ -54,4 +56,12 @@ test("a size can be overridden, as the menu toggle needs (22 px)", () => {
 test("props such as className reach the svg", () => {
   const { container } = render(<icons.IconCheck className="mark" />);
   expect(container.querySelector("svg")).toHaveClass("mark");
+});
+
+test("the eye icons are the open and the crossed eye, so the password toggle can tell its two states apart", () => {
+  const open = render(<icons.IconEye />).container.querySelector("svg");
+  const crossed = render(<icons.IconEyeOff />).container.querySelector("svg");
+  expect(open).toHaveClass("lucide-eye");
+  expect(crossed).toHaveClass("lucide-eye-off");
+  expect(open?.innerHTML).not.toBe(crossed?.innerHTML);
 });

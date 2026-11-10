@@ -153,6 +153,10 @@ Un solo color por prioridad en toda la aplicación.
   con borde de 2 px, ambos en el principal (en el rojo de P1 si el campo tiene error). El foco
   siempre es más grueso que el hover; el relleno interior compensa el grosor para que el texto no se
   mueva. Los obligatorios llevan «*» y una leyenda «* Campo obligatorio».
+- **Botón de icono dentro de un campo.** Va a la derecha, dentro del borde del campo, con un icono
+  de 16 px en texto secundario (tinta al pasar el cursor), sin borde ni relleno, de 32 × 32 px como
+  mínimo y con el nombre accesible del campo. Si alterna un estado, como mostrar u ocultar la
+  contraseña, lleva `aria-pressed`.
 - **Foco de teclado** del resto de elementos: contorno de 2 px en el principal, separado 2 px.
 - **Elemento activo** (pestaña, elemento de la navegación lateral, día de un calendario): sin
   relleno, en tinta, con una línea recta de 2 px en el principal por debajo. En la barra superior,

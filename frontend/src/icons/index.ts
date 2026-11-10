@@ -7,6 +7,8 @@ import {
   ChevronRight,
   ChevronsUpDown,
   CircleAlert,
+  Eye,
+  EyeOff,
   Factory,
   FileText,
   Globe,
@@ -42,6 +44,8 @@ export const IconChevronDown = sized(ChevronDown, "IconChevronDown");
 export const IconChevronLeft = sized(ChevronLeft, "IconChevronLeft");
 export const IconChevronRight = sized(ChevronRight, "IconChevronRight");
 export const IconChevronsUpDown = sized(ChevronsUpDown, "IconChevronsUpDown");
+export const IconEye = sized(Eye, "IconEye");
+export const IconEyeOff = sized(EyeOff, "IconEyeOff");
 export const IconFactory = sized(Factory, "IconFactory");
 export const IconFile = sized(FileText, "IconFile");
 export const IconGlobe = sized(Globe, "IconGlobe");

@@ -1,7 +1,7 @@
 import { forwardRef, useRef, useState, type ComponentProps, type FocusEvent } from "react";
 import { useTranslation } from "react-i18next";
 
-import "../Button.css";
+import { IconEye, IconEyeOff } from "../../icons";
 import { TextField } from "./TextField";
 
 type PasswordFieldProps = Omit<ComponentProps<typeof TextField>, "type" | "adornment" | "hint"> & {
@@ -9,7 +9,7 @@ type PasswordFieldProps = Omit<ComponentProps<typeof TextField>, "type" | "adorn
 };
 
 export const PasswordField = forwardRef<HTMLInputElement, PasswordFieldProps>(
-  function PasswordField({ kind, onBlur, ...fieldProps }, ref) {
+  function PasswordField({ kind, onBlur, className, ...fieldProps }, ref) {
     const { t } = useTranslation();
     const [visible, setVisible] = useState(false);
     const inputRef = useRef<HTMLInputElement | null>(null);
@@ -32,6 +32,7 @@ export const PasswordField = forwardRef<HTMLInputElement, PasswordFieldProps>(
     return (
       <TextField
         {...fieldProps}
+        className={["has-action", className].filter(Boolean).join(" ")}
         ref={setInput}
         type={visible ? "text" : "password"}
         autoComplete={kind === "current" ? "current-password" : "new-password"}
@@ -44,13 +45,13 @@ export const PasswordField = forwardRef<HTMLInputElement, PasswordFieldProps>(
           <button
             ref={toggleRef}
             type="button"
-            className="btn btn-ghost hov"
+            className="field-action"
             aria-pressed={visible}
             aria-label={`${t("field.showPassword")} (${fieldProps.label})`}
             onClick={() => setVisible(!visible)}
             onBlur={handleLeave}
           >
-            {t("field.showPassword")}
+            {visible ? <IconEyeOff /> : <IconEye />}
           </button>
         }
       />

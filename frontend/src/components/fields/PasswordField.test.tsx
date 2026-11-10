@@ -150,9 +150,40 @@ test("a current password has no hint", () => {
   expect(screen.getByLabelText("Password")).not.toHaveAttribute("aria-describedby");
 });
 
-test("the toggle names its field while showing only its own text", () => {
+test("the toggle is an icon button that names its field and shows no text", () => {
   renderWithI18n(<PasswordField label="New password" kind="new" />);
 
   const toggle = screen.getByRole("button", { name: "Show password (New password)" });
-  expect(toggle).toHaveTextContent(/^Show password$/);
+  expect(toggle).toHaveTextContent("");
+  expect(toggle).toHaveClass("field-action");
+  expect(toggle).not.toHaveClass("btn");
+  expect(toggle.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
+});
+
+test("the toggle shows an open eye while the password is hidden and a crossed eye while shown", async () => {
+  const user = userEvent.setup();
+  renderWithI18n(<PasswordField label="Password" kind="current" />);
+
+  const toggle = screen.getByRole("button", { name: "Show password (Password)" });
+  expect(toggle.querySelector("svg")).toHaveClass("lucide-eye");
+
+  await user.click(toggle);
+
+  expect(toggle.querySelector("svg")).toHaveClass("lucide-eye-off");
+  expect(toggle).toHaveAttribute("aria-pressed", "true");
+  expect(toggle).toHaveAccessibleName("Show password (Password)");
+});
+
+test("the password input leaves room for the button inside its border", () => {
+  renderWithI18n(<PasswordField label="Password" kind="current" />);
+  expect(screen.getByLabelText("Password")).toHaveClass("field", "has-action");
+});
+
+test("the toggle comes right after the input, inside the same field", () => {
+  const { container } = renderWithI18n(<PasswordField label="Password" kind="current" />);
+  const input = screen.getByLabelText("Password");
+  expect(input.nextElementSibling).toBe(
+    screen.getByRole("button", { name: "Show password (Password)" }),
+  );
+  expect(container.firstElementChild).toContainElement(input);
 });
