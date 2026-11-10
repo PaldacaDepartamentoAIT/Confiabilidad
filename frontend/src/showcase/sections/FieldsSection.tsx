@@ -2,9 +2,16 @@ import { useId } from "react";
 
 import { Checkbox } from "../../components/fields/Checkbox";
 import { CodeField } from "../../components/fields/CodeField";
+import { CustomSelect } from "../../components/fields/CustomSelect";
 import { PasswordField } from "../../components/fields/PasswordField";
 import { TextField } from "../../components/fields/TextField";
 import "./sections.css";
+
+const SECTORS = [
+  { value: "gen", label: "Generación" },
+  { value: "tra", label: "Transmisión" },
+  { value: "dis", label: "Distribución" },
+];
 
 // Contenido de ejemplo del catálogo: inventado y en español (S-03), por eso lleva su propio `lang`.
 export function FieldsSection() {
@@ -23,6 +30,18 @@ export function FieldsSection() {
         />
         <PasswordField label="Clave de acceso" kind="current" />
         <CodeField label="Código" defaultValue="123456" />
+        <CustomSelect
+          label="Sector"
+          placeholder="Selecciona una opción"
+          options={SECTORS}
+          defaultValue="gen"
+        />
+        <CustomSelect
+          label="Tipo de planta"
+          placeholder="Selecciona una opción"
+          options={SECTORS}
+          error="Elige un tipo de planta."
+        />
       </div>
       <div className="catalog-stack">
         <Checkbox

@@ -332,17 +332,35 @@ transitorias hasta T-051 (D-12).
   muertos: ciclar, temporizador, olvidar tras la pausa, mayúsculas, Ctrl, abrir al escribir, texto
   frente a valor.
 ## E-07b Selector propio
-- [ ] T-023 Selector propio
+- [x] T-023 Selector propio
   RF: RF-016 | Depende de: T-015, T-019, T-058 | Archivos: 3
-  Archivos: `components/fields/SelectField.tsx`, `SelectField.css`, `ChoiceFields.test.tsx`.
+  Archivos: `components/fields/CustomSelect.tsx`, `CustomSelect.css`, `ChoiceFields.test.tsx`.
   Hecho cuando: el disparador `<button role="combobox" name value>` abre la lista, se maneja con
   Enter, Espacio, flechas, Inicio, Fin, Escape y escritura, marca la opción, muestra el error y
   anuncia valor y estado; `useFormValidation` lo lee y enfoca; suite verde con `RegisterPage`.
-- [ ] T-025 Catálogo: selector
-  RF: RF-027 | Depende de: T-024 | Archivos: 3
+  Decisiones (desvío del orden previsto): el selector propio se escribió en un componente nuevo,
+  `CustomSelect`, y no sobre `SelectField`; `SelectField` pasa a elegir entre el propio y el nativo en
+  T-024, donde se reescriben sus tests. Así `SelectField`, `RegisterPage` y sus tests siguen en verde
+  entre una tarea y otra — [Probable] — revertir: mover el contenido a `SelectField.tsx`. El
+  disparador es un `<button name value>` con `role="combobox"` etiquetado con un `<label htmlFor>`;
+  no hay opción vacía en la lista, el texto de reserva solo se ve sin valor — [Suposición] —
+  revertir: añadir una primera opción vacía. La escritura para saltar a una opción viene del
+  menú (T-058, E-07). Mutantes muertos: `value`, `name`, valor controlado, aviso de cambio,
+  `onBlur`, `ref`, texto de reserva, estado interno.
+
+- [x] T-025 Catálogo: selector
+  RF: RF-027 | Depende de: T-023 | Archivos: 3
   Archivos: `showcase/sections/FieldsSection.tsx`, `showcase/ShowcasePage.tsx`,
   `showcase/ShowcasePage.test.tsx`.
   Hecho cuando: el catálogo exhibe el selector con valor y con error; suite verde.
+  Decisiones: la sección «Campos» muestra `CustomSelect` (con valor y con error) y no `SelectField`,
+  que sigue siendo el nativo hasta T-024; por eso la tarea depende de T-023 y no de T-024 —
+  [Cierto]. Se ajustó el test de la sección para contar solo los `input` con error (el selector con
+  error añade otro disparador inválido). Verificado en un navegador real en claro y oscuro:
+  disparador de 36 px a todo el ancho de su columna con borde de 1 px, hover en el principal, 2 px y
+  relleno de 10 px abierto, y lista con la opción activa en negrita con chevron. Mutantes
+  muertos: cubiertos por los de T-023.
+
 ## E-07c Selector nativo en dispositivos táctiles
 - [ ] T-022 Detección de puntero táctil
   RF: RF-031 | Depende de: — | Archivos: 2

@@ -1,0 +1,26 @@
+.select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  text-align: left;
+}
+
+.select-trigger .value {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.select-trigger .value.placeholder {
+  color: var(--text2);
+}
+
+.select-trigger > svg {
+  flex: none;
+  color: var(--ink);
+}
