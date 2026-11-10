@@ -355,11 +355,18 @@ transitorias hasta T-051 (D-12).
   Archivos: `components/fields/SelectField.tsx`, `ChoiceFields.test.tsx`.
   Hecho cuando: con puntero táctil se muestra el `<select>` nativo con la misma etiqueta, valor,
   opciones y error; suite verde.
-- [ ] T-025 Catálogo: selector
-  RF: RF-027 | Depende de: T-024 | Archivos: 3
+- [x] T-025 Catálogo: selector
+  RF: RF-027 | Depende de: T-023 | Archivos: 3
   Archivos: `showcase/sections/FieldsSection.tsx`, `showcase/ShowcasePage.tsx`,
   `showcase/ShowcasePage.test.tsx`.
   Hecho cuando: el catálogo exhibe el selector con valor y con error; suite verde.
+  Decisiones: la sección «Campos» muestra `CustomSelect` (con valor y con error) y no `SelectField`,
+  que sigue siendo el nativo hasta T-024; por eso la tarea depende de T-023 y no de T-024 —
+  [Cierto]. Se ajustó el test de la sección para contar solo los `input` con error (el selector con
+  error añade otro disparador inválido). Verificado en un navegador real en claro y oscuro:
+  disparador de 36 px a todo el ancho de su columna con borde de 1 px, hover en el principal, 2 px y
+  relleno de 10 px abierto, y lista con la opción activa en negrita con chevron. Mutantes
+  muertos: cubiertos por los de T-023.
 
 ## E-08 Diseño público en el registro
 - [ ] T-026 Diseño público
