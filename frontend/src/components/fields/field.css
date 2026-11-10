@@ -90,6 +90,32 @@ form > .btn + .btn {
   margin-top: 1px;
 }
 
-.fld > .btn {
-  align-self: flex-start;
+/* Botón de icono dentro de un campo: sigue al input en el flujo y se coloca encima de su borde derecho. */
+.field.has-action {
+  padding-right: 38px;
+}
+
+.field.has-action:focus {
+  padding-right: 37px;
+}
+
+.fld .field-action {
+  align-self: flex-end;
+  width: 32px;
+  height: 32px;
+  margin: -40px 2px 2px 0;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text2);
+  transition: color 0.35s ease;
+}
+
+.fld .field-action:hover {
+  color: var(--ink);
+  transition-duration: 0.08s;
 }
