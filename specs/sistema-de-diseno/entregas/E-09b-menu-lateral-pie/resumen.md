@@ -1,6 +1,6 @@
 # Entrega E-09b · Contraer el menú lateral y su pie
 
-Rama: `feat/sistema-de-diseno-menu-lateral-pie` (sale de `feat/sistema-de-diseno-menu-lateral-base`) · PR: pendiente ·
+Rama: `feat/sistema-de-diseno-menu-lateral-pie` · PR: [PaldacaDepartamentoAIT/Confiabilidad#84](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/84) ·
 Líneas de código y tests: 285 (límite: 400).
 
 ## Qué se hizo
