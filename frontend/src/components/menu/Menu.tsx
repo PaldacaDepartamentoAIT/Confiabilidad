@@ -25,6 +25,8 @@ type MenuProps = {
   align?: "left" | "right";
 };
 
+const TYPE_AHEAD_MS = 700;
+
 // Menú desplegable compartido: patrón «select-only combobox» de WAI-ARIA. El foco no sale del
 // disparador; la opción resaltada se señala con `aria-activedescendant` (D-05).
 export function Menu({
@@ -42,6 +44,7 @@ export function Menu({
   const [open, setOpen] = useState(false);
   const [shown, setShown] = useState(false);
   const [active, setActive] = useState(-1);
+  const typed = useRef({ text: "", timer: 0 });
   const selected = options.findIndex((option) => option.value === value);
   const last = options.length - 1;
 
@@ -74,7 +77,38 @@ export function Menu({
     setOpen(false);
   }
 
+  // Escribir letras salta a la siguiente opción que empiece por ellas; una pausa las olvida.
+  function typeAhead(key: string, from: number): number {
+    window.clearTimeout(typed.current.timer);
+    typed.current.text += key.toLowerCase();
+    typed.current.timer = window.setTimeout(() => (typed.current.text = ""), TYPE_AHEAD_MS);
+    const text = typed.current.text;
+    const prefix = [...text].every((letter) => letter === text[0]) ? text[0] : text;
+    const start = prefix.length === 1 ? from + 1 : from;
+    for (let step = 0; step < options.length; step += 1) {
+      const index = (((start + step) % options.length) + options.length) % options.length;
+      const option = options[index];
+      const label = typeof option.label === "string" ? option.label : option.value;
+      if (label.toLowerCase().startsWith(prefix)) return index;
+    }
+    return -1;
+  }
+
   function handleKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
+    const isText =
+      event.key.length === 1 &&
+      event.key !== " " &&
+      !event.ctrlKey &&
+      !event.metaKey &&
+      !event.altKey;
+    if (isText) {
+      event.preventDefault();
+      const match = typeAhead(event.key, open ? active : selected);
+      if (!open) setOpen(true);
+      if (match >= 0) setActive(match);
+      else if (!open) setActive(options.length === 0 ? -1 : Math.max(selected, 0));
+      return;
+    }
     if (!open) {
       if (["ArrowDown", "ArrowUp", "Enter", " "].includes(event.key)) {
         event.preventDefault();

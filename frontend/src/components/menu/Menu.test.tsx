@@ -245,3 +245,155 @@ test("releasing the space bar does not click the trigger again, which would clos
   expect(fireEvent.keyUp(trigger, { key: " " })).toBe(false);
   expect(fireEvent.keyUp(trigger, { key: "a" })).toBe(true);
 });
+
+describe("type-ahead", () => {
+  const COUNTRIES: MenuOption[] = [
+    { value: "br", label: "Brasil" },
+    { value: "cl", label: "Chile" },
+    { value: "co", label: "Colombia" },
+    { value: "mx", label: "México" },
+  ];
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  async function openWithCountries() {
+    const user = userEvent.setup();
+    const view = renderMenu({ options: COUNTRIES, value: "br" });
+    await user.click(view.trigger);
+    const active = () =>
+      screen
+        .getAllByRole("option")
+        .find((option) => option.id === view.trigger.getAttribute("aria-activedescendant"))
+        ?.textContent;
+    return { user, active, ...view };
+  }
+
+  test("typing a letter jumps to the next option that starts with it, wrapping around", async () => {
+    const { user, active } = await openWithCountries();
+
+    await user.keyboard("c");
+    expect(active()).toBe("Chile");
+    await user.keyboard("c");
+    expect(active()).toBe("Colombia");
+    await user.keyboard("c");
+    expect(active()).toBe("Chile");
+  });
+
+  test("typing several letters quickly matches the whole prefix, ignoring case", async () => {
+    const { user, active } = await openWithCountries();
+
+    await user.keyboard("co");
+    expect(active()).toBe("Colombia");
+    await user.keyboard("{Escape}");
+  });
+
+  test("a letter with no match keeps the highlight where it is", async () => {
+    const { user, active } = await openWithCountries();
+
+    await user.keyboard("z");
+
+    expect(active()).toBe("Brasil");
+  });
+
+  test("the typed letters are forgotten after a pause, so a lone o matches nothing", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const { trigger } = renderMenu({ options: COUNTRIES, value: "br" });
+    await user.click(trigger);
+    const active = () =>
+      screen
+        .getAllByRole("option")
+        .find((option) => option.id === trigger.getAttribute("aria-activedescendant"))?.textContent;
+
+    await user.keyboard("c");
+    expect(active()).toBe("Chile");
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    await user.keyboard("o");
+
+    expect(active()).toBe("Chile");
+  });
+
+  test("typing on a closed trigger opens the menu on the matching option", async () => {
+    const user = userEvent.setup();
+    const { trigger } = renderMenu({ options: COUNTRIES, value: "br" });
+    trigger.focus();
+
+    await user.keyboard("m");
+
+    expect(screen.getByRole("listbox")).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "México" })).toHaveClass("highlight");
+  });
+
+  test("shortcuts with Ctrl, Alt or Meta are not typed text", async () => {
+    const user = userEvent.setup();
+    const { trigger } = renderMenu({ options: COUNTRIES, value: "br" });
+    trigger.focus();
+
+    await user.keyboard("{Control>}c{/Control}");
+
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+  });
+
+  test("options whose label is not text are matched by their value", async () => {
+    const user = userEvent.setup();
+    const { trigger } = renderMenu({
+      options: [
+        { value: "alpha", label: <b>First</b> },
+        { value: "beta", label: <b>Second</b> },
+      ],
+      value: "alpha",
+    });
+    await user.click(trigger);
+
+    await user.keyboard("b");
+
+    expect(screen.getByRole("option", { name: "Second" })).toHaveClass("highlight");
+  });
+
+  test("matches the text of the label, not the stored value", async () => {
+    const user = userEvent.setup();
+    const { trigger } = renderMenu({
+      options: [
+        { value: "1", label: "Zeta" },
+        { value: "2", label: "Omega" },
+      ],
+      value: "1",
+    });
+    await user.click(trigger);
+
+    await user.keyboard("o");
+
+    expect(screen.getByRole("option", { name: "Omega" })).toHaveClass("highlight");
+  });
+
+  test("a letter typed again before the pause keeps the earlier ones, even after the first timer would have fired", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const { trigger } = renderMenu({
+      options: [
+        { value: "br", label: "Brasil" },
+        { value: "cl", label: "Chile" },
+        { value: "co", label: "Colombia" },
+        { value: "cu", label: "Cuba" },
+      ],
+      value: "br",
+    });
+    await user.click(trigger);
+
+    await user.keyboard("c");
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+    await user.keyboard("u");
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+    await user.keyboard("b");
+
+    expect(screen.getByRole("option", { name: "Cuba" })).toHaveClass("highlight");
+  });
+});
