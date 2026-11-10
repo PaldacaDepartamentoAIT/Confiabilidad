@@ -514,8 +514,9 @@ transitorias hasta T-051 (D-12).
 - [ ] T-032 Panel superpuesto del menú
   RF: RF-009 | Depende de: T-029, T-031 | Archivos: 3
   Archivos: `layouts/Sidebar.tsx`, `Sidebar.css`, `Sidebar.test.tsx`.
-  Hecho cuando: bajo 768 px se oculta, se abre con velo, se cierra con velo, Escape o al elegir
-  un elemento, sin estado contraído y devolviendo el foco al botón que lo abrió; suite verde.
+  Hecho cuando: bajo 768 px se oculta, se abre como panel sin velo, se cierra al pulsar fuera,
+  con Escape o al elegir un elemento, sin estado contraído y devolviendo el foco al botón que lo
+  abrió; suite verde.
 - [ ] T-033 Diseño con sesión
   RF: RF-006 | Depende de: T-032 | Archivos: 3
   Archivos: `layouts/AppLayout.tsx`, `AppLayout.css`, `AppLayout.test.tsx`.
