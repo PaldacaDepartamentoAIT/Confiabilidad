@@ -11,7 +11,6 @@ import {
 } from "../api/registration";
 import { Button } from "../components/Button";
 import { FormMessage } from "../components/FormMessage";
-import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import { CodeField } from "../components/fields/CodeField";
 import {
   useFormValidation,
@@ -20,6 +19,7 @@ import {
   type ValidationKey,
 } from "../forms/useFormValidation";
 import type { LanguageStorage } from "../i18n/language";
+import { PublicLayout } from "../layouts/PublicLayout";
 import { navigate, useLocation } from "../routing/router";
 import { required, sixDigitCode } from "../showcase/validators";
 import { PasswordStep } from "./PasswordStep";
@@ -128,64 +128,65 @@ export function VerifyPage({ client, storage }: VerifyPageProps) {
   if (loaded === "notFound") return <InvalidLink storage={storage} />;
 
   return (
-    <main>
-      <LanguageSwitcher storage={storage} />
-      <h1>{t("register.verifyTitle")}</h1>
-      <p>{t("register.verifyText")}</p>
-      {loaded === "networkError" && (
-        <FormMessage type="error" messageKey="validation.networkError" />
-      )}
-      {loaded === "failed" && <FormMessage type="error" messageKey="validation.serverError" />}
-      {loaded === "ready" && status && acceptedCode && (
-        <PasswordStep
-          client={client}
-          publicId={publicId}
-          code={acceptedCode}
-          onCreated={() => navigate("/register/done")}
-          onCodeRejected={codeRejected}
-        />
-      )}
-      {loaded === "ready" && status && !acceptedCode && (
-        <>
-          {rejection && <FormMessage type="error" messageKey={`validation.${rejection}`} />}
-          <p>
-            {expiry.remaining > 0
-              ? t("register.codeExpiresIn", { time: minutesAndSeconds(expiry.remaining) })
-              : t("register.codeExpiredNotice")}
-          </p>
-          <CodeForm
-            key={loads}
+    <PublicLayout storage={storage}>
+      <main>
+        <h1>{t("register.verifyTitle")}</h1>
+        <p>{t("register.verifyText")}</p>
+        {loaded === "networkError" && (
+          <FormMessage type="error" messageKey="validation.networkError" />
+        )}
+        {loaded === "failed" && <FormMessage type="error" messageKey="validation.serverError" />}
+        {loaded === "ready" && status && acceptedCode && (
+          <PasswordStep
             client={client}
             publicId={publicId}
-            initiallyLocked={status.locked}
-            onVerified={setAcceptedCode}
-            onNotFound={() => setLoaded("notFound")}
+            code={acceptedCode}
+            onCreated={() => navigate("/register/done")}
+            onCodeRejected={codeRejected}
           />
-          {resendMessage && (
-            <FormMessage type={resendMessage.type} messageKey={resendMessage.messageKey} />
-          )}
-          {resendLimited && resendWait.remaining > 0 && (
-            <p role="status">{t("validation.retryIn", { seconds: resendWait.remaining })}</p>
-          )}
-          <Button
-            disabled={resendWait.remaining > 0 || status.resends_left === 0}
-            onClick={() => void resend()}
-          >
-            {resendWait.remaining > 0
-              ? t("register.resendIn", { seconds: resendWait.remaining })
-              : t("register.resend")}
-          </Button>
-          {status.resends_left > 0 ? (
-            <p>{t("register.resendsLeft", { count: status.resends_left })}</p>
-          ) : (
-            <>
-              <p>{t("register.noResendsLeft")}</p>
-              <FormLink />
-            </>
-          )}
-        </>
-      )}
-    </main>
+        )}
+        {loaded === "ready" && status && !acceptedCode && (
+          <>
+            {rejection && <FormMessage type="error" messageKey={`validation.${rejection}`} />}
+            <p>
+              {expiry.remaining > 0
+                ? t("register.codeExpiresIn", { time: minutesAndSeconds(expiry.remaining) })
+                : t("register.codeExpiredNotice")}
+            </p>
+            <CodeForm
+              key={loads}
+              client={client}
+              publicId={publicId}
+              initiallyLocked={status.locked}
+              onVerified={setAcceptedCode}
+              onNotFound={() => setLoaded("notFound")}
+            />
+            {resendMessage && (
+              <FormMessage type={resendMessage.type} messageKey={resendMessage.messageKey} />
+            )}
+            {resendLimited && resendWait.remaining > 0 && (
+              <p role="status">{t("validation.retryIn", { seconds: resendWait.remaining })}</p>
+            )}
+            <Button
+              disabled={resendWait.remaining > 0 || status.resends_left === 0}
+              onClick={() => void resend()}
+            >
+              {resendWait.remaining > 0
+                ? t("register.resendIn", { seconds: resendWait.remaining })
+                : t("register.resend")}
+            </Button>
+            {status.resends_left > 0 ? (
+              <p>{t("register.resendsLeft", { count: status.resends_left })}</p>
+            ) : (
+              <>
+                <p>{t("register.noResendsLeft")}</p>
+                <FormLink />
+              </>
+            )}
+          </>
+        )}
+      </main>
+    </PublicLayout>
   );
 }
 
@@ -284,11 +285,12 @@ function FormLink() {
 function InvalidLink({ storage }: { storage?: LanguageStorage }) {
   const { t } = useTranslation();
   return (
-    <main>
-      <LanguageSwitcher storage={storage} />
-      <h1>{t("register.invalidLinkTitle")}</h1>
-      <p>{t("validation.linkNotFound")}</p>
-      <FormLink />
-    </main>
+    <PublicLayout storage={storage}>
+      <main>
+        <h1>{t("register.invalidLinkTitle")}</h1>
+        <p>{t("validation.linkNotFound")}</p>
+        <FormLink />
+      </main>
+    </PublicLayout>
   );
 }

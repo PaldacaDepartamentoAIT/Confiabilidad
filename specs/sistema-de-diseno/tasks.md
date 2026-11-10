@@ -409,11 +409,21 @@ transitorias hasta T-051 (D-12).
   borde inferior, relleno de 22 px); `.brand` se define aquí y el menú lateral (T-029) lo reutilizará
   — [Suposición]. Mutantes muertos: alineación, `data-ui`, nombre, `header`, contenedor, orden de
   los botones.
-- [ ] T-027 Registro y acceso usan el diseño público
-  RF: RF-026 | Depende de: T-026, T-011, T-016, T-023 | Archivos: 3
-  Archivos: `registration/RegisterPage.tsx`, `VerifyPage.tsx`, `DonePage.tsx`.
+- [x] T-027 Registro y acceso usan el diseño público
+  RF: RF-026 | Depende de: T-026, T-011, T-016, T-023 | Archivos: 4
+  Archivos: `registration/RegisterPage.tsx`, `VerifyPage.tsx`, `DonePage.tsx`, `a11y.test.tsx`.
   Hecho cuando: las tres pantallas se ven con el diseño público y los tests previos de registro
   siguen pasando sin cambios; suite verde.
+  Excepción: se añadió `registration/a11y.test.tsx` (cuatro tests nuevos de la barra pública) para
+  respetar el test primero; los tests previos de registro se conservan sin cambios. Lo añadí sin
+  detenerme — [Suposición] — revertir: pedir una Excepción aparte.
+  Decisiones: las pantallas de registro dejan de pintar el selector de idioma de tres botones
+  (`LanguageSwitcher`) porque el botón de idioma de la barra lo sustituye; el componente sigue
+  existiendo para la página de muestra — [Probable] — revertir: volver a pintarlo en las páginas.
+  `VerifyPage` envuelve sus dos `<main>` (verificación y enlace no válido) — [Cierto]. Verificado
+  en un navegador real con la API simulada: barra de 64 px a todo el ancho, borde inferior de 1 px,
+  menú de idioma alineado a la derecha, en claro y oscuro. Mutantes muertos: sin el diseño en cada
+  una de las tres pantallas.
 - [ ] T-028 Página de muestra en el diseño público
   RF: RF-026, RF-027 | Depende de: T-026 | Archivos: 2
   Archivos: `showcase/ShowcasePage.tsx`, `showcase/ShowcasePage.test.tsx`.
