@@ -1,6 +1,6 @@
 # Entrega E-08 · Diseño público y pantallas de registro y acceso con él
 
-Rama: `feat/sistema-de-diseno-publico-registro` · PR: pendiente ·
+Rama: `feat/sistema-de-diseno-publico-registro` · PR: [PaldacaDepartamentoAIT/Confiabilidad#81](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/81) ·
 Líneas de código y tests: 373 (límite: 400).
 
 ## Qué se hizo
