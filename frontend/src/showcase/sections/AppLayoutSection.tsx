@@ -5,7 +5,7 @@ import type { LanguageStorage } from "../../i18n/language";
 import { IconBell, IconFactory, IconHouse, IconPackage } from "../../icons";
 import { AppLayout } from "../../layouts/AppLayout";
 import type { SidebarItem } from "../../layouts/Sidebar";
-import { tabId, tabPanelId } from "../../layouts/tabIds";
+import { TabPanel } from "../../layouts/TabPanel";
 import { TopBar } from "../../layouts/TopBar";
 import "./sections.css";
 
@@ -71,17 +71,11 @@ export function AppLayoutSection({ storage }: AppLayoutSectionProps) {
         >
           <h3>Activos</h3>
           {TABS.map((tab) => (
-            <div
-              key={tab.id}
-              role="tabpanel"
-              id={tabPanelId("demo", tab.id)}
-              aria-labelledby={tabId("demo", tab.id)}
-              hidden={tab.id !== active}
-            >
+            <TabPanel key={tab.id} idPrefix="demo" id={tab.id} active={tab.id === active}>
               <Block title={PANELS[tab.id].title} count={PANELS[tab.id].count}>
                 <p>{PANELS[tab.id].text}</p>
               </Block>
-            </div>
+            </TabPanel>
           ))}
         </AppLayout>
       </div>

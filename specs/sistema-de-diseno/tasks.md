@@ -701,11 +701,16 @@ transitorias hasta T-051 (D-12).
   `open` rancio, así que `aria-expanded={open}` no cambia nada visible (el test de «se ensancha y se
   estrecha» mata la versión sin limpiar el estado). Mutantes muertos: foco dentro, foco al botón,
   nombre del botón, clases `narrow` y `open`, `aria-controls`.
-- [ ] T-042 Catálogo: pestañas completas
+- [x] T-042 Catálogo: pestañas completas
   RF: RF-027 | Depende de: T-039, T-040, T-041 | Archivos: 3
   Archivos: `showcase/sections/AppLayoutSection.tsx`, `showcase/ShowcasePage.tsx`,
   `showcase/ShowcasePage.test.tsx`.
   Hecho cuando: la pantalla de ejemplo cambia de sección con fundido; suite verde.
+  Decisiones: los paneles de la pantalla de ejemplo del catálogo son `TabPanel`: al cambiar de
+  pestaña el nuevo aparece con fundido y solo uno es visible; el selector de pestañas y el buscador
+  reducido salen solos al estrechar la ventana. Verificado en un navegador real: la opacidad del
+  panel nuevo pasa de 0 a 1 en unos 0,2 s y solo queda un panel visible — [Cierto]. Mutantes muertos:
+  paneles siempre activos.
 
 ## E-13 Indicadores y tabla
 - [ ] T-043 Indicador y su rejilla
