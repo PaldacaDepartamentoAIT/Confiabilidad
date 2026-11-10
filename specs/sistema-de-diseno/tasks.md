@@ -362,16 +362,37 @@ transitorias hasta T-051 (D-12).
   muertos: cubiertos por los de T-023.
 
 ## E-07c Selector nativo en dispositivos táctiles
-- [ ] T-022 Detección de puntero táctil
+- [x] T-022 Detección de puntero táctil
   RF: RF-031 | Depende de: — | Archivos: 2
   Archivos: `components/fields/useCoarsePointer.ts`, `useCoarsePointer.test.ts`.
   Hecho cuando: devuelve verdadero si `matchMedia("(pointer: coarse)")` coincide y reacciona a su
   cambio; suite verde.
-- [ ] T-024 Selector nativo en dispositivos táctiles
-  RF: RF-031 | Depende de: T-022, T-023 | Archivos: 2
-  Archivos: `components/fields/SelectField.tsx`, `ChoiceFields.test.tsx`.
+  Decisiones: si el navegador no tiene `matchMedia`, el hook devuelve verdadero (control nativo),
+  porque el nativo funciona en cualquier sitio; en la práctica solo ocurre en jsdom, de modo que los
+  tests existentes de registro, que usan el `<select>` nativo, no cambian — [Probable] — revertir:
+  devolver falso. Mutantes muertos: sin escucha, sin limpieza, valor de reserva, consulta, cambio.
+
+- [x] T-024 Selector nativo en dispositivos táctiles
+  RF: RF-031 | Depende de: T-022, T-023 | Archivos: 4
+  Archivos: `components/fields/SelectField.tsx`, `ChoiceFields.test.tsx`, `forms/useFormValidation.ts`,
+  `forms/useFormValidation.test.tsx`.
   Hecho cuando: con puntero táctil se muestra el `<select>` nativo con la misma etiqueta, valor,
   opciones y error; suite verde.
+  Excepción: `useFormValidation` solo leía el valor de `<input>` y `<select>`, y el selector propio es
+  un `<button name value>` (D-06): sin ampliarlo, un formulario de registro con el selector propio
+  nunca validaría el país. Eso suma `useFormValidation.ts` y su test a los dos archivos de la tarea.
+  Lo añadí sin detenerme — [Suposición] — revertir: pedir una Excepción aparte.
+  Decisiones: `SelectField` elige entre `CustomSelect` (puntero fino) y el `<select>` nativo
+  (puntero táctil o navegador que no lo sabe decir), con la misma API: `label`, `placeholder`,
+  `options`, `name`, `required`, `error`, `hint`, `onBlur`, `value` y `defaultValue`; `onChange` es
+  del nativo y `onValueChange` del propio — [Probable] — revertir: volver al `<select>` único. El
+  nativo toma el aspecto de campo de la guía (`.fld`, `.field`, ayuda y error con icono). El `ref`
+  apunta al control que se muestre. Verificado en un navegador real con la API simulada: con
+  puntero fino el país es un botón de 788 px en un contenedor de 788 px y elegir «Chile» guarda su
+  valor; con puntero táctil es un `<select>` de 308 px en un contenedor de 308 px. Los tests de
+  registro siguen igual porque jsdom no tiene `matchMedia` y usa el nativo. Mutantes muertos:
+  selección invertida, `fld` nativo, `data-ui`, aviso de cambio, valor inicial, `name`, `ref`, y la
+  lectura del valor de un botón en `useFormValidation`.
 
 ## E-08 Diseño público en el registro
 - [ ] T-026 Diseño público
