@@ -14,6 +14,12 @@ export const en = {
     announceLight: "Light theme",
     announceDark: "Dark theme",
   },
+  sidebar: {
+    label: "Main menu",
+    sections: "Sections",
+    collapse: "Collapse menu",
+    expand: "Expand menu",
+  },
   button: {
     processing: "Processing…",
     processingAnnouncement: "Processing",

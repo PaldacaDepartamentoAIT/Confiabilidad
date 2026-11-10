@@ -441,6 +441,17 @@ transitorias hasta T-051 (D-12).
   público.
 
 ## E-09 Menú lateral
+- [x] T-059 Textos del menú lateral en tres idiomas
+  RF: RF-030 | Depende de: T-001 | Archivos: 4
+  Archivos: `i18n/locales/en.ts`, `es.ts`, `pt-BR.ts`, `locales.test.ts`.
+  Hecho cuando: existen `sidebar.label`, `sidebar.sections`, `sidebar.collapse` y `sidebar.expand`
+  en los tres idiomas y los tests de claves y locales pasan; suite verde.
+  Excepción: los tres archivos de idioma son una unidad (`es` y `pt-BR` se tipan contra `en`) y
+  `locales.test.ts` lista los grupos de esos mismos archivos.
+  Decisiones: tarea nueva, como T-003 para el tema: el menú necesita cuatro textos propios (nombre
+  de la región, nombre de la navegación y los dos nombres del botón de contraer) que no estaban en
+  la lista de tareas aprobada — [Cierto] — revertir: pasarlos por props. Mutante muerto: quitar una
+  clave de `es`.
 - [ ] T-029 Menú lateral
   RF: RF-007, RF-008 | Depende de: T-004, T-020 | Archivos: 3
   Archivos: `layouts/Sidebar.tsx`, `Sidebar.css`, `Sidebar.test.tsx`.
@@ -703,7 +714,7 @@ Rama de integración: `feat/sistema-de-diseno` (los PR de las entregas van contr
   Tareas: T-028 | Líneas estimadas: 158 | Rama: feat/sistema-de-diseno-publico-muestra
   Cómo probarlo: abrir la página de muestra y ver la barra superior con idioma y tema.
 - E-09 Menú lateral en el catálogo.
-  Tareas: T-029, T-030 | Líneas estimadas: 340 | Rama: feat/sistema-de-diseno-menu-lateral
+  Tareas: T-059, T-029, T-030 | Líneas estimadas: 340 | Rama: feat/sistema-de-diseno-menu-lateral
   Cómo probarlo: catálogo; contraer y expandir el menú.
 - E-10 Diseño con sesión y panel de menú en pantallas pequeñas.
   Tareas: T-031, T-032, T-033, T-034 | Líneas estimadas: 390 | Rama: feat/sistema-de-diseno-con-sesion
