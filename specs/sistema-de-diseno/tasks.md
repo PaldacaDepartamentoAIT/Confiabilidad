@@ -657,10 +657,17 @@ transitorias hasta T-051 (D-12).
   Archivos: `layouts/Tabs.tsx`, `Tabs.css`, `Tabs.test.tsx`.
   Hecho cuando: si no caben se desvanecen y aparece el selector con la pestaña activa que
   despliega las demás (medidas simuladas); suite verde.
-- [ ] T-040 Cambio de sección con fundido
+- [x] T-040 Cambio de sección con fundido
   RF: RF-013 | Depende de: T-035 | Archivos: 3
   Archivos: `layouts/TabPanel.tsx`, `TabPanel.css`, `TabPanel.test.tsx`.
   Hecho cuando: solo una sección es visible y la nueva aparece con fundido de 0,2 s; suite verde.
+  Decisiones: `TabPanel` recibe `idPrefix`, `id` y `active`; es `role="tabpanel"` con el
+  identificador y el `aria-labelledby` de `tabIds.ts`, oculto con `hidden` si no está activo, y con la
+  clase `entering` (fundido de 0,2 s) solo cuando pasa a activo después de montarse; la regla
+  `[role="tabpanel"][hidden]` evita que un `display: flex` lo deje visible — [Cierto]. Con movimiento
+  reducido no hay fundido porque `base.css` quita todas las animaciones (RF-004) — [Cierto]. `axe`
+  exige que la pestaña esté dentro de un `tablist`: el test lo monta — [Cierto]. Mutantes muertos:
+  fundido al montar, fundido al salir, oculto, nombre, atributos extra e identificador.
 - [ ] T-041 Buscador reducido en pantallas pequeñas
   RF: RF-012 | Depende de: T-036, T-031 | Archivos: 3
   Archivos: `layouts/SearchBox.tsx`, `SearchBox.css`, `SearchBox.test.tsx`.
