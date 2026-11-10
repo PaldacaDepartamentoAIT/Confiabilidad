@@ -585,12 +585,38 @@ transitorias hasta T-051 (D-12).
   Decisiones: tarea nueva, nacida de dividir E-10 por tamaño (la entrega completa medía 752 líneas):
   el botón y el estado del panel son lo que hace usable E-10b — [Cierto].
 
-## E-11 Barra superior
-- [ ] T-035 Pestañas
-  RF: RF-010 | Depende de: T-001 | Archivos: 3
-  Archivos: `layouts/Tabs.tsx`, `Tabs.css`, `Tabs.test.tsx`.
+## E-11 Pestañas
+- [x] T-035 Pestañas
+  RF: RF-010 | Depende de: T-001 | Archivos: 4
+  Archivos: `layouts/Tabs.tsx`, `Tabs.css`, `Tabs.test.tsx`, `tabIds.ts`.
   Hecho cuando: se manejan con flechas, Inicio y Fin, y la línea de 2 px se desplaza a la pestaña
   nueva en 0,25 s (medidas simuladas); suite verde.
+  Decisiones: `Tabs` recibe `label`, `tabs` (`id`, `label`), `activeId`, `onChange` e `idPrefix`; las
+  pestañas son botones con `role="tab"`, solo la activa está en el orden del teclado y se activan al
+  moverse con las flechas (con vuelta al principio y al final, como la referencia), Inicio y Fin —
+  [Probable] — revertir: activación manual con Intro. Las funciones `tabId` y `tabPanelId` dan los
+  identificadores que los paneles (T-040) usarán. La línea de 2 px se coloca midiendo la pestaña
+  activa (ancho −24 px y margen de 12 px) con una transición de 0,25 s; jsdom no calcula el diseño,
+  así que los tests simulan `offsetWidth` y `offsetLeft` — [Cierto]. `axe` exige que `aria-controls`
+  apunte a un panel existente: el test monta paneles — [Cierto]. Mutantes muertos: vuelta de las
+  flechas, Inicio, Fin, orden del teclado, `preventDefault`, ancho y margen de la línea, foco,
+  actualización de la línea, `data-ui` y `aria-controls`.
+  Excepción: `tabIds.ts` (los identificadores de pestaña y panel) es un archivo más, porque exportarlos
+  desde `Tabs.tsx` daba un aviso de lint; lo añadí sin detenerme — [Suposición] — revertir: pedir una
+  Excepción aparte.
+- [x] T-064 Catálogo: pestañas
+  RF: RF-027 | Depende de: T-035 | Archivos: 3
+  Archivos: `showcase/sections/AppLayoutSection.tsx`, `showcase/ShowcasePage.tsx`,
+  `showcase/ShowcasePage.test.tsx`.
+  Hecho cuando: la pantalla de ejemplo del catálogo tiene tres pestañas con su panel cada una y
+  cambiar de pestaña, con ratón o con flechas, muestra su sección; suite verde.
+  Decisiones: tarea nueva, nacida de dividir E-11 por tamaño: muestra las pestañas en el hueco de la
+  barra antes de que exista el buscador (T-036 y T-037) — [Cierto]. Cada panel es un bloque con su
+  contador y el visible se decide con `hidden`, sin fundido (T-040). Verificado en un navegador
+  real, en claro y oscuro: la línea de 2 px queda a 12 px del borde de la pestaña activa con su ancho
+  menos 24 px y se mueve al cambiar con el ratón y con la flecha derecha — [Cierto]. Mutantes
+  muertos: paneles ocultos, cambio de pestaña y una pestaña.
+## E-11b Barra superior con buscador
 - [ ] T-036 Buscador
   RF: RF-010 | Depende de: T-006, T-015 | Archivos: 3
   Archivos: `layouts/SearchBox.tsx`, `SearchBox.css`, `SearchBox.test.tsx`.
@@ -833,9 +859,14 @@ Rama de integración: `feat/sistema-de-diseno` (los PR de las entregas van contr
 - E-10c Botón de menú de la barra que abre el panel.
   Tareas: T-063 | Líneas estimadas: 150 | Rama: feat/sistema-de-diseno-con-sesion-boton
   Cómo probarlo: catálogo en una ventana de menos de 768 px: pulsar «Abrir menú».
-- E-11 Barra superior con pestañas y buscador.
-  Tareas: T-035, T-036, T-037, T-038 | Líneas estimadas: 400 | Rama: feat/sistema-de-diseno-barra-superior
-  Cómo probarlo: catálogo, pantalla de ejemplo: moverse por las pestañas con teclado.
+- E-11 Pestañas en la barra superior de la pantalla con sesión.
+  Tareas: T-035, T-064 | Líneas estimadas: 365 | Rama: feat/sistema-de-diseno-pestanas
+  Cómo probarlo: catálogo, «Diseño con sesión»: moverse por las pestañas con ratón y con flechas.
+  Nota: E-11 se dividió en E-11 y E-11b porque la entrega completa medía 654 líneas; se aplicó la
+  regla de AGENTS.md. T-064 nació de esa división.
+- E-11b Buscador y barra superior completa con pestañas y buscador.
+  Tareas: T-036, T-037, T-038 | Líneas estimadas: 290 | Rama: feat/sistema-de-diseno-barra-superior-buscador
+  Cómo probarlo: catálogo, «Diseño con sesión»: el buscador a la derecha de las pestañas.
 - E-12 Pestañas que no caben, fundido y buscador reducido.
   Tareas: T-039, T-040, T-041, T-042 | Líneas estimadas: 380 | Rama: feat/sistema-de-diseno-pestanas-adaptables
   Cómo probarlo: estrechar la ventana hasta que las pestañas pasen a un selector y el buscador a un botón.
