@@ -507,10 +507,14 @@ transitorias hasta T-051 (D-12).
   quedan los iconos y el avatar.
 
 ## E-10 Diseño con sesión y menú en pantallas pequeñas
-- [ ] T-031 `useMediaQuery`
+- [x] T-031 `useMediaQuery`
   RF: RF-009 | Depende de: — | Archivos: 2
   Archivos: `layouts/useMediaQuery.ts`, `useMediaQuery.test.ts`.
   Hecho cuando: devuelve y actualiza el resultado de una consulta; suite verde.
+  Decisiones: `useMediaQuery(consulta)` devuelve falso (pantalla ancha) si el navegador no tiene
+  consultas de medios, al contrario que `useCoarsePointer`, que asume «nativo»: aquí lo seguro es el
+  menú de escritorio — [Probable] — revertir: devolver verdadero. Vuelve a leer la consulta cuando
+  cambia. Mutantes muertos: escucha, limpieza, cambio de consulta, valor de reserva y relectura.
 - [ ] T-032 Panel superpuesto del menú
   RF: RF-009 | Depende de: T-029, T-031 | Archivos: 3
   Archivos: `layouts/Sidebar.tsx`, `Sidebar.css`, `Sidebar.test.tsx`.
