@@ -276,7 +276,7 @@ transitorias hasta T-051 (D-12).
   `li role="option"` con `lang` opcional y un chevron «>» que solo se ve en la seleccionada — [Probable]
   — revertir: rehacer el componente. Las flechas se detienen en los extremos, sin dar la vuelta —
   [Suposición] — revertir: usar módulo en `ArrowDown` y `ArrowUp`. La escritura para saltar a una
-  opción (RF-016) no está aquí: la añade T-023 sobre este menú — [Cierto]. Se cierra con Escape,
+  opción (RF-016) no está aquí: la añade T-058 sobre este menú — [Cierto]. Se cierra con Escape,
   al salir del foco y con un clic fuera; abre con animación (la clase `open` aparece en el
   siguiente fotograma) y cierra sin animación — [Cierto]. Un disparador con rol `combobox` necesita
   nombre accesible propio (`aria-label`): `axe` lo exige porque ese rol no toma el nombre de su
