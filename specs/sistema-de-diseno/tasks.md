@@ -851,18 +851,27 @@ transitorias hasta T-051 (D-12).
   Decisiones: `PublicPage({title, titleId?, children})`; la columna mide 524 px con 22 px de relleno
   lateral (480 px de contenido) y 32 px de margen superior. El título usa las clases del bloque
   (`blk-h`, `data-ui="block-title"`) pero es un `h1` de 15 px, porque `Block` solo admite `h2` a `h4`
-  — [Probable]. La separación de los formularios sigue en las reglas transitorias de `field.css` hasta
-  E-15c. Mutantes muertos: título sin `h1`, `id` del título, orden del título y el contenido.
-- [ ] T-071 Registro con la columna pública
+  — [Probable]. Los formularios de la columna van apilados con 16 px y su acción a la derecha; hasta
+  E-15c, unas reglas transitorias anulan la caja de `main`, `form` y `section` y la separación de
+  `field.css`, que se retiran con T-051. Mutantes muertos: título sin `h1`, `id` del título, orden del título y el contenido.
+- [x] T-071 Registro con la columna pública
   RF: RF-026 | Depende de: T-070 | Archivos: 1
   Archivos: `registration/RegisterPage.tsx`.
   Hecho cuando: la pantalla de registro usa `PublicPage` sin cambiar su flujo, textos ni
   validaciones; suite verde.
-- [ ] T-072 Verificación, contraseña y cuenta creada con la columna pública
+  Decisiones: el `<main>` y el `h1` pasan a `PublicPage`; el formulario conserva su `aria-labelledby`
+  con el id del título. Verificado en un navegador real con la API simulada, a 1000 px: un bloque de
+  480 px centrado con el título, los campos apilados y el botón a la derecha — [Cierto].
+- [x] T-072 Verificación, contraseña y cuenta creada con la columna pública
   RF: RF-026 | Depende de: T-070 | Archivos: 3
   Archivos: `registration/VerifyPage.tsx`, `PasswordStep.tsx`, `DonePage.tsx`.
   Hecho cuando: las pantallas de verificación, de contraseña, de enlace no válido y de cuenta creada
   usan `PublicPage` sin cambiar su flujo, textos ni validaciones; suite verde.
+  Decisiones: `VerifyPage` (verificación y enlace no válido) y `DonePage` pasan a `PublicPage`;
+  `PasswordStep` no cambia, porque su `section` con `h2` queda dentro del bloque y la columna le da su
+  estilo. El botón «Enviar otro código» pasa a ser secundario, porque es la acción secundaria de la
+  pantalla según la guía — [Probable] — revertir: quitar `variant="secondary"`. Verificado en un
+  navegador real a 420 px — [Cierto].
 
 ## E-15c Limpieza de `base.css`
 - [ ] T-051 Retirar las reglas transitorias de `base.css`
