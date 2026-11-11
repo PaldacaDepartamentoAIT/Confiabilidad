@@ -812,7 +812,7 @@ transitorias hasta T-051 (D-12).
   Archivos: `showcase/sections/DataSection.tsx`, `showcase/ShowcasePage.test.tsx`.
   Hecho cuando: el catálogo exhibe la leyenda y una gráfica sin datos; suite verde.
 
-## E-15 Rejilla de estado y limpieza
+## E-15 Rejilla de estado
 - [x] T-049 Rejilla de estado
   RF: RF-025 | Depende de: T-007 | Archivos: 3
   Archivos: `components/data/StatusGrid.tsx`, `StatusGrid.css`, `StatusGrid.test.tsx`.
@@ -835,6 +835,7 @@ transitorias hasta T-051 (D-12).
   avisos, campos, menús, diseños (público y con sesión) con pestañas y buscador, indicadores, tabla,
   gráfica y rejilla. Verificado en un navegador real, en oscuro: cuadros de 24 × 24 px separados 4 px,
   glifos de 12 px en el color del lienzo — [Cierto].
+## E-15b Limpieza de `base.css`
 - [ ] T-051 Retirar las reglas transitorias de `base.css`
   RF: RF-001 | Depende de: T-050 | Archivos: 2
   Archivos: `styles/base.css`, `styles/tokens.test.ts`.
@@ -1048,9 +1049,15 @@ Rama de integración: `feat/sistema-de-diseno` (los PR de las entregas van contr
   Cómo probarlo: la gráfica del catálogo lleva su leyenda y hay una gráfica sin datos con su mensaje.
   Nota: E-14 se dividió en dos (E-14 y E-14b) porque la entrega completa medía 473 líneas; se aplicó
   la regla de AGENTS.md.
-- E-15 Rejilla de estado y limpieza de `base.css`.
-  Tareas: T-049, T-050, T-051 | Líneas estimadas: 300 | Rama: feat/sistema-de-diseno-rejilla
-  Cómo probarlo: catálogo completo; las pantallas de registro se ven igual que antes de la limpieza.
+- E-15 Rejilla de estado.
+  Tareas: T-049, T-050 | Líneas estimadas: 250 | Rama: feat/sistema-de-diseno-rejilla
+  Cómo probarlo: sección «Rejilla de estado» del catálogo.
+- E-15b Limpieza de `base.css`.
+  Tareas: T-051 | Líneas estimadas: por definir | Rama: feat/sistema-de-diseno-limpieza
+  Cómo probarlo: las pantallas de registro y el catálogo se ven igual que antes.
+  Nota: E-15 se separó de la limpieza porque quitar las reglas transitorias cambia el aspecto de las
+  pantallas de registro (su caja y la separación de sus formularios dependen de ellas); T-051 espera
+  a que el usuario decida cómo resolverlo.
 - E-16 Comprobación visual automática contra las referencias.
   Tareas: T-052, T-053, T-054, T-055 | Líneas estimadas: 300 | Rama: feat/sistema-de-diseno-visual
   Cómo probarlo: `pnpm --filter frontend test:visual`; debe pasar y fallar si se altera un estilo.
