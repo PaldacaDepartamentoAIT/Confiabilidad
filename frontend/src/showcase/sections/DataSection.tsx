@@ -5,6 +5,11 @@ import { Chip } from "../../components/Chip";
 import { BarChart } from "../../components/data/BarChart";
 import type { ChartGroup } from "../../components/data/chartScale";
 import { Indicator, IndicatorGrid } from "../../components/data/Indicator";
+import {
+  StatusGrid,
+  type StatusGridCell,
+  type StatusGridLabels,
+} from "../../components/data/StatusGrid";
 import { Table, type TableColumn, type TableRow } from "../../components/data/Table";
 import "./sections.css";
 
@@ -42,11 +47,36 @@ const MONTHS: ChartGroup[] = [
   { label: "Nov", first: 96, second: 22 },
 ];
 
+const STATUS_LABELS: StatusGridLabels = {
+  normal: "Normal",
+  p1: "P1",
+  p2: "P2",
+  warning: "Advertencia",
+  neutral: "Mantenimiento",
+};
+
+const SPECIAL = {
+  5: "p2",
+  11: "warning",
+  17: "neutral",
+  23: "p1",
+  29: "warning",
+  34: "neutral",
+  40: "p2",
+  44: "p1",
+} as const;
+
+const ASSETS: StatusGridCell[] = Array.from({ length: 48 }, (_, i) => ({
+  name: `A-${100 + i * 3}`,
+  kind: SPECIAL[i as keyof typeof SPECIAL],
+}));
+
 // Contenido de ejemplo del catálogo: inventado y en español (S-03), por eso lleva su propio `lang`.
 export function DataSection() {
   const indicatorsId = useId();
   const tableId = useId();
   const chartId = useId();
+  const gridId = useId();
   return (
     <>
       <div role="region" aria-labelledby={indicatorsId} lang="es" className="catalog-section">
@@ -97,6 +127,16 @@ export function DataSection() {
           <BarChart
             groups={MONTHS}
             description="Órdenes preventivas y correctivas de junio a noviembre: las preventivas suben de 62 a 96 y las correctivas bajan de 48 a 22."
+          />
+        </Block>
+      </div>
+      <div role="region" aria-labelledby={gridId} lang="es" className="catalog-section">
+        <h2 id={gridId}>Rejilla de estado</h2>
+        <Block title="Estado de los activos" count={ASSETS.length} countLabel="48 activos">
+          <StatusGrid
+            label="Rejilla de estado de 48 activos"
+            cells={ASSETS}
+            labels={STATUS_LABELS}
           />
         </Block>
       </div>
