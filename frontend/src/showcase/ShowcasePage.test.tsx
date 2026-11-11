@@ -434,6 +434,16 @@ test("the catalog shows a table with its three column kinds and an empty one", (
   expect(within(tables[1]).getByRole("cell", { name: /sin activos/i })).toHaveClass("empty");
 });
 
+test("the catalog shows the bar chart", () => {
+  renderPage("en");
+
+  const catalog = screen.getByRole("region", { name: "Gráfica de barras" });
+  expect(catalog).toHaveAttribute("lang", "es");
+  const chart = within(catalog).getByRole("img", { name: /preventivas suben de 62 a 96/ });
+  expect(chart).toHaveAttribute("data-ui", "bar-chart");
+  expect(chart.querySelectorAll("rect[data-series='first']")).toHaveLength(6);
+});
+
 test("the catalog adds no extra stops to the keyboard order", async () => {
   const user = userEvent.setup();
   renderPage();
