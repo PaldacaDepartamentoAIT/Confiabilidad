@@ -1,6 +1,6 @@
 # Entrega E-13b · Tabla
 
-Rama: `feat/sistema-de-diseno-tabla` (sale de `feat/sistema-de-diseno`, con E-13 ya fusionada) · PR: pendiente ·
+Rama: `feat/sistema-de-diseno-tabla` (sale de `feat/sistema-de-diseno`) · PR: [#95](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/95) ·
 Líneas de código y tests: 363 (límite: 400).
 
 ## Qué se hizo
@@ -22,7 +22,7 @@ El detalle de cada tarea está en [`tasks.md`](../../tasks.md).
 | Tarea | Título | Commit |
 |---|---|---|
 | T-044 | Tabla | `89c05ad` |
-| T-066 | Catálogo: tabla | ver historial de la rama |
+| T-066 | Catálogo: tabla | `04904cd` |
 
 ## Cómo ejecutarlo y probarlo
 Desde la raíz del repositorio, instala las dependencias:
