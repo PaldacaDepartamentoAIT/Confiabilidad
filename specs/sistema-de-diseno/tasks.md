@@ -863,8 +863,8 @@ transitorias hasta T-051 (D-12).
   con el id del título. Verificado en un navegador real con la API simulada, a 1000 px: un bloque de
   480 px centrado con el título, los campos apilados y el botón a la derecha — [Cierto].
 - [x] T-072 Verificación, contraseña y cuenta creada con la columna pública
-  RF: RF-026 | Depende de: T-070 | Archivos: 3
-  Archivos: `registration/VerifyPage.tsx`, `PasswordStep.tsx`, `DonePage.tsx`.
+  RF: RF-026 | Depende de: T-070 | Archivos: 2
+  Archivos: `registration/VerifyPage.tsx`, `DonePage.tsx`.
   Hecho cuando: las pantallas de verificación, de contraseña, de enlace no válido y de cuenta creada
   usan `PublicPage` sin cambiar su flujo, textos ni validaciones; suite verde.
   Decisiones: `VerifyPage` (verificación y enlace no válido) y `DonePage` pasan a `PublicPage`;
