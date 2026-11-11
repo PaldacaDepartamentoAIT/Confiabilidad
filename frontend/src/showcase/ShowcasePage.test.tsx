@@ -417,6 +417,23 @@ test("the catalog shows the four indicators in the grid, with the featured and a
   expect(catalog.querySelector(".kpi.alert")).toBeInTheDocument();
 });
 
+test("the catalog shows a table with its three column kinds and an empty one", () => {
+  renderPage("en");
+
+  const catalog = screen.getByRole("region", { name: "Tabla" });
+  expect(catalog).toHaveAttribute("lang", "es");
+  const tables = within(catalog).getAllByRole("table");
+  expect(tables).toHaveLength(2);
+  expect(tables[0].querySelector("td.mono")).toBeInTheDocument();
+  expect(tables[0].querySelector("[data-ui='chip']")).toBeInTheDocument();
+  const shapes = [...tables[0].querySelectorAll(".st [data-shape]")].map((shape) =>
+    shape.getAttribute("data-shape"),
+  );
+  expect(shapes.sort()).toEqual(["diamond", "hollow-square", "square", "triangle"]);
+  expect(tables[0].querySelectorAll(".st > .shape:not(svg)").length).toBeGreaterThanOrEqual(1);
+  expect(within(tables[1]).getByRole("cell", { name: /sin activos/i })).toHaveClass("empty");
+});
+
 test("the catalog adds no extra stops to the keyboard order", async () => {
   const user = userEvent.setup();
   renderPage();
