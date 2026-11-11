@@ -23,6 +23,7 @@ import {
 } from "../forms/useFormValidation";
 import type { LanguageStorage } from "../i18n/language";
 import { PublicLayout } from "../layouts/PublicLayout";
+import { PublicPage } from "../layouts/PublicPage";
 import { navigate } from "../routing/router";
 import { email, required } from "../showcase/validators";
 import { translateFieldErrors } from "./serverErrors";
@@ -83,8 +84,7 @@ export function RegisterPage({ client, storage }: RegisterPageProps) {
 
   return (
     <PublicLayout storage={storage}>
-      <main>
-        <h1 id={titleId}>{t("register.title")}</h1>
+      <PublicPage title={t("register.title")} titleId={titleId}>
         {loaded.status === "failed" && (
           <FormMessage type="error" messageKey="validation.networkError" />
         )}
@@ -100,7 +100,7 @@ export function RegisterPage({ client, storage }: RegisterPageProps) {
           ) : (
             <FormMessage type="error" messageKey="validation.termsUnavailable" />
           ))}
-      </main>
+      </PublicPage>
     </PublicLayout>
   );
 }
