@@ -802,15 +802,22 @@ transitorias hasta T-051 (D-12).
   eje en JetBrains Mono y meses en Manrope, y a 420 px el lienzo se escala a 300 px — [Cierto].
 
 ## E-14b Leyenda y mensaje de vacío de la gráfica
-- [ ] T-068 Leyenda y mensaje de vacío de la gráfica
+- [x] T-068 Leyenda y mensaje de vacío de la gráfica
   RF: RF-024 | Depende de: T-047 | Archivos: 3
   Archivos: `components/data/BarChart.tsx`, `BarChart.css`, `BarChart.test.tsx`.
   Hecho cuando: muestra la leyenda con las dos series y, sin datos o con datos no válidos, el mensaje
   de vacío en lugar de la gráfica; suite verde.
-- [ ] T-069 Catálogo: leyenda y gráfica sin datos
+  Decisiones: `BarChart` recibe `legend` y `emptyMessage`. La leyenda va encima del lienzo, alineada a
+  la derecha, dentro del propio componente (en la referencia está en la cabecera del bloque) —
+  [Suposición]. Sin datos válidos no hay SVG ni leyenda: solo el mensaje. Como las dos propiedades son
+  obligatorias, T-068 y T-069 van en el mismo commit para que ninguno deje el tipado roto.
+- [x] T-069 Catálogo: leyenda y gráfica sin datos
   RF: RF-027 | Depende de: T-068, T-048 | Archivos: 2
   Archivos: `showcase/sections/DataSection.tsx`, `showcase/ShowcasePage.test.tsx`.
   Hecho cuando: el catálogo exhibe la leyenda y una gráfica sin datos; suite verde.
+  Decisiones: la gráfica del catálogo lleva su leyenda (Preventivas y Correctivas) y hay un segundo
+  bloque con una gráfica sin datos que muestra «Sin datos para mostrar». Verificado en un navegador
+  real — [Cierto].
 
 ## E-15 Rejilla de estado y limpieza
 - [ ] T-049 Rejilla de estado
