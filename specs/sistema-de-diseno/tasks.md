@@ -819,17 +819,30 @@ transitorias hasta T-051 (D-12).
   bloque con una gráfica sin datos que muestra «Sin datos para mostrar». Verificado en un navegador
   real — [Cierto].
 
-## E-15 Rejilla de estado y limpieza
-- [ ] T-049 Rejilla de estado
+## E-15 Rejilla de estado
+- [x] T-049 Rejilla de estado
   RF: RF-025 | Depende de: T-007 | Archivos: 3
   Archivos: `components/data/StatusGrid.tsx`, `StatusGrid.css`, `StatusGrid.test.tsx`.
   Hecho cuando: cuadros de 24 × 24 px con glifo de su forma, `title` y `aria-label`, y leyenda;
   suite verde.
-- [ ] T-050 Catálogo: rejilla de estado
-  RF: RF-027 | Depende de: T-049 | Archivos: 3
-  Archivos: `showcase/sections/DataSection.tsx`, `showcase/ShowcasePage.tsx`,
-  `showcase/ShowcasePage.test.tsx`.
+  Decisiones: `StatusGrid({label, cells, labels})`: cada celda es `{name, kind?}` (sin `kind`, normal) y
+  `labels` da el texto de cada estado en el idioma de quien la usa; el `title` y el `aria-label` son
+  «nombre · estado». El contenedor es `role="group"` con nombre (una `div` con `aria-label` y sin rol
+  la rechaza axe) y cada cuadro `role="img"` — [Cierto]. Los glifos son `AlarmShape` de 12 px en
+  el color del lienzo; el neutro no lleva glifo y se dibuja con su borde de 2 px. La leyenda lleva
+  las formas de 16 px y las etiquetas en tinta, en el orden de la referencia (mantenimiento, P1, P2,
+  advertencia). Mutantes muertos: glifo en el neutro o en el normal, clase de estado intercambiada,
+  título sin estado.
+- [x] T-050 Catálogo: rejilla de estado
+  RF: RF-027 | Depende de: T-049 | Archivos: 2
+  Archivos: `showcase/sections/DataSection.tsx`, `showcase/ShowcasePage.test.tsx`.
   Hecho cuando: el catálogo exhibe todas las piezas de la feature; suite verde.
+  Decisiones: sección «Rejilla de estado» con los 48 activos de la referencia (dos de cada estado y el
+  resto normales). Con ella el catálogo exhibe ya todas las piezas: bloques, chips y formas, botones y
+  avisos, campos, menús, diseños (público y con sesión) con pestañas y buscador, indicadores, tabla,
+  gráfica y rejilla. Verificado en un navegador real, en oscuro: cuadros de 24 × 24 px separados 4 px,
+  glifos de 12 px en el color del lienzo — [Cierto].
+## E-15b Limpieza de `base.css`
 - [ ] T-051 Retirar las reglas transitorias de `base.css`
   RF: RF-001 | Depende de: T-050 | Archivos: 2
   Archivos: `styles/base.css`, `styles/tokens.test.ts`.
@@ -1043,9 +1056,15 @@ Rama de integración: `feat/sistema-de-diseno` (los PR de las entregas van contr
   Cómo probarlo: la gráfica del catálogo lleva su leyenda y hay una gráfica sin datos con su mensaje.
   Nota: E-14 se dividió en dos (E-14 y E-14b) porque la entrega completa medía 473 líneas; se aplicó
   la regla de AGENTS.md.
-- E-15 Rejilla de estado y limpieza de `base.css`.
-  Tareas: T-049, T-050, T-051 | Líneas estimadas: 300 | Rama: feat/sistema-de-diseno-rejilla
-  Cómo probarlo: catálogo completo; las pantallas de registro se ven igual que antes de la limpieza.
+- E-15 Rejilla de estado.
+  Tareas: T-049, T-050 | Líneas estimadas: 250 | Rama: feat/sistema-de-diseno-rejilla
+  Cómo probarlo: sección «Rejilla de estado» del catálogo.
+- E-15b Limpieza de `base.css`.
+  Tareas: T-051 | Líneas estimadas: por definir | Rama: feat/sistema-de-diseno-limpieza
+  Cómo probarlo: las pantallas de registro y el catálogo se ven igual que antes.
+  Nota: E-15 se separó de la limpieza porque quitar las reglas transitorias cambia el aspecto de las
+  pantallas de registro (su caja y la separación de sus formularios dependen de ellas); T-051 espera
+  a que el usuario decida cómo resolverlo.
 - E-16 Comprobación visual automática contra las referencias.
   Tareas: T-052, T-053, T-054, T-055 | Líneas estimadas: 300 | Rama: feat/sistema-de-diseno-visual
   Cómo probarlo: `pnpm --filter frontend test:visual`; debe pasar y fallar si se altera un estilo.

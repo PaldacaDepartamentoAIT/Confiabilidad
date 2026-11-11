@@ -447,6 +447,22 @@ test("the catalog shows the bar chart with its legend and one without data", () 
   expect(within(catalog).getByText("Sin datos para mostrar")).toHaveClass("chart-empty");
 });
 
+test("the catalog shows the status grid with its glyphs and its legend", () => {
+  renderPage("en");
+
+  const catalog = screen.getByRole("region", { name: "Rejilla de estado" });
+  expect(catalog).toHaveAttribute("lang", "es");
+  const grid = within(catalog).getByRole("group", { name: "Rejilla de estado de 48 activos" });
+  expect(grid.querySelectorAll(".cell")).toHaveLength(48);
+  expect(grid.querySelectorAll(".cell.p1")).toHaveLength(2);
+  expect(grid.querySelectorAll(".cell.p2")).toHaveLength(2);
+  expect(grid.querySelectorAll(".cell.warning")).toHaveLength(2);
+  expect(grid.querySelectorAll(".cell.neutral")).toHaveLength(2);
+  expect(within(grid).getByRole("img", { name: "A-115 · P2" })).toBeInTheDocument();
+  expect(within(grid).getByRole("img", { name: "A-100 · Normal" })).toBeInTheDocument();
+  expect(catalog.querySelector(".cells-legend")).toHaveTextContent("Mantenimiento");
+});
+
 test("the catalog adds no extra stops to the keyboard order", async () => {
   const user = userEvent.setup();
   renderPage();
