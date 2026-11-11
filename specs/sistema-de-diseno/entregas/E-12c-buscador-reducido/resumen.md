@@ -1,6 +1,6 @@
 # Entrega E-12c · Buscador reducido en pantallas pequeñas
 
-Rama: `feat/sistema-de-diseno-buscador-reducido` (sale de `feat/sistema-de-diseno-pestanas-selector`) · PR: pendiente ·
+Rama: `feat/sistema-de-diseno-buscador-reducido` (sale de `feat/sistema-de-diseno`) · PR: [#92](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/92) ·
 Líneas de código y tests: 234 (límite: 400).
 
 ## Qué se hizo
