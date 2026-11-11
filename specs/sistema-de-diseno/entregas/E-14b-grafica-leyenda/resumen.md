@@ -1,6 +1,6 @@
 # Entrega E-14b · Leyenda y mensaje de vacío de la gráfica
 
-Rama: `feat/sistema-de-diseno-grafica-leyenda` (sale de `feat/sistema-de-diseno`, con E-14 ya fusionada) · PR: pendiente ·
+Rama: `feat/sistema-de-diseno-grafica-leyenda` (sale de `feat/sistema-de-diseno`) · PR: [#97](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/97) ·
 Líneas de código y tests: 262 (límite: 400).
 
 ## Qué se hizo
