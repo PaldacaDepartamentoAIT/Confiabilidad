@@ -406,6 +406,17 @@ test("the catalog shows the three block variants, the chips and the four alarm s
   expect(catalog.querySelector("[data-ui='counter']")).toBeInTheDocument();
 });
 
+test("the catalog shows the four indicators in the grid, with the featured and alert variants", () => {
+  renderPage("en");
+
+  const catalog = screen.getByRole("region", { name: "Indicadores" });
+  expect(catalog).toHaveAttribute("lang", "es");
+  expect(catalog.querySelector(".kpis")).toBeInTheDocument();
+  expect(catalog.querySelectorAll("[data-ui='indicator']")).toHaveLength(4);
+  expect(catalog.querySelector(".kpi.featured")).toBeInTheDocument();
+  expect(catalog.querySelector(".kpi.alert")).toBeInTheDocument();
+});
+
 test("the catalog adds no extra stops to the keyboard order", async () => {
   const user = userEvent.setup();
   renderPage();
