@@ -372,10 +372,11 @@ textarea.field:focus { padding: 7px 10px; }
   .topbar .menu-btn.mobile-only { display: inline-flex; }
 }
 @media (max-width: 559px) {
-  .search { display: none; }
   .search-toggle { display: inline-flex; width: 36px; height: 36px; align-items: center; justify-content: center; border-radius: 6px; color: var(--ink); flex: none; }
-  .topbar.search-open .search { display: block; position: absolute; right: 22px; top: 14px; z-index: 5; }
-  .topbar.search-open .search-toggle, .topbar.search-open .tabs-area { visibility: hidden; }
+  .search-toggle, .tabs-area { transition: opacity 0.2s ease, visibility 0s; }
+  .search { position: absolute; left: 74px; right: 22px; top: 14px; width: auto; z-index: 5; opacity: 0; visibility: hidden; clip-path: inset(0 0 0 calc(100% - 36px)); transition: clip-path 0.25s ease-out, opacity 0.2s ease, visibility 0s linear 0.25s; }
+  .topbar.search-open .search { opacity: 1; visibility: visible; clip-path: inset(0); transition: clip-path 0.25s ease-out, opacity 0.2s ease, visibility 0s; }
+  .topbar.search-open .search-toggle, .topbar.search-open .tabs-area { opacity: 0; visibility: hidden; transition: opacity 0.2s ease, visibility 0s linear 0.2s; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }

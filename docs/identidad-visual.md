@@ -169,8 +169,11 @@ Un solo color por prioridad en toda la aplicación.
   del hover. Siguen el patrón de combobox con `listbox`: flechas, Inicio, Fin, RePág, AvPág, Enter,
   Espacio, Tab, Escape y búsqueda por letra (sin distinguir tildes).
 - **Botón de abrir y cerrar el menú:** chevron «<» con el menú abierto y «>» con el menú contraído.
-- **Buscador.** Ancho fijo de 220 px. Por debajo de 560 px se convierte en un botón con lupa que
-  despliega el campo sobre las pestañas.
+- **Buscador.** Ancho fijo de 220 px. Por debajo de 560 px se convierte en un botón con lupa. Al
+  pulsarlo, el campo se despliega desde el botón hasta ocupar todo el ancho de la barra superior a la
+  derecha del botón del menú lateral (que sigue visible), mientras las pestañas (o el selector) se
+  desvanecen. Al perder el foco, aunque haya texto escrito, o con Escape, el campo se pliega y vuelve
+  a verse el botón.
 - **Estado del menú lateral.** No se recuerda: cada sesión empieza con el menú abierto.
 
 ## Movimiento
@@ -182,6 +185,7 @@ Un solo color por prioridad en toda la aplicación.
 | Desplazamiento de la línea de la pestaña activa | 0,25 s, salida suave |
 | Cambio del contenido al cambiar de sección | 0,2 s de fundido |
 | Pestañas a selector y al revés | 0,15 s de salida y, a continuación, 0,2 s de entrada |
+| Buscador reducido: abrir y cerrar | 0,25 s, salida suave; 0,2 s de fundido de las pestañas y del botón |
 | Aparición de un menú desplegable | 0,18 s (fundido y 6 px de desplazamiento hacia abajo); se cierra sin animación |
 | Panel lateral en móvil | 0,25 s de deslizamiento |
 | Cambio de tema | 0,4 s en todos los colores, solo durante el cambio |
