@@ -842,12 +842,45 @@ transitorias hasta T-051 (D-12).
   avisos, campos, menús, diseños (público y con sesión) con pestañas y buscador, indicadores, tabla,
   gráfica y rejilla. Verificado en un navegador real, en oscuro: cuadros de 24 × 24 px separados 4 px,
   glifos de 12 px en el color del lienzo — [Cierto].
-## E-15b Limpieza de `base.css`
+## E-15b Pantallas públicas con la columna de la guía
+- [x] T-070 Columna de las pantallas públicas
+  RF: RF-005 | Depende de: T-024, T-009 | Archivos: 3
+  Archivos: `layouts/PublicPage.tsx`, `PublicPage.css`, `PublicPage.test.tsx`.
+  Hecho cuando: `PublicPage` pinta un `<main>` con una columna de 480 px como máximo y un bloque cuyo
+  título es el `h1`; suite verde.
+  Decisiones: `PublicPage({title, titleId?, children})`; la columna mide 524 px con 22 px de relleno
+  lateral (480 px de contenido) y 32 px de margen superior. El título usa las clases del bloque
+  (`blk-h`, `data-ui="block-title"`) pero es un `h1` de 15 px, porque `Block` solo admite `h2` a `h4`
+  — [Probable]. La separación de los formularios sigue en las reglas transitorias de `field.css` hasta
+  E-15c. Mutantes muertos: título sin `h1`, `id` del título, orden del título y el contenido.
+- [ ] T-071 Registro con la columna pública
+  RF: RF-026 | Depende de: T-070 | Archivos: 1
+  Archivos: `registration/RegisterPage.tsx`.
+  Hecho cuando: la pantalla de registro usa `PublicPage` sin cambiar su flujo, textos ni
+  validaciones; suite verde.
+- [ ] T-072 Verificación, contraseña y cuenta creada con la columna pública
+  RF: RF-026 | Depende de: T-070 | Archivos: 3
+  Archivos: `registration/VerifyPage.tsx`, `PasswordStep.tsx`, `DonePage.tsx`.
+  Hecho cuando: las pantallas de verificación, de contraseña, de enlace no válido y de cuenta creada
+  usan `PublicPage` sin cambiar su flujo, textos ni validaciones; suite verde.
+
+## E-15c Limpieza de `base.css`
 - [ ] T-051 Retirar las reglas transitorias de `base.css`
-  RF: RF-001 | Depende de: T-050 | Archivos: 2
-  Archivos: `styles/base.css`, `styles/tokens.test.ts`.
+  RF: RF-001 | Depende de: T-071, T-072, T-073 | Archivos: 5
+  Archivos: `styles/base.css`, `styles/tokens.test.ts`, `components/fields/field.css`,
+  `layouts/PublicLayout.css`, `layouts/AppLayout.css`.
   Hecho cuando: `base.css` no estila `button`, `input`, `select`, `main`, `form` ni `section` y el
-  test lo comprueba; las pantallas de registro y el catálogo se ven igual; suite verde.
+  test lo comprueba; las pantallas de registro (con la columna pública) y el catálogo conservan su
+  aspecto salvo lo que cambia la guía; suite verde.
+  Excepción: 5 archivos. Es un único cambio de retirar reglas transitorias que se compensan entre sí
+  (el relleno del `body` y el `margin: -22px` de `.public-app`; la caja de `main` y su anulación en
+  `.content`; la separación de `field.css`); separarlo dejaría pantallas rotas entre commits.
+- [ ] T-073 Catálogo sin reglas transitorias
+  RF: RF-027 | Depende de: T-050 | Archivos: 3
+  Archivos: `showcase/ShowcasePage.tsx`, `showcase/sections/sections.css`,
+  `showcase/ShowcasePage.test.tsx`.
+  Hecho cuando: la página del catálogo trae sus propias clases (contenedor, formulario y separación)
+  y no depende de `main`, `form` ni `section` de `base.css`; suite verde.
 
 ## E-16 Comprobación visual
 - [ ] T-052 Playwright y proyecto de test visual
@@ -1059,12 +1092,15 @@ Rama de integración: `feat/sistema-de-diseno` (los PR de las entregas van contr
 - E-15 Rejilla de estado.
   Tareas: T-049, T-050 | Líneas estimadas: 250 | Rama: feat/sistema-de-diseno-rejilla
   Cómo probarlo: sección «Rejilla de estado» del catálogo.
-- E-15b Limpieza de `base.css`.
-  Tareas: T-051 | Líneas estimadas: por definir | Rama: feat/sistema-de-diseno-limpieza
-  Cómo probarlo: las pantallas de registro y el catálogo se ven igual que antes.
+- E-15b Pantallas públicas con la columna de la guía.
+  Tareas: T-070, T-071, T-072 | Líneas estimadas: 200 | Rama: feat/sistema-de-diseno-pantallas-publicas
+  Cómo probarlo: `/register`, `/register/continue` y `/register/done` muestran un bloque centrado de
+  480 px con su título.
+- E-15c Limpieza de `base.css`.
+  Tareas: T-073, T-051 | Líneas estimadas: 250 | Rama: feat/sistema-de-diseno-limpieza
+  Cómo probarlo: el catálogo y las pantallas de registro se ven como antes de la limpieza.
   Nota: E-15 se separó de la limpieza porque quitar las reglas transitorias cambia el aspecto de las
-  pantallas de registro (su caja y la separación de sus formularios dependen de ellas); T-051 espera
-  a que el usuario decida cómo resolverlo.
+  pantallas de registro; el usuario eligió que adopten la columna y el bloque de la guía (11-nov).
 - E-16 Comprobación visual automática contra las referencias.
   Tareas: T-052, T-053, T-054, T-055 | Líneas estimadas: 300 | Rama: feat/sistema-de-diseno-visual
   Cómo probarlo: `pnpm --filter frontend test:visual`; debe pasar y fallar si se altera un estilo.
