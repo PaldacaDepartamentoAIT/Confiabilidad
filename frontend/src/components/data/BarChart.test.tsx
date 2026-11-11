@@ -17,7 +17,9 @@ function renderChart(props: Partial<Parameters<typeof BarChart>[0]> = {}) {
   return render(
     <BarChart
       groups={groups}
+      legend={{ first: "Preventive", second: "Corrective" }}
       description="Orders from June to November: preventive rise from 62 to 96."
+      emptyMessage="No data"
       {...props}
     />,
   );
@@ -110,26 +112,63 @@ test("the group labels sit below the plot, centered on each group", () => {
   expect(labels[0]).toHaveAttribute("text-anchor", "middle");
 });
 
+test("the legend names both series with their swatch", () => {
+  const { container } = renderChart();
+
+  const items = container.querySelectorAll(".legend span");
+  expect(items).toHaveLength(2);
+  expect(items[0]).toHaveTextContent("Preventive");
+  expect(items[1]).toHaveTextContent("Corrective");
+  expect(items[0].querySelector("i")).toHaveStyle({ background: "var(--primary)" });
+  expect(items[1].querySelector("i")).toHaveStyle({ background: "var(--gray)" });
+});
+
 test("the axis grows with the data", () => {
   const { container } = renderChart({ groups: [{ label: "A", first: 31, second: 0 }] });
   const ticks = [...container.querySelectorAll("text[data-tick]")].map((tick) => tick.textContent);
   expect(ticks).toEqual(["0", "30", "60"]);
 });
 
+test.each([
+  ["no data", []],
+  ["a negative value", [{ label: "A", first: -1, second: 2 }]],
+  ["a value that is not a number", [{ label: "A", first: Number.NaN, second: 2 }]],
+])("with %s it shows the empty message instead of the chart", (_name, data) => {
+  const { container } = renderChart({ groups: data });
+
+  expect(screen.getByText("No data")).toBeInTheDocument();
+  expect(screen.queryByRole("img")).not.toBeInTheDocument();
+  expect(container.querySelector("svg")).not.toBeInTheDocument();
+  expect(container.querySelector(".legend")).not.toBeInTheDocument();
+});
+
 test("two charts do not share the grid pattern", () => {
   const { container } = render(
     <>
-      <BarChart groups={groups} description="one" />
-      <BarChart groups={groups} description="two" />
+      <BarChart
+        groups={groups}
+        legend={{ first: "A", second: "B" }}
+        description="one"
+        emptyMessage="-"
+      />
+      <BarChart
+        groups={groups}
+        legend={{ first: "A", second: "B" }}
+        description="two"
+        emptyMessage="-"
+      />
     </>,
   );
   const ids = [...container.querySelectorAll("pattern")].map((pattern) => pattern.id);
   expect(new Set(ids).size).toBe(2);
 });
 
-test("has no accessibility violations", async () => {
+test("has no accessibility violations with data and without it", async () => {
   const run = (container: HTMLElement) =>
     axe.run(container, { rules: { "color-contrast": { enabled: false } } });
-  const { container } = renderChart();
-  expect((await run(container)).violations).toEqual([]);
+  const full = renderChart();
+  expect((await run(full.container)).violations).toEqual([]);
+  full.unmount();
+  const empty = renderChart({ groups: [] });
+  expect((await run(empty.container)).violations).toEqual([]);
 });

@@ -96,7 +96,17 @@ export function DataSection() {
         <Block title="Órdenes de trabajo por mes">
           <BarChart
             groups={MONTHS}
+            legend={{ first: "Preventivas", second: "Correctivas" }}
             description="Órdenes preventivas y correctivas de junio a noviembre: las preventivas suben de 62 a 96 y las correctivas bajan de 48 a 22."
+            emptyMessage="Sin datos para mostrar"
+          />
+        </Block>
+        <Block title="Gráfica sin datos">
+          <BarChart
+            groups={[]}
+            legend={{ first: "Preventivas", second: "Correctivas" }}
+            description="Sin datos"
+            emptyMessage="Sin datos para mostrar"
           />
         </Block>
       </div>
