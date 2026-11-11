@@ -68,8 +68,12 @@ Si las pestañas no caben en la barra, entonces el sistema deberá sustituirlas 
 nombre de la pestaña activa que despliegue las demás, con la animación de la guía.
 
 ### RF-012 Buscador en pantallas pequeñas
-Mientras la pantalla sea más estrecha que 560 px, el sistema deberá reducir el buscador a un botón
-que despliegue el campo sobre las pestañas y lo cierre con Escape.
+Mientras la pantalla sea más estrecha que 560 px, el sistema deberá reducir el buscador a un botón.
+Cuando el usuario lo pulse, el sistema deberá desplegar el campo con una animación de 0,25 s desde el
+botón, ocupando todo el ancho disponible de la barra superior a la derecha del botón del menú
+lateral, que seguirá visible, y desvanecer con una animación de 0,2 s las pestañas (o el selector).
+Cuando el campo pierda el foco, aunque tenga texto escrito, o el usuario pulse Escape, el sistema
+deberá cerrarlo con la animación inversa y volver a mostrar el botón y las pestañas (o el selector).
 
 ### RF-013 Cambio de sección
 Cuando el usuario cambie de pestaña, el sistema deberá mostrar el nuevo contenido con un fundido de
@@ -191,3 +195,4 @@ Mientras el dispositivo tenga un puntero principal táctil, el sistema deberá m
 - 2026-11-09 — Spec inicial — RF: RF-001 a RF-030 — Estado: clarificado
 - 2026-11-09 — Clarificación: C-01 a C-09 — RF: RF-005, RF-007, RF-009, RF-010, RF-012, RF-015, RF-016, RF-024, RF-028, RF-031 — Estado: clarificado
 - 2026-11-10 — Corrección de RF-009: sin velo, según la guía y las referencias — RF: RF-009 — Estado: clarificado
+- 2026-11-11 — Corrección de RF-012: animación, ancho completo y cierre al perder el foco — RF: RF-012 — Estado: clarificado

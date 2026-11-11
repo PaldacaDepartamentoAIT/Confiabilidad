@@ -696,12 +696,38 @@ transitorias hasta T-051 (D-12).
   del selector, alineación, nombre, observador y clase `overflow`.
 
 ## E-12c Buscador reducido en pantallas pequeñas
-- [ ] T-041 Buscador reducido en pantallas pequeñas
+- [x] T-041 Buscador reducido en pantallas pequeñas
   RF: RF-012 | Depende de: T-036, T-031 | Archivos: 3
   Archivos: `layouts/SearchBox.tsx`, `SearchBox.css`, `SearchBox.test.tsx`.
   Hecho cuando: bajo 560 px es un botón con lupa que despliega el campo sobre las pestañas y lo
   cierra con Escape; suite verde.
+  Decisiones: bajo 560 px (`useMediaQuery`) el buscador pinta un botón con lupa (`search-toggle`, con
+  `aria-expanded` y `aria-controls`) y el campo pasa a `narrow`, oculto hasta que se pulsa; abierto
+  se coloca sobre las pestañas (`position: absolute`, que ocultan con `:has()`), recibe el foco y
+  Escape lo cierra devolviendo el foco al botón; si la pantalla se ensancha se cierra — [Probable].
+  El botón se llama como el campo salvo que se pase `openLabel` — [Probable] — revertir: hacerlo
+  obligatorio. Se corrigió un fallo que solo veía el navegador: el botón está oculto
+  (`visibility`) mientras el campo está abierto y el foco no puede llegar a un elemento oculto, así que
+  el foco vuelve después de renderizar, con un efecto — [Cierto]. Verificado en un navegador real a
+  500 px: cerrado es un botón de 36 × 36 px; abierto, el campo de 220 px cubre las pestañas; Escape
+  lo cierra y el foco queda en el botón. Mutante equivalente: el estado `expanded` ya ignora un
+  `open` rancio, así que `aria-expanded={open}` no cambia nada visible (el test de «se ensancha y se
+  estrecha» mata la versión sin limpiar el estado). Mutantes muertos: foco dentro, foco al botón,
+  nombre del botón, clases `narrow` y `open`, `aria-controls`.
 
+- [x] T-065 Buscador reducido: animación, ancho completo y cierre al perder el foco
+  RF: RF-012 | Depende de: T-041 | Archivos: 3
+  Archivos: `layouts/SearchBox.tsx`, `SearchBox.css`, `SearchBox.test.tsx`.
+  Hecho cuando: el campo se despliega desde el botón con animación de 0,25 s hasta ocupar el ancho de
+  la barra a la derecha del botón del menú, las pestañas y el botón de búsqueda se desvanecen, y se
+  cierra con la animación inversa al perder el foco (aunque tenga texto) o con Escape; suite verde.
+  Decisiones: el campo está siempre montado bajo 560 px y se anima con `clip-path`, `opacity` y
+  `visibility` (con retardo al ocultar); cerrado es `inert`. `onBlur` cierra si el foco sale del
+  campo y no devuelve el foco (solo Escape lo devuelve al botón); el texto escrito se conserva. El
+  botón del menú lateral sigue visible, por eso `left: 74px` (22 + 40 + 12) — [Probable]. Verificado
+  en un navegador real a 500 px: el campo pasa de 36 px a 324 px (114–438), las pestañas y el botón
+  quedan a opacidad 0, perder el foco lo cierra y Escape devuelve el foco al botón — [Cierto].
+  Guía y referencias actualizadas.
 ## E-13 Indicadores y tabla
 - [ ] T-043 Indicador y su rejilla
   RF: RF-021 | Depende de: T-008 | Archivos: 3
@@ -926,7 +952,7 @@ Rama de integración: `feat/sistema-de-diseno` (los PR de las entregas van contr
   Tareas: T-039 | Líneas estimadas: 380 | Rama: feat/sistema-de-diseno-pestanas-selector
   Cómo probarlo: catálogo, «Diseño con sesión»: estrechar la ventana hasta que las pestañas pasen a un selector.
 - E-12c Buscador reducido a un botón en pantallas pequeñas.
-  Tareas: T-041 | Líneas estimadas: 240 | Rama: feat/sistema-de-diseno-buscador-reducido
+  Tareas: T-041, T-065 | Líneas estimadas: 240 | Rama: feat/sistema-de-diseno-buscador-reducido
   Cómo probarlo: catálogo, ventana de menos de 560 px: pulsar la lupa y cerrar con Escape.
 - E-13 Indicadores y tabla.
   Tareas: T-043, T-044, T-045 | Líneas estimadas: 330 | Rama: feat/sistema-de-diseno-indicadores-tabla
