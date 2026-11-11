@@ -579,3 +579,18 @@ test("the screen with session of the catalog has tabs and a search, and choosing
   expect(tabs[2]).toHaveFocus();
   expect(visible()).toEqual([tabs[2].id]);
 });
+
+test("choosing a tab of the catalog fades its section in, and the first one does not fade on load", async () => {
+  const user = userEvent.setup();
+  renderPage("en");
+  const catalog = screen.getByRole("region", { name: "Diseño con sesión" });
+  const panel = (id: string) => catalog.querySelector(`#demo-panel-${id}`) as HTMLElement;
+  expect(panel("summary")).not.toHaveClass("entering");
+
+  await user.click(within(catalog).getByRole("tab", { name: "Alarmas" }));
+
+  expect(panel("alarms")).toHaveClass("entering");
+  expect(panel("alarms")).not.toHaveAttribute("hidden");
+  expect(panel("summary")).toHaveAttribute("hidden");
+  expect(panel("summary")).not.toHaveClass("entering");
+});

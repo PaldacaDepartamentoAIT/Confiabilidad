@@ -1,0 +1,17 @@
+[role="tabpanel"][hidden] {
+  display: none;
+}
+
+@keyframes sectionIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+[role="tabpanel"].entering {
+  animation: sectionIn 0.2s ease-out;
+}
