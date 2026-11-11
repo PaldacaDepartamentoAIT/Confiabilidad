@@ -813,11 +813,19 @@ transitorias hasta T-051 (D-12).
   Hecho cuando: el catálogo exhibe la leyenda y una gráfica sin datos; suite verde.
 
 ## E-15 Rejilla de estado y limpieza
-- [ ] T-049 Rejilla de estado
+- [x] T-049 Rejilla de estado
   RF: RF-025 | Depende de: T-007 | Archivos: 3
   Archivos: `components/data/StatusGrid.tsx`, `StatusGrid.css`, `StatusGrid.test.tsx`.
   Hecho cuando: cuadros de 24 × 24 px con glifo de su forma, `title` y `aria-label`, y leyenda;
   suite verde.
+  Decisiones: `StatusGrid({label, cells, labels})`: cada celda es `{name, kind?}` (sin `kind`, normal) y
+  `labels` da el texto de cada estado en el idioma de quien la usa; el `title` y el `aria-label` son
+  «nombre · estado». El contenedor es `role="group"` con nombre (una `div` con `aria-label` y sin rol
+  la rechaza axe) y cada cuadro `role="img"` — [Cierto]. Los glifos son `AlarmShape` de 12 px en
+  el color del lienzo; el neutro no lleva glifo y se dibuja con su borde de 2 px. La leyenda lleva
+  las formas de 16 px y las etiquetas en tinta, en el orden de la referencia (mantenimiento, P1, P2,
+  advertencia). Mutantes muertos: glifo en el neutro o en el normal, clase de estado intercambiada,
+  título sin estado.
 - [ ] T-050 Catálogo: rejilla de estado
   RF: RF-027 | Depende de: T-049 | Archivos: 3
   Archivos: `showcase/sections/DataSection.tsx`, `showcase/ShowcasePage.tsx`,
