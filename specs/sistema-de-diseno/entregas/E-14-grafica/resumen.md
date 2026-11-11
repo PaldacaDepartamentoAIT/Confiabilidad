@@ -1,6 +1,6 @@
 # Entrega E-14 · Gráfica de barras
 
-Rama: `feat/sistema-de-diseno-grafica` (sale de `feat/sistema-de-diseno`) · PR: pendiente ·
+Rama: `feat/sistema-de-diseno-grafica` (sale de `feat/sistema-de-diseno`) · PR: [#96](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/96) ·
 Líneas de código y tests: 373 (límite: 400).
 
 ## Qué se hizo
@@ -26,7 +26,7 @@ El detalle de cada tarea está en [`tasks.md`](../../tasks.md).
 |---|---|---|
 | T-046 | Escala de la gráfica | `3e03b32` |
 | T-047 | Gráfica de barras | `bed33cc` |
-| T-048 | Catálogo: gráfica | ver historial de la rama |
+| T-048 | Catálogo: gráfica | `b54d277` |
 
 ## Cómo ejecutarlo y probarlo
 Desde la raíz del repositorio, instala las dependencias:
