@@ -770,11 +770,18 @@ transitorias hasta T-051 (D-12).
   [Cierto].
 
 ## E-14 Gráfica de barras
-- [ ] T-046 Escala de la gráfica
+- [x] T-046 Escala de la gráfica
   RF: RF-024 | Depende de: — | Archivos: 2
   Archivos: `components/data/chartScale.ts`, `chartScale.test.ts`.
   Hecho cuando: el eje va de 0 al siguiente múltiplo de 30 (mínimo 30), el ancho de grupo se ajusta
   al número de grupos y los negativos o no numéricos se rechazan; suite verde.
+  Decisiones: `chartScale(groups)` es una función pura que devuelve `{max, ticks, groupWidth,
+  barWidth, groupOffset}` o `null` si no hay grupos o algún valor no es un número mayor o igual que
+  cero. El eje es `max(30, ceil(mayor / 30) × 30)`; un valor que ya es múltiplo de 30 no sube al
+  siguiente (90 → 90) — [Probable]. El grupo mide `576 / n`; las barras miden 30 px y, si no caben,
+  se reducen de forma proporcional (12 grupos → 14 px) manteniendo la separación de 4 px —
+  [Suposición]: la guía solo define el caso de 6 grupos (96 px). Mutantes muertos: `ceil` por `floor`,
+  mínimo de 30, aceptar negativos o no numéricos.
 - [ ] T-047 Gráfica de barras
   RF: RF-024 | Depende de: T-046 | Archivos: 3
   Archivos: `components/data/BarChart.tsx`, `BarChart.css`, `BarChart.test.tsx`.
