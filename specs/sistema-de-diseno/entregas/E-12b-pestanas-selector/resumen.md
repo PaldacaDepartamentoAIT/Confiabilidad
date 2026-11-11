@@ -1,6 +1,6 @@
 # Entrega E-12b · Pestañas que no caben: selector
 
-Rama: `feat/sistema-de-diseno-pestanas-selector` (sale de `feat/sistema-de-diseno-fundido`) · PR: pendiente ·
+Rama: `feat/sistema-de-diseno-pestanas-selector` (sale de `feat/sistema-de-diseno`) · PR: [#91](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/91) ·
 Líneas de código y tests: 385 (límite: 400).
 
 ## Qué se hizo
