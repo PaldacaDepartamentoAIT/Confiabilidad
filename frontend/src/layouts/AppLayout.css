@@ -43,4 +43,17 @@
   .topbar .menu-btn.mobile-only {
     display: inline-flex;
   }
+
+  /* La lista del selector de pestañas vive dentro de la barra (z-index 30) y el panel lateral (70) la
+     tapa. Mientras está abierta, la barra sube por encima del panel y, para no taparlo, queda sin
+     fondo y sin los controles que están debajo de él; solo se ve el selector y su lista. */
+  .topbar:has(.tab-select .menu.open) {
+    z-index: 80;
+    background: transparent;
+    border-bottom-color: transparent;
+  }
+
+  .topbar:has(.tab-select .menu.open) > :not(.tabs-area) {
+    visibility: hidden;
+  }
 }

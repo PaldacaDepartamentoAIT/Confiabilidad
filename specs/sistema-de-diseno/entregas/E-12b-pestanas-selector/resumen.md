@@ -18,6 +18,9 @@ Líneas de código y tests: 385 (límite: 400).
 - Verificado en un navegador real en la pantalla de ejemplo del catálogo: a 1200 px caben (área de
   612 px, pestañas de 261 px); a 820 px no caben (área de 232 px) y aparece el selector con su lista
   alineada al borde derecho; elegir «Alarmas» muestra su sección.
+- La lista del selector se muestra por encima del panel lateral móvil: mientras está abierta, la barra
+  superior sube sobre el panel, queda sin fondo y esconde sus otros controles para no tapar el panel.
+  Verificado en un navegador real a 500 px: la lista queda por encima del panel.
 - Esta parte salió de las pestañas adaptables (796 líneas), dividida en tres por la regla de
   `AGENTS.md`.
 
