@@ -1,6 +1,6 @@
 # Entrega E-12 · Fundido entre secciones de las pestañas
 
-Rama: `feat/sistema-de-diseno-fundido` · PR: pendiente ·
+Rama: `feat/sistema-de-diseno-fundido` · PR: [#90](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/90) ·
 Líneas de código y tests: 177 (límite: 400).
 
 ## Qué se hizo
