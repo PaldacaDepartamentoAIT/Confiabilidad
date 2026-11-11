@@ -826,11 +826,15 @@ transitorias hasta T-051 (D-12).
   las formas de 16 px y las etiquetas en tinta, en el orden de la referencia (mantenimiento, P1, P2,
   advertencia). Mutantes muertos: glifo en el neutro o en el normal, clase de estado intercambiada,
   título sin estado.
-- [ ] T-050 Catálogo: rejilla de estado
-  RF: RF-027 | Depende de: T-049 | Archivos: 3
-  Archivos: `showcase/sections/DataSection.tsx`, `showcase/ShowcasePage.tsx`,
-  `showcase/ShowcasePage.test.tsx`.
+- [x] T-050 Catálogo: rejilla de estado
+  RF: RF-027 | Depende de: T-049 | Archivos: 2
+  Archivos: `showcase/sections/DataSection.tsx`, `showcase/ShowcasePage.test.tsx`.
   Hecho cuando: el catálogo exhibe todas las piezas de la feature; suite verde.
+  Decisiones: sección «Rejilla de estado» con los 48 activos de la referencia (dos de cada estado y el
+  resto normales). Con ella el catálogo exhibe ya todas las piezas: bloques, chips y formas, botones y
+  avisos, campos, menús, diseños (público y con sesión) con pestañas y buscador, indicadores, tabla,
+  gráfica y rejilla. Verificado en un navegador real, en oscuro: cuadros de 24 × 24 px separados 4 px,
+  glifos de 12 px en el color del lienzo — [Cierto].
 - [ ] T-051 Retirar las reglas transitorias de `base.css`
   RF: RF-001 | Depende de: T-050 | Archivos: 2
   Archivos: `styles/base.css`, `styles/tokens.test.ts`.
