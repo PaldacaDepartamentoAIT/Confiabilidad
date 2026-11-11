@@ -5,9 +5,12 @@ Líneas de código y tests: 234 (límite: 400).
 
 ## Qué se hizo
 - En pantallas de menos de 560 px, el buscador de la barra superior se reduce a un botón con lupa
-  de 36 × 36 px. Al pulsarlo, el campo (de 220 px) se despliega sobre las pestañas, que quedan
-  ocultas, y recibe el foco. Escape lo cierra y devuelve el foco al botón. Si la pantalla se
-  ensancha con el campo abierto, se cierra; en pantalla ancha no hay botón y el campo se ve siempre.
+  de 36 × 36 px. Al pulsarlo, el campo se despliega desde el botón con una animación de 0,25 s hasta
+  ocupar todo el ancho de la barra a la derecha del botón del menú lateral (que sigue visible),
+  mientras las pestañas y el botón de búsqueda se desvanecen en 0,2 s; recibe el foco. Escape o
+  perder el foco (aunque haya texto escrito, que se conserva) lo pliegan con la animación inversa; solo
+  Escape devuelve el foco al botón. Si la pantalla se ensancha con el campo abierto, se cierra; en
+  pantalla ancha no hay botón y el campo se ve siempre.
 - El botón se llama igual que el campo, salvo que la pantalla le dé otro nombre.
 - Un fallo que solo se veía en un navegador real quedó corregido antes de entregar: el botón está
   oculto mientras el campo está abierto, y el foco no puede llegar a un elemento oculto, así que el
@@ -23,6 +26,7 @@ El detalle de cada tarea está en [`tasks.md`](../../tasks.md).
 | Tarea | Título | Commit |
 |---|---|---|
 | T-041 | Buscador reducido en pantallas pequeñas | `8911511` |
+| T-065 | Buscador reducido: animación, ancho completo y cierre al perder el foco | ver historial de la rama |
 
 ## Cómo ejecutarlo y probarlo
 Desde la raíz del repositorio, instala las dependencias:
@@ -41,7 +45,7 @@ Levanta la aplicación:
 pnpm --filter frontend dev
 ```
 Abre http://localhost:5173/, baja hasta «Diseño con sesión» y estrecha la ventana por debajo de 560 px:
-el buscador pasa a ser una lupa; púlsala, escribe algo y cierra con Escape.
+el buscador pasa a ser una lupa; púlsala (el campo se despliega con animación), escribe algo y ciérralo con Escape o pulsando fuera.
 
 ## Marco teórico
 - **Despliegue sobre las pestañas:** el campo no se queda en la barra porque no cabe; se coloca

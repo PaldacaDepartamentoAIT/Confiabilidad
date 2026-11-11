@@ -100,6 +100,40 @@ describe("en pantallas de menos de 560 px", () => {
     expect(toggle).toHaveFocus();
   });
 
+  it("al perder el foco, aunque haya texto escrito, el campo se cierra sin robar el foco", async () => {
+    stubScreen(true);
+    const user = userEvent.setup();
+    const { container } = render(
+      <>
+        <SearchBox label="Buscar" placeholder="Buscar…" />
+        <button type="button">Otro</button>
+      </>,
+    );
+    const toggle = screen.getByRole("button", { name: "Buscar" });
+    await user.click(toggle);
+    await user.type(screen.getByRole("searchbox"), "bomba");
+
+    await user.click(screen.getByRole("button", { name: "Otro" }));
+
+    expect(container.querySelector(".search")).not.toHaveClass("open");
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByRole("button", { name: "Otro" })).toHaveFocus();
+    await user.click(toggle);
+    expect(screen.getByRole("searchbox")).toHaveValue("bomba");
+  });
+
+  it("mientras está cerrado, el campo no es alcanzable; abierto, sí", async () => {
+    stubScreen(true);
+    const user = userEvent.setup();
+    const { container } = render(<SearchBox label="Buscar" placeholder="Buscar…" />);
+    const field = container.querySelector(".search");
+    expect(field).toHaveAttribute("inert");
+
+    await user.click(screen.getByRole("button", { name: "Buscar" }));
+
+    expect(field).not.toHaveAttribute("inert");
+  });
+
   it("Escape no hace nada si el campo está cerrado", async () => {
     stubScreen(true);
     const user = userEvent.setup();
@@ -119,6 +153,7 @@ describe("en pantallas de menos de 560 px", () => {
 
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
     expect(container.querySelector(".search")).not.toHaveClass("narrow");
+    expect(container.querySelector(".search")).not.toHaveAttribute("inert");
   });
 
   it("se cierra si la pantalla se ensancha con el campo abierto", async () => {

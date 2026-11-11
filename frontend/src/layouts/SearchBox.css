@@ -25,7 +25,8 @@
   display: none;
 }
 
-/* Menos de 560 px: botón con lupa; el campo se despliega sobre las pestañas. */
+/* Menos de 560 px: botón con lupa; el campo se despliega desde el botón hasta ocupar el ancho de la
+   barra a la derecha del botón del menú lateral (22 + 40 + 12 px), y las pestañas se desvanecen. */
 .search-toggle {
   width: 36px;
   height: 36px;
@@ -40,19 +41,44 @@
   color: var(--ink);
 }
 
-.search.narrow:not(.open) {
-  display: none;
+.search-toggle,
+.tabs-area {
+  transition:
+    opacity 0.2s ease,
+    visibility 0s;
+}
+
+.search.narrow {
+  position: absolute;
+  left: 74px;
+  right: 22px;
+  top: 14px;
+  width: auto;
+  z-index: 5;
+  opacity: 0;
+  visibility: hidden;
+  clip-path: inset(0 0 0 calc(100% - 36px));
+  transition:
+    clip-path 0.25s ease-out,
+    opacity 0.2s ease,
+    visibility 0s linear 0.25s;
 }
 
 .search.narrow.open {
-  display: block;
-  position: absolute;
-  right: 22px;
-  top: 14px;
-  z-index: 5;
+  opacity: 1;
+  visibility: visible;
+  clip-path: inset(0);
+  transition:
+    clip-path 0.25s ease-out,
+    opacity 0.2s ease,
+    visibility 0s;
 }
 
 .topbar:has(.search.open) .search-toggle,
 .topbar:has(.search.open) .tabs-area {
+  opacity: 0;
   visibility: hidden;
+  transition:
+    opacity 0.2s ease,
+    visibility 0s linear 0.2s;
 }

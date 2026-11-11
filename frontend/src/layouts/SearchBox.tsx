@@ -14,8 +14,8 @@ type SearchBoxProps = {
 };
 
 // Buscador solo visual (C-06): no filtra ni emite nada; cada pantalla que lo necesite define qué hace.
-// En pantallas de menos de 560 px se reduce a un botón con lupa que despliega el campo sobre las
-// pestañas (RF-012); Escape lo cierra.
+// En pantallas de menos de 560 px se reduce a un botón con lupa que despliega el campo con una
+// animación sobre las pestañas (RF-012); Escape o perder el foco lo cierran.
 export function SearchBox({ label, placeholder, openLabel }: SearchBoxProps) {
   const narrow = useMediaQuery("(max-width: 559px)");
   const [open, setOpen] = useState(false);
@@ -39,6 +39,8 @@ export function SearchBox({ label, placeholder, openLabel }: SearchBoxProps) {
     }
   }, [expanded]);
 
+  const inert = narrow && !expanded ? ({ inert: "" } as Record<string, string>) : {};
+
   return (
     <>
       {narrow && (
@@ -57,6 +59,10 @@ export function SearchBox({ label, placeholder, openLabel }: SearchBoxProps) {
       <div
         id={id}
         className={["search", narrow && "narrow", expanded && "open"].filter(Boolean).join(" ")}
+        {...inert}
+        onBlur={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
+        }}
         onKeyDown={(event) => {
           if (event.key === "Escape" && expanded) {
             returnFocus.current = true;

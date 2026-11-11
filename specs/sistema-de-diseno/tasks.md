@@ -715,6 +715,19 @@ transitorias hasta T-051 (D-12).
   estrecha» mata la versión sin limpiar el estado). Mutantes muertos: foco dentro, foco al botón,
   nombre del botón, clases `narrow` y `open`, `aria-controls`.
 
+- [x] T-065 Buscador reducido: animación, ancho completo y cierre al perder el foco
+  RF: RF-012 | Depende de: T-041 | Archivos: 3
+  Archivos: `layouts/SearchBox.tsx`, `SearchBox.css`, `SearchBox.test.tsx`.
+  Hecho cuando: el campo se despliega desde el botón con animación de 0,25 s hasta ocupar el ancho de
+  la barra a la derecha del botón del menú, las pestañas y el botón de búsqueda se desvanecen, y se
+  cierra con la animación inversa al perder el foco (aunque tenga texto) o con Escape; suite verde.
+  Decisiones: el campo está siempre montado bajo 560 px y se anima con `clip-path`, `opacity` y
+  `visibility` (con retardo al ocultar); cerrado es `inert`. `onBlur` cierra si el foco sale del
+  campo y no devuelve el foco (solo Escape lo devuelve al botón); el texto escrito se conserva. El
+  botón del menú lateral sigue visible, por eso `left: 74px` (22 + 40 + 12) — [Probable]. Verificado
+  en un navegador real a 500 px: el campo pasa de 36 px a 324 px (114–438), las pestañas y el botón
+  quedan a opacidad 0, perder el foco lo cierra y Escape devuelve el foco al botón — [Cierto].
+  Guía y referencias actualizadas.
 ## E-13 Indicadores y tabla
 - [ ] T-043 Indicador y su rejilla
   RF: RF-021 | Depende de: T-008 | Archivos: 3
@@ -939,7 +952,7 @@ Rama de integración: `feat/sistema-de-diseno` (los PR de las entregas van contr
   Tareas: T-039 | Líneas estimadas: 380 | Rama: feat/sistema-de-diseno-pestanas-selector
   Cómo probarlo: catálogo, «Diseño con sesión»: estrechar la ventana hasta que las pestañas pasen a un selector.
 - E-12c Buscador reducido a un botón en pantallas pequeñas.
-  Tareas: T-041 | Líneas estimadas: 240 | Rama: feat/sistema-de-diseno-buscador-reducido
+  Tareas: T-041, T-065 | Líneas estimadas: 240 | Rama: feat/sistema-de-diseno-buscador-reducido
   Cómo probarlo: catálogo, ventana de menos de 560 px: pulsar la lupa y cerrar con Escape.
 - E-13 Indicadores y tabla.
   Tareas: T-043, T-044, T-045 | Líneas estimadas: 330 | Rama: feat/sistema-de-diseno-indicadores-tabla
