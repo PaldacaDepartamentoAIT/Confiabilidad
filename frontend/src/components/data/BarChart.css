@@ -1,0 +1,9 @@
+.chart text {
+  font: 400 12px var(--mono);
+  fill: var(--text2);
+  font-variant-numeric: tabular-nums;
+}
+
+.chart text.m {
+  font-family: var(--font);
+}

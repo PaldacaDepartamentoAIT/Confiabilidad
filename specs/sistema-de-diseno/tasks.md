@@ -770,21 +770,47 @@ transitorias hasta T-051 (D-12).
   [Cierto].
 
 ## E-14 Gráfica de barras
-- [ ] T-046 Escala de la gráfica
+- [x] T-046 Escala de la gráfica
   RF: RF-024 | Depende de: — | Archivos: 2
   Archivos: `components/data/chartScale.ts`, `chartScale.test.ts`.
   Hecho cuando: el eje va de 0 al siguiente múltiplo de 30 (mínimo 30), el ancho de grupo se ajusta
   al número de grupos y los negativos o no numéricos se rechazan; suite verde.
-- [ ] T-047 Gráfica de barras
+  Decisiones: `chartScale(groups)` es una función pura que devuelve `{max, ticks, groupWidth,
+  barWidth, groupOffset}` o `null` si no hay grupos o algún valor no es un número mayor o igual que
+  cero. El eje es `max(30, ceil(mayor / 30) × 30)`; un valor que ya es múltiplo de 30 no sube al
+  siguiente (90 → 90) — [Probable]. El grupo mide `576 / n`; las barras miden 30 px y, si no caben,
+  se reducen de forma proporcional (12 grupos → 14 px) manteniendo la separación de 4 px —
+  [Suposición]: la guía solo define el caso de 6 grupos (96 px). Mutantes muertos: `ceil` por `floor`,
+  mínimo de 30, aceptar negativos o no numéricos.
+- [x] T-047 Gráfica de barras
   RF: RF-024 | Depende de: T-046 | Archivos: 3
   Archivos: `components/data/BarChart.tsx`, `BarChart.css`, `BarChart.test.tsx`.
-  Hecho cuando: dibuja dos series, cuadrícula, ejes, leyenda y texto alternativo, escala al
-  bloque y muestra el mensaje de vacío sin datos o con datos no válidos; suite verde.
-- [ ] T-048 Catálogo: gráfica
-  RF: RF-027 | Depende de: T-047 | Archivos: 3
-  Archivos: `showcase/sections/DataSection.tsx`, `showcase/ShowcasePage.tsx`,
-  `showcase/ShowcasePage.test.tsx`.
+  Hecho cuando: dibuja dos series, cuadrícula, ejes y texto alternativo y escala al bloque; suite
+  verde.
+  Decisiones: `BarChart({groups, description})`; el texto alternativo (`description`) lo escribe quien
+  usa la pieza, porque depende del idioma y de los datos — [Probable]. El lienzo es el de la guía
+  (640 × 240, área de 576 × 192 en x = 40, y = 8), con la cuadrícula de 16 px como `pattern` con id
+  único por `useId`, para que dos gráficas en la misma página no compartan el patrón. Con datos no
+  válidos no dibuja nada (el mensaje de vacío y la leyenda son T-068). Mutantes muertos: color de las
+  series intercambiado, altura sin escalar, etiquetas sin centrar, patrón compartido.
+- [x] T-048 Catálogo: gráfica
+  RF: RF-027 | Depende de: T-047 | Archivos: 2
+  Archivos: `showcase/sections/DataSection.tsx`, `showcase/ShowcasePage.test.tsx`.
   Hecho cuando: el catálogo exhibe la gráfica; suite verde.
+  Decisiones: sección «Gráfica de barras» con las órdenes de trabajo de junio a noviembre de la
+  referencia. Verificado en un navegador real: barras de 30 px sobre un lienzo de 640 px, números del
+  eje en JetBrains Mono y meses en Manrope, y a 420 px el lienzo se escala a 300 px — [Cierto].
+
+## E-14b Leyenda y mensaje de vacío de la gráfica
+- [ ] T-068 Leyenda y mensaje de vacío de la gráfica
+  RF: RF-024 | Depende de: T-047 | Archivos: 3
+  Archivos: `components/data/BarChart.tsx`, `BarChart.css`, `BarChart.test.tsx`.
+  Hecho cuando: muestra la leyenda con las dos series y, sin datos o con datos no válidos, el mensaje
+  de vacío en lugar de la gráfica; suite verde.
+- [ ] T-069 Catálogo: leyenda y gráfica sin datos
+  RF: RF-027 | Depende de: T-068, T-048 | Archivos: 2
+  Archivos: `showcase/sections/DataSection.tsx`, `showcase/ShowcasePage.test.tsx`.
+  Hecho cuando: el catálogo exhibe la leyenda y una gráfica sin datos; suite verde.
 
 ## E-15 Rejilla de estado y limpieza
 - [ ] T-049 Rejilla de estado
@@ -1003,8 +1029,13 @@ Rama de integración: `feat/sistema-de-diseno` (los PR de las entregas van contr
   Nota: E-13 se dividió en dos (E-13 y E-13b) porque la entrega completa medía 478 líneas; se aplicó
   la regla de AGENTS.md.
 - E-14 Gráfica de barras.
-  Tareas: T-046, T-047, T-048 | Líneas estimadas: 330 | Rama: feat/sistema-de-diseno-grafica
-  Cómo probarlo: sección de datos del catálogo; `pnpm --filter frontend test` para la escala.
+  Tareas: T-046, T-047, T-048 | Líneas estimadas: 373 | Rama: feat/sistema-de-diseno-grafica
+  Cómo probarlo: sección «Gráfica de barras» del catálogo; `pnpm --filter frontend test` para la escala.
+- E-14b Leyenda y mensaje de vacío de la gráfica.
+  Tareas: T-068, T-069 | Líneas estimadas: 100 | Rama: feat/sistema-de-diseno-grafica-leyenda
+  Cómo probarlo: la gráfica del catálogo lleva su leyenda y hay una gráfica sin datos con su mensaje.
+  Nota: E-14 se dividió en dos (E-14 y E-14b) porque la entrega completa medía 473 líneas; se aplicó
+  la regla de AGENTS.md.
 - E-15 Rejilla de estado y limpieza de `base.css`.
   Tareas: T-049, T-050, T-051 | Líneas estimadas: 300 | Rama: feat/sistema-de-diseno-rejilla
   Cómo probarlo: catálogo completo; las pantallas de registro se ven igual que antes de la limpieza.
