@@ -42,7 +42,7 @@ export function AppLayout({
   }, []);
 
   return (
-    <div className="app">
+    <div className={embedded ? "app embedded" : "app"}>
       <Sidebar
         id={sidebarId}
         items={items}
