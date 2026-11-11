@@ -18,3 +18,38 @@
 .public-card p {
   margin: 0 0 14px;
 }
+
+.public-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.public-card form > .btn {
+  align-self: flex-end;
+}
+
+.public-card > .btn {
+  margin: 2px 0 14px;
+}
+
+/* Transitorio: anulan la caja que base.css pone a `main`, `form` y `section` y la separación de
+   `field.css`, que ya no hacen falta aquí; se retiran con T-051. */
+.public-page,
+.public-card form,
+.public-card section {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.public-card form,
+.public-card section {
+  padding: 0;
+}
+
+.public-card form > .fld + .fld,
+.public-card form > .fld + .btn,
+.public-card form > .btn + .btn {
+  margin: 0;
+}
