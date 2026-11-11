@@ -20,6 +20,7 @@ import {
 } from "../forms/useFormValidation";
 import type { LanguageStorage } from "../i18n/language";
 import { PublicLayout } from "../layouts/PublicLayout";
+import { PublicPage } from "../layouts/PublicPage";
 import { navigate, useLocation } from "../routing/router";
 import { required, sixDigitCode } from "../showcase/validators";
 import { PasswordStep } from "./PasswordStep";
@@ -129,8 +130,7 @@ export function VerifyPage({ client, storage }: VerifyPageProps) {
 
   return (
     <PublicLayout storage={storage}>
-      <main>
-        <h1>{t("register.verifyTitle")}</h1>
+      <PublicPage title={t("register.verifyTitle")}>
         <p>{t("register.verifyText")}</p>
         {loaded === "networkError" && (
           <FormMessage type="error" messageKey="validation.networkError" />
@@ -168,6 +168,7 @@ export function VerifyPage({ client, storage }: VerifyPageProps) {
               <p role="status">{t("validation.retryIn", { seconds: resendWait.remaining })}</p>
             )}
             <Button
+              variant="secondary"
               disabled={resendWait.remaining > 0 || status.resends_left === 0}
               onClick={() => void resend()}
             >
@@ -185,7 +186,7 @@ export function VerifyPage({ client, storage }: VerifyPageProps) {
             )}
           </>
         )}
-      </main>
+      </PublicPage>
     </PublicLayout>
   );
 }
@@ -286,11 +287,10 @@ function InvalidLink({ storage }: { storage?: LanguageStorage }) {
   const { t } = useTranslation();
   return (
     <PublicLayout storage={storage}>
-      <main>
-        <h1>{t("register.invalidLinkTitle")}</h1>
+      <PublicPage title={t("register.invalidLinkTitle")}>
         <p>{t("validation.linkNotFound")}</p>
         <FormLink />
-      </main>
+      </PublicPage>
     </PublicLayout>
   );
 }
