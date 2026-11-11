@@ -1,6 +1,6 @@
 # Entrega E-15 · Rejilla de estado
 
-Rama: `feat/sistema-de-diseno-rejilla` (sale de `feat/sistema-de-diseno`) · PR: pendiente ·
+Rama: `feat/sistema-de-diseno-rejilla` (sale de `feat/sistema-de-diseno`) · PR: [#98](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/98) ·
 Líneas de código y tests: 250 (límite: 400).
 
 ## Qué se hizo
