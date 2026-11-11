@@ -748,16 +748,26 @@ transitorias hasta T-051 (D-12).
   dividir E-13 por tamaño (478 líneas); la parte de la tabla pasa a T-066.
 
 ## E-13b Tabla
-- [ ] T-044 Tabla
+- [x] T-044 Tabla
   RF: RF-022 | Depende de: T-007, T-009 | Archivos: 3
   Archivos: `components/data/Table.tsx`, `Table.css`, `Table.test.tsx`.
   Hecho cuando: columnas de texto, código y estado con icono de forma, desplazamiento horizontal y
   mensaje de vacío sin filas; suite verde.
-- [ ] T-066 Catálogo: tabla
+  Decisiones: `Table({label, columns, rows, emptyMessage})`; la columna es de texto, de código
+  (`mono`) o de estado (`{text, kind?}`: con `kind` lleva su forma; sin él, un hueco de 16 px). La
+  tabla va en una región con nombre y `tabIndex=0` para poder desplazarla con el teclado (regla de
+  axe) — [Cierto]. Sin filas, una sola celda con `colSpan` y el mensaje. La selección de filas y el
+  pie de tabla de la guía no se hacen aquí: no están en RF-022 — [Probable]. Mutantes muertos: clase
+  de código intercambiada, hueco del estado normal, `colSpan`.
+- [x] T-066 Catálogo: tabla
   RF: RF-027 | Depende de: T-044, T-045 | Archivos: 3
   Archivos: `showcase/sections/DataSection.tsx`, `showcase/ShowcasePage.tsx`,
   `showcase/ShowcasePage.test.tsx`.
   Hecho cuando: el catálogo exhibe la tabla con filas y sin ellas; suite verde.
+  Decisiones: el catálogo tiene una sección «Tabla» con dos bloques: el inventario de cinco activos
+  de la referencia (los cuatro estados y el normal) y una tabla sin filas. Verificado en un navegador
+  real: filas de 44 px y, a 420 px, la tabla (640 px) se desplaza dentro de su bloque (300 px) —
+  [Cierto].
 
 ## E-14 Gráfica de barras
 - [ ] T-046 Escala de la gráfica
