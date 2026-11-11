@@ -180,3 +180,14 @@ test("embedded, the bar and the content are plain blocks, for a page that alread
   expect(content).toHaveClass("content");
   expect(content).toHaveTextContent("Page");
 });
+
+test("embedded, the layout is marked so that its mobile panel stays inside its own frame", () => {
+  stubScreen(false);
+  const embedded = renderLayout({ embedded: true });
+  expect(embedded.container.firstElementChild).toHaveClass("app", "embedded");
+  embedded.unmount();
+
+  const full = renderLayout();
+  expect(full.container.firstElementChild).toHaveClass("app");
+  expect(full.container.firstElementChild).not.toHaveClass("embedded");
+});

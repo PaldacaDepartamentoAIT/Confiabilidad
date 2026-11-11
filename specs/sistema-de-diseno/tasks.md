@@ -855,6 +855,22 @@ transitorias hasta T-051 (D-12).
   `padding: 0`. Mutantes muertos: iconos intercambiados, sin clase, sin `has-action`, sin
   `aria-pressed`, sin nombre accesible.
 
+## Corrección: panel móvil incrustado
+- [x] T-067 El panel móvil del menú lateral se queda dentro de su marco
+  RF: RF-009 | Depende de: T-034, T-042 | Archivos: 3
+  Archivos: `layouts/AppLayout.tsx`, `AppLayout.css`, `AppLayout.test.tsx`.
+  Hecho cuando: con `embedded`, bajo 768 px el panel se posiciona dentro del marco y no sobre la
+  ventana; suite verde.
+  Decisiones: bug visto por el usuario en el catálogo: bajo 768 px el panel (`position: fixed`)
+  salía del marco de ejemplo y tapaba la barra superior de la página. `AppLayout` con `embedded`
+  añade la clase `embedded` al `.app` (`position: relative`, `overflow: hidden`) y el panel pasa a
+  `absolute`; así sirve también para una sección de la página pública. Verificado en un navegador
+  real a 700 px: el panel pasa de 0–700 px (ventana) a 211–689 px (marco), y a 900 px no cambia —
+  [Cierto]. Mutante muerto: clase `embedded` ausente. Además, el usuario fijó el orden de capas:
+  panel móvil (70) > barra pública (40) > menú lateral (35, antes 40) > barra privada (30). Con las
+  dos en 40, al desplazar la página el menú lateral del marco quedaba por encima de la barra
+  pública (el último en el DOM gana); a 260 px de alto se reprodujo y con 35 ya no — [Cierto].
+
 ## Entregas
 Rama de integración: `feat/sistema-de-diseno` (los PR de las entregas van contra ella; ver `AGENTS.md`)
 
