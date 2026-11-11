@@ -728,7 +728,7 @@ transitorias hasta T-051 (D-12).
   en un navegador real a 500 px: el campo pasa de 36 px a 324 px (114–438), las pestañas y el botón
   quedan a opacidad 0, perder el foco lo cierra y Escape devuelve el foco al botón — [Cierto].
   Guía y referencias actualizadas.
-## E-13 Indicadores y tabla
+## E-13 Indicadores
 - [x] T-043 Indicador y su rejilla
   RF: RF-021 | Depende de: T-008 | Archivos: 3
   Archivos: `components/data/Indicator.tsx`, `Indicator.css`, `Indicator.test.tsx`.
@@ -737,16 +737,27 @@ transitorias hasta T-051 (D-12).
   Decisiones: `Indicator` es un `div.block.kpi` (con `data-ui="indicator"`) que reutiliza el estilo de
   `Block`; `IndicatorGrid` es la rejilla `.kpis`. El estilo viene de la guía y de la referencia. La
   ayuda es opcional — [Probable]. Mutantes muertos: variante ignorada, ayuda siempre pintada.
+- [x] T-045 Catálogo: indicadores
+  RF: RF-027 | Depende de: T-043 | Archivos: 3
+  Archivos: `showcase/sections/DataSection.tsx`, `showcase/ShowcasePage.tsx`,
+  `showcase/ShowcasePage.test.tsx`.
+  Hecho cuando: el catálogo exhibe los indicadores; suite verde.
+  Decisiones: el catálogo tiene una sección «Indicadores» con los cuatro de la referencia (normal,
+  destacado, normal y en alerta). Verificado en un navegador real: cifra de 28 px y rejilla de
+  cuatro columnas — [Cierto]. La tarea original «Catálogo: indicadores y tabla» se dividió al
+  dividir E-13 por tamaño (478 líneas); la parte de la tabla pasa a T-066.
+
+## E-13b Tabla
 - [ ] T-044 Tabla
   RF: RF-022 | Depende de: T-007, T-009 | Archivos: 3
   Archivos: `components/data/Table.tsx`, `Table.css`, `Table.test.tsx`.
   Hecho cuando: columnas de texto, código y estado con icono de forma, desplazamiento horizontal y
   mensaje de vacío sin filas; suite verde.
-- [ ] T-045 Catálogo: indicadores y tabla
-  RF: RF-027 | Depende de: T-043, T-044 | Archivos: 3
+- [ ] T-066 Catálogo: tabla
+  RF: RF-027 | Depende de: T-044, T-045 | Archivos: 3
   Archivos: `showcase/sections/DataSection.tsx`, `showcase/ShowcasePage.tsx`,
   `showcase/ShowcasePage.test.tsx`.
-  Hecho cuando: el catálogo exhibe indicadores y tabla; suite verde.
+  Hecho cuando: el catálogo exhibe la tabla con filas y sin ellas; suite verde.
 
 ## E-14 Gráfica de barras
 - [ ] T-046 Escala de la gráfica
@@ -957,9 +968,14 @@ Rama de integración: `feat/sistema-de-diseno` (los PR de las entregas van contr
 - E-12c Buscador reducido a un botón en pantallas pequeñas.
   Tareas: T-041, T-065 | Líneas estimadas: 240 | Rama: feat/sistema-de-diseno-buscador-reducido
   Cómo probarlo: catálogo, ventana de menos de 560 px: pulsar la lupa y cerrar con Escape.
-- E-13 Indicadores y tabla.
-  Tareas: T-043, T-044, T-045 | Líneas estimadas: 330 | Rama: feat/sistema-de-diseno-indicadores-tabla
-  Cómo probarlo: sección de datos del catálogo.
+- E-13 Indicadores.
+  Tareas: T-043, T-045 | Líneas estimadas: 160 | Rama: feat/sistema-de-diseno-indicadores
+  Cómo probarlo: sección «Indicadores» del catálogo.
+- E-13b Tabla.
+  Tareas: T-044, T-066 | Líneas estimadas: 320 | Rama: feat/sistema-de-diseno-tabla
+  Cómo probarlo: sección «Tabla» del catálogo.
+  Nota: E-13 se dividió en dos (E-13 y E-13b) porque la entrega completa medía 478 líneas; se aplicó
+  la regla de AGENTS.md.
 - E-14 Gráfica de barras.
   Tareas: T-046, T-047, T-048 | Líneas estimadas: 330 | Rama: feat/sistema-de-diseno-grafica
   Cómo probarlo: sección de datos del catálogo; `pnpm --filter frontend test` para la escala.
