@@ -729,11 +729,14 @@ transitorias hasta T-051 (D-12).
   quedan a opacidad 0, perder el foco lo cierra y Escape devuelve el foco al botón — [Cierto].
   Guía y referencias actualizadas.
 ## E-13 Indicadores y tabla
-- [ ] T-043 Indicador y su rejilla
+- [x] T-043 Indicador y su rejilla
   RF: RF-021 | Depende de: T-008 | Archivos: 3
   Archivos: `components/data/Indicator.tsx`, `Indicator.css`, `Indicator.test.tsx`.
   Hecho cuando: variantes normal, destacado y en alerta (cifra en el color de la prioridad) y
   rejilla de 190 px mínimo; suite verde.
+  Decisiones: `Indicator` es un `div.block.kpi` (con `data-ui="indicator"`) que reutiliza el estilo de
+  `Block`; `IndicatorGrid` es la rejilla `.kpis`. El estilo viene de la guía y de la referencia. La
+  ayuda es opcional — [Probable]. Mutantes muertos: variante ignorada, ayuda siempre pintada.
 - [ ] T-044 Tabla
   RF: RF-022 | Depende de: T-007, T-009 | Archivos: 3
   Archivos: `components/data/Table.tsx`, `Table.css`, `Table.test.tsx`.
