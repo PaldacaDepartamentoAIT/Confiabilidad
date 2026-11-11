@@ -1,6 +1,6 @@
 # Entrega E-13 · Indicadores
 
-Rama: `feat/sistema-de-diseno-indicadores` (sale de `feat/sistema-de-diseno`) · PR: pendiente ·
+Rama: `feat/sistema-de-diseno-indicadores` (sale de `feat/sistema-de-diseno`) · PR: [#93](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/93) ·
 Líneas de código y tests: 164 (límite: 400).
 
 ## Qué se hizo
@@ -20,7 +20,7 @@ El detalle de cada tarea está en [`tasks.md`](../../tasks.md).
 | Tarea | Título | Commit |
 |---|---|---|
 | T-043 | Indicador y su rejilla | `16980b2` |
-| T-045 | Catálogo: indicadores | ver historial de la rama |
+| T-045 | Catálogo: indicadores | `78aa11b` |
 
 ## Cómo ejecutarlo y probarlo
 Desde la raíz del repositorio, instala las dependencias:

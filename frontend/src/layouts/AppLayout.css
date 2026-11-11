@@ -40,7 +40,7 @@
 }
 
 /* La lista del selector de pestañas vive dentro de la barra (z-index 30): mientras está abierta, la
-   barra sube por encima del menú lateral (40) pero se queda por debajo del panel móvil (70). */
+   barra sube por encima del menú lateral (35) pero se queda por debajo del panel móvil (70). */
 .topbar:has(.tab-select .menu.open) {
   z-index: 50;
 }
@@ -48,5 +48,20 @@
 @media (max-width: 767px) {
   .topbar .menu-btn.mobile-only {
     display: inline-flex;
+  }
+}
+
+/* Incrustado en un marco (catálogo, una sección de la página pública): el panel móvil se limita al
+   marco en vez de ocupar la ventana entera. */
+.app.embedded {
+  position: relative;
+  overflow: hidden;
+  min-height: 0;
+}
+
+@media (max-width: 767px) {
+  .app.embedded .sidebar,
+  .app.embedded .sidebar.collapsed {
+    position: absolute;
   }
 }

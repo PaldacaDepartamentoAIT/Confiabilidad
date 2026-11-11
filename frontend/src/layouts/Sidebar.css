@@ -11,7 +11,8 @@
   border-right: 1px solid var(--gray);
   overflow: hidden;
   transition: width 0.25s ease-out;
-  z-index: 40;
+  /* Capas: panel móvil (70) > barra pública (40) > menú lateral (35) > barra privada (30). */
+  z-index: 35;
 }
 
 .sidebar.collapsed {
