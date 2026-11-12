@@ -242,10 +242,12 @@ svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor;
 .block h2 { margin: 0 0 14px; font-size: 15px; font-weight: 600; }
 .block p { margin: 0; }
 
-.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px 18px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 2px 18px; }
 .span-all { grid-column: 1 / -1; }
 
-.fld { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.fld { --msg-offset: -6px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.fld::after { content: ""; height: 20px; margin-top: var(--msg-offset); }
+.fld:has(> .error-msg:not([hidden]))::after { content: none; }
 .fld > label, .fld > .lbl { font-size: 12.5px; font-weight: 500; color: var(--text2); }
 .req { color: var(--text2); }
 .help { font-size: 12px; color: var(--text2); }
@@ -269,8 +271,9 @@ svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor;
 textarea.field { height: auto; min-height: 92px; padding: 8px 11px; resize: vertical; }
 textarea.field:focus { padding: 7px 10px; }
 .field[aria-invalid="true"], .field[aria-invalid="true"]:hover, .field[aria-invalid="true"]:focus { border-color: var(--p1); }
-.error-msg { display: flex; align-items: flex-start; gap: 6px; font-size: 12.5px; color: var(--ink); }
-.error-msg .i { color: var(--p1); margin-top: 1px; }
+.error-msg { display: flex; align-items: flex-start; gap: 6px; min-height: 20px; font-size: 12.5px; line-height: 16px; color: var(--ink); }
+.fld > .error-msg, .check-field > .error-msg { margin-top: var(--msg-offset, 0); }
+.error-msg .i { color: var(--p1); }
 .error-msg[hidden] { display: none; }
 
 /* Menú de selección propio */
@@ -305,8 +308,10 @@ textarea.field:focus { padding: 7px 10px; }
 .option:hover, .option.highlight { background: color-mix(in srgb, var(--ink) 9%, var(--bg)); transition-duration: .08s; }
 
 /* Casillas */
-.checks { display: flex; flex-direction: column; gap: 14px; }
+.checks { display: flex; flex-direction: column; gap: 2px; }
 .check-field { display: flex; flex-direction: column; gap: 2px; }
+.check-field::after { content: ""; height: 20px; }
+.check-field:has(> .error-msg:not([hidden]))::after { content: none; }
 .check { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; }
 .check .txt { display: flex; flex-direction: column; gap: 2px; }
 .cb { position: relative; width: 18px; height: 18px; flex: none; margin-top: 1px; }

@@ -22,8 +22,13 @@ export default defineConfig(({ mode }) => ({
     setupFiles: "./src/setupTests.ts",
     // Las pruebas de `visual/` necesitan un navegador: se ejecutan con `test:visual`.
     exclude: [...configDefaults.exclude, "visual/**"],
-    // Los tests de la identidad visual leen estos dos CSS; los demás estilos no se procesan en los tests.
-    css: { include: [/src\/styles\/(tokens|base)\.css/] },
+    // Los tests de la identidad visual y de la reserva del error leen estos CSS; los demás estilos no se procesan en los tests.
+    css: {
+      include: [
+        /src\/styles\/(tokens|base)\.css/,
+        /src\/components\/fields\/(field|Checkbox)\.css/,
+      ],
+    },
     coverage: {
       provider: "v8",
       include: ["src/**/*.{ts,tsx}"],
