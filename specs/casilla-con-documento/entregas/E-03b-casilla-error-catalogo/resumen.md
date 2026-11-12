@@ -1,6 +1,6 @@
 # Entrega E-03b · Error, revalidación y catálogo de la casilla
 
-Rama: `feat/casilla-con-documento-casilla` (sale de `feat/casilla-con-documento`, con E-03 ya fusionada) · PR: pendiente ·
+Rama: `feat/casilla-con-documento-casilla` (sale de `feat/casilla-con-documento`) · PR: [#109](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/109) ·
 Líneas de código y tests: 331 (límite: 400).
 
 ## Qué se hizo
