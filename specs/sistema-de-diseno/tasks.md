@@ -914,13 +914,23 @@ transitorias hasta T-051 (D-12).
   pasan — [Suposición]. Mutante muerto: volver a poner la regla de `main`.
 
 ## E-16 Comprobación visual
-- [ ] T-052 Playwright y proyecto de test visual
+- [x] T-052 Playwright y proyecto de test visual
   RF: RF-028 | Depende de: T-050 | Archivos: 4
   Archivos: `frontend/package.json`, `pnpm-lock.yaml`, `frontend/vitest.visual.config.ts`,
   `frontend/visual/smoke.visual.test.ts`.
   Hecho cuando: con tu permiso previo, `playwright` está en `devDependencies`, existe
   `test:visual` y la prueba abre el catálogo en Chromium; suite verde.
-  Excepción: `pnpm-lock.yaml` lo regenera `pnpm add`. Se pide permiso antes de instalar.
+  Excepción: `pnpm-lock.yaml` lo regenera `pnpm add`. Se pide permiso antes de instalar. Además se
+  tocaron `visual/app.ts` (levanta Vite en un puerto libre), `tsconfig.json` (incluye `visual`) y
+  `vite.config.ts` (excluye `visual/**` de `pnpm test`): 7 archivos en total, porque la prueba de
+  humo necesita servir la aplicación y las dos configuraciones deben convivir.
+  Decisiones: el usuario autorizó la dependencia el 12-nov. `playwright` queda fijada en `1.63.0`
+  (sin `^`), la versión cuyo Chromium trae este entorno, para que local y CI usen el mismo navegador —
+  [Probable]. `pnpm test:visual` usa `vitest.visual.config.ts` (entorno `node`, tiempo de espera de
+  60 s) y no lo ejecuta `pnpm test`. La prueba de humo abre el catálogo en tema claro y oscuro y
+  comprueba el fondo del cuerpo (`rgb(248, 249, 249)` y `rgb(17, 18, 19)`), que haya indicadores y que
+  no haya errores de página — [Cierto]. Se retiró `/// <reference types="vitest/config" />` de
+  `vite.config.ts` porque ESLint lo rechaza al importar de `vitest/config`.
 - [ ] T-053 Comparación con las referencias
   RF: RF-028 | Depende de: T-052 | Archivos: 2
   Archivos: `frontend/visual/measure.ts`, `frontend/visual/compare.visual.test.ts`.
