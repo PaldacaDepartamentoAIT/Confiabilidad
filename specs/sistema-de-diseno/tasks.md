@@ -958,11 +958,19 @@ transitorias hasta T-051 (D-12).
   Mutantes muertos (4 pruebas cada uno): relleno superior del bloque 18 → 19 px y radio del botón
   6 → 7 px.
 
-- [ ] T-054 Contraste y accesibilidad en ambos temas
+- [x] T-054 Contraste y accesibilidad en ambos temas
   RF: RF-029 | Depende de: T-052 | Archivos: 2
   Archivos: `frontend/visual/contrast.visual.test.ts`, `frontend/visual/measure.ts`.
   Hecho cuando: `axe-core` no halla violaciones de contraste AA ni de accesibilidad en el
   catálogo en claro y oscuro; `test:visual` pasa.
+  Decisiones: `accessibilityViolations(page)` inyecta `axe-core` (que ya era dependencia) en el
+  Chromium real y ejecuta las reglas WCAG 2.0/2.1 A y AA y las buenas prácticas, con la de contraste,
+  que jsdom no puede evaluar; se prueba el catálogo en claro y oscuro, a 1280 y a 420 px (4 pruebas) —
+  [Cierto]. La primera versión fallaba a veces solo a 420 px: axe leía el color a medio camino de las
+  transiciones de 0,35 s; se espera 0,7 s tras cargar y quedó estable (6 ejecuciones seguidas) —
+  [Cierto]. Mutante muerto: texto secundario del tema claro `#61656b` → `#b0b3b6` (falla la regla
+  `color-contrast`).
+
 - [ ] T-055 Comprobación visual en CI
   RF: RF-028, RF-029 | Depende de: T-053, T-054 | Archivos: 1
   Archivos: `.github/workflows/ci.yml`.
