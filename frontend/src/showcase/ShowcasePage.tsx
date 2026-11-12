@@ -67,67 +67,76 @@ export function ShowcasePage({ storage }: ShowcasePageProps) {
 
   return (
     <PublicLayout storage={storage}>
-      <main>
+      <main className="catalog-page">
         <LanguageSwitcher storage={storage} />
         <h1>{t("app.heading")}</h1>
         <p>{t("app.intro")}</p>
-        <h2 id={formTitleId}>{t("showcase.formTitle")}</h2>
-        <RequiredLegend />
-        {message && (
-          <FormMessage ref={messageRef} type={message.type} messageKey={message.messageKey} />
-        )}
-        <form
-          ref={formRef}
-          aria-labelledby={formTitleId}
-          noValidate
-          onSubmit={handleSubmit(simulateSending)}
-        >
-          <TextField
-            label={t("showcase.nameLabel")}
-            name="name"
-            autoComplete="name"
-            required
-            error={errorText(errors.name)}
-            onBlur={onBlur("name")}
-          />
-          <TextField
-            label={t("showcase.emailLabel")}
-            name="email"
-            type="email"
-            required
-            error={errorText(errors.email)}
-            onBlur={onBlur("email")}
-          />
-          <PasswordField
-            label={t("showcase.passwordLabel")}
-            name="password"
-            kind="current"
-            required
-            error={errorText(errors.password)}
-            onBlur={onBlur("password")}
-          />
-          <PasswordField
-            label={t("showcase.newPasswordLabel")}
-            name="newPassword"
-            kind="new"
-            required
-            error={errorText(errors.newPassword)}
-            onBlur={onBlur("newPassword")}
-          />
-          <CodeField
-            label={t("showcase.codeLabel")}
-            name="code"
-            required
-            error={errorText(errors.code)}
-            onBlur={onBlur("code")}
-          />
-          <Button type="submit" keepFocusOnMouseDown processing={processing}>
-            {t("showcase.submit")}
-          </Button>
-          <Button keepFocusOnMouseDown onClick={() => showResult({ message: SAMPLE_ERROR })}>
-            {t("showcase.showExampleError")}
-          </Button>
-        </form>
+        <div className="block catalog-form-block">
+          <h2 id={formTitleId}>{t("showcase.formTitle")}</h2>
+          <RequiredLegend />
+          {message && (
+            <FormMessage ref={messageRef} type={message.type} messageKey={message.messageKey} />
+          )}
+          <form
+            ref={formRef}
+            className="catalog-form"
+            aria-labelledby={formTitleId}
+            noValidate
+            onSubmit={handleSubmit(simulateSending)}
+          >
+            <TextField
+              label={t("showcase.nameLabel")}
+              name="name"
+              autoComplete="name"
+              required
+              error={errorText(errors.name)}
+              onBlur={onBlur("name")}
+            />
+            <TextField
+              label={t("showcase.emailLabel")}
+              name="email"
+              type="email"
+              required
+              error={errorText(errors.email)}
+              onBlur={onBlur("email")}
+            />
+            <PasswordField
+              label={t("showcase.passwordLabel")}
+              name="password"
+              kind="current"
+              required
+              error={errorText(errors.password)}
+              onBlur={onBlur("password")}
+            />
+            <PasswordField
+              label={t("showcase.newPasswordLabel")}
+              name="newPassword"
+              kind="new"
+              required
+              error={errorText(errors.newPassword)}
+              onBlur={onBlur("newPassword")}
+            />
+            <CodeField
+              label={t("showcase.codeLabel")}
+              name="code"
+              required
+              error={errorText(errors.code)}
+              onBlur={onBlur("code")}
+            />
+            <div className="catalog-actions">
+              <Button type="submit" keepFocusOnMouseDown processing={processing}>
+                {t("showcase.submit")}
+              </Button>
+              <Button
+                keepFocusOnMouseDown
+                variant="secondary"
+                onClick={() => showResult({ message: SAMPLE_ERROR })}
+              >
+                {t("showcase.showExampleError")}
+              </Button>
+            </div>
+          </form>
+        </div>
         <BlocksSection />
         <ButtonsSection />
         <FieldsSection />

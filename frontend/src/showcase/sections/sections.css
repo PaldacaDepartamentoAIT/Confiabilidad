@@ -63,3 +63,36 @@
     height: 100%;
   }
 }
+
+.catalog-page {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.catalog-page > h1,
+.catalog-page > p {
+  margin: 0;
+}
+
+.catalog-form-block {
+  margin-bottom: 22px;
+}
+
+.catalog-form-block h2 {
+  margin: 0 0 14px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.catalog-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.catalog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
