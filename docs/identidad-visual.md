@@ -32,7 +32,7 @@ Hay dos estructuras, según se haya iniciado sesión o no.
   a la derecha; el contenido va debajo, en una columna centrada de 480 px como máximo (el ancho
   completo en pantallas más estrechas), con 22 px de relleno lateral y 32 px de margen superior. La
   columna contiene un único bloque cuya cabecera es el título de la pantalla (`h1`, 15 px, 600) y,
-  debajo, el texto, los campos y las acciones. Los campos van apilados con 16 px de separación y las
+  debajo, el texto, los campos y las acciones. Los campos van apilados con la separación de la tabla «Campos» (24 px: la reserva del error más 2 px) y las
   acciones alineadas a la derecha con 10 px entre ellas. Las pantallas de error o de confirmación
   llevan el mismo bloque, con su título y su texto, sin formulario.
 - **Pantallas con sesión iniciada:** menú lateral y barra superior, descritos a continuación.
@@ -264,7 +264,7 @@ sección manda sobre las descripciones generales de arriba.
 | Título de página | 24 px, 600, `letter-spacing: -0,01em`, interlineado 1,25 |
 | Descripción de página | texto secundario, 14 px, a 4 px del título |
 | Formulario | dos columnas: contenido flexible y un bloque lateral de 280 px, con 18 px entre ellas; a menos de 1100 px, una sola columna |
-| Rejilla de campos | columnas automáticas de 240 px como mínimo, separación de 16 px en vertical y 18 px en horizontal; un campo puede ocupar toda la fila |
+| Rejilla de campos | columnas automáticas de 240 px como mínimo, separación de 2 px en vertical (el resto lo da la reserva del error de cada campo) y 18 px en horizontal; un campo puede ocupar toda la fila |
 | Acciones del formulario | alineadas a la derecha, separación de 10 px; el secundario («Cancelar») antes que el principal |
 | Leyenda de obligatorios | «* Campo obligatorio», 12 px, texto secundario, debajo de las acciones y alineada a la derecha, igual que ellas |
 
@@ -280,8 +280,9 @@ sección manda sobre las descripciones generales de arriba.
 
 | Parte | Valor |
 |---|---|
-| Etiqueta | 12,5 px, 500, texto secundario, a 6 px del campo; el «*» en texto secundario |
+| Etiqueta | 12,5 px, 500, texto secundario, a 8 px del campo; el «*» en texto secundario |
 | Campo | 36 px de alto, relleno horizontal de 11 px, borde de 1 px en borde de control, radio 6 px, 14 px, fondo del lienzo |
+| Reserva del mensaje | cada campo (texto, contraseña, código, selector y casilla) reserva bajo su caja 20 px (la línea del error, de 16 px, más 4 px de aire por debajo) a 2 px de ella; al aparecer o desaparecer no mueve el contenido; la ayuda va encima y siempre visible; la separación entre campos es esa reserva más los 2 px (`gap`) del formulario o de la rejilla que los contiene (24 px); dentro del campo, 8 px entre etiqueta, caja y ayuda, y lo que no es un campo conserva 16 px por encima. Un error de más de una línea hace crecer ese campo |
 | Campo de códigos | JetBrains Mono 13 px |
 | Hover | borde de 1 px en el principal |
 | Foco o menú abierto | borde de 2 px en el principal; el relleno horizontal baja a 10 px para que el texto no se mueva |

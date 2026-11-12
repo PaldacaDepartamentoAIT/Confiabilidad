@@ -1030,6 +1030,25 @@ transitorias hasta T-051 (D-12).
   dos en 40, al desplazar la página el menú lateral del marco quedaba por encima de la barra
   pública (el último en el DOM gana); a 260 px de alto se reprodujo y con 35 ya no — [Cierto].
 
+## Corrección: reserva del mensaje de error
+- [x] T-075 Reserva del mensaje de error en los campos
+  RF: RF-015 | Depende de: T-051 | Archivos: 3
+  Archivos: `components/fields/field.css`, `Checkbox.css`, `messageSpace.test.ts`.
+  Hecho cuando: cada campo y cada casilla reservan 20 px a 2 px bajo su caja y, al aparecer un error,
+  el formulario no cambia de alto; suite verde.
+  Decisiones: medido antes: 16 px entre un campo y la etiqueta del siguiente sin error y 54 px con él
+  (el error empujaba 38 px) — [Cierto]. Ahora: 24 px siempre (22 px de reserva más 2 px de `gap` del formulario o de la rejilla que contiene los campos, con 8 px de hueco interior y un margen del `::after` de −6 px; la reserva fue de 18 px y el usuario la subió, porque el error
+  quedaba pegado a la etiqueta siguiente: 16 px de línea más 4 px de aire), con 0 px de cambio de
+  altura con cinco errores a la vez en el formulario de registro, en el del catálogo y en la
+  verificación a 420 px — [Cierto]. Sin cambiar el marcado: un `::after` de 16 px que se oculta
+  con `:has(> .error-msg)`; el error mide 16 px (icono sin margen) y su margen gana en especificidad a
+  `.block p`, que lo anulaba. `PublicPage` y el catálogo quitan la separación entre campos y mantienen
+  16 px sobre lo que no es un campo; el `.public-card p` ya no alcanza a los mensajes ni a la ayuda
+  de los campos. Se amplió `css.include` de Vitest a `field.css` y `Checkbox.css` para poder
+  leerlos en el test. Límite: un mensaje de dos líneas hace crecer ese campo — [Suposición]. Mutante
+  muerto: quitar el `::after` o el que lo oculta con error. El error mide 16 px de línea en una franja de
+  20 px (`min-height`), con el texto arriba.
+
 ## Entregas
 Rama de integración: `feat/sistema-de-diseno` (los PR de las entregas van contra ella; ver `AGENTS.md`)
 
