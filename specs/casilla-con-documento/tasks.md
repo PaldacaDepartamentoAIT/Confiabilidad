@@ -157,13 +157,21 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   T-010. Se deja de aceptar `checked` desde fuera: el estado es de la casilla — [Probable] — revertir:
   aceptar `checked` y usarlo si llega. Mutantes muertos: el modal se cierra al marcar, la del modal arranca
   siempre sin marcar, la del modal hereda el `name` y sin asterisco en la del modal.
-- [ ] T-010 Cierre, error y revalidación
+- [x] T-010 Cierre, error y revalidación
   RF: RF-006, RF-011 | Depende de: T-009 | Archivos: 3
   Archivos: `components/fields/DocumentCheckbox.tsx`, `DocumentCheckbox.css`, `DocumentCheckbox.test.tsx`.
   Hecho cuando: al cerrar el modal el foco vuelve al enlace y la casilla conserva su estado; la casilla
   muestra marca de obligatoria, ayuda y error con su reserva de espacio; con la casilla en error, marcarla
   desde el modal no retira el error hasta cerrar el modal, y al cerrar se pide la revalidación al formulario
   (`onBlur`) con el estado actual; suite verde.
+  Decisiones: al pasar `open` de verdadero a falso, un efecto enfoca el enlace y llama al `onBlur` recibido con
+  un evento `{target, currentTarget, type: "blur"}` cuyo objetivo es la casilla de fuera, una vez por cierre;
+  el enlace se enfoca aunque el clic no lo hiciera (Safari no enfoca un enlace al pulsarlo) — [Probable]. El
+  error y la ayuda se pintan solo fuera del modal y la casilla de fuera lleva `aria-required`, `aria-invalid`
+  y `aria-describedby`; el error no se retira al marcar en el modal porque lo gobierna el formulario y este
+  solo valida al recibir el `onBlur` (RF-011) — [Cierto]. Sin documento, el error y la ayuda los pinta el
+  `Checkbox` normal. Mutantes muertos: no pedir la validación al cerrar (corregí uno que no se había aplicado
+  por el formato de la línea), no enfocar el enlace, el error también en el modal y sin `aria-invalid`.
 - [ ] T-011 Catálogo: casilla con documento
   RF: RF-013 | Depende de: T-010 | Archivos: 2
   Archivos: `showcase/sections/DocumentSection.tsx`, `showcase/ShowcasePage.test.tsx`.
