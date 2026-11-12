@@ -25,11 +25,12 @@
 .public-card form {
   display: flex;
   flex-direction: column;
+  gap: 2px;
 }
 
 .public-card form > * + :not(.fld, .check-field),
 .public-card form > :not(.fld, .check-field) + * {
-  margin-top: 16px;
+  margin-top: 14px;
 }
 
 .public-card form > .btn {

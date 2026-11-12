@@ -16,6 +16,13 @@ describe("reserva del mensaje de error", () => {
     expect(reserve).toMatch(/height:\s*20px/);
   });
 
+  it("el hueco de 8 px y el margen de -6 px dejan el error a 2 px de la caja", () => {
+    const container = rule(field, ".fld");
+    expect(container).toMatch(/--msg-offset:\s*-6px/);
+    expect(container).toMatch(/gap:\s*8px/);
+    expect(container).not.toMatch(/margin-bottom/);
+  });
+
   it("el error ocupa la línea reservada y no la suma a ella", () => {
     expect(rule(field, ".fld:has(> .error-msg)::after")).toMatch(/content:\s*none/);
     const message = rule(field, ".error-msg");

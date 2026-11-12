@@ -92,11 +92,12 @@
 .catalog-form {
   display: flex;
   flex-direction: column;
+  gap: 2px;
 }
 
 .catalog-form > * + :not(.fld, .check-field),
 .catalog-form > :not(.fld, .check-field) + * {
-  margin-top: 16px;
+  margin-top: 14px;
 }
 
 .catalog-actions {

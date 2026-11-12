@@ -1,13 +1,13 @@
 .fld {
-  --msg-offset: -4px;
+  --msg-offset: -6px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   min-width: 0;
 }
 
 /* Reserva del mensaje de error: 20 px (la línea de 16 px más 4 px de aire por debajo) a 2 px de la
-   caja (6 px de hueco menos 4 px). El error la ocupa al aparecer, de modo que el formulario no cambia
+   caja (8 px de hueco menos 6 px). El error la ocupa al aparecer, de modo que el formulario no cambia
    de alto. */
 .fld::after {
   content: "";
