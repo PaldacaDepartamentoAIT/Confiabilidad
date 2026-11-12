@@ -1,6 +1,6 @@
 # Entrega E-03 · Casilla con enlace y casilla del modal
 
-Rama: `feat/casilla-con-documento-casilla-enlace` (sale de `feat/casilla-con-documento`) · PR: pendiente ·
+Rama: `feat/casilla-con-documento-casilla-enlace` (sale de `feat/casilla-con-documento`) · PR: [#108](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/108) ·
 Líneas de código y tests: 347 (límite: 400).
 
 ## Qué se hizo
