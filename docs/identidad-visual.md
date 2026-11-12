@@ -29,7 +29,12 @@ Hay dos estructuras, según se haya iniciado sesión o no.
 - **Pantallas públicas** (inicio de sesión, registro, recuperación de contraseña y cualquier otra a
   la que se accede sin sesión): sin menú lateral. Solo una barra superior de 64 px con el nombre
   del sistema a la izquierda (mismo estilo que en el menú lateral) y el botón de idioma y el de tema
-  a la derecha; el contenido va debajo.
+  a la derecha; el contenido va debajo, en una columna centrada de 480 px como máximo (el ancho
+  completo en pantallas más estrechas), con 22 px de relleno lateral y 32 px de margen superior. La
+  columna contiene un único bloque cuya cabecera es el título de la pantalla (`h1`, 15 px, 600) y,
+  debajo, el texto, los campos y las acciones. Los campos van apilados con 16 px de separación y las
+  acciones alineadas a la derecha con 10 px entre ellas. Las pantallas de error o de confirmación
+  llevan el mismo bloque, con su título y su texto, sin formulario.
 - **Pantallas con sesión iniciada:** menú lateral y barra superior, descritos a continuación.
 
 Elementos comunes y de las pantallas con sesión:

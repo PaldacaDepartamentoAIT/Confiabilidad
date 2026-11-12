@@ -34,7 +34,7 @@ los cambios (transiciones, fundidos, desplazamientos de la línea de pestañas y
 ### RF-005 Diseño público
 El sistema deberá ofrecer un diseño para pantallas sin sesión con una barra superior de 64 px que
 muestre el nombre del sistema a la izquierda y, a la derecha, el botón de idioma (que muestra el código del idioma activo y abre el selector de idioma de RF-003 a RF-005 de `componentes-base-accesibles`) y el botón de tema,
-sin menú lateral, y con el contenido debajo.
+sin menú lateral, y con el contenido debajo, en una columna centrada de 480 px como máximo que contiene un único bloque con el título de la pantalla.
 
 ### RF-006 Diseño con sesión
 El sistema deberá ofrecer un diseño para pantallas con sesión compuesto por un menú lateral a la
@@ -196,3 +196,4 @@ Mientras el dispositivo tenga un puntero principal táctil, el sistema deberá m
 - 2026-11-09 — Clarificación: C-01 a C-09 — RF: RF-005, RF-007, RF-009, RF-010, RF-012, RF-015, RF-016, RF-024, RF-028, RF-031 — Estado: clarificado
 - 2026-11-10 — Corrección de RF-009: sin velo, según la guía y las referencias — RF: RF-009 — Estado: clarificado
 - 2026-11-11 — Corrección de RF-012: animación, ancho completo y cierre al perder el foco — RF: RF-012 — Estado: clarificado
+- 2026-11-11 — Corrección de RF-005: columna centrada con un bloque para el contenido de las pantallas públicas — RF: RF-005 — Estado: clarificado
