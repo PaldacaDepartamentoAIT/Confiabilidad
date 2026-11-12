@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import axe from "axe-core";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { I18nextProvider } from "react-i18next";
 
 import { createI18n } from "../i18n";
@@ -169,5 +169,78 @@ describe("closing", () => {
     await userEvent.keyboard("a{Tab}{Tab}b");
 
     expect(onClose).not.toHaveBeenCalled();
+  });
+});
+
+describe("focus", () => {
+  function Harness() {
+    const [open, setOpen] = useState(false);
+    return (
+      <I18nextProvider i18n={createI18n("en")}>
+        <button type="button" onClick={() => setOpen(true)}>
+          Open it
+        </button>
+        <DocumentModal open={open} name="Terms" content="x" onClose={() => setOpen(false)}>
+          <span />
+        </DocumentModal>
+      </I18nextProvider>
+    );
+  }
+
+  it.each([
+    ["the close button", () => userEvent.click(screen.getByRole("button", { name: "Close" }))],
+    [
+      "Escape",
+      () => fireEvent(screen.getByRole("dialog"), new Event("cancel", { cancelable: true })),
+    ],
+    ["the curtain", () => userEvent.click(screen.getByRole("dialog"))],
+  ])(
+    "returns to the element that opened the modal when it closes with %s",
+    async (_name, close) => {
+      render(<Harness />);
+      const opener = screen.getByRole("button", { name: "Open it" });
+      await userEvent.click(opener);
+      // En un navegador el foco pasa al modal; jsdom no lo mueve, así que se simula.
+      screen.getByRole("button", { name: "Close" }).focus();
+      expect(opener).not.toHaveFocus();
+
+      await close();
+
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      expect(opener).toHaveFocus();
+    },
+  );
+
+  it("does not fail if the element that opened it is gone", async () => {
+    function Vanishing() {
+      const [open, setOpen] = useState(false);
+      const [shown, setShown] = useState(true);
+      return (
+        <I18nextProvider i18n={createI18n("en")}>
+          {shown && (
+            <button type="button" onClick={() => setOpen(true)}>
+              Open it
+            </button>
+          )}
+          <DocumentModal
+            open={open}
+            name="Terms"
+            content="x"
+            onClose={() => {
+              setShown(false);
+              setOpen(false);
+            }}
+          >
+            <span />
+          </DocumentModal>
+        </I18nextProvider>
+      );
+    }
+    render(<Vanishing />);
+    await userEvent.click(screen.getByRole("button", { name: "Open it" }));
+
+    await userEvent.click(screen.getByRole("button", { name: "Close" }));
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 });

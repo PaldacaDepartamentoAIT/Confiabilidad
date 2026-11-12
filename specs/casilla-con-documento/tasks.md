@@ -91,8 +91,23 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   casilla y enlaces legibles) y a 420 px en oscuro (caja de 388 px con 16 px de margen) — [Cierto]. En el
   tema oscuro la cortina negra se nota menos porque la página ya es oscura; el borde de 1 px separa la caja —
   [Cierto]. Mutantes muertos: cortina 0,5 → 0,4 y enlace `#7f94b5` → `#546c8c`.
-- [ ] T-007 Prueba del modal en Chromium
-  RF: RF-002, RF-006, RF-007, RF-009, RF-015, RF-016 | Depende de: T-005, T-006 | Archivos: 1
+- [x] T-016 Corrección: el modal devuelve el foco al elemento que lo abrió
+  Tipo: corrección | Origen: prueba en Chromium de T-007
+  RF: RF-006 | Depende de: T-004 | Archivos: 2
+  Archivos: `components/DocumentModal.tsx`, `components/DocumentModal.test.tsx`.
+  Causa: el diálogo se desmonta en vez de cerrarse con `close()` y el navegador no restaura el foco al
+  quitarlo del documento.
+  Hecho cuando: el modal recuerda el elemento enfocado al abrirse y le devuelve el foco al cerrarse, por
+  cualquier vía; el test de jsdom lo comprueba y, en Chromium, las seis pruebas de cierre de T-007 pasan;
+  suite verde.
+  Decisiones: el efecto que abre el diálogo guarda `document.activeElement` y su limpieza le devuelve el foco
+  si sigue en el documento — [Cierto]. Se podía haber llamado a `dialog.close()` antes de desmontar, que sí
+  restaura el foco, pero el modal es controlado y se desmonta al dejar de pasar `open`; recordar al elemento
+  es más sencillo — [Probable] — revertir: cerrar con `close()` en la limpieza. Mutante muerto: no devolver el
+  foco. Mutante equivalente: quitar la comprobación `isConnected` (enfocar un elemento que ya no está en el
+  documento no hace nada).
+- [x] T-007 Prueba del modal en Chromium
+  RF: RF-002, RF-006, RF-007, RF-009, RF-015, RF-016 | Depende de: T-005, T-006, T-016 | Archivos: 1
   Archivos: `frontend/visual/document-modal.visual.test.ts`.
   Hecho cuando: en Chromium, en claro y oscuro, el catálogo abre el modal; Tab no sale de él; la página
   de detrás no se desplaza; se cierra por «x», Escape y cortina devolviendo el foco al botón que lo abrió;
@@ -100,6 +115,17 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   cambiar el tamaño de la ventana se recalcula con el modal abierto; `axe` (con contraste) no halla
   violaciones con el modal abierto, incluido el enlace de `#7f94b5`; `pnpm --filter frontend test:visual`
   pasa.
+  Decisiones: 20 pruebas por tema (40): cortina `rgba(0, 0, 0, 0.5)`, caja `rgb(27, 30, 34)` y `rgb(0, 0, 0)`
+  con texto blanco, borde de 1 px y radio de 4 px; enlaces `rgb(127, 148, 181)` sin subrayado y en pestaña
+  nueva; Tab y Mayús+Tab no llevan el foco a la página; la página de detrás no se desplaza (la rueda sobre la
+  cortina no mueve `scrollY` y el `body` queda en `overflow: hidden`); cierre por «x», Escape y cortina con
+  el foco devuelto al botón; 640 px, 568 px a 600 px de ancho y 388 px tras reducir la ventana a 420 px con
+  el modal abierto; con 120 px de alto la caja no pasa de 88 px y «x» y casilla siguen a la vista; solo se
+  desplaza el contenido; y `axe` con contraste sin violaciones con el modal abierto, incluido el enlace
+  `#7f94b5` — [Cierto]. Descubrió el defecto de T-016. Al salir del último elemento, el navegador puede llevar
+  el foco a su propia interfaz (no hay elemento activo en la página), así que lo que se afirma es que no
+  caiga en la página de detrás — [Cierto]. Mutantes (del código que la prueba vigila): el de T-016 y los de
+  T-006 (cortina y color del enlace) los matan estas pruebas.
 
 ## E-03 Casilla con documento
 - [ ] T-008 Casilla con enlace al documento
@@ -169,7 +195,7 @@ Rama de integración: feat/casilla-con-documento (los PR de las entregas van con
   Cómo probarlo: `pnpm --filter frontend dev`, abrir http://localhost:5173/ y, en la sección «Documento en un
   modal», abrir el documento y cerrarlo con la «x», Escape y la cortina.
 - E-02 El modal tiene el aspecto de la guía y se comprueba en un navegador real.
-  Tareas: T-006, T-007 | Líneas estimadas: 230 | Rama: feat/casilla-con-documento-aspecto
+  Tareas: T-006, T-016, T-007 | Líneas estimadas: 400 | Rama: feat/casilla-con-documento-aspecto
   Cómo probarlo: `pnpm --filter frontend test:visual`; en el catálogo, abrir el modal y comprobar que la
   página de detrás no se desplaza, que Tab no sale de él y que se adapta a una ventana estrecha.
 - E-03 La casilla con enlace abre el documento y se sincroniza con la del modal.
