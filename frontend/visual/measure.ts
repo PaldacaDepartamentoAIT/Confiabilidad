@@ -1,3 +1,4 @@
+import axe from "axe-core";
 import type { Page } from "playwright";
 
 // Propiedades de RF-028 que se comparan con igualdad exacta, sin tolerancia.
@@ -79,4 +80,28 @@ export function differences(reference: Measures, candidate: Measures): string[] 
     }
   }
   return found;
+}
+
+export type Violation = { id: string; impact?: string | null; targets: string[] };
+
+// Ejecuta axe-core en el navegador real, con todas sus reglas (también la de contraste, que jsdom no
+// puede evaluar), y devuelve cada violación con los elementos afectados.
+export async function accessibilityViolations(page: Page): Promise<Violation[]> {
+  await page.evaluate(() => document.fonts.ready);
+  // Las transiciones de color (0,35 s) deben haber terminado: axe lee el color a medio camino.
+  await page.waitForTimeout(700);
+  await page.addScriptTag({ content: axe.source });
+  const results = await page.evaluate(() =>
+    (window as unknown as { axe: typeof axe }).axe.run(document, {
+      runOnly: {
+        type: "tag",
+        values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "best-practice"],
+      },
+    }),
+  );
+  return results.violations.map(({ id, impact, nodes }) => ({
+    id,
+    impact,
+    targets: nodes.map((node) => node.target.join(" ")),
+  }));
 }
