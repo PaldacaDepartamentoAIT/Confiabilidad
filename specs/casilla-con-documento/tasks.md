@@ -107,7 +107,7 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   arreglo y pasan después — [Cierto]. Mutante muerto: no devolver el foco. Mutante equivalente: quitar la comprobación `isConnected` (enfocar un elemento que ya no está en el
   documento no hace nada).
 ## E-02b Prueba del modal en Chromium
-- [ ] T-007 Prueba del modal en Chromium
+- [x] T-007 Prueba del modal en Chromium
   RF: RF-002, RF-006, RF-007, RF-009, RF-015, RF-016 | Depende de: T-005, T-006, T-016 | Archivos: 1
   Archivos: `frontend/visual/document-modal.visual.test.ts`.
   Hecho cuando: en Chromium, en claro y oscuro, el catálogo abre el modal; Tab no sale de él; la página
@@ -116,6 +116,17 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   cambiar el tamaño de la ventana se recalcula con el modal abierto; `axe` (con contraste) no halla
   violaciones con el modal abierto, incluido el enlace de `#7f94b5`; `pnpm --filter frontend test:visual`
   pasa.
+  Decisiones: 20 pruebas por tema (40): cortina `rgba(0, 0, 0, 0.5)`, caja `rgb(27, 30, 34)` y `rgb(0, 0, 0)`
+  con texto blanco, borde de 1 px y radio de 4 px; enlaces `rgb(127, 148, 181)` sin subrayado y en pestaña
+  nueva; Tab y Mayús+Tab no llevan el foco a la página; la página de detrás no se desplaza (la rueda sobre la
+  cortina no mueve `scrollY` y el `body` queda en `overflow: hidden`); cierre por «x», Escape y cortina con
+  el foco devuelto al botón; 640 px, 568 px a 600 px de ancho y 388 px tras reducir la ventana a 420 px con
+  el modal abierto; con 120 px de alto la caja no pasa de 88 px y «x» y casilla siguen a la vista; solo se
+  desplaza el contenido; y `axe` con contraste sin violaciones con el modal abierto, incluido el enlace
+  `#7f94b5` — [Cierto]. Descubrió el defecto de T-016. Al salir del último elemento, el navegador puede llevar
+  el foco a su propia interfaz (no hay elemento activo en la página), así que lo que se afirma es que no
+  caiga en la página de detrás — [Cierto]. Mutantes (del código que la prueba vigila): el de T-016 y los de
+  T-006 (cortina y color del enlace) los matan estas pruebas.
 
 ## E-03 Casilla con documento
 - [ ] T-008 Casilla con enlace al documento
