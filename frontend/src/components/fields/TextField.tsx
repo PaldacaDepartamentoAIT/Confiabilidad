@@ -47,7 +47,7 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(function T
       />
       {adornment}
       {hint && (
-        <p className="help" id={hintId}>
+        <p className="help" id={hintId} data-ui="help">
           {hint}
         </p>
       )}

@@ -65,7 +65,7 @@ const NativeSelect = forwardRef<HTMLSelectElement, NativeSelectProps>(function N
         ))}
       </select>
       {hint && (
-        <p className="help" id={hintId}>
+        <p className="help" id={hintId} data-ui="help">
           {hint}
         </p>
       )}

@@ -5,6 +5,7 @@
 }
 
 .check {
+  color: var(--ink);
   display: flex;
   align-items: flex-start;
   gap: 10px;

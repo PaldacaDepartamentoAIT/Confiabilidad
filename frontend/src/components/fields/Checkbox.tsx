@@ -44,7 +44,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
         </span>
       </label>
       {hint && (
-        <p className="help" id={hintId}>
+        <p className="help" id={hintId} data-ui="help">
           {hint}
         </p>
       )}
