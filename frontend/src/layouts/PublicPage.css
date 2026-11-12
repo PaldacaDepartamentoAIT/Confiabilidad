@@ -15,14 +15,21 @@
   margin: 24px 0 14px;
 }
 
-.public-card p {
+.public-card p:not(.error-msg, .help),
+.public-card > .help {
   margin: 0 0 14px;
 }
 
+/* Entre campos no hay separación propia: la línea reservada del error (18 px) ya la da. Lo que no es
+   un campo conserva 16 px por encima. */
 .public-card form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+}
+
+.public-card form > * + :not(.fld, .check-field),
+.public-card form > :not(.fld, .check-field) + * {
+  margin-top: 16px;
 }
 
 .public-card form > .btn {

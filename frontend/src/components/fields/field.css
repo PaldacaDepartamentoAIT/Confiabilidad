@@ -1,8 +1,21 @@
 .fld {
+  --msg-offset: -4px;
   display: flex;
   flex-direction: column;
   gap: 6px;
   min-width: 0;
+}
+
+/* Reserva del mensaje de error: una línea de 16 px más 2 px de separación bajo la caja (6 px de
+   hueco menos 4 px). El error la ocupa al aparecer, de modo que el formulario no cambia de alto. */
+.fld::after {
+  content: "";
+  height: 16px;
+  margin-top: var(--msg-offset);
+}
+
+.fld:has(> .error-msg)::after {
+  content: none;
 }
 
 .fld > label,
@@ -70,14 +83,21 @@
   align-items: flex-start;
   gap: 6px;
   margin: 0;
+  min-height: 16px;
   font-size: 12.5px;
+  line-height: 16px;
   color: var(--ink);
+}
+
+/* Con más especificidad que `.block p`, que pone margen 0 a los párrafos de un bloque. */
+.fld > .error-msg,
+.check-field > .error-msg {
+  margin-top: var(--msg-offset, 0);
 }
 
 .error-msg > svg {
   flex: none;
   color: var(--p1);
-  margin-top: 1px;
 }
 
 /* Botón de icono dentro de un campo: sigue al input en el flujo y se coloca encima de su borde derecho. */

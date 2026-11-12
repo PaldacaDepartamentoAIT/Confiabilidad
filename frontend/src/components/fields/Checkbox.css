@@ -4,6 +4,16 @@
   gap: 2px;
 }
 
+/* Reserva del mensaje de error: la misma línea de 16 px que en los demás campos. */
+.check-field::after {
+  content: "";
+  height: 16px;
+}
+
+.check-field:has(> .error-msg)::after {
+  content: none;
+}
+
 .check {
   display: flex;
   align-items: flex-start;
