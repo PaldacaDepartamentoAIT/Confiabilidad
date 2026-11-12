@@ -7,11 +7,14 @@ En cada tarea se prueba al menos un mutante del código que introduce y debe hac
 Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
 
 ## E-01 Modal de documento
-- [ ] T-001 Doble de `<dialog>` para los tests de jsdom
+- [x] T-001 Doble de `<dialog>` para los tests de jsdom
   RF: RF-008 | Depende de: — | Archivos: 2
   Archivos: `setupTests.ts`, `dialogStub.test.ts`.
   Hecho cuando: en jsdom, `showModal()` pone el atributo `open`, `close()` lo quita y emite `close`, y
   `dialogStub.test.ts` lo comprueba; suite verde.
+  Decisiones: el doble solo se instala si jsdom no trae `showModal`, y no imita el foco ni la inertización:
+  eso lo comprueba Chromium (T-007) — [Cierto]. `close()` en un diálogo cerrado no emite nada, como el
+  navegador — [Probable]. Mutante muerto: `close()` sin emitir el evento.
 - [ ] T-002 Texto de «Cerrar» del modal en tres idiomas
   RF: RF-014 | Depende de: — | Archivos: 3
   Archivos: `i18n/locales/en.ts`, `es.ts`, `pt-BR.ts`.
