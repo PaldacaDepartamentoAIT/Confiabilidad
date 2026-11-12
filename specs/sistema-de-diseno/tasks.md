@@ -998,7 +998,7 @@ transitorias hasta T-051 (D-12).
   Hecho cuando: cada campo y cada casilla reservan 20 px a 2 px bajo su caja y, al aparecer un error,
   el formulario no cambia de alto; suite verde.
   Decisiones: medido antes: 16 px entre un campo y la etiqueta del siguiente sin error y 54 px con él
-  (el error empujaba 38 px) — [Cierto]. Ahora: 22 px siempre (la reserva fue de 18 px y el usuario la subió, porque el error
+  (el error empujaba 38 px) — [Cierto]. Ahora: 24 px siempre (22 px de reserva más 2 px de `gap` del formulario o de la rejilla que contiene los campos, con 8 px de hueco interior y un margen del `::after` de −6 px; la reserva fue de 18 px y el usuario la subió, porque el error
   quedaba pegado a la etiqueta siguiente: 16 px de línea más 4 px de aire), con 0 px de cambio de
   altura con cinco errores a la vez en el formulario de registro, en el del catálogo y en la
   verificación a 420 px — [Cierto]. Sin cambiar el marcado: un `::after` de 16 px que se oculta
