@@ -68,7 +68,7 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   del pie sale en tinta sobre negro (no se lee), los enlaces en el color principal y la cortina por defecto
   del navegador — [Cierto]. Mutante muerto: `onClose` vacío.
 
-## E-02 Aspecto del modal y prueba en navegador
+## E-02 Aspecto del modal y foco
 - [x] T-006 Aspecto del modal según la guía
   RF: RF-002, RF-007, RF-009 | Depende de: T-004 | Archivos: 3
   Archivos: `components/DocumentModal.css`, `components/documentModalCss.test.ts`,
@@ -103,9 +103,10 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   Decisiones: el efecto que abre el diálogo guarda `document.activeElement` y su limpieza le devuelve el foco
   si sigue en el documento — [Cierto]. Se podía haber llamado a `dialog.close()` antes de desmontar, que sí
   restaura el foco, pero el modal es controlado y se desmonta al dejar de pasar `open`; recordar al elemento
-  es más sencillo — [Probable] — revertir: cerrar con `close()` en la limpieza. Mutante muerto: no devolver el
-  foco. Mutante equivalente: quitar la comprobación `isConnected` (enfocar un elemento que ya no está en el
+  es más sencillo — [Probable] — revertir: cerrar con `close()` en la limpieza. Verificado en Chromium con las pruebas de cierre de T-007 (entrega E-02b), que fallaban antes del
+  arreglo y pasan después — [Cierto]. Mutante muerto: no devolver el foco. Mutante equivalente: quitar la comprobación `isConnected` (enfocar un elemento que ya no está en el
   documento no hace nada).
+## E-02b Prueba del modal en Chromium
 - [x] T-007 Prueba del modal en Chromium
   RF: RF-002, RF-006, RF-007, RF-009, RF-015, RF-016 | Depende de: T-005, T-006, T-016 | Archivos: 1
   Archivos: `frontend/visual/document-modal.visual.test.ts`.
@@ -194,10 +195,15 @@ Rama de integración: feat/casilla-con-documento (los PR de las entregas van con
   Tareas: T-005 | Líneas estimadas: 83 | Rama: feat/casilla-con-documento-modal
   Cómo probarlo: `pnpm --filter frontend dev`, abrir http://localhost:5173/ y, en la sección «Documento en un
   modal», abrir el documento y cerrarlo con la «x», Escape y la cortina.
-- E-02 El modal tiene el aspecto de la guía y se comprueba en un navegador real.
-  Tareas: T-006, T-016, T-007 | Líneas estimadas: 400 | Rama: feat/casilla-con-documento-aspecto
-  Cómo probarlo: `pnpm --filter frontend test:visual`; en el catálogo, abrir el modal y comprobar que la
-  página de detrás no se desplaza, que Tab no sale de él y que se adapta a una ventana estrecha.
+- E-02 El modal tiene el aspecto de la guía y devuelve el foco al elemento que lo abrió.
+  Tareas: T-006, T-016 | Líneas estimadas: 209 | Rama: feat/casilla-con-documento-aspecto-modal
+  Cómo probarlo: `pnpm --filter frontend dev`, abrir http://localhost:5173/, abrir el documento de la sección
+  «Documento en un modal» y comprobar la cortina, la caja negra, los enlaces azul grisáceo sin subrayado, la
+  etiqueta de la casilla en blanco y que, al cerrarlo, el foco vuelve al botón que lo abrió.
+  Nota: E-02 medía 425 líneas con la prueba en Chromium; se dividió en E-02 y E-02b según `AGENTS.md`.
+- E-02b El modal se comprueba en un navegador real.
+  Tareas: T-007 | Líneas estimadas: 216 | Rama: feat/casilla-con-documento-aspecto
+  Cómo probarlo: `pnpm --filter frontend test:visual` (40 pruebas nuevas del modal, en claro y oscuro).
 - E-03 La casilla con enlace abre el documento y se sincroniza con la del modal.
   Tareas: T-008, T-009, T-010, T-011 | Líneas estimadas: 390 | Rama: feat/casilla-con-documento-casilla
   Cómo probarlo: `pnpm --filter frontend dev`, abrir http://localhost:5173/ y, en la sección de casillas
