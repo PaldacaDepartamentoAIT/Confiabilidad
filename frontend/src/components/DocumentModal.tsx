@@ -18,7 +18,7 @@ type DocumentModalProps = {
 
 // Modal de documento sobre un `<dialog>` nativo: el navegador atrapa el foco, deja inerte la página y atiende
 // Escape (D-01). Se pinta en `document.body` para que no pertenezca a ningún formulario.
-export function DocumentModal({ open, name, content, children }: DocumentModalProps) {
+export function DocumentModal({ open, name, content, onClose, children }: DocumentModalProps) {
   const { t } = useTranslation();
   const dialog = useRef<HTMLDialogElement>(null);
 
@@ -29,10 +29,28 @@ export function DocumentModal({ open, name, content, children }: DocumentModalPr
   if (!open) return null;
 
   return createPortal(
-    <dialog ref={dialog} className="document-modal" aria-label={name}>
+    <dialog
+      ref={dialog}
+      className="document-modal"
+      aria-label={name}
+      // Escape: el diálogo no se cierra solo; lo cierra quien lo usa al dejar de pasar `open`.
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
+      // El diálogo ocupa toda la pantalla y la caja va dentro: un clic sobre él mismo es un clic en la cortina.
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
       <div className="document-box">
         <div className="document-head">
-          <button type="button" className="document-close" aria-label={t("button.close")}>
+          <button
+            type="button"
+            className="document-close"
+            aria-label={t("button.close")}
+            onClick={onClose}
+          >
             <span aria-hidden="true">×</span>
           </button>
         </div>

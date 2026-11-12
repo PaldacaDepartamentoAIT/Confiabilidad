@@ -41,11 +41,17 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   `onClose` ya está en las propiedades pero se usa en T-004. El `<dialog>` ocupa toda la pantalla y la caja
   va dentro, para que T-004 detecte el clic en la cortina — [Cierto]. Mutantes muertos: sin `target`, se
   pinta cerrado, sin nombre accesible.
-- [ ] T-004 Modal: cierre por «x», Escape y cortina
+- [x] T-004 Modal: cierre por «x», Escape y cortina
   RF: RF-006 | Depende de: T-003 | Archivos: 3
   Archivos: `components/DocumentModal.tsx`, `DocumentModal.css`, `DocumentModal.test.tsx`.
   Hecho cuando: la «x», la tecla Escape y un clic en la cortina llaman a `onClose`, y un clic dentro de
   la caja no; el modal no se cierra solo por otros motivos; suite verde.
+  Decisiones: el modal es controlado: «x», Escape y cortina solo llaman a `onClose`; quien lo usa deja de
+  pasar `open` para cerrarlo. Escape llega como el evento `cancel` nativo, cuyo comportamiento por defecto
+  (cerrar el diálogo) se anula con `preventDefault` — [Cierto]. La prueba de Escape lanza ese evento en
+  jsdom; que el navegador real lo emita con la tecla se comprueba en Chromium (T-007) — [Probable]. Un test
+  mal escrito (la barra espaciadora sobre la «x» enfocada sí la pulsa) se corrigió. Mutantes muertos: la
+  cortina cierra también con clic dentro, Escape sin `preventDefault`, la «x» sin manejador.
 - [ ] T-005 Catálogo: modal de ejemplo
   RF: RF-013 | Depende de: T-004 | Archivos: 3
   Archivos: `showcase/sections/DocumentSection.tsx`, `showcase/ShowcasePage.tsx`,

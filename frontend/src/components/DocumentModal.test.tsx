@@ -1,4 +1,5 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import axe from "axe-core";
 import type { ReactNode } from "react";
 import { I18nextProvider } from "react-i18next";
@@ -116,4 +117,57 @@ test("has no accessibility violations", async () => {
   renderModal();
   const results = await axe.run(document.body, { rules: { "color-contrast": { enabled: false } } });
   expect(results.violations).toEqual([]);
+});
+
+describe("closing", () => {
+  it("the close button asks to close", async () => {
+    const onClose = vi.fn();
+    renderModal({ onClose });
+
+    await userEvent.click(screen.getByRole("button", { name: "Close" }));
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("Escape asks to close and does not close the dialog by itself", () => {
+    const onClose = vi.fn();
+    renderModal({ onClose });
+    const dialog = screen.getByRole("dialog");
+    const cancel = new Event("cancel", { cancelable: true });
+
+    fireEvent(dialog, cancel);
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(cancel.defaultPrevented).toBe(true);
+    expect(dialog).toHaveAttribute("open");
+  });
+
+  it("a click on the curtain asks to close", async () => {
+    const onClose = vi.fn();
+    renderModal({ onClose });
+
+    await userEvent.click(screen.getByRole("dialog"));
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("a click inside the box does not close it", async () => {
+    const onClose = vi.fn();
+    renderModal({ onClose });
+
+    await userEvent.click(screen.getByRole("heading", { name: "Terms" }));
+    await userEvent.click(screen.getByRole("checkbox", { name: "Accept" }));
+    await userEvent.click(screen.getByRole("link", { name: "the policy" }));
+
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("other keys do not close it", async () => {
+    const onClose = vi.fn();
+    renderModal({ onClose });
+
+    await userEvent.keyboard("a{Tab}{Tab}b");
+
+    expect(onClose).not.toHaveBeenCalled();
+  });
 });
