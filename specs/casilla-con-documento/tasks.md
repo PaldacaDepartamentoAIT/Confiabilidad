@@ -79,6 +79,9 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   desplaza (`body:has(dialog[open])`); aparece con un fundido de 0,2 s; los enlaces del documento son
   `#7f94b5` sin subrayado; `docs/identidad-visual.md` recoge estas medidas en filas nuevas; el test lee
   el CSS y las comprueba; suite verde.
+  Excepción: 4 archivos en lugar de 3. Vitest solo procesa los CSS de `css.include` en `vite.config.ts` y
+  sin eso el test que lee `DocumentModal.css` recibe un texto vacío; añadir ese CSS son una línea en
+  `frontend/vite.config.ts`. Aprobada por el usuario el 12-nov.
 - [ ] T-007 Prueba del modal en Chromium
   RF: RF-002, RF-006, RF-007, RF-009, RF-015, RF-016 | Depende de: T-005, T-006 | Archivos: 1
   Archivos: `frontend/visual/document-modal.visual.test.ts`.
