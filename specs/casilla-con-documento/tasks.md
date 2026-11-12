@@ -6,7 +6,7 @@ Estado: aprobado
 En cada tarea se prueba al menos un mutante del código que introduce y debe hacer fallar sus tests.
 Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
 
-## E-01 Modal de documento
+## E-01 Modal de documento (componente)
 - [x] T-001 Doble de `<dialog>` para los tests de jsdom
   RF: RF-008 | Depende de: — | Archivos: 2
   Archivos: `setupTests.ts`, `dialogStub.test.ts`.
@@ -52,6 +52,7 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   jsdom; que el navegador real lo emita con la tecla se comprueba en Chromium (T-007) — [Probable]. Un test
   mal escrito (la barra espaciadora sobre la «x» enfocada sí la pulsa) se corrigió. Mutantes muertos: la
   cortina cierra también con clic dentro, Escape sin `preventDefault`, la «x» sin manejador.
+## E-01b Catálogo: modal de ejemplo
 - [ ] T-005 Catálogo: modal de ejemplo
   RF: RF-013 | Depende de: T-004 | Archivos: 3
   Archivos: `showcase/sections/DocumentSection.tsx`, `showcase/ShowcasePage.tsx`,
@@ -137,10 +138,16 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
 ## Entregas
 Rama de integración: feat/casilla-con-documento (los PR de las entregas van contra ella; ver `AGENTS.md`)
 
-- E-01 Se puede abrir y cerrar un modal con un documento desde el catálogo.
-  Tareas: T-001, T-002, T-003, T-004, T-005 | Líneas estimadas: 390 | Rama: feat/casilla-con-documento-modal
-  Cómo probarlo: `pnpm --filter frontend dev`, abrir http://localhost:5173/ y, en la sección del modal, abrir
-  el documento y cerrarlo con la «x», Escape y la cortina.
+- E-01 El componente `DocumentModal` abre un documento en Markdown en un diálogo y se cierra con la «x», Escape
+  y la cortina (se prueba con `pnpm --filter frontend test`; aún no se ve en el catálogo).
+  Tareas: T-001, T-002, T-003, T-004 | Líneas estimadas: 382 | Rama: feat/casilla-con-documento-componente-modal
+  Cómo probarlo: `pnpm --filter frontend test` (los 14 tests de `DocumentModal.test.tsx` y los de
+  `dialogStub.test.ts`).
+  Nota: E-01 medía 465 líneas con el catálogo; se dividió en E-01 y E-01b según `AGENTS.md`.
+- E-01b Se puede abrir y cerrar el modal con un documento desde el catálogo.
+  Tareas: T-005 | Líneas estimadas: 83 | Rama: feat/casilla-con-documento-modal
+  Cómo probarlo: `pnpm --filter frontend dev`, abrir http://localhost:5173/ y, en la sección «Documento en un
+  modal», abrir el documento y cerrarlo con la «x», Escape y la cortina.
 - E-02 El modal tiene el aspecto de la guía y se comprueba en un navegador real.
   Tareas: T-006, T-007 | Líneas estimadas: 230 | Rama: feat/casilla-con-documento-aspecto
   Cómo probarlo: `pnpm --filter frontend test:visual`; en el catálogo, abrir el modal y comprobar que la
