@@ -495,6 +495,60 @@ test("the catalog opens an example document in a modal and closes it in the thre
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 });
 
+test("the catalog shows the checkbox with a document in its four cases and opens its modal", async () => {
+  const user = userEvent.setup();
+  renderPage("en");
+  const catalog = screen.getByRole("region", { name: "Casillas con documento" });
+  expect(catalog).toHaveAttribute("lang", "es");
+  expect(within(catalog).getAllByRole("checkbox")).toHaveLength(4);
+  // Obligatoria, opcional y con error llevan enlace; la cuarta no tiene documento.
+  expect(within(catalog).getAllByRole("link")).toHaveLength(3);
+  const required = within(catalog).getByRole("checkbox", {
+    name: "Acepto los términos y condiciones",
+  });
+  expect(required).toHaveAttribute("aria-required", "true");
+  expect(
+    within(catalog).getByRole("checkbox", { name: /Quiero recibir novedades/ }),
+  ).not.toHaveAttribute("aria-required");
+  expect(
+    within(catalog).getByRole("checkbox", { name: "Acepto el aviso de privacidad" }),
+  ).toBeInTheDocument();
+  expect(
+    within(catalog).queryByRole("link", { name: "Acepto el aviso de privacidad" }),
+  ).not.toBeInTheDocument();
+
+  await user.click(
+    within(catalog).getByRole("link", { name: "Acepto los términos y condiciones" }),
+  );
+  const dialog = screen.getByRole("dialog", { name: "Acepto los términos y condiciones" });
+  expect(
+    within(dialog).getByRole("heading", { name: "Términos y condiciones" }),
+  ).toBeInTheDocument();
+  await user.click(within(dialog).getByRole("checkbox"));
+  await user.click(within(dialog).getByRole("button", { name: "Close" }));
+
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  expect(required).toBeChecked();
+});
+
+test("in the catalog, the checkbox with an error keeps it until the modal closes and then revalidates", async () => {
+  const user = userEvent.setup();
+  renderPage("en");
+  const catalog = screen.getByRole("region", { name: "Casillas con documento" });
+  const link = within(catalog).getByRole("link", { name: "Acepto la política de datos" });
+  expect(within(catalog).getByText("Debes aceptar la política de datos.")).toBeInTheDocument();
+
+  await user.click(link);
+  await user.click(within(screen.getByRole("dialog")).getByRole("checkbox"));
+  expect(within(catalog).getByText("Debes aceptar la política de datos.")).toBeInTheDocument();
+
+  await user.click(screen.getByRole("button", { name: "Close" }));
+
+  expect(
+    within(catalog).queryByText("Debes aceptar la política de datos."),
+  ).not.toBeInTheDocument();
+});
+
 test("the catalog adds no extra stops to the keyboard order", async () => {
   const user = userEvent.setup();
   renderPage();

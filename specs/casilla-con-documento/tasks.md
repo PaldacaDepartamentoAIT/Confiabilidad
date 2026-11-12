@@ -158,18 +158,35 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   aceptar `checked` y usarlo si llega. Mutantes muertos: el modal se cierra al marcar, la del modal arranca
   siempre sin marcar, la del modal hereda el `name` y sin asterisco en la del modal.
 ## E-03b Error, revalidación y catálogo de la casilla
-- [ ] T-010 Cierre, error y revalidación
+- [x] T-010 Cierre, error y revalidación
   RF: RF-006, RF-011 | Depende de: T-009 | Archivos: 3
   Archivos: `components/fields/DocumentCheckbox.tsx`, `DocumentCheckbox.css`, `DocumentCheckbox.test.tsx`.
   Hecho cuando: al cerrar el modal el foco vuelve al enlace y la casilla conserva su estado; la casilla
   muestra marca de obligatoria, ayuda y error con su reserva de espacio; con la casilla en error, marcarla
   desde el modal no retira el error hasta cerrar el modal, y al cerrar se pide la revalidación al formulario
   (`onBlur`) con el estado actual; suite verde.
-- [ ] T-011 Catálogo: casilla con documento
+  Decisiones: al pasar `open` de verdadero a falso, un efecto enfoca el enlace y llama al `onBlur` recibido con
+  un evento `{target, currentTarget, type: "blur"}` cuyo objetivo es la casilla de fuera, una vez por cierre;
+  el enlace se enfoca aunque el clic no lo hiciera (Safari no enfoca un enlace al pulsarlo) — [Probable]. El
+  error y la ayuda se pintan solo fuera del modal y la casilla de fuera lleva `aria-required`, `aria-invalid`
+  y `aria-describedby`; el error no se retira al marcar en el modal porque lo gobierna el formulario y este
+  solo valida al recibir el `onBlur` (RF-011) — [Cierto]. Sin documento, el error y la ayuda los pinta el
+  `Checkbox` normal. Mutantes muertos: no pedir la validación al cerrar (corregí uno que no se había aplicado
+  por el formato de la línea), no enfocar el enlace, el error también en el modal y sin `aria-invalid`.
+- [x] T-011 Catálogo: casilla con documento
   RF: RF-013 | Depende de: T-010 | Archivos: 2
   Archivos: `showcase/sections/DocumentSection.tsx`, `showcase/ShowcasePage.test.tsx`.
   Hecho cuando: el catálogo sustituye el modal de ejemplo por la casilla con documento obligatoria,
   opcional, con error y sin documento, y abre el modal en las que lo tienen; suite verde.
+  Decisiones: se conserva el modal de ejemplo de T-005 (botón «Abrir el documento») y se añade al lado la
+  sección «Casillas con documento», en vez de sustituirlo como decía la tarea: la prueba en Chromium de T-007
+  (`document-modal.visual.test.ts`) lo abre desde ese botón y cambiarlo exigía tocar ese archivo, fuera de los
+  de la tarea — [Probable] — revertir: abrir el modal en esa prueba desde el enlace de la casilla y borrar el
+  botón. Las cuatro casillas son: términos (obligatoria), novedades por correo (opcional), política de datos
+  (obligatoria y con un error que se mantiene hasta cerrar el modal y entonces se revalida) y aviso de
+  privacidad (sin documento). Verificado en un navegador real: el error no cambia la altura de la fila
+  (42 px con y sin error), el foco vuelve al enlace al cerrar y las 40 pruebas visuales siguen pasando
+  — [Cierto].
 
 ## E-04 Registro con la casilla
 - [ ] T-012 Casilla con documento: idioma y accesibilidad

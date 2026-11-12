@@ -1,4 +1,5 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import { useState, type FocusEvent } from "react";
 import userEvent from "@testing-library/user-event";
 import { I18nextProvider } from "react-i18next";
 
@@ -231,5 +232,137 @@ describe("the checkbox of the modal", () => {
     await userEvent.click(inner);
 
     expect(onChange).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("obligatory, help, error and closing", () => {
+  it("marks the obligatory one with an asterisk outside the link and with aria-required", () => {
+    renderCheckbox({ required: true });
+
+    const link = screen.getByRole("link", { name: LABEL });
+    expect(link).not.toHaveTextContent("*");
+    expect(link.closest(".txt")).toHaveTextContent(`${LABEL} *`);
+    expect(screen.getByRole("checkbox")).toHaveAttribute("aria-required", "true");
+  });
+
+  it("an optional one has no asterisk and no aria-required", () => {
+    renderCheckbox();
+
+    expect(screen.getByRole("link").closest(".txt")).not.toHaveTextContent("*");
+    expect(screen.getByRole("checkbox")).not.toHaveAttribute("aria-required");
+  });
+
+  it("shows the help and the error under the row, linked to the checkbox", () => {
+    const { container } = renderCheckbox({ hint: "Read it first", error: "You must accept" });
+
+    const box = screen.getByRole("checkbox");
+    const hint = screen.getByText("Read it first");
+    const error = screen.getByText("You must accept").closest(".error-msg") as HTMLElement;
+    expect(hint).toHaveClass("help");
+    expect(error.querySelector("svg")).toHaveClass("lucide-circle-alert");
+    expect(box).toHaveAttribute("aria-invalid", "true");
+    expect(box.getAttribute("aria-describedby")?.split(" ")).toEqual([hint.id, error.id]);
+    expect(container.querySelector(".check-field")).toContainElement(error);
+  });
+
+  it("without error it is not invalid", () => {
+    renderCheckbox();
+    expect(screen.getByRole("checkbox")).not.toHaveAttribute("aria-invalid");
+  });
+
+  it("the error and the help stay outside the modal, which repeats neither", async () => {
+    renderCheckbox({ hint: "Read it first", error: "You must accept" });
+
+    await userEvent.click(screen.getByRole("link", { name: LABEL }));
+
+    const dialog = screen.getByRole("dialog");
+    expect(within(dialog).queryByText("Read it first")).not.toBeInTheDocument();
+    expect(within(dialog).queryByText("You must accept")).not.toBeInTheDocument();
+  });
+
+  it("the error also works without a document", () => {
+    renderCheckbox({ document: "", error: "You must accept" });
+    expect(screen.getByRole("checkbox")).toHaveAttribute("aria-invalid", "true");
+  });
+
+  function Form() {
+    const [error, setError] = useState<string | undefined>("You must accept");
+    return (
+      <I18nextProvider i18n={createI18n("en")}>
+        <form>
+          <DocumentCheckbox
+            label={LABEL}
+            name="terms"
+            document="Some text"
+            required
+            error={error}
+            onBlur={(event: FocusEvent<HTMLInputElement>) =>
+              setError(event.target.checked ? undefined : "You must accept")
+            }
+          />
+        </form>
+      </I18nextProvider>
+    );
+  }
+
+  it("keeps the error while the modal is open even if it is checked there, and lifts it when it closes", async () => {
+    render(<Form />);
+    await userEvent.click(screen.getByRole("link", { name: LABEL }));
+
+    await userEvent.click(within(screen.getByRole("dialog")).getByRole("checkbox"));
+    expect(screen.getByText("You must accept")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Close" }));
+
+    expect(screen.queryByText("You must accept")).not.toBeInTheDocument();
+    expect(screen.getByRole("checkbox")).toBeChecked();
+  });
+
+  it("revalidates with the current state when it closes, also when it is still unchecked", async () => {
+    render(<Form />);
+    await userEvent.click(screen.getByRole("link", { name: LABEL }));
+
+    await userEvent.click(screen.getByRole("button", { name: "Close" }));
+
+    expect(screen.getByText("You must accept")).toBeInTheDocument();
+    expect(screen.getByRole("checkbox")).not.toBeChecked();
+  });
+
+  it("asks for the validation with an event whose target is the outside checkbox, once per closing", async () => {
+    const onBlur = vi.fn();
+    const { container } = renderCheckbox({ onBlur });
+    await userEvent.click(screen.getByRole("link", { name: LABEL }));
+    expect(onBlur).not.toHaveBeenCalled();
+
+    await userEvent.click(screen.getByRole("button", { name: "Close" }));
+
+    expect(onBlur).toHaveBeenCalledTimes(1);
+    expect(onBlur.mock.calls[0][0].target).toBe(container.querySelector("input[name='terms']"));
+  });
+
+  it.each([
+    ["the close button", () => userEvent.click(screen.getByRole("button", { name: "Close" }))],
+    ["the curtain", () => userEvent.click(screen.getByRole("dialog"))],
+  ])("the focus goes back to the link when it closes with %s", async (_name, close) => {
+    renderCheckbox();
+    await userEvent.click(screen.getByRole("link", { name: LABEL }));
+
+    await close();
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: LABEL })).toHaveFocus();
+  });
+
+  it("the focus goes back to the link even if the click did not focus it", async () => {
+    renderCheckbox();
+    const link = screen.getByRole("link", { name: LABEL });
+    // Safari no enfoca un enlace al pulsarlo: se abre sin que el enlace tenga el foco.
+    fireEvent.click(link);
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(link).not.toHaveFocus();
+
+    await userEvent.click(screen.getByRole("button", { name: "Close" }));
+
+    expect(link).toHaveFocus();
   });
 });
