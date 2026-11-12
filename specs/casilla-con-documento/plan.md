@@ -1,5 +1,5 @@
 # Plan: casilla-con-documento
-Estado: borrador
+Estado: aprobado
 
 ## Módulos
 
@@ -11,15 +11,16 @@ lleva el nombre accesible; da su tamaño según la guía. Los enlaces del docume
 RF: RF-002, RF-003, RF-005, RF-006, RF-007, RF-008, RF-009, RF-016
 
 ### M-02 Casilla con documento (`components/fields/DocumentCheckbox.tsx`, `DocumentCheckbox.css`)
-Responsabilidad: casilla cuyo texto es un enlace que abre M-01. Guarda el estado marcado y lo comparte con la
+Responsabilidad: componente reutilizable, sin nada propio del registro (recibe etiqueta, contenido, nombre,
+obligatoria, error, ayuda y los manejadores del formulario), cuyo texto es un enlace que abre M-01. Guarda el estado marcado y lo comparte con la
 casilla del pie del modal (la de siempre, `Checkbox`). Sin documento, se comporta como `Checkbox`. Al cerrar
 el modal devuelve el foco al enlace y avisa a la validación del formulario. Conserva obligatoria, ayuda y
 error con su reserva de espacio.
 RF: RF-001, RF-004, RF-005, RF-006, RF-010, RF-011, RF-016
 
 ### M-03 Registro (`registration/RegisterPage.tsx`)
-Responsabilidad: los términos (obligatoria) y el marketing (opcional, si hay documento) pasan a usar M-02, una
-casilla encima de la otra, en lugar de los desplegables; mismos nombres de campo, validaciones y datos
+Responsabilidad: cada casilla del registro que lleva un documento —los términos (obligatoria) y el marketing
+(opcional, si hay documento)— pasa a usar M-02, una encima de la otra, en lugar de los desplegables; mismos nombres de campo, validaciones y datos
 enviados. Se retiran las claves de texto de los desplegables que dejan de usarse.
 RF: RF-012
 
@@ -91,10 +92,15 @@ es el propio `<dialog>` cierra.
 ### D-07 Medidas y colores del modal salen de la guía, que se amplía
 Elegida: caja con el relleno negro del sistema (`--black-fill`) y texto blanco, borde de 1 px de línea en
 ambos temas, 640 px de ancho máximo y `min(80 dvh, 100 dvh - 32 px)` de alto; por debajo de 700 px, el ancho
-completo menos 32 px; fundido de 0,2 s; los enlaces del documento, blancos y subrayados.
-Descartada: color de principal para los enlaces, como en el resto de la aplicación.
-Motivo: el principal no alcanza 4,5:1 sobre el negro, y RF-015 exige contraste AA. Las filas nuevas de
-`docs/identidad-visual.md` las aprueba el usuario con el plan.
+completo menos 32 px; fundido de 0,2 s; los enlaces del documento, **sin subrayado** y en un
+azul grisáceo propio del modal (`#7f94b5`).
+Descartada: color principal para los enlaces, como en el resto de la aplicación; y enlaces blancos.
+Motivo: el principal no alcanza 4,5:1 sobre el negro y RF-015 exige contraste AA. Sin subrayado, un enlace
+blanco sería idéntico al texto blanco y no se distinguiría (WCAG 1.4.1: el enlace debe distinguirse por algo
+más que no sea solo el color del texto, o tener 3:1 de contraste con el texto que lo rodea). `#7f94b5` da
+unos 5,4:1 sobre el relleno negro del tema claro, 6,8:1 sobre el negro del oscuro y 3,1:1 respecto al blanco
+del texto; es un valor calculado, que las pruebas de accesibilidad en Chromium (M-06) confirman o corrigen.
+Las filas nuevas de `docs/identidad-visual.md` las aprueba el usuario con el plan.
 
 ### D-08 Los textos del documento llegan de la pantalla; el componente solo trae su propio texto
 Elegida: la pantalla pasa la etiqueta y el contenido; el componente aporta solo el nombre del botón de cerrar
