@@ -1,6 +1,6 @@
 # Entrega E-15b · Pantallas públicas con la columna de la guía
 
-Rama: `feat/sistema-de-diseno-pantallas-publicas` (sale de `feat/sistema-de-diseno`) · PR: pendiente ·
+Rama: `feat/sistema-de-diseno-pantallas-publicas` (sale de `feat/sistema-de-diseno`) · PR: [#99](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/99) ·
 Líneas de código y tests: 168 (límite: 400).
 
 ## Qué se hizo
