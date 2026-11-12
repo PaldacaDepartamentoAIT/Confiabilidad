@@ -205,7 +205,7 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   esa página queda inerte y lo comprueba Chromium (T-007 y T-015) — [Probable]. Mutantes muertos: «Cerrar» fijo
   en inglés, casilla de fuera sin `aria-labelledby`, diálogo sin nombre y estado reiniciado al cambiar de
   idioma.
-- [ ] T-013 Registro con la casilla con documento
+- [x] T-013 Registro con la casilla con documento
   RF: RF-012 | Depende de: T-010 | Archivos: 2
   Archivos: `registration/RegisterPage.tsx`, `registration/RegisterPage.test.tsx`.
   Hecho cuando: el formulario de registro muestra los términos (obligatoria) y, si hay documento de
@@ -213,6 +213,17 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   los nombres de campo, la validación de los términos y los datos enviados (versión e idioma de cada
   documento) no cambian y sus tests previos pasan, salvo los de los desplegables, que se sustituyen; suite
   verde.
+  Decisiones: los términos usan `DocumentCheckbox` con `name="terms"`, `required`, el error y el `onBlur` del
+  formulario (que se invoca al cerrar el modal), y el marketing con `name="marketing"`, sin nada más: es
+  opcional y solo aparece si hay documento. Se quitaron `react-markdown` y `Checkbox` del registro: el
+  Markdown lo pinta ahora el modal con el mismo componente — [Cierto]. Las pruebas de los desplegables se
+  sustituyeron por: enlaces que abren el documento en un modal, sin `<details>` y con las dos casillas
+  apiladas (términos primero), el Markdown sin interpretar HTML dentro del modal, la casilla del modal fuera
+  del formulario, y la revalidación de los términos al cerrar (aparece y se retira el error). Las pruebas de
+  envío (sin marketing / con marketing) siguen intactas y pasan — [Cierto]. Verificado en un navegador real, a
+  1000 px en claro y a 420 px en oscuro, con la API simulada: el formulario cabe sin scroll, el modal abre,
+  Escape lo cierra, el foco vuelve al enlace y aparece el error de los términos — [Cierto]. Mutantes muertos:
+  sin `onBlur` en los términos, términos no obligatorios y marketing sin documento.
 - [ ] T-014 Retirar los textos de los desplegables
   RF: RF-014 | Depende de: T-013 | Archivos: 3
   Archivos: `i18n/locales/en.ts`, `es.ts`, `pt-BR.ts`.

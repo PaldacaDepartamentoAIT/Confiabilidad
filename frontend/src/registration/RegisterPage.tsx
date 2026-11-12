@@ -1,6 +1,5 @@
 import { useEffect, useId, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import Markdown from "react-markdown";
 
 import type { ApiClient } from "../api/client";
 import {
@@ -11,7 +10,7 @@ import {
 } from "../api/registration";
 import { Button } from "../components/Button";
 import { FormMessage } from "../components/FormMessage";
-import { Checkbox } from "../components/fields/Checkbox";
+import { DocumentCheckbox } from "../components/fields/DocumentCheckbox";
 import { RequiredLegend } from "../components/fields/RequiredLegend";
 import { SelectField } from "../components/fields/SelectField";
 import { TextField } from "../components/fields/TextField";
@@ -202,25 +201,20 @@ function RegisterForm({ client, options, terms, language, titleId }: RegisterFor
           error={errorText(allErrors.country)}
           onBlur={onBlur("country")}
         />
-        <details>
-          <summary>{t("register.termsTitle")}</summary>
-          <Markdown>{terms.content}</Markdown>
-        </details>
-        <Checkbox
+        <DocumentCheckbox
           label={t("register.termsLabel")}
+          document={terms.content}
           name="terms"
           required
           error={errorText(allErrors.terms)}
           onBlur={onBlur("terms")}
         />
         {options.marketing && (
-          <>
-            <details>
-              <summary>{t("register.marketingTitle")}</summary>
-              <Markdown>{options.marketing.content}</Markdown>
-            </details>
-            <Checkbox label={t("register.marketingLabel")} name="marketing" />
-          </>
+          <DocumentCheckbox
+            label={t("register.marketingLabel")}
+            document={options.marketing.content}
+            name="marketing"
+          />
         )}
         <Button
           type="submit"
