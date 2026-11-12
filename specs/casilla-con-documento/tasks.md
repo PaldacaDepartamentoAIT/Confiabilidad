@@ -144,12 +144,19 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   sigue habiendo enlace. Nota: en jsdom un `<label>` que envuelve la fila no marcaba la casilla al pulsar la
   fila, así que la prueba «pulsar el resto de la fila no hace nada» no distingue ese mutante; lo distingue la
   de estructura (sin `<label>`) y lo comprobará Chromium — [Cierto].
-- [ ] T-009 Casilla del modal sincronizada
+- [x] T-009 Casilla del modal sincronizada
   RF: RF-004, RF-005 | Depende de: T-008 | Archivos: 3
   Archivos: `components/fields/DocumentCheckbox.tsx`, `DocumentCheckbox.css`, `DocumentCheckbox.test.tsx`.
   Hecho cuando: el pie del modal lleva una casilla con el mismo texto (y el asterisco si es obligatoria,
   sin ayuda ni error) cuyo texto sí la marca; marcar o desmarcar una refleja el estado en la otra; el modal
   sigue abierto al hacerlo; la casilla del modal no entra en los datos del formulario; suite verde.
+  Decisiones: `DocumentCheckbox` es dueña de `checked` (arranca con `defaultChecked`) y controla las dos
+  casillas con él; el `onChange` que recibe se llama desde cualquiera de las dos. La del modal es un
+  `Checkbox` sin `name` y pintado en el portal, así que nunca entra en los datos del formulario. Admite la
+  propiedad `required` (el asterisco del pie); la marca en la casilla de fuera, la ayuda y el error son de
+  T-010. Se deja de aceptar `checked` desde fuera: el estado es de la casilla — [Probable] — revertir:
+  aceptar `checked` y usarlo si llega. Mutantes muertos: el modal se cierra al marcar, la del modal arranca
+  siempre sin marcar, la del modal hereda el `name` y sin asterisco en la del modal.
 - [ ] T-010 Cierre, error y revalidación
   RF: RF-006, RF-011 | Depende de: T-009 | Archivos: 3
   Archivos: `components/fields/DocumentCheckbox.tsx`, `DocumentCheckbox.css`, `DocumentCheckbox.test.tsx`.
