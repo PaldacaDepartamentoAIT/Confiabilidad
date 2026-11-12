@@ -224,11 +224,15 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   1000 px en claro y a 420 px en oscuro, con la API simulada: el formulario cabe sin scroll, el modal abre,
   Escape lo cierra, el foco vuelve al enlace y aparece el error de los términos — [Cierto]. Mutantes muertos:
   sin `onBlur` en los términos, términos no obligatorios y marketing sin documento.
-- [ ] T-014 Retirar los textos de los desplegables
+- [x] T-014 Retirar los textos de los desplegables
   RF: RF-014 | Depende de: T-013 | Archivos: 3
   Archivos: `i18n/locales/en.ts`, `es.ts`, `pt-BR.ts`.
   Hecho cuando: `register.termsTitle` y `register.marketingTitle` ya no existen en ningún idioma, nada del
   código los usa y la paridad de claves sigue en verde; suite verde.
+  Decisiones: se eliminaron `register.termsTitle` y `register.marketingTitle` de los tres idiomas, como
+  aprobó el usuario con el plan; `termsLabel`, `marketingLabel` y `termsNotAccepted` se conservan. La prueba
+  roja fue quitar la clave solo de `en.ts` (la paridad de claves falló) — [Cierto]. Mutante muerto: volver a
+  poner una de las claves solo en inglés.
 - [ ] T-015 Accesibilidad del registro con el modal abierto
   RF: RF-015 | Depende de: T-013 | Archivos: 1
   Archivos: `registration/a11y.test.tsx`.
