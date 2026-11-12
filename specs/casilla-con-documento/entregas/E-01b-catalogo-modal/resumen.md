@@ -1,6 +1,6 @@
 # Entrega E-01b · Catálogo: modal de ejemplo
 
-Rama: `feat/casilla-con-documento-modal` (sale de `feat/casilla-con-documento`, con E-01 ya fusionada) · PR: pendiente ·
+Rama: `feat/casilla-con-documento-modal` (sale de `feat/casilla-con-documento`) · PR: [#105](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/105) ·
 Líneas de código y tests: 83 (límite: 400).
 
 ## Qué se hizo
