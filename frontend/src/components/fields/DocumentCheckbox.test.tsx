@@ -1,7 +1,8 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { useState, type FocusEvent } from "react";
 import userEvent from "@testing-library/user-event";
-import { I18nextProvider } from "react-i18next";
+import axe from "axe-core";
+import { I18nextProvider, useTranslation } from "react-i18next";
 
 import { createI18n } from "../../i18n";
 import { DocumentCheckbox } from "./DocumentCheckbox";
@@ -364,5 +365,121 @@ describe("obligatory, help, error and closing", () => {
     await userEvent.click(screen.getByRole("button", { name: "Close" }));
 
     expect(link).toHaveFocus();
+  });
+});
+
+describe("language and accessibility with the modal open", () => {
+  const TEXTS = {
+    en: { label: "I accept the terms", document: "# Terms\n\nEnglish text.", close: "Close" },
+    es: {
+      label: "Acepto los términos",
+      document: "# Términos\n\nTexto en español.",
+      close: "Cerrar",
+    },
+  } as const;
+
+  function Translated() {
+    const { i18n } = useTranslation();
+    const texts = TEXTS[i18n.language as keyof typeof TEXTS];
+    return (
+      <form>
+        <DocumentCheckbox label={texts.label} document={texts.document} name="terms" required />
+      </form>
+    );
+  }
+
+  function renderTranslated() {
+    const i18n = createI18n("en");
+    const view = render(
+      <I18nextProvider i18n={i18n}>
+        <Translated />
+      </I18nextProvider>,
+    );
+    return { ...view, i18n };
+  }
+
+  it("changing the language with the modal open updates the texts and keeps it open", async () => {
+    const { i18n } = renderTranslated();
+    await userEvent.click(screen.getByRole("link", { name: TEXTS.en.label }));
+    const dialog = screen.getByRole("dialog");
+
+    await act(() => i18n.changeLanguage("es"));
+
+    expect(screen.getByRole("dialog")).toBe(dialog);
+    expect(dialog).toHaveAccessibleName(TEXTS.es.label);
+    expect(within(dialog).getByRole("heading", { name: "Términos" })).toBeInTheDocument();
+    expect(within(dialog).getByRole("button", { name: TEXTS.es.close })).toBeInTheDocument();
+    expect(within(dialog).getByRole("checkbox", { name: TEXTS.es.label })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: TEXTS.es.label })).toBeInTheDocument();
+  });
+
+  it("keeps the state of the checkbox and the focus when the language changes", async () => {
+    const { i18n } = renderTranslated();
+    await userEvent.click(screen.getByRole("link", { name: TEXTS.en.label }));
+    const inner = within(screen.getByRole("dialog")).getByRole("checkbox");
+    await userEvent.click(inner);
+    inner.focus();
+
+    await act(() => i18n.changeLanguage("es"));
+
+    expect(within(screen.getByRole("dialog")).getByRole("checkbox")).toBeChecked();
+    expect(document.querySelector("input[name='terms']")).toBeChecked();
+    expect(within(screen.getByRole("dialog")).getByRole("checkbox")).toHaveFocus();
+  });
+
+  it("the whole interaction can be done with the keyboard", async () => {
+    renderCheckbox({ required: true });
+    const link = screen.getByRole("link", { name: LABEL });
+
+    // Tab: la casilla y después el enlace; Enter en el enlace abre el modal.
+    await userEvent.tab();
+    expect(screen.getByRole("checkbox")).toHaveFocus();
+    await userEvent.tab();
+    expect(link).toHaveFocus();
+    await userEvent.keyboard("{Enter}");
+    const dialog = screen.getByRole("dialog");
+
+    // Dentro del modal: Tab recorre la «×», el contenido, y la casilla; Espacio la marca.
+    const close = within(dialog).getByRole("button", { name: "Close" });
+    const body = dialog.querySelector(".document-body") as HTMLElement;
+    const inner = within(dialog).getByRole("checkbox");
+    close.focus();
+    await userEvent.tab();
+    expect(body).toHaveFocus();
+    await userEvent.tab();
+    expect(inner).toHaveFocus();
+    await userEvent.keyboard(" ");
+    expect(inner).toBeChecked();
+
+    // Escape (el evento `cancel` del navegador) cierra y devuelve el foco al enlace.
+    fireEvent(dialog, new Event("cancel", { cancelable: true }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(link).toHaveFocus();
+    expect(screen.getByRole("checkbox")).toBeChecked();
+  });
+
+  it.each([
+    ["with the modal closed", false],
+    ["with the modal open", true],
+  ])("has no accessibility violations %s", async (_name, open) => {
+    renderCheckbox({ required: true, hint: "Read it first", error: "You must accept" });
+    if (open) await userEvent.click(screen.getByRole("link", { name: LABEL }));
+
+    // Con el modal abierto la página de detrás queda inerte en un navegador real (lo comprueba Chromium); aquí
+    // axe, que en jsdom no ve esa inertización, se limita al diálogo.
+    const context = open ? (screen.getByRole("dialog") as HTMLElement) : document.body;
+    const results = await axe.run(context, {
+      rules: { "color-contrast": { enabled: false }, region: { enabled: false } },
+    });
+
+    expect(results.violations).toEqual([]);
+  });
+
+  it("has no accessibility violations without a document either", async () => {
+    renderCheckbox({ document: "", required: true, error: "You must accept" });
+    const results = await axe.run(document.body, {
+      rules: { "color-contrast": { enabled: false }, region: { enabled: false } },
+    });
+    expect(results.violations).toEqual([]);
   });
 });

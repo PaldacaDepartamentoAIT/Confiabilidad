@@ -189,13 +189,22 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   — [Cierto].
 
 ## E-04 Registro con la casilla
-- [ ] T-012 Casilla con documento: idioma y accesibilidad
+- [x] T-012 Casilla con documento: idioma y accesibilidad
   RF: RF-015, RF-016 | Depende de: T-010 | Archivos: 1
   Archivos: `components/fields/DocumentCheckbox.test.tsx`.
   Hecho cuando: con el modal abierto, cambiar el idioma actualiza el texto de la casilla, del enlace y del
   botón de cerrar sin cerrarlo y conservando el estado y el foco; `axe` no halla violaciones con el modal
   cerrado ni abierto; todo se puede hacer con el teclado (Enter en el enlace, Tab dentro del modal, Espacio,
   Escape); suite verde.
+  Decisiones: es una tarea de pruebas: no cambia código, porque el comportamiento ya salía de E-01 a E-03; sus
+  pruebas se validan con mutantes (los que ya se mataban en las tareas anteriores no cuentan). El texto de la
+  casilla y del documento los pasa la pantalla, así que la prueba usa un componente que los toma del idioma
+  activo; el «Cerrar» del modal cambia solo, por `useTranslation` — [Cierto]. Con el modal abierto, `axe` se
+  ejecuta sobre el diálogo y no sobre `document.body`: en jsdom no ve que la página de detrás queda inerte y
+  marcaba la casilla de fuera como «sin etiqueta» al no encontrar el enlace que la nombra; en un navegador real
+  esa página queda inerte y lo comprueba Chromium (T-007 y T-015) — [Probable]. Mutantes muertos: «Cerrar» fijo
+  en inglés, casilla de fuera sin `aria-labelledby`, diálogo sin nombre y estado reiniciado al cambiar de
+  idioma.
 - [ ] T-013 Registro con la casilla con documento
   RF: RF-012 | Depende de: T-010 | Archivos: 2
   Archivos: `registration/RegisterPage.tsx`, `registration/RegisterPage.test.tsx`.
