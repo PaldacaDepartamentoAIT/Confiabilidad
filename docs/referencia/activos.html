@@ -23,8 +23,8 @@
   --p2: #915535;
   --warn: #7a7020;
   --surface: var(--bg);
-  --font: "Manrope", system-ui, sans-serif;
-  --mono: "JetBrains Mono", ui-monospace, monospace;
+  --font: "Manrope Variable", "Manrope", system-ui, sans-serif;
+  --mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -132,6 +132,7 @@ svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor;
   border: 0; border-radius: 6px;
   background: var(--menu-btn-bg); color: var(--menu-btn-icon);
   transition: background-color .35s ease;
+  padding: 0;
 }
 .menu-btn svg.i.lg, #sbToggle svg.i { width: 22px; height: 22px; }
 .menu-btn:hover { background: color-mix(in srgb, var(--menu-btn-bg) 80%, var(--text2)); transition-duration: .08s; }

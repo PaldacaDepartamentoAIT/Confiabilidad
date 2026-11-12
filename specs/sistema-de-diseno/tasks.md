@@ -914,24 +914,63 @@ transitorias hasta T-051 (D-12).
   pasan — [Suposición]. Mutante muerto: volver a poner la regla de `main`.
 
 ## E-16 Comprobación visual
-- [ ] T-052 Playwright y proyecto de test visual
+- [x] T-052 Playwright y proyecto de test visual
   RF: RF-028 | Depende de: T-050 | Archivos: 4
   Archivos: `frontend/package.json`, `pnpm-lock.yaml`, `frontend/vitest.visual.config.ts`,
   `frontend/visual/smoke.visual.test.ts`.
   Hecho cuando: con tu permiso previo, `playwright` está en `devDependencies`, existe
   `test:visual` y la prueba abre el catálogo en Chromium; suite verde.
-  Excepción: `pnpm-lock.yaml` lo regenera `pnpm add`. Se pide permiso antes de instalar.
-- [ ] T-053 Comparación con las referencias
+  Excepción: `pnpm-lock.yaml` lo regenera `pnpm add`. Se pide permiso antes de instalar. Además se
+  tocaron `visual/app.ts` (levanta Vite en un puerto libre), `tsconfig.json` (incluye `visual`) y
+  `vite.config.ts` (excluye `visual/**` de `pnpm test`): 7 archivos en total, porque la prueba de
+  humo necesita servir la aplicación y las dos configuraciones deben convivir.
+  Decisiones: el usuario autorizó la dependencia el 12-nov. `playwright` queda fijada en `1.63.0`
+  (sin `^`), la versión cuyo Chromium trae este entorno, para que local y CI usen el mismo navegador —
+  [Probable]. `pnpm test:visual` usa `vitest.visual.config.ts` (entorno `node`, tiempo de espera de
+  60 s) y no lo ejecuta `pnpm test`. La prueba de humo abre el catálogo en tema claro y oscuro y
+  comprueba el fondo del cuerpo (`rgb(248, 249, 249)` y `rgb(17, 18, 19)`), que haya indicadores y que
+  no haya errores de página — [Cierto]. Se retiró `/// <reference types="vitest/config" />` de
+  `vite.config.ts` porque ESLint lo rechaza al importar de `vitest/config`.
+- [x] T-053 Comparación con las referencias
   RF: RF-028 | Depende de: T-052 | Archivos: 2
   Archivos: `frontend/visual/measure.ts`, `frontend/visual/compare.visual.test.ts`.
   Hecho cuando: compara con igualdad exacta las propiedades de RF-028 entre el catálogo y
   `docs/referencia/*.html` en claro y oscuro y falla al cambiar un valor de un componente
   (comprobado); `pnpm --filter frontend test:visual` pasa.
-- [ ] T-054 Contraste y accesibilidad en ambos temas
+  Excepción: 8 archivos en lugar de 2. Además de `measure.ts` y `compare.visual.test.ts` hay un test
+  unitario de la función de diferencias (`measure.visual.test.ts`) y las correcciones que la
+  comparación hizo aparecer (dos referencias HTML, `Checkbox.css` y la marca `data-ui="help"` de
+  cuatro campos), en un commit aparte.
+  Decisiones: `measure()` es la de `docs/referencia/comparar.cjs` (primera aparición visible de cada
+  `data-ui`; las propiedades de RF-028; alto en las de ancho variable y ancho y alto en las de tamaño
+  fijo) y `differences()` omite las piezas que no están en el catálogo. La comparación se hace a 1280 px
+  contra las dos referencias, en claro y oscuro (4 pruebas). La primera ejecución encontró diferencias
+  reales — [Cierto]: (1) la pila tipográfica: las referencias declaraban `"Manrope"` y la aplicación
+  `"Manrope Variable", "Manrope"` (el nombre que da el paquete de fuentes); se actualizó la referencia
+  en vez de aplicar tolerancia, porque RF-028 exige igualdad exacta — [Probable]; (2) el botón de
+  menú de la referencia no ponía `padding: 0` y medía el relleno por defecto del navegador
+  (1 px 6 px); se añadió a la referencia, ya que el tamaño es fijo y el icono va centrado; (3) la
+  etiqueta de las casillas se veía en texto secundario en la aplicación y en tinta en la referencia:
+  defecto real de la aplicación, corregido en `Checkbox.css` (`color: var(--ink)`). Además se marcó la
+  ayuda de los campos con `data-ui="help"` para que también se compare. Quedan sin comparar
+  `page-title`, que la aplicación todavía no tiene como pieza, y lo que no esté en el catálogo. Se
+  añadió una comprobación de que se comparan al menos 15 piezas, para que no pase en vacío.
+  Mutantes muertos (4 pruebas cada uno): relleno superior del bloque 18 → 19 px y radio del botón
+  6 → 7 px.
+
+- [x] T-054 Contraste y accesibilidad en ambos temas
   RF: RF-029 | Depende de: T-052 | Archivos: 2
   Archivos: `frontend/visual/contrast.visual.test.ts`, `frontend/visual/measure.ts`.
   Hecho cuando: `axe-core` no halla violaciones de contraste AA ni de accesibilidad en el
   catálogo en claro y oscuro; `test:visual` pasa.
+  Decisiones: `accessibilityViolations(page)` inyecta `axe-core` (que ya era dependencia) en el
+  Chromium real y ejecuta las reglas WCAG 2.0/2.1 A y AA y las buenas prácticas, con la de contraste,
+  que jsdom no puede evaluar; se prueba el catálogo en claro y oscuro, a 1280 y a 420 px (4 pruebas) —
+  [Cierto]. La primera versión fallaba a veces solo a 420 px: axe leía el color a medio camino de las
+  transiciones de 0,35 s; se espera 0,7 s tras cargar y quedó estable (6 ejecuciones seguidas) —
+  [Cierto]. Mutante muerto: texto secundario del tema claro `#61656b` → `#b0b3b6` (falla la regla
+  `color-contrast`).
+
 - [ ] T-055 Comprobación visual en CI
   RF: RF-028, RF-029 | Depende de: T-053, T-054 | Archivos: 1
   Archivos: `.github/workflows/ci.yml`.

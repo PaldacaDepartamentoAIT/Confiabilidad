@@ -92,7 +92,7 @@ export const CustomSelect = forwardRef<HTMLButtonElement, CustomSelectProps>(fun
         )}
       />
       {hint && (
-        <p className="help" id={hintId}>
+        <p className="help" id={hintId} data-ui="help">
           {hint}
         </p>
       )}

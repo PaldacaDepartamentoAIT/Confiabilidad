@@ -1,6 +1,6 @@
-/// <reference types="vitest/config" />
 import react from "@vitejs/plugin-react";
-import { defineConfig, loadEnv } from "vite";
+import { loadEnv } from "vite";
+import { configDefaults, defineConfig } from "vitest/config";
 
 export default defineConfig(({ mode }) => ({
   plugins: [react()],
@@ -20,6 +20,8 @@ export default defineConfig(({ mode }) => ({
     environment: "jsdom",
     globals: true,
     setupFiles: "./src/setupTests.ts",
+    // Las pruebas de `visual/` necesitan un navegador: se ejecutan con `test:visual`.
+    exclude: [...configDefaults.exclude, "visual/**"],
     // Los tests de la identidad visual leen estos dos CSS; los demás estilos no se procesan en los tests.
     css: { include: [/src\/styles\/(tokens|base)\.css/] },
     coverage: {
