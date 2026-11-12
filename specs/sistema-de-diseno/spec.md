@@ -88,6 +88,7 @@ El sistema deberá mostrar los campos de texto, de contraseña y de código con 
 etiqueta, ayuda, marca de obligatorio, borde de 1 px al pasar el cursor, de 2 px con el foco (sin
 mover el resto del contenido) y borde y mensaje de error con el icono de forma cuando el campo sea
 inválido, conservando los comportamientos de RF-011 a RF-016 de `componentes-base-accesibles`.
+Cuando un campo muestre u oculte su mensaje de error, el sistema no deberá cambiar la altura del formulario.
 
 ### RF-016 Selector propio
 El sistema deberá ofrecer un selector que sustituya al nativo, con un disparador igual a un campo y
@@ -197,3 +198,4 @@ Mientras el dispositivo tenga un puntero principal táctil, el sistema deberá m
 - 2026-11-10 — Corrección de RF-009: sin velo, según la guía y las referencias — RF: RF-009 — Estado: clarificado
 - 2026-11-11 — Corrección de RF-012: animación, ancho completo y cierre al perder el foco — RF: RF-012 — Estado: clarificado
 - 2026-11-11 — Corrección de RF-005: columna centrada con un bloque para el contenido de las pantallas públicas — RF: RF-005 — Estado: clarificado
+- 2026-11-12 — Corrección de RF-015: el mensaje de error de un campo no cambia la altura del formulario — RF: RF-015 — Estado: clarificado

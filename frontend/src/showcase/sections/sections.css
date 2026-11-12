@@ -79,6 +79,10 @@
   margin-bottom: 22px;
 }
 
+.catalog-form-block > .help {
+  margin-bottom: 14px;
+}
+
 .catalog-form-block h2 {
   margin: 0 0 14px;
   font-size: 15px;
@@ -88,7 +92,12 @@
 .catalog-form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 2px;
+}
+
+.catalog-form > * + :not(.fld, .check-field),
+.catalog-form > :not(.fld, .check-field) + * {
+  margin-top: 14px;
 }
 
 .catalog-actions {
