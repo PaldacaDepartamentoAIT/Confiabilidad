@@ -23,6 +23,7 @@ export const en = {
     close: "Close menu",
   },
   button: {
+    close: "Close",
     processing: "Processing…",
     processingAnnouncement: "Processing",
   },

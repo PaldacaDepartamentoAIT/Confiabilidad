@@ -26,6 +26,7 @@ export const es: Messages = {
     close: "Cerrar menú",
   },
   button: {
+    close: "Cerrar",
     processing: "Procesando…",
     processingAnnouncement: "Procesando",
   },

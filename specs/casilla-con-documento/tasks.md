@@ -6,29 +6,53 @@ Estado: aprobado
 En cada tarea se prueba al menos un mutante del código que introduce y debe hacer fallar sus tests.
 Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
 
-## E-01 Modal de documento
-- [ ] T-001 Doble de `<dialog>` para los tests de jsdom
+## E-01 Modal de documento (componente)
+- [x] T-001 Doble de `<dialog>` para los tests de jsdom
   RF: RF-008 | Depende de: — | Archivos: 2
   Archivos: `setupTests.ts`, `dialogStub.test.ts`.
   Hecho cuando: en jsdom, `showModal()` pone el atributo `open`, `close()` lo quita y emite `close`, y
   `dialogStub.test.ts` lo comprueba; suite verde.
-- [ ] T-002 Texto de «Cerrar» del modal en tres idiomas
+  Decisiones: el doble solo se instala si jsdom no trae `showModal`, y no imita el foco ni la inertización:
+  eso lo comprueba Chromium (T-007) — [Cierto]. `close()` en un diálogo cerrado no emite nada, como el
+  navegador — [Probable]. Mutante muerto: `close()` sin emitir el evento.
+- [x] T-002 Texto de «Cerrar» del modal en tres idiomas
   RF: RF-014 | Depende de: — | Archivos: 3
   Archivos: `i18n/locales/en.ts`, `es.ts`, `pt-BR.ts`.
-  Hecho cuando: existe `documentModal.close` en `es`, `pt-BR` y `en` y `keys.test.ts` y `locales.test.ts`
+  Hecho cuando: existe `button.close` en `es`, `pt-BR` y `en` y `keys.test.ts` y `locales.test.ts`
   (paridad de claves) siguen en verde.
-- [ ] T-003 Modal: estructura, documento y nombre accesible
+  Decisiones: la clave se llama `button.close` ("Close", "Cerrar", "Fechar") y no `documentModal.close`, como
+  decía el texto de la tarea: `locales.test.ts` enumera los grupos de primer nivel y un grupo nuevo habría
+  obligado a tocar ese test, un archivo que la tarea no prevé; un «Cerrar» genérico en el grupo de los
+  botones además sirve a otras piezas — [Probable] — revertir: mover la clave a un grupo propio y añadirlo a
+  la lista de `locales.test.ts`. Mutante muerto: texto vacío en `pt-BR` (falla «no empty texts»).
+- [x] T-003 Modal: estructura, documento y nombre accesible
   RF: RF-002, RF-003, RF-008 | Depende de: T-001, T-002 | Archivos: 3
   Archivos: `components/DocumentModal.tsx`, `DocumentModal.css`, `DocumentModal.test.tsx`.
   Hecho cuando: `DocumentModal` abierto muestra, fuera del formulario (portal), un diálogo con nombre
   accesible, con la «x», el documento en Markdown con sus enlaces abiertos en pestaña nueva
   (`target="_blank"` y `rel="noopener noreferrer"`) y un pie con lo que reciba, en ese orden; cerrado,
   no pinta nada; el aspecto mínimo (caja negra de la guía) ya está; suite verde.
-- [ ] T-004 Modal: cierre por «x», Escape y cortina
+  Decisiones: `DocumentModal({open, name, content, onClose, children})`; cerrado devuelve `null` (no hay
+  `<dialog>` en el documento) y abierto lo pinta en `document.body` y llama a `showModal()` en un efecto.
+  La «x» es el carácter «×» (con `aria-hidden`) en un botón con el nombre «Cerrar» de `button.close`, y no
+  un icono de `lucide-react`: añadir `IconX` toca `icons/index.ts` y su test, fuera de los tres archivos de
+  la tarea — [Probable] — revertir: añadir `IconX` y sustituir el carácter. El contenido con
+  desplazamiento lleva `tabIndex={0}` para llegar a él con el teclado (RF-007, RF-015) — [Probable].
+  `onClose` ya está en las propiedades pero se usa en T-004. El `<dialog>` ocupa toda la pantalla y la caja
+  va dentro, para que T-004 detecte el clic en la cortina — [Cierto]. Mutantes muertos: sin `target`, se
+  pinta cerrado, sin nombre accesible.
+- [x] T-004 Modal: cierre por «x», Escape y cortina
   RF: RF-006 | Depende de: T-003 | Archivos: 3
   Archivos: `components/DocumentModal.tsx`, `DocumentModal.css`, `DocumentModal.test.tsx`.
   Hecho cuando: la «x», la tecla Escape y un clic en la cortina llaman a `onClose`, y un clic dentro de
   la caja no; el modal no se cierra solo por otros motivos; suite verde.
+  Decisiones: el modal es controlado: «x», Escape y cortina solo llaman a `onClose`; quien lo usa deja de
+  pasar `open` para cerrarlo. Escape llega como el evento `cancel` nativo, cuyo comportamiento por defecto
+  (cerrar el diálogo) se anula con `preventDefault` — [Cierto]. La prueba de Escape lanza ese evento en
+  jsdom; que el navegador real lo emita con la tecla se comprueba en Chromium (T-007) — [Probable]. Un test
+  mal escrito (la barra espaciadora sobre la «x» enfocada sí la pulsa) se corrigió. Mutantes muertos: la
+  cortina cierra también con clic dentro, Escape sin `preventDefault`, la «x» sin manejador.
+## E-01b Catálogo: modal de ejemplo
 - [ ] T-005 Catálogo: modal de ejemplo
   RF: RF-013 | Depende de: T-004 | Archivos: 3
   Archivos: `showcase/sections/DocumentSection.tsx`, `showcase/ShowcasePage.tsx`,
@@ -114,10 +138,16 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
 ## Entregas
 Rama de integración: feat/casilla-con-documento (los PR de las entregas van contra ella; ver `AGENTS.md`)
 
-- E-01 Se puede abrir y cerrar un modal con un documento desde el catálogo.
-  Tareas: T-001, T-002, T-003, T-004, T-005 | Líneas estimadas: 390 | Rama: feat/casilla-con-documento-modal
-  Cómo probarlo: `pnpm --filter frontend dev`, abrir http://localhost:5173/ y, en la sección del modal, abrir
-  el documento y cerrarlo con la «x», Escape y la cortina.
+- E-01 El componente `DocumentModal` abre un documento en Markdown en un diálogo y se cierra con la «x», Escape
+  y la cortina (se prueba con `pnpm --filter frontend test`; aún no se ve en el catálogo).
+  Tareas: T-001, T-002, T-003, T-004 | Líneas estimadas: 382 | Rama: feat/casilla-con-documento-componente-modal
+  Cómo probarlo: `pnpm --filter frontend test` (los 14 tests de `DocumentModal.test.tsx` y los de
+  `dialogStub.test.ts`).
+  Nota: E-01 medía 465 líneas con el catálogo; se dividió en E-01 y E-01b según `AGENTS.md`.
+- E-01b Se puede abrir y cerrar el modal con un documento desde el catálogo.
+  Tareas: T-005 | Líneas estimadas: 83 | Rama: feat/casilla-con-documento-modal
+  Cómo probarlo: `pnpm --filter frontend dev`, abrir http://localhost:5173/ y, en la sección «Documento en un
+  modal», abrir el documento y cerrarlo con la «x», Escape y la cortina.
 - E-02 El modal tiene el aspecto de la guía y se comprueba en un navegador real.
   Tareas: T-006, T-007 | Líneas estimadas: 230 | Rama: feat/casilla-con-documento-aspecto
   Cómo probarlo: `pnpm --filter frontend test:visual`; en el catálogo, abrir el modal y comprobar que la

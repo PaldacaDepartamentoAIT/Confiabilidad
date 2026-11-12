@@ -25,6 +25,7 @@ export const ptBR: Messages = {
     close: "Fechar menu",
   },
   button: {
+    close: "Fechar",
     processing: "Processando…",
     processingAnnouncement: "Processando",
   },
