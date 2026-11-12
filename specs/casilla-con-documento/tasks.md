@@ -116,7 +116,7 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   cambiar el tamaño de la ventana se recalcula con el modal abierto; `axe` (con contraste) no halla
   violaciones con el modal abierto, incluido el enlace de `#7f94b5`; `pnpm --filter frontend test:visual`
   pasa.
-  Decisiones: 20 pruebas por tema (40): cortina `rgba(0, 0, 0, 0.5)`, caja `rgb(27, 30, 34)` y `rgb(0, 0, 0)`
+  Decisiones: 13 pruebas por tema (26): cortina `rgba(0, 0, 0, 0.5)`, caja `rgb(27, 30, 34)` y `rgb(0, 0, 0)`
   con texto blanco, borde de 1 px y radio de 4 px; enlaces `rgb(127, 148, 181)` sin subrayado y en pestaña
   nueva; Tab y Mayús+Tab no llevan el foco a la página; la página de detrás no se desplaza (la rueda sobre la
   cortina no mueve `scrollY` y el `body` queda en `overflow: hidden`); cierre por «x», Escape y cortina con
@@ -185,7 +185,7 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   botón. Las cuatro casillas son: términos (obligatoria), novedades por correo (opcional), política de datos
   (obligatoria y con un error que se mantiene hasta cerrar el modal y entonces se revalida) y aviso de
   privacidad (sin documento). Verificado en un navegador real: el error no cambia la altura de la fila
-  (42 px con y sin error), el foco vuelve al enlace al cerrar y las 40 pruebas visuales siguen pasando
+  (42 px con y sin error), el foco vuelve al enlace al cerrar y las 40 pruebas visuales (14 de antes y 26 del modal) siguen pasando
   — [Cierto].
 
 ## E-04 Registro con la casilla
@@ -233,12 +233,18 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   aprobó el usuario con el plan; `termsLabel`, `marketingLabel` y `termsNotAccepted` se conservan. La prueba
   roja fue quitar la clave solo de `en.ts` (la paridad de claves falló) — [Cierto]. Mutante muerto: volver a
   poner una de las claves solo en inglés.
-- [ ] T-015 Accesibilidad del registro con el modal abierto
+- [x] T-015 Accesibilidad del registro con el modal abierto
   RF: RF-015 | Depende de: T-013 | Archivos: 1
   Archivos: `registration/a11y.test.tsx`.
   Hecho cuando: `axe` no halla violaciones en el registro con el modal de términos cerrado ni abierto;
   suite verde.
-
+  Decisiones: es una tarea de pruebas: el código ya salía de las tareas anteriores. Se añaden las pruebas del
+  modal de los términos y del marketing, cerrado y abierto, y del formulario con el error de los términos y el
+  modal cerrado; con el modal abierto `axe` se ejecuta sobre el diálogo porque jsdom no ve que la página de
+  detrás queda inerte (igual que en T-012) — [Probable]. Mutantes muertos: casilla de fuera sin
+  `aria-labelledby` y botón de cerrar sin nombre. Corrección de una cifra: en las notas de T-007, E-02b y
+  E-03b dije que el modal tenía 40 pruebas en Chromium (20 por tema); son 26 (13 por tema) y 40 con las 14 que
+  ya había; se corrigieron esos textos — [Cierto].
 ## Entregas
 Rama de integración: feat/casilla-con-documento (los PR de las entregas van contra ella; ver `AGENTS.md`)
 
@@ -260,7 +266,7 @@ Rama de integración: feat/casilla-con-documento (los PR de las entregas van con
   Nota: E-02 medía 425 líneas con la prueba en Chromium; se dividió en E-02 y E-02b según `AGENTS.md`.
 - E-02b El modal se comprueba en un navegador real.
   Tareas: T-007 | Líneas estimadas: 216 | Rama: feat/casilla-con-documento-aspecto
-  Cómo probarlo: `pnpm --filter frontend test:visual` (40 pruebas nuevas del modal, en claro y oscuro).
+  Cómo probarlo: `pnpm --filter frontend test:visual` (26 pruebas nuevas del modal, 13 en claro y 13 en oscuro; 40 en total con las de antes).
 - E-03 La casilla con enlace abre el documento y se sincroniza con la casilla del modal (se prueba con
   `pnpm --filter frontend test`; aún no se ve en el catálogo).
   Tareas: T-008, T-009 | Líneas estimadas: 330 | Rama: feat/casilla-con-documento-casilla-enlace

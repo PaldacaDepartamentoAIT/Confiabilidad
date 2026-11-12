@@ -16,7 +16,7 @@ Líneas de código y tests: 331 (límite: 400).
   privacidad (sin documento). Se conserva también el modal de ejemplo de E-01b, porque la prueba en Chromium lo
   abre desde su botón.
 - Verificado en un navegador real: el error no cambia la altura de la fila (42 px con y sin error), el foco vuelve
-  al enlace y las 40 pruebas visuales del modal siguen pasando.
+  al enlace y las 40 pruebas visuales (14 de antes y 26 del modal) siguen pasando.
 - Esta parte salió de una entrega de 670 líneas, dividida en dos por la regla de `AGENTS.md`.
 
 ## Tareas
