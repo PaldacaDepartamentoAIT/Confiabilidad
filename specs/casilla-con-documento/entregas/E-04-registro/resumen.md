@@ -1,6 +1,6 @@
 # Entrega E-04 · Registro con la casilla con documento
 
-Rama: `feat/casilla-con-documento-registro` (sale de `feat/casilla-con-documento`) · PR: pendiente ·
+Rama: `feat/casilla-con-documento-registro` (sale de `feat/casilla-con-documento`) · PR: [#110](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/110) ·
 Líneas de código y tests: 274 (límite: 400).
 
 ## Qué se hizo
