@@ -25,13 +25,22 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   obligado a tocar ese test, un archivo que la tarea no prevé; un «Cerrar» genérico en el grupo de los
   botones además sirve a otras piezas — [Probable] — revertir: mover la clave a un grupo propio y añadirlo a
   la lista de `locales.test.ts`. Mutante muerto: texto vacío en `pt-BR` (falla «no empty texts»).
-- [ ] T-003 Modal: estructura, documento y nombre accesible
+- [x] T-003 Modal: estructura, documento y nombre accesible
   RF: RF-002, RF-003, RF-008 | Depende de: T-001, T-002 | Archivos: 3
   Archivos: `components/DocumentModal.tsx`, `DocumentModal.css`, `DocumentModal.test.tsx`.
   Hecho cuando: `DocumentModal` abierto muestra, fuera del formulario (portal), un diálogo con nombre
   accesible, con la «x», el documento en Markdown con sus enlaces abiertos en pestaña nueva
   (`target="_blank"` y `rel="noopener noreferrer"`) y un pie con lo que reciba, en ese orden; cerrado,
   no pinta nada; el aspecto mínimo (caja negra de la guía) ya está; suite verde.
+  Decisiones: `DocumentModal({open, name, content, onClose, children})`; cerrado devuelve `null` (no hay
+  `<dialog>` en el documento) y abierto lo pinta en `document.body` y llama a `showModal()` en un efecto.
+  La «x» es el carácter «×» (con `aria-hidden`) en un botón con el nombre «Cerrar» de `button.close`, y no
+  un icono de `lucide-react`: añadir `IconX` toca `icons/index.ts` y su test, fuera de los tres archivos de
+  la tarea — [Probable] — revertir: añadir `IconX` y sustituir el carácter. El contenido con
+  desplazamiento lleva `tabIndex={0}` para llegar a él con el teclado (RF-007, RF-015) — [Probable].
+  `onClose` ya está en las propiedades pero se usa en T-004. El `<dialog>` ocupa toda la pantalla y la caja
+  va dentro, para que T-004 detecte el clic en la cortina — [Cierto]. Mutantes muertos: sin `target`, se
+  pinta cerrado, sin nombre accesible.
 - [ ] T-004 Modal: cierre por «x», Escape y cortina
   RF: RF-006 | Depende de: T-003 | Archivos: 3
   Archivos: `components/DocumentModal.tsx`, `DocumentModal.css`, `DocumentModal.test.tsx`.
