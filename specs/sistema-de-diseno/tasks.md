@@ -971,11 +971,15 @@ transitorias hasta T-051 (D-12).
   [Cierto]. Mutante muerto: texto secundario del tema claro `#61656b` → `#b0b3b6` (falla la regla
   `color-contrast`).
 
-- [ ] T-055 Comprobación visual en CI
+- [x] T-055 Comprobación visual en CI
   RF: RF-028, RF-029 | Depende de: T-053, T-054 | Archivos: 1
   Archivos: `.github/workflows/ci.yml`.
   Hecho cuando: un trabajo nuevo instala Chromium y ejecuta `test:visual`; el CI queda en verde en
   el PR.
+  Decisiones: nuevo trabajo `visual` en `.github/workflows/ci.yml` (checkout, pnpm, Node 20, `pnpm
+  install --frozen-lockfile`, `playwright install --with-deps chromium` y `test:visual`). En el PR #102
+  el trabajo «Frontend (comprobación visual)» terminó en verde, igual que el resto de comprobaciones —
+  [Cierto]. Tarda unos 55 s.
 
 ## E-05c Botón de ojo en la contraseña (cambio aprobado por el usuario)
 - [x] T-056 Iconos de ojo en el módulo de iconos
