@@ -15,11 +15,16 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   Decisiones: el doble solo se instala si jsdom no trae `showModal`, y no imita el foco ni la inertización:
   eso lo comprueba Chromium (T-007) — [Cierto]. `close()` en un diálogo cerrado no emite nada, como el
   navegador — [Probable]. Mutante muerto: `close()` sin emitir el evento.
-- [ ] T-002 Texto de «Cerrar» del modal en tres idiomas
+- [x] T-002 Texto de «Cerrar» del modal en tres idiomas
   RF: RF-014 | Depende de: — | Archivos: 3
   Archivos: `i18n/locales/en.ts`, `es.ts`, `pt-BR.ts`.
-  Hecho cuando: existe `documentModal.close` en `es`, `pt-BR` y `en` y `keys.test.ts` y `locales.test.ts`
+  Hecho cuando: existe `button.close` en `es`, `pt-BR` y `en` y `keys.test.ts` y `locales.test.ts`
   (paridad de claves) siguen en verde.
+  Decisiones: la clave se llama `button.close` ("Close", "Cerrar", "Fechar") y no `documentModal.close`, como
+  decía el texto de la tarea: `locales.test.ts` enumera los grupos de primer nivel y un grupo nuevo habría
+  obligado a tocar ese test, un archivo que la tarea no prevé; un «Cerrar» genérico en el grupo de los
+  botones además sirve a otras piezas — [Probable] — revertir: mover la clave a un grupo propio y añadirlo a
+  la lista de `locales.test.ts`. Mutante muerto: texto vacío en `pt-BR` (falla «no empty texts»).
 - [ ] T-003 Modal: estructura, documento y nombre accesible
   RF: RF-002, RF-003, RF-008 | Depende de: T-001, T-002 | Archivos: 3
   Archivos: `components/DocumentModal.tsx`, `DocumentModal.css`, `DocumentModal.test.tsx`.
