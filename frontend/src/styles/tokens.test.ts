@@ -117,4 +117,24 @@ describe("identidad visual: reglas generales", () => {
     expect(base).toMatch(/body\s*\{[^}]*color:\s*var\(--ink\)/);
     expect(base).toMatch(/body\s*\{[^}]*font:\s*400 14px\/1\.45 var\(--font\)/);
   });
+
+  it("no estila elementos sueltos: solo reinicia la fuente, el color y el cursor de los controles", () => {
+    const rules = [...base.matchAll(/([^{}@]+)\{([^{}]*)\}/g)].map(([, selector, body]) => ({
+      selectors: selector.split(",").map((part) => part.trim()),
+      properties: body
+        .split(";")
+        .map((declaration) => declaration.split(":")[0].trim())
+        .filter(Boolean),
+    }));
+    const loose = /^(button|input|select|textarea|main|form|section)$/;
+
+    for (const { selectors, properties } of rules) {
+      if (!selectors.some((selector) => loose.test(selector))) continue;
+      expect(selectors.every((selector) => /^(button|input|select|textarea)$/.test(selector))).toBe(
+        true,
+      );
+      properties.forEach((property) => expect(["font", "color", "cursor"]).toContain(property));
+    }
+    expect(rules.some(({ selectors }) => selectors.includes("main"))).toBe(false);
+  });
 });

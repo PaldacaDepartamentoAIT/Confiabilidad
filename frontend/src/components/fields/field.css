@@ -5,16 +5,6 @@
   min-width: 0;
 }
 
-/* Transitorio: separación en los formularios que aún no usan rejilla (se retira con la limpieza de base.css). */
-form > .fld + .fld,
-form > .fld + .btn {
-  margin-top: 16px;
-}
-
-form > .btn + .btn {
-  margin-left: 10px;
-}
-
 .fld > label,
 .fld > .lbl {
   font-size: 12.5px;
