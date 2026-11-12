@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { I18nextProvider } from "react-i18next";
 
@@ -96,18 +96,38 @@ test("names the countries in the active language", async () => {
   expect(screen.getByRole("option", { name: "Espanha" })).toHaveValue("ES");
 });
 
-test("gives access to the text of the terms and of the marketing consent", async () => {
+const TERMS = "Acepto los términos y condiciones";
+const MARKETING = "Quiero recibir novedades por correo (opcional)";
+
+test("the terms and the marketing consent are links that open their document in a modal", async () => {
   const user = userEvent.setup();
   const { fetcher } = fakeFetch(respondWith(OPTIONS));
   renderPage(fetcher);
 
-  await user.click(await screen.findByText("Términos y condiciones"));
-  expect(screen.getByText("Texto de los términos.")).toBeVisible();
-  await user.click(screen.getByText("Novedades por correo"));
-  expect(screen.getByText("Texto del marketing.")).toBeVisible();
+  await user.click(await screen.findByRole("link", { name: TERMS }));
+  expect(screen.getByRole("dialog", { name: TERMS })).toHaveTextContent("Texto de los términos.");
+  await user.click(screen.getByRole("button", { name: "Cerrar" }));
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+  await user.click(screen.getByRole("link", { name: MARKETING }));
+  expect(screen.getByRole("dialog", { name: MARKETING })).toHaveTextContent("Texto del marketing.");
+});
+
+test("there are no collapsible sections any more and the two consents are stacked, terms first", async () => {
+  const { fetcher } = fakeFetch(respondWith(OPTIONS));
+  renderPage(fetcher);
+
+  const terms = await screen.findByRole("link", { name: TERMS });
+  const marketing = screen.getByRole("link", { name: MARKETING });
+  expect(document.querySelector("details")).toBeNull();
+  expect(terms.compareDocumentPosition(marketing) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  const checks = document.querySelectorAll("form .check-field");
+  expect(checks[checks.length - 2]).toContainElement(terms);
+  expect(checks[checks.length - 1]).toContainElement(marketing);
 });
 
 test("shows the terms and the marketing text as Markdown without interpreting HTML", async () => {
+  const user = userEvent.setup();
   const content =
     "**Cláusula 1**\n\nVer <https://example.com>.\n\n<b>negrita</b><script>x()</script>";
   const { fetcher } = fakeFetch(
@@ -119,14 +139,60 @@ test("shows the terms and the marketing text as Markdown without interpreting HT
   );
   renderPage(fetcher);
 
-  await screen.findByText("Términos y condiciones");
-  for (const title of ["Términos y condiciones", "Novedades por correo"]) {
-    const details = screen.getByText(title).closest("details") as HTMLElement;
-    expect(details.querySelector("strong")).toHaveTextContent("Cláusula 1");
-    expect(details.querySelector("a")).toHaveAttribute("href", "https://example.com");
-    expect(details.querySelectorAll("p")).toHaveLength(3);
-    expect(details.querySelector("b, script")).toBeNull();
+  await screen.findByRole("link", { name: TERMS });
+  for (const label of [TERMS, MARKETING]) {
+    await user.click(screen.getByRole("link", { name: label }));
+    const dialog = screen.getByRole("dialog", { name: label });
+    const body = dialog.querySelector(".document-body") as HTMLElement;
+    expect(body.querySelector("strong")).toHaveTextContent("Cláusula 1");
+    expect(body.querySelector("a")).toHaveAttribute("href", "https://example.com");
+    expect(body.querySelectorAll("p")).toHaveLength(3);
+    expect(body.querySelector("b, script")).toBeNull();
+    await user.click(within(dialog).getByRole("button", { name: "Cerrar" }));
   }
+});
+
+test("the checkbox of the modal is not a field of the form", async () => {
+  const user = userEvent.setup();
+  const { fetcher } = fakeFetch(respondWith(OPTIONS));
+  renderPage(fetcher);
+  await user.click(await screen.findByRole("link", { name: TERMS }));
+
+  const form = document.querySelector("form") as HTMLFormElement;
+  const inner = within(screen.getByRole("dialog")).getByRole("checkbox");
+  await user.click(inner);
+
+  expect(form).not.toContainElement(inner);
+  expect(new FormData(form).getAll("terms")).toEqual(["on"]);
+});
+
+test("closing the modal revalidates the terms: the error appears when they are not accepted", async () => {
+  const user = userEvent.setup();
+  const { fetcher } = fakeFetch(respondWith(OPTIONS));
+  renderPage(fetcher);
+  await user.click(await screen.findByRole("link", { name: TERMS }));
+
+  await user.click(screen.getByRole("button", { name: "Cerrar" }));
+
+  expect(await screen.findByText("Debes aceptar los términos y condiciones.")).toBeInTheDocument();
+  expect(screen.getByRole("checkbox", { name: TERMS })).toHaveAttribute("aria-invalid", "true");
+});
+
+test("accepting the terms in the modal and closing it lifts the error", async () => {
+  const user = userEvent.setup();
+  const { fetcher } = fakeFetch(respondWith(OPTIONS));
+  renderPage(fetcher);
+  await user.click(await screen.findByRole("link", { name: TERMS }));
+  await user.click(screen.getByRole("button", { name: "Cerrar" }));
+  await screen.findByText("Debes aceptar los términos y condiciones.");
+
+  await user.click(screen.getByRole("link", { name: TERMS }));
+  await user.click(within(screen.getByRole("dialog")).getByRole("checkbox"));
+  expect(screen.getByText("Debes aceptar los términos y condiciones.")).toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: "Cerrar" }));
+
+  expect(screen.queryByText("Debes aceptar los términos y condiciones.")).not.toBeInTheDocument();
+  expect(screen.getByRole("checkbox", { name: TERMS })).toBeChecked();
 });
 
 test("without a marketing document there is no marketing checkbox", async () => {

@@ -5,7 +5,7 @@ Líneas de código y tests: 216 (límite: 400).
 
 ## Qué se hizo
 - Hay una prueba nueva, `frontend/visual/document-modal.visual.test.ts`, que abre el catálogo en un Chromium
-  real y comprueba el modal de documento en tema claro y oscuro (20 pruebas por tema, 40 en total). Forma
+  real y comprueba el modal de documento en tema claro y oscuro (13 pruebas por tema, 26 en total). Forma
   parte de `pnpm --filter frontend test:visual` y del CI.
 - Comprueba lo que jsdom no puede ver: los colores de la cortina (`rgba(0, 0, 0, 0.5)`) y de la caja, el
   borde y el radio; los enlaces del documento (azul grisáceo, sin subrayado, en pestaña nueva); que Tab y
@@ -40,7 +40,7 @@ Ejecuta las pruebas visuales:
 ```bash
 pnpm --filter frontend test:visual
 ```
-Deberías ver 54 pruebas en verde (14 que ya había y 40 del modal).
+Deberías ver 40 pruebas en verde (14 que ya había y 26 del modal).
 
 Para ver que detectan un cambio, en `frontend/src/components/DocumentModal.css` cambia `rgba(0, 0, 0, 0.5)`
 por `rgba(0, 0, 0, 0.4)` y vuelve a ejecutarlas: falla la de la cortina. Deshaz el cambio.

@@ -116,7 +116,7 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   cambiar el tamaño de la ventana se recalcula con el modal abierto; `axe` (con contraste) no halla
   violaciones con el modal abierto, incluido el enlace de `#7f94b5`; `pnpm --filter frontend test:visual`
   pasa.
-  Decisiones: 20 pruebas por tema (40): cortina `rgba(0, 0, 0, 0.5)`, caja `rgb(27, 30, 34)` y `rgb(0, 0, 0)`
+  Decisiones: 13 pruebas por tema (26): cortina `rgba(0, 0, 0, 0.5)`, caja `rgb(27, 30, 34)` y `rgb(0, 0, 0)`
   con texto blanco, borde de 1 px y radio de 4 px; enlaces `rgb(127, 148, 181)` sin subrayado y en pestaña
   nueva; Tab y Mayús+Tab no llevan el foco a la página; la página de detrás no se desplaza (la rueda sobre la
   cortina no mueve `scrollY` y el `body` queda en `overflow: hidden`); cierre por «x», Escape y cortina con
@@ -185,18 +185,27 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   botón. Las cuatro casillas son: términos (obligatoria), novedades por correo (opcional), política de datos
   (obligatoria y con un error que se mantiene hasta cerrar el modal y entonces se revalida) y aviso de
   privacidad (sin documento). Verificado en un navegador real: el error no cambia la altura de la fila
-  (42 px con y sin error), el foco vuelve al enlace al cerrar y las 40 pruebas visuales siguen pasando
+  (42 px con y sin error), el foco vuelve al enlace al cerrar y las 40 pruebas visuales (14 de antes y 26 del modal) siguen pasando
   — [Cierto].
 
 ## E-04 Registro con la casilla
-- [ ] T-012 Casilla con documento: idioma y accesibilidad
+- [x] T-012 Casilla con documento: idioma y accesibilidad
   RF: RF-015, RF-016 | Depende de: T-010 | Archivos: 1
   Archivos: `components/fields/DocumentCheckbox.test.tsx`.
   Hecho cuando: con el modal abierto, cambiar el idioma actualiza el texto de la casilla, del enlace y del
   botón de cerrar sin cerrarlo y conservando el estado y el foco; `axe` no halla violaciones con el modal
   cerrado ni abierto; todo se puede hacer con el teclado (Enter en el enlace, Tab dentro del modal, Espacio,
   Escape); suite verde.
-- [ ] T-013 Registro con la casilla con documento
+  Decisiones: es una tarea de pruebas: no cambia código, porque el comportamiento ya salía de E-01 a E-03; sus
+  pruebas se validan con mutantes (los que ya se mataban en las tareas anteriores no cuentan). El texto de la
+  casilla y del documento los pasa la pantalla, así que la prueba usa un componente que los toma del idioma
+  activo; el «Cerrar» del modal cambia solo, por `useTranslation` — [Cierto]. Con el modal abierto, `axe` se
+  ejecuta sobre el diálogo y no sobre `document.body`: en jsdom no ve que la página de detrás queda inerte y
+  marcaba la casilla de fuera como «sin etiqueta» al no encontrar el enlace que la nombra; en un navegador real
+  esa página queda inerte y lo comprueba Chromium (T-007 y T-015) — [Probable]. Mutantes muertos: «Cerrar» fijo
+  en inglés, casilla de fuera sin `aria-labelledby`, diálogo sin nombre y estado reiniciado al cambiar de
+  idioma.
+- [x] T-013 Registro con la casilla con documento
   RF: RF-012 | Depende de: T-010 | Archivos: 2
   Archivos: `registration/RegisterPage.tsx`, `registration/RegisterPage.test.tsx`.
   Hecho cuando: el formulario de registro muestra los términos (obligatoria) y, si hay documento de
@@ -204,17 +213,38 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   los nombres de campo, la validación de los términos y los datos enviados (versión e idioma de cada
   documento) no cambian y sus tests previos pasan, salvo los de los desplegables, que se sustituyen; suite
   verde.
-- [ ] T-014 Retirar los textos de los desplegables
+  Decisiones: los términos usan `DocumentCheckbox` con `name="terms"`, `required`, el error y el `onBlur` del
+  formulario (que se invoca al cerrar el modal), y el marketing con `name="marketing"`, sin nada más: es
+  opcional y solo aparece si hay documento. Se quitaron `react-markdown` y `Checkbox` del registro: el
+  Markdown lo pinta ahora el modal con el mismo componente — [Cierto]. Las pruebas de los desplegables se
+  sustituyeron por: enlaces que abren el documento en un modal, sin `<details>` y con las dos casillas
+  apiladas (términos primero), el Markdown sin interpretar HTML dentro del modal, la casilla del modal fuera
+  del formulario, y la revalidación de los términos al cerrar (aparece y se retira el error). Las pruebas de
+  envío (sin marketing / con marketing) siguen intactas y pasan — [Cierto]. Verificado en un navegador real, a
+  1000 px en claro y a 420 px en oscuro, con la API simulada: el formulario cabe sin scroll, el modal abre,
+  Escape lo cierra, el foco vuelve al enlace y aparece el error de los términos — [Cierto]. Mutantes muertos:
+  sin `onBlur` en los términos, términos no obligatorios y marketing sin documento.
+- [x] T-014 Retirar los textos de los desplegables
   RF: RF-014 | Depende de: T-013 | Archivos: 3
   Archivos: `i18n/locales/en.ts`, `es.ts`, `pt-BR.ts`.
   Hecho cuando: `register.termsTitle` y `register.marketingTitle` ya no existen en ningún idioma, nada del
   código los usa y la paridad de claves sigue en verde; suite verde.
-- [ ] T-015 Accesibilidad del registro con el modal abierto
+  Decisiones: se eliminaron `register.termsTitle` y `register.marketingTitle` de los tres idiomas, como
+  aprobó el usuario con el plan; `termsLabel`, `marketingLabel` y `termsNotAccepted` se conservan. La prueba
+  roja fue quitar la clave solo de `en.ts` (la paridad de claves falló) — [Cierto]. Mutante muerto: volver a
+  poner una de las claves solo en inglés.
+- [x] T-015 Accesibilidad del registro con el modal abierto
   RF: RF-015 | Depende de: T-013 | Archivos: 1
   Archivos: `registration/a11y.test.tsx`.
   Hecho cuando: `axe` no halla violaciones en el registro con el modal de términos cerrado ni abierto;
   suite verde.
-
+  Decisiones: es una tarea de pruebas: el código ya salía de las tareas anteriores. Se añaden las pruebas del
+  modal de los términos y del marketing, cerrado y abierto, y del formulario con el error de los términos y el
+  modal cerrado; con el modal abierto `axe` se ejecuta sobre el diálogo porque jsdom no ve que la página de
+  detrás queda inerte (igual que en T-012) — [Probable]. Mutantes muertos: casilla de fuera sin
+  `aria-labelledby` y botón de cerrar sin nombre. Corrección de una cifra: en las notas de T-007, E-02b y
+  E-03b dije que el modal tenía 40 pruebas en Chromium (20 por tema); son 26 (13 por tema) y 40 con las 14 que
+  ya había; se corrigieron esos textos — [Cierto].
 ## Entregas
 Rama de integración: feat/casilla-con-documento (los PR de las entregas van contra ella; ver `AGENTS.md`)
 
@@ -236,7 +266,7 @@ Rama de integración: feat/casilla-con-documento (los PR de las entregas van con
   Nota: E-02 medía 425 líneas con la prueba en Chromium; se dividió en E-02 y E-02b según `AGENTS.md`.
 - E-02b El modal se comprueba en un navegador real.
   Tareas: T-007 | Líneas estimadas: 216 | Rama: feat/casilla-con-documento-aspecto
-  Cómo probarlo: `pnpm --filter frontend test:visual` (40 pruebas nuevas del modal, en claro y oscuro).
+  Cómo probarlo: `pnpm --filter frontend test:visual` (26 pruebas nuevas del modal, 13 en claro y 13 en oscuro; 40 en total con las de antes).
 - E-03 La casilla con enlace abre el documento y se sincroniza con la casilla del modal (se prueba con
   `pnpm --filter frontend test`; aún no se ve en el catálogo).
   Tareas: T-008, T-009 | Líneas estimadas: 330 | Rama: feat/casilla-con-documento-casilla-enlace
