@@ -128,7 +128,7 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   caiga en la página de detrás — [Cierto]. Mutantes (del código que la prueba vigila): el de T-016 y los de
   T-006 (cortina y color del enlace) los matan estas pruebas.
 
-## E-03 Casilla con documento
+## E-03 Casilla con enlace y casilla del modal
 - [x] T-008 Casilla con enlace al documento
   RF: RF-001, RF-010 | Depende de: T-004 | Archivos: 3
   Archivos: `components/fields/DocumentCheckbox.tsx`, `DocumentCheckbox.css`, `DocumentCheckbox.test.tsx`.
@@ -157,6 +157,7 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   T-010. Se deja de aceptar `checked` desde fuera: el estado es de la casilla — [Probable] — revertir:
   aceptar `checked` y usarlo si llega. Mutantes muertos: el modal se cierra al marcar, la del modal arranca
   siempre sin marcar, la del modal hereda el `name` y sin asterisco en la del modal.
+## E-03b Error, revalidación y catálogo de la casilla
 - [x] T-010 Cierre, error y revalidación
   RF: RF-006, RF-011 | Depende de: T-009 | Archivos: 3
   Archivos: `components/fields/DocumentCheckbox.tsx`, `DocumentCheckbox.css`, `DocumentCheckbox.test.tsx`.
@@ -236,11 +237,16 @@ Rama de integración: feat/casilla-con-documento (los PR de las entregas van con
 - E-02b El modal se comprueba en un navegador real.
   Tareas: T-007 | Líneas estimadas: 216 | Rama: feat/casilla-con-documento-aspecto
   Cómo probarlo: `pnpm --filter frontend test:visual` (40 pruebas nuevas del modal, en claro y oscuro).
-- E-03 La casilla con enlace abre el documento y se sincroniza con la del modal.
-  Tareas: T-008, T-009, T-010, T-011 | Líneas estimadas: 390 | Rama: feat/casilla-con-documento-casilla
-  Cómo probarlo: `pnpm --filter frontend dev`, abrir http://localhost:5173/ y, en la sección de casillas
-  con documento, marcar desde el modal, cerrarlo y ver que la casilla de fuera sigue marcada; el caso con
-  error se revalida al cerrar.
+- E-03 La casilla con enlace abre el documento y se sincroniza con la casilla del modal (se prueba con
+  `pnpm --filter frontend test`; aún no se ve en el catálogo).
+  Tareas: T-008, T-009 | Líneas estimadas: 330 | Rama: feat/casilla-con-documento-casilla-enlace
+  Cómo probarlo: `pnpm --filter frontend test` (los 21 tests de `DocumentCheckbox.test.tsx`).
+  Nota: E-03 medía 670 líneas; se dividió en E-03 y E-03b según `AGENTS.md`.
+- E-03b La casilla muestra su error y se revalida al cerrar, y el catálogo exhibe sus cuatro casos.
+  Tareas: T-010, T-011 | Líneas estimadas: 340 | Rama: feat/casilla-con-documento-casilla
+  Cómo probarlo: `pnpm --filter frontend dev`, abrir http://localhost:5173/ y, en la sección «Casillas con
+  documento», marcar desde el modal, cerrarlo y ver que la casilla de fuera sigue marcada; el caso con error se
+  revalida al cerrar.
 - E-04 El registro usa la casilla con documento para los términos y el marketing.
   Tareas: T-012, T-013, T-014, T-015 | Líneas estimadas: 250 | Rama: feat/casilla-con-documento-registro
   Cómo probarlo: `pnpm --filter frontend dev` con el backend levantado, abrir
