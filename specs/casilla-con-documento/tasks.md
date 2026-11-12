@@ -1,5 +1,5 @@
 # Tareas: casilla-con-documento
-Estado: borrador
+Estado: aprobado
 
 «Suite verde» = `pnpm --filter frontend test:coverage` (líneas ≥ 80 %), `typecheck`, `lint` y
 `exec prettier --check .` sin errores, y, desde T-007, también `pnpm --filter frontend test:visual`.
