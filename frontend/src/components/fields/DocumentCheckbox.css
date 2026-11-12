@@ -1,0 +1,25 @@
+/* Fila de la casilla con documento: como `.check`, pero sin `cursor` ni hover en toda la fila, porque solo el
+   cuadro la marca y solo el enlace abre el documento. */
+.doc-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.doc-check .txt {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--ink);
+}
+
+.doc-check .cb:hover input:not(:checked) {
+  background: color-mix(in srgb, var(--ink) 9%, var(--bg));
+  transition-duration: 0.08s;
+}
+
+.doc-check .cb:hover input:checked {
+  background: color-mix(in srgb, var(--primary) 78%, #000);
+  border-color: color-mix(in srgb, var(--primary) 78%, #000);
+  transition-duration: 0.08s;
+}

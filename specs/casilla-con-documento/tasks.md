@@ -129,13 +129,21 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   T-006 (cortina y color del enlace) los matan estas pruebas.
 
 ## E-03 Casilla con documento
-- [ ] T-008 Casilla con enlace al documento
+- [x] T-008 Casilla con enlace al documento
   RF: RF-001, RF-010 | Depende de: T-004 | Archivos: 3
   Archivos: `components/fields/DocumentCheckbox.tsx`, `DocumentCheckbox.css`, `DocumentCheckbox.test.tsx`.
   Hecho cuando: con documento, el texto de la casilla es un enlace (`aria-haspopup="dialog"`) que abre el
   modal sin cambiar la casilla; pulsar el cuadro la marca sin abrir el modal; pulsar el hueco de la fila no
   hace nada; la casilla se nombra con el texto del enlace y no está envuelta en `<label>`; sin contenido
   es una casilla normal sin enlace; suite verde.
+  Decisiones: `DocumentCheckbox({label, document, ...inputProps})`: `label` es un texto (se usa como enlace y
+  como nombre del modal) y `document` el Markdown; sin `document` pinta un `Checkbox` normal. La fila no es un
+  `<label>` ni lleva la clase `check` (que da `cursor` y hover a toda la fila): usa `doc-check` y el hover solo
+  sobre el cuadro — [Probable]. El enlace es `<a href="#">` que llama a `preventDefault`. El pie del modal va
+  vacío hasta T-009. Mutantes muertos: fila envuelta en `<label>`, el enlace marca la casilla y sin documento
+  sigue habiendo enlace. Nota: en jsdom un `<label>` que envuelve la fila no marcaba la casilla al pulsar la
+  fila, así que la prueba «pulsar el resto de la fila no hace nada» no distingue ese mutante; lo distingue la
+  de estructura (sin `<label>`) y lo comprobará Chromium — [Cierto].
 - [ ] T-009 Casilla del modal sincronizada
   RF: RF-004, RF-005 | Depende de: T-008 | Archivos: 3
   Archivos: `components/fields/DocumentCheckbox.tsx`, `DocumentCheckbox.css`, `DocumentCheckbox.test.tsx`.
