@@ -1,6 +1,6 @@
 # Entrega E-02b · Prueba del modal en Chromium
 
-Rama: `feat/casilla-con-documento-aspecto` (sale de `feat/casilla-con-documento`) · PR: pendiente ·
+Rama: `feat/casilla-con-documento-aspecto` (sale de `feat/casilla-con-documento`) · PR: [#107](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/107) ·
 Líneas de código y tests: 216 (límite: 400).
 
 ## Qué se hizo
