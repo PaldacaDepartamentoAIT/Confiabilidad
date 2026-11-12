@@ -874,22 +874,44 @@ transitorias hasta T-051 (D-12).
   navegador real a 420 px — [Cierto].
 
 ## E-15c Limpieza de `base.css`
-- [ ] T-051 Retirar las reglas transitorias de `base.css`
-  RF: RF-001 | Depende de: T-071, T-072, T-073 | Archivos: 5
+- [x] T-074 Selector de idioma con sus propias clases
+  RF: RF-027 | Depende de: T-009 | Archivos: 3
+  Archivos: `components/LanguageSwitcher.tsx`, `LanguageSwitcher.css`, `LanguageSwitcher.test.tsx`.
+  Hecho cuando: los botones del selector de idioma usan las clases del botón (principal el activo,
+  secundario los demás) en vez de la regla transitoria de `button`; suite verde.
+  Decisiones: tarea nueva surgida al buscar quién usaba `button` suelto: solo `LanguageSwitcher` (el
+  catálogo) y `MenuSection`, que ya tiene `sb-btn hov` — [Cierto]. `LanguageSwitcher` pasa a `btn
+  btn-primary` el activo y `btn btn-ghost hov` los demás, en un grupo `lang-switcher` con 8 px de
+  separación. Sus tests no cambian (comprueban roles y `aria-pressed`).
+- [x] T-073 Catálogo sin reglas transitorias
+  RF: RF-027 | Depende de: T-050 | Archivos: 2
+  Archivos: `showcase/ShowcasePage.tsx`, `showcase/sections/sections.css`.
+  Hecho cuando: la página del catálogo trae sus propias clases (contenedor, formulario y separación)
+  y no depende de `main`, `form` ni `section` de `base.css`; suite verde.
+  Decisiones: el `<main>` lleva `catalog-page` (columna con 14 px) y el formulario de ejemplo va en un
+  bloque (`.block`) con su título, con campos apilados con 16 px y las dos acciones a la derecha con
+  10 px; el orden de las acciones no cambia (los tests recorren el teclado) — [Cierto]. Se pierde la
+  caja que envolvía toda la página, que era la regla transitoria — [Cierto].
+- [x] T-051 Retirar las reglas transitorias de `base.css`
+  RF: RF-001 | Depende de: T-071, T-072, T-073, T-074 | Archivos: 6
   Archivos: `styles/base.css`, `styles/tokens.test.ts`, `components/fields/field.css`,
-  `layouts/PublicLayout.css`, `layouts/AppLayout.css`.
+  `layouts/PublicLayout.css`, `layouts/AppLayout.css`, `layouts/PublicPage.css`.
   Hecho cuando: `base.css` no estila `button`, `input`, `select`, `main`, `form` ni `section` y el
   test lo comprueba; las pantallas de registro (con la columna pública) y el catálogo conservan su
   aspecto salvo lo que cambia la guía; suite verde.
-  Excepción: 5 archivos. Es un único cambio de retirar reglas transitorias que se compensan entre sí
+  Excepción: 6 archivos. Es un único cambio de retirar reglas transitorias que se compensan entre sí
   (el relleno del `body` y el `margin: -22px` de `.public-app`; la caja de `main` y su anulación en
-  `.content`; la separación de `field.css`); separarlo dejaría pantallas rotas entre commits.
-- [ ] T-073 Catálogo sin reglas transitorias
-  RF: RF-027 | Depende de: T-050 | Archivos: 3
-  Archivos: `showcase/ShowcasePage.tsx`, `showcase/sections/sections.css`,
-  `showcase/ShowcasePage.test.tsx`.
-  Hecho cuando: la página del catálogo trae sus propias clases (contenedor, formulario y separación)
-  y no depende de `main`, `form` ni `section` de `base.css`; suite verde.
+  `.content` y en `PublicPage`; la separación de `field.css`); separarlo dejaría pantallas rotas entre
+  commits.
+  Decisiones: `base.css` queda con el reinicio, la fuente, el foco y el movimiento reducido; para los
+  controles solo conserva el reinicio `font: inherit; color: inherit` y `cursor: pointer` de `button`,
+  que el test permite — [Probable]. Test nuevo: ninguna regla de `main`, `form` ni `section`, y las de
+  controles solo con `font`, `color` y `cursor`; falla con el `base.css` anterior. Comparación de
+  capturas antes y después, con la API simulada, en claro y oscuro a 1000 y 420 px: las pantallas de
+  registro (formulario, verificación y cuenta creada) son idénticas píxel a píxel; el catálogo cambia
+  solo por perder la caja global y por el formulario de ejemplo en un bloque — [Cierto]. El paso de
+  la contraseña (`PasswordStep`) no se pudo ver en pantalla (necesita un código aceptado); sus tests
+  pasan — [Suposición]. Mutante muerto: volver a poner la regla de `main`.
 
 ## E-16 Comprobación visual
 - [ ] T-052 Playwright y proyecto de test visual
@@ -1106,7 +1128,7 @@ Rama de integración: `feat/sistema-de-diseno` (los PR de las entregas van contr
   Cómo probarlo: `/register`, `/register/continue` y `/register/done` muestran un bloque centrado de
   480 px con su título.
 - E-15c Limpieza de `base.css`.
-  Tareas: T-073, T-051 | Líneas estimadas: 250 | Rama: feat/sistema-de-diseno-limpieza
+  Tareas: T-074, T-073, T-051 | Líneas estimadas: 290 | Rama: feat/sistema-de-diseno-limpieza
   Cómo probarlo: el catálogo y las pantallas de registro se ven como antes de la limpieza.
   Nota: E-15 se separó de la limpieza porque quitar las reglas transitorias cambia el aspecto de las
   pantallas de registro; el usuario eligió que adopten la columna y el bloque de la guía (11-nov).
