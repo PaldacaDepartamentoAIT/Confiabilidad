@@ -52,12 +52,20 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   jsdom; que el navegador real lo emita con la tecla se comprueba en Chromium (T-007) — [Probable]. Un test
   mal escrito (la barra espaciadora sobre la «x» enfocada sí la pulsa) se corrigió. Mutantes muertos: la
   cortina cierra también con clic dentro, Escape sin `preventDefault`, la «x» sin manejador.
-- [ ] T-005 Catálogo: modal de ejemplo
+- [x] T-005 Catálogo: modal de ejemplo
   RF: RF-013 | Depende de: T-004 | Archivos: 3
   Archivos: `showcase/sections/DocumentSection.tsx`, `showcase/ShowcasePage.tsx`,
   `showcase/ShowcasePage.test.tsx`.
   Hecho cuando: el catálogo tiene una sección con un botón que abre el modal con un documento de ejemplo
   (con títulos, listas y un enlace) y una casilla en el pie, y se cierra por sus tres vías; suite verde.
+  Decisiones: sección «Documento en un modal» con un botón secundario «Abrir el documento», un documento de
+  ejemplo con títulos, listas, un enlace y texto de relleno para que haga scroll, y la casilla de siempre
+  (`Checkbox`, sin estado compartido todavía) en el pie. El contenido no lleva `lang` propio porque el
+  modal se pinta en `document.body`, fuera de la región con `lang="es"` — [Probable]. Verificado en un
+  navegador real a 1000 px en claro y a 420 px en oscuro: abre, la caja mide 640 px (388 px a 420 px), el
+  foco queda en la «x» y Escape lo cierra — [Cierto]. Se ve que falta lo de T-006: la etiqueta de la casilla
+  del pie sale en tinta sobre negro (no se lee), los enlaces en el color principal y la cortina por defecto
+  del navegador — [Cierto]. Mutante muerto: `onClose` vacío.
 
 ## E-02 Aspecto del modal y prueba en navegador
 - [ ] T-006 Aspecto del modal según la guía

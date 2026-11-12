@@ -463,6 +463,38 @@ test("the catalog shows the status grid with its glyphs and its legend", () => {
   expect(catalog.querySelector(".cells-legend")).toHaveTextContent("Mantenimiento");
 });
 
+test("the catalog opens an example document in a modal and closes it in the three ways", async () => {
+  const user = userEvent.setup();
+  renderPage("en");
+  const catalog = screen.getByRole("region", { name: "Documento en un modal" });
+  expect(catalog).toHaveAttribute("lang", "es");
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+  await user.click(within(catalog).getByRole("button", { name: "Abrir el documento" }));
+
+  const dialog = screen.getByRole("dialog", { name: "Términos de ejemplo" });
+  expect(
+    within(dialog).getByRole("heading", { name: "Términos y condiciones" }),
+  ).toBeInTheDocument();
+  expect(within(dialog).getAllByRole("listitem").length).toBeGreaterThanOrEqual(2);
+  expect(within(dialog).getByRole("link", { name: /política/i })).toHaveAttribute(
+    "target",
+    "_blank",
+  );
+  expect(within(dialog).getByRole("checkbox", { name: "Acepto los términos" })).toBeInTheDocument();
+
+  await user.click(within(dialog).getByRole("button", { name: "Close" }));
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+  await user.click(within(catalog).getByRole("button", { name: "Abrir el documento" }));
+  fireEvent(screen.getByRole("dialog"), new Event("cancel", { cancelable: true }));
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+  await user.click(within(catalog).getByRole("button", { name: "Abrir el documento" }));
+  await user.click(screen.getByRole("dialog"));
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+});
+
 test("the catalog adds no extra stops to the keyboard order", async () => {
   const user = userEvent.setup();
   renderPage();
