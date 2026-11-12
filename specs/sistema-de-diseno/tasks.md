@@ -931,12 +931,33 @@ transitorias hasta T-051 (D-12).
   comprueba el fondo del cuerpo (`rgb(248, 249, 249)` y `rgb(17, 18, 19)`), que haya indicadores y que
   no haya errores de página — [Cierto]. Se retiró `/// <reference types="vitest/config" />` de
   `vite.config.ts` porque ESLint lo rechaza al importar de `vitest/config`.
-- [ ] T-053 Comparación con las referencias
+- [x] T-053 Comparación con las referencias
   RF: RF-028 | Depende de: T-052 | Archivos: 2
   Archivos: `frontend/visual/measure.ts`, `frontend/visual/compare.visual.test.ts`.
   Hecho cuando: compara con igualdad exacta las propiedades de RF-028 entre el catálogo y
   `docs/referencia/*.html` en claro y oscuro y falla al cambiar un valor de un componente
   (comprobado); `pnpm --filter frontend test:visual` pasa.
+  Excepción: 8 archivos en lugar de 2. Además de `measure.ts` y `compare.visual.test.ts` hay un test
+  unitario de la función de diferencias (`measure.visual.test.ts`) y las correcciones que la
+  comparación hizo aparecer (dos referencias HTML, `Checkbox.css` y la marca `data-ui="help"` de
+  cuatro campos), en un commit aparte.
+  Decisiones: `measure()` es la de `docs/referencia/comparar.cjs` (primera aparición visible de cada
+  `data-ui`; las propiedades de RF-028; alto en las de ancho variable y ancho y alto en las de tamaño
+  fijo) y `differences()` omite las piezas que no están en el catálogo. La comparación se hace a 1280 px
+  contra las dos referencias, en claro y oscuro (4 pruebas). La primera ejecución encontró diferencias
+  reales — [Cierto]: (1) la pila tipográfica: las referencias declaraban `"Manrope"` y la aplicación
+  `"Manrope Variable", "Manrope"` (el nombre que da el paquete de fuentes); se actualizó la referencia
+  en vez de aplicar tolerancia, porque RF-028 exige igualdad exacta — [Probable]; (2) el botón de
+  menú de la referencia no ponía `padding: 0` y medía el relleno por defecto del navegador
+  (1 px 6 px); se añadió a la referencia, ya que el tamaño es fijo y el icono va centrado; (3) la
+  etiqueta de las casillas se veía en texto secundario en la aplicación y en tinta en la referencia:
+  defecto real de la aplicación, corregido en `Checkbox.css` (`color: var(--ink)`). Además se marcó la
+  ayuda de los campos con `data-ui="help"` para que también se compare. Quedan sin comparar
+  `page-title`, que la aplicación todavía no tiene como pieza, y lo que no esté en el catálogo. Se
+  añadió una comprobación de que se comparan al menos 15 piezas, para que no pase en vacío.
+  Mutantes muertos (4 pruebas cada uno): relleno superior del bloque 18 → 19 px y radio del botón
+  6 → 7 px.
+
 - [ ] T-054 Contraste y accesibilidad en ambos temas
   RF: RF-029 | Depende de: T-052 | Archivos: 2
   Archivos: `frontend/visual/contrast.visual.test.ts`, `frontend/visual/measure.ts`.
