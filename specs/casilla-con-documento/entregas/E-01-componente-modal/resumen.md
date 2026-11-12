@@ -1,6 +1,6 @@
 # Entrega E-01 · Componente de modal de documento
 
-Rama: `feat/casilla-con-documento-componente-modal` (sale de `feat/casilla-con-documento`) · PR: pendiente ·
+Rama: `feat/casilla-con-documento-componente-modal` (sale de `feat/casilla-con-documento`) · PR: [#104](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/104) ·
 Líneas de código y tests: 382 (límite: 400).
 
 ## Qué se hizo
