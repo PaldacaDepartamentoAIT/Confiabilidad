@@ -1,6 +1,6 @@
 # Entrega E-16 · Comprobación visual
 
-Rama: `feat/sistema-de-diseno-visual` (sale de `feat/sistema-de-diseno`) · PR: pendiente ·
+Rama: `feat/sistema-de-diseno-visual` (sale de `feat/sistema-de-diseno`) · PR: [#102](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/102) ·
 Líneas de código y tests: 324 (límite: 400).
 
 ## Qué se hizo
