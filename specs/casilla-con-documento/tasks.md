@@ -69,7 +69,7 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   del navegador — [Cierto]. Mutante muerto: `onClose` vacío.
 
 ## E-02 Aspecto del modal y prueba en navegador
-- [ ] T-006 Aspecto del modal según la guía
+- [x] T-006 Aspecto del modal según la guía
   RF: RF-002, RF-007, RF-009 | Depende de: T-004 | Archivos: 3
   Archivos: `components/DocumentModal.css`, `components/documentModalCss.test.ts`,
   `docs/identidad-visual.md`.
@@ -82,6 +82,15 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   Excepción: 4 archivos en lugar de 3. Vitest solo procesa los CSS de `css.include` en `vite.config.ts` y
   sin eso el test que lee `DocumentModal.css` recibe un texto vacío; añadir ese CSS son una línea en
   `frontend/vite.config.ts`. Aprobada por el usuario el 12-nov.
+  Decisiones: las reglas de la guía están en `DocumentModal.css` y en una sección nueva «Modal de documento»
+  de `docs/identidad-visual.md` (más una fila en la tabla de movimiento). La caja usa `width: 640px` y
+  `max-width: calc(100% - 32px)`, y por debajo de 700 px `width: calc(100% - 32px)`; el alto es
+  `max-height: min(80dvh, calc(100dvh - 32px))`; la cortina y la caja aparecen con el mismo fundido de 0,2 s;
+  el sombreado al pasar el ratón por la «×» (blanco al 12 %) y el foco con el contorno global no vienen de
+  la spec — [Probable]. Verificado en un navegador real a 1000 px en claro (cortina visible, etiqueta de la
+  casilla y enlaces legibles) y a 420 px en oscuro (caja de 388 px con 16 px de margen) — [Cierto]. En el
+  tema oscuro la cortina negra se nota menos porque la página ya es oscura; el borde de 1 px separa la caja —
+  [Cierto]. Mutantes muertos: cortina 0,5 → 0,4 y enlace `#7f94b5` → `#546c8c`.
 - [ ] T-007 Prueba del modal en Chromium
   RF: RF-002, RF-006, RF-007, RF-009, RF-015, RF-016 | Depende de: T-005, T-006 | Archivos: 1
   Archivos: `frontend/visual/document-modal.visual.test.ts`.

@@ -1,3 +1,5 @@
+/* Modal de documento (docs/identidad-visual.md, «Modal de documento»). El diálogo ocupa toda la pantalla y la
+   caja va dentro: un clic sobre el diálogo es un clic en la cortina. */
 .document-modal {
   width: 100%;
   height: 100%;
@@ -9,14 +11,24 @@
   background: transparent;
 }
 
+.document-modal::backdrop {
+  background: rgba(0, 0, 0, 0.5);
+}
+
 .document-modal[open] {
   display: grid;
   place-items: center;
 }
 
+/* La página de detrás no se desplaza mientras el modal está abierto. */
+body:has(dialog.document-modal[open]) {
+  overflow: hidden;
+}
+
 .document-box {
-  width: min(640px, calc(100% - 32px));
-  max-height: calc(100% - 32px);
+  width: 640px;
+  max-width: calc(100% - 32px);
+  max-height: min(80dvh, calc(100dvh - 32px));
   display: flex;
   flex-direction: column;
   background: var(--black-fill);
@@ -25,7 +37,32 @@
   border-radius: 4px;
 }
 
+.document-modal[open] .document-box {
+  animation: document-in 0.2s ease-out;
+}
+
+.document-modal[open]::backdrop {
+  animation: document-in 0.2s ease-out;
+}
+
+@keyframes document-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 699px) {
+  .document-box {
+    width: calc(100% - 32px);
+  }
+}
+
 .document-head {
+  flex: none;
   display: flex;
   justify-content: flex-end;
   padding: 8px 8px 0;
@@ -47,6 +84,10 @@
   cursor: pointer;
 }
 
+.document-close:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
 .document-body {
   flex: 1;
   min-height: 0;
@@ -54,7 +95,17 @@
   padding: 0 20px;
 }
 
+.document-body a {
+  color: #7f94b5;
+  text-decoration: none;
+}
+
 .document-foot {
+  flex: none;
   padding: 14px 20px 20px;
   border-top: 1px solid var(--gray);
+}
+
+.document-box .check {
+  color: #ffffff;
 }

@@ -191,6 +191,7 @@ Un solo color por prioridad en toda la aplicación.
 | Cambio del contenido al cambiar de sección | 0,2 s de fundido |
 | Pestañas a selector y al revés | 0,15 s de salida y, a continuación, 0,2 s de entrada |
 | Buscador reducido: abrir y cerrar | 0,25 s, salida suave; 0,2 s de fundido de las pestañas y del botón |
+| Aparición del modal de documento | 0,2 s de fundido de la caja y de la cortina |
 | Aparición de un menú desplegable | 0,18 s (fundido y 6 px de desplazamiento hacia abajo); se cierra sin animación |
 | Panel lateral en móvil | 0,25 s de deslizamiento |
 | Cambio de tema | 0,4 s en todos los colores, solo durante el cambio |
@@ -310,6 +311,21 @@ sección manda sobre las descripciones generales de arriba.
 | Hover | sin marcar: fondo con el 9 % de la tinta; marcada: el principal oscurecido |
 | Fila | caja y texto separados 10 px; texto de 14 px |
 | Ayuda y error | debajo de la fila, a 2 px, alineados con el borde izquierdo de la caja (sin sangría); la ayuda de 12 px en texto secundario; el error con el icono `circle-alert` en P1 y el mensaje en tinta, como en un campo de texto |
+
+### Modal de documento
+
+Ventana modal que muestra un documento (términos, consentimientos) y se abre desde el texto de una casilla.
+
+| Parte | Valor |
+|---|---|
+| Cortina | negro al 50 % de opacidad sobre toda la pantalla, igual en los dos temas |
+| Caja | relleno negro del sistema (`#1b1e22` en claro y `#000000` en oscuro), texto en blanco `#ffffff`, borde de 1 px en el color de las líneas y radio 4 px, centrada |
+| Tamaño | 640 px de ancho máximo; por debajo de 700 px de ancho de pantalla, el ancho completo menos 32 px (16 px de margen a cada lado). Alto máximo: el 80 % del alto visible, sin pasar de ese alto menos 32 px |
+| Partes | de arriba abajo: botón «×» de 32 × 32 px a la derecha, contenido con desplazamiento y pie con la casilla de aceptación separado por una línea de 1 px; solo se desplaza el contenido |
+| Enlaces del documento | `#7f94b5`, sin subrayado (da 3:1 frente al texto blanco y más de 4,5:1 sobre el negro); se abren en una pestaña nueva |
+| Casilla del pie | etiqueta en blanco |
+| Página de detrás | no se desplaza mientras el modal está abierto |
+| Aparición | fundido de 0,2 s de la caja y de la cortina |
 
 ### Botones
 
