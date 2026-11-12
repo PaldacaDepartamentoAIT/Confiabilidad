@@ -1,8 +1,3 @@
-/* Transitorio: compensa el relleno del `body` de base.css (se retira con T-051). */
-.public-app {
-  margin: -22px;
-}
-
 .public-bar {
   position: sticky;
   top: 0;

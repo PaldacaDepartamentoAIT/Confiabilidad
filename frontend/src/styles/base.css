@@ -1,5 +1,4 @@
-/* Reglas generales de docs/identidad-visual.md. Las reglas de elementos sueltos de «Transitorio»
-   se retiran en T-051, cuando cada pieza trae sus propias clases. */
+/* Reglas generales de docs/identidad-visual.md: reinicio, fuente, foco y movimiento reducido. */
 *,
 *::before,
 *::after {
@@ -60,60 +59,4 @@ small {
     animation: none !important;
     transition: none !important;
   }
-}
-
-/* Transitorio: estilos de las piezas de componentes-base-accesibles hasta que se restilicen. */
-body {
-  padding: 22px;
-}
-
-main,
-form,
-section {
-  background: var(--bg);
-  border: 1px solid var(--gray);
-  border-radius: 4px;
-  padding: 14px 16px;
-}
-
-button {
-  border: 1px solid var(--primary);
-  border-radius: 6px;
-  background: var(--primary);
-  color: var(--on-primary);
-  font-weight: 600;
-  padding: 6px 16px;
-}
-
-button[aria-pressed="false"],
-button[data-variant="secondary"] {
-  background: transparent;
-  color: var(--primary);
-}
-
-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-input,
-select {
-  border: 1px solid var(--ctrl);
-  border-radius: 6px;
-  background: var(--bg);
-  padding: 6px 8px;
-}
-
-select {
-  display: block;
-  width: 100%;
-}
-
-input[type="checkbox"] {
-  accent-color: var(--primary);
-}
-
-input[inputmode="numeric"] {
-  font-family: var(--mono);
-  font-variant-numeric: tabular-nums;
 }

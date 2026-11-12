@@ -7,6 +7,9 @@ import {
   type Language,
   type LanguageStorage,
 } from "../i18n/language";
+import "../theme/ThemeButton.css";
+import "./Button.css";
+import "./LanguageSwitcher.css";
 
 type LanguageSwitcherProps = {
   storage?: LanguageStorage;
@@ -21,11 +24,14 @@ export function LanguageSwitcher({ storage }: LanguageSwitcherProps) {
   }
 
   return (
-    <div role="group" aria-label={t("language.label")}>
+    <div className="lang-switcher" role="group" aria-label={t("language.label")}>
       {SUPPORTED_LANGUAGES.map((language) => (
         <button
           key={language}
           type="button"
+          className={["btn", i18n.language === language ? "btn-primary" : "btn-ghost hov"].join(
+            " ",
+          )}
           lang={language}
           aria-pressed={i18n.language === language}
           onClick={() => choose(language)}
