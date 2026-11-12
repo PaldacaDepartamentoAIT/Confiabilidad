@@ -14,6 +14,7 @@ import { AppLayoutSection } from "./sections/AppLayoutSection";
 import { BlocksSection } from "./sections/BlocksSection";
 import { ButtonsSection } from "./sections/ButtonsSection";
 import { DataSection } from "./sections/DataSection";
+import { DocumentSection } from "./sections/DocumentSection";
 import { FieldsSection } from "./sections/FieldsSection";
 import { MenuSection } from "./sections/MenuSection";
 
@@ -140,6 +141,7 @@ export function ShowcasePage({ storage }: ShowcasePageProps) {
         <BlocksSection />
         <ButtonsSection />
         <FieldsSection />
+        <DocumentSection />
         <MenuSection storage={storage} />
         <AppLayoutSection storage={storage} />
         <DataSection />
