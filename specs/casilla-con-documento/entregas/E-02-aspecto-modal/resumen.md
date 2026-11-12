@@ -1,6 +1,6 @@
 # Entrega E-02 · Aspecto del modal y foco
 
-Rama: `feat/casilla-con-documento-aspecto-modal` (sale de `feat/casilla-con-documento`) · PR: pendiente ·
+Rama: `feat/casilla-con-documento-aspecto-modal` (sale de `feat/casilla-con-documento`) · PR: [#106](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/106) ·
 Líneas de código y tests: 209 (límite: 400).
 
 ## Qué se hizo
