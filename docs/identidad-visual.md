@@ -282,7 +282,7 @@ sección manda sobre las descripciones generales de arriba.
 |---|---|
 | Etiqueta | 12,5 px, 500, texto secundario, a 6 px del campo; el «*» en texto secundario |
 | Campo | 36 px de alto, relleno horizontal de 11 px, borde de 1 px en borde de control, radio 6 px, 14 px, fondo del lienzo |
-| Reserva del mensaje | cada campo (texto, contraseña, código, selector y casilla) reserva bajo su caja una línea de 16 px más 2 px de separación para el error; al aparecer o desaparecer no mueve el contenido; la ayuda va encima y siempre visible; la separación entre campos es esa línea (18 px), y lo que no es un campo conserva 16 px por encima. Un error de más de una línea hace crecer ese campo |
+| Reserva del mensaje | cada campo (texto, contraseña, código, selector y casilla) reserva bajo su caja 20 px (la línea del error, de 16 px, más 4 px de aire por debajo) a 2 px de ella; al aparecer o desaparecer no mueve el contenido; la ayuda va encima y siempre visible; la separación entre campos es esa reserva (22 px), y lo que no es un campo conserva 16 px por encima. Un error de más de una línea hace crecer ese campo |
 | Campo de códigos | JetBrains Mono 13 px |
 | Hover | borde de 1 px en el principal |
 | Foco o menú abierto | borde de 2 px en el principal; el relleno horizontal baja a 10 px para que el texto no se mueva |

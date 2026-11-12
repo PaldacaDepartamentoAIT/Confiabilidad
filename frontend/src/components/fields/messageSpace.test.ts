@@ -10,16 +10,16 @@ function rule(css: string, selector: string): string {
 }
 
 describe("reserva del mensaje de error", () => {
-  it("el campo reserva una línea de 16 px bajo su caja", () => {
+  it("el campo reserva 20 px bajo su caja", () => {
     const reserve = rule(field, ".fld::after");
     expect(reserve).toMatch(/content:\s*""/);
-    expect(reserve).toMatch(/height:\s*16px/);
+    expect(reserve).toMatch(/height:\s*20px/);
   });
 
   it("el error ocupa la línea reservada y no la suma a ella", () => {
     expect(rule(field, ".fld:has(> .error-msg)::after")).toMatch(/content:\s*none/);
     const message = rule(field, ".error-msg");
-    expect(message).toMatch(/min-height:\s*16px/);
+    expect(message).toMatch(/min-height:\s*20px/);
     expect(message).toMatch(/line-height:\s*16px/);
   });
 
@@ -30,7 +30,7 @@ describe("reserva del mensaje de error", () => {
   });
 
   it("la casilla reserva la misma línea y la oculta con el error", () => {
-    expect(rule(checkbox, ".check-field::after")).toMatch(/height:\s*16px/);
+    expect(rule(checkbox, ".check-field::after")).toMatch(/height:\s*20px/);
     expect(rule(checkbox, ".check-field:has(> .error-msg)::after")).toMatch(/content:\s*none/);
   });
 });
