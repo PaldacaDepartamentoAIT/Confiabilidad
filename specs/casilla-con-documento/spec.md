@@ -1,5 +1,5 @@
 # Spec: casilla-con-documento
-Estado: borrador
+Estado: aprobada
 Aprobación: ligera
 
 ## Objetivo (por qué)
@@ -14,23 +14,20 @@ la usa en el formulario de registro.
 ### RF-001 Casilla con enlace al documento
 Donde se indique un documento para la casilla, el sistema deberá mostrar el texto de su etiqueta como un
 enlace. Cuando la persona pulse el enlace, el sistema deberá abrir el modal con el documento sin marcar
-ni desmarcar la casilla; cuando pulse el cuadro de la casilla, el sistema deberá marcarla o desmarcarla
-sin abrir el modal.
+ni desmarcar la casilla; cuando pulse el cuadro de la casilla, el sistema deberá marcarla o desmarcarla sin abrir el modal. Cuando pulse cualquier otra parte de la fila (el hueco entre el cuadro y el texto o lo que sobra a la derecha), el sistema no deberá hacer nada.
 
 ### RF-002 Estructura del modal
-Mientras el modal esté abierto, el sistema deberá mostrar una caja negra sobre una cortina negra que
-cubre la pantalla, con tres partes en este orden: un botón «x» arriba, el contenido del documento con
-desplazamiento y, abajo, una casilla con el mismo texto que el enlace.
+Mientras el modal esté abierto, el sistema deberá mostrar una caja sobre una cortina que cubre la pantalla, con tres partes en este orden: un botón «x» arriba, el contenido del documento con desplazamiento y, abajo, una casilla con el mismo texto que el enlace. La cortina deberá ser negra al 50 % de opacidad y la caja deberá usar el relleno negro del sistema de diseño (`#1b1e22` en tema claro y `#000000` en oscuro) con texto blanco.
 
 ### RF-003 Contenido del documento
 El sistema deberá mostrar el documento dentro del modal con su formato (Markdown: títulos, párrafos,
-listas, énfasis y enlaces), sin exigir llegar al final del texto para poder marcar la casilla.
+listas, énfasis y enlaces), sin exigir llegar al final del texto para poder marcar la casilla. Cuando la persona pulse un enlace del documento, el sistema deberá abrirlo en una pestaña nueva, sin cerrar el modal ni salir de la página.
 
 ### RF-004 Casilla del modal sincronizada
 Mientras el modal esté abierto, el sistema deberá mantener sincronizado el estado de la casilla del
 modal con el de la casilla del formulario: cuando la persona marque o desmarque una, la otra deberá
 reflejar el mismo estado. A diferencia de la del formulario, el texto de la casilla del modal es una
-etiqueta corriente: cuando la persona pulse su texto, el sistema deberá marcar o desmarcar la casilla.
+etiqueta corriente: cuando la persona pulse su texto, el sistema deberá marcar o desmarcar la casilla. Además, la casilla del modal deberá mostrar el texto de la etiqueta y, si la casilla es obligatoria, su asterisco, sin repetir la ayuda ni el error.
 
 ### RF-005 El modal sigue abierto al marcar
 Cuando la persona marque o desmarque la casilla del modal, el sistema deberá mantener el modal abierto.
@@ -41,8 +38,7 @@ modal y devolver el foco al enlace que lo abrió, conservando el estado de la ca
 
 ### RF-007 Fondo bloqueado
 Mientras el modal esté abierto, el sistema deberá impedir que la página de detrás se desplace y deberá
-mantener el foco del teclado dentro del modal, de modo que Tab recorra solo la «x», el contenido con
-desplazamiento y la casilla.
+mantener el foco del teclado dentro del modal, de modo que Tab recorra solo la «x», el contenido con desplazamiento (y los enlaces que contenga) y la casilla.
 
 ### RF-008 Nombre accesible
 Mientras el modal esté abierto, el sistema deberá exponerlo a las tecnologías de apoyo como un diálogo
@@ -50,7 +46,7 @@ modal cuyo nombre sea el texto de la etiqueta, sin mostrar un título visible.
 
 ### RF-009 Tamaño del modal
 El sistema deberá mostrar la caja del modal centrada, con un ancho máximo de 640 px y un alto máximo del
-80 % de la pantalla; en pantallas estrechas deberá ocupar casi todo el ancho con 16 px de margen. Cuando
+80 % de la pantalla; en pantallas de menos de 700 px de ancho deberá ocupar casi todo el ancho con 16 px de margen. Si el alto visible no alcanza para el 80 %, entonces la caja deberá dejar 16 px de margen arriba y abajo y mantener visibles la «x» y la casilla. Cuando
 el documento no quepa, el sistema deberá desplazar solo el contenido, manteniendo siempre visibles la
 «x» y la casilla.
 
@@ -61,8 +57,7 @@ casilla normal, con su etiqueta como texto y sin enlace ni modal.
 ### RF-011 Casilla obligatoria, opcional y con error
 El sistema deberá conservar para esta casilla los comportamientos de una casilla de verificación del
 sistema de diseño: marca de obligatoria, ayuda opcional, error con su icono y la reserva de espacio que
-evita que el formulario cambie de alto al aparecer el error. El error se mostrará junto a la casilla del
-formulario, no en el modal.
+evita que el formulario cambie de alto al aparecer el error. El error se mostrará junto a la casilla del formulario, no en el modal. Si la casilla está en error y la persona la marca desde el modal, el error deberá mantenerse mientras el modal siga abierto; al cerrarlo, el sistema deberá revalidar y retirar el error si la casilla está marcada.
 
 ### RF-012 Uso en el registro
 El sistema deberá mostrar en el formulario de registro la aceptación de los términos (obligatoria) y,
@@ -83,6 +78,11 @@ aplicación.
 El sistema deberá poder usarse por completo con el teclado (abrir con Enter sobre el enlace, recorrer el
 modal con Tab, marcar con Espacio, cerrar con Escape) y deberá cumplir contraste AA y no tener
 violaciones de accesibilidad, en tema claro y oscuro, con el modal cerrado y abierto.
+
+### RF-016 Cambios con el modal abierto
+Mientras el modal esté abierto, cuando cambie el idioma o el tamaño de la pantalla (por ejemplo, al girar
+un móvil), el sistema deberá actualizar los textos y recalcular la caja manteniendo el modal abierto, el
+foco y el estado de la casilla.
 
 ## Supuestos
 - S-01 El documento llega a la casilla ya cargado y en Markdown; quién lo pide al servidor y en qué
@@ -121,3 +121,4 @@ violaciones de accesibilidad, en tema claro y oscuro, con el modal cerrado y abi
 
 ## Historial de cambios
 - 2026-11-12 — Spec inicial — RF: RF-001 a RF-015 — Estado: pendiente de clarificar
+- 2026-11-12 — Clarificación: C-01 a C-07 — RF: RF-001, RF-002, RF-003, RF-004, RF-007, RF-009, RF-011, RF-016 — Estado: clarificado
