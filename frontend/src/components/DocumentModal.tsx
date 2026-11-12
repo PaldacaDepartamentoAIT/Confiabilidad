@@ -23,7 +23,14 @@ export function DocumentModal({ open, name, content, onClose, children }: Docume
   const dialog = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
-    if (open && dialog.current && !dialog.current.open) dialog.current.showModal();
+    if (!open) return;
+    // El diálogo se desmonta en vez de cerrarse con `close()`, y el navegador no devuelve el foco al quitarlo
+    // del documento: se recuerda quién lo tenía al abrir y se le devuelve al cerrar (RF-006).
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    if (dialog.current && !dialog.current.open) dialog.current.showModal();
+    return () => {
+      if (opener?.isConnected) opener.focus();
+    };
   }, [open]);
 
   if (!open) return null;
