@@ -245,6 +245,23 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   `aria-labelledby` y botón de cerrar sin nombre. Corrección de una cifra: en las notas de T-007, E-02b y
   E-03b dije que el modal tenía 40 pruebas en Chromium (20 por tema); son 26 (13 por tema) y 40 con las 14 que
   ya había; se corrigieron esos textos — [Cierto].
+## Corrección: barra espaciadora en el enlace
+- [x] T-017 Corrección: la barra espaciadora abre el documento desde el enlace de la casilla
+  Tipo: corrección | Origen: bug reportado por el usuario (el botón de espacio no abre el modal de la casilla)
+  RF: RF-015 | Depende de: T-008 | Archivos: 2
+  Archivos: `components/fields/DocumentCheckbox.tsx`, `DocumentCheckbox.test.tsx`.
+  Causa: el texto de la casilla es un `<a>` y un enlace solo responde a Enter; la barra espaciadora, en cambio,
+  desplaza la página.
+  Hecho cuando: con el foco en el enlace, la barra espaciadora abre el documento sin desplazar la página, y
+  Enter y el clic siguen funcionando una sola vez; la suite completa sigue en verde.
+  Decisiones: se abre al soltar la tecla (`keyup`), como un botón, y se evita el desplazamiento al pulsarla
+  (`keydown`); las demás teclas no se tocan. El enlace sigue siendo un enlace (no un `role="button"`) porque RF-001
+  y el usuario lo pidieron así — [Probable]. RF-015 decía «abrir con Enter» y se amplía a Enter o barra
+  espaciadora; el cambio lo pidió el usuario — [Cierto]. Verificado en un navegador real: con el foco en el
+  enlace, Espacio abre el modal sin mover la página, Escape lo cierra y devuelve el foco al enlace, Enter abre
+  un solo modal y Espacio sobre el cuadro enfocado marca la casilla sin abrir nada — [Cierto]. Mutantes
+  muertos: no evitar el desplazamiento, abrir al pulsar y no al soltar, y abrir con cualquier tecla.
+
 ## Entregas
 Rama de integración: feat/casilla-con-documento (los PR de las entregas van contra ella; ver `AGENTS.md`)
 

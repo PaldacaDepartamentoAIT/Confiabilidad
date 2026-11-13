@@ -64,6 +64,51 @@ describe("with a document", () => {
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 
+  it("pressing the space bar on the link opens the document, like a button", async () => {
+    renderCheckbox();
+    screen.getByRole("link", { name: LABEL }).focus();
+
+    await userEvent.keyboard(" ");
+
+    expect(screen.getByRole("dialog", { name: LABEL })).toBeInTheDocument();
+    expect(screen.getAllByRole("checkbox")[0]).not.toBeChecked();
+  });
+
+  it("the space bar does not scroll the page and opens when it is released, not when it is pressed", () => {
+    renderCheckbox();
+    const link = screen.getByRole("link", { name: LABEL });
+
+    const notPrevented = fireEvent.keyDown(link, { key: " " });
+    expect(notPrevented).toBe(false);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+    fireEvent.keyUp(link, { key: " " });
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
+
+  it("other keys on the link do not open it and are not stopped", () => {
+    renderCheckbox();
+    const link = screen.getByRole("link", { name: LABEL });
+
+    expect(fireEvent.keyDown(link, { key: "a" })).toBe(true);
+    fireEvent.keyUp(link, { key: "a" });
+    expect(fireEvent.keyDown(link, { key: "Tab" })).toBe(true);
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("the space bar inside the modal still toggles its checkbox and does not reopen anything", async () => {
+    renderCheckbox();
+    await userEvent.click(screen.getByRole("link", { name: LABEL }));
+    const inner = within(screen.getByRole("dialog")).getByRole("checkbox");
+    inner.focus();
+
+    await userEvent.keyboard(" ");
+
+    expect(inner).toBeChecked();
+    expect(screen.getAllByRole("dialog")).toHaveLength(1);
+  });
+
   it("pressing the box checks and unchecks it without opening the document", async () => {
     renderCheckbox();
     const box = screen.getByRole("checkbox");
