@@ -187,7 +187,7 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   Mutantes muertos: quitar `:disabled` de la regla y poner un fondo distinto de `transparent`.
 
 ## E-04b Prueba de la carga, el fundido y la barra en Chromium
-- [ ] T-013 Prueba en Chromium: carga, fundido, barra y movimiento reducido
+- [x] T-013 Prueba en Chromium: carga, fundido, barra y movimiento reducido
   RF: RF-004, RF-005, RF-006, RF-009 | Depende de: T-005, T-012 | Archivos: 2
   Archivos: `frontend/visual/registration.visual.test.ts`, `docs/identidad-visual.md`.
   Hecho cuando: en Chromium, en claro y oscuro y con la API simulada y retenida, mientras se espera la
@@ -196,6 +196,15 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   superior es el mismo nodo antes y después de navegar; con movimiento reducido no hay animación; `axe` con
   contraste no halla violaciones en las pantallas afectadas; la guía recoge el fundido; `pnpm --filter frontend
   test:visual` pasa.
+  Decisiones: 18 pruebas nuevas (9 por tema) con la API simulada y retenida y el reloj de Playwright
+  (`page.clock`) para saltar los 10 s: sin card ni título mientras se espera en `/register` y en
+  `/register/continue`, con la animación `public-in` de 200 ms y opacidad inicial 0 al llegar y opacidad 1 después; la card
+  con el error de conexión a los 10 s; movimiento reducido sin animación en marcha; la barra es el mismo nodo
+  al pasar de pantalla y no tiene animaciones; `axe` con contraste sin violaciones en el registro, la
+  verificación y la cuenta creada — [Cierto]. La opacidad se espera con tiempo real y no con el reloj simulado,
+  porque las animaciones CSS no dependen de él (un primer intento fallaba por eso). Mutantes muertos: duración
+  de 0,5 s, sin fundido, card pintada durante la carga, sin plazo, `key` en la barra y sin la regla de movimiento
+  reducido de `base.css`. La guía recoge el fundido en «Movimiento» — [Cierto].
 
 ## Entregas
 Rama de integración: feat/presentacion-registro (los PR de las entregas van contra ella; ver `AGENTS.md`)

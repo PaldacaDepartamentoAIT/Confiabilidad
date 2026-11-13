@@ -192,6 +192,7 @@ Un solo color por prioridad en toda la aplicación.
 | Pestañas a selector y al revés | 0,15 s de salida y, a continuación, 0,2 s de entrada |
 | Buscador reducido: abrir y cerrar | 0,25 s, salida suave; 0,2 s de fundido de las pestañas y del botón |
 | Aparición del modal de documento | 0,2 s de fundido de la caja y de la cortina |
+| Aparición de una pantalla pública y cambio de paso dentro de ella | 0,2 s de fundido de la card (y del contenido que cambia de paso); mientras se espera la respuesta del servidor no se pinta la card ni su título, solo la barra superior, que no se anima; pasados 10 s sin respuesta aparece la card con el error de conexión |
 | Aparición de un menú desplegable | 0,18 s (fundido y 6 px de desplazamiento hacia abajo); se cierra sin animación |
 | Panel lateral en móvil | 0,25 s de deslizamiento |
 | Cambio de tema | 0,4 s en todos los colores, solo durante el cambio |

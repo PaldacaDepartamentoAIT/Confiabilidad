@@ -1,7 +1,7 @@
 import { chromium, type Browser, type Page } from "playwright";
 
 import { startApp, type RunningApp } from "./app";
-import { VIEWPORT } from "./measure";
+import { VIEWPORT, accessibilityViolations } from "./measure";
 
 let app: RunningApp;
 let browser: Browser;
@@ -174,3 +174,156 @@ describe.each(["light", "dark"] as const)("la verificación en tema %s", (scheme
     await context.close();
   });
 });
+
+// Comprobación de la carga, del fundido y de la barra superior de las pantallas públicas (RF-004 a RF-006 y RF-009).
+const OPTIONS = {
+  countries: ["ES", "BR"],
+  terms: { version: "1", locale: "en", content: "Terms." },
+  marketing: null,
+};
+const STATUS = {
+  code_expires_in: 600,
+  resend_in: 0,
+  resends_left: 3,
+  locked: false,
+  expired: false,
+};
+
+const CARD = ".public-card";
+const BAR = ".public-bar";
+const VERIFY = "register/continue#abc";
+
+// La API simulada retiene cada respuesta hasta que `release()` la libera, para ver qué hay en pantalla mientras se espera.
+async function openHeld(scheme: "light" | "dark", path: string, reducedMotion = false) {
+  const context = await browser.newContext({
+    viewport: VIEWPORT,
+    colorScheme: scheme,
+    reducedMotion: reducedMotion ? "reduce" : "no-preference",
+  });
+  const page = await context.newPage();
+  const waiting: (() => void)[] = [];
+  let held = true;
+  await page.route(
+    (url) => /registration\//.test(url.pathname) && !url.pathname.startsWith("/src"),
+    async (route) => {
+      if (held) await new Promise<void>((resolve) => waiting.push(resolve));
+      const body = route.request().url().includes("status") ? STATUS : OPTIONS;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(body),
+      });
+    },
+  );
+  await page.clock.install();
+  await page.goto(`${app.url}${path}`);
+  await page.locator(BAR).waitFor();
+  return {
+    page,
+    context,
+    release: () => {
+      held = false;
+      waiting.splice(0).forEach((resolve) => resolve());
+    },
+  };
+}
+
+const cardAnimations = (page: Page) =>
+  page.evaluate((selector) => {
+    const card = document.querySelector(selector);
+    if (!card) return null;
+    return card.getAnimations().map((animation) => {
+      const effect = animation.effect as KeyframeEffect;
+      return {
+        name: (animation as CSSAnimation).animationName,
+        duration: effect.getComputedTiming().duration,
+        from: effect.getKeyframes()[0].opacity,
+      };
+    });
+  }, CARD);
+
+describe.each(["light", "dark"] as const)(
+  "la carga de las pantallas públicas en tema %s",
+  (scheme) => {
+    test.each([["/register"], [`/${VERIFY}`]])(
+      "%s no muestra card ni título hasta que llega la respuesta, y entra con un fundido de 0,2 s",
+      async (path) => {
+        const { page, context, release } = await openHeld(scheme, path.slice(1));
+        await page.clock.runFor(500);
+        expect(await page.locator(CARD).count()).toBe(0);
+        expect(await page.getByRole("heading").count()).toBe(0);
+        expect(await page.locator(BAR).count()).toBe(1);
+
+        release();
+        await page.locator(CARD).waitFor();
+        const animations = await cardAnimations(page);
+        expect(animations).toContainEqual({ name: "public-in", duration: 200, from: "0" });
+        await page.waitForTimeout(500);
+        expect(await page.locator(CARD).evaluate((e) => getComputedStyle(e).opacity)).toBe("1");
+        await context.close();
+      },
+    );
+
+    test.each([["register"], [VERIFY]])(
+      "%s: pasados 10 s sin respuesta aparece la card con el error de conexión",
+      async (path) => {
+        const { page, context } = await openHeld(scheme, path);
+        await page.clock.runFor(9_000);
+        expect(await page.locator(CARD).count()).toBe(0);
+        await page.clock.runFor(1_500);
+        await page.locator(CARD).waitFor();
+        await page.getByText(/Could not connect/).waitFor();
+        await context.close();
+      },
+    );
+
+    test("con movimiento reducido la card aparece sin animación", async () => {
+      const { page, context, release } = await openHeld(scheme, "register", true);
+      release();
+      await page.locator(CARD).waitFor();
+      const state = await page.locator(CARD).evaluate((card) => ({
+        opacity: getComputedStyle(card).opacity,
+        animations: card.getAnimations().filter((a) => a.playState === "running").length,
+      }));
+      expect(state).toEqual({ opacity: "1", animations: 0 });
+      await context.close();
+    });
+
+    test("la barra superior es el mismo nodo al pasar de una pantalla a otra y no se anima", async () => {
+      const { page, context, release } = await openHeld(scheme, "register");
+      release();
+      await page.locator(CARD).waitFor();
+      await page.evaluate((selector) => {
+        (window as unknown as { bar: Element | null }).bar = document.querySelector(selector);
+      }, BAR);
+
+      await page.evaluate(() => {
+        window.history.pushState(null, "", "/register/done");
+        window.dispatchEvent(new PopStateEvent("popstate"));
+      });
+      await page.getByRole("heading", { name: "Account created" }).waitFor();
+
+      const same = await page.evaluate(
+        (selector) =>
+          document.querySelector(selector) === (window as unknown as { bar: Element }).bar &&
+          document.querySelectorAll(selector).length === 1,
+        BAR,
+      );
+      expect(same).toBe(true);
+      expect(await page.locator(BAR).evaluate((bar) => bar.getAnimations().length)).toBe(0);
+      await context.close();
+    });
+
+    test.each([["register"], [VERIFY], ["register/done"]])(
+      "%s no tiene violaciones de accesibilidad ni de contraste",
+      async (path) => {
+        const { page, context, release } = await openHeld(scheme, path);
+        release();
+        await page.locator(CARD).waitFor();
+        await page.clock.runFor(1_000);
+        expect(await accessibilityViolations(page)).toEqual([]);
+        await context.close();
+      },
+    );
+  },
+);
