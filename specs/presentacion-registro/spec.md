@@ -1,5 +1,5 @@
 # Spec: presentacion-registro
-Estado: borrador
+Estado: aprobada
 Aprobación: ligera
 
 ## Objetivo (por qué)
@@ -14,7 +14,7 @@ pantalla.
 ### RF-001 Acciones de la verificación en una línea
 El sistema deberá mostrar en la pantalla de verificación del código los botones «Enviar otro código» y
 «Verificar» en la misma línea, alineados a la derecha, con «Enviar otro código» (secundario) a la izquierda y
-«Verificar» (principal) a la derecha, separados 10 px.
+«Verificar» (principal) a la derecha, separados 10 px. Cuando los dos botones no quepan en una línea (pantallas de menos de 480 px de ancho), el sistema deberá disponerlos en dos líneas, cada uno a todo el ancho de la card, con «Verificar» arriba y «Enviar otro código» debajo.
 
 ### RF-002 Aspecto de botón desactivado
 Mientras un botón esté bloqueado, ya sea porque está desactivado o porque está procesando, el sistema deberá
@@ -23,8 +23,7 @@ puntero por encima. Esto vale para todos los botones del sistema.
 
 ### RF-003 Hueco reservado para el mensaje de reenvío
 El sistema deberá mostrar en la pantalla de verificación, debajo del recuento de códigos que se pueden pedir
-todavía (o del aviso de que no quedan), un hueco reservado del alto de dos líneas de texto donde aparezcan los
-mensajes del reenvío (informativo, de espera y de error). Cuando uno de esos mensajes aparezca o desaparezca, el
+todavía (o del aviso de que no quedan), un hueco reservado del alto de dos líneas de texto donde aparezcan los mensajes del reenvío: el informativo, el de espera y el de error. El aviso de código bloqueado, el error del formulario y el aviso de que no quedan códigos (con su enlace al formulario) permanecen donde están. Cuando uno de esos mensajes aparezca o desaparezca, el
 sistema no deberá cambiar el alto de la card. Si un mensaje ocupa más de dos líneas, entonces la card deberá
 crecer lo justo para mostrarlo entero.
 
@@ -32,11 +31,10 @@ crecer lo justo para mostrarlo entero.
 Mientras una pantalla pública del registro (registro, verificación, cuenta creada y enlace no válido) esté
 cargando los datos que necesita, el sistema no deberá mostrar su card y solo deberá verse la barra superior.
 Cuando los datos estén listos, el sistema deberá mostrar la card completa con un fundido de entrada de 0,2 s.
-Si la carga falla, entonces el sistema deberá mostrar la card con su mensaje de error, con el mismo fundido.
+Si la carga falla, o si no hay respuesta pasados 10 s, entonces el sistema deberá mostrar la card con el mensaje de error de conexión, con el mismo fundido.
 
 ### RF-005 Fundido entre pantallas
-Cuando la persona pase de una pantalla pública del registro a otra, el sistema deberá mostrar la nueva card con
-el mismo fundido de entrada de 0,2 s, sin mostrarla vacía.
+Cuando la persona pase de una pantalla pública del registro a otra, o cuando cambie el contenido de la card dentro de una misma pantalla (de la introducción del código a la elección de la contraseña), el sistema deberá mostrar el contenido nuevo con el mismo fundido de entrada de 0,2 s, sin mostrarlo vacío. Las pantallas que no cargan datos (cuenta creada y enlace no válido) entran con fundido en cuanto se pintan.
 
 ### RF-006 Movimiento reducido
 Si el sistema operativo pide reducir el movimiento, entonces el sistema deberá mostrar las cards sin fundido,
@@ -50,23 +48,30 @@ esta feature cambia.
 ### RF-008 Catálogo
 El sistema deberá mostrar en el catálogo un botón desactivado, de cada variante, con su aspecto de desactivado.
 
+### RF-009 Barra superior estable
+Mientras la persona cambia de pantalla pública del registro, el sistema deberá mantener la barra superior
+(nombre del sistema y botones de idioma y de tema) fija, sin repintarla ni animarla, y conservar el idioma y el
+tema elegidos.
+
 ## Supuestos
 - S-01 «Cargar» significa esperar la respuesta del servidor que necesita la pantalla; mientras se espera no
   hay esqueleto ni indicador de carga, solo la barra superior.
 - S-02 El alto de dos líneas se mide con el interlineado del texto de la card; el plan lo concreta en píxeles.
-- S-03 En pantallas tan estrechas que los dos botones no caben en una línea, pasan a dos líneas, siempre
-  alineados a la derecha; el plan lo concreta.
+- S-03 (eliminado: la disposición en pantallas estrechas es ahora parte de RF-001).
 - S-04 El aspecto de desactivado es el que tenían los botones antes de la limpieza de `base.css`: opacidad
   del 60 % y cursor de no permitido.
 - S-05 El fundido de salida de la pantalla anterior no se anima: la anterior desaparece al cambiar de ruta y la
   nueva entra con fundido.
 - S-06 Esta feature depende de `sistema-de-diseno` y de `casilla-con-documento`, que aún no están en `main`; su
   PR a `main` no puede fusionarse antes que los de aquellas.
+- S-07 El límite de espera de 10 s se mide desde que la pantalla pide los datos, y la pantalla de error de conexión
+  es la que ya existe.
 
 ## Fuera de alcance
 - Esqueletos o indicadores de carga mientras se espera.
 - Un fundido de salida (la pantalla que se va) o un fundido cruzado.
 - Cambiar los textos, las validaciones o el flujo del registro.
+- Un indicador de carga pasado el límite de espera.
 - Pantallas con sesión y el resto de la aplicación, salvo el aspecto de los botones desactivados.
 
 ## Criterios de finalización
@@ -82,3 +87,4 @@ El sistema deberá mostrar en el catálogo un botón desactivado, de cada varian
 
 ## Historial de cambios
 - 2026-11-13 — Spec inicial — RF: RF-001 a RF-008 — Estado: pendiente de clarificar
+- 2026-11-13 — Clarificación: C-01 a C-05 — RF: RF-001, RF-003, RF-004, RF-005, RF-009 — Estado: clarificado
