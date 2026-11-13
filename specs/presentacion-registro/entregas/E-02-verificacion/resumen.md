@@ -1,6 +1,6 @@
 # Entrega E-02 · Verificación: botones en una fila y hueco reservado
 
-Rama: `feat/presentacion-registro-verificacion` (sale de `feat/presentacion-registro`) · PR: pendiente ·
+Rama: `feat/presentacion-registro-verificacion` (sale de `feat/presentacion-registro`) · PR: [#114](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/114) ·
 Líneas de código y tests: 277 (límite: 400).
 
 ## Qué se hizo
