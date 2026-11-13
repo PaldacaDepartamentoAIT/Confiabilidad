@@ -795,3 +795,129 @@ describe("the reserved space for the resend message", () => {
     );
   });
 });
+
+describe("while the status loads", () => {
+  const NETWORK_ERROR = /No se pudo conectar\. Revisa tu conexión y vuelve a intentarlo\./;
+
+  test("there is no card and no title until the status arrives", async () => {
+    openAt("/register/continue#pid-1");
+    let answer: (response: Response) => void = () => undefined;
+    const { fetcher } = replies(() => new Promise<Response>((resolve) => (answer = resolve)));
+    renderPage(fetcher);
+
+    expect(screen.queryByRole("heading")).toBeNull();
+    expect(document.querySelector(".public-card")).toBeNull();
+
+    await act(async () => answer(new Response(JSON.stringify(STATUS), { status: 200 })));
+    expect(await screen.findByRole("heading", { level: 1 })).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Código de verificación" })).toBeInTheDocument();
+  });
+
+  test("a failed load shows the card with the connection error", async () => {
+    openAt("/register/continue#pid-1");
+    const { fetcher } = replies(() => Promise.reject(new TypeError("Failed to fetch")));
+    renderPage(fetcher);
+
+    expect(await screen.findByRole("heading", { level: 1 })).toBeInTheDocument();
+    expect(await screen.findByText(NETWORK_ERROR)).toBeInTheDocument();
+  });
+
+  test("after 10 s without an answer the card appears with the connection error", async () => {
+    vi.useFakeTimers();
+    openAt("/register/continue#pid-1");
+    const { fetcher } = replies(() => new Promise<Response>(() => undefined));
+    renderPage(fetcher);
+
+    await act(async () => void vi.advanceTimersByTime(9_999));
+    expect(screen.queryByRole("heading")).toBeNull();
+
+    await act(async () => void vi.advanceTimersByTime(1));
+    expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
+    expect(screen.getByText(NETWORK_ERROR)).toBeInTheDocument();
+  });
+
+  test("an answer that arrives after the time limit is ignored", async () => {
+    vi.useFakeTimers();
+    openAt("/register/continue#pid-1");
+    let answer: (response: Response) => void = () => undefined;
+    const { fetcher } = replies(() => new Promise<Response>((resolve) => (answer = resolve)));
+    renderPage(fetcher);
+
+    await act(async () => void vi.advanceTimersByTime(10_000));
+    await act(async () => answer(new Response(JSON.stringify(STATUS), { status: 200 })));
+
+    expect(screen.getByText(NETWORK_ERROR)).toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: "Código de verificación" })).toBeNull();
+  });
+
+  test("an answer before the time limit leaves no timer that later shows the error", async () => {
+    vi.useFakeTimers();
+    openAt("/register/continue#pid-1");
+    const { fetcher } = replies(reply(200, STATUS));
+    renderPage(fetcher);
+
+    await act(async () => void vi.advanceTimersByTime(0));
+    await act(async () => void vi.advanceTimersByTime(20_000));
+    expect(screen.queryByText(NETWORK_ERROR)).toBeNull();
+    expect(screen.getByRole("textbox", { name: "Código de verificación" })).toBeInTheDocument();
+  });
+
+  test("a link opened after the time limit expired is loaded normally", async () => {
+    vi.useFakeTimers();
+    openAt("/register/continue#old");
+    const { fetcher } = replies(
+      () => new Promise<Response>(() => undefined),
+      reply(200, { ...STATUS, code_expires_in: 30 }),
+    );
+    renderPage(fetcher);
+    await act(async () => void vi.advanceTimersByTime(10_000));
+    expect(screen.getByText(NETWORK_ERROR)).toBeInTheDocument();
+
+    await act(async () => {
+      window.history.pushState(null, "", "/register/continue#new");
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    });
+    expect(screen.getByText("El código caduca en 0:30.")).toBeInTheDocument();
+  });
+
+  test("the invalid link shows its card as soon as it knows, not before", async () => {
+    openAt("/register/continue#pid-1");
+    let answer: (response: Response) => void = () => undefined;
+    const { fetcher } = replies(() => new Promise<Response>((resolve) => (answer = resolve)));
+    renderPage(fetcher);
+    expect(screen.queryByRole("heading")).toBeNull();
+
+    await act(async () => answer(new Response(JSON.stringify({}), { status: 404 })));
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Enlace no válido" }),
+    ).toBeInTheDocument();
+  });
+
+  test("the change from the code to the password is wrapped in a new fade container", async () => {
+    openAt("/register/continue#pid-1");
+    const user = userEvent.setup();
+    const { fetcher } = replies(
+      reply(200, { ...STATUS, resend_in: 0 }),
+      reply(200, { result: "verified" }),
+    );
+    renderPage(fetcher);
+
+    const fadeOfCode = await waitFor(() => {
+      const element = document.querySelector(".public-fade");
+      expect(element).not.toBeNull();
+      return element;
+    });
+    expect(fadeOfCode).toContainElement(
+      screen.getByRole("textbox", { name: "Código de verificación" }),
+    );
+
+    await user.type(screen.getByRole("textbox", { name: "Código de verificación" }), "123456");
+    await user.click(screen.getByRole("button", { name: "Verificar" }));
+    const heading = await screen.findByRole("heading", { level: 2, name: "Elige tu contraseña" });
+
+    const fadeOfPassword = document.querySelector(".public-fade");
+    expect(fadeOfPassword).not.toBe(fadeOfCode);
+    expect(fadeOfPassword).toContainElement(heading);
+    expect(document.querySelectorAll(".public-fade")).toHaveLength(1);
+  });
+});
