@@ -8,7 +8,7 @@ reducido no hay animación; la barra es el mismo nodo al cambiar de pantalla; y 
 violaciones. La guía visual recoge el fundido. No cambia código de la aplicación.
 
 ## Tareas
-- T-013 (prueba en Chromium: carga, fundido, barra y movimiento reducido) — commit de esta entrega.
+- T-013 (prueba en Chromium: carga, fundido, barra y movimiento reducido) — commit `4a24201`.
 
 ## Cómo ejecutarlo y probarlo
 ```bash
@@ -21,7 +21,7 @@ Para comprobar que detecta fallos, cambia en `frontend/src/layouts/PublicPage.cs
 animación `public-in` y vuelve a ejecutar el comando anterior: deben fallar las pruebas del fundido.
 
 ## Líneas
-Ver el PR.
+155 de código y pruebas (límite 400).
 
 ## PR
 Pendiente.
