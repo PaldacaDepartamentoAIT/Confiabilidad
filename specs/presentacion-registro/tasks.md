@@ -144,11 +144,15 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   debe aceptarse — [Cierto]. El enlace no válido entra con el fundido de la propia `PublicPage` al montarse.
   Mutantes muertos: sin ignorar la respuesta tardía, sin plazo, card visible durante la carga, clave fija y sin
   reiniciar `timedOut`.
-- [ ] T-011 Cuenta creada con fundido
+- [x] T-011 Cuenta creada con fundido
   RF: RF-005, RF-007 | Depende de: T-006 | Archivos: 2
   Archivos: `registration/DonePage.tsx`, `registration/DonePage.test.tsx`.
   Hecho cuando: la pantalla de cuenta creada entra con fundido en cuanto se pinta y su texto no cambia; suite
   verde.
+  Decisiones: `DonePage.tsx` no cambia: ya usa `PublicPage` con `ready` por defecto, así que entra con el fundido de
+  T-006 en cuanto se pinta; la tarea se reduce a fijarlo con `DonePage.test.tsx` (la card está pintada al montar,
+  dentro de `.public-card`, y el texto sigue igual). Se lista `DonePage.tsx` en la tarea pero no se toca — [Cierto].
+  El fundido real se comprueba en Chromium en T-013. Mutante muerto: `ready={false}` en `DonePage`.
 
 ## E-04 Barra superior compartida y comprobación final en navegador
 - [ ] T-012 Barra superior compartida
