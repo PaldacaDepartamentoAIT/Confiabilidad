@@ -10,7 +10,7 @@ específica (T-014).
 
 ## Tareas
 - T-012 (barra superior compartida) — commit `d1a28a4`.
-- T-014 (hover del botón secundario bloqueado que no dependa del orden del CSS) — commit de esta entrega.
+- T-014 (hover del botón secundario bloqueado que no dependa del orden del CSS) — commit `008d902`.
 
 ## Cómo ejecutarlo y probarlo
 ```bash
@@ -31,11 +31,16 @@ Para verlo en el navegador, arranca el frontend:
 pnpm --filter frontend dev
 ```
 
-Abre `/register` y, en la consola del navegador, ejecuta `history.pushState(null, "", "/register/done"); dispatchEvent(new PopStateEvent("popstate"))`:
-la barra superior no parpadea ni se mueve mientras cambia la card.
+Abre `/register` y, en la consola del navegador, ejecuta:
+
+```js
+history.pushState(null, "", "/register/done"); dispatchEvent(new PopStateEvent("popstate"))
+```
+
+La barra superior no parpadea ni se mueve mientras cambia la card.
 
 ## Líneas
-Ver el PR.
+282 de código y pruebas (límite 400).
 
 ## PR
 Pendiente.
