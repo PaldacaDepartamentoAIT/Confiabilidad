@@ -75,7 +75,7 @@ El sistema deberá ofrecer en español, portugués de Brasil e inglés los texto
 aplicación.
 
 ### RF-015 Accesibilidad
-El sistema deberá poder usarse por completo con el teclado (abrir con Enter sobre el enlace, recorrer el
+El sistema deberá poder usarse por completo con el teclado (abrir con Enter o con la barra espaciadora sobre el enlace, recorrer el
 modal con Tab, marcar con Espacio, cerrar con Escape) y deberá cumplir contraste AA y no tener
 violaciones de accesibilidad, en tema claro y oscuro, con el modal cerrado y abierto.
 
@@ -123,3 +123,4 @@ foco y el estado de la casilla.
 - 2026-11-12 — Spec inicial — RF: RF-001 a RF-015 — Estado: pendiente de clarificar
 - 2026-11-12 — Clarificación: C-01 a C-07 — RF: RF-001, RF-002, RF-003, RF-004, RF-007, RF-009, RF-011, RF-016 — Estado: clarificado
 - 2026-11-13 — Validación: cerrada con riesgo residual aceptado por el usuario (14 de 16 RF cumplidos; RF-001 y RF-016 sin prueba completa en un navegador real). Riesgos aceptados: (1) RF-001: la prueba de que pulsar el hueco de la fila no hace nada corre solo en jsdom y no detectaría que la fila se envolviera en una etiqueta `<label>` (impacto medio, probabilidad baja); (2) RF-016: ninguna prueba en Chromium comprueba que se conservan el foco y el estado de la casilla al cambiar el tamaño con el modal de la casilla abierto (bajo, muy baja); (3) el contraste y el tema oscuro del registro solo se comprueban en jsdom y por sondeo manual, sin prueba en Chromium (bajo, baja); (4) defecto de código conocido de S-03: con «reducir movimiento» la cortina del modal (`::backdrop`) sigue animándose con un fundido de 0,2 s, aunque la caja no (bajo, baja); (5) observaciones menores: Tab no se comprueba hacia todos los elementos del modal en Chromium, la prueba de desplazamiento mide la «x» y no el pie, la reserva de espacio del error no se mide en la casilla con documento y los «Cómo probarlo» de `tasks.md` llevan comandos en línea — Estado: validada con riesgo residual
+- 2026-11-13 — Corrección de RF-015: el enlace también se abre con la barra espaciadora, a petición del usuario — RF: RF-015 — Estado: clarificado

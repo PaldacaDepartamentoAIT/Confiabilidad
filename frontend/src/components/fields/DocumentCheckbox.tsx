@@ -115,6 +115,14 @@ export function DocumentCheckbox({
                 event.preventDefault();
                 setOpen(true);
               }}
+              // Un enlace solo responde a Enter; para que la barra espaciadora lo abra, como un botón, se evita el
+              // desplazamiento de la página al pulsarla y se abre al soltarla.
+              onKeyDown={(event) => {
+                if (event.key === " ") event.preventDefault();
+              }}
+              onKeyUp={(event) => {
+                if (event.key === " ") setOpen(true);
+              }}
             >
               {label}
             </a>
