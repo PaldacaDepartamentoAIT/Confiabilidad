@@ -335,6 +335,13 @@ Ventana modal que muestra un documento (términos, consentimientos) y se abre de
 | Principal | fondo y borde en el principal, texto en el color de texto sobre el principal; hover con el principal oscurecido |
 | Secundario | sin relleno, borde de 1 px y texto en el principal; hover con el 9 % de la tinta |
 | Desactivado | un botón bloqueado —desactivado o procesando— se ve atenuado al 60 % de opacidad, con el cursor de acción no permitida y sin cambiar de color al pasar el puntero; vale para el principal y el secundario |
+| Acciones de un formulario | los botones de acción van en una misma fila alineada a la derecha, con 10 px entre ellos: el secundario a la izquierda y el principal a la derecha; por debajo de 480 px de ancho pasan a dos filas a todo el ancho, con el principal arriba |
+
+### Hueco de mensajes
+
+Cuando un mensaje puede aparecer o desaparecer bajo un elemento sin que el resto de la pantalla se mueva, su sitio se
+reserva siempre: en la verificación del registro, bajo el recuento de códigos, un hueco de dos líneas (2 × 1,45 em)
+para el mensaje del reenvío y la espera, de modo que la card no cambia de alto.
 
 ### Aviso
 
