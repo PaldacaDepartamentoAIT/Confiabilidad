@@ -27,10 +27,12 @@ Para verlo en el navegador, arranca el frontend:
 pnpm --filter frontend dev
 ```
 
-Abre `/register` en la dirección que muestre la terminal. En las herramientas de desarrollo del navegador,
-pestaña Red, limita la velocidad a «Offline» o retrasa la petición `registration/options`: hasta que llegue (o
-pasen 10 s) solo se ve la barra superior; después, la card con un fundido. El fundido y el movimiento reducido
-se comprueban en Chromium en la tarea T-013 (entrega E-04).
+Abre `/register` con la conexión normal para comprobar que carga. En las herramientas de desarrollo, abre
+«Bloqueo de solicitudes de red» (menú ⋮, «Más herramientas») y añade el patrón `*registration/options*`; recarga la
+página. Deberías ver la barra superior desde el principio, sin card ni título, y enseguida la card con el error de
+conexión. No uses «Offline» antes de recargar: corta también la carga de la propia página y el navegador muestra
+su pantalla de error. El plazo de 10 s lo cubren los tests con temporizadores simulados, y el fundido y el
+movimiento reducido se comprueban en Chromium en la tarea T-013 (entrega E-04).
 
 ## Líneas
 271 de código y pruebas (límite 400).
