@@ -623,3 +623,66 @@ test("the account created screen says so without signing in", () => {
   expect(screen.queryByRole("textbox")).toBeNull();
   expect(screen.queryByLabelText(/Contraseña/)).toBeNull();
 });
+
+describe("the two buttons in one row", () => {
+  it("both go in the same row of the form, with the secondary one before the main one", async () => {
+    openAt("/register/continue#pid-1");
+    const { fetcher } = replies(reply(200, { ...STATUS, resend_in: 0 }));
+    const { container } = renderPage(fetcher);
+
+    const resend = await screen.findByRole("button", { name: "Enviar otro código" });
+    const verify = screen.getByRole("button", { name: "Verificar" });
+
+    const row = container.querySelector("form .form-actions") as HTMLElement;
+    expect(row).toContainElement(resend);
+    expect(row).toContainElement(verify);
+    expect([...row.children]).toEqual([resend, verify]);
+    expect(resend).toHaveAttribute("data-ui", "button-secondary");
+    expect(verify).toHaveAttribute("data-ui", "button-primary");
+    expect(row.parentElement?.tagName).toBe("FORM");
+  });
+
+  it("the resend button is not a submit button: it does not send the code", async () => {
+    const user = userEvent.setup();
+    openAt("/register/continue#pid-1");
+    const { calls, fetcher } = replies(
+      reply(200, { ...STATUS, resend_in: 0 }),
+      reply(202, { result: "resent" }),
+      reply(200, STATUS),
+    );
+    renderPage(fetcher);
+    await user.type(
+      await screen.findByRole("textbox", { name: /Código de verificación/ }),
+      "123456",
+    );
+
+    const resend = screen.getByRole("button", { name: "Enviar otro código" });
+    expect(resend).toHaveAttribute("type", "button");
+    await user.click(resend);
+
+    await screen.findByText("Códigos que aún puedes pedir: 5.");
+    expect(calls.map((call) => call.url.split("/").pop())).toEqual(["status", "resend", "status"]);
+  });
+
+  it("the main button still sends the code and is the only submit of the form", async () => {
+    openAt("/register/continue#pid-1");
+    const { fetcher } = replies(reply(200, STATUS));
+    const { container } = renderPage(fetcher);
+
+    const verify = await screen.findByRole("button", { name: "Verificar" });
+
+    expect(verify).toHaveAttribute("type", "submit");
+    expect(container.querySelectorAll("form button[type='submit']")).toHaveLength(1);
+  });
+
+  it("the resend button keeps its countdown and its lock inside the row", async () => {
+    openAt("/register/continue#pid-1");
+    const { fetcher } = replies(reply(200, { ...STATUS, resend_in: 30, resends_left: 0 }));
+    const { container } = renderPage(fetcher);
+
+    const resend = await screen.findByRole("button", { name: "Enviar otro código en 30 s" });
+
+    expect(resend).toBeDisabled();
+    expect(container.querySelector(".form-actions")).toContainElement(resend);
+  });
+});

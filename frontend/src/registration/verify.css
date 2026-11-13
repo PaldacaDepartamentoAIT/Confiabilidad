@@ -1,0 +1,19 @@
+/* Acciones de la verificación del código: «Enviar otro código» (secundario) y «Verificar» (principal) en una
+   fila, alineadas a la derecha. */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* Por debajo de 480 px no caben en una línea: columna invertida y a todo el ancho, con «Verificar» arriba.
+   En el HTML el secundario va antes que el principal, como en la guía; la columna invertida los ordena. */
+@media (max-width: 479px) {
+  .form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .form-actions .btn {
+    width: 100%;
+  }
+}

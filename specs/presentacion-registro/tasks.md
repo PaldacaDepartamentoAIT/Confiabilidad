@@ -35,13 +35,24 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   Mutante muerto: el secundario sin `disabled`.
 
 ## E-02 Verificación: botones en una fila y hueco reservado
-- [ ] T-003 Botones de la verificación en una fila
+- [x] T-003 Botones de la verificación en una fila
   RF: RF-001 | Depende de: T-001 | Archivos: 3
   Archivos: `registration/VerifyPage.tsx`, `registration/verify.css`, `registration/VerifyPage.test.tsx`.
   Hecho cuando: «Enviar otro código» y «Verificar» están en un contenedor `.form-actions` dentro del
   formulario del código, con el secundario antes que el principal; el de reenviar es `type="button"`, no envía el
   formulario y conserva su estado, su cuenta atrás y su bloqueo; el CSS alinea la fila a la derecha con 10 px y,
   por debajo de 480 px, la pone en columna invertida con los botones a todo el ancho; suite verde.
+  Decisiones: `CodeForm` recibe el botón secundario como propiedad (`secondaryAction`) y lo pinta antes de
+  «Verificar» en `.form-actions`; el estado, la cuenta atrás y el bloqueo del reenvío siguen en `VerifyPage` y
+  el botón es `type="button"` (el de `Button` por defecto), así que no envía el código — [Cierto]. Las
+  reglas de la fila (alineación a la derecha, 10 px, columna invertida a todo el ancho por debajo de 480 px)
+  están en `registration/verify.css` y se fijan en Chromium en T-005, no en un test de jsdom, porque leer
+  `verify.css` desde Vitest habría exigido tocar `vite.config.ts` (fuera de los 3 archivos de la tarea) —
+  [Probable]. Verificado en un navegador real con la API simulada: a 1000 px los botones están en la misma fila,
+  el secundario a la izquierda, 10 px entre ellos y pegados al borde derecho; a 420 px quedan en columna, ambos de
+  290 px, con «Verificar» arriba (y a 46 px de distancia el reenviar) — [Cierto]. Se observa que el recuento
+  «Códigos que aún puedes pedir» queda pegado a los botones: lo ajusta T-004. Mutantes muertos: orden invertido
+  de la fila, el reenvío como botón de envío y la fila con otra clase.
 - [ ] T-004 Hueco reservado del mensaje de reenvío
   RF: RF-003 | Depende de: T-003 | Archivos: 3
   Archivos: `registration/VerifyPage.tsx`, `registration/verify.css`, `registration/VerifyPage.test.tsx`.
