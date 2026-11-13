@@ -89,12 +89,17 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   acciones de un formulario y el hueco de mensajes — [Cierto].
 
 ## E-03 Registro con carga y fundido
-- [ ] T-006 Fundido de la card y carga lista
+- [x] T-006 Fundido de la card y carga lista
   RF: RF-004, RF-005, RF-006 | Depende de: — | Archivos: 3
   Archivos: `layouts/PublicPage.tsx`, `layouts/PublicPage.css`, `layouts/PublicPage.test.tsx`.
   Hecho cuando: `PublicPage` con `ready={false}` no pinta nada y con `ready` (por defecto verdadero) pinta la card
   con una animación de entrada de 0,2 s (`@keyframes public-in`); el movimiento reducido lo anula la regla
   global de `base.css`; suite verde.
+  Decisiones: sin `ready` no se pinta ni el `main` (devuelve `null`), porque una card o un título vacíos son
+  justo lo que se quiere evitar; la animación (`public-in`, 0,2 s, solo opacidad) está en `.public-card`. El CSS
+  no se lee desde Vitest (`PublicPage.css` no está en `css.include`, y añadirlo tocaría un cuarto archivo): el
+  fundido y el movimiento reducido se fijan en Chromium en T-013 — [Probable]. Mutante muerto: pintar aun sin
+  `ready`.
 - [ ] T-007 Fundido de un contenido que cambia dentro de la card
   RF: RF-005 | Depende de: T-006 | Archivos: 3
   Archivos: `layouts/Fade.tsx`, `layouts/Fade.test.tsx`, `layouts/PublicPage.css`.
