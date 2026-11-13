@@ -173,20 +173,26 @@ export function VerifyPage({ client, storage }: VerifyPageProps) {
                 </Button>
               }
             />
-            {resendMessage && (
-              <FormMessage type={resendMessage.type} messageKey={resendMessage.messageKey} />
-            )}
-            {resendLimited && resendWait.remaining > 0 && (
-              <p role="status">{t("validation.retryIn", { seconds: resendWait.remaining })}</p>
-            )}
             {status.resends_left > 0 ? (
-              <p>{t("register.resendsLeft", { count: status.resends_left })}</p>
+              <p className="resend-count">
+                {t("register.resendsLeft", { count: status.resends_left })}
+              </p>
             ) : (
               <>
-                <p>{t("register.noResendsLeft")}</p>
+                <p className="resend-count">{t("register.noResendsLeft")}</p>
                 <FormLink />
               </>
             )}
+            {/* Hueco reservado de dos líneas para los mensajes del reenvío: aparecen y desaparecen sin
+                cambiar el alto de la card (RF-003). */}
+            <div className="resend-slot">
+              {resendMessage && (
+                <FormMessage type={resendMessage.type} messageKey={resendMessage.messageKey} />
+              )}
+              {resendLimited && resendWait.remaining > 0 && (
+                <p role="status">{t("validation.retryIn", { seconds: resendWait.remaining })}</p>
+              )}
+            </div>
           </>
         )}
       </PublicPage>

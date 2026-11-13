@@ -53,12 +53,22 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   290 px, con «Verificar» arriba (y a 46 px de distancia el reenviar) — [Cierto]. Se observa que el recuento
   «Códigos que aún puedes pedir» queda pegado a los botones: lo ajusta T-004. Mutantes muertos: orden invertido
   de la fila, el reenvío como botón de envío y la fila con otra clase.
-- [ ] T-004 Hueco reservado del mensaje de reenvío
+- [x] T-004 Hueco reservado del mensaje de reenvío
   RF: RF-003 | Depende de: T-003 | Archivos: 3
   Archivos: `registration/VerifyPage.tsx`, `registration/verify.css`, `registration/VerifyPage.test.tsx`.
   Hecho cuando: debajo del recuento de códigos (o del aviso de que no quedan, con su enlace) hay un contenedor con
   `min-height: calc(2 * 1.45em)` que contiene el mensaje informativo, el de espera y el de error del reenvío; el
   aviso de bloqueo, el error del formulario y el de «no quedan códigos» siguen donde estaban; suite verde.
+  Decisiones: el hueco es un `div.resend-slot` que está siempre, vacío, después del recuento (o del aviso de que
+  no quedan códigos y su enlace) y contiene el `FormMessage` del reenvío y el estado de espera; el mensaje del
+  reenvío ya no va encima del formulario. `min-height: calc(2 * 1.45em)` (unos 41 px a 14 px). El recuento
+  lleva la clase `resend-count` con 14 px de margen superior, para que no quede pegado a los botones —
+  [Probable]. La lectura de `verify.css` queda para Chromium (T-005), por lo mismo que en T-003. Verificado en
+  un navegador real con la API simulada: a 1000 px y a 420 px el alto de la card es el mismo (376 px y 442 px)
+  antes y después de que aparezca el mensaje informativo, y el hueco mide 41 px — [Cierto]. Mutantes muertos:
+  el hueco solo existe con mensaje, otra clase para el hueco y el mensaje otra vez sobre el formulario. El
+  fallo del primer intento de verificación en el navegador era de mi script (con `StrictMode` la pantalla pide
+  el estado dos veces), no de la aplicación.
 
 ## E-02b Prueba de la verificación en Chromium
 - [ ] T-005 Prueba en Chromium: botones, desactivado y altura de la verificación
