@@ -119,12 +119,16 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   Decisiones: sigue el patrón de `useCountdown` (guarda la última `alVencer` en una referencia, para que un
   `alVencer` nuevo en cada pintado no reinicie el plazo) — [Cierto]. Mutantes muertos: no limpiar el temporizador
   y no depender de `activo`.
-- [ ] T-009 Registro con carga, plazo y fundido
+- [x] T-009 Registro con carga, plazo y fundido
   RF: RF-004, RF-005, RF-007 | Depende de: T-006, T-008 | Archivos: 2
   Archivos: `registration/RegisterPage.tsx`, `registration/RegisterPage.test.tsx`.
   Hecho cuando: mientras se cargan las opciones no hay card ni título; al llegar, la card entra con fundido; si
   la carga falla o pasan 10 s sin respuesta, la card aparece con el error de conexión y una respuesta que llegue
   después se ignora; el flujo, los textos, las validaciones y los datos enviados no cambian; suite verde.
+  Decisiones: `PublicPage` recibe `ready={loaded.status !== "loading"}` y `useDeadline` pasa la carga a `failed`
+  a los 10 s; la respuesta tardía se ignora porque el `setLoaded` solo cambia el estado si sigue en `loading` —
+  [Cierto]. La barra superior sigue pintada durante la carga (es el diseño actual; E-04 la deja fija) — [Probable].
+  Mutantes muertos: sin plazo, sin ignorar la respuesta tardía y card visible durante la carga.
 
 ## E-03b Verificación y cuenta creada con carga y fundido
 - [ ] T-010 Verificación y enlace no válido con carga, plazo y fundido
