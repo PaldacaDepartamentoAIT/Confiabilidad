@@ -110,12 +110,15 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   animación (comparte la regla con `.public-card`), y las dos reglas de `PublicPage.css` que miraban a los hijos
   directos de la card (`> .help` y `> .btn`) valen también para los de `.public-fade`, para que envolver un paso
   no cambie su aspecto — [Probable]. Mutante muerto: `Fade` sin `key` (no repite la animación).
-- [ ] T-008 Plazo de 10 s
+- [x] T-008 Plazo de 10 s
   RF: RF-004 | Depende de: — | Archivos: 2
   Archivos: `registration/useDeadline.ts`, `registration/useDeadline.test.ts`.
   Hecho cuando: `useDeadline(activo, ms, alVencer)` llama a `alVencer` una vez pasados `ms` mientras `activo` sea
   verdadero, no la llama si `activo` pasa a falso antes ni tras desmontarse, y reinicia el plazo si `activo`
   vuelve a ser verdadero; suite verde.
+  Decisiones: sigue el patrón de `useCountdown` (guarda la última `alVencer` en una referencia, para que un
+  `alVencer` nuevo en cada pintado no reinicie el plazo) — [Cierto]. Mutantes muertos: no limpiar el temporizador
+  y no depender de `activo`.
 - [ ] T-009 Registro con carga, plazo y fundido
   RF: RF-004, RF-005, RF-007 | Depende de: T-006, T-008 | Archivos: 2
   Archivos: `registration/RegisterPage.tsx`, `registration/RegisterPage.test.tsx`.
