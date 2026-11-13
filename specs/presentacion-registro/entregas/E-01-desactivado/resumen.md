@@ -1,6 +1,6 @@
 # Entrega E-01 · Botón desactivado
 
-Rama: `feat/presentacion-registro-desactivado` (sale de `feat/presentacion-registro`) · PR: pendiente ·
+Rama: `feat/presentacion-registro-desactivado` (sale de `feat/presentacion-registro`) · PR: [#113](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/113) ·
 Líneas de código y tests: 68 (límite: 400).
 
 ## Qué se hizo
