@@ -20,7 +20,7 @@
   border: 1px solid var(--primary);
 }
 
-.btn-primary:hover {
+.btn-primary:not(:disabled):not([aria-disabled="true"]):hover {
   background: color-mix(in srgb, var(--primary) 78%, #000);
   border-color: color-mix(in srgb, var(--primary) 78%, #000);
   transition-duration: 0.08s;
@@ -31,6 +31,8 @@
   color: var(--primary);
 }
 
+/* Bloqueado, por `disabled` o por `aria-disabled` (procesando): atenuado y sin hover (RF-002). */
+.btn:disabled,
 .btn[aria-disabled="true"] {
   cursor: not-allowed;
   opacity: 0.6;
@@ -45,7 +47,7 @@
     color 0.35s ease;
 }
 
-.btn-ghost.hov:hover {
+.btn-ghost.hov:not(:disabled):not([aria-disabled="true"]):hover {
   background: color-mix(in srgb, var(--ink) 9%, var(--surface));
   transition-duration: 0.08s;
 }

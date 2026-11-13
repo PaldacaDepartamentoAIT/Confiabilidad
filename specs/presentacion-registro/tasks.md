@@ -7,12 +7,20 @@ En cada tarea se prueba al menos un mutante del código que introduce y debe hac
 Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
 
 ## E-01 Botón desactivado
-- [ ] T-001 Aspecto de botón desactivado
+- [x] T-001 Aspecto de botón desactivado
   RF: RF-002 | Depende de: — | Archivos: 3
   Archivos: `components/Button.css`, `components/buttonCss.test.ts`, `frontend/vite.config.ts`.
   Hecho cuando: `.btn:disabled` y `.btn[aria-disabled="true"]` tienen `opacity: 0.6` y `cursor: not-allowed`; el
   hover del primario y del secundario solo se aplica a los botones que no están bloqueados; el test lee el CSS y
   lo comprueba (por eso `Button.css` entra en `css.include` de `vite.config.ts`); suite verde.
+  Decisiones: el aspecto es el de antes de la limpieza de `base.css`: 60 % y cursor de no permitido, ahora en
+  `Button.css` y para `disabled` y para `aria-disabled` (que ya lo tenía) — [Cierto]. El hover se excluye con
+  `:not(:disabled):not([aria-disabled="true"])` en lugar de pisarlo después, para que un botón bloqueado no
+  cambie ni siquiera durante la transición — [Probable]. El test quita los comentarios del CSS antes de
+  analizarlo (un comentario delante de una regla se leía como parte de su selector). `Button.css` entra en
+  `css.include` de Vitest como `field.css` y `DocumentModal.css`. Las 40 pruebas visuales, incluida la comparación
+  exacta con las referencias, siguen pasando: el aspecto en reposo no cambia — [Cierto]. Mutantes muertos:
+  opacidad 0,6 → 0,8, hover del principal sin excluir el bloqueado y sin la regla de `disabled` nativo.
 - [ ] T-002 Catálogo y guía: botones desactivados
   RF: RF-008 | Depende de: T-001 | Archivos: 3
   Archivos: `showcase/sections/ButtonsSection.tsx`, `showcase/ShowcasePage.test.tsx`, `docs/identidad-visual.md`.

@@ -28,6 +28,7 @@ export default defineConfig(({ mode }) => ({
         /src\/styles\/(tokens|base)\.css/,
         /src\/components\/fields\/(field|Checkbox)\.css/,
         /src\/components\/DocumentModal\.css/,
+        /src\/components\/Button\.css/,
       ],
     },
     coverage: {
