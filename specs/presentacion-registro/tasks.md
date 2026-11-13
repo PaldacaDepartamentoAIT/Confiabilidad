@@ -89,29 +89,46 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   acciones de un formulario y el hueco de mensajes — [Cierto].
 
 ## E-03 Registro con carga y fundido
-- [ ] T-006 Fundido de la card y carga lista
+- [x] T-006 Fundido de la card y carga lista
   RF: RF-004, RF-005, RF-006 | Depende de: — | Archivos: 3
   Archivos: `layouts/PublicPage.tsx`, `layouts/PublicPage.css`, `layouts/PublicPage.test.tsx`.
   Hecho cuando: `PublicPage` con `ready={false}` no pinta nada y con `ready` (por defecto verdadero) pinta la card
   con una animación de entrada de 0,2 s (`@keyframes public-in`); el movimiento reducido lo anula la regla
   global de `base.css`; suite verde.
-- [ ] T-007 Fundido de un contenido que cambia dentro de la card
+  Decisiones: sin `ready` no se pinta ni el `main` (devuelve `null`), porque una card o un título vacíos son
+  justo lo que se quiere evitar; la animación (`public-in`, 0,2 s, solo opacidad) está en `.public-card`. El CSS
+  no se lee desde Vitest (`PublicPage.css` no está en `css.include`, y añadirlo tocaría un cuarto archivo): el
+  fundido y el movimiento reducido se fijan en Chromium en T-013 — [Probable]. Mutante muerto: pintar aun sin
+  `ready`.
+- [x] T-007 Fundido de un contenido que cambia dentro de la card
   RF: RF-005 | Depende de: T-006 | Archivos: 3
   Archivos: `layouts/Fade.tsx`, `layouts/Fade.test.tsx`, `layouts/PublicPage.css`.
   Hecho cuando: `Fade` es un contenedor que, al cambiar su `key`, vuelve a montarse y repite la animación de
   entrada de 0,2 s, y no cambia el aspecto del contenido que envuelve; suite verde.
-- [ ] T-008 Plazo de 10 s
+  Decisiones: `key` no se puede leer dentro de un componente, así que `Fade` recibe `fadeKey` y lo usa como
+  `key` de su `div.public-fade` — [Cierto]. El contenedor es un bloque normal sin estilo propio salvo la
+  animación (comparte la regla con `.public-card`), y las dos reglas de `PublicPage.css` que miraban a los hijos
+  directos de la card (`> .help` y `> .btn`) valen también para los de `.public-fade`, para que envolver un paso
+  no cambie su aspecto — [Probable]. Mutante muerto: `Fade` sin `key` (no repite la animación).
+- [x] T-008 Plazo de 10 s
   RF: RF-004 | Depende de: — | Archivos: 2
   Archivos: `registration/useDeadline.ts`, `registration/useDeadline.test.ts`.
   Hecho cuando: `useDeadline(activo, ms, alVencer)` llama a `alVencer` una vez pasados `ms` mientras `activo` sea
   verdadero, no la llama si `activo` pasa a falso antes ni tras desmontarse, y reinicia el plazo si `activo`
   vuelve a ser verdadero; suite verde.
-- [ ] T-009 Registro con carga, plazo y fundido
+  Decisiones: sigue el patrón de `useCountdown` (guarda la última `alVencer` en una referencia, para que un
+  `alVencer` nuevo en cada pintado no reinicie el plazo) — [Cierto]. Mutantes muertos: no limpiar el temporizador
+  y no depender de `activo`.
+- [x] T-009 Registro con carga, plazo y fundido
   RF: RF-004, RF-005, RF-007 | Depende de: T-006, T-008 | Archivos: 2
   Archivos: `registration/RegisterPage.tsx`, `registration/RegisterPage.test.tsx`.
   Hecho cuando: mientras se cargan las opciones no hay card ni título; al llegar, la card entra con fundido; si
   la carga falla o pasan 10 s sin respuesta, la card aparece con el error de conexión y una respuesta que llegue
   después se ignora; el flujo, los textos, las validaciones y los datos enviados no cambian; suite verde.
+  Decisiones: `PublicPage` recibe `ready={loaded.status !== "loading"}` y `useDeadline` pasa la carga a `failed`
+  a los 10 s; la respuesta tardía se ignora porque el `setLoaded` solo cambia el estado si sigue en `loading` —
+  [Cierto]. La barra superior sigue pintada durante la carga (es el diseño actual; E-04 la deja fija) — [Probable].
+  Mutantes muertos: sin plazo, sin ignorar la respuesta tardía y card visible durante la carga.
 
 ## E-03b Verificación y cuenta creada con carga y fundido
 - [ ] T-010 Verificación y enlace no válido con carga, plazo y fundido

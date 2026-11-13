@@ -27,6 +27,7 @@ import { navigate } from "../routing/router";
 import { email, required } from "../showcase/validators";
 import { translateFieldErrors } from "./serverErrors";
 import { useCountdown } from "./useCountdown";
+import { useDeadline } from "./useDeadline";
 
 const chosen =
   (key: FieldError["key"]): Validator =>
@@ -55,6 +56,9 @@ function fieldResult(errors: Record<string, string[]>): SubmitResult<Field> {
   return { fieldErrors: translateFieldErrors(errors), message: known ? undefined : UNKNOWN };
 }
 
+// Pasado este tiempo sin respuesta, la card aparece con el error de conexión (RF-004).
+const LOAD_LIMIT_MS = 10_000;
+
 type Loaded =
   { status: "loading" } | { status: "failed" } | { status: "ready"; options: RegistrationOptions };
 
@@ -72,8 +76,13 @@ export function RegisterPage({ client, storage }: RegisterPageProps) {
     let current = true;
     void fetchOptions(client).then((result) => {
       if (!current) return;
-      setLoaded(
-        result.kind === "ok" ? { status: "ready", options: result.data } : { status: "failed" },
+      // Una respuesta que llega cuando el plazo ya la dio por fallida se ignora (RF-004).
+      setLoaded((previous) =>
+        previous.status !== "loading"
+          ? previous
+          : result.kind === "ok"
+            ? { status: "ready", options: result.data }
+            : { status: "failed" },
       );
     });
     return () => {
@@ -81,9 +90,11 @@ export function RegisterPage({ client, storage }: RegisterPageProps) {
     };
   }, [client]);
 
+  useDeadline(loaded.status === "loading", LOAD_LIMIT_MS, () => setLoaded({ status: "failed" }));
+
   return (
     <PublicLayout storage={storage}>
-      <PublicPage title={t("register.title")} titleId={titleId}>
+      <PublicPage title={t("register.title")} titleId={titleId} ready={loaded.status !== "loading"}>
         {loaded.status === "failed" && (
           <FormMessage type="error" messageKey="validation.networkError" />
         )}

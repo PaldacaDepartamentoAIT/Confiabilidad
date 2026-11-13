@@ -49,6 +49,24 @@ test("without an id the heading has none", () => {
   expect(screen.getByRole("heading", { level: 1 })).not.toHaveAttribute("id");
 });
 
+test("paints nothing while it is not ready, and the card as soon as it is", () => {
+  const { rerender, container } = render(
+    <PublicPage title="Register" ready={false}>
+      <p>Content</p>
+    </PublicPage>,
+  );
+  expect(container).toBeEmptyDOMElement();
+  expect(screen.queryByRole("heading")).not.toBeInTheDocument();
+
+  rerender(
+    <PublicPage title="Register" ready>
+      <p>Content</p>
+    </PublicPage>,
+  );
+  expect(screen.getByRole("heading", { level: 1, name: "Register" })).toBeInTheDocument();
+  expect(screen.getByText("Content")).toBeInTheDocument();
+});
+
 test("has no accessibility violations", async () => {
   const { container } = render(
     <PublicPage title="Register">

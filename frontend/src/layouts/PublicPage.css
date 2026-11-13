@@ -4,6 +4,18 @@
   padding: 32px 22px 0;
 }
 
+/* La regla global de movimiento reducido de base.css anula la animación. */
+@keyframes public-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.public-card,
+.public-fade {
+  animation: public-in 0.2s ease-out;
+}
+
 .public-card h1,
 .public-card h2 {
   margin: 0;
@@ -16,7 +28,8 @@
 }
 
 .public-card p:not(.error-msg, .help),
-.public-card > .help {
+.public-card > .help,
+.public-fade > .help {
   margin: 0 0 14px;
 }
 
@@ -36,6 +49,7 @@
   align-self: flex-end;
 }
 
-.public-card > .btn {
+.public-card > .btn,
+.public-fade > .btn {
   margin: 2px 0 14px;
 }
