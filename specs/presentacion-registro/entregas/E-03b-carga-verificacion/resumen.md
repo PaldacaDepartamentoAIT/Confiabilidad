@@ -8,8 +8,8 @@ fundido, y el enlace no válido y la cuenta creada entran con el de su card. El 
 validaciones no cambian.
 
 ## Tareas
-- T-010 (verificación y enlace no válido con carga, plazo y fundido) — commit de esta entrega.
-- T-011 (cuenta creada con fundido) — commit de esta entrega. No cambia código: `DonePage` ya recibe el fundido
+- T-010 (verificación y enlace no válido con carga, plazo y fundido) — commit `cc8774d`.
+- T-011 (cuenta creada con fundido) — commit `8bab868`. No cambia código: `DonePage` ya recibe el fundido
   de la card desde E-03; la tarea añade su test.
 
 ## Cómo ejecutarlo y probarlo
@@ -32,7 +32,7 @@ error de conexión. No uses «Offline» antes de recargar: corta también la car
 movimiento reducido se comprueban en Chromium en la tarea T-013 (entrega E-04).
 
 ## Líneas
-Ver el PR.
+280 de código y pruebas (límite 400).
 
 ## PR
 Pendiente.
