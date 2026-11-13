@@ -1,5 +1,5 @@
 # Plan: presentacion-registro
-Estado: borrador
+Estado: aprobado
 
 ## Módulos
 
