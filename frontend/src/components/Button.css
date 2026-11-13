@@ -51,3 +51,10 @@
   background: color-mix(in srgb, var(--ink) 9%, var(--surface));
   transition-duration: 0.08s;
 }
+
+/* Más específica que la regla global `.hov:hover` de ThemeButton.css, para que un secundario bloqueado
+   no cambie de fondo según el orden en que se cargue el CSS. */
+.btn-ghost.hov:disabled:hover,
+.btn-ghost.hov[aria-disabled="true"]:hover {
+  background: transparent;
+}
