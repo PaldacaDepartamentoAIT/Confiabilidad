@@ -131,12 +131,19 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   Mutantes muertos: sin plazo, sin ignorar la respuesta tardía y card visible durante la carga.
 
 ## E-03b Verificación y cuenta creada con carga y fundido
-- [ ] T-010 Verificación y enlace no válido con carga, plazo y fundido
+- [x] T-010 Verificación y enlace no válido con carga, plazo y fundido
   RF: RF-004, RF-005, RF-007 | Depende de: T-006, T-007, T-008 | Archivos: 2
   Archivos: `registration/VerifyPage.tsx`, `registration/VerifyPage.test.tsx`.
   Hecho cuando: mientras se carga el estado no hay card; al llegar entra con fundido; con error o pasados 10 s sin
   respuesta aparece con el error de conexión; el enlace no válido entra con fundido al pintarse; el cambio del
   código a la contraseña se anima con `Fade`; el flujo no cambia; suite verde.
+  Decisiones: un único `Fade` envuelve el paso (`fadeKey` «code» o «password»), no uno por rama, porque con dos
+  ramas separadas la clave no hacía nada (un mutante lo demostró) — [Cierto]. El plazo usa una referencia
+  `timedOut` que se reinicia al empezar cada carga, para que una respuesta tardía se ignore pero un enlace nuevo
+  se cargue; no se usa el estado `loaded` porque tras un reenvío el estado sigue en «ready» y la nueva respuesta
+  debe aceptarse — [Cierto]. El enlace no válido entra con el fundido de la propia `PublicPage` al montarse.
+  Mutantes muertos: sin ignorar la respuesta tardía, sin plazo, card visible durante la carga, clave fija y sin
+  reiniciar `timedOut`.
 - [ ] T-011 Cuenta creada con fundido
   RF: RF-005, RF-007 | Depende de: T-006 | Archivos: 2
   Archivos: `registration/DonePage.tsx`, `registration/DonePage.test.tsx`.

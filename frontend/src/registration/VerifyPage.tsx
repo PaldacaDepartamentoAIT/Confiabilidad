@@ -1,4 +1,4 @@
-import { useEffect, useState, type MouseEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 import type { ApiClient } from "../api/client";
@@ -19,6 +19,7 @@ import {
   type ValidationKey,
 } from "../forms/useFormValidation";
 import type { LanguageStorage } from "../i18n/language";
+import { Fade } from "../layouts/Fade";
 import { PublicLayout } from "../layouts/PublicLayout";
 import { PublicPage } from "../layouts/PublicPage";
 import { navigate, useLocation } from "../routing/router";
@@ -26,12 +27,16 @@ import { required, sixDigitCode } from "../showcase/validators";
 import { PasswordStep } from "./PasswordStep";
 import { translateCode } from "./serverErrors";
 import { useCountdown } from "./useCountdown";
+import { useDeadline } from "./useDeadline";
 import "./verify.css";
 
 const CODE_FIELDS = { code: [required, sixDigitCode] };
 
 // Estos rechazos se refieren al código escrito y se pintan bajo el campo (RF-007).
 const CODE_ERRORS = new Set(["wrong_code", "code_expired"]);
+
+// Pasado este tiempo sin respuesta, la card aparece con el error de conexión (RF-004).
+const LOAD_LIMIT_MS = 10_000;
 
 type Loaded = "loading" | "ready" | "notFound" | "networkError" | "failed";
 
@@ -64,6 +69,8 @@ export function VerifyPage({ client, storage }: VerifyPageProps) {
   // El código aceptado solo vive en memoria: recargar vuelve a la verificación (RF-011, S-08).
   const [acceptedCode, setAcceptedCode] = useState<string | null>(null);
   const [rejection, setRejection] = useState<ValidationKey | null>(null);
+  // Verdadero cuando el plazo ya dio por fallida la carga: una respuesta posterior se ignora (RF-004).
+  const timedOut = useRef(false);
   const expiry = useCountdown();
   const resendWait = useCountdown();
   const { start } = expiry;
@@ -72,11 +79,12 @@ export function VerifyPage({ client, storage }: VerifyPageProps) {
   useEffect(() => {
     if (!publicId) return;
     let current = true;
+    timedOut.current = false;
     async function load() {
       // El enlace del correo puede abrirse en un navegador sin la cookie CSRF que piden los POST (D-09).
       if (!hasCsrfCookie()) await fetchOptions(client);
       const result = await fetchStatus(client, publicId);
-      if (!current) return;
+      if (!current || timedOut.current) return;
       if (result.kind === "ok") {
         start(result.data.code_expires_in);
         startResendWait(result.data.resend_in);
@@ -92,6 +100,11 @@ export function VerifyPage({ client, storage }: VerifyPageProps) {
       current = false;
     };
   }, [client, publicId, start, startResendWait, generation]);
+
+  useDeadline(loaded === "loading", LOAD_LIMIT_MS, () => {
+    timedOut.current = true;
+    setLoaded("networkError");
+  });
 
   async function resend() {
     setResendMessage(null);
@@ -131,69 +144,74 @@ export function VerifyPage({ client, storage }: VerifyPageProps) {
 
   return (
     <PublicLayout storage={storage}>
-      <PublicPage title={t("register.verifyTitle")}>
+      <PublicPage title={t("register.verifyTitle")} ready={loaded !== "loading"}>
         <p>{t("register.verifyText")}</p>
         {loaded === "networkError" && (
           <FormMessage type="error" messageKey="validation.networkError" />
         )}
         {loaded === "failed" && <FormMessage type="error" messageKey="validation.serverError" />}
-        {loaded === "ready" && status && acceptedCode && (
-          <PasswordStep
-            client={client}
-            publicId={publicId}
-            code={acceptedCode}
-            onCreated={() => navigate("/register/done")}
-            onCodeRejected={codeRejected}
-          />
-        )}
-        {loaded === "ready" && status && !acceptedCode && (
-          <>
-            {rejection && <FormMessage type="error" messageKey={`validation.${rejection}`} />}
-            <p>
-              {expiry.remaining > 0
-                ? t("register.codeExpiresIn", { time: minutesAndSeconds(expiry.remaining) })
-                : t("register.codeExpiredNotice")}
-            </p>
-            <CodeForm
-              key={loads}
-              client={client}
-              publicId={publicId}
-              initiallyLocked={status.locked}
-              onVerified={setAcceptedCode}
-              onNotFound={() => setLoaded("notFound")}
-              secondaryAction={
-                <Button
-                  variant="secondary"
-                  disabled={resendWait.remaining > 0 || status.resends_left === 0}
-                  onClick={() => void resend()}
-                >
-                  {resendWait.remaining > 0
-                    ? t("register.resendIn", { seconds: resendWait.remaining })
-                    : t("register.resend")}
-                </Button>
-              }
-            />
-            {status.resends_left > 0 ? (
-              <p className="resend-count">
-                {t("register.resendsLeft", { count: status.resends_left })}
-              </p>
+        {loaded === "ready" && status && (
+          <Fade fadeKey={acceptedCode ? "password" : "code"}>
+            {acceptedCode ? (
+              <PasswordStep
+                client={client}
+                publicId={publicId}
+                code={acceptedCode}
+                onCreated={() => navigate("/register/done")}
+                onCodeRejected={codeRejected}
+              />
             ) : (
               <>
-                <p className="resend-count">{t("register.noResendsLeft")}</p>
-                <FormLink />
+                {rejection && <FormMessage type="error" messageKey={`validation.${rejection}`} />}
+                <p>
+                  {expiry.remaining > 0
+                    ? t("register.codeExpiresIn", { time: minutesAndSeconds(expiry.remaining) })
+                    : t("register.codeExpiredNotice")}
+                </p>
+                <CodeForm
+                  key={loads}
+                  client={client}
+                  publicId={publicId}
+                  initiallyLocked={status.locked}
+                  onVerified={setAcceptedCode}
+                  onNotFound={() => setLoaded("notFound")}
+                  secondaryAction={
+                    <Button
+                      variant="secondary"
+                      disabled={resendWait.remaining > 0 || status.resends_left === 0}
+                      onClick={() => void resend()}
+                    >
+                      {resendWait.remaining > 0
+                        ? t("register.resendIn", { seconds: resendWait.remaining })
+                        : t("register.resend")}
+                    </Button>
+                  }
+                />
+                {status.resends_left > 0 ? (
+                  <p className="resend-count">
+                    {t("register.resendsLeft", { count: status.resends_left })}
+                  </p>
+                ) : (
+                  <>
+                    <p className="resend-count">{t("register.noResendsLeft")}</p>
+                    <FormLink />
+                  </>
+                )}
+                {/* Hueco reservado de dos líneas para los mensajes del reenvío: aparecen y desaparecen sin
+                cambiar el alto de la card (RF-003). */}
+                <div className="resend-slot">
+                  {resendMessage && (
+                    <FormMessage type={resendMessage.type} messageKey={resendMessage.messageKey} />
+                  )}
+                  {resendLimited && resendWait.remaining > 0 && (
+                    <p role="status">
+                      {t("validation.retryIn", { seconds: resendWait.remaining })}
+                    </p>
+                  )}
+                </div>
               </>
             )}
-            {/* Hueco reservado de dos líneas para los mensajes del reenvío: aparecen y desaparecen sin
-                cambiar el alto de la card (RF-003). */}
-            <div className="resend-slot">
-              {resendMessage && (
-                <FormMessage type={resendMessage.type} messageKey={resendMessage.messageKey} />
-              )}
-              {resendLimited && resendWait.remaining > 0 && (
-                <p role="status">{t("validation.retryIn", { seconds: resendWait.remaining })}</p>
-              )}
-            </div>
-          </>
+          </Fade>
         )}
       </PublicPage>
     </PublicLayout>
