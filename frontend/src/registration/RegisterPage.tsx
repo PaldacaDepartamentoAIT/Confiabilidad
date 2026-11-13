@@ -20,8 +20,6 @@ import {
   type SubmitResult,
   type Validator,
 } from "../forms/useFormValidation";
-import type { LanguageStorage } from "../i18n/language";
-import { PublicLayout } from "../layouts/PublicLayout";
 import { PublicPage } from "../layouts/PublicPage";
 import { navigate } from "../routing/router";
 import { email, required } from "../showcase/validators";
@@ -64,10 +62,9 @@ type Loaded =
 
 type RegisterPageProps = {
   client: ApiClient;
-  storage?: LanguageStorage;
 };
 
-export function RegisterPage({ client, storage }: RegisterPageProps) {
+export function RegisterPage({ client }: RegisterPageProps) {
   const { t, i18n } = useTranslation();
   const titleId = useId();
   const [loaded, setLoaded] = useState<Loaded>({ status: "loading" });
@@ -93,25 +90,23 @@ export function RegisterPage({ client, storage }: RegisterPageProps) {
   useDeadline(loaded.status === "loading", LOAD_LIMIT_MS, () => setLoaded({ status: "failed" }));
 
   return (
-    <PublicLayout storage={storage}>
-      <PublicPage title={t("register.title")} titleId={titleId} ready={loaded.status !== "loading"}>
-        {loaded.status === "failed" && (
-          <FormMessage type="error" messageKey="validation.networkError" />
-        )}
-        {loaded.status === "ready" &&
-          (loaded.options.terms ? (
-            <RegisterForm
-              client={client}
-              options={loaded.options}
-              terms={loaded.options.terms}
-              language={i18n.language}
-              titleId={titleId}
-            />
-          ) : (
-            <FormMessage type="error" messageKey="validation.termsUnavailable" />
-          ))}
-      </PublicPage>
-    </PublicLayout>
+    <PublicPage title={t("register.title")} titleId={titleId} ready={loaded.status !== "loading"}>
+      {loaded.status === "failed" && (
+        <FormMessage type="error" messageKey="validation.networkError" />
+      )}
+      {loaded.status === "ready" &&
+        (loaded.options.terms ? (
+          <RegisterForm
+            client={client}
+            options={loaded.options}
+            terms={loaded.options.terms}
+            language={i18n.language}
+            titleId={titleId}
+          />
+        ) : (
+          <FormMessage type="error" messageKey="validation.termsUnavailable" />
+        ))}
+    </PublicPage>
   );
 }
 

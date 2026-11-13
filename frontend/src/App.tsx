@@ -8,6 +8,7 @@ import { useDocumentLanguage } from "./i18n/useDocumentLanguage";
 import { DonePage } from "./registration/DonePage";
 import { RegisterPage } from "./registration/RegisterPage";
 import { VerifyPage } from "./registration/VerifyPage";
+import { PublicLayout } from "./layouts/PublicLayout";
 import { matchRoute, useLocation } from "./routing/router";
 import { ShowcasePage } from "./showcase/ShowcasePage";
 
@@ -29,10 +30,16 @@ export function App({ storage, client }: AppProps) {
   const route = matchRoute(useLocation().path, ROUTES, "/");
   return (
     <LiveAnnouncer>
-      {route === "/" && <ShowcasePage storage={storage} />}
-      {route === "/register" && <RegisterPage client={api} storage={storage} />}
-      {route === "/register/continue" && <VerifyPage client={api} storage={storage} />}
-      {route === "/register/done" && <DonePage storage={storage} />}
+      {route === "/" ? (
+        <ShowcasePage storage={storage} />
+      ) : (
+        // Una sola barra para todo el registro: al cambiar de pantalla es el mismo nodo, no se repinta (RF-009).
+        <PublicLayout storage={storage}>
+          {route === "/register" && <RegisterPage client={api} />}
+          {route === "/register/continue" && <VerifyPage client={api} />}
+          {route === "/register/done" && <DonePage />}
+        </PublicLayout>
+      )}
     </LiveAnnouncer>
   );
 }

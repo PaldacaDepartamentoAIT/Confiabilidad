@@ -1,4 +1,4 @@
-import { act, render, screen } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { I18nextProvider } from "react-i18next";
 
@@ -135,4 +135,53 @@ test("without a given client, the screens use the one built from the environment
   );
   fetchSpy.mockRestore();
   window.history.replaceState(null, "", "/");
+});
+
+describe("the top bar of the registration", () => {
+  afterEach(() => window.history.replaceState(null, "", "/"));
+
+  function renderApp() {
+    render(
+      <I18nextProvider i18n={createI18n("en")}>
+        <App client={fakeClient()} />
+      </I18nextProvider>,
+    );
+  }
+
+  test("there is one bar with the banner, the language and the theme", async () => {
+    window.history.replaceState(null, "", "/register");
+    renderApp();
+    await screen.findByRole("heading", { level: 1, name: "Create your account" });
+
+    const banners = screen.getAllByRole("banner");
+    expect(banners).toHaveLength(1);
+    expect(within(banners[0]).getByRole("combobox", { name: /^Language/ })).toBeInTheDocument();
+    expect(within(banners[0]).getByRole("button", { name: /Switch theme/ })).toBeInTheDocument();
+  });
+
+  test("is the very same node when moving from one screen to another", async () => {
+    window.history.replaceState(null, "", "/register");
+    renderApp();
+    await screen.findByRole("heading", { level: 1, name: "Create your account" });
+    const bar = screen.getByRole("banner");
+    const language = within(bar).getByRole("combobox", { name: /^Language/ });
+
+    act(() => navigate("/register/done"));
+    await screen.findByRole("heading", { level: 1, name: "Account created" });
+
+    expect(screen.getByRole("banner")).toBe(bar);
+    expect(within(bar).getByRole("combobox", { name: /^Language/ })).toBe(language);
+    expect(screen.getAllByRole("banner")).toHaveLength(1);
+  });
+
+  test("the sample page keeps its own bar and the registration brings the shared one", async () => {
+    window.history.replaceState(null, "", "/");
+    renderApp();
+    await screen.findByRole("heading", { level: 1, name: "Reliability" });
+    expect(screen.getAllByRole("banner")).toHaveLength(1);
+
+    act(() => navigate("/register/done"));
+    await screen.findByRole("heading", { level: 1, name: "Account created" });
+    expect(screen.getAllByRole("banner")).toHaveLength(1);
+  });
 });

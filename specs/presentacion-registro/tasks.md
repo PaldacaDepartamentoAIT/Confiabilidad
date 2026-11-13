@@ -155,7 +155,7 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   El fundido real se comprueba en Chromium en T-013. Mutante muerto: `ready={false}` en `DonePage`.
 
 ## E-04 Barra superior compartida y comprobación final en navegador
-- [ ] T-012 Barra superior compartida
+- [x] T-012 Barra superior compartida
   RF: RF-009, RF-007 | Depende de: T-009, T-010, T-011 | Archivos: 6
   Archivos: `App.tsx`, `App.test.tsx`, `registration/RegisterPage.tsx`, `registration/VerifyPage.tsx`,
   `registration/DonePage.tsx`, `registration/a11y.test.tsx`.
@@ -165,6 +165,13 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   Excepción: 6 archivos en lugar de 3. Sacar la barra de las páginas y pintarla en `App` es un único cambio
   atómico: con solo uno de los dos habría dos barras o ninguna entre commits, y los tests de las páginas que
   miraban el banner pasan a `App`.
+  Decisiones: `App` pinta un solo `PublicLayout` para las tres rutas del registro y cambia solo su contenido;
+  el catálogo sigue con el suyo, en otra rama del árbol. Las páginas dejan de recibir `storage` (ya no tienen
+  barra) — [Cierto]. El enlace no válido (dentro de `VerifyPage`) tampoco la lleva. Los tests de la barra de
+  `a11y.test.tsx` ya pasaban por `App`, así que siguen valiendo sin cambios; en `App.test.tsx` se añaden una barra
+  única con idioma y tema, el mismo nodo (barra y selector de idioma) al pasar de una pantalla a otra, y el
+  catálogo con su propia barra. Mutantes muertos: la barra repetida dentro de una ruta y `key` en el
+  `PublicLayout` (que la repinta).
 - [ ] T-013 Prueba en Chromium: carga, fundido, barra y movimiento reducido
   RF: RF-004, RF-005, RF-006, RF-009 | Depende de: T-005, T-012 | Archivos: 2
   Archivos: `frontend/visual/registration.visual.test.ts`, `docs/identidad-visual.md`.
