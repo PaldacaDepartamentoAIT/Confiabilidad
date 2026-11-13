@@ -20,17 +20,16 @@
   margin: 0 0 14px;
 }
 
-/* Entre campos no hay separación propia: la línea reservada del error (18 px) ya la da. Lo que no es
-   un campo conserva 16 px por encima. */
+/* Entre campos no hay separación propia: la línea reservada del error ya la da. */
 .public-card form {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
-.public-card form > * + :not(.fld, .check-field),
-.public-card form > :not(.fld, .check-field) + * {
-  margin-top: 14px;
+/* Lo que no es un campo y viene después de otro elemento (las acciones) también deja 14 px por debajo. */
+.public-card form > * + :not(.fld, .check-field) {
+  margin-bottom: 14px;
 }
 
 .public-card form > .btn {

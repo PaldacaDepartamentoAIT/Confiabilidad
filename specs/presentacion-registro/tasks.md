@@ -35,19 +35,42 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   Mutante muerto: el secundario sin `disabled`.
 
 ## E-02 Verificación: botones en una fila y hueco reservado
-- [ ] T-003 Botones de la verificación en una fila
+- [x] T-003 Botones de la verificación en una fila
   RF: RF-001 | Depende de: T-001 | Archivos: 3
   Archivos: `registration/VerifyPage.tsx`, `registration/verify.css`, `registration/VerifyPage.test.tsx`.
   Hecho cuando: «Enviar otro código» y «Verificar» están en un contenedor `.form-actions` dentro del
   formulario del código, con el secundario antes que el principal; el de reenviar es `type="button"`, no envía el
   formulario y conserva su estado, su cuenta atrás y su bloqueo; el CSS alinea la fila a la derecha con 10 px y,
   por debajo de 480 px, la pone en columna invertida con los botones a todo el ancho; suite verde.
-- [ ] T-004 Hueco reservado del mensaje de reenvío
+  Decisiones: `CodeForm` recibe el botón secundario como propiedad (`secondaryAction`) y lo pinta antes de
+  «Verificar» en `.form-actions`; el estado, la cuenta atrás y el bloqueo del reenvío siguen en `VerifyPage` y
+  el botón es `type="button"` (el de `Button` por defecto), así que no envía el código — [Cierto]. Las
+  reglas de la fila (alineación a la derecha, 10 px, columna invertida a todo el ancho por debajo de 480 px)
+  están en `registration/verify.css` y se fijan en Chromium en T-005, no en un test de jsdom, porque leer
+  `verify.css` desde Vitest habría exigido tocar `vite.config.ts` (fuera de los 3 archivos de la tarea) —
+  [Probable]. Verificado en un navegador real con la API simulada: a 1000 px los botones están en la misma fila,
+  el secundario a la izquierda, 10 px entre ellos y pegados al borde derecho; a 420 px quedan en columna, ambos de
+  290 px, con «Verificar» arriba (y a 46 px de distancia el reenviar) — [Cierto]. Se observa que el recuento
+  «Códigos que aún puedes pedir» queda pegado a los botones: lo ajusta T-004. Mutantes muertos: orden invertido
+  de la fila, el reenvío como botón de envío y la fila con otra clase.
+- [x] T-004 Hueco reservado del mensaje de reenvío
   RF: RF-003 | Depende de: T-003 | Archivos: 3
   Archivos: `registration/VerifyPage.tsx`, `registration/verify.css`, `registration/VerifyPage.test.tsx`.
   Hecho cuando: debajo del recuento de códigos (o del aviso de que no quedan, con su enlace) hay un contenedor con
   `min-height: calc(2 * 1.45em)` que contiene el mensaje informativo, el de espera y el de error del reenvío; el
   aviso de bloqueo, el error del formulario y el de «no quedan códigos» siguen donde estaban; suite verde.
+  Decisiones: el hueco es un `div.resend-slot` que está siempre, vacío, después del recuento (o del aviso de que
+  no quedan códigos y su enlace) y contiene el `FormMessage` del reenvío y el estado de espera; el mensaje del
+  reenvío ya no va encima del formulario. `min-height: calc(2 * 1.45em)` (unos 41 px a 14 px). El recuento lleva la clase `resend-count`. El aire entre los botones y el recuento lo da una regla general de las
+  pantallas públicas que pidió el usuario: `.public-card form > * + :not(.fld, .check-field)` deja 14 px por
+  debajo (`margin-bottom`), con lo que el recuento queda a 14 px de los botones; esa regla también añade 14 px
+  bajo el botón de «Continuar» del registro (la card pasa de unos 21 px a 35 px por debajo del botón) —
+  [Cierto]. La lectura de `verify.css` queda para Chromium (T-005), por lo mismo que en T-003. Verificado en
+  un navegador real con la API simulada: a 1000 px y a 420 px el alto de la card es el mismo (376 px y 442 px)
+  antes y después de que aparezca el mensaje informativo, y el hueco mide 41 px — [Cierto]. Mutantes muertos:
+  el hueco solo existe con mensaje, otra clase para el hueco y el mensaje otra vez sobre el formulario. El
+  fallo del primer intento de verificación en el navegador era de mi script (con `StrictMode` la pantalla pide
+  el estado dos veces), no de la aplicación.
 
 ## E-02b Prueba de la verificación en Chromium
 - [ ] T-005 Prueba en Chromium: botones, desactivado y altura de la verificación

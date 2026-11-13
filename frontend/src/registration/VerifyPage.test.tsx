@@ -623,3 +623,175 @@ test("the account created screen says so without signing in", () => {
   expect(screen.queryByRole("textbox")).toBeNull();
   expect(screen.queryByLabelText(/Contraseña/)).toBeNull();
 });
+
+describe("the two buttons in one row", () => {
+  it("both go in the same row of the form, with the secondary one before the main one", async () => {
+    openAt("/register/continue#pid-1");
+    const { fetcher } = replies(reply(200, { ...STATUS, resend_in: 0 }));
+    const { container } = renderPage(fetcher);
+
+    const resend = await screen.findByRole("button", { name: "Enviar otro código" });
+    const verify = screen.getByRole("button", { name: "Verificar" });
+
+    const row = container.querySelector("form .form-actions") as HTMLElement;
+    expect(row).toContainElement(resend);
+    expect(row).toContainElement(verify);
+    expect([...row.children]).toEqual([resend, verify]);
+    expect(resend).toHaveAttribute("data-ui", "button-secondary");
+    expect(verify).toHaveAttribute("data-ui", "button-primary");
+    expect(row.parentElement?.tagName).toBe("FORM");
+  });
+
+  it("the resend button is not a submit button: it does not send the code", async () => {
+    const user = userEvent.setup();
+    openAt("/register/continue#pid-1");
+    const { calls, fetcher } = replies(
+      reply(200, { ...STATUS, resend_in: 0 }),
+      reply(202, { result: "resent" }),
+      reply(200, STATUS),
+    );
+    renderPage(fetcher);
+    await user.type(
+      await screen.findByRole("textbox", { name: /Código de verificación/ }),
+      "123456",
+    );
+
+    const resend = screen.getByRole("button", { name: "Enviar otro código" });
+    expect(resend).toHaveAttribute("type", "button");
+    await user.click(resend);
+
+    await screen.findByText("Códigos que aún puedes pedir: 5.");
+    expect(calls.map((call) => call.url.split("/").pop())).toEqual(["status", "resend", "status"]);
+  });
+
+  it("the main button still sends the code and is the only submit of the form", async () => {
+    openAt("/register/continue#pid-1");
+    const { fetcher } = replies(reply(200, STATUS));
+    const { container } = renderPage(fetcher);
+
+    const verify = await screen.findByRole("button", { name: "Verificar" });
+
+    expect(verify).toHaveAttribute("type", "submit");
+    expect(container.querySelectorAll("form button[type='submit']")).toHaveLength(1);
+  });
+
+  it("the resend button keeps its countdown and its lock inside the row", async () => {
+    openAt("/register/continue#pid-1");
+    const { fetcher } = replies(reply(200, { ...STATUS, resend_in: 30, resends_left: 0 }));
+    const { container } = renderPage(fetcher);
+
+    const resend = await screen.findByRole("button", { name: "Enviar otro código en 30 s" });
+
+    expect(resend).toBeDisabled();
+    expect(container.querySelector(".form-actions")).toContainElement(resend);
+  });
+});
+
+describe("the reserved space for the resend message", () => {
+  const slot = (container: HTMLElement) => container.querySelector(".resend-slot") as HTMLElement;
+
+  it("is there from the start, empty, below the count of codes", async () => {
+    openAt("/register/continue#pid-1");
+    const { fetcher } = replies(reply(200, STATUS));
+    const { container } = renderPage(fetcher);
+
+    const count = await screen.findByText("Códigos que aún puedes pedir: 5.");
+
+    expect(slot(container)).toBeInTheDocument();
+    expect(slot(container)).toBeEmptyDOMElement();
+    expect(count.compareDocumentPosition(slot(container)) & Node.DOCUMENT_POSITION_FOLLOWING).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+  });
+
+  it("goes below the buttons, and the count comes right after them", async () => {
+    openAt("/register/continue#pid-1");
+    const { fetcher } = replies(reply(200, STATUS));
+    const { container } = renderPage(fetcher);
+    await screen.findByText("Códigos que aún puedes pedir: 5.");
+
+    const form = container.querySelector("form") as HTMLFormElement;
+    const children = [...(form.parentElement?.children ?? [])];
+    const count = screen.getByText("Códigos que aún puedes pedir: 5.");
+    expect(children.indexOf(form)).toBeLessThan(children.indexOf(count));
+    expect(children.indexOf(count)).toBeLessThan(children.indexOf(slot(container)));
+  });
+
+  it("holds the information message after sending another code", async () => {
+    const user = userEvent.setup();
+    openAt("/register/continue#pid-1");
+    const { fetcher } = replies(
+      reply(200, { ...STATUS, resend_in: 0 }),
+      reply(202, { result: "resent" }),
+      reply(200, STATUS),
+    );
+    const { container } = renderPage(fetcher);
+
+    await user.click(await screen.findByRole("button", { name: "Enviar otro código" }));
+
+    const message = await screen.findByText(/Si puedes registrarte, recibirás un código nuevo/);
+    expect(slot(container)).toContainElement(message.closest("div") as HTMLElement);
+    expect(message.closest("div")?.textContent).toMatch(/^Información:/);
+  });
+
+  it("holds the wait message of the limit", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    openAt("/register/continue#pid-1");
+    const { fetcher } = replies(
+      reply(200, { ...STATUS, resend_in: 0 }),
+      reply(429, { message: "x", retry_after: 5 }),
+    );
+    const { container } = renderPage(fetcher);
+
+    await user.click(await screen.findByRole("button", { name: "Enviar otro código" }));
+
+    const wait = await screen.findByText("Demasiados intentos. Vuelve a intentarlo en 5 s.");
+    expect(slot(container)).toContainElement(wait);
+  });
+
+  it.each([
+    [reply(400, { code: "resend_unavailable", message: "x" }), /Ahora no se puede enviar otro/],
+    [() => Promise.reject(new TypeError("Failed to fetch")), /No se pudo conectar/],
+    [reply(500, {}), /Algo falló en nuestro servidor/],
+  ])("holds the error of a refusal or a failure", async (answer, text) => {
+    const user = userEvent.setup();
+    openAt("/register/continue#pid-1");
+    const { fetcher } = replies(reply(200, { ...STATUS, resend_in: 0 }), answer);
+    const { container } = renderPage(fetcher);
+
+    await user.click(await screen.findByRole("button", { name: "Enviar otro código" }));
+
+    expect(slot(container)).toContainElement(await screen.findByText(text));
+  });
+
+  it("with no codes left it goes below the notice and the link to the form", async () => {
+    openAt("/register/continue#pid-1");
+    const { fetcher } = replies(reply(200, { ...STATUS, resend_in: 0, resends_left: 0 }));
+    const { container } = renderPage(fetcher);
+
+    const notice = await screen.findByText(
+      "No puedes pedir más códigos. Vuelve a empezar el registro.",
+    );
+    const link = screen.getByRole("link", { name: "Ir al formulario de registro" });
+
+    for (const before of [notice, link]) {
+      expect(
+        before.compareDocumentPosition(slot(container)) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    }
+  });
+
+  it("leaves the lock notice, the rejection and the form messages where they were", async () => {
+    openAt("/register/continue#pid-1");
+    const { fetcher } = replies(reply(200, { ...STATUS, locked: true }));
+    const { container } = renderPage(fetcher);
+
+    const locked = await screen.findByText(/Has agotado los intentos con este código/);
+
+    expect(slot(container)).not.toContainElement(locked);
+    expect(slot(container)).not.toContainElement(
+      screen.getByText("Códigos que aún puedes pedir: 5."),
+    );
+  });
+});

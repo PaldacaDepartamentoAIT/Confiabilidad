@@ -1,0 +1,25 @@
+/* Acciones de la verificación del código: «Enviar otro código» (secundario) y «Verificar» (principal) en una
+   fila, alineadas a la derecha. */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* Por debajo de 480 px no caben en una línea: columna invertida y a todo el ancho, con «Verificar» arriba.
+   En el HTML el secundario va antes que el principal, como en la guía; la columna invertida los ordena. */
+@media (max-width: 479px) {
+  .form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .form-actions .btn {
+    width: 100%;
+  }
+}
+
+/* Hueco reservado del alto de dos líneas de texto, para los mensajes del reenvío (informativo, de espera y de
+   error): al aparecer o desaparecer no cambia el alto de la card; si un mensaje ocupa más, crece lo justo. */
+.resend-slot {
+  min-height: calc(2 * 1.45em);
+}
