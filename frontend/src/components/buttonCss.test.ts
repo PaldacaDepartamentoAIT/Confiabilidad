@@ -40,4 +40,11 @@ describe("aspecto de botón desactivado", () => {
     expect(declarations(`.btn-ghost.hov${ENABLED}:hover`)).toMatch(/background:/);
     expect(css).not.toMatch(/\.btn-ghost\.hov:hover/);
   });
+
+  it.each([".btn-ghost.hov:disabled:hover", '.btn-ghost.hov[aria-disabled="true"]:hover'])(
+    "%s mantiene el fondo transparente aunque otra regla de hover llegue después",
+    (selector) => {
+      expect(declarations(selector)).toMatch(/background:\s*transparent/);
+    },
+  );
 });

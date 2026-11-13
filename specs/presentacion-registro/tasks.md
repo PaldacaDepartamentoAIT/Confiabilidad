@@ -154,8 +154,8 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   dentro de `.public-card`, y el texto sigue igual). Se lista `DonePage.tsx` en la tarea pero no se toca — [Cierto].
   El fundido real se comprueba en Chromium en T-013. Mutante muerto: `ready={false}` en `DonePage`.
 
-## E-04 Barra superior compartida y comprobación final en navegador
-- [ ] T-012 Barra superior compartida
+## E-04 Barra superior compartida
+- [x] T-012 Barra superior compartida
   RF: RF-009, RF-007 | Depende de: T-009, T-010, T-011 | Archivos: 6
   Archivos: `App.tsx`, `App.test.tsx`, `registration/RegisterPage.tsx`, `registration/VerifyPage.tsx`,
   `registration/DonePage.tsx`, `registration/a11y.test.tsx`.
@@ -165,6 +165,28 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   Excepción: 6 archivos en lugar de 3. Sacar la barra de las páginas y pintarla en `App` es un único cambio
   atómico: con solo uno de los dos habría dos barras o ninguna entre commits, y los tests de las páginas que
   miraban el banner pasan a `App`.
+  Decisiones: `App` pinta un solo `PublicLayout` para las tres rutas del registro y cambia solo su contenido;
+  el catálogo sigue con el suyo, en otra rama del árbol. Las páginas dejan de recibir `storage` (ya no tienen
+  barra) — [Cierto]. El enlace no válido (dentro de `VerifyPage`) tampoco la lleva. Los tests de la barra de
+  `a11y.test.tsx` ya pasaban por `App`, así que siguen valiendo sin cambios; en `App.test.tsx` se añaden una barra
+  única con idioma y tema, el mismo nodo (barra y selector de idioma) al pasar de una pantalla a otra, y el
+  catálogo con su propia barra. Mutantes muertos: la barra repetida dentro de una ruta y `key` en el
+  `PublicLayout` (que la repinta).
+- [x] T-014 Hover del botón secundario bloqueado que no dependa del orden del CSS
+  RF: RF-002 | Depende de: T-012 | Archivos: 2
+  Archivos: `components/Button.css`, `components/buttonCss.test.ts`.
+  Hecho cuando: `Button.css` añade `.btn-ghost.hov:disabled:hover, .btn-ghost.hov[aria-disabled="true"]:hover {
+  background: transparent; }`, con más especificidad que la regla global `.hov:hover` de `ThemeButton.css`, de
+  modo que un secundario bloqueado no cambia de fondo en ningún orden de carga; el test lee el CSS y lo
+  comprueba; la prueba de Chromium de E-02b («un botón bloqueado se ve atenuado… sin hover») pasa con la barra
+  en `App`; suite verde.
+  Decisiones: nació al probar T-013: al importar `PublicLayout` desde `App` (T-012), `ThemeButton.css` se carga
+  después de `Button.css` y su `.hov:hover` (misma especificidad que `.btn-ghost.hov`) ganaba, así que el
+  secundario bloqueado cambiaba de fondo; aprobada por el usuario. No se toca `ThemeButton.css`: es de otra
+  feature y `.hov:hover` lo usan más elementos — [Cierto]. Suite visual (56) y de unidad (838) en verde.
+  Mutantes muertos: quitar `:disabled` de la regla y poner un fondo distinto de `transparent`.
+
+## E-04b Prueba de la carga, el fundido y la barra en Chromium
 - [ ] T-013 Prueba en Chromium: carga, fundido, barra y movimiento reducido
   RF: RF-004, RF-005, RF-006, RF-009 | Depende de: T-005, T-012 | Archivos: 2
   Archivos: `frontend/visual/registration.visual.test.ts`, `docs/identidad-visual.md`.
@@ -197,10 +219,14 @@ Rama de integración: feat/presentacion-registro (los PR de las entregas van con
   Tareas: T-010, T-011 | Líneas estimadas: 170 | Rama: feat/presentacion-registro-carga-verificacion
   Cómo probarlo: abrir `/register/continue#<PUBLIC_ID>` y `/register/done`: entran con fundido y el cambio del
   código a la contraseña también.
-- E-04 La barra superior no parpadea al cambiar de pantalla y todo se comprueba en un navegador real.
-  Tareas: T-012, T-013 | Líneas estimadas: 240 | Rama: feat/presentacion-registro-barra
+- E-04 La barra superior no parpadea al cambiar de pantalla.
+  Tareas: T-012, T-014 | Líneas estimadas: 240 | Rama: feat/presentacion-registro-barra
   Cómo probarlo: `pnpm --filter frontend test:visual`; navegar del registro a la verificación y ver que la barra
   no se mueve.
+- E-04b La carga, el fundido y la barra se comprueban en un navegador real.
+  Tareas: T-013 | Líneas estimadas: 170 | Rama: feat/presentacion-registro-prueba-barra
+  Cómo probarlo: `pnpm --filter frontend test:visual`.
+  Nota: E-04 se dividió en E-04 (T-012, T-014) y E-04b (T-013) porque juntas pasaban de 400 líneas.
   Nota: E-03 y E-04 rozan las 400 líneas; si una entrega ya implementada las rebasa, se divide en dos
   (E-XX y E-XXb) según `AGENTS.md`.
 
