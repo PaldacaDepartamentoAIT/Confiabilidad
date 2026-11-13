@@ -73,7 +73,7 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   el estado dos veces), no de la aplicación.
 
 ## E-02b Prueba de la verificación en Chromium
-- [ ] T-005 Prueba en Chromium: botones, desactivado y altura de la verificación
+- [x] T-005 Prueba en Chromium: botones, desactivado y altura de la verificación
   RF: RF-001, RF-002, RF-003 | Depende de: T-004 | Archivos: 2
   Archivos: `frontend/visual/registration.visual.test.ts`, `docs/identidad-visual.md`.
   Hecho cuando: en Chromium, en claro y oscuro y con la API simulada, la verificación muestra «Enviar otro
@@ -81,6 +81,12 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   arriba a 420 px; un botón bloqueado se ve con opacidad 0,6, cursor de no permitido y sin cambiar de color al
   pasar el puntero; la altura de la card es idéntica con y sin mensaje de reenvío; la guía recoge las acciones
   y el hueco; `pnpm --filter frontend test:visual` pasa.
+  Decisiones: 16 pruebas en Chromium (8 por tema) con la API simulada: fila con 10 px y pegada a la derecha, dos
+  filas a 420 px con «Verificar» arriba, una fila aún a 480 px, bloqueado con opacidad 0,6, cursor de no permitido
+  y sin cambio al pasar el puntero (el activo sí cambia), alto de la card igual con y sin mensaje a 1280 y 420 px,
+  y hueco de dos líneas bajo el recuento — [Cierto]. Mutantes muertos: separación de 14 px, hueco sin altura
+  mínima y orden de la columna sin invertir. La suite visual completa pasa (56 pruebas). La guía recoge las
+  acciones de un formulario y el hueco de mensajes — [Cierto].
 
 ## E-03 Registro con carga y fundido
 - [ ] T-006 Fundido de la card y carga lista
