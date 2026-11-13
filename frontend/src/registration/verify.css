@@ -18,11 +18,6 @@
   }
 }
 
-/* El recuento de códigos va justo debajo de los botones, con aire. */
-.resend-count {
-  margin-top: 14px;
-}
-
 /* Hueco reservado del alto de dos líneas de texto, para los mensajes del reenvío (informativo, de espera y de
    error): al aparecer o desaparecer no cambia el alto de la card; si un mensaje ocupa más, crece lo justo. */
 .resend-slot {

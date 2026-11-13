@@ -61,9 +61,11 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   aviso de bloqueo, el error del formulario y el de «no quedan códigos» siguen donde estaban; suite verde.
   Decisiones: el hueco es un `div.resend-slot` que está siempre, vacío, después del recuento (o del aviso de que
   no quedan códigos y su enlace) y contiene el `FormMessage` del reenvío y el estado de espera; el mensaje del
-  reenvío ya no va encima del formulario. `min-height: calc(2 * 1.45em)` (unos 41 px a 14 px). El recuento
-  lleva la clase `resend-count` con 14 px de margen superior, para que no quede pegado a los botones —
-  [Probable]. La lectura de `verify.css` queda para Chromium (T-005), por lo mismo que en T-003. Verificado en
+  reenvío ya no va encima del formulario. `min-height: calc(2 * 1.45em)` (unos 41 px a 14 px). El recuento lleva la clase `resend-count`. El aire entre los botones y el recuento lo da una regla general de las
+  pantallas públicas que pidió el usuario: `.public-card form > * + :not(.fld, .check-field)` deja 14 px por
+  debajo (`margin-bottom`), con lo que el recuento queda a 14 px de los botones; esa regla también añade 14 px
+  bajo el botón de «Continuar» del registro (la card pasa de unos 21 px a 35 px por debajo del botón) —
+  [Cierto]. La lectura de `verify.css` queda para Chromium (T-005), por lo mismo que en T-003. Verificado en
   un navegador real con la API simulada: a 1000 px y a 420 px el alto de la card es el mismo (376 px y 442 px)
   antes y después de que aparezca el mensaje informativo, y el hueco mide 41 px — [Cierto]. Mutantes muertos:
   el hueco solo existe con mensaje, otra clase para el hueco y el mensaje otra vez sobre el formulario. El

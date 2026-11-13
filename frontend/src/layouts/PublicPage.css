@@ -33,6 +33,11 @@
   margin-top: 14px;
 }
 
+/* Lo que no es un campo y viene después de otro elemento (las acciones) también deja 14 px por debajo. */
+.public-card form > * + :not(.fld, .check-field) {
+  margin-bottom: 14px;
+}
+
 .public-card form > .btn {
   align-self: flex-end;
 }
