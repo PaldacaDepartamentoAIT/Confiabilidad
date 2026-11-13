@@ -100,11 +100,16 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   no se lee desde Vitest (`PublicPage.css` no está en `css.include`, y añadirlo tocaría un cuarto archivo): el
   fundido y el movimiento reducido se fijan en Chromium en T-013 — [Probable]. Mutante muerto: pintar aun sin
   `ready`.
-- [ ] T-007 Fundido de un contenido que cambia dentro de la card
+- [x] T-007 Fundido de un contenido que cambia dentro de la card
   RF: RF-005 | Depende de: T-006 | Archivos: 3
   Archivos: `layouts/Fade.tsx`, `layouts/Fade.test.tsx`, `layouts/PublicPage.css`.
   Hecho cuando: `Fade` es un contenedor que, al cambiar su `key`, vuelve a montarse y repite la animación de
   entrada de 0,2 s, y no cambia el aspecto del contenido que envuelve; suite verde.
+  Decisiones: `key` no se puede leer dentro de un componente, así que `Fade` recibe `fadeKey` y lo usa como
+  `key` de su `div.public-fade` — [Cierto]. El contenedor es un bloque normal sin estilo propio salvo la
+  animación (comparte la regla con `.public-card`), y las dos reglas de `PublicPage.css` que miraban a los hijos
+  directos de la card (`> .help` y `> .btn`) valen también para los de `.public-fade`, para que envolver un paso
+  no cambie su aspecto — [Probable]. Mutante muerto: `Fade` sin `key` (no repite la animación).
 - [ ] T-008 Plazo de 10 s
   RF: RF-004 | Depende de: — | Archivos: 2
   Archivos: `registration/useDeadline.ts`, `registration/useDeadline.test.ts`.
