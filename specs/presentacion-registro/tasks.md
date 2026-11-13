@@ -21,11 +21,18 @@ Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
   `css.include` de Vitest como `field.css` y `DocumentModal.css`. Las 40 pruebas visuales, incluida la comparación
   exacta con las referencias, siguen pasando: el aspecto en reposo no cambia — [Cierto]. Mutantes muertos:
   opacidad 0,6 → 0,8, hover del principal sin excluir el bloqueado y sin la regla de `disabled` nativo.
-- [ ] T-002 Catálogo y guía: botones desactivados
+- [x] T-002 Catálogo y guía: botones desactivados
   RF: RF-008 | Depende de: T-001 | Archivos: 3
   Archivos: `showcase/sections/ButtonsSection.tsx`, `showcase/ShowcasePage.test.tsx`, `docs/identidad-visual.md`.
   Hecho cuando: el catálogo muestra un botón desactivado primario y uno secundario, con `disabled`; la guía
   describe el aspecto de desactivado; suite verde.
+  Decisiones: los dos botones del catálogo se llaman «Guardar bloqueado» y «Cancelar bloqueado» y van en una
+  fila aparte, debajo de los botones normales y del que está procesando; la fila nueva de la guía se llama
+  «Desactivado» y describe el 60 %, el cursor y la ausencia de hover — [Probable]. Verificado en un navegador
+  real: ambos con opacidad 0,6, cursor de no permitido y sin cambio de color al pasar el puntero (fondo
+  `rgb(84, 108, 140)` antes y después), mientras que el botón activo se oscurece y muestra la mano — [Cierto].
+  Las 40 pruebas visuales siguen pasando, `axe` incluido: no evalúa el contraste de un botón desactivado.
+  Mutante muerto: el secundario sin `disabled`.
 
 ## E-02 Verificación: botones en una fila y hueco reservado
 - [ ] T-003 Botones de la verificación en una fila

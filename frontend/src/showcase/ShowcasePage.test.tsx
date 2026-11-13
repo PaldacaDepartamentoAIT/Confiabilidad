@@ -577,6 +577,18 @@ test("the catalog shows buttons in both variants and while processing, and the n
   ).toBeInTheDocument();
 });
 
+test("the catalog shows a disabled button of each variant", () => {
+  renderPage("en");
+
+  const catalog = screen.getByRole("region", { name: "Botones y avisos" });
+  const primary = within(catalog).getByRole("button", { name: "Guardar bloqueado" });
+  const secondary = within(catalog).getByRole("button", { name: "Cancelar bloqueado" });
+  expect(primary).toBeDisabled();
+  expect(primary).toHaveAttribute("data-ui", "button-primary");
+  expect(secondary).toBeDisabled();
+  expect(secondary).toHaveAttribute("data-ui", "button-secondary");
+});
+
 test("the catalog shows text, password and code fields, a field with an error and the checkbox", () => {
   renderPage("en");
 

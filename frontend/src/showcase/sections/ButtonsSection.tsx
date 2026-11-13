@@ -16,6 +16,12 @@ export function ButtonsSection() {
         <Button variant="secondary">Cancelar</Button>
         <Button processing>Enviar</Button>
       </div>
+      <div className="catalog-row">
+        <Button disabled>Guardar bloqueado</Button>
+        <Button variant="secondary" disabled>
+          Cancelar bloqueado
+        </Button>
+      </div>
       <Notice role="note">Los cambios se guardan como borrador.</Notice>
       <Notice kind="success" role="note">
         Empresa guardada correctamente.
