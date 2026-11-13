@@ -334,6 +334,7 @@ Ventana modal que muestra un documento (términos, consentimientos) y se abre de
 | Medidas | 36 px de alto, relleno horizontal de 16 px, radio 6 px, 14 px, peso 600, separación de 8 px entre icono y texto |
 | Principal | fondo y borde en el principal, texto en el color de texto sobre el principal; hover con el principal oscurecido |
 | Secundario | sin relleno, borde de 1 px y texto en el principal; hover con el 9 % de la tinta |
+| Desactivado | un botón bloqueado —desactivado o procesando— se ve atenuado al 60 % de opacidad, con el cursor de acción no permitida y sin cambiar de color al pasar el puntero; vale para el principal y el secundario |
 
 ### Aviso
 

@@ -7,17 +7,32 @@ En cada tarea se prueba al menos un mutante del código que introduce y debe hac
 Las rutas son relativas a `frontend/src/` salvo que se indique otra cosa.
 
 ## E-01 Botón desactivado
-- [ ] T-001 Aspecto de botón desactivado
+- [x] T-001 Aspecto de botón desactivado
   RF: RF-002 | Depende de: — | Archivos: 3
   Archivos: `components/Button.css`, `components/buttonCss.test.ts`, `frontend/vite.config.ts`.
   Hecho cuando: `.btn:disabled` y `.btn[aria-disabled="true"]` tienen `opacity: 0.6` y `cursor: not-allowed`; el
   hover del primario y del secundario solo se aplica a los botones que no están bloqueados; el test lee el CSS y
   lo comprueba (por eso `Button.css` entra en `css.include` de `vite.config.ts`); suite verde.
-- [ ] T-002 Catálogo y guía: botones desactivados
+  Decisiones: el aspecto es el de antes de la limpieza de `base.css`: 60 % y cursor de no permitido, ahora en
+  `Button.css` y para `disabled` y para `aria-disabled` (que ya lo tenía) — [Cierto]. El hover se excluye con
+  `:not(:disabled):not([aria-disabled="true"])` en lugar de pisarlo después, para que un botón bloqueado no
+  cambie ni siquiera durante la transición — [Probable]. El test quita los comentarios del CSS antes de
+  analizarlo (un comentario delante de una regla se leía como parte de su selector). `Button.css` entra en
+  `css.include` de Vitest como `field.css` y `DocumentModal.css`. Las 40 pruebas visuales, incluida la comparación
+  exacta con las referencias, siguen pasando: el aspecto en reposo no cambia — [Cierto]. Mutantes muertos:
+  opacidad 0,6 → 0,8, hover del principal sin excluir el bloqueado y sin la regla de `disabled` nativo.
+- [x] T-002 Catálogo y guía: botones desactivados
   RF: RF-008 | Depende de: T-001 | Archivos: 3
   Archivos: `showcase/sections/ButtonsSection.tsx`, `showcase/ShowcasePage.test.tsx`, `docs/identidad-visual.md`.
   Hecho cuando: el catálogo muestra un botón desactivado primario y uno secundario, con `disabled`; la guía
   describe el aspecto de desactivado; suite verde.
+  Decisiones: los dos botones del catálogo se llaman «Guardar bloqueado» y «Cancelar bloqueado» y van en una
+  fila aparte, debajo de los botones normales y del que está procesando; la fila nueva de la guía se llama
+  «Desactivado» y describe el 60 %, el cursor y la ausencia de hover — [Probable]. Verificado en un navegador
+  real: ambos con opacidad 0,6, cursor de no permitido y sin cambio de color al pasar el puntero (fondo
+  `rgb(84, 108, 140)` antes y después), mientras que el botón activo se oscurece y muestra la mano — [Cierto].
+  Las 40 pruebas visuales siguen pasando, `axe` incluido: no evalúa el contraste de un botón desactivado.
+  Mutante muerto: el secundario sin `disabled`.
 
 ## E-02 Verificación: botones en una fila y hueco reservado
 - [ ] T-003 Botones de la verificación en una fila
