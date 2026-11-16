@@ -1,0 +1,10 @@
+.chip {
+  display: inline-block;
+  background: var(--gray);
+  color: var(--ink);
+  border-radius: 4px;
+  padding: 0 8px;
+  line-height: 22px;
+  font-size: 12px;
+  font-weight: 500;
+}

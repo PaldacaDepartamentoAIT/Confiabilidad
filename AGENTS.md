@@ -163,6 +163,9 @@ Secretos:
   entrega deja la rama de integración en verde y no expone en rutas ni en la UI nada que aún no
   funcione. Una entrega puede llegar a `sdd.max_lineas_pr_excepcion` solo con una línea
   `Excepción:` que explique por qué no se puede dividir; por encima, se divide o decide el usuario.
+  Si una entrega ya implementada rebasa `sdd.max_lineas_pr`, se divide en dos (`E-XX` y `E-XXb`)
+  sin volver a preguntar, procurando que ambas muestren algo de funcionalidad (algo que se pueda
+  ver o probar) y no solo una la parte visible y la otra la parte interna.
   La siguiente rama sale de la rama de integración cuando la anterior está fusionada en ella, o de
   la rama anterior (PR apilado) si el usuario no quiere esperar. La descripción de cada PR incluye
   «Cómo probarlo» con pasos ejecutables.

@@ -2,141 +2,365 @@
 
 Estado: aprobado
 
-Referencia visual de la interfaz de Confiabilidad (web y escritorio). Define colores, tipografía,
-formas y reglas de uso. Los valores salen de la maqueta revisada con el usuario; el código los
-recogerá como variables CSS en `frontend/`, y `desktop/` los hereda al cargar el frontend.
+Reglas de estilo de la interfaz de Confiabilidad (web y escritorio): colores, tipografía, formas,
+interacción y movimiento. El código las recoge como variables CSS y componentes reutilizables en
+`frontend/`, y `desktop/` las hereda al cargar el frontend. Toda pantalla nueva se construye con
+esos componentes.
+
+Versión 2. Sustituye a la versión 1 (paleta Niebla marina, bloques bento, botones en píldora).
 
 ## Principios
 
-1. **El color informa, no decora.** Lo normal va en neutro. Solo las alarmas y las acciones
-   tienen color propio.
-2. **Lo que se pulsa se distingue por forma y por color.** Todo elemento interactivo es redondo
-   (píldora o círculo) y usa el color de acción. Lo que solo informa es rectangular y nunca usa el
-   color de acción.
-3. **Un color por función.** Cada color tiene un único papel; si dos elementos comparten color,
-   comparten significado.
-4. **Nada depende solo del color.** Cada estado lleva también forma y texto.
+1. **Plano y cuadrado.** Sin sombras, sin degradados, sin transparencias. Las zonas se separan con
+   líneas de 1 px y radios pequeños.
+2. **El color informa, no decora.** Lo normal va en neutro. Solo los estados de alarma y lo
+   interactivo tienen color propio.
+3. **Lo que se pulsa se reconoce.** Todo elemento interactivo tiene hover, foco visible y un radio
+   mayor que el de las zonas que solo informan.
+4. **Un color por función.** Cada color tiene un único papel; si dos elementos comparten color,
+   comparten significado. Única excepción: el error de formulario usa el rojo de P1, porque también
+   bloquea.
+5. **Nada depende solo del color.** Cada estado lleva también forma y texto.
 
-## Estructura
+## Estructura de la aplicación
 
-- **Lienzo plano** y **bloques opacos** sin sombra, separados por el lienzo (composición en
-  bloques o *bento*).
-- **Barra lateral flotante** con iconos; el elemento activo usa el color de acción.
-- Sin degradado de fondo, sin transparencias y sin animación de fondo.
+Hay dos estructuras, según se haya iniciado sesión o no.
+
+- **Pantallas públicas** (inicio de sesión, registro, recuperación de contraseña y cualquier otra a
+  la que se accede sin sesión): sin menú lateral. Solo una barra superior de 64 px con el nombre
+  del sistema a la izquierda (mismo estilo que en el menú lateral) y el botón de idioma y el de tema
+  a la derecha; el contenido va debajo, en una columna centrada de 480 px como máximo (el ancho
+  completo en pantallas más estrechas), con 22 px de relleno lateral y 32 px de margen superior. La
+  columna contiene un único bloque cuya cabecera es el título de la pantalla (`h1`, 15 px, 600) y,
+  debajo, el texto, los campos y las acciones. Los campos van apilados con la separación de la tabla «Campos» (24 px: la reserva del error más 2 px) y las
+  acciones alineadas a la derecha con 10 px entre ellas. Las pantallas de error o de confirmación
+  llevan el mismo bloque, con su título y su texto, sin formulario.
+- **Pantallas con sesión iniciada:** menú lateral y barra superior, descritos a continuación.
+
+Elementos comunes y de las pantallas con sesión:
+
+- **Fondo único.** Lienzo y bloques usan el mismo color; los bloques se separan con borde. Única
+  excepción: un bloque destacado puede llevar el fondo secundario.
+- **Menú lateral** (solo con sesión) a la izquierda, con la altura de la pantalla y fondo del color
+  secundario, separado del contenido por un borde de 1 px:
+  - abierto mide 232 px y contraído 60 px; pasa de uno a otro con animación;
+  - cabecera de 64 px con el nombre del sistema a la izquierda y el botón de abrir y cerrar a la
+    derecha; contraído, solo el botón, centrado;
+  - navegación con icono y etiqueta; contraída, solo el icono, con la etiqueta como `title`;
+  - pie con el botón de tema y, debajo, el de idioma, siempre uno encima del otro; debajo, el de
+    usuario (avatar con iniciales, nombre y flechas), a todo el ancho.
+- **Barra superior** de 64 px: secciones de la pantalla en pestañas a la izquierda y buscador a la
+  derecha. Su línea inferior continúa por la cabecera del menú lateral, de modo que se ve como una
+  sola línea.
+- **Contenido** con margen de 22 px y separación de 18 px entre bloques; el título de la página va
+  al principio del contenido.
+- **Móvil** (menos de 768 px). El menú lateral se oculta y se abre como panel superpuesto desde un
+  botón a la izquierda de la barra superior; se cierra con un clic fuera o con Escape, sin velo. En
+  móvil no existe el estado contraído.
 
 ## Temas
 
-Dos temas de igual rango, claro y oscuro: la aplicación la usan tanto ingenieros en oficina como
-operadores en sala de control. Al arrancar se usa el tema del sistema operativo; si el usuario
-elige uno, se recuerda, igual que el idioma.
+Dos temas de igual rango, claro y oscuro. Al arrancar se usa el tema del sistema operativo; el
+botón de tema lo cambia y la elección se recuerda, igual que el idioma. El botón muestra el tema
+actual. Sustituye a la decisión D-13 de `registro-flujo`.
 
-## Paleta: Niebla marina
+## Paleta: Pizarra
 
-13 colores por tema: 7 neutros, 1 de acción con 2 tonos derivados y 3 de alarma. El contraste
-indicado es el del texto sobre su fondo habitual (WCAG 2.2; mínimo 4,5:1 para texto y 3:1 para
-iconos y formas).
+El contraste indicado es el del elemento sobre su fondo habitual (WCAG 2.2: mínimo 4,5:1 para texto
+y 3:1 para iconos, formas y bordes de controles).
 
 ### Tema claro
 
 | Rol | Color | Uso | Contraste |
 |---|---|---|---|
-| Lienzo | `#dbe5eb` | Fondo de la aplicación | — |
-| Bloque | `#ffffff` | Fondo de tarjetas y paneles | — |
-| Apoyo | `#edf3f7` | Cabecera de tablas, fila seleccionada, etiquetas | — |
-| Línea | `#d1dde5` | Separadores | — |
-| Línea fuerte | `#768c9b` | Bordes de campos y casillas, rayado | 3,5:1 sobre bloque |
-| Texto secundario | `#384d5c` | Etiquetas, ayudas, ejes | 8,8:1 sobre bloque |
-| Tinta | `#0f222e` | Texto y relleno fuerte | 16,3:1 sobre bloque |
-| Acción | `#1b5983` | Todo lo interactivo; texto blanco encima | 7,5:1 con blanco |
-| Acento, tono 1 | `#6aafdc` | Inicio del degradado de acento; texto en tinta | 6,8:1 con tinta |
-| Acento, tono 2 | `#c9e2f2` | Final del degradado de acento | 12,1:1 con tinta |
-| Alarma P1 | `#8a2f3a` | Prioridad 1 | 8,2:1 sobre bloque |
-| Alarma P2 | `#80442b` | Prioridad 2 | 7,6:1 sobre bloque |
-| Advertencia | `#655423` | Prioridad 3 | 7,4:1 sobre bloque |
+| Fondo | `#f8f9f9` | Lienzo y bloques | — |
+| Tinta | `#1b1e22` | Texto y relleno negro | 15,9:1 |
+| Texto secundario | `#61656b` | Etiquetas, ayudas, ejes, placeholder, pestañas no activas | 5,6:1 |
+| Gris | `#c3c5c7` | Líneas, bordes de zonas, rellenos neutros, contadores | 1,6:1 |
+| Cuadrícula | `#d8dadb` | Cuadrícula de las gráficas | — |
+| Borde de control | `#8d9094` | Borde de campos, casillas y menús desplegables | 3,0:1 |
+| Principal | `#546c8c` | Acento de lo interactivo; texto blanco encima | 5,1:1 (5,4:1 con blanco) |
+| Secundario | `#d8dbdf` | Menú lateral y bloque destacado; texto en tinta | 12,0:1 con tinta |
 
 ### Tema oscuro
 
 | Rol | Color | Uso | Contraste |
 |---|---|---|---|
-| Lienzo | `#0c161d` | Fondo de la aplicación | — |
-| Bloque | `#162631` | Fondo de tarjetas y paneles | — |
-| Apoyo | `#1f313d` | Cabecera de tablas, fila seleccionada, etiquetas | — |
-| Línea | `#293e4c` | Separadores | — |
-| Línea fuerte | `#627d90` | Bordes de campos y casillas, rayado | 3,6:1 sobre bloque |
-| Texto secundario | `#b3c5d0` | Etiquetas, ayudas, ejes | 8,7:1 sobre bloque |
-| Tinta | `#eaf1f6` | Texto | 13,6:1 sobre bloque |
-| Relleno fuerte | `#344855` | Relleno fuerte (ver reglas); texto en tinta | 8,4:1 con tinta |
-| Acción | `#9cc9e8` | Todo lo interactivo; texto en color de lienzo | 10,4:1 con lienzo |
-| Acento, tono 1 | `#4f95c4` | Inicio del degradado de acento; texto en color de lienzo | 5,6:1 con lienzo |
-| Acento, tono 2 | `#9cc9e8` | Final del degradado de acento | 10,4:1 con lienzo |
-| Alarma P1 | `#d97f87` | Prioridad 1 | 5,4:1 sobre bloque |
-| Alarma P2 | `#d29a76` | Prioridad 2 | 6,4:1 sobre bloque |
-| Advertencia | `#c4b07a` | Prioridad 3 | 7,3:1 sobre bloque |
+| Fondo | `#111213` | Lienzo y bloques | — |
+| Relleno negro | `#000000` | Bloque en alerta (el tema claro usa la tinta) | — |
+| Tinta | `#eeeff1` | Texto | 16,3:1 |
+| Texto secundario | `#aaadb0` | Etiquetas, ayudas, ejes, placeholder, pestañas no activas | 8,3:1 |
+| Gris | `#47484a` | Líneas, bordes de zonas, rellenos neutros, contadores | 2,0:1 |
+| Cuadrícula | `#313234` | Cuadrícula de las gráficas | — |
+| Borde de control | `#5f6163` | Borde de campos, casillas y menús desplegables | 3,0:1 |
+| Principal | `#9fafc6` | Acento de lo interactivo; texto en color de fondo encima | 8,4:1 |
+| Secundario | `#535a65` | Menú lateral y bloque destacado; texto en tinta | 6,0:1 con tinta |
+| Botón de menú | `#ffffff` | Fondo del botón de abrir y cerrar; icono en secundario | 7,0:1 |
 
-## Reglas de color
+- En el tema claro, el botón de abrir y cerrar usa la tinta como fondo y el secundario en el icono.
+- Sobre el color secundario solo se escribe en tinta: el texto secundario no llega a 4,5:1 encima.
+- «Principal» es el acento de lo interactivo (botón principal, botón secundario, casilla marcada,
+  hover y foco de campos, línea del elemento activo, contorno de foco). Lo demás que se pulsa
+  (pestañas, navegación, botones del menú lateral) va en tinta o en texto secundario.
 
-- **Relleno fuerte.** Un único color para lo que informa con fuerza: criticidad A, tarjeta
-  destacada (mapa de activos), barra de operación y mantenimiento en curso. En claro es la tinta;
-  en oscuro, el relleno fuerte `#344855`.
-- **Acción.** Solo para elementos interactivos: botón principal, pestaña y día activos, icono
-  activo de la barra lateral, casillas marcadas, texto y borde de botones secundarios. Ningún dato
-  usa este color.
-- **Acento.** Siempre como degradado del tono 1 al tono 2 (160°), nunca como color liso. Se usa en
-  la tarjeta de disponibilidad y en el mantenimiento planificado (barras, leyenda y calendario). El
-  degradado es lo que lo distingue de un botón.
-- **Parada no planificada.** Rayado diagonal de líneas de 1 px cada 4 px, en línea fuerte sobre
-  apoyo, sin borde.
-- **Tarjeta destacada.** Fondo de relleno fuerte. Sobre ella se usan, en claro, el texto
-  `#eaf1f6`, el secundario `#b3c5d0`, los puntos normales `#506a7c` y las alarmas del tema oscuro;
-  en oscuro, la tinta, el texto secundario, los puntos `#5c6d78` y las alarmas del propio tema.
-  Las formas de alarma sobre ella superan 3:1 en ambos temas.
+### Estados de alarma
 
-## Alarmas
+Un solo color por prioridad en toda la aplicación.
 
-- Tres prioridades, cada una con color **y** forma: P1 cuadrado, P2 triángulo, advertencia rombo.
-- **Color solo en la forma.** El texto del estado va en tinta; el color queda en el icono. Así las
-  alarmas no dominan la pantalla y el texto mantiene su contraste.
-- Los colores son atenuados (carmín, terracota y ocre oscuros) y no se usan para nada más.
-- Normal y mantenimiento van en texto secundario con icono (círculo y llave), sin color propio.
-- El color de marca nunca es rojo, naranja ni amarillo.
+| Prioridad | Forma | Claro | Oscuro | Contraste sobre el fondo |
+|---|---|---|---|---|
+| P1 | Cuadrado | `#a47070` | `#a47070` | 3,9:1 · 4,6:1 |
+| P2 | Triángulo | `#915535` | `#d9977a` | 5,6:1 · 7,7:1 |
+| Advertencia | Rombo | `#7a7020` | `#c9bd8c` | 4,8:1 · 9,9:1 |
+| Neutro (por ejemplo, mantenimiento) | Cuadrado vacío | Texto secundario | Texto secundario | — |
 
-## Interacción y forma
+- **Color solo en la forma.** El texto del estado va en tinta y el color queda en el icono, porque
+  el rojo de P1 no llega a 4,5:1 en el tema claro.
+- **Aviso.** Bloque con borde de 1 px y borde izquierdo de 4 px en el color de la prioridad.
+- **Bloque en alerta.** Fondo en relleno negro; la cifra principal en el color de la prioridad y
+  el texto pequeño en blanco.
+- **Error de formulario.** Borde del campo e icono `circle-alert` en el rojo de P1; el texto del
+  mensaje, en tinta.
+- **Información y confirmación.** No tienen color propio: aviso con borde izquierdo de 4 px en texto
+  secundario e icono `info`.
 
-| Elemento | Forma |
+## Forma
+
+| Elemento | Radio |
 |---|---|
-| Botones, pestañas, buscador, menú de usuario, días del calendario | Píldora (radio 999 px) |
-| Botones de icono, iconos de la barra lateral, avatar | Círculo |
-| Casillas de verificación | Cuadradas, radio 4 px (convención reconocible) |
-| Tarjetas y paneles | Radio 12 px |
-| Etiquetas, criticidad, franjas del calendario, barra de tiempo | Radio 4 px |
+| Zonas: bloques, avisos, menús desplegables | 4 px |
+| Interactivos: botones, campos, buscador, pestañas, opciones de menú, elementos del menú lateral | 6 px |
+| Casillas, contadores, etiquetas (chips), avatar | 4 px |
+| Línea del elemento activo | 0 (línea recta) |
 
-- **Foco visible:** contorno de 3 px en color de acción, separado 2 px del elemento.
-- La criticidad A va rellena en relleno fuerte; B con borde de tinta; C con borde de texto
-  secundario.
+| Elemento | Tamaño |
+|---|---|
+| Botones, campos y pestañas | 36 px de alto |
+| Opciones de menú desplegable | 34 px de alto |
+| Elementos del menú lateral (navegación, tema, idioma, usuario) | 36 px de alto, abierto o contraído |
+| Botón de abrir y cerrar | 40 × 37 px |
+| Casilla | 18 × 18 px |
+| Avatar | 24 × 24 px |
+
+- Bordes de 1 px en todas las zonas.
+- Los iconos del menú lateral no se desplazan al abrir o cerrar; solo aparecen o desaparecen las
+  etiquetas.
+
+## Interacción
+
+- **Hover.** Elementos sin relleno: fondo opaco que mezcla un 9 % de la tinta con el fondo de su
+  contenedor. Elementos rellenos con el principal (botón principal, casilla marcada): el principal
+  oscurecido (78 % principal, 22 % `#000`), en ambos temas.
+- **Transición del hover.** Entra en 0,08 s y sale en 0,35 s.
+- **Botón principal:** relleno en el principal, texto en peso 600. **Botón secundario:** sin
+  relleno, borde y texto en el principal.
+- **Campos de texto** (incluido el buscador): sin cambio de fondo; hover con borde de 1 px y foco
+  con borde de 2 px, ambos en el principal (en el rojo de P1 si el campo tiene error). El foco
+  siempre es más grueso que el hover; el relleno interior compensa el grosor para que el texto no se
+  mueva. Los obligatorios llevan «*» y una leyenda «* Campo obligatorio».
+- **Botón de icono dentro de un campo.** Va a la derecha, dentro del borde del campo, con un icono
+  de 16 px en texto secundario (tinta al pasar el cursor), sin borde ni relleno, de 32 × 32 px como
+  mínimo y con el nombre accesible del campo. Si alterna un estado, como mostrar u ocultar la
+  contraseña, lleva `aria-pressed`.
+- **Foco de teclado** del resto de elementos: contorno de 2 px en el principal, separado 2 px.
+- **Elemento activo** (pestaña, elemento de la navegación lateral, día de un calendario): sin
+  relleno, en tinta, con una línea recta de 2 px en el principal por debajo. En la barra superior,
+  la línea se desplaza de la pestaña anterior a la nueva al cambiar de sección.
+- **Pestañas que no caben.** Se desvanecen todas y aparece un selector pegado a la izquierda del
+  buscador: el texto de la pestaña activa con un chevron hacia abajo, sin borde ni subrayado. Se
+  recalcula al cambiar de pestaña, al abrir o cerrar el menú y al redimensionar la ventana.
+- **Menús de selección.** Mismo fondo, borde de control y tipografía que los campos; la opción
+  seleccionada en negrita con un chevron «>» a la izquierda; la resaltada con el teclado usa el fondo
+  del hover. Siguen el patrón de combobox con `listbox`: flechas, Inicio, Fin, RePág, AvPág, Enter,
+  Espacio, Tab, Escape y búsqueda por letra (sin distinguir tildes).
+- **Botón de abrir y cerrar el menú:** chevron «<» con el menú abierto y «>» con el menú contraído.
+- **Buscador.** Ancho fijo de 220 px. Por debajo de 560 px se convierte en un botón con lupa. Al
+  pulsarlo, el campo se despliega desde el botón hasta ocupar todo el ancho de la barra superior a la
+  derecha del botón del menú lateral (que sigue visible), mientras las pestañas (o el selector) se
+  desvanecen. Al perder el foco, aunque haya texto escrito, o con Escape, el campo se pliega y vuelve
+  a verse el botón.
+- **Estado del menú lateral.** No se recuerda: cada sesión empieza con el menú abierto.
+
+## Movimiento
+
+| Animación | Duración |
+|---|---|
+| Abrir y cerrar el menú lateral (sin rebote) | 0,25 s, salida suave |
+| Etiquetas del menú lateral al abrir o cerrar | 0,15–0,2 s de fundido |
+| Desplazamiento de la línea de la pestaña activa | 0,25 s, salida suave |
+| Cambio del contenido al cambiar de sección | 0,2 s de fundido |
+| Pestañas a selector y al revés | 0,15 s de salida y, a continuación, 0,2 s de entrada |
+| Buscador reducido: abrir y cerrar | 0,25 s, salida suave; 0,2 s de fundido de las pestañas y del botón |
+| Aparición de un menú desplegable | 0,18 s (fundido y 6 px de desplazamiento hacia abajo); se cierra sin animación |
+| Panel lateral en móvil | 0,25 s de deslizamiento |
+| Cambio de tema | 0,4 s en todos los colores, solo durante el cambio |
+
+Si el sistema pide reducir el movimiento, no se anima nada, incluidos el hover y el cambio de tema.
+
+## Datos
+
+- **Gráficas de barras.** Primera serie en el principal y segunda en gris, sólidas y sin borde; cuadrícula de fondo
+  de 16 px en color de cuadrícula.
+- **Rejillas de estado.** Cuadros separados 4 px; los normales en gris y los que tienen un estado de
+  alarma en su color; el estado neutro, como cuadrado vacío.
+- **Tablas.** Cabecera en texto secundario, filas separadas por línea de 1 px, códigos y fechas en
+  monoespaciada.
+- **Contadores.** Relleno gris, texto en tinta, monoespaciada de 12 px.
 
 ## Tipografía
 
-| Uso | Fuente | Peso |
+| Uso | Fuente | Tamaño y peso |
 |---|---|---|
-| Texto, títulos y cifras grandes | Manrope | 400 (texto y cifras), 500–600 (títulos de bloque, botones) |
-| TAG, códigos de OT, fechas, valores en tablas | JetBrains Mono | 400–500 |
+| Nombre del sistema | Manrope | 18 px, 700, subrayado en tinta de 2,5 px de grosor y 6 px de separación |
+| Título de página | Manrope | 24 px, 600 |
+| Título de bloque | Manrope | 15 px, 600 |
+| Cifra destacada | Manrope | 28 px, 600 |
+| Texto y pestañas | Manrope | 14 px, 400–500 (las pestañas en 500, activas o no) |
+| Etiquetas de campo | Manrope | 12,5 px, 500, en texto secundario |
+| Ayudas | Manrope | 12 px |
+| Códigos, fechas, contadores, avatar | JetBrains Mono | 12–13 px, 400–500 (13 px dentro de los campos) |
 
-- Se incluyen en el proyecto como paquetes npm: `@fontsource-variable/manrope` y
-  `@fontsource-variable/jetbrains-mono` (licencia OFL). Funcionan sin conexión en la app de
-  escritorio.
-- Las cifras que se alinean en columna usan `font-variant-numeric: tabular-nums`.
-- JetBrains Mono distingue `0`/`O` y `1`/`l`, necesario en códigos como `210-BB-003`.
-- Escala de la maqueta (se ajustará al implementar): título de área 28–40 px; cifra grande
-  30–46 px; título de bloque 14,5 px; texto 13,5 px; secundario 12 px.
+Paquetes npm `@fontsource-variable/manrope` y `@fontsource-variable/jetbrains-mono` (licencia OFL).
+Las cifras en columna usan `font-variant-numeric: tabular-nums`.
 
-## Espaciado
+## Especificación de componentes
 
-- Separación entre bloques: 10 px.
-- Relleno interior de tarjetas: 14 px vertical, 16 px horizontal.
-- Relleno lateral de la página: 22 px.
+Valores exactos tomados de la pantalla de referencia «Crear empresa»
+(`docs/referencia/crear-empresa.html`). Todas las pantallas deben reproducirlos tal cual; esta
+sección manda sobre las descripciones generales de arriba.
+
+### Menú lateral
+
+| Parte | Valor |
+|---|---|
+| Contenedor | `position: sticky; top: 0; height: 100vh`; ancho 232 px (60 px contraído); borde derecho de 1 px en gris; transición de ancho 0,25 s `ease-out` |
+| Cabecera | 64 px de alto, relleno horizontal de 10 px, borde inferior de 1 px en gris |
+| Nombre del sistema | posicionado a 22 px del borde izquierdo y centrado en vertical; 18 px, 700, `line-height: 1,25`, `letter-spacing: -0,01em`; subrayado en tinta de 2,5 px con 6 px de separación |
+| Botón de abrir y cerrar | 40 × 37 px, radio 6 px, a la derecha de la cabecera; icono de chevron de 22 px (la excepción al icono de 16 px); al pasar el cursor, fondo en 80 % del fondo del botón y 20 % del texto secundario |
+| Navegación | relleno de 10 px, separación de 2 px entre elementos |
+| Elemento de navegación | 36 px de alto, relleno horizontal de 12 px, separación de 10 px entre icono y etiqueta, radio 6 px, peso 500, icono de 16 px |
+| Elemento activo | línea de 2 px en el principal, a 3 px del borde inferior del elemento y con 12 px de margen a cada lado |
+| Contador | 20 px de alto, ancho mínimo de 20 px, relleno horizontal de 5 px, fondo gris, texto en tinta, JetBrains Mono 12 px, 500, radio 4 px |
+| Pie | borde superior de 1 px en gris, relleno de 10 px, separación de 8 px entre botones |
+| Botones del pie | 36 px de alto, relleno horizontal de 12 px, separación de 10 px, peso 500 |
+| Botón de usuario | relleno horizontal de 8 px; avatar de 24 × 24 px (radio 4 px, fondo gris, JetBrains Mono 12 px 500), nombre y chevrons arriba y abajo |
+
+### Barra superior
+
+| Parte | Valor |
+|---|---|
+| Contenedor | `position: sticky; top: 0`, 64 px de alto, relleno horizontal de 22 px, separación de 12 px, borde inferior de 1 px en gris, fondo del lienzo |
+| Pestaña | 36 px de alto, relleno horizontal de 12 px, radio 6 px, 14 px, peso 500; inactiva en texto secundario, activa en tinta |
+| Separación entre pestañas | 4 px |
+| Línea de la pestaña activa | 2 px en el principal, pegada al borde inferior de la pestaña con 12 px de margen a cada lado; se desplaza entre pestañas |
+| Buscador | 220 × 36 px, icono de lupa a 11 px del borde izquierdo en texto secundario, relleno izquierdo de 34 px; placeholder «Buscar…» |
+| Selector de pestañas | alto de 36 px, relleno de 0 10 px 0 12 px, radio 6 px, separación de 6 px entre texto y chevron, peso 500, menú alineado a la derecha con ancho mínimo de 200 px |
+
+### Contenido
+
+| Parte | Valor |
+|---|---|
+| Contenedor | relleno de 22 px, separación de 18 px entre bloques |
+| Título de página | 24 px, 600, `letter-spacing: -0,01em`, interlineado 1,25 |
+| Descripción de página | texto secundario, 14 px, a 4 px del título |
+| Formulario | dos columnas: contenido flexible y un bloque lateral de 280 px, con 18 px entre ellas; a menos de 1100 px, una sola columna |
+| Rejilla de campos | columnas automáticas de 240 px como mínimo, separación de 2 px en vertical (el resto lo da la reserva del error de cada campo) y 18 px en horizontal; un campo puede ocupar toda la fila |
+| Acciones del formulario | alineadas a la derecha, separación de 10 px; el secundario («Cancelar») antes que el principal |
+| Leyenda de obligatorios | «* Campo obligatorio», 12 px, texto secundario, debajo de las acciones y alineada a la derecha, igual que ellas |
+
+### Bloque
+
+| Parte | Valor |
+|---|---|
+| Contenedor | borde de 1 px en gris, radio 4 px, relleno de 18 px arriba, 20 px a los lados y 20 px abajo, fondo del lienzo |
+| Título | 15 px, 600, margen inferior de 14 px |
+| Bloque destacado | fondo secundario; todo el texto en tinta, incluidas las ayudas |
+
+### Campos
+
+| Parte | Valor |
+|---|---|
+| Etiqueta | 12,5 px, 500, texto secundario, a 8 px del campo; el «*» en texto secundario |
+| Campo | 36 px de alto, relleno horizontal de 11 px, borde de 1 px en borde de control, radio 6 px, 14 px, fondo del lienzo |
+| Reserva del mensaje | cada campo (texto, contraseña, código, selector y casilla) reserva bajo su caja 20 px (la línea del error, de 16 px, más 4 px de aire por debajo) a 2 px de ella; al aparecer o desaparecer no mueve el contenido; la ayuda va encima y siempre visible; la separación entre campos es esa reserva más los 2 px (`gap`) del formulario o de la rejilla que los contiene (24 px); dentro del campo, 8 px entre etiqueta, caja y ayuda, y lo que no es un campo conserva 16 px por encima. Un error de más de una línea hace crecer ese campo |
+| Campo de códigos | JetBrains Mono 13 px |
+| Hover | borde de 1 px en el principal |
+| Foco o menú abierto | borde de 2 px en el principal; el relleno horizontal baja a 10 px para que el texto no se mueva |
+| Área de texto | 92 px de alto mínimo, relleno de 8 px arriba y 11 px a los lados (7 px y 10 px con foco), redimensionable en vertical |
+| Ayuda | 12 px, texto secundario |
+| Contador de caracteres | JetBrains Mono 12 px, texto secundario, a la derecha de la ayuda |
+| Error | borde en P1; debajo, el icono `circle-alert` en P1 y el mensaje en tinta, 12,5 px, con 6 px de separación; `aria-invalid` activo |
+
+### Menú de selección
+
+| Parte | Valor |
+|---|---|
+| Disparador | igual que un campo; texto a la izquierda y chevron hacia abajo a la derecha; sin valor, «Selecciona una opción» en texto secundario |
+| Ancho del disparador | todo el ancho disponible de su contenedor (100 %), sea un campo de formulario, un botón del menú lateral o un selector de la barra; el menú desplegado nunca es más estrecho que él |
+| Menú | aparece a 4 px bajo el disparador, ancho mínimo igual al del disparador, alto máximo de 260 px con desplazamiento, relleno de 4 px, fondo del lienzo, borde de 1 px en borde de control, radio 4 px |
+| Opción | 34 px de alto, relleno de 0 10 px 0 6 px, separación de 6 px, radio 6 px; la seleccionada en peso 700 y con un chevron «>» a la izquierda; el resto reserva el mismo hueco |
+| Opción resaltada u opción bajo el cursor | fondo con el 9 % de la tinta mezclado con el lienzo |
+
+### Casilla
+
+| Parte | Valor |
+|---|---|
+| Caja | 18 × 18 px, borde de 1 px en borde de control, radio 4 px |
+| Marcada | fondo y borde en el principal, check de 14 px de trazo 3 en el color de texto sobre el principal |
+| Hover | sin marcar: fondo con el 9 % de la tinta; marcada: el principal oscurecido |
+| Fila | caja y texto separados 10 px; texto de 14 px |
+| Ayuda y error | debajo de la fila, a 2 px, alineados con el borde izquierdo de la caja (sin sangría); la ayuda de 12 px en texto secundario; el error con el icono `circle-alert` en P1 y el mensaje en tinta, como en un campo de texto |
+
+### Botones
+
+| Parte | Valor |
+|---|---|
+| Medidas | 36 px de alto, relleno horizontal de 16 px, radio 6 px, 14 px, peso 600, separación de 8 px entre icono y texto |
+| Principal | fondo y borde en el principal, texto en el color de texto sobre el principal; hover con el principal oscurecido |
+| Secundario | sin relleno, borde de 1 px y texto en el principal; hover con el 9 % de la tinta |
+
+### Aviso
+
+Borde de 1 px en gris y de 4 px a la izquierda, radio 4 px, relleno de 12 px arriba y abajo y 14 px a
+los lados, separación de 10 px entre icono y texto, texto en tinta. El borde izquierdo y el icono
+usan el color de la prioridad; en un aviso informativo, el texto secundario.
+
+### Datos
+
+Valores exactos tomados de la pantalla «Activos», aprobada como referencia
+(`docs/referencia/activos.html`). Los componentes de las páginas de referencia llevan `data-ui`, y
+`docs/referencia/comparar.cjs` comprueba que una página candidata coincida con ellas (ver
+`docs/referencia/README.md`).
+
+| Parte | Valor |
+|---|---|
+| Rejilla de indicadores | columnas automáticas de 190 px como mínimo, separación de 18 px |
+| Indicador | bloque de 16 px de relleno; etiqueta de 12,5 px, 500, texto secundario; cifra de 28 px, 600, interlineado 1,2, `tabular-nums`, con 2 px de margen arriba y abajo; ayuda de 12 px |
+| Indicador destacado | fondo secundario; etiqueta y ayuda en tinta |
+| Indicador en alerta | fondo en relleno negro; etiqueta y ayuda en blanco `#ffffff`; cifra en el color de la prioridad (28 px) |
+| Cabecera de bloque | elementos en fila con 10 px de separación, 14 px de margen inferior; título de 15 px, 600; contador a continuación; acciones alineadas a la derecha |
+| Aviso de alarma | relleno de 12 px arriba y abajo y 16 px a los lados, separación de 12 px entre icono, texto y acción; el título en peso 600; puede llevar un botón secundario a la derecha |
+| Estado | icono de forma de 16 px y texto en tinta, a 8 px; el estado normal no lleva icono pero reserva el mismo hueco de 16 px |
+| Chip (criticidad y similares) | fondo gris, texto en tinta, 12 px, 500, relleno horizontal de 8 px, interlineado de 22 px, radio 4 px |
+| Gráfica de barras | lienzo SVG de 640 × 240 que se escala al ancho del bloque; área de trazado de 576 × 192 situada en x = 40, y = 8, con la cuadrícula de 16 px detrás de las barras; eje vertical con marcas cada 30 y números de 12 px en JetBrains Mono, texto secundario, a 8 px del área; meses debajo, centrados y a 20 px, en Manrope 12 px, texto secundario |
+| Barras | 30 px de ancho, 4 px de separación entre las dos series, 96 px por grupo; primera serie en el principal y segunda en gris, sólidas y sin borde |
+| Leyenda de gráfica | separación de 16 px entre elementos; muestras de 12 × 12 px sin borde; 12 px, texto secundario |
+| Rejilla de estado | cuadros de 24 × 24 px con radio 0 y separación de 4 px, que continúan en la fila siguiente; los normales en gris; los de P1, P2 y advertencia en su color con el glifo de su forma (12 px, en color del lienzo) dentro, para no depender solo del color; el neutro, con borde de 2 px en texto secundario; cada cuadro con `title` y `aria-label` |
+| Leyenda de la rejilla | iconos de forma de 16 px y etiquetas de 12 px en tinta, 14 px por debajo de la rejilla |
+| Tabla | ancho completo con desplazamiento horizontal desde 640 px; cabecera de 12,5 px, 500, texto secundario, relleno de 8 px arriba y abajo y 12 px a los lados, borde inferior de 1 px en gris; filas de 44 px de alto con relleno horizontal de 12 px y borde inferior de 1 px en gris; códigos y fechas en JetBrains Mono 13 px |
+| Fila bajo el cursor o seleccionada | fondo con el 9 % de la tinta; la seleccionada lleva además una línea de 2 px en el principal a su izquierda, para distinguirla del hover |
+| Pie de tabla | 12 px, texto secundario, a 12 px por debajo; muestra el número de filas seleccionadas |
+
+Regla de estado: **el texto del estado va siempre en tinta**; solo el icono de forma lleva el color de
+la prioridad.
+
+## Iconos y gráficos
+
+- Iconos de la librería `lucide-react`, de trazo 2, a 16 px (14 px dentro de las casillas).
+- Gráficas en SVG propio, sin librería.
 
 ## Accesibilidad
 
-- Contrastes de esta paleta: ver tablas; todo texto supera 4,5:1, y toda forma de estado y todo borde de control, 3:1.
-- Ningún estado se comunica solo con color (forma + texto).
-- Si el sistema pide reducir el movimiento, no se anima nada que no sea imprescindible.
+- Todo texto supera 4,5:1; formas de estado, iconos y bordes de controles, 3:1.
+- Ningún estado se comunica solo con color.
+- Los selectores propios se comportan como un combobox con `listbox` accesible.

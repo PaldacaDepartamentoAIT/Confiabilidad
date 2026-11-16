@@ -33,6 +33,7 @@ export const CodeField = forwardRef<HTMLInputElement, CodeFieldProps>(function C
       {...fieldProps}
       ref={ref}
       type="text"
+      className="mono"
       inputMode="numeric"
       autoComplete="one-time-code"
       value={code}

@@ -1,0 +1,56 @@
+/* Cambio de tema: 0,4 s en todos los colores (clase temporal para no alterar el hover). */
+.theme-anim,
+.theme-anim *,
+.theme-anim *::before,
+.theme-anim *::after {
+  transition:
+    color 0.4s,
+    background-color 0.4s,
+    border-color 0.4s,
+    outline-color 0.4s,
+    stroke 0.4s,
+    fill 0.4s,
+    text-decoration-color 0.4s !important;
+}
+
+/* Hover: entra en 0,08 s y sale en 0,35 s. */
+.hov {
+  background: transparent;
+  border: 0;
+  transition:
+    background-color 0.35s ease,
+    border-color 0.35s ease,
+    color 0.35s ease;
+}
+
+.hov:hover {
+  background: color-mix(in srgb, var(--ink) 9%, var(--surface));
+  transition-duration: 0.08s;
+}
+
+svg.i {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.sb-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 36px;
+  padding: 0 12px;
+  width: 100%;
+  min-width: 0;
+  border-radius: 6px;
+  color: var(--ink);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-align: left;
+}

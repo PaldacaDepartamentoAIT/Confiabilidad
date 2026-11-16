@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import axe from "axe-core";
 import { I18nextProvider } from "react-i18next";
@@ -108,3 +108,35 @@ test("the account created screen has no violations and no email", async () => {
   expect(await violations()).toEqual([]);
   expect(document.body.textContent).not.toContain("@");
 });
+
+test.each([
+  ["the form", "/register", { options: ok(OPTIONS) }, "Crea tu cuenta"],
+  [
+    "the verification",
+    "/register/continue#pid-1",
+    { status: ok(STATUS) },
+    "Escribe el código de verificación",
+  ],
+  [
+    "the invalid link",
+    "/register/continue#pid-1",
+    { status: { status: 404, body: { code: "not_found" } } },
+    "Enlace no válido",
+  ],
+  ["the account created screen", "/register/done", {}, "Cuenta creada"],
+])(
+  "%s uses the public layout: top bar with the language and theme buttons",
+  async (_, path, answers, heading) => {
+    renderAt(path, answers);
+
+    await screen.findByRole("heading", { level: 1, name: heading });
+    const bar = screen.getByRole("banner");
+    expect(bar).toHaveTextContent("Confiabilidad");
+    expect(within(bar).getByRole("combobox", { name: "Idioma: Español" })).toBeInTheDocument();
+    expect(
+      within(bar).getByRole("button", { name: /^Tema (claro|oscuro)\. Cambiar tema$/ }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("group", { name: "Idioma" })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("main")).toHaveLength(1);
+  },
+);

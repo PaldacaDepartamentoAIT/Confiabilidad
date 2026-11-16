@@ -40,6 +40,8 @@ test("switches the whole page language from the keyboard and remembers it", asyn
 
   await user.tab();
   await user.tab();
+  await user.tab();
+  await user.tab();
   await user.keyboard("{Enter}");
 
   const portuguese = screen.getByRole("button", { name: "Português (Brasil)" });

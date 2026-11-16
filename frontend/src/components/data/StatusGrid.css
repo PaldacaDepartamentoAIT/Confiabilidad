@@ -1,0 +1,46 @@
+.cells {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.cell {
+  width: 24px;
+  height: 24px;
+  border-radius: 0;
+  background: var(--gray);
+  display: grid;
+  place-items: center;
+}
+
+.cell.p1 {
+  background: var(--p1);
+}
+
+.cell.p2 {
+  background: var(--p2);
+}
+
+.cell.warning {
+  background: var(--warn);
+}
+
+.cell.neutral {
+  background: var(--bg);
+  border: 2px solid var(--text2);
+}
+
+.cells-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 14px;
+  font-size: 12px;
+  color: var(--ink);
+}
+
+.cells-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}

@@ -56,6 +56,8 @@ test("every language covers the groups used by the components", () => {
   expect(Object.keys(en)).toEqual([
     "app",
     "language",
+    "theme",
+    "sidebar",
     "button",
     "field",
     "message",

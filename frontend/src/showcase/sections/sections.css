@@ -1,0 +1,107 @@
+.catalog-section {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 22px;
+}
+
+.catalog-section h2 {
+  margin: 0;
+}
+
+.catalog-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.catalog-row li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px 18px;
+}
+
+.catalog-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Con sesión, el diseño real ocupa toda la pantalla; en el catálogo cabe en un marco (solo en pantallas
+   anchas: en las estrechas el menú es un panel superpuesto, como en la aplicación). */
+.catalog-frame {
+  height: 480px;
+  display: flex;
+  border: 1px solid var(--gray);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.catalog-frame .app {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.catalog-frame .main {
+  overflow-y: auto;
+}
+
+@media (min-width: 768px) {
+  .catalog-frame .sidebar {
+    position: relative;
+    height: 100%;
+  }
+}
+
+.catalog-page {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.catalog-page > h1,
+.catalog-page > p {
+  margin: 0;
+}
+
+.catalog-form-block {
+  margin-bottom: 22px;
+}
+
+.catalog-form-block > .help {
+  margin-bottom: 14px;
+}
+
+.catalog-form-block h2 {
+  margin: 0 0 14px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.catalog-form {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.catalog-form > * + :not(.fld, .check-field),
+.catalog-form > :not(.fld, .check-field) + * {
+  margin-top: 14px;
+}
+
+.catalog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}

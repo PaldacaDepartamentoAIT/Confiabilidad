@@ -10,6 +10,21 @@ export const es: Messages = {
   language: {
     label: "Idioma",
   },
+  theme: {
+    light: "Claro",
+    dark: "Oscuro",
+    toggle: "Cambiar tema",
+    announceLight: "Tema claro",
+    announceDark: "Tema oscuro",
+  },
+  sidebar: {
+    label: "Menú principal",
+    sections: "Secciones",
+    collapse: "Contraer menú",
+    expand: "Expandir menú",
+    open: "Abrir menú",
+    close: "Cerrar menú",
+  },
   button: {
     processing: "Procesando…",
     processingAnnouncement: "Procesando",

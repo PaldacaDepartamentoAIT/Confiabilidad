@@ -1,50 +1,63 @@
-/* Paleta Niebla marina de docs/identidad-visual.md. El tema sigue al sistema operativo (D-13). */
+/* Paleta Pizarra de docs/identidad-visual.md. Claro por defecto; oscuro según el sistema operativo
+   salvo que se fije el tema claro, o siempre que se fije el oscuro (data-theme en <html>). */
 :root {
   color-scheme: light;
-  --color-canvas: #dbe5eb;
-  --color-block: #ffffff;
-  --color-support: #edf3f7;
-  --color-line: #d1dde5;
-  --color-line-strong: #768c9b;
-  --color-text-secondary: #384d5c;
-  --color-ink: #0f222e;
-  --color-fill-strong: #0f222e;
-  --color-action: #1b5983;
-  --color-on-action: #ffffff;
-  --color-accent-1: #6aafdc;
-  --color-accent-2: #c9e2f2;
-  --color-alarm-p1: #8a2f3a;
-  --color-alarm-p2: #80442b;
-  --color-warning: #655423;
-
-  --radius-pill: 999px;
-  --radius-card: 12px;
-  --radius-tag: 4px;
-  --space-block: 10px;
-  --space-card-y: 14px;
-  --space-card-x: 16px;
-  --space-page: 22px;
-  --font-text: "Manrope Variable", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
+  --bg: #f8f9f9;
+  --ink: #1b1e22;
+  --text2: #61656b;
+  --gray: #c3c5c7;
+  --grid: #d8dadb;
+  --ctrl: #8d9094;
+  --primary: #546c8c;
+  --on-primary: #ffffff;
+  --secondary: #d8dbdf;
+  --menu-btn-bg: #1b1e22;
+  --menu-btn-icon: #d8dbdf;
+  --black-fill: #1b1e22;
+  --p1: #a47070;
+  --p2: #915535;
+  --warn: #7a7020;
+  --surface: var(--bg);
+  --font: "Manrope Variable", "Manrope", system-ui, sans-serif;
+  --mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --color-canvas: #0c161d;
-    --color-block: #162631;
-    --color-support: #1f313d;
-    --color-line: #293e4c;
-    --color-line-strong: #627d90;
-    --color-text-secondary: #b3c5d0;
-    --color-ink: #eaf1f6;
-    --color-fill-strong: #344855;
-    --color-action: #9cc9e8;
-    --color-on-action: #0c161d;
-    --color-accent-1: #4f95c4;
-    --color-accent-2: #9cc9e8;
-    --color-alarm-p1: #d97f87;
-    --color-alarm-p2: #d29a76;
-    --color-warning: #c4b07a;
+    --bg: #111213;
+    --ink: #eeeff1;
+    --text2: #aaadb0;
+    --gray: #47484a;
+    --grid: #313234;
+    --ctrl: #5f6163;
+    --primary: #9fafc6;
+    --on-primary: #111213;
+    --secondary: #535a65;
+    --menu-btn-bg: #ffffff;
+    --menu-btn-icon: #535a65;
+    --black-fill: #000000;
+    --p1: #a47070;
+    --p2: #d9977a;
+    --warn: #c9bd8c;
   }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #111213;
+  --ink: #eeeff1;
+  --text2: #aaadb0;
+  --gray: #47484a;
+  --grid: #313234;
+  --ctrl: #5f6163;
+  --primary: #9fafc6;
+  --on-primary: #111213;
+  --secondary: #535a65;
+  --menu-btn-bg: #ffffff;
+  --menu-btn-icon: #535a65;
+  --black-fill: #000000;
+  --p1: #a47070;
+  --p2: #d9977a;
+  --warn: #c9bd8c;
 }

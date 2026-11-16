@@ -1,0 +1,63 @@
+.app {
+  display: flex;
+  min-height: 100vh;
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  height: 64px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 22px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--gray);
+}
+
+.topbar .menu-btn.mobile-only {
+  display: none;
+}
+
+.content {
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* La lista del selector de pestañas vive dentro de la barra (z-index 30): mientras está abierta, la
+   barra sube por encima del menú lateral (35) pero se queda por debajo del panel móvil (70). */
+.topbar:has(.tab-select .menu.open) {
+  z-index: 50;
+}
+
+@media (max-width: 767px) {
+  .topbar .menu-btn.mobile-only {
+    display: inline-flex;
+  }
+}
+
+/* Incrustado en un marco (catálogo, una sección de la página pública): el panel móvil se limita al
+   marco en vez de ocupar la ventana entera. */
+.app.embedded {
+  position: relative;
+  overflow: hidden;
+  min-height: 0;
+}
+
+@media (max-width: 767px) {
+  .app.embedded .sidebar,
+  .app.embedded .sidebar.collapsed {
+    position: absolute;
+  }
+}

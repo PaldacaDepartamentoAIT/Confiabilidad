@@ -9,6 +9,21 @@ export const ptBR: Messages = {
   language: {
     label: "Idioma",
   },
+  theme: {
+    light: "Claro",
+    dark: "Escuro",
+    toggle: "Alternar tema",
+    announceLight: "Tema claro",
+    announceDark: "Tema escuro",
+  },
+  sidebar: {
+    label: "Menu principal",
+    sections: "Seções",
+    collapse: "Recolher menu",
+    expand: "Expandir menu",
+    open: "Abrir menu",
+    close: "Fechar menu",
+  },
   button: {
     processing: "Processando…",
     processingAnnouncement: "Processando",

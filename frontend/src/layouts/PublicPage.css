@@ -1,0 +1,42 @@
+.public-page {
+  max-width: 524px;
+  margin: 0 auto;
+  padding: 32px 22px 0;
+}
+
+.public-card h1,
+.public-card h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.public-card h2 {
+  margin: 24px 0 14px;
+}
+
+.public-card p:not(.error-msg, .help),
+.public-card > .help {
+  margin: 0 0 14px;
+}
+
+/* Entre campos no hay separación propia: la línea reservada del error (18 px) ya la da. Lo que no es
+   un campo conserva 16 px por encima. */
+.public-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.public-card form > * + :not(.fld, .check-field),
+.public-card form > :not(.fld, .check-field) + * {
+  margin-top: 14px;
+}
+
+.public-card form > .btn {
+  align-self: flex-end;
+}
+
+.public-card > .btn {
+  margin: 2px 0 14px;
+}

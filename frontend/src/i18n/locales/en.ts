@@ -7,6 +7,21 @@ export const en = {
   language: {
     label: "Language",
   },
+  theme: {
+    light: "Light",
+    dark: "Dark",
+    toggle: "Switch theme",
+    announceLight: "Light theme",
+    announceDark: "Dark theme",
+  },
+  sidebar: {
+    label: "Main menu",
+    sections: "Sections",
+    collapse: "Collapse menu",
+    expand: "Expand menu",
+    open: "Open menu",
+    close: "Close menu",
+  },
   button: {
     processing: "Processing…",
     processingAnnouncement: "Processing",
