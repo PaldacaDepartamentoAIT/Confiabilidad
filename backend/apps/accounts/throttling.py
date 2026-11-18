@@ -7,6 +7,7 @@ from django.core.cache import cache
 from apps.accounts import conf
 from apps.core.fingerprints import consent_email_fingerprint
 
+_MINUTE = 60.0
 _HOUR = 3600.0
 
 
@@ -50,6 +51,16 @@ def check_flow_ip(ip: str, *, now: float | None = None) -> Verdict:
     )
 
 
+def check_login_ip(ip: str, *, now: float | None = None) -> Verdict:
+    return _check(
+        f"login-rate:ip:{ip}",
+        per_hour=conf.login_rate_ip_per_minute(),
+        interval=0.0,
+        now=time.time() if now is None else now,
+        window=_MINUTE,
+    )
+
+
 def record_ip(ip: str, *, now: float | None = None) -> None:
     key = _ip_key(ip)
     moment = time.time() if now is None else now
@@ -60,24 +71,32 @@ def _ip_key(ip: str) -> str:
     return f"registration-rate:ip:{ip}"
 
 
-def _recent(key: str, now: float) -> list[float]:
-    return [stamp for stamp in cache.get(key, []) if stamp > now - _HOUR]
+def _recent(key: str, now: float, window: float = _HOUR) -> list[float]:
+    return [stamp for stamp in cache.get(key, []) if stamp > now - window]
 
 
-def _record(key: str, stamps: list[float], now: float) -> None:
-    cache.set(key, [*stamps, now], timeout=int(_HOUR))
+def _record(key: str, stamps: list[float], now: float, window: float = _HOUR) -> None:
+    cache.set(key, [*stamps, now], timeout=int(window))
 
 
-def _check(key: str, *, per_hour: int, interval: float, now: float, record: bool = True) -> Verdict:
+def _check(
+    key: str,
+    *,
+    per_hour: int,
+    interval: float,
+    now: float,
+    record: bool = True,
+    window: float = _HOUR,
+) -> Verdict:
     # Sin cerrojo: dos solicitudes simultáneas pueden colarse a la vez (D-09).
-    stamps = _recent(key, now)
+    stamps = _recent(key, now, window)
     wait = 0.0
     if stamps and interval:
         wait = max(wait, stamps[-1] + interval - now)
     if len(stamps) >= per_hour:
-        wait = max(wait, stamps[-per_hour] + _HOUR - now)
+        wait = max(wait, stamps[-per_hour] + window - now)
     if wait > 0:
         return Verdict(allowed=False, retry_after=math.ceil(wait))
     if record:
-        _record(key, stamps, now)
+        _record(key, stamps, now, window)
     return Verdict(allowed=True, retry_after=0)

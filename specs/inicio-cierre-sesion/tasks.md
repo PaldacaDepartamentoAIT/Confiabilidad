@@ -32,12 +32,16 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   cadena en `settings.py`. Validación pendiente en la máquina virtual del usuario (alternativa sin
   dependencias locales de `AGENTS.md`).
 
-- [ ] T-002 Límite por IP del inicio de sesión
+- [x] T-002 Límite por IP del inicio de sesión
   RF: RF-005 (límite de frecuencia por IP en el inicio de sesión), RF-020 (M-03) | Depende de: T-001 (valores configurables de inicio de sesión y sesiones) | Archivos: 2
   Archivos: `throttling.py`, `tests/test_auth_throttling.py`.
   Hecho cuando: `check_login_ip` permite 30 solicitudes por minuto desde una misma IP y rechaza la
   31.ª devolviendo `allowed=False` y los segundos de espera (`retry_after`), con una clave propia en
   caché independiente de las del registro; suite verde.
+  Decisiones: `_check` admite un parámetro `window` con valor por defecto `_HOUR` para reutilizar el
+  mismo registro deslizante con ventana de 60 s (`_MINUTE`) sin cambiar las funciones del registro —
+  [Cierto] — revertir: separar una función propia para la ventana de un minuto. Validación pendiente
+  en la máquina virtual del usuario.
 
 - [ ] T-003 Bloqueo por intentos fallidos en cuenta inactiva
   RF: RF-002 (rechazo neutro de credenciales inválidas o cuenta inactiva), RF-004 (bloqueo temporal por intentos fallidos; M-03; D-03, cómputo de intentos fallidos en cuenta inactiva; C-02, bloqueo por intentos en cuenta inactiva) | Depende de: T-001 | Archivos: 2
