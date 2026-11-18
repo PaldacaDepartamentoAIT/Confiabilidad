@@ -267,9 +267,14 @@ Rama de integración: `feat/inicio-cierre-sesion` (los PR de las entregas van co
   Tareas: T-001, T-002, T-003 | Líneas estimadas: 240 | Rama: feat/inicio-cierre-sesion-limites
   Cómo probarlo: ejecutar `pytest apps/accounts/tests/test_auth_conf.py apps/accounts/tests/test_auth_throttling.py apps/accounts/tests/test_inactive_login.py` y comprobar que 6 intentos con contraseña correcta sobre una cuenta inactiva disparan el bloqueo `too_many_login_attempts` y la fila `LOCKOUT` en `SecurityEvent`.
 
-- E-02 Modelo `UserSession` y servicio de sesiones activas
-  Tareas: T-004, T-005, T-006 | Líneas estimadas: 350 | Rama: feat/inicio-cierre-sesion-servicio-sesiones
-  Cómo probarlo: aplicar la migración y ejecutar `pytest apps/accounts/tests/test_user_session_model.py apps/accounts/tests/test_sessions_service.py`.
+- E-02 Modelo `UserSession` y servicio básico de sesiones activas
+  Tareas: T-004, T-005 | Líneas estimadas: 399 | Rama: feat/inicio-cierre-sesion-servicio-sesiones
+  Cómo probarlo: aplicar la migración y ejecutar `pytest apps/accounts/tests/test_user_session_model.py apps/accounts/tests/test_sessions_service.py --no-cov -v`.
+  Dividida: con T-006 superaba `sdd.max_lineas_pr` (400); el cierre de otras sesiones, invalidación masiva y purga pasan a E-02b.
+
+- E-02b Cierre de otras sesiones, invalidación masiva y purga en el servicio
+  Tareas: T-006 | Líneas estimadas: 220 | Rama: feat/inicio-cierre-sesion-revocar-sesiones
+  Cómo probarlo: ejecutar `pytest apps/accounts/tests/test_sessions_service.py --no-cov -v` para comprobar `revoke_other_session`, `revoke_all_other_sessions`, `revoke_all_user_sessions` y `purge_expired`.
 
 - E-03 Ciclo de vida automático de sesiones y orden de purga en consola
   Tareas: T-007, T-008 | Líneas estimadas: 280 | Rama: feat/inicio-cierre-sesion-purga
