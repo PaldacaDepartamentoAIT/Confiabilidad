@@ -140,17 +140,18 @@ class User(AbstractBaseUser, PermissionsMixin):
                 del self.skip_history_when_saving
         self._revoke_sessions_on_change(previous)
 
-    def _lifecycle_snapshot(self, update_fields: Any) -> dict[str, Any] | None:
+    def _lifecycle_snapshot(self, update_fields: Any) -> tuple[bool, str] | None:
         if self._state.adding:
             return None
         if update_fields is not None and not ({"is_active", "password"} & set(update_fields)):
             return None
-        return type(self).objects.filter(pk=self.pk).values("is_active", "password").first()
+        return type(self).objects.filter(pk=self.pk).values_list("is_active", "password").first()
 
-    def _revoke_sessions_on_change(self, previous: dict[str, Any] | None) -> None:
+    def _revoke_sessions_on_change(self, previous: tuple[bool, str] | None) -> None:
         if previous is None:
             return
-        if (previous["is_active"] and not self.is_active) or previous["password"] != self.password:
+        was_active, previous_password = previous
+        if (was_active and not self.is_active) or previous_password != self.password:
             from apps.accounts import sessions
 
             sessions.revoke_all_user_sessions(self)
