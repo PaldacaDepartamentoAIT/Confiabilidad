@@ -3,6 +3,7 @@ from importlib import import_module
 import pytest
 from django.conf import settings
 from django.contrib.auth import login, logout
+from django.contrib.auth.models import AnonymousUser
 from django.contrib.sessions.backends.base import SessionBase
 from django.http import HttpRequest
 from django.test import RequestFactory
@@ -27,6 +28,7 @@ def _request(session_key: str | None = None) -> HttpRequest:
     if session_key is None:
         store.create()
     request.session = store
+    request.user = AnonymousUser()
     return request
 
 

@@ -365,10 +365,15 @@ def _register_user_session_on_login(sender: type, request: Any, user: Any, **kwa
 def _remove_user_session_on_logout(sender: type, request: Any, user: Any, **kwargs: Any) -> None:
     session = getattr(request, "session", None)
     session_key = getattr(session, "session_key", None)
-    if isinstance(user, User) and isinstance(session_key, str) and session_key:
+    if isinstance(session_key, str) and session_key:
         from apps.accounts import sessions
 
-        sessions.close_current_session(user, session_key)
+        if isinstance(user, User):
+            sessions.close_current_session(user, session_key)
+        else:
+            from apps.core.fingerprints import audit_session_fingerprint
+
+            UserSession.objects.filter(session_key=audit_session_fingerprint(session_key)).delete()
 
 
 @receiver(pre_delete, sender=User)
