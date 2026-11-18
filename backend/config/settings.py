@@ -254,6 +254,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "apps.accounts.tasks.purge_stale_registrations",
         "schedule": 3600.0,
     },
+    "accounts-purge-expired-sessions": {
+        "task": "apps.accounts.tasks.purge_expired_sessions",
+        "schedule": 3600.0,
+    },
 }
 
 # Correos: dirección del frontend a la que llevan los enlaces de los correos (D-09).

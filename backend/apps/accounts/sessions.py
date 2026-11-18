@@ -234,12 +234,26 @@ def revoke_all_other_sessions(
     return revoked
 
 
-def revoke_all_user_sessions(user: User) -> int:
+def revoke_all_user_sessions(user: User, *, clear_only: bool = False) -> int:
     rows = list(UserSession.objects.filter(user=user))
     for row in rows:
-        _evict_from_store(row.session_key)
+        if clear_only:
+            _clear_in_store(row.session_key)
+        else:
+            _evict_from_store(row.session_key)
     deleted, _ = UserSession.objects.filter(user=user).delete()
     return deleted
+
+
+def _clear_in_store(key_hash: str) -> None:
+    raw_key = _raw_key(key_hash)
+    _session_cache().delete(_reverse_key(key_hash))
+    if raw_key is None:
+        return
+    store = _session_store(raw_key)
+    if store.exists(raw_key):
+        store.clear()
+        store.save()
 
 
 def purge_expired() -> int:

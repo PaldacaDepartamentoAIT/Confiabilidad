@@ -99,15 +99,25 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   `apps/audit` y sin señales adicionales — [Cierto] — revertir: añadir una señal propia en
   `apps/accounts/signals.py`. Validación pendiente en la máquina virtual del usuario.
 
-- [ ] T-007 Sincronización automática de sesiones al entrar, salir, desactivar, borrar o cambiar contraseña
+- [x] T-007 Sincronización automática de sesiones al entrar, salir, desactivar, borrar o cambiar contraseña
   RF: RF-003, RF-006, RF-007, RF-010 (M-02, invalidación automática por cuenta inactiva, borrado o cambio de contraseña; D-05, invalidación de sesiones en dos capas; C-03, alcance de invalidación por cambio de contraseña) | Depende de: T-006 (servicio de sesiones: cierre de otras sesiones, invalidación masiva y purga) | Archivos: 3
   Archivos: `models.py`, `sessions.py`, `tests/test_sessions_lifecycle.py`.
   Hecho cuando: iniciar o cerrar sesión mediante las señales de autenticación crea o borra la fila
   de `UserSession`; desactivar (`is_active=False`) o borrar físicamente un usuario, cambiar su
   contraseña en `User.save()` o completar `password_reset.complete` invalida sus sesiones en la
   caché `sessions` y vacía sus filas de `UserSession`; suite verde.
+  Decisiones: los receptores de ciclo de vida (`user_logged_in`, `user_logged_out`, `pre_delete` y
+  `password_reset_completed`) se registran en `models.py` (donde ya vive `_leave_password_reset_tombstone`
+  y que se carga al arrancar Django) importando `sessions` dentro de cada gancho para evitar
+  importaciones circulares sin tocar `apps.py` — [Cierto] — revertir: mover los receptores a
+  `sessions.py` e importarlo en `apps.py`. Al cambiar la contraseña con la cuenta activa,
+  `revoke_all_user_sessions(..., clear_only=True)` vacía el contenido de la sesión en Redis y borra
+  su fila de `UserSession` en vez de borrar la clave de Redis, de modo que deja de autenticar pero
+  `/_allauth/app/v1/auth/session` sigue respondiendo `401` y no `410` (preservando S-03 y CF-3 de
+  `cambio-contrasena` sin `sdd-cambio`) — [Cierto] — revertir: pasar `clear_only=False`. Validación
+  pendiente en la máquina virtual del usuario.
 
-- [ ] T-008 Limpieza de sesiones caducadas por consola y tarea periódica
+- [x] T-008 Limpieza de sesiones caducadas por consola y tarea periódica
   RF: RF-021 (M-05, comando de consola y tarea programada de limpieza; P-03, backend verificable desde CLI) | Depende de: T-006 | Archivos: 4
   Archivos: `management/commands/purge_expired_sessions.py`, `tasks.py`,
   `backend/config/settings.py`, `tests/test_purge_expired_sessions.py`.
@@ -116,6 +126,9 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   borran las filas caducadas o sin sesión viva e informan del número borrado; suite verde.
   Excepción: el comando, la tarea, su programación en `settings.py` y su test deben ir juntos para
   verificar tanto la orden de consola como la tarea periódica de RF-021.
+  Decisiones: el comando imprime `<N> expired user sessions deleted.` sin `--dry-run`, ya que RF-021
+  solo pide borrar e informar cuántos borró — [Cierto] — revertir: añadir `--dry-run` como en
+  `purge_security_events`. Validación pendiente en la máquina virtual del usuario.
 
 - [ ] T-009 Textos de la API de inicio y cierre de sesión en tres idiomas
   RF: RF-019 (idioma de pantallas y mensajes; M-04, API de inicio y cierre de sesión, términos y sesiones activas) | Depende de: — | Archivos: 2
