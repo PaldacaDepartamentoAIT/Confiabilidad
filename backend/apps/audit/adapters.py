@@ -49,6 +49,8 @@ class AuditAccountAdapter(DefaultAccountAdapter):  # type: ignore[misc]  # allau
 
     def pre_login(self, request: HttpRequest, user: Any, **kwargs: Any) -> Any:
         if not user.is_active:
+            # Cuenta para el límite de allauth igual que una contraseña errónea (D-03, C-02).
+            super().authentication_failed(request, email=user.email)
             record_event(
                 EventType.LOGIN,
                 success=False,

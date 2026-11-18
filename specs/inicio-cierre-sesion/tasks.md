@@ -43,7 +43,7 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   [Cierto] — revertir: separar una función propia para la ventana de un minuto. Validación pendiente
   en la máquina virtual del usuario.
 
-- [ ] T-003 Bloqueo por intentos fallidos en cuenta inactiva
+- [x] T-003 Bloqueo por intentos fallidos en cuenta inactiva
   RF: RF-002 (rechazo neutro de credenciales inválidas o cuenta inactiva), RF-004 (bloqueo temporal por intentos fallidos; M-03; D-03, cómputo de intentos fallidos en cuenta inactiva; C-02, bloqueo por intentos en cuenta inactiva) | Depende de: T-001 | Archivos: 2
   Archivos: `backend/apps/audit/adapters.py`, `tests/test_inactive_login.py`.
   Hecho cuando: en `AuditAccountAdapter.pre_login`, un intento sobre una cuenta inactiva con
@@ -51,6 +51,11 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   limitador `login_failed` de allauth, de modo que al sexto intento consecutivo se bloquea con
   `too_many_login_attempts` y genera el evento `LOCKOUT`, igual que con contraseña incorrecta, sin
   romper los tests existentes de `test_inactive_login.py`; suite verde.
+  Decisiones: `pre_login` llama a `super().authentication_failed(request, email=user.email)` (de
+  `DefaultAccountAdapter`) en lugar de `self.authentication_failed`, para consumir el intento en el
+  limitador oficial de allauth sin registrar un segundo evento `invalid_credentials` además de
+  `inactive_account` — [Cierto] — revertir: quitar la llamada a `super().authentication_failed`.
+  Validación pendiente en la máquina virtual del usuario.
 
 - [ ] T-004 Modelo `UserSession`
   RF: RF-007 (registro de sesiones activas; M-01, modelo `UserSession` y servicio de sesiones; D-02, huella HMAC en `UserSession.session_key` e índice inverso en caché; C-08, trato de `user_agent` vacío o largo; S-09, huella HMAC de la clave de sesión) | Depende de: — | Archivos: 3

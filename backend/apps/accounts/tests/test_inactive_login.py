@@ -11,6 +11,7 @@ from django.http import HttpRequest
 from django.test import Client, RequestFactory
 
 from apps.accounts.tests.factories import DEFAULT_PASSWORD, make_user
+from apps.audit.models import EventType, SecurityEvent
 
 
 @pytest.fixture(params=["browser", "app"])
@@ -134,3 +135,35 @@ def test_verifying_email_does_not_reactivate_account(kind: str, unique_email: st
     assert not user.is_active
     status, _ = _login(Client(enforce_csrf_checks=True), kind, unique_email)
     assert status == 401
+
+
+@pytest.mark.django_db
+def test_inactive_account_with_valid_password_counts_towards_lockout(
+    kind: str, unique_email: str
+) -> None:
+    make_user(email=unique_email, is_active=False)
+    client = Client(enforce_csrf_checks=True, REMOTE_ADDR="198.51.100.44")
+
+    for _ in range(5):
+        status, _ = _login(client, kind, unique_email)
+        assert status == 401
+
+    status, body = _login(client, kind, unique_email)
+    assert status == 400
+    assert "too_many_login_attempts" in {error["code"] for error in body["errors"]}
+    assert (
+        SecurityEvent.objects.filter(
+            event_type=EventType.LOGIN,
+            success=False,
+            metadata={"reason": "inactive_account"},
+        ).count()
+        == 5
+    )
+    assert (
+        SecurityEvent.objects.filter(
+            event_type=EventType.LOCKOUT,
+            success=False,
+            metadata={"reason": "too_many_login_attempts"},
+        ).count()
+        == 1
+    )
