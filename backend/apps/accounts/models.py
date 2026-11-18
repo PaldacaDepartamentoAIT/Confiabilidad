@@ -156,8 +156,8 @@ class User(AbstractBaseUser, PermissionsMixin):
         if deactivated or password_changed:
             from apps.accounts import sessions
 
-            # Al cambiar la contraseña sin desactivar la cuenta, vaciamos el contenido de la sesión
-            # conservando la clave para que allauth responda 401 y no 410 (S-03 de cambio-contrasena).
+            # Al cambiar la contraseña con cuenta activa, vaciamos el contenido de la sesión sin
+            # borrar la clave para que allauth responda 401 y no 410 (S-03 de cambio-contrasena).
             sessions.revoke_all_user_sessions(self, clear_only=not deactivated)
 
     def clean_fields(self, exclude: Collection[str] | None = None) -> None:
