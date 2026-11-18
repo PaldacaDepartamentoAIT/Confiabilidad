@@ -109,9 +109,13 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   Decisiones: los receptores de ciclo de vida (`user_logged_in`, `user_logged_out`, `pre_delete` y
   `password_reset_completed`) se registran en `models.py` (donde ya vive `_leave_password_reset_tombstone`
   y que se carga al arrancar Django) importando `sessions` dentro de cada gancho para evitar
-  importaciones circulares sin tocar `apps.py`; solo se modificaron 2 archivos (`models.py` y
-  `test_sessions_lifecycle.py`) — [Cierto] — revertir: mover los receptores a `sessions.py` e
-  importarlo en `apps.py`. Validación pendiente en la máquina virtual del usuario.
+  importaciones circulares sin tocar `apps.py` — [Cierto] — revertir: mover los receptores a
+  `sessions.py` e importarlo en `apps.py`. Al cambiar la contraseña con la cuenta activa,
+  `revoke_all_user_sessions(..., clear_only=True)` vacía el contenido de la sesión en Redis y borra
+  su fila de `UserSession` en vez de borrar la clave de Redis, de modo que deja de autenticar pero
+  `/_allauth/app/v1/auth/session` sigue respondiendo `401` y no `410` (preservando S-03 y CF-3 de
+  `cambio-contrasena` sin `sdd-cambio`) — [Cierto] — revertir: pasar `clear_only=False`. Validación
+  pendiente en la máquina virtual del usuario.
 
 - [x] T-008 Limpieza de sesiones caducadas por consola y tarea periódica
   RF: RF-021 (M-05, comando de consola y tarea programada de limpieza; P-03, backend verificable desde CLI) | Depende de: T-006 | Archivos: 4

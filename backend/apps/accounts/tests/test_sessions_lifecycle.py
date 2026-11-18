@@ -87,7 +87,8 @@ def test_changing_password_or_completing_reset_revokes_all_sessions() -> None:
     user.save()
 
     assert not UserSession.objects.filter(user=user).exists()
-    assert not _store(key_save).exists(key_save)
+    assert _store(key_save).load() == {}
+    assert not sessions.is_session_active(key_save, user.pk)
 
     req_reset = _request()
     login(req_reset, user, backend="django.contrib.auth.backends.ModelBackend")
@@ -100,4 +101,5 @@ def test_changing_password_or_completing_reset_revokes_all_sessions() -> None:
     password_reset.complete(public_id=started.public_id, password="An0ther-Strong-2026!")
 
     assert not UserSession.objects.filter(user=user).exists()
-    assert not _store(key_reset).exists(key_reset)
+    assert _store(key_reset).load() == {}
+    assert not sessions.is_session_active(key_reset, user.pk)

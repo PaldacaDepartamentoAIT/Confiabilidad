@@ -151,10 +151,14 @@ class User(AbstractBaseUser, PermissionsMixin):
         if previous is None:
             return
         was_active, previous_password = previous
-        if (was_active and not self.is_active) or previous_password != self.password:
+        deactivated = was_active and not self.is_active
+        password_changed = previous_password != self.password
+        if deactivated or password_changed:
             from apps.accounts import sessions
 
-            sessions.revoke_all_user_sessions(self)
+            # Al cambiar la contraseña sin desactivar la cuenta, vaciamos el contenido de la sesión
+            # conservando la clave para que allauth responda 401 y no 410 (S-03 de cambio-contrasena).
+            sessions.revoke_all_user_sessions(self, clear_only=not deactivated)
 
     def clean_fields(self, exclude: Collection[str] | None = None) -> None:
         excluded = set(exclude or ())
@@ -394,4 +398,4 @@ def _revoke_sessions_on_password_reset(
     if user is not None:
         from apps.accounts import sessions
 
-        sessions.revoke_all_user_sessions(user)
+        sessions.revoke_all_user_sessions(user, clear_only=user.is_active)
