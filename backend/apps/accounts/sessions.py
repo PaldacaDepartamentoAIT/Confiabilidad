@@ -1,4 +1,4 @@
-import hmac
+import secrets
 from dataclasses import dataclass
 from datetime import datetime
 from importlib import import_module
@@ -136,7 +136,7 @@ def list_active_sessions(user: User, current_session_key: str | None) -> list[Ac
             created_at=row.created_at,
             last_seen_at=row.last_seen_at,
             is_current=current_hash is not None
-            and hmac.compare_digest(row.session_key, current_hash),
+            and secrets.compare_digest(row.session_key, current_hash),
         )
         for row in rows
     ]
