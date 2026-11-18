@@ -69,7 +69,7 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   contenido (`C-08`) — [Cierto] — revertir: mover la normalización solo al servicio. Validación
   pendiente en la máquina virtual del usuario.
 
-- [ ] T-005 Servicio de sesiones: alta, actividad, consulta y cierre actual
+- [x] T-005 Servicio de sesiones: alta, actividad, consulta y cierre actual
   RF: RF-006 (cierre de la sesión actual), RF-007, RF-008 (consulta de sesiones activas; M-01, D-02; C-01, detección y limpieza de sesiones caducadas; C-08) | Depende de: T-001, T-004 (modelo `UserSession`) | Archivos: 2
   Archivos: `sessions.py`, `tests/test_sessions_service.py`.
   Hecho cuando: `register_session` guarda la fila en `UserSession` con la huella HMAC
@@ -78,6 +78,11 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   al menos 60 s; `list_active_sessions` borra las vencidas o ausentes en la caché y devuelve las
   vigentes ordenadas de más reciente a más antigua con `is_current`; `close_current_session` borra
   la sesión de la caché y su fila de `UserSession`; suite verde.
+  Decisiones: `sessions.py` mantiene un índice inverso efímero (`user-session-key:<huella>`) en
+  `caches[settings.SESSION_CACHE_ALIAS]` con el TTL de `conf.session_lifetime()` para comprobar la
+  existencia y borrar la sesión de Redis sin almacenar la clave en claro en PostgreSQL (`D-02`) —
+  [Cierto] — revertir: cambiar el almacén de índice en `sessions.py`. Validación pendiente en la
+  máquina virtual del usuario.
 
 - [ ] T-006 Servicio de sesiones: cierre de otras sesiones, invalidación masiva y purga
   RF: RF-003 (invalidación inmediata al desactivar o borrar una cuenta), RF-009 (cierre de otra sesión o de todas las demás), RF-010 (invalidación de sesiones al cambiar o restablecer la contraseña), RF-021 (limpieza de sesiones caducadas; M-01, D-02; C-01; C-05, cierre sin sesión válida y cierre masivo sin otras sesiones) | Depende de: T-005 (servicio de sesiones: alta, actividad, consulta y cierre actual) | Archivos: 2
