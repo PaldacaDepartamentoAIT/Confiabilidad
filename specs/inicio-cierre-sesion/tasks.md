@@ -113,7 +113,7 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   `test_sessions_lifecycle.py`) — [Cierto] — revertir: mover los receptores a `sessions.py` e
   importarlo en `apps.py`. Validación pendiente en la máquina virtual del usuario.
 
-- [ ] T-008 Limpieza de sesiones caducadas por consola y tarea periódica
+- [x] T-008 Limpieza de sesiones caducadas por consola y tarea periódica
   RF: RF-021 (M-05, comando de consola y tarea programada de limpieza; P-03, backend verificable desde CLI) | Depende de: T-006 | Archivos: 4
   Archivos: `management/commands/purge_expired_sessions.py`, `tasks.py`,
   `backend/config/settings.py`, `tests/test_purge_expired_sessions.py`.
@@ -122,6 +122,9 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   borran las filas caducadas o sin sesión viva e informan del número borrado; suite verde.
   Excepción: el comando, la tarea, su programación en `settings.py` y su test deben ir juntos para
   verificar tanto la orden de consola como la tarea periódica de RF-021.
+  Decisiones: el comando imprime `<N> expired user sessions deleted.` sin `--dry-run`, ya que RF-021
+  solo pide borrar e informar cuántos borró — [Cierto] — revertir: añadir `--dry-run` como en
+  `purge_security_events`. Validación pendiente en la máquina virtual del usuario.
 
 - [ ] T-009 Textos de la API de inicio y cierre de sesión en tres idiomas
   RF: RF-019 (idioma de pantallas y mensajes; M-04, API de inicio y cierre de sesión, términos y sesiones activas) | Depende de: — | Archivos: 2
