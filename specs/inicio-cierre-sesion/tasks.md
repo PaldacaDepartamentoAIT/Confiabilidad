@@ -14,7 +14,7 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
 
 ## Backend
 
-- [ ] T-001 Valores configurables de inicio de sesión y sesiones
+- [x] T-001 Valores configurables de inicio de sesión y sesiones
   RF: RF-020 (valores configurables; M-03, adaptador de allauth y límites de inicio de sesión) | Depende de: — | Archivos: 4
   Archivos: `backend/config/settings.py`, `backend/.env.example`, `conf.py`,
   `tests/test_auth_conf.py`.
@@ -25,6 +25,12 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   menores que 1; suite verde.
   Excepción: la configuración está repartida por diseño entre `settings.py`, `.env.example` y
   `conf.py`; separarla dejaría un ajuste sin lector o sin su prueba.
+  Decisiones: `ACCOUNT_RATE_LIMITS["login_failed"]` conserva `10/m/ip` junto a
+  `{LOGIN_MAX_FAILED_ATTEMPTS}/{LOGIN_LOCKOUT_MINUTES}m/key`, como el valor por defecto de allauth,
+  para no bloquear por IP tras 5 intentos cuando `password_reset.complete` borra el contador por
+  correo y conserva el de IP (`RF-009` de `cambio-contrasena`) — [Cierto] — revertir: cambiar la
+  cadena en `settings.py`. Validación pendiente en la máquina virtual del usuario (alternativa sin
+  dependencias locales de `AGENTS.md`).
 
 - [ ] T-002 Límite por IP del inicio de sesión
   RF: RF-005 (límite de frecuencia por IP en el inicio de sesión), RF-020 (M-03) | Depende de: T-001 (valores configurables de inicio de sesión y sesiones) | Archivos: 2
