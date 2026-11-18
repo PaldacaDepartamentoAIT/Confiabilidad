@@ -166,8 +166,9 @@ Secretos:
   Si una entrega ya implementada rebasa `sdd.max_lineas_pr`, se divide en dos (`E-XX` y `E-XXb`)
   sin volver a preguntar, procurando que ambas muestren algo de funcionalidad (algo que se pueda
   ver o probar) y no solo una la parte visible y la otra la parte interna.
-  La siguiente rama sale de la rama de integración cuando la anterior está fusionada en ella, o de
-  la rama anterior (PR apilado) si el usuario no quiere esperar. La descripción de cada PR incluye
+  La siguiente rama sale de la rama de integración **solo después de que la entrega anterior se
+  haya fusionado (merge) en ella**; nunca se continúa con la entrega o tarea siguiente sin que se
+  haya hecho merge de la anterior (no se crean PR apilados). La descripción de cada PR incluye
   «Cómo probarlo» con pasos ejecutables.
 - **Rama de integración.** Cada feature tiene una rama de integración, `feat/<feature>`, que sale
   de `main` antes de su primera entrega. Las ramas de las entregas (`feat/<feature>-<descripcion>`)
@@ -207,7 +208,8 @@ Secretos:
     - superar `sdd.max_archivos_tarea` sin una `Excepción:` en la tarea;
     - superar `sdd.max_lineas_pr` en una entrega sin una `Excepción:`;
     - completar una entrega: se crea su resumen de entrega, se informa de sus líneas reales y de cómo
-      probarla, y se pregunta si se abre su PR antes de empezar la siguiente;
+      probarla, se abre (o prepara) su PR y **se espera a que el usuario haga merge en la rama de
+      integración** antes de continuar con la entrega o tarea siguiente;
     - añadir dependencias, servicios o infraestructura;
     - un mutante que sobrevive sin un arreglo claro: un test dentro de los archivos de la tarea que
       lo mate sin afirmar nada que no esté en la spec o el plan. Un mutante equivalente se anota en
@@ -237,6 +239,11 @@ Secretos:
 - Pasar tipos (`cd backend && mypy .`, `pnpm --filter frontend typecheck`).
 - Pasar lint/formato (`ruff`/`black`, `eslint`/`prettier`, `cargo fmt`/`clippy`).
 - Verificar que el entorno Docker sigue levantando sin errores.
+- **Alternativa sin dependencias locales:** si la máquina donde se trabaja no tiene disponibles las
+  dependencias o los servicios locales (Docker/Podman, PostgreSQL, Redis, entornos de Python o Node),
+  no se bloquea el avance: se guarda el trabajo en su rama correspondiente, se sube a GitHub
+  (`git push -u origin <rama>`) y se dejan listos los comandos de verificación para que el usuario
+  ejecute los tests, tipos y linters en su máquina virtual o VPS con todo instalado.
 
 ### Rutas
 - `HUMAN_TODO.md`: acciones que requieren intervención humana y no pertenecen a ninguna spec

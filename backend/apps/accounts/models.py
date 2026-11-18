@@ -313,3 +313,23 @@ def _leave_password_reset_tombstone(sender: type[User], instance: User, **kwargs
     )
     tombstone.save()
     PhantomProcess.objects.filter(pk=tombstone.pk).update(created_at=request.created_at)
+
+
+DEFAULT_USER_AGENT = "unknown"
+
+
+class UserSession(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="sessions")
+    session_key = models.CharField(max_length=64, unique=True)
+    ip = models.GenericIPAddressField()
+    user_agent = models.TextField(blank=True, default=DEFAULT_USER_AGENT)
+    created_at = models.DateTimeField(default=timezone.now)
+    last_seen_at = models.DateTimeField(default=timezone.now, db_index=True)
+
+    def __str__(self) -> str:
+        return f"{self.user.email}:{self.ip}"
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        if not self.user_agent or not self.user_agent.strip():
+            self.user_agent = DEFAULT_USER_AGENT
+        super().save(*args, **kwargs)

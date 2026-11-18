@@ -140,12 +140,25 @@ AUTHENTICATION_BACKENDS = [
     "allauth.account.auth_backends.AuthenticationBackend",
 ]
 
-# django-allauth (headless): cuenta local por email, sin verificación ni rate limiting (prueba).
+# Inicio de sesión y sesiones activas: límites y tiempos configurables (RF-020 de
+# inicio-cierre-sesion).
+LOGIN_MAX_FAILED_ATTEMPTS = env.int("LOGIN_MAX_FAILED_ATTEMPTS", default=5)
+LOGIN_LOCKOUT_MINUTES = env.int("LOGIN_LOCKOUT_MINUTES", default=5)
+LOGIN_RATE_IP_PER_MINUTE = env.int("LOGIN_RATE_IP_PER_MINUTE", default=30)
+SESSION_ACTIVITY_UPDATE_INTERVAL_SECONDS = env.int(
+    "SESSION_ACTIVITY_UPDATE_INTERVAL_SECONDS", default=60
+)
+SESSION_LIFETIME_DAYS = env.int("SESSION_LIFETIME_DAYS", default=14)
+SESSION_COOKIE_AGE = SESSION_LIFETIME_DAYS * 86400
+
+# django-allauth (headless): cuenta local por email, con bloqueo por intentos fallidos (RF-004).
 ACCOUNT_LOGIN_METHODS = {"email"}
 ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
 ACCOUNT_EMAIL_VERIFICATION = "none"
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
-ACCOUNT_RATE_LIMITS: dict[str, object] = {}
+ACCOUNT_RATE_LIMITS: dict[str, object] = {
+    "login_failed": f"10/m/ip,{LOGIN_MAX_FAILED_ATTEMPTS}/{LOGIN_LOCKOUT_MINUTES}m/key",
+}
 ACCOUNT_ADAPTER = "apps.audit.adapters.AuditAccountAdapter"
 HEADLESS_ONLY = True
 
