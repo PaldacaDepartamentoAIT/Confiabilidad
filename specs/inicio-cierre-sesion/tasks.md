@@ -57,13 +57,17 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   [Cierto] — revertir: quitar `_consume_login_failed` de `pre_login`. Validación pendiente en la
   máquina virtual del usuario.
 
-- [ ] T-004 Modelo `UserSession`
+- [x] T-004 Modelo `UserSession`
   RF: RF-007 (registro de sesiones activas; M-01, modelo `UserSession` y servicio de sesiones; D-02, huella HMAC en `UserSession.session_key` e índice inverso en caché; C-08, trato de `user_agent` vacío o largo; S-09, huella HMAC de la clave de sesión) | Depende de: — | Archivos: 3
   Archivos: `models.py`, `migrations/0015_usersession.py`, `tests/test_user_session_model.py`.
   Hecho cuando: `UserSession` guarda `user`, `session_key` (único de 64 caracteres), `ip`,
   `user_agent` (`"unknown"` si falta o está en blanco, y longitud completa sin recortar cuando viene
   informada), `created_at` y `last_seen_at` (indexado); `python manage.py makemigrations --check` no
   propone nada; suite verde.
+  Decisiones: `UserSession.user_agent` admite `blank=True` y normaliza valores vacíos o de solo
+  espacios a `"unknown"` en `save()`, conservando el valor íntegro sin recortar cuando tiene
+  contenido (`C-08`) — [Cierto] — revertir: mover la normalización solo al servicio. Validación
+  pendiente en la máquina virtual del usuario.
 
 - [ ] T-005 Servicio de sesiones: alta, actividad, consulta y cierre actual
   RF: RF-006 (cierre de la sesión actual), RF-007, RF-008 (consulta de sesiones activas; M-01, D-02; C-01, detección y limpieza de sesiones caducadas; C-08) | Depende de: T-001, T-004 (modelo `UserSession`) | Archivos: 2
