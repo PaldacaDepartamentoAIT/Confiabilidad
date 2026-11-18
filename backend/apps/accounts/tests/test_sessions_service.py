@@ -24,17 +24,11 @@ def _store(session_key: str | None = None) -> SessionBase:
 
 
 def _request(
-    *,
-    ip: str = "192.0.2.10",
-    user_agent: str = "Browser/1.0",
-    session_key: str | None = None,
+    *, ip: str = "192.0.2.10", user_agent: str = "Browser/1.0", session_key: str | None = None
 ) -> HttpRequest:
-    factory = RequestFactory()
-    request = (
-        factory.get("/", REMOTE_ADDR=ip, HTTP_USER_AGENT=user_agent)
-        if user_agent
-        else factory.get("/", REMOTE_ADDR=ip)
-    )
+    request = RequestFactory().get("/", REMOTE_ADDR=ip)
+    if user_agent:
+        request.META["HTTP_USER_AGENT"] = user_agent
     store = _store(session_key)
     if session_key is None:
         store.create()
