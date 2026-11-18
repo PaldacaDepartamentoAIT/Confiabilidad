@@ -139,7 +139,7 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   Decisiones: validación pendiente en la máquina virtual del usuario (alternativa sin dependencias
   locales de `AGENTS.md`).
 
-- [ ] T-010 Rutas de inicio de sesión, consulta de sesión actual y cierre de sesión
+- [x] T-010 Rutas de inicio de sesión, consulta de sesión actual y cierre de sesión
   RF: RF-001 (acceso con correo y contraseña), RF-002, RF-003, RF-004, RF-005, RF-006, RF-018 (clientes web y de escritorio), RF-019 (M-04; D-01, vistas propias bajo `/api/.../auth/`; D-04, autenticación común para ambos clientes; C-04, rechazo de login con sesión activa; C-05; CF-2, test de respuesta neutra y bloqueo en cuenta inactiva; CF-3, test de invalidación al cerrar sesión o desactivar cuenta; CF-6, test de límites de intentos y por IP) | Depende de: T-002 (límite por IP del inicio de sesión), T-003 (bloqueo por intentos fallidos en cuenta inactiva), T-007 (sincronización automática de sesiones), T-009 (textos de la API en tres idiomas) | Archivos: 4
   Archivos: `api/auth_serializers.py`, `api/auth_views.py`, `api/urls.py`, `tests/test_auth_api.py`.
   Hecho cuando: `POST /api/{browser,app}/v1/auth/login`, `GET .../auth/session` y
@@ -150,6 +150,12 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   `QuerySet.update(is_active=False)`; suite verde.
   Excepción: las rutas nuevas requieren su serializador, su vista, el registro en `urls.py` y su
   test de integración para ser ejercitables.
+  Decisiones: `AppSessionView` en `browser` (`BrowserSessionView`) se decora con
+  `ensure_csrf_cookie` para que la consulta inicial de sesión entregue la cookie `csrftoken` al
+  navegador antes del login; en `app`, `AppLogoutView` asigna `user` y `session` al `HttpRequest`
+  subyacente antes de `django.contrib.auth.logout` para reutilizar el mismo receptor de auditoría —
+  [Cierto] — revertir: emitir `user_logged_out` manualmente para `app`. Validación pendiente en la
+  máquina virtual del usuario.
 
 - [ ] T-011 Test de neutralidad y bloqueo en el inicio de sesión
   RF: RF-002, RF-004 (CF-2, CF-6) | Depende de: T-010 (rutas de inicio de sesión, consulta de sesión actual y cierre de sesión) | Archivos: 1
@@ -300,9 +306,14 @@ Rama de integración: `feat/inicio-cierre-sesion` (los PR de las entregas van co
   Tareas: T-007, T-008 | Líneas estimadas: 280 | Rama: feat/inicio-cierre-sesion-purga
   Cómo probarlo: iniciar sesión desde consola/test, envejecer la fila en `UserSession` y ejecutar `python manage.py purge_expired_sessions`; desactivar o cambiar la contraseña de un usuario y comprobar que sus filas de `UserSession` desaparecen.
 
-- E-04 API de inicio de sesión, sesión actual, cierre de sesión y neutralidad
-  Tareas: T-009, T-010, T-011 | Líneas estimadas: 380 | Rama: feat/inicio-cierre-sesion-api-auth
-  Cómo probarlo: con `curl`, iniciar sesión en `/api/browser/v1/auth/login` y `/api/app/v1/auth/login`, consultar `/api/.../auth/session`, cerrar sesión en `/api/.../auth/logout`, y verificar la misma respuesta `400` ante cuenta inactiva y contraseña errónea.
+- E-04 API de inicio de sesión, sesión actual y cierre de sesión
+  Tareas: T-009, T-010 | Líneas estimadas: 424 | Rama: feat/inicio-cierre-sesion-api-auth
+  Cómo probarlo: con `curl`, iniciar sesión en `/api/browser/v1/auth/login` y `/api/app/v1/auth/login`, consultar `/api/.../auth/session` y cerrar sesión en `/api/.../auth/logout`.
+  Excepción: 424 líneas reales (dentro de `sdd.max_lineas_pr_excepcion`, 500): login, consulta de sesión y logout comparten autenticador y textos en `auth_views.py` y no deben exponerse por separado; T-011 pasa a E-04b para no superar 500 líneas.
+
+- E-04b Neutralidad y bloqueo por intentos fallidos en el inicio de sesión
+  Tareas: T-011 | Líneas estimadas: 70 | Rama: feat/inicio-cierre-sesion-neutralidad
+  Cómo probarlo: ejecutar `pytest apps/accounts/tests/test_auth_neutrality.py --no-cov -v` y comprobar con `curl` la respuesta idéntica y el bloqueo al 6.º intento entre correo inexistente, contraseña errónea y cuenta inactiva.
 
 - E-05 API de aceptación de términos vigentes y gestión de otras sesiones
   Tareas: T-012, T-013 | Líneas estimadas: 340 | Rama: feat/inicio-cierre-sesion-api-sesiones
