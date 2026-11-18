@@ -1,10 +1,12 @@
 import secrets
 from dataclasses import dataclass
 from datetime import datetime
+from enum import StrEnum
 from importlib import import_module
 from typing import Any
 
 from django.conf import settings
+from django.contrib.auth.signals import user_logged_out
 from django.contrib.sessions.backends.base import SessionBase
 from django.core.cache import caches
 from django.http import HttpRequest
@@ -15,6 +17,12 @@ from apps.accounts.models import DEFAULT_USER_AGENT, User, UserSession
 from apps.core.fingerprints import audit_session_fingerprint
 
 _REVERSE_KEY_PREFIX = "user-session-key:"
+
+
+class RevokeResult(StrEnum):
+    REVOKED = "revoked"
+    CURRENT_SESSION = "cannot_revoke_current_session"
+    NOT_FOUND = "not_found"
 
 
 @dataclass(frozen=True)
@@ -50,11 +58,35 @@ def _delete_from_store(raw_key: str) -> None:
     _session_store(raw_key).delete()
 
 
+def _raw_key(key_hash: str) -> str | None:
+    raw = _session_cache().get(_reverse_key(key_hash))
+    return raw if isinstance(raw, str) and raw else None
+
+
 def _exists_in_store(key_hash: str) -> bool:
-    raw_key = _session_cache().get(_reverse_key(key_hash))
-    if not isinstance(raw_key, str) or not raw_key:
-        return False
-    return _session_store(raw_key).exists(raw_key)
+    raw_key = _raw_key(key_hash)
+    return raw_key is not None and _session_store(raw_key).exists(raw_key)
+
+
+def _evict_from_store(key_hash: str) -> str | None:
+    raw_key = _raw_key(key_hash)
+    _session_cache().delete(_reverse_key(key_hash))
+    if raw_key is None or not _session_store(raw_key).exists(raw_key):
+        return None
+    _delete_from_store(raw_key)
+    return raw_key
+
+
+def _logout_request(
+    acting_request: HttpRequest | None, row: UserSession, raw_key: str
+) -> HttpRequest:
+    request = HttpRequest()
+    request.session = _session_store(raw_key)
+    request.META["REMOTE_ADDR"] = _request_ip(acting_request) if acting_request else row.ip
+    request.META["HTTP_USER_AGENT"] = (
+        _request_user_agent(acting_request) if acting_request else row.user_agent
+    )
+    return request
 
 
 def _request_ip(request: HttpRequest) -> str:
@@ -149,3 +181,79 @@ def close_current_session(user: User, session_key: str) -> None:
     UserSession.objects.filter(user=user, session_key=key_hash).delete()
     _session_cache().delete(_reverse_key(key_hash))
     _delete_from_store(session_key)
+
+
+def revoke_other_session(
+    user: User,
+    current_session_key: str | None,
+    session_id: int,
+    *,
+    request: HttpRequest | None = None,
+) -> RevokeResult:
+    row = UserSession.objects.filter(pk=session_id, user=user).first()
+    if row is None:
+        return RevokeResult.NOT_FOUND
+    if current_session_key and secrets.compare_digest(
+        row.session_key, audit_session_fingerprint(current_session_key)
+    ):
+        return RevokeResult.CURRENT_SESSION
+    expired = row.last_seen_at <= timezone.now() - conf.session_lifetime()
+    raw_key = _evict_from_store(row.session_key)
+    row.delete()
+    if expired or raw_key is None:
+        return RevokeResult.NOT_FOUND
+    user_logged_out.send(sender=User, request=_logout_request(request, row, raw_key), user=user)
+    return RevokeResult.REVOKED
+
+
+def revoke_all_other_sessions(
+    user: User,
+    current_session_key: str | None,
+    *,
+    request: HttpRequest | None = None,
+) -> int:
+    cutoff = timezone.now() - conf.session_lifetime()
+    current_hash = audit_session_fingerprint(current_session_key) if current_session_key else None
+    rows = list(UserSession.objects.filter(user=user))
+    targets = [
+        row
+        for row in rows
+        if current_hash is None or not secrets.compare_digest(row.session_key, current_hash)
+    ]
+    if not targets:
+        return 0
+    revoked = 0
+    for row in targets:
+        raw_key = _evict_from_store(row.session_key)
+        if row.last_seen_at > cutoff and raw_key is not None:
+            user_logged_out.send(
+                sender=User, request=_logout_request(request, row, raw_key), user=user
+            )
+            revoked += 1
+    UserSession.objects.filter(pk__in=[row.pk for row in targets]).delete()
+    return revoked
+
+
+def revoke_all_user_sessions(user: User) -> int:
+    rows = list(UserSession.objects.filter(user=user))
+    for row in rows:
+        _evict_from_store(row.session_key)
+    deleted, _ = UserSession.objects.filter(user=user).delete()
+    return deleted
+
+
+def purge_expired() -> int:
+    cutoff = timezone.now() - conf.session_lifetime()
+    expired_rows = list(UserSession.objects.filter(last_seen_at__lte=cutoff))
+    for row in expired_rows:
+        _evict_from_store(row.session_key)
+    deleted = 0
+    if expired_rows:
+        deleted, _ = UserSession.objects.filter(pk__in=[row.pk for row in expired_rows]).delete()
+    evicted_ids = [
+        row.pk for row in UserSession.objects.all() if not _exists_in_store(row.session_key)
+    ]
+    if evicted_ids:
+        evicted_deleted, _ = UserSession.objects.filter(pk__in=evicted_ids).delete()
+        deleted += evicted_deleted
+    return deleted

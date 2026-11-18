@@ -84,7 +84,7 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   [Cierto] — revertir: cambiar el almacén de índice en `sessions.py`. Validación pendiente en la
   máquina virtual del usuario.
 
-- [ ] T-006 Servicio de sesiones: cierre de otras sesiones, invalidación masiva y purga
+- [x] T-006 Servicio de sesiones: cierre de otras sesiones, invalidación masiva y purga
   RF: RF-003 (invalidación inmediata al desactivar o borrar una cuenta), RF-009 (cierre de otra sesión o de todas las demás), RF-010 (invalidación de sesiones al cambiar o restablecer la contraseña), RF-021 (limpieza de sesiones caducadas; M-01, D-02; C-01; C-05, cierre sin sesión válida y cierre masivo sin otras sesiones) | Depende de: T-005 (servicio de sesiones: alta, actividad, consulta y cierre actual) | Archivos: 2
   Archivos: `sessions.py`, `tests/test_sessions_service.py`.
   Hecho cuando: `revoke_other_session` rechaza cerrar la sesión actual y una inexistente o ajena, y
@@ -93,6 +93,11 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   cada una vigente (0 eventos si solo está la actual); `revoke_all_user_sessions` borra todas las de
   la cuenta; `purge_expired` borra todas las caducadas o sin entrada en caché y devuelve el total;
   suite verde.
+  Decisiones: al revocar otra sesión o todas las demás, `sessions.py` emite la señal estándar
+  `django.contrib.auth.signals.user_logged_out` con un `HttpRequest` construido con `_session_store(raw_key)`
+  y los metadatos de la petición o de la fila revocada, manteniendo `apps/accounts` desacoplada de
+  `apps/audit` y sin señales adicionales — [Cierto] — revertir: añadir una señal propia en
+  `apps/accounts/signals.py`. Validación pendiente en la máquina virtual del usuario.
 
 - [ ] T-007 Sincronización automática de sesiones al entrar, salir, desactivar, borrar o cambiar contraseña
   RF: RF-003, RF-006, RF-007, RF-010 (M-02, invalidación automática por cuenta inactiva, borrado o cambio de contraseña; D-05, invalidación de sesiones en dos capas; C-03, alcance de invalidación por cambio de contraseña) | Depende de: T-006 (servicio de sesiones: cierre de otras sesiones, invalidación masiva y purga) | Archivos: 3
