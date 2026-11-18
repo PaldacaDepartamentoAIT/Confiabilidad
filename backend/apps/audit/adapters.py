@@ -1,6 +1,9 @@
+import inspect
 from typing import Any
 
+from allauth.account import app_settings as allauth_account_settings
 from allauth.account.adapter import DefaultAccountAdapter
+from allauth.core.internal import ratelimit as allauth_ratelimit
 from django.core.exceptions import ValidationError
 from django.http import HttpRequest
 
@@ -50,7 +53,8 @@ class AuditAccountAdapter(DefaultAccountAdapter):  # type: ignore[misc]  # allau
     def pre_login(self, request: HttpRequest, user: Any, **kwargs: Any) -> Any:
         if not user.is_active:
             # Cuenta para el límite de allauth igual que una contraseña errónea (D-03, C-02).
-            super().authentication_failed(request, email=user.email)
+            key = self._get_login_attempts_cache_key(request, email=user.email)
+            _consume_login_failed(request, key)
             record_event(
                 EventType.LOGIN,
                 success=False,
@@ -59,3 +63,13 @@ class AuditAccountAdapter(DefaultAccountAdapter):  # type: ignore[misc]  # allau
                 metadata={"reason": INACTIVE_ACCOUNT_CODE},
             )
         return super().pre_login(request, user, **kwargs)
+
+
+def _consume_login_failed(request: HttpRequest, key: str) -> None:
+    kwargs: dict[str, Any] = {}
+    params = inspect.signature(allauth_ratelimit.consume).parameters
+    if "app" in params:
+        kwargs["app"] = "allauth.account"
+    if "config" in params:
+        kwargs["config"] = allauth_account_settings.RATE_LIMITS
+    allauth_ratelimit.consume(request, action="login_failed", key=key, **kwargs)

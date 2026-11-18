@@ -51,11 +51,11 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   limitador `login_failed` de allauth, de modo que al sexto intento consecutivo se bloquea con
   `too_many_login_attempts` y genera el evento `LOCKOUT`, igual que con contraseña incorrecta, sin
   romper los tests existentes de `test_inactive_login.py`; suite verde.
-  Decisiones: `pre_login` llama a `super().authentication_failed(request, email=user.email)` (de
-  `DefaultAccountAdapter`) en lugar de `self.authentication_failed`, para consumir el intento en el
-  limitador oficial de allauth sin registrar un segundo evento `invalid_credentials` además de
-  `inactive_account` — [Cierto] — revertir: quitar la llamada a `super().authentication_failed`.
-  Validación pendiente en la máquina virtual del usuario.
+  Decisiones: `pre_login` consume el intento directamente con `allauth_ratelimit.consume` (con
+  `action="login_failed"` y la clave de `_get_login_attempts_cache_key`) porque
+  `DefaultAccountAdapter.authentication_failed` no consume el límite por sí solo en allauth 65.x —
+  [Cierto] — revertir: quitar `_consume_login_failed` de `pre_login`. Validación pendiente en la
+  máquina virtual del usuario.
 
 - [ ] T-004 Modelo `UserSession`
   RF: RF-007 (registro de sesiones activas; M-01, modelo `UserSession` y servicio de sesiones; D-02, huella HMAC en `UserSession.session_key` e índice inverso en caché; C-08, trato de `user_agent` vacío o largo; S-09, huella HMAC de la clave de sesión) | Depende de: — | Archivos: 3
