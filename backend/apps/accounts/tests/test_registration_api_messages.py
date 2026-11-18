@@ -33,6 +33,12 @@ CODES = [
     "password_too_common",
     "password_entirely_numeric",
     "password_pwned",
+    "invalid_credentials",
+    "too_many_login_attempts",
+    "already_authenticated",
+    "unauthenticated",
+    "terms_required",
+    "cannot_revoke_current_session",
 ]
 
 

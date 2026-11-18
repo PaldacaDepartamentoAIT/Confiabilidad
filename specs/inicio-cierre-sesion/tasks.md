@@ -130,12 +130,14 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   solo pide borrar e informar cuántos borró — [Cierto] — revertir: añadir `--dry-run` como en
   `purge_security_events`. Validación pendiente en la máquina virtual del usuario.
 
-- [ ] T-009 Textos de la API de inicio y cierre de sesión en tres idiomas
+- [x] T-009 Textos de la API de inicio y cierre de sesión en tres idiomas
   RF: RF-019 (idioma de pantallas y mensajes; M-04, API de inicio y cierre de sesión, términos y sesiones activas) | Depende de: — | Archivos: 2
   Archivos: `api/messages.py`, `tests/test_registration_api_messages.py`.
   Hecho cuando: `invalid_credentials`, `too_many_login_attempts`, `already_authenticated`,
   `unauthenticated`, `terms_required` y `cannot_revoke_current_session` tienen texto en `es`,
   `pt-BR` y `en`, y el test de completitud de mensajes pasa; suite verde.
+  Decisiones: validación pendiente en la máquina virtual del usuario (alternativa sin dependencias
+  locales de `AGENTS.md`).
 
 - [ ] T-010 Rutas de inicio de sesión, consulta de sesión actual y cierre de sesión
   RF: RF-001 (acceso con correo y contraseña), RF-002, RF-003, RF-004, RF-005, RF-006, RF-018 (clientes web y de escritorio), RF-019 (M-04; D-01, vistas propias bajo `/api/.../auth/`; D-04, autenticación común para ambos clientes; C-04, rechazo de login con sesión activa; C-05; CF-2, test de respuesta neutra y bloqueo en cuenta inactiva; CF-3, test de invalidación al cerrar sesión o desactivar cuenta; CF-6, test de límites de intentos y por IP) | Depende de: T-002 (límite por IP del inicio de sesión), T-003 (bloqueo por intentos fallidos en cuenta inactiva), T-007 (sincronización automática de sesiones), T-009 (textos de la API en tres idiomas) | Archivos: 4
