@@ -57,6 +57,26 @@ def purge_after() -> timedelta:
     return timedelta(hours=_at_least_one("REGISTRATION_PURGE_AFTER_HOURS"))
 
 
+def login_max_failed_attempts() -> int:
+    return _at_least_one("LOGIN_MAX_FAILED_ATTEMPTS")
+
+
+def login_lockout_window() -> timedelta:
+    return timedelta(minutes=_at_least_one("LOGIN_LOCKOUT_MINUTES"))
+
+
+def login_rate_ip_per_minute() -> int:
+    return _at_least_one("LOGIN_RATE_IP_PER_MINUTE")
+
+
+def session_activity_update_interval() -> timedelta:
+    return timedelta(seconds=_at_least_one("SESSION_ACTIVITY_UPDATE_INTERVAL_SECONDS"))
+
+
+def session_lifetime() -> timedelta:
+    return timedelta(days=_at_least_one("SESSION_LIFETIME_DAYS"))
+
+
 def _at_least_one(name: str) -> int:
     # Un límite de 0 no tiene significado definido: es un error de configuración, no un cierre.
     value = int(getattr(settings, name))

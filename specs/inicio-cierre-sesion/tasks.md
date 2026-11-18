@@ -14,7 +14,7 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
 
 ## Backend
 
-- [ ] T-001 Valores configurables de inicio de sesión y sesiones
+- [x] T-001 Valores configurables de inicio de sesión y sesiones
   RF: RF-020 (valores configurables; M-03, adaptador de allauth y límites de inicio de sesión) | Depende de: — | Archivos: 4
   Archivos: `backend/config/settings.py`, `backend/.env.example`, `conf.py`,
   `tests/test_auth_conf.py`.
@@ -25,15 +25,25 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   menores que 1; suite verde.
   Excepción: la configuración está repartida por diseño entre `settings.py`, `.env.example` y
   `conf.py`; separarla dejaría un ajuste sin lector o sin su prueba.
+  Decisiones: `ACCOUNT_RATE_LIMITS["login_failed"]` conserva `10/m/ip` junto a
+  `{LOGIN_MAX_FAILED_ATTEMPTS}/{LOGIN_LOCKOUT_MINUTES}m/key`, como el valor por defecto de allauth,
+  para no bloquear por IP tras 5 intentos cuando `password_reset.complete` borra el contador por
+  correo y conserva el de IP (`RF-009` de `cambio-contrasena`) — [Cierto] — revertir: cambiar la
+  cadena en `settings.py`. Validación pendiente en la máquina virtual del usuario (alternativa sin
+  dependencias locales de `AGENTS.md`).
 
-- [ ] T-002 Límite por IP del inicio de sesión
+- [x] T-002 Límite por IP del inicio de sesión
   RF: RF-005 (límite de frecuencia por IP en el inicio de sesión), RF-020 (M-03) | Depende de: T-001 (valores configurables de inicio de sesión y sesiones) | Archivos: 2
   Archivos: `throttling.py`, `tests/test_auth_throttling.py`.
   Hecho cuando: `check_login_ip` permite 30 solicitudes por minuto desde una misma IP y rechaza la
   31.ª devolviendo `allowed=False` y los segundos de espera (`retry_after`), con una clave propia en
   caché independiente de las del registro; suite verde.
+  Decisiones: `_check` admite un parámetro `window` con valor por defecto `_HOUR` para reutilizar el
+  mismo registro deslizante con ventana de 60 s (`_MINUTE`) sin cambiar las funciones del registro —
+  [Cierto] — revertir: separar una función propia para la ventana de un minuto. Validación pendiente
+  en la máquina virtual del usuario.
 
-- [ ] T-003 Bloqueo por intentos fallidos en cuenta inactiva
+- [x] T-003 Bloqueo por intentos fallidos en cuenta inactiva
   RF: RF-002 (rechazo neutro de credenciales inválidas o cuenta inactiva), RF-004 (bloqueo temporal por intentos fallidos; M-03; D-03, cómputo de intentos fallidos en cuenta inactiva; C-02, bloqueo por intentos en cuenta inactiva) | Depende de: T-001 | Archivos: 2
   Archivos: `backend/apps/audit/adapters.py`, `tests/test_inactive_login.py`.
   Hecho cuando: en `AuditAccountAdapter.pre_login`, un intento sobre una cuenta inactiva con
@@ -41,6 +51,11 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   limitador `login_failed` de allauth, de modo que al sexto intento consecutivo se bloquea con
   `too_many_login_attempts` y genera el evento `LOCKOUT`, igual que con contraseña incorrecta, sin
   romper los tests existentes de `test_inactive_login.py`; suite verde.
+  Decisiones: `pre_login` consume el intento directamente con `allauth_ratelimit.consume` (con
+  `action="login_failed"` y la clave de `_get_login_attempts_cache_key`) porque
+  `DefaultAccountAdapter.authentication_failed` no consume el límite por sí solo en allauth 65.x —
+  [Cierto] — revertir: quitar `_consume_login_failed` de `pre_login`. Validación pendiente en la
+  máquina virtual del usuario.
 
 - [ ] T-004 Modelo `UserSession`
   RF: RF-007 (registro de sesiones activas; M-01, modelo `UserSession` y servicio de sesiones; D-02, huella HMAC en `UserSession.session_key` e índice inverso en caché; C-08, trato de `user_agent` vacío o largo; S-09, huella HMAC de la clave de sesión) | Depende de: — | Archivos: 3
