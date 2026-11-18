@@ -30,8 +30,11 @@ def _request(
     session_key: str | None = None,
 ) -> HttpRequest:
     factory = RequestFactory()
-    headers = {"HTTP_USER_AGENT": user_agent} if user_agent else {}
-    request = factory.get("/", REMOTE_ADDR=ip, **headers)
+    request = (
+        factory.get("/", REMOTE_ADDR=ip, HTTP_USER_AGENT=user_agent)
+        if user_agent
+        else factory.get("/", REMOTE_ADDR=ip)
+    )
     store = _store(session_key)
     if session_key is None:
         store.create()
