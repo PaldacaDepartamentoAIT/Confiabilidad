@@ -7,6 +7,7 @@ from django.contrib.auth.models import (
     BaseUserManager,
     PermissionsMixin,
 )
+from django.contrib.auth.signals import user_logged_in, user_logged_out
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.functions import Lower
@@ -16,7 +17,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
-from apps.accounts import conf
+from apps.accounts import conf, signals
 from apps.accounts.validators import (
     NAME_MAX_LENGTH,
     PLACEHOLDER_COUNTRY,
@@ -131,11 +132,28 @@ class User(AbstractBaseUser, PermissionsMixin):
         )
         if skip_history:
             self.skip_history_when_saving = True
+        previous = self._lifecycle_snapshot(update_fields)
         try:
             super().save(*args, **kwargs)
         finally:
             if skip_history:
                 del self.skip_history_when_saving
+        self._revoke_sessions_on_change(previous)
+
+    def _lifecycle_snapshot(self, update_fields: Any) -> dict[str, Any] | None:
+        if self._state.adding:
+            return None
+        if update_fields is not None and not ({"is_active", "password"} & set(update_fields)):
+            return None
+        return type(self).objects.filter(pk=self.pk).values("is_active", "password").first()
+
+    def _revoke_sessions_on_change(self, previous: dict[str, Any] | None) -> None:
+        if previous is None:
+            return
+        if (previous["is_active"] and not self.is_active) or previous["password"] != self.password:
+            from apps.accounts import sessions
+
+            sessions.revoke_all_user_sessions(self)
 
     def clean_fields(self, exclude: Collection[str] | None = None) -> None:
         excluded = set(exclude or ())
@@ -333,3 +351,41 @@ class UserSession(models.Model):
         if not self.user_agent or not self.user_agent.strip():
             self.user_agent = DEFAULT_USER_AGENT
         super().save(*args, **kwargs)
+
+
+@receiver(user_logged_in)
+def _register_user_session_on_login(sender: type, request: Any, user: Any, **kwargs: Any) -> None:
+    if isinstance(user, User) and request is not None and getattr(request, "session", None):
+        from apps.accounts import sessions
+
+        sessions.register_session(request, user)
+
+
+@receiver(user_logged_out)
+def _remove_user_session_on_logout(sender: type, request: Any, user: Any, **kwargs: Any) -> None:
+    session = getattr(request, "session", None)
+    session_key = getattr(session, "session_key", None)
+    if isinstance(user, User) and isinstance(session_key, str) and session_key:
+        from apps.accounts import sessions
+
+        sessions.close_current_session(user, session_key)
+
+
+@receiver(pre_delete, sender=User)
+def _revoke_sessions_on_delete(sender: type[User], instance: User, **kwargs: Any) -> None:
+    from apps.accounts import sessions
+
+    sessions.revoke_all_user_sessions(instance)
+
+
+@receiver(signals.password_reset_completed)
+def _revoke_sessions_on_password_reset(
+    sender: type, email: str, success: bool, **kwargs: Any
+) -> None:
+    if not success:
+        return
+    user = User.objects.filter(email__iexact=email).first()
+    if user is not None:
+        from apps.accounts import sessions
+
+        sessions.revoke_all_user_sessions(user)
