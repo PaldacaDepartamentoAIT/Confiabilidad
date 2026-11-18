@@ -237,6 +237,11 @@ Secretos:
 - Pasar tipos (`cd backend && mypy .`, `pnpm --filter frontend typecheck`).
 - Pasar lint/formato (`ruff`/`black`, `eslint`/`prettier`, `cargo fmt`/`clippy`).
 - Verificar que el entorno Docker sigue levantando sin errores.
+- **Alternativa sin dependencias locales:** si la máquina donde se trabaja no tiene disponibles las
+  dependencias o los servicios locales (Docker/Podman, PostgreSQL, Redis, entornos de Python o Node),
+  no se bloquea el avance: se guarda el trabajo en su rama correspondiente, se sube a GitHub
+  (`git push -u origin <rama>`) y se dejan listos los comandos de verificación para que el usuario
+  ejecute los tests, tipos y linters en su máquina virtual o VPS con todo instalado.
 
 ### Rutas
 - `HUMAN_TODO.md`: acciones que requieren intervención humana y no pertenecen a ninguna spec
