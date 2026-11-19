@@ -35,6 +35,10 @@ const SERVER_CODES: [string, string][] = [
   ["password_too_common", "passwordTooCommon"],
   ["password_entirely_numeric", "passwordOnlyDigits"],
   ["password_pwned", "passwordPwned"],
+  ["invalid_credentials", "invalidCredentials"],
+  ["too_many_login_attempts", "tooManyLoginAttempts"],
+  ["already_authenticated", "alreadyAuthenticated"],
+  ["cannot_revoke_current_session", "cannotRevokeCurrentSession"],
 ];
 
 test.each(SERVER_CODES)("the server code %s is shown with the key %s", (code, key) => {
