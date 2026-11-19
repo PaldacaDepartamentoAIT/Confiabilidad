@@ -7,6 +7,7 @@ from django.contrib.auth.models import (
     BaseUserManager,
     PermissionsMixin,
 )
+from django.contrib.auth.signals import user_logged_in, user_logged_out
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.functions import Lower
@@ -16,7 +17,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
-from apps.accounts import conf
+from apps.accounts import conf, signals
 from apps.accounts.validators import (
     NAME_MAX_LENGTH,
     PLACEHOLDER_COUNTRY,
@@ -131,11 +132,33 @@ class User(AbstractBaseUser, PermissionsMixin):
         )
         if skip_history:
             self.skip_history_when_saving = True
+        previous = self._lifecycle_snapshot(update_fields)
         try:
             super().save(*args, **kwargs)
         finally:
             if skip_history:
                 del self.skip_history_when_saving
+        self._revoke_sessions_on_change(previous)
+
+    def _lifecycle_snapshot(self, update_fields: Any) -> tuple[bool, str] | None:
+        if self._state.adding:
+            return None
+        if update_fields is not None and not ({"is_active", "password"} & set(update_fields)):
+            return None
+        return type(self).objects.filter(pk=self.pk).values_list("is_active", "password").first()
+
+    def _revoke_sessions_on_change(self, previous: tuple[bool, str] | None) -> None:
+        if previous is None:
+            return
+        was_active, previous_password = previous
+        deactivated = was_active and not self.is_active
+        password_changed = previous_password != self.password
+        if deactivated or password_changed:
+            from apps.accounts import sessions
+
+            # Al cambiar la contraseña con cuenta activa, vaciamos el contenido de la sesión sin
+            # borrar la clave para que allauth responda 401 y no 410 (S-03 de cambio-contrasena).
+            sessions.revoke_all_user_sessions(self, clear_only=not deactivated)
 
     def clean_fields(self, exclude: Collection[str] | None = None) -> None:
         excluded = set(exclude or ())
@@ -313,3 +336,66 @@ def _leave_password_reset_tombstone(sender: type[User], instance: User, **kwargs
     )
     tombstone.save()
     PhantomProcess.objects.filter(pk=tombstone.pk).update(created_at=request.created_at)
+
+
+DEFAULT_USER_AGENT = "unknown"
+
+
+class UserSession(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="sessions")
+    session_key = models.CharField(max_length=64, unique=True)
+    ip = models.GenericIPAddressField()
+    user_agent = models.TextField(blank=True, default=DEFAULT_USER_AGENT)
+    created_at = models.DateTimeField(default=timezone.now)
+    last_seen_at = models.DateTimeField(default=timezone.now, db_index=True)
+
+    def __str__(self) -> str:
+        return f"{self.user.email}:{self.ip}"
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        if not self.user_agent or not self.user_agent.strip():
+            self.user_agent = DEFAULT_USER_AGENT
+        super().save(*args, **kwargs)
+
+
+@receiver(user_logged_in)
+def _register_user_session_on_login(sender: type, request: Any, user: Any, **kwargs: Any) -> None:
+    if isinstance(user, User) and request is not None and getattr(request, "session", None):
+        from apps.accounts import sessions
+
+        sessions.register_session(request, user)
+
+
+@receiver(user_logged_out)
+def _remove_user_session_on_logout(sender: type, request: Any, user: Any, **kwargs: Any) -> None:
+    session = getattr(request, "session", None)
+    session_key = getattr(session, "session_key", None)
+    if isinstance(session_key, str) and session_key:
+        from apps.accounts import sessions
+
+        if isinstance(user, User):
+            sessions.close_current_session(user, session_key)
+        else:
+            from apps.core.fingerprints import audit_session_fingerprint
+
+            UserSession.objects.filter(session_key=audit_session_fingerprint(session_key)).delete()
+
+
+@receiver(pre_delete, sender=User)
+def _revoke_sessions_on_delete(sender: type[User], instance: User, **kwargs: Any) -> None:
+    from apps.accounts import sessions
+
+    sessions.revoke_all_user_sessions(instance)
+
+
+@receiver(signals.password_reset_completed)
+def _revoke_sessions_on_password_reset(
+    sender: type, email: str, success: bool, **kwargs: Any
+) -> None:
+    if not success:
+        return
+    user = User.objects.filter(email__iexact=email).first()
+    if user is not None:
+        from apps.accounts import sessions
+
+        sessions.revoke_all_user_sessions(user, clear_only=user.is_active)

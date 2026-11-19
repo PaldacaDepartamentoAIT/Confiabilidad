@@ -166,8 +166,9 @@ Secretos:
   Si una entrega ya implementada rebasa `sdd.max_lineas_pr`, se divide en dos (`E-XX` y `E-XXb`)
   sin volver a preguntar, procurando que ambas muestren algo de funcionalidad (algo que se pueda
   ver o probar) y no solo una la parte visible y la otra la parte interna.
-  La siguiente rama sale de la rama de integración cuando la anterior está fusionada en ella, o de
-  la rama anterior (PR apilado) si el usuario no quiere esperar. La descripción de cada PR incluye
+  La siguiente rama sale de la rama de integración **solo después de que la entrega anterior se
+  haya fusionado (merge) en ella**; nunca se continúa con la entrega o tarea siguiente sin que se
+  haya hecho merge de la anterior (no se crean PR apilados). La descripción de cada PR incluye
   «Cómo probarlo» con pasos ejecutables.
 - **Rama de integración.** Cada feature tiene una rama de integración, `feat/<feature>`, que sale
   de `main` antes de su primera entrega. Las ramas de las entregas (`feat/<feature>-<descripcion>`)
@@ -195,7 +196,7 @@ Secretos:
     con su análisis de impacto, y toda tarea nueva, sea por un bug, un mutante o la validación).
     Todo lo demás es automático: `sdd-implementar` encadena las tareas sin pedir aprobación de cada
     diff, y al terminarlas (con todas las entregas fusionadas en la rama de integración) se lanza
-    `sdd-validar`. Los textos que se escriben sin Aceptar/Rechazar
+    `sdd-validar` cuando corresponda según el nivel de validación de la spec. Los textos que se escriben sin Aceptar/Rechazar
     (`resumen.md`, los resúmenes de entrega, el `HUMAN_TODO.md` de la feature, las marcas y decisiones de
     `tasks.md`, la entrada de validación)
     se listan en el informe final. El código se revisa en el PR de cada entrega, que solo se abre si el
@@ -207,7 +208,8 @@ Secretos:
     - superar `sdd.max_archivos_tarea` sin una `Excepción:` en la tarea;
     - superar `sdd.max_lineas_pr` en una entrega sin una `Excepción:`;
     - completar una entrega: se crea su resumen de entrega, se informa de sus líneas reales y de cómo
-      probarla, y se pregunta si se abre su PR antes de empezar la siguiente;
+      probarla, se abre (o prepara) su PR y **se espera a que el usuario haga merge en la rama de
+      integración** antes de continuar con la entrega o tarea siguiente;
     - añadir dependencias, servicios o infraestructura;
     - un mutante que sobrevive sin un arreglo claro: un test dentro de los archivos de la tarea que
       lo mate sin afirmar nada que no esté en la spec o el plan. Un mutante equivalente se anota en
@@ -225,9 +227,31 @@ Secretos:
     preguntar. La pregunta de aprobación se hace en ese mismo mensaje, como texto final, y no con
     una ventana de opciones que pueda ocultar lo que hay que aprobar.
   - **En ambos modos** se mantienen las reglas de ramas y commits, no acreditarse como IA,
-    `HUMAN_TODO.md`, el `resumen.md` con marco teórico, el test de mutación de cada tarea y que la
-    validación la haga un subagente sin contexto de la implementación (o una sesión nueva si el
-    entorno no admite subagentes; nunca la misma sesión).
+    `HUMAN_TODO.md`, el `resumen.md` con marco teórico y los requisitos del nivel de validación
+    elegido para la feature (`Validación:` en `spec.md`).
+- **Niveles de riesgo y validación.** Tras clarificar una feature en `sdd-clarificar` (y tras
+  clarificar un cambio con `sdd-cambio` si varía su impacto), se evalúa el nivel de riesgo y se
+  pregunta al usuario qué nivel de validación corresponde en formato de selección, colocando primero
+  y con `(Recomendada)` al final la opción indicada según el riesgo. La decisión se registra en
+  `spec.md`, justo debajo de `Aprobación:`, con la línea `Validación: estricta | ligera | sin-sdd`
+  (si falta en una spec existente, se asume `estricta`).
+  - **Validación estricta (Obligatoria)** (`Validación: estricta`): Solo para el core del negocio,
+    flujos de dinero/datos críticos, cambios en esquemas de base de datos o contratos de API pública.
+    Aquí un error sale carísimo. Mantiene el flujo SDD completo: `sdd-plan`, `sdd-tareas`, TDD con
+    test de mutación en `sdd-implementar` y validación formal requisito a requisito con
+    `sdd-validar` en un subagente sin contexto de la implementación (o una sesión nueva si el entorno
+    no admite subagentes; nunca la misma sesión).
+  - **Validación ligera / asíncrona** (`Validación: ligera`): Para features secundarios o internos.
+    Se escribe una spec mínima (criterios de aceptación en bullets, sin diagramas extensos) y la
+    validación ocurre en el Code Review o mediante tests automatizados básicos. Se puede omitir
+    `sdd-plan` extenso y `sdd-validar` formal en subagente, así como el test de mutación obligatorio;
+    siguen aplicándose los tests automatizados básicos, tipos, lint/formato y revisión en PR.
+  - **Sin SDD (Vía rápida)** (`Validación: sin-sdd`): Hotfixes, ajustes visuales de UI, refactors
+    internos que no alteran comportamiento o prototipos desechables. No requiere `sdd-plan`,
+    `sdd-tareas` ni `sdd-validar` (y estos casos pueden ejecutarse directamente por vía rápida sin
+    abrir flujo SDD). Si se clasifica así al cerrar `sdd-clarificar`, se registra en el historial
+    de la spec y se implementa en la rama adecuada (`fix/`, `refactor/`, `style/`, `poc/`) con las
+    comprobaciones de código estándar y revisión en PR.
 
 ## Al terminar cualquier tarea
 - Si la tarea solo cambia documentación (`.md`), no se levanta Docker ni se ejecutan tests, tipos
@@ -237,6 +261,11 @@ Secretos:
 - Pasar tipos (`cd backend && mypy .`, `pnpm --filter frontend typecheck`).
 - Pasar lint/formato (`ruff`/`black`, `eslint`/`prettier`, `cargo fmt`/`clippy`).
 - Verificar que el entorno Docker sigue levantando sin errores.
+- **Alternativa sin dependencias locales:** si la máquina donde se trabaja no tiene disponibles las
+  dependencias o los servicios locales (Docker/Podman, PostgreSQL, Redis, entornos de Python o Node),
+  no se bloquea el avance: se guarda el trabajo en su rama correspondiente, se sube a GitHub
+  (`git push -u origin <rama>`) y se dejan listos los comandos de verificación para que el usuario
+  ejecute los tests, tipos y linters en su máquina virtual o VPS con todo instalado.
 
 ### Rutas
 - `HUMAN_TODO.md`: acciones que requieren intervención humana y no pertenecen a ninguna spec
