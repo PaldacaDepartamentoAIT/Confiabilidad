@@ -258,7 +258,7 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   revertir: controlar el valor del campo en estado React. Validación pendiente en la máquina
   virtual del usuario (alternativa sin dependencias locales de `AGENTS.md`).
 
-- [ ] T-019 Pantalla de términos pendientes (sin ruta)
+- [x] T-019 Pantalla de términos pendientes (sin ruta)
   RF: RF-011, RF-012, RF-015, RF-019 (M-09, CF-5, CF-7) | Depende de: T-015, T-017 | Archivos: 2
   Archivos: `auth/TermsPage.tsx`, `auth/TermsPage.test.tsx`.
   Hecho cuando: con `terms_status === "not_accepted"`, `TermsPage` muestra el documento vigente en
@@ -266,6 +266,10 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   área privada, o permite cerrar la sesión actual (`logout`, incluso si falla la red); con
   `no_current_version`, oculta el formulario de aceptación, informa de que no se puede continuar y
   ofrece cerrar la sesión; suite verde.
+  Decisiones: reutiliza `DocumentCheckbox` (de `casilla-con-documento`) para mostrar el documento en
+  Markdown dentro del modal del sistema de diseño y sincronizar el estado de la casilla — [Cierto] —
+  revertir: pintar un `<Markdown>` en línea más un `<Checkbox>` simple. Validación pendiente en la
+  máquina virtual del usuario (alternativa sin dependencias locales de `AGENTS.md`).
 
 - [ ] T-020 Pantalla del área privada y gestión de sesiones (sin ruta)
   RF: RF-006, RF-008, RF-009, RF-011, RF-016, RF-017 (redirecciones según el estado de la sesión), RF-019 (M-10, pantalla del área privada y gestión de sesiones; C-05, C-06, CF-4, CF-7) | Depende de: T-015, T-016 | Archivos: 2
@@ -358,7 +362,7 @@ Rama de integración: `feat/inicio-cierre-sesion` (los PR de las entregas van co
   Cómo probarlo: ejecutar `pnpm --filter frontend test src/auth/LoginPage.test.tsx`.
 
 - E-07b Pantalla de términos pendientes (sin ruta)
-  Tareas: T-019 | Líneas estimadas: 220 | Rama: feat/inicio-cierre-sesion-pantalla-terminos
+  Tareas: T-019 | Líneas estimadas: 302 | Rama: feat/inicio-cierre-sesion-pantalla-terminos
   Cómo probarlo: ejecutar `pnpm --filter frontend test src/auth/TermsPage.test.tsx`.
 
 - E-08 Pantalla del área privada y gestión de sesiones (sin ruta)
