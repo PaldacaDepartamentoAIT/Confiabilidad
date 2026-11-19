@@ -226,7 +226,7 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   servidor devuelva `401` o falle la red), `acceptTerms`, `listSessions`, `revokeSession` y
   `revokeOtherSessions`; suite verde.
 
-- [ ] T-016 Textos de inicio de sesión, términos pendientes y sesiones activas en tres idiomas
+- [x] T-016 Textos de inicio de sesión, términos pendientes y sesiones activas en tres idiomas
   RF: RF-013 (pantalla de inicio de sesión y enlaces con el registro), RF-014 (validación en el cliente y mensajes de error al iniciar sesión), RF-015 (pantalla de aceptación de términos pendientes), RF-016 (área privada y gestión de sesiones en pantalla), RF-019 (M-07, enrutamiento, guardia de sesión y enlaces con registro) | Depende de: — | Archivos: 4
   Archivos: `i18n/locales/es.ts`, `i18n/locales/pt-BR.ts`, `i18n/locales/en.ts`,
   `i18n/locales/locales.test.ts`.

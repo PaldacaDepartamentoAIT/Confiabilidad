@@ -64,6 +64,7 @@ test("every language covers the groups used by the components", () => {
     "validation",
     "showcase",
     "register",
+    "auth",
   ]);
 });
 
