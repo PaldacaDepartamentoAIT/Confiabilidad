@@ -106,7 +106,7 @@ test("vacía la contraseña y conserva el correo ante invalid_credentials, pero 
 });
 
 test("muestra cuenta atrás ante 429 y desactiva el botón hasta llegar a cero", async () => {
-  vi.useFakeTimers();
+  vi.useFakeTimers({ shouldAdvanceTime: true });
   try {
     renderLogin(() => Promise.resolve(json(429, { message: "x", retry_after: 2 })));
     fireEvent.change(screen.getByRole("textbox", { name: "Correo electrónico" }), {
@@ -115,18 +115,18 @@ test("muestra cuenta atrás ante 429 y desactiva el botón hasta llegar a cero",
     fireEvent.change(screen.getByLabelText(/^Contraseña/), {
       target: { value: "secreto123" },
     });
-    await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Iniciar sesión" }));
-    });
+    fireEvent.click(screen.getByRole("button", { name: "Iniciar sesión" }));
 
+    expect(
+      await screen.findByText("Demasiados intentos. Vuelve a intentarlo en 2 s."),
+    ).toBeInTheDocument();
     const submit = screen.getByRole("button", { name: "Iniciar sesión" });
-    expect(screen.getByRole("status")).toHaveTextContent("2 s");
     expect(submit).toBeDisabled();
 
     act(() => {
       vi.advanceTimersByTime(2000);
     });
-    expect(submit).not.toBeDisabled();
+    expect(submit).toBeEnabled();
   } finally {
     vi.useRealTimers();
   }
