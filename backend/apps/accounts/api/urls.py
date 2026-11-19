@@ -4,9 +4,11 @@ from apps.accounts.api.auth_views import (
     AppLoginView,
     AppLogoutView,
     AppSessionView,
+    AppTermsAcceptView,
     BrowserLoginView,
     BrowserLogoutView,
     BrowserSessionView,
+    BrowserTermsAcceptView,
 )
 from apps.accounts.api.flow_views import (
     AppCompleteView,
@@ -69,4 +71,14 @@ urlpatterns = [
     path("app/v1/auth/session", AppSessionView.as_view(), name="auth-session-app"),
     path("browser/v1/auth/logout", BrowserLogoutView.as_view(), name="auth-logout-browser"),
     path("app/v1/auth/logout", AppLogoutView.as_view(), name="auth-logout-app"),
+    path(
+        "browser/v1/auth/terms/accept",
+        BrowserTermsAcceptView.as_view(),
+        name="auth-terms-accept-browser",
+    ),
+    path(
+        "app/v1/auth/terms/accept",
+        AppTermsAcceptView.as_view(),
+        name="auth-terms-accept-app",
+    ),
 ]

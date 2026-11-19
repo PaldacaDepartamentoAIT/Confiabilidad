@@ -171,7 +171,7 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   la caché de sesiones entre parametrizaciones. Validación pendiente en la máquina virtual del
   usuario (alternativa sin dependencias locales de `AGENTS.md`).
 
-- [ ] T-012 Ruta de aceptación de términos vigentes y guarda del área privada
+- [x] T-012 Ruta de aceptación de términos vigentes y guarda del área privada
   RF: RF-011 (bloqueo del área privada mientras falten los términos vigentes), RF-012 (aceptación de los términos vigentes con sesión iniciada), RF-018, RF-019 (M-04; D-06, comprobación de términos vigentes en cada petición privada; C-06, comprobación de términos en cada petición privada; CF-5, test de bloqueo y aceptación de términos vigentes) | Depende de: T-010 | Archivos: 4
   Archivos: `api/auth_serializers.py`, `api/auth_views.py`, `api/urls.py`,
   `tests/test_auth_terms_gate.py`.
@@ -182,6 +182,11 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   pero recibe `403 terms_required` en las rutas del área privada, también cuando se publica una
   versión obligatoria nueva con la sesión ya abierta; suite verde.
   Excepción: la ruta nueva requiere su serializador, su vista, su entrada en `urls.py` y su test.
+  Decisiones: `TermsAcceptSerializer` reutiliza `RegistrationSerializer().validate_terms` desde
+  `run_validation` para conservar exactamente las mismas reglas y códigos de RF-004 de
+  `registro-api` sin duplicar código — [Cierto] — revertir: extraer una función compartida en
+  `serializers.py`. Validación pendiente en la máquina virtual del usuario (alternativa sin
+  dependencias locales de `AGENTS.md`).
 
 - [ ] T-013 Rutas de listado y cierre de otras sesiones activas
   RF: RF-008, RF-009, RF-011, RF-018, RF-019 (M-04, D-06; C-01, C-05, C-06; CF-4, test de listado y cierre de otras sesiones) | Depende de: T-012 (ruta de aceptación de términos vigentes y guarda del área privada) | Archivos: 4
