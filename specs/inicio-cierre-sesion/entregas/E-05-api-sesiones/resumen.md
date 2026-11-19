@@ -1,6 +1,6 @@
 # Entrega E-05 · API de aceptación de términos vigentes y guarda del área privada
 
-Rama: `feat/inicio-cierre-sesion-api-sesiones` · PR: pendiente · Líneas de código y tests: 292 (límite: 400).
+Rama: `feat/inicio-cierre-sesion-api-sesiones` · PR: pendiente · Líneas de código y tests: 293 (límite: 400).
 
 ## Qué se hizo
 - Se añadió `TermsAcceptSerializer` en `apps/accounts/api/auth_serializers.py`, reutilizando las reglas y códigos de validación de términos obligatorios de `RegistrationSerializer.validate_terms` (`RF-012`, `RF-019`).

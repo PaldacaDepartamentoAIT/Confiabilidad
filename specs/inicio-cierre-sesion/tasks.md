@@ -326,7 +326,7 @@ Rama de integración: `feat/inicio-cierre-sesion` (los PR de las entregas van co
   Cómo probarlo: ejecutar `pytest apps/accounts/tests/test_auth_neutrality.py --no-cov -v` y comprobar con `curl` la respuesta idéntica y el bloqueo al 6.º intento entre correo inexistente, contraseña errónea y cuenta inactiva.
 
 - E-05 API de aceptación de términos vigentes y guarda del área privada
-  Tareas: T-012 | Líneas estimadas: 292 | Rama: feat/inicio-cierre-sesion-api-sesiones
+  Tareas: T-012 | Líneas estimadas: 293 | Rama: feat/inicio-cierre-sesion-api-sesiones
   Cómo probarlo: con `curl`, iniciar sesión con una cuenta sin términos vigentes aceptados, aceptarlos en `/api/app/v1/auth/terms/accept` y comprobar en `/api/app/v1/auth/session` que `terms_status` pasa a `"accepted"`, además de ejecutar `pytest apps/accounts/tests/test_auth_terms_gate.py --no-cov -v`.
 
 - E-05b API de listado y cierre de otras sesiones activas

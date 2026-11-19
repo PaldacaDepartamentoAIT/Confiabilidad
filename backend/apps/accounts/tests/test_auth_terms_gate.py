@@ -16,7 +16,7 @@ from apps.accounts import sessions
 from apps.accounts.api import auth_views
 from apps.accounts.tests.factories import DEFAULT_PASSWORD, make_user
 from apps.consents.models import Terms, UserTerms
-from apps.consents.tests.factories import publish_version
+from apps.consents.tests.factories import make_document, publish_version
 
 pytestmark = pytest.mark.django_db
 
@@ -133,8 +133,9 @@ def test_terms_accept_without_current_version_and_concurrent_error(
     client = _client()
     token = _login(client, "app", user.email).json()["session_token"]
 
+    make_document(version="draft-1", locale="es", published_at=None)
     missing = _accept(
-        client, "app", {"version": "1", "locale": "es", "accepted": True}, token=token
+        client, "app", {"version": "draft-1", "locale": "es", "accepted": True}, token=token
     )
     assert missing.status_code == 400
     assert missing.json()["errors"]["non_field_errors"][0]["code"] == "no_current_version"
