@@ -50,18 +50,21 @@ class AuditAccountAdapter(DefaultAccountAdapter):  # type: ignore[misc]  # allau
             metadata={"reason": LOGIN_LIMIT_CODE},
         )
 
+    def record_inactive_login_attempt(self, request: HttpRequest, user: Any) -> None:
+        # Cuenta para el límite de allauth igual que una contraseña errónea (D-03, C-02).
+        key = self._get_login_attempts_cache_key(request, email=user.email)
+        _consume_login_failed(request, key)
+        record_event(
+            EventType.LOGIN,
+            success=False,
+            request=request,
+            email=user.email,
+            metadata={"reason": INACTIVE_ACCOUNT_CODE},
+        )
+
     def pre_login(self, request: HttpRequest, user: Any, **kwargs: Any) -> Any:
         if not user.is_active:
-            # Cuenta para el límite de allauth igual que una contraseña errónea (D-03, C-02).
-            key = self._get_login_attempts_cache_key(request, email=user.email)
-            _consume_login_failed(request, key)
-            record_event(
-                EventType.LOGIN,
-                success=False,
-                request=request,
-                email=user.email,
-                metadata={"reason": INACTIVE_ACCOUNT_CODE},
-            )
+            self.record_inactive_login_attempt(request, user)
         return super().pre_login(request, user, **kwargs)
 
 

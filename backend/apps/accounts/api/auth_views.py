@@ -154,7 +154,8 @@ class AppLoginView(APIView):
         if user is None:
             return _err("invalid_credentials", language)
         if not user.is_active:
-            adapter.pre_login(django_request, user)
+            # No llamamos a super().pre_login porque accede a sesión/mensajes y añade Vary: Cookie.
+            adapter.record_inactive_login_attempt(django_request, user)
             return _err("invalid_credentials", language)
         login(django_request, user, backend=_AUTH_BACKEND)
         payload = _session_info_payload(user, language)
