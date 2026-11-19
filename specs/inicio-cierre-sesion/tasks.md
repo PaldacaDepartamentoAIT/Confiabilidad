@@ -157,7 +157,7 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   [Cierto] — revertir: emitir `user_logged_out` manualmente para `app`. Validación pendiente en la
   máquina virtual del usuario.
 
-- [ ] T-011 Test de neutralidad y bloqueo en el inicio de sesión
+- [x] T-011 Test de neutralidad y bloqueo en el inicio de sesión
   RF: RF-002, RF-004 (CF-2, CF-6) | Depende de: T-010 (rutas de inicio de sesión, consulta de sesión actual y cierre de sesión) | Archivos: 1
   Archivos: `tests/test_auth_neutrality.py`.
   Hecho cuando: un test demuestra que correo inexistente, contraseña incorrecta y cuenta inactiva
@@ -165,6 +165,11 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   código (`400`), cuerpo, cabeceras y cookies en los intentos 1 a 5 y el mismo bloqueo
   (`too_many_login_attempts`) en el 6.º, mientras que `SecurityEvent` registra `inactive_account`
   antes del bloqueo cuando la contraseña de la cuenta inactiva es correcta; suite verde.
+  Decisiones: cada caso usa su propia IP aleatoria para no disparar el límite por IP (`RF-005`)
+  antes del 6.º intento por cuenta y un correo con sufijo aleatorio para aislar contadores de
+  Redis entre ejecuciones — [Cierto] — revertir: fijar correos/IPs estáticos si la suite limpia
+  la caché de sesiones entre parametrizaciones. Validación pendiente en la máquina virtual del
+  usuario (alternativa sin dependencias locales de `AGENTS.md`).
 
 - [ ] T-012 Ruta de aceptación de términos vigentes y guarda del área privada
   RF: RF-011 (bloqueo del área privada mientras falten los términos vigentes), RF-012 (aceptación de los términos vigentes con sesión iniciada), RF-018, RF-019 (M-04; D-06, comprobación de términos vigentes en cada petición privada; C-06, comprobación de términos en cada petición privada; CF-5, test de bloqueo y aceptación de términos vigentes) | Depende de: T-010 | Archivos: 4
