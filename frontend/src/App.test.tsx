@@ -87,6 +87,8 @@ function fakeClient() {
 }
 
 test.each([
+  ["/login", "Sign in"],
+  ["/terms", "Pending terms and conditions"],
   ["/register", "Create your account"],
   ["/register/continue#pid-1", "Enter the verification code"],
   ["/register/done", "Account created"],
