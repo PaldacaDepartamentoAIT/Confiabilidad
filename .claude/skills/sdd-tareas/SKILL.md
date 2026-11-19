@@ -18,8 +18,8 @@ Si falta alguno, pídelo al usuario en un solo mensaje y no continúes hasta ten
 ## Precondiciones
 
 - [ ] Existe `specs/<feature>/spec.md` con `Estado: aprobada`.
-- [ ] Existe `specs/<feature>/plan.md` con `Estado: aprobado`.
-- [ ] La sección "RF sin cobertura" del plan está vacía o dice "ninguno".
+- [ ] `Validación:` en `spec.md` no es `sin-sdd` (vía rápida) ni `pendiente`.
+- [ ] Para `Validación: estricta` (o sin línea `Validación:`): existe `specs/<feature>/plan.md` con `Estado: aprobado` y la sección "RF sin cobertura" vacía o con "ninguno". En `Validación: ligera`, el plan es opcional y pueden crearse tareas breves directamente desde los criterios en bullets de la spec.
 - [ ] Si ya existe `tasks.md`: la última entrada del historial de la spec está en `impacto analizado` y el plan (si debía cambiar) ya está aprobado de nuevo.
 
 ## Si falta una precondición

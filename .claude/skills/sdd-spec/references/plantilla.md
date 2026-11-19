@@ -4,6 +4,7 @@
 # Spec: <feature>
 Estado: borrador | aprobada
 Aprobación: fuerte | ligera
+Validación: pendiente | estricta | ligera | sin-sdd
 
 ## Objetivo (por qué)
 

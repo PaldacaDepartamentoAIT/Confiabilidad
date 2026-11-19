@@ -47,9 +47,11 @@ Siguiente paso: <skill a ejecutar o acción del usuario>
    - Este formato es solo para la entrevista: las aprobaciones de texto siguen las reglas de
      `AGENTS.md` (texto completo en el mensaje y pregunta final en texto).
 4. Si el usuario responde "no sé", propón una opción razonable y regístrala como supuesto (`S-01`…). No la conviertas en requisito sin marcarla.
-5. Genera `specs/<feature>/spec.md` con la plantilla de `references/plantilla.md`, con `Estado: borrador`
-   y, justo debajo, la línea `Aprobación: <modo elegido>`. Ningún otro skill cambia esa línea salvo
-   que el usuario lo pida de forma explícita.
+5. Genera `specs/<feature>/spec.md` con la plantilla de `references/plantilla.md`, con `Estado: borrador`,
+   justo debajo la línea `Aprobación: <modo elegido>`, y debajo `Validación: pendiente` (el nivel de
+   riesgo y validación se decide al terminar `sdd-clarificar`). Ningún otro skill cambia la línea
+   `Aprobación:` salvo que el usuario lo pida de forma explícita.
+   - Si la petición inicial corresponde claramente a **Sin SDD (Vía rápida)** (hotfix, ajuste visual de UI, refactor interno que no altera comportamiento o prototipo desechable), avisa al usuario antes de empezar por si prefiere ir directo por vía rápida sin spec.
    - Escribe cada RF con uno de los patrones EARS de la plantilla y con ID correlativo (`RF-001`…).
    - Cada RF describe un comportamiento observable y verificable.
 6. Muestra la spec al usuario.

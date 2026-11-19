@@ -196,7 +196,7 @@ Secretos:
     con su análisis de impacto, y toda tarea nueva, sea por un bug, un mutante o la validación).
     Todo lo demás es automático: `sdd-implementar` encadena las tareas sin pedir aprobación de cada
     diff, y al terminarlas (con todas las entregas fusionadas en la rama de integración) se lanza
-    `sdd-validar`. Los textos que se escriben sin Aceptar/Rechazar
+    `sdd-validar` cuando corresponda según el nivel de validación de la spec. Los textos que se escriben sin Aceptar/Rechazar
     (`resumen.md`, los resúmenes de entrega, el `HUMAN_TODO.md` de la feature, las marcas y decisiones de
     `tasks.md`, la entrada de validación)
     se listan en el informe final. El código se revisa en el PR de cada entrega, que solo se abre si el
@@ -227,9 +227,31 @@ Secretos:
     preguntar. La pregunta de aprobación se hace en ese mismo mensaje, como texto final, y no con
     una ventana de opciones que pueda ocultar lo que hay que aprobar.
   - **En ambos modos** se mantienen las reglas de ramas y commits, no acreditarse como IA,
-    `HUMAN_TODO.md`, el `resumen.md` con marco teórico, el test de mutación de cada tarea y que la
-    validación la haga un subagente sin contexto de la implementación (o una sesión nueva si el
-    entorno no admite subagentes; nunca la misma sesión).
+    `HUMAN_TODO.md`, el `resumen.md` con marco teórico y los requisitos del nivel de validación
+    elegido para la feature (`Validación:` en `spec.md`).
+- **Niveles de riesgo y validación.** Tras clarificar una feature en `sdd-clarificar` (y tras
+  clarificar un cambio con `sdd-cambio` si varía su impacto), se evalúa el nivel de riesgo y se
+  pregunta al usuario qué nivel de validación corresponde en formato de selección, colocando primero
+  y con `(Recomendada)` al final la opción indicada según el riesgo. La decisión se registra en
+  `spec.md`, justo debajo de `Aprobación:`, con la línea `Validación: estricta | ligera | sin-sdd`
+  (si falta en una spec existente, se asume `estricta`).
+  - **Validación estricta (Obligatoria)** (`Validación: estricta`): Solo para el core del negocio,
+    flujos de dinero/datos críticos, cambios en esquemas de base de datos o contratos de API pública.
+    Aquí un error sale carísimo. Mantiene el flujo SDD completo: `sdd-plan`, `sdd-tareas`, TDD con
+    test de mutación en `sdd-implementar` y validación formal requisito a requisito con
+    `sdd-validar` en un subagente sin contexto de la implementación (o una sesión nueva si el entorno
+    no admite subagentes; nunca la misma sesión).
+  - **Validación ligera / asíncrona** (`Validación: ligera`): Para features secundarios o internos.
+    Se escribe una spec mínima (criterios de aceptación en bullets, sin diagramas extensos) y la
+    validación ocurre en el Code Review o mediante tests automatizados básicos. Se puede omitir
+    `sdd-plan` extenso y `sdd-validar` formal en subagente, así como el test de mutación obligatorio;
+    siguen aplicándose los tests automatizados básicos, tipos, lint/formato y revisión en PR.
+  - **Sin SDD (Vía rápida)** (`Validación: sin-sdd`): Hotfixes, ajustes visuales de UI, refactors
+    internos que no alteran comportamiento o prototipos desechables. No requiere `sdd-plan`,
+    `sdd-tareas` ni `sdd-validar` (y estos casos pueden ejecutarse directamente por vía rápida sin
+    abrir flujo SDD). Si se clasifica así al cerrar `sdd-clarificar`, se registra en el historial
+    de la spec y se implementa en la rama adecuada (`fix/`, `refactor/`, `style/`, `poc/`) con las
+    comprobaciones de código estándar y revisión en PR.
 
 ## Al terminar cualquier tarea
 - Si la tarea solo cambia documentación (`.md`), no se levanta Docker ni se ejecutan tests, tipos
