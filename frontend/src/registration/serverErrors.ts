@@ -34,6 +34,10 @@ const KEYS: Record<string, ValidationKey> = {
   password_too_common: "passwordTooCommon",
   password_entirely_numeric: "passwordOnlyDigits",
   password_pwned: "passwordPwned",
+  invalid_credentials: "invalidCredentials",
+  too_many_login_attempts: "tooManyLoginAttempts",
+  already_authenticated: "alreadyAuthenticated",
+  cannot_revoke_current_session: "cannotRevokeCurrentSession",
 };
 
 // Los mismos códigos tienen un texto más preciso en estos campos, como en el servidor.

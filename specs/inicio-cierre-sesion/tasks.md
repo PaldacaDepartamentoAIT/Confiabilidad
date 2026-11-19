@@ -226,7 +226,7 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   servidor devuelva `401` o falle la red), `acceptTerms`, `listSessions`, `revokeSession` y
   `revokeOtherSessions`; suite verde.
 
-- [ ] T-016 Textos de inicio de sesión, términos pendientes y sesiones activas en tres idiomas
+- [x] T-016 Textos de inicio de sesión, términos pendientes y sesiones activas en tres idiomas
   RF: RF-013 (pantalla de inicio de sesión y enlaces con el registro), RF-014 (validación en el cliente y mensajes de error al iniciar sesión), RF-015 (pantalla de aceptación de términos pendientes), RF-016 (área privada y gestión de sesiones en pantalla), RF-019 (M-07, enrutamiento, guardia de sesión y enlaces con registro) | Depende de: — | Archivos: 4
   Archivos: `i18n/locales/es.ts`, `i18n/locales/pt-BR.ts`, `i18n/locales/en.ts`,
   `i18n/locales/locales.test.ts`.
@@ -237,7 +237,7 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   actualizarse juntos para no romper la comprobación de RF-008 de `componentes-base-accesibles`
   (traducciones completas).
 
-- [ ] T-017 Traducción de errores de inicio de sesión y términos en el cliente
+- [x] T-017 Traducción de errores de inicio de sesión y términos en el cliente
   RF: RF-012, RF-014, RF-019 (M-08, pantalla de inicio de sesión; M-09, pantalla de términos pendientes) | Depende de: T-016 (textos en tres idiomas) | Archivos: 2
   Archivos: `registration/serverErrors.ts`, `registration/serverErrors.test.ts`.
   Hecho cuando: `serverErrors` traduce `invalid_credentials`, `too_many_login_attempts`,
@@ -346,7 +346,7 @@ Rama de integración: `feat/inicio-cierre-sesion` (los PR de las entregas van co
   Cómo probarlo: ejecutar `pnpm --filter frontend test src/api/client.test.ts src/api/auth.test.ts`.
 
 - E-06b Textos multilingües y traducción de errores de autenticación en el cliente
-  Tareas: T-016, T-017 | Líneas estimadas: 140 | Rama: feat/inicio-cierre-sesion-textos-auth
+  Tareas: T-016, T-017 | Líneas estimadas: 110 | Rama: feat/inicio-cierre-sesion-textos-auth
   Cómo probarlo: ejecutar `pnpm --filter frontend test src/i18n/locales/locales.test.ts src/registration/serverErrors.test.ts`.
 
 - E-07 Pantallas de inicio de sesión y de términos pendientes (sin ruta)
