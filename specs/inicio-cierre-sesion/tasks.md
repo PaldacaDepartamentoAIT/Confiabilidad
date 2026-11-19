@@ -335,7 +335,7 @@ Rama de integración: `feat/inicio-cierre-sesion` (los PR de las entregas van co
   Cómo probarlo: con `curl`, iniciar sesión con una cuenta sin términos vigentes aceptados, aceptarlos en `/api/app/v1/auth/terms/accept` y comprobar en `/api/app/v1/auth/session` que `terms_status` pasa a `"accepted"`, además de ejecutar `pytest apps/accounts/tests/test_auth_terms_gate.py --no-cov -v`.
 
 - E-05b API de listado y cierre de otras sesiones activas
-  Tareas: T-013 | Líneas estimadas: 314 | Rama: feat/inicio-cierre-sesion-gestion-sesiones
+  Tareas: T-013 | Líneas estimadas: 313 | Rama: feat/inicio-cierre-sesion-gestion-sesiones
   Cómo probarlo: con `curl`, comprobar `403 terms_required` en `/api/app/v1/auth/sessions` sin términos vigentes y, tras aceptarlos, listar sesiones activas y revocar otra sesión o todas las demás.
 
 - E-06 Cliente de autenticación, token de escritorio y traducciones del frontend

@@ -1,6 +1,6 @@
 # Entrega E-05b · API de listado y cierre de otras sesiones activas
 
-Rama: `feat/inicio-cierre-sesion-gestion-sesiones` · PR: pendiente · Líneas de código y tests: 314 (límite: 400).
+Rama: `feat/inicio-cierre-sesion-gestion-sesiones` · PR: pendiente · Líneas de código y tests: 313 (límite: 400).
 
 ## Qué se hizo
 - Se añadió `RevokeSessionSerializer` en `apps/accounts/api/auth_serializers.py` (`T-013`).

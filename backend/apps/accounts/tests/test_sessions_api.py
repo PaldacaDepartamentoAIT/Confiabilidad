@@ -178,7 +178,6 @@ def test_revoke_others_handles_multiple_and_zero_other_sessions(kind: str) -> No
     assert c_extra_app.get("/api/app/v1/auth/session", headers=extra_app_headers).status_code == 401
     assert c_main.get(f"/api/{kind}/v1/auth/session", headers=main_headers).status_code == 200
 
-    SecurityEvent.objects.filter(event_type=EventType.LOGOUT).delete()
     empty = c_main.post(f"/api/{kind}/v1/auth/sessions/revoke-others", headers=main_headers)
     assert empty.status_code == 200 and empty.json() == {"result": "revoked", "revoked_count": 0}
-    assert not SecurityEvent.objects.filter(event_type=EventType.LOGOUT).exists()
+    assert SecurityEvent.objects.filter(event_type=EventType.LOGOUT).count() == 2
