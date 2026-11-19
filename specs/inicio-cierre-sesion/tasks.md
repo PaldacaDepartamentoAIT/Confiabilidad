@@ -158,8 +158,8 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   máquina virtual del usuario.
 
 - [x] T-011 Test de neutralidad y bloqueo en el inicio de sesión
-  RF: RF-002, RF-004 (CF-2, CF-6) | Depende de: T-010 (rutas de inicio de sesión, consulta de sesión actual y cierre de sesión) | Archivos: 2
-  Archivos: `api/auth_views.py`, `tests/test_auth_neutrality.py`.
+  RF: RF-002, RF-004 (CF-2, CF-6) | Depende de: T-010 (rutas de inicio de sesión, consulta de sesión actual y cierre de sesión) | Archivos: 3
+  Archivos: `api/auth_views.py`, `apps/audit/adapters.py`, `tests/test_auth_neutrality.py`.
   Hecho cuando: un test demuestra que correo inexistente, contraseña incorrecta y cuenta inactiva
   (con contraseña correcta o incorrecta) reciben en `/api/{browser,app}/v1/auth/login` el mismo
   código (`400`), cuerpo, cabeceras y cookies en los intentos 1 a 5 y el mismo bloqueo
