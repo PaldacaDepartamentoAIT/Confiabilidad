@@ -244,7 +244,7 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   `already_authenticated` y `cannot_revoke_current_session` a sus claves de traducción, manteniendo
   todos los códigos existentes; suite verde.
 
-- [ ] T-018 Pantalla de inicio de sesión (sin ruta)
+- [x] T-018 Pantalla de inicio de sesión (sin ruta)
   RF: RF-013, RF-014, RF-019 (M-08; CF-7, tests de pantallas y redirecciones en frontend) | Depende de: T-015 (llamadas de la API de autenticación y sesiones), T-017 (traducción de errores en el cliente) | Archivos: 2
   Archivos: `auth/LoginPage.tsx`, `auth/LoginPage.test.tsx`.
   Hecho cuando: `LoginPage` valida al salir y al enviar que el correo y la contraseña no estén
@@ -253,6 +253,10 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   contraseña; ante `too_many_login_attempts` o fallo de red muestra el error general conservando el
   correo; ante `429` muestra la cuenta atrás y desactiva el botón hasta cero; incluye el enlace a
   `/register` y notifica al autenticar con éxito; suite verde.
+  Decisiones: al recibir `invalid_credentials` se vacía el `<input>` de contraseña mediante `ref`
+  para mantener el formulario no controlado compatible con `useFormValidation` — [Cierto] —
+  revertir: controlar el valor del campo en estado React. Validación pendiente en la máquina
+  virtual del usuario (alternativa sin dependencias locales de `AGENTS.md`).
 
 - [ ] T-019 Pantalla de términos pendientes (sin ruta)
   RF: RF-011, RF-012, RF-015, RF-019 (M-09, CF-5, CF-7) | Depende de: T-015, T-017 | Archivos: 2
@@ -349,9 +353,13 @@ Rama de integración: `feat/inicio-cierre-sesion` (los PR de las entregas van co
   Tareas: T-016, T-017 | Líneas estimadas: 110 | Rama: feat/inicio-cierre-sesion-textos-auth
   Cómo probarlo: ejecutar `pnpm --filter frontend test src/i18n/locales/locales.test.ts src/registration/serverErrors.test.ts`.
 
-- E-07 Pantallas de inicio de sesión y de términos pendientes (sin ruta)
-  Tareas: T-018, T-019 | Líneas estimadas: 360 | Rama: feat/inicio-cierre-sesion-pantallas-acceso
-  Cómo probarlo: ejecutar `pnpm --filter frontend test src/auth/LoginPage.test.tsx src/auth/TermsPage.test.tsx`.
+- E-07 Pantalla de inicio de sesión (sin ruta)
+  Tareas: T-018 | Líneas estimadas: 301 | Rama: feat/inicio-cierre-sesion-pantallas-acceso
+  Cómo probarlo: ejecutar `pnpm --filter frontend test src/auth/LoginPage.test.tsx`.
+
+- E-07b Pantalla de términos pendientes (sin ruta)
+  Tareas: T-019 | Líneas estimadas: 220 | Rama: feat/inicio-cierre-sesion-pantalla-terminos
+  Cómo probarlo: ejecutar `pnpm --filter frontend test src/auth/TermsPage.test.tsx`.
 
 - E-08 Pantalla del área privada y gestión de sesiones (sin ruta)
   Tareas: T-020 | Líneas estimadas: 320 | Rama: feat/inicio-cierre-sesion-pantalla-sesiones
