@@ -218,7 +218,7 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   y cae a memoria solo si el acceso lanza error o no existe — [Cierto] — revertir: priorizar el
   valor en memoria sobre `localStorage`.
 
-- [ ] T-015 Llamadas de la API de autenticación y sesiones
+- [x] T-015 Llamadas de la API de autenticación y sesiones
   RF: RF-001, RF-006, RF-008, RF-009, RF-012, RF-018 (M-06, S-07) | Depende de: T-014 (almacenamiento de token para escritorio y soporte en el cliente API) | Archivos: 2
   Archivos: `api/auth.ts`, `api/auth.test.ts`.
   Hecho cuando: existen funciones tipadas `getSession`, `login` (que en modo `app` guarda el
