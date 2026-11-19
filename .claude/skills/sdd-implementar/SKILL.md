@@ -32,9 +32,8 @@ Si falta alguno, pídelo al usuario en un solo mensaje y no continúes hasta ten
 ## Precondiciones
 
 - [ ] Existe `specs/constitution.md`.
-- [ ] Existe `specs/<feature>/spec.md` con `Estado: aprobada`.
-- [ ] Existe `specs/<feature>/plan.md` con `Estado: aprobado`.
-- [ ] Existe `specs/<feature>/tasks.md` con `Estado: aprobado`.
+- [ ] Existe `specs/<feature>/spec.md` con `Estado: aprobada` y `Validación:` distinta de `pendiente` y `sin-sdd` (si falta, se asume `estricta`; con `sin-sdd` se usa vía rápida sin flujo SDD).
+- [ ] Con `Validación: estricta` (o sin línea `Validación:`): existen `specs/<feature>/plan.md` (`Estado: aprobado`) y `specs/<feature>/tasks.md` (`Estado: aprobado`). Con `Validación: ligera`, `plan.md` es opcional y se verifican tests automatizados básicos, tipos, lint y Code Review en PR en lugar de mutantes obligatorios y `sdd-validar` en subagente.
 - [ ] La tarea existe y no está marcada.
 - [ ] Todas sus dependencias están marcadas.
 - [ ] La suite se ejecuta. Ejecútala antes de empezar: si hay tests que ya fallan, no podrías distinguir tus fallos de los anteriores, así que abstente e informa de cuáles fallan.
@@ -54,7 +53,7 @@ Siguiente paso: <skill a ejecutar o acción del usuario>
 1. Lee la constitución, la spec, el plan y la tarea.
 2. Escribe los tests de la tarea, ejecútalos y muestra la salida donde FALLAN. Si pasan sin haber implementado nada, el test no prueba el comportamiento nuevo: corrígelo antes de seguir.
 3. Implementa lo mínimo necesario para que pasen.
-4. Introduce al menos un mutante en el código nuevo (un cambio pequeño que debería romper el comportamiento), ejecuta los tests del archivo afectado y comprueba que alguno falla; después deshaz el mutante. Si sobrevive, añade el test que lo mata dentro de los archivos de la tarea. Si es equivalente (no cambia el comportamiento), anótalo en `Decisiones:`.
+4. En `Validación: estricta` (o sin línea `Validación:`), introduce al menos un mutante en el código nuevo (un cambio pequeño que debería romper el comportamiento), ejecuta los tests del archivo afectado y comprueba que alguno falla; después deshaz el mutante. Si sobrevive, añade el test que lo mata dentro de los archivos de la tarea. Si es equivalente (no cambia el comportamiento), anótalo en `Decisiones:`. (En `Validación: ligera`, este paso es opcional: bastan los tests automatizados básicos).
 5. Ejecuta la suite completa y muestra la salida real. Pasa tipos y lint/formato según «Al terminar cualquier tarea» de `AGENTS.md`.
 6. Comprueba la línea `Hecho cuando:` de la tarea.
 7. Marca la tarea como hecha en `tasks.md`. Si tomaste decisiones que no están explícitas en la spec ni en el plan (también dentro de los tests), añade bajo la tarea una línea `Decisiones:` con cada una, su motivo, su nivel de confianza ([Cierto]/[Probable]/[Suposición]) y cómo revertirla.
@@ -79,8 +78,8 @@ Siguiente tarea disponible: <T-XXX | ninguna: ejecuta sdd-validar>
 
 1. Tras el paso 9, sigue con la siguiente tarea sin marcar de la entrega en curso. Al completarla, crea su resumen de entrega (ver «Al completar cada entrega» en `AGENTS.md`), informa de las tareas, las líneas reales y «Cómo probarlo», y pregunta si abres su PR contra la rama de integración de la feature (`feat/<feature>`, ver «Rama de integración» en `AGENTS.md`); no empieces la siguiente entrega hasta que el usuario responda.
 2. Ante una parada obligatoria de `AGENTS.md`, detente: explica la causa, la tarea en curso y las opciones, y espera al usuario. Cuando la resuelva, continúa la cadena sin volver a preguntar el modo.
-3. Al terminar todas las tareas, y con todas las entregas fusionadas en la rama de integración, entrega el informe con el formato de abajo y lanza `sdd-validar` sobre esa rama en un subagente sin el contexto de esta conversación. Si el entorno no admite subagentes, no valides aquí: pide al usuario que la lance en una sesión nueva.
-4. Si el veredicto es CUMPLIDA, `sdd-validar` registra la validación y el resumen; actualiza el informe con el resultado. Con cualquier otro veredicto, detente: las tareas de corrección y el cierre con riesgo residual los decide el usuario.
+3. Al terminar todas las tareas, y con todas las entregas fusionadas en la rama de integración, entrega el informe con el formato de abajo. Si `Validación: estricta` (o no existe la línea), lanza `sdd-validar` sobre esa rama en un subagente sin el contexto de esta conversación (o pide al usuario lanzarla en una sesión nueva si el entorno no admite subagentes). Si `Validación: ligera`, omite `sdd-validar` formal en subagente: la validación se completa con los tests automatizados básicos y el Code Review del PR.
+4. En `Validación: estricta`, si el veredicto es CUMPLIDA, `sdd-validar` registra la validación y el resumen; actualiza el informe con el resultado. Con cualquier otro veredicto, detente: las tareas de corrección y el cierre con riesgo residual los decide el usuario.
 5. Termina preguntando si abres el PR de la rama de integración a `main`; no lo abras sin su confirmación.
 
 ```

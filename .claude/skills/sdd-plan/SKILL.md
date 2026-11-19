@@ -17,6 +17,7 @@ Si falta, pídelo al usuario y no continúes hasta tenerlo.
 
 - [ ] Existe `specs/constitution.md` con `Estado: aprobada`.
 - [ ] Existe `specs/<feature>/spec.md` con `Estado: aprobada`.
+- [ ] `Validación:` en `spec.md` no está en `pendiente` (si falta la línea, se asume `estricta`). Si está en `sin-sdd`, no procede `sdd-plan` (vía rápida); si está en `ligera`, el plan técnico es opcional y breve (sin diagramas extensos), salvo que el usuario pida detallarlo.
 - [ ] Ninguna entrada del historial de la spec está en `pendiente de clarificar`.
 - [ ] Si ya existe `plan.md`: la última entrada del historial de la spec está en `impacto analizado` y ese análisis indica que el plan debe cambiar. Si no es así, pregunta al usuario si quiere actualizar el plan igualmente.
 
