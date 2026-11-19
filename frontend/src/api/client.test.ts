@@ -1,3 +1,4 @@
+import { createTokenStorage, tokenStorage } from "../auth/tokenStorage";
 import { createClient, detectClientKind, environmentConfig, type ClientConfig } from "./client";
 
 type Call = { url: string; init: RequestInit };
@@ -25,6 +26,7 @@ function config(fetcher: typeof fetch, overrides: Partial<ClientConfig> = {}): C
 afterEach(() => {
   vi.unstubAllEnvs();
   document.cookie = "csrftoken=; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+  tokenStorage.clear();
 });
 
 describe("cliente de la API", () => {
@@ -165,5 +167,54 @@ describe("cliente de la API", () => {
   it("detecta Tauri por su objeto global", () => {
     expect(detectClientKind({})).toBe("browser");
     expect(detectClientKind({ __TAURI_INTERNALS__: {} })).toBe("app");
+  });
+
+  it("adjunta X-Session-Token en modo app cuando existe token guardado", async () => {
+    tokenStorage.set("tok-app-1");
+    const { calls, fetcher } = fakeFetch(json(200, {}));
+    const client = createClient(
+      config(fetcher, { kind: "app", appBaseUrl: "https://api.example" }),
+    );
+
+    await client.get("auth/session");
+
+    expect(new Headers(calls[0].init.headers).get("X-Session-Token")).toBe("tok-app-1");
+    tokenStorage.clear();
+    expect(tokenStorage.get()).toBeNull();
+  });
+
+  it("mantiene respaldo en memoria en TokenStorage si el almacenamiento falla", () => {
+    const broken = {
+      getItem: () => {
+        throw new Error("blocked");
+      },
+      setItem: () => {
+        throw new Error("blocked");
+      },
+      removeItem: () => {
+        throw new Error("blocked");
+      },
+    };
+    const store = createTokenStorage(broken);
+    expect(store.get()).toBeNull();
+    store.set("mem-1");
+    expect(store.get()).toBe("mem-1");
+    store.clear();
+    expect(store.get()).toBeNull();
+  });
+
+  it("interpreta 401 como unauthenticated y 403 terms_required como termsRequired", async () => {
+    const { fetcher: f401 } = fakeFetch(json(401, { code: "unauthenticated", message: "x" }));
+    expect(await createClient(config(f401)).get("auth/session")).toEqual({
+      kind: "unauthenticated",
+    });
+
+    const { fetcher: f403 } = fakeFetch(
+      json(403, { code: "terms_required", terms_status: "no_current_version", message: "x" }),
+    );
+    expect(await createClient(config(f403)).get("auth/sessions")).toEqual({
+      kind: "termsRequired",
+      termsStatus: "no_current_version",
+    });
   });
 });
