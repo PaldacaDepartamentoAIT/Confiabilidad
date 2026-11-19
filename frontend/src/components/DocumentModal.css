@@ -1,0 +1,111 @@
+/* Modal de documento (docs/identidad-visual.md, «Modal de documento»). El diálogo ocupa toda la pantalla y la
+   caja va dentro: un clic sobre el diálogo es un clic en la cortina. */
+.document-modal {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.document-modal::backdrop {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.document-modal[open] {
+  display: grid;
+  place-items: center;
+}
+
+/* La página de detrás no se desplaza mientras el modal está abierto. */
+body:has(dialog.document-modal[open]) {
+  overflow: hidden;
+}
+
+.document-box {
+  width: 640px;
+  max-width: calc(100% - 32px);
+  max-height: min(80dvh, calc(100dvh - 32px));
+  display: flex;
+  flex-direction: column;
+  background: var(--black-fill);
+  color: #ffffff;
+  border: 1px solid var(--gray);
+  border-radius: 4px;
+}
+
+.document-modal[open] .document-box {
+  animation: document-in 0.2s ease-out;
+}
+
+.document-modal[open]::backdrop {
+  animation: document-in 0.2s ease-out;
+}
+
+@keyframes document-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 699px) {
+  .document-box {
+    width: calc(100% - 32px);
+  }
+}
+
+.document-head {
+  flex: none;
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px 8px 0;
+}
+
+.document-close {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #ffffff;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.document-close:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.document-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 20px;
+}
+
+.document-body a {
+  color: #7f94b5;
+  text-decoration: none;
+}
+
+.document-foot {
+  flex: none;
+  padding: 14px 20px 20px;
+  border-top: 1px solid var(--gray);
+}
+
+.document-box .check {
+  color: #ffffff;
+}

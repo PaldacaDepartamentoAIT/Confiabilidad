@@ -1,6 +1,6 @@
 ---
 name: sdd-clarificar
-description: 'Revisa una spec SDD como un QA profesional para detectar ambigüedades, contradicciones, casos límite ausentes, requisitos no verificables y conflictos con la constitución, y después incorpora las respuestas del usuario y aprueba la spec. Usar cuando el usuario quiera revisar, clarificar, validar o aprobar una spec, cuando se acaba de crear una spec con sdd-spec o cuando se acaba de cambiar una con sdd-cambio. No usar para verificar código (sdd-validar).'
+description: 'Revisa una spec SDD como un QA profesional para detectar ambigüedades, contradicciones, casos límite ausentes, requisitos no verificables y conflictos con la constitución, incorpora las respuestas del usuario, determina el nivel de riesgo y validación requerido y aprueba la spec. Usar cuando el usuario quiera revisar, clarificar, validar o aprobar una spec, cuando se acaba de crear una spec con sdd-spec o cuando se acaba de cambiar una con sdd-cambio. No usar para verificar código (sdd-validar).'
 ---
 
 # SDD · Clarificación
@@ -50,17 +50,26 @@ Determínalo leyendo la spec e indícaselo al usuario:
      descripción breve de su consecuencia. Ninguna se marca como recomendada ni se ordena por
      preferencia (paso 3).
    - El usuario siempre puede escribir otra respuesta; trátala igual que una opción elegida.
-   - Este formato es solo para responder hallazgos: el diff y la aprobación de la spec (pasos 3
-     y 4 de la fase B) se piden en texto, según `AGENTS.md`.
-6. Si no hay hallazgos, dilo y pasa directamente al paso 4 de la fase B para pedir la aprobación.
+   - Este formato es solo para responder hallazgos y elegir el nivel de validación: el diff y la
+     aprobación de la spec (pasos 3 y 5 de la fase B) se piden en texto, según `AGENTS.md`.
+6. Si no hay hallazgos, dilo y pasa directamente al paso 4 de la fase B para determinar el nivel de riesgo y validación y pedir la aprobación.
 
 ### Fase B: cierre
 
 1. Espera las respuestas del usuario. Si alguna no resuelve su hallazgo, dilo y vuelve a preguntar solo por ese.
 2. Prepara los cambios en la spec: modifica los RF afectados sin cambiar sus IDs, añade los nuevos con el siguiente ID libre y registra cada cambio en el historial.
 3. Muestra el diff y espera la aprobación del usuario antes de escribir.
-4. Pide al usuario que apruebe la spec. Cuando lo haga, cambia a `Estado: aprobada` y, en modo tras un cambio, marca la entrada del historial como `clarificado`.
-5. Indica el siguiente paso: `sdd-plan` para una feature nueva, o `sdd-cambio` (análisis de impacto) tras un cambio.
+4. **Nivel de riesgo y validación** (obligatorio en feature nueva, y tras un cambio si varía el alcance o el riesgo): analiza lo clarificado frente a los criterios de riesgo y explica brevemente por qué corresponde ese nivel. Después pregunta al usuario qué nivel de validación aplicar mediante la herramienta de preguntas de opción múltiple, colocando **en primer lugar** y con **`(Recomendada)`** al final la opción indicada según el riesgo (a diferencia de la Fase A, aquí sí se recomienda explícitamente la opción adecuada):
+   - **Validación estricta (Obligatoria)**: Solo para el core del negocio, flujos de dinero/datos críticos, cambios en esquemas de base de datos o contratos de API pública. Aquí un error sale carísimo.
+   - **Validación ligera / asíncrona**: Para features secundarios o internos. Se escribe una spec mínima (criterios de aceptación en bullets, sin diagramas extensos) y la validación ocurre en el Code Review o mediante tests automatizados básicos.
+   - **Sin SDD (Vía rápida)**: Hotfixes, ajustes visuales de UI, refactors internos que no alteran comportamiento o prototipos desechables.
+
+   Registra la elección debajo de `Aprobación:` con `Validación: estricta | ligera | sin-sdd`. Si el usuario elige `ligera`, simplifica o confirma la spec en formato mínimo (criterios de aceptación en bullets, sin diagramas extensos); si elige `sin-sdd`, anótalo en el historial de la spec.
+5. Pide al usuario que apruebe la spec (incluyendo el cambio de la línea `Validación:` en texto si no estaba aprobada). Cuando lo haga, cambia a `Estado: aprobada` y, en modo tras un cambio, marca la entrada del historial como `clarificado`.
+6. Indica el siguiente paso según el nivel de validación elegido y el modo:
+   - Si `Validación: estricta`: `sdd-plan` para una feature nueva, o `sdd-cambio` (análisis de impacto) tras un cambio.
+   - Si `Validación: ligera`: si es feature nueva, pasar directamente a implementación con tests automatizados básicos (o `sdd-tareas` breves) y validación en Code Review (sin `sdd-plan` extenso ni `sdd-validar` en subagente); tras un cambio, `sdd-cambio` (análisis de impacto).
+   - Si `Validación: sin-sdd`: continuar directamente por vía rápida en la rama adecuada (`fix/`, `refactor/`, `style/`, `poc/`) cumpliendo los checks de código y Code Review en PR, sin ejecutar `sdd-plan`, `sdd-tareas` ni `sdd-validar`.
 
 ## Detente si
 

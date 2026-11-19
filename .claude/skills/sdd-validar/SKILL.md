@@ -21,6 +21,7 @@ El agente que implementó tiende a darse la razón a sí mismo. En ambos modos, 
 ## Precondiciones
 
 - [ ] Existe `specs/<feature>/spec.md` con `Estado: aprobada`.
+- [ ] `Validación:` en `spec.md` es `estricta` (o no existe la línea, en cuyo caso se asume `estricta`). Si es `ligera` o `sin-sdd`, esta validación formal requisito a requisito en contexto limpio no es obligatoria (salvo petición explícita del usuario en `ligera`): la feature se valida mediante tests automatizados básicos y Code Review en PR.
 - [ ] Existen `specs/<feature>/plan.md` y `specs/<feature>/tasks.md`.
 - [ ] Todas las tareas de `tasks.md` están marcadas.
 - [ ] Se valida sobre la rama de integración de la feature (`feat/<feature>`, ver «Rama de integración» en `AGENTS.md`), con todas las entregas fusionadas en ella.

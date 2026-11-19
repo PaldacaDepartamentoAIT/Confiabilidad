@@ -26,6 +26,7 @@ export const es: Messages = {
     close: "Cerrar menú",
   },
   button: {
+    close: "Cerrar",
     processing: "Procesando…",
     processingAnnouncement: "Procesando",
   },
@@ -99,9 +100,7 @@ export const es: Messages = {
     emailLabel: "Correo electrónico",
     countryLabel: "País",
     countryPlaceholder: "Elige un país",
-    termsTitle: "Términos y condiciones",
     termsLabel: "Acepto los términos y condiciones",
-    marketingTitle: "Novedades por correo",
     marketingLabel: "Quiero recibir novedades por correo (opcional)",
     submit: "Continuar",
     verifyTitle: "Escribe el código de verificación",

@@ -57,5 +57,5 @@ Siguiente paso: <skill a ejecutar o acción del usuario>
 
 1. Lee la spec, el plan, las tareas y los tests relacionados con los RF de la última entrada del historial.
 2. Para cada RF cambiado, indica qué secciones de `plan.md`, qué tareas de `tasks.md` y qué tests quedan afectados, con el formato de `references/plantilla.md`.
-3. No modifiques nada: el plan lo actualiza `sdd-plan` y las tareas `sdd-tareas`. Muestra el análisis y espera la aprobación del usuario.
-4. Cuando apruebe, marca la entrada del historial como `impacto analizado` e indica el siguiente paso: `sdd-plan` si el plan se ve afectado, o `sdd-tareas` si no.
+3. No modifiques nada: el plan lo actualiza `sdd-plan` y las tareas `sdd-tareas` (según el nivel `Validación:` vigente tras `sdd-clarificar`). Muestra el análisis y espera la aprobación del usuario.
+4. Cuando apruebe, marca la entrada del historial como `impacto analizado` e indica el siguiente paso según `Validación:` en la spec (`sdd-plan` si es `estricta` y el plan cambia; `sdd-tareas` o implementación directa con tests básicos y Code Review si es `ligera`).

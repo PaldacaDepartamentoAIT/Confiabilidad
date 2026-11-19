@@ -140,3 +140,36 @@ test.each([
     expect(screen.getAllByRole("main")).toHaveLength(1);
   },
 );
+
+test.each([
+  ["terms", "Acepto los términos y condiciones"],
+  ["marketing", "Quiero recibir novedades por correo (opcional)"],
+])("the %s modal, closed and open, has no violations", async (_name, label) => {
+  const user = userEvent.setup();
+  renderAt("/register", { options: ok(OPTIONS) });
+  const link = await screen.findByRole("link", { name: label });
+  expect(await violations()).toEqual([]);
+
+  await user.click(link);
+  const dialog = screen.getByRole("dialog", { name: label });
+
+  // Con el modal abierto la página de detrás queda inerte en un navegador real (lo comprueba Chromium); jsdom
+  // no lo ve, así que axe se limita al diálogo.
+  const results = await axe.run(dialog, { rules: { "color-contrast": { enabled: false } } });
+  expect(results.violations.map((violation) => violation.id)).toEqual([]);
+  expect(within(dialog).getByRole("checkbox", { name: label })).toBeInTheDocument();
+
+  await user.click(within(dialog).getByRole("button", { name: "Cerrar" }));
+  expect(await violations()).toEqual([]);
+  expect(link).toHaveFocus();
+});
+
+test("the form with its terms in error and the modal closed has no violations", async () => {
+  const user = userEvent.setup();
+  renderAt("/register", { options: ok(OPTIONS) });
+  await user.click(await screen.findByRole("link", { name: "Acepto los términos y condiciones" }));
+  await user.click(screen.getByRole("button", { name: "Cerrar" }));
+  await screen.findByText("Debes aceptar los términos y condiciones.");
+
+  expect(await violations()).toEqual([]);
+});

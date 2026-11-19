@@ -25,6 +25,7 @@ export const ptBR: Messages = {
     close: "Fechar menu",
   },
   button: {
+    close: "Fechar",
     processing: "Processando…",
     processingAnnouncement: "Processando",
   },
@@ -97,9 +98,7 @@ export const ptBR: Messages = {
     emailLabel: "E-mail",
     countryLabel: "País",
     countryPlaceholder: "Escolha um país",
-    termsTitle: "Termos e condições",
     termsLabel: "Aceito os termos e condições",
-    marketingTitle: "Novidades por e-mail",
     marketingLabel: "Quero receber novidades por e-mail (opcional)",
     submit: "Continuar",
     verifyTitle: "Digite o código de verificação",
