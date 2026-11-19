@@ -23,6 +23,7 @@ export const en = {
     close: "Close menu",
   },
   button: {
+    close: "Close",
     processing: "Processing…",
     processingAnnouncement: "Processing",
   },
@@ -95,9 +96,7 @@ export const en = {
     emailLabel: "Email",
     countryLabel: "Country",
     countryPlaceholder: "Choose a country",
-    termsTitle: "Terms and conditions",
     termsLabel: "I accept the terms and conditions",
-    marketingTitle: "News by email",
     marketingLabel: "I want to receive news by email (optional)",
     submit: "Continue",
     verifyTitle: "Enter the verification code",
