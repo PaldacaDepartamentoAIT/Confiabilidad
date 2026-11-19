@@ -57,17 +57,16 @@ def test_private_session_endpoints_require_auth_csrf_and_current_terms() -> None
     assert client.post("/api/browser/v1/auth/sessions/revoke-others").status_code == 403
 
     _, headers = _login(client, "app", user.email)
-    for call in [
-        lambda: client.get("/api/app/v1/auth/sessions", headers=headers),
-        lambda: client.post(
+    for blocked in (
+        client.get("/api/app/v1/auth/sessions", headers=headers),
+        client.post(
             "/api/app/v1/auth/sessions/revoke",
             data=json.dumps({"session_id": 1}),
             content_type="application/json",
             headers=headers,
         ),
-        lambda: client.post("/api/app/v1/auth/sessions/revoke-others", headers=headers),
-    ]:
-        blocked = call()
+        client.post("/api/app/v1/auth/sessions/revoke-others", headers=headers),
+    ):
         assert blocked.status_code == 403 and blocked.json()["code"] == "terms_required"
 
     accept_terms(user, version="1", locale="es")
