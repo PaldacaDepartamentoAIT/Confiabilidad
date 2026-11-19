@@ -17,7 +17,11 @@ from rest_framework.views import APIView
 
 from apps.accounts import sessions, throttling
 from apps.accounts.api import messages
-from apps.accounts.api.auth_serializers import LoginSerializer, TermsAcceptSerializer
+from apps.accounts.api.auth_serializers import (
+    LoginSerializer,
+    RevokeSessionSerializer,
+    TermsAcceptSerializer,
+)
 from apps.accounts.api.language import request_language
 from apps.accounts.api.views import _enforce_csrf, _limited, _read_body, _render, _unreadable
 from apps.accounts.models import User
@@ -272,4 +276,96 @@ class AppTermsAcceptView(APIView):
 
 
 class BrowserTermsAcceptView(_BrowserCsrfMixin, AppTermsAcceptView):
+    pass
+
+
+class AppSessionsView(APIView):
+    authentication_classes: list[Any] = []
+    permission_classes = [AllowAny]
+    client_kind: ClassVar[str] = "app"
+
+    def get(self, request: Request) -> Response:
+        language = request_language(
+            request.query_params.get("language"), request.headers.get("Accept-Language")
+        )
+        auth = _require_auth(request, self.client_kind, language, require_terms=True)
+        if isinstance(auth, Response):
+            return auth
+        user, raw_key = auth
+        items = sessions.list_active_sessions(user, raw_key)
+        return Response(
+            {
+                "sessions": [
+                    {
+                        "id": item.id,
+                        "ip": item.ip,
+                        "user_agent": item.user_agent,
+                        "created_at": item.created_at,
+                        "last_seen_at": item.last_seen_at,
+                        "is_current": item.is_current,
+                    }
+                    for item in items
+                ]
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class BrowserSessionsView(AppSessionsView):
+    client_kind = "browser"
+
+
+class AppRevokeSessionView(APIView):
+    authentication_classes: list[Any] = []
+    permission_classes = [AllowAny]
+    parser_classes = [JSONParser]
+    client_kind: ClassVar[str] = "app"
+
+    def post(self, request: Request) -> Response:
+        body, readable = _read_body(request) if request.content_type else ({}, True)
+        language = _body_language(request, body, readable)
+        auth = _require_auth(request, self.client_kind, language, require_terms=True)
+        if isinstance(auth, Response):
+            return auth
+        if not readable:
+            return _unreadable(language)
+        serializer = RevokeSessionSerializer(data=body)
+        if not serializer.is_valid():
+            return Response(
+                {"errors": _render(serializer.errors, language)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        user, raw_key = auth
+        result = sessions.revoke_other_session(
+            user, raw_key, serializer.validated_data["session_id"], request=request._request
+        )
+        if result is sessions.RevokeResult.CURRENT_SESSION:
+            return _err("cannot_revoke_current_session", language, status.HTTP_400_BAD_REQUEST)
+        if result is sessions.RevokeResult.NOT_FOUND:
+            return _err("not_found", language, status.HTTP_404_NOT_FOUND)
+        return Response({"result": "revoked"}, status=status.HTTP_200_OK)
+
+
+class BrowserRevokeSessionView(_BrowserCsrfMixin, AppRevokeSessionView):
+    pass
+
+
+class AppRevokeOthersView(APIView):
+    authentication_classes: list[Any] = []
+    permission_classes = [AllowAny]
+    parser_classes = [JSONParser]
+    client_kind: ClassVar[str] = "app"
+
+    def post(self, request: Request) -> Response:
+        body, readable = _read_body(request) if request.content_type else ({}, True)
+        language = _body_language(request, body, readable)
+        auth = _require_auth(request, self.client_kind, language, require_terms=True)
+        if isinstance(auth, Response):
+            return auth
+        user, raw_key = auth
+        revoked_count = sessions.revoke_all_other_sessions(user, raw_key, request=request._request)
+        return Response({"result": "revoked", "revoked_count": revoked_count}, status=200)
+
+
+class BrowserRevokeOthersView(_BrowserCsrfMixin, AppRevokeOthersView):
     pass
