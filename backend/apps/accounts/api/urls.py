@@ -3,10 +3,16 @@ from django.urls import path
 from apps.accounts.api.auth_views import (
     AppLoginView,
     AppLogoutView,
+    AppRevokeOthersView,
+    AppRevokeSessionView,
+    AppSessionsView,
     AppSessionView,
     AppTermsAcceptView,
     BrowserLoginView,
     BrowserLogoutView,
+    BrowserRevokeOthersView,
+    BrowserRevokeSessionView,
+    BrowserSessionsView,
     BrowserSessionView,
     BrowserTermsAcceptView,
 )
@@ -80,5 +86,27 @@ urlpatterns = [
         "app/v1/auth/terms/accept",
         AppTermsAcceptView.as_view(),
         name="auth-terms-accept-app",
+    ),
+    path("browser/v1/auth/sessions", BrowserSessionsView.as_view(), name="auth-sessions-browser"),
+    path("app/v1/auth/sessions", AppSessionsView.as_view(), name="auth-sessions-app"),
+    path(
+        "browser/v1/auth/sessions/revoke",
+        BrowserRevokeSessionView.as_view(),
+        name="auth-sessions-revoke-browser",
+    ),
+    path(
+        "app/v1/auth/sessions/revoke",
+        AppRevokeSessionView.as_view(),
+        name="auth-sessions-revoke-app",
+    ),
+    path(
+        "browser/v1/auth/sessions/revoke-others",
+        BrowserRevokeOthersView.as_view(),
+        name="auth-sessions-revoke-others-browser",
+    ),
+    path(
+        "app/v1/auth/sessions/revoke-others",
+        AppRevokeOthersView.as_view(),
+        name="auth-sessions-revoke-others-app",
     ),
 ]

@@ -188,7 +188,7 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   `serializers.py`. Validación pendiente en la máquina virtual del usuario (alternativa sin
   dependencias locales de `AGENTS.md`).
 
-- [ ] T-013 Rutas de listado y cierre de otras sesiones activas
+- [x] T-013 Rutas de listado y cierre de otras sesiones activas
   RF: RF-008, RF-009, RF-011, RF-018, RF-019 (M-04, D-06; C-01, C-05, C-06; CF-4, test de listado y cierre de otras sesiones) | Depende de: T-012 (ruta de aceptación de términos vigentes y guarda del área privada) | Archivos: 4
   Archivos: `api/auth_serializers.py`, `api/auth_views.py`, `api/urls.py`,
   `tests/test_sessions_api.py`.
@@ -199,6 +199,11 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   o todas las demás (`200` con `revoked_count: 0` y sin eventos si no hay otras), e invalidan al
   instante sus cookies y tokens; suite verde.
   Excepción: las rutas nuevas requieren su serializador, su vista, `urls.py` y su test.
+  Decisiones: en `sessions/revoke` se reutiliza la clave `not_found` ya presente en `messages.py`
+  para sesiones inexistentes o ajenas, y en `sessions/revoke-others` con 0 otras sesiones se
+  responde igualmente `200 {"result": "revoked", "revoked_count": 0}` sin tocar eventos —
+  [Cierto] — revertir: añadir una clave de mensaje específica `session_not_found`. Validación
+  pendiente en la máquina virtual del usuario (alternativa sin dependencias locales de `AGENTS.md`).
 
 ## Frontend
 
@@ -330,7 +335,7 @@ Rama de integración: `feat/inicio-cierre-sesion` (los PR de las entregas van co
   Cómo probarlo: con `curl`, iniciar sesión con una cuenta sin términos vigentes aceptados, aceptarlos en `/api/app/v1/auth/terms/accept` y comprobar en `/api/app/v1/auth/session` que `terms_status` pasa a `"accepted"`, además de ejecutar `pytest apps/accounts/tests/test_auth_terms_gate.py --no-cov -v`.
 
 - E-05b API de listado y cierre de otras sesiones activas
-  Tareas: T-013 | Líneas estimadas: 180 | Rama: feat/inicio-cierre-sesion-gestion-sesiones
+  Tareas: T-013 | Líneas estimadas: 314 | Rama: feat/inicio-cierre-sesion-gestion-sesiones
   Cómo probarlo: con `curl`, comprobar `403 terms_required` en `/api/app/v1/auth/sessions` sin términos vigentes y, tras aceptarlos, listar sesiones activas y revocar otra sesión o todas las demás.
 
 - E-06 Cliente de autenticación, token de escritorio y traducciones del frontend

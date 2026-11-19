@@ -32,3 +32,7 @@ class TermsAcceptSerializer(serializers.Serializer[dict[str, Any]]):
             if isinstance(detail, dict):
                 raise
             raise serializers.ValidationError({"non_field_errors": detail}) from error
+
+
+class RevokeSessionSerializer(serializers.Serializer[dict[str, Any]]):
+    session_id = serializers.IntegerField(min_value=1)
