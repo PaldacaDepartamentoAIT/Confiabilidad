@@ -1,16 +1,23 @@
+import { tokenStorage, type TokenStorage } from "../auth/tokenStorage";
+
 export type ClientKind = "browser" | "app";
+
+export type TermsStatus = "accepted" | "not_accepted" | "no_current_version";
 
 export type ClientConfig = {
   kind: ClientKind;
   appBaseUrl: string;
   language: () => string;
   fetch: typeof fetch;
+  tokenStorage?: TokenStorage;
 };
 
 export type ApiResult<Data = unknown> =
   | { kind: "ok"; status: number; data: Data }
   | { kind: "fieldErrors"; errors: Record<string, string[]> }
   | { kind: "refused"; code: string }
+  | { kind: "unauthenticated" }
+  | { kind: "termsRequired"; termsStatus: TermsStatus }
   | { kind: "notFound" }
   | { kind: "rateLimited"; retryAfter: number }
   | { kind: "failed"; status: number }
@@ -68,11 +75,22 @@ function retryAfter(body: unknown, response: Response): number {
   return Number(response.headers.get("Retry-After") ?? 0);
 }
 
+function isTermsStatus(value: unknown): value is TermsStatus {
+  return value === "accepted" || value === "not_accepted" || value === "no_current_version";
+}
+
 async function interpret<Data>(response: Response): Promise<ApiResult<Data>> {
   const text = await response.text();
   const body = text === "" ? null : parseJson(text);
   if (response.ok && body !== undefined) {
     return { kind: "ok", status: response.status, data: body as Data };
+  }
+  if (response.status === 401) return { kind: "unauthenticated" };
+  if (response.status === 403 && isRecord(body) && body.code === "terms_required") {
+    return {
+      kind: "termsRequired",
+      termsStatus: isTermsStatus(body.terms_status) ? body.terms_status : "not_accepted",
+    };
   }
   if (response.status === 404) return { kind: "notFound" };
   if (response.status === 429)
@@ -101,6 +119,9 @@ export function createClient(config: ClientConfig): ApiClient {
       credentials = "same-origin";
       const token = readCookie(CSRF_COOKIE);
       if (token !== null) headers.set("X-CSRFToken", token);
+    } else {
+      const token = (config.tokenStorage ?? tokenStorage).get();
+      if (token !== null && token !== "") headers.set("X-Session-Token", token);
     }
     let response: Response;
     try {

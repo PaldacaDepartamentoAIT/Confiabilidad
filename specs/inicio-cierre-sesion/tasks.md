@@ -207,13 +207,16 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
 
 ## Frontend
 
-- [ ] T-014 Almacenamiento de token para escritorio y soporte de autenticación en el cliente API
+- [x] T-014 Almacenamiento de token para escritorio y soporte de autenticación en el cliente API
   RF: RF-006, RF-011, RF-018 (M-06, cliente de autenticación y almacenamiento de token para escritorio; S-07, limpieza local garantizada al cerrar sesión) | Depende de: — | Archivos: 3
   Archivos: `auth/tokenStorage.ts`, `api/client.ts`, `api/client.test.ts`.
   Hecho cuando: en modo `app`, el cliente adjunta `X-Session-Token` cuando hay token guardado en
   `TokenStorage`; `client.ts` interpreta `401` como `{ kind: "unauthenticated" }` y `403` con
   `code: "terms_required"` como `{ kind: "termsRequired", termsStatus }`, conservando el resto de
   respuestas existentes; suite verde.
+  Decisiones: `createTokenStorage` usa `localStorage` como fuente de verdad cuando está disponible
+  y cae a memoria solo si el acceso lanza error o no existe — [Cierto] — revertir: priorizar el
+  valor en memoria sobre `localStorage`.
 
 - [ ] T-015 Llamadas de la API de autenticación y sesiones
   RF: RF-001, RF-006, RF-008, RF-009, RF-012, RF-018 (M-06, S-07) | Depende de: T-014 (almacenamiento de token para escritorio y soporte en el cliente API) | Archivos: 2
