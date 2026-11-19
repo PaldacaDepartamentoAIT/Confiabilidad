@@ -307,9 +307,9 @@ Rama de integración: `feat/inicio-cierre-sesion` (los PR de las entregas van co
   Cómo probarlo: iniciar sesión desde consola/test, envejecer la fila en `UserSession` y ejecutar `python manage.py purge_expired_sessions`; desactivar o cambiar la contraseña de un usuario y comprobar que sus filas de `UserSession` desaparecen.
 
 - E-04 API de inicio de sesión, sesión actual y cierre de sesión
-  Tareas: T-009, T-010 | Líneas estimadas: 424 | Rama: feat/inicio-cierre-sesion-api-auth
+  Tareas: T-009, T-010 | Líneas estimadas: 427 | Rama: feat/inicio-cierre-sesion-api-auth
   Cómo probarlo: con `curl`, iniciar sesión en `/api/browser/v1/auth/login` y `/api/app/v1/auth/login`, consultar `/api/.../auth/session` y cerrar sesión en `/api/.../auth/logout`.
-  Excepción: 424 líneas reales (dentro de `sdd.max_lineas_pr_excepcion`, 500): login, consulta de sesión y logout comparten autenticador y textos en `auth_views.py` y no deben exponerse por separado; T-011 pasa a E-04b para no superar 500 líneas.
+  Excepción: 427 líneas reales (dentro de `sdd.max_lineas_pr_excepcion`, 500): login, consulta de sesión y logout comparten autenticador y textos en `auth_views.py` y no deben exponerse por separado; T-011 pasa a E-04b para no superar 500 líneas.
 
 - E-04b Neutralidad y bloqueo por intentos fallidos en el inicio de sesión
   Tareas: T-011 | Líneas estimadas: 70 | Rama: feat/inicio-cierre-sesion-neutralidad

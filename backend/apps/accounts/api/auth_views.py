@@ -2,7 +2,7 @@ import secrets
 from typing import Any, ClassVar
 
 from allauth.account.adapter import get_adapter
-from django.contrib.auth import HASH_SESSION_KEY, SESSION_KEY, login, logout
+from django.contrib.auth import HASH_SESSION_KEY, SESSION_KEY, get_user, login, logout
 from django.core.exceptions import ValidationError
 from django.http import HttpRequest
 from django.utils.decorators import method_decorator
@@ -83,7 +83,10 @@ def _authenticated_session(request: Request, client_kind: str) -> tuple[User, st
     if client_kind == "app":
         return _resolve_user_from_token(str(request.headers.get("X-Session-Token") or "").strip())
     raw_key = getattr(getattr(django_request, "session", None), "session_key", None)
-    return _verify_active_user(getattr(django_request, "user", None), raw_key)
+    if not isinstance(raw_key, str) or not raw_key:
+        return None
+    # DRF sustituye request._request.user por AnonymousUser cuando authentication_classes=[].
+    return _verify_active_user(get_user(django_request), raw_key)
 
 
 def _body_language(request: Request, body: Any, readable: bool = True) -> str:
@@ -200,8 +203,8 @@ class AppLogoutView(APIView):
             return _err("unauthenticated", language, status.HTTP_401_UNAUTHORIZED)
         user, raw_key = auth
         django_request = request._request
+        django_request.user = user
         if self.client_kind == "app":
-            django_request.user = user
             django_request.session = sessions._session_store(raw_key)
         logout(django_request)
         sessions.close_current_session(user, raw_key)

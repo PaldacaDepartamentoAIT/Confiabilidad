@@ -1,6 +1,6 @@
 # Entrega E-04 · Catálogo de mensajes y API de autenticación
 
-Rama: `feat/inicio-cierre-sesion-api-auth` · PR: pendiente · Líneas de código y tests: 424 (límite: 400; excepción hasta 500 por mantener en una única entrega el catálogo de mensajes y los tres endpoints `login`/`session`/`logout` para `browser` y `app`).
+Rama: `feat/inicio-cierre-sesion-api-auth` · PR: pendiente · Líneas de código y tests: 427 (límite: 400; excepción hasta 500 por mantener en una única entrega el catálogo de mensajes y los tres endpoints `login`/`session`/`logout` para `browser` y `app`).
 
 ## Qué se hizo
 - Se añadieron los mensajes multilingües (`es`, `pt-BR`, `en`) para autenticación y cierre de sesión en `apps/accounts/api/messages.py` (`T-009`, `RF-002`, `RF-005`, `RF-012`, `RF-019`):
