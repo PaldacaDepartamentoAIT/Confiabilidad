@@ -154,7 +154,15 @@ class AppLoginView(APIView):
         if user is None:
             return _err("invalid_credentials", language)
         if not user.is_active:
-            adapter.pre_login(django_request, user)
+            adapter.pre_login(
+                django_request,
+                user,
+                email_verification=None,
+                signal_kwargs=None,
+                email=data["email"],
+                signup=False,
+                redirect_url=None,
+            )
             return _err("invalid_credentials", language)
         login(django_request, user, backend=_AUTH_BACKEND)
         payload = _session_info_payload(user, language)

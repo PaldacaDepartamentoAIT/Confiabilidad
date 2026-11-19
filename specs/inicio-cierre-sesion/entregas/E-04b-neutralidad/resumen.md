@@ -1,8 +1,9 @@
 # Entrega E-04b · Neutralidad y bloqueo por intentos fallidos en el inicio de sesión
 
-Rama: `feat/inicio-cierre-sesion-neutralidad` · PR: pendiente · Líneas de código y tests: 112 (límite: 400).
+Rama: `feat/inicio-cierre-sesion-neutralidad` · PR: pendiente · Líneas de código y tests: 122 (límite: 400).
 
 ## Qué se hizo
+- Se corrigió la llamada a `adapter.pre_login` en `apps/accounts/api/auth_views.py` para pasar los argumentos por nombre obligatorios de `DefaultAccountAdapter.pre_login` cuando la cuenta está inactiva.
 - Se añadieron los tests de integración `apps/accounts/tests/test_auth_neutrality.py` para `POST /api/browser/v1/auth/login` y `POST /api/app/v1/auth/login` (`T-011`, `RF-002`, `RF-004`, `CF-2`, `CF-6`):
   - Verifican que correo inexistente, contraseña incorrecta en cuenta activa, cuenta inactiva con contraseña incorrecta y cuenta inactiva con contraseña correcta devuelven exactamente el mismo código HTTP (`400`), cuerpo (`invalid_credentials`), cabeceras y cookies en los intentos 1 a 5.
   - Verifican que los cuatro casos alcanzan el mismo bloqueo (`400 too_many_login_attempts`) en el 6.º intento y no dejan filas en `UserSession`.
