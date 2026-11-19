@@ -164,6 +164,42 @@ ERRORS: dict[str, dict[str, str]] = {
         "pt-BR": "Esta senha apareceu em vazamentos de dados. Escolha outra.",
         "en": "This password has appeared in data breaches. Choose another one.",
     },
+    # Inicio, cierre y gestión de sesiones (inicio-cierre-sesion).
+    "invalid_credentials": {
+        "es": "El correo o la contraseña no son correctos.",
+        "pt-BR": "O e-mail ou a senha estão incorretos.",
+        "en": "The email address or password is incorrect.",
+    },
+    "too_many_login_attempts": {
+        "es": (
+            "Has superado el máximo de intentos fallidos. Espera unos minutos e inténtalo de nuevo."
+        ),
+        "pt-BR": (
+            "Você atingiu o máximo de tentativas com falha. "
+            "Aguarde alguns minutos e tente novamente."
+        ),
+        "en": "Too many failed login attempts. Wait a few minutes and try again.",
+    },
+    "already_authenticated": {
+        "es": "Ya tienes una sesión iniciada.",
+        "pt-BR": "Você já tem uma sessão iniciada.",
+        "en": "You already have an active session.",
+    },
+    "unauthenticated": {
+        "es": "Debes iniciar sesión para continuar.",
+        "pt-BR": "Você precisa iniciar sessão para continuar.",
+        "en": "You must sign in to continue.",
+    },
+    "terms_required": {
+        "es": "Debes aceptar los términos vigentes para acceder.",
+        "pt-BR": "Você precisa aceitar os termos vigentes para acessar.",
+        "en": "You must accept the current terms to continue.",
+    },
+    "cannot_revoke_current_session": {
+        "es": "No puedes cerrar la sesión actual desde esta acción.",
+        "pt-BR": "Você não pode encerrar a sessão atual por esta ação.",
+        "en": "You cannot revoke your current session with this action.",
+    },
 }
 
 FIELD_ERRORS: dict[str, dict[str, str]] = {

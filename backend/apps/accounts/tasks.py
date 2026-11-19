@@ -5,7 +5,7 @@ from typing import Any
 from celery import current_app, shared_task
 from django.utils import timezone
 
-from apps.accounts import conf, password_reset, registration
+from apps.accounts import conf, password_reset, registration, sessions
 from apps.accounts.models import PhantomProcess
 
 logger = logging.getLogger(__name__)
@@ -78,6 +78,11 @@ def sweep_unresolved() -> int:
 def purge_stale_registrations() -> int:
     # Cada hora: un registro se borra entre 24 y 25 h después de caducar su código (RF-020).
     return registration.purge_stale()
+
+
+@shared_task(name="apps.accounts.tasks.purge_expired_sessions")  # type: ignore[untyped-decorator]
+def purge_expired_sessions() -> int:
+    return sessions.purge_expired()
 
 
 def _unresolved_after_window(public_id: str) -> bool:

@@ -84,7 +84,7 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   [Cierto] — revertir: cambiar el almacén de índice en `sessions.py`. Validación pendiente en la
   máquina virtual del usuario.
 
-- [ ] T-006 Servicio de sesiones: cierre de otras sesiones, invalidación masiva y purga
+- [x] T-006 Servicio de sesiones: cierre de otras sesiones, invalidación masiva y purga
   RF: RF-003 (invalidación inmediata al desactivar o borrar una cuenta), RF-009 (cierre de otra sesión o de todas las demás), RF-010 (invalidación de sesiones al cambiar o restablecer la contraseña), RF-021 (limpieza de sesiones caducadas; M-01, D-02; C-01; C-05, cierre sin sesión válida y cierre masivo sin otras sesiones) | Depende de: T-005 (servicio de sesiones: alta, actividad, consulta y cierre actual) | Archivos: 2
   Archivos: `sessions.py`, `tests/test_sessions_service.py`.
   Hecho cuando: `revoke_other_session` rechaza cerrar la sesión actual y una inexistente o ajena, y
@@ -93,16 +93,31 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   cada una vigente (0 eventos si solo está la actual); `revoke_all_user_sessions` borra todas las de
   la cuenta; `purge_expired` borra todas las caducadas o sin entrada en caché y devuelve el total;
   suite verde.
+  Decisiones: al revocar otra sesión o todas las demás, `sessions.py` emite la señal estándar
+  `django.contrib.auth.signals.user_logged_out` con un `HttpRequest` construido con `_session_store(raw_key)`
+  y los metadatos de la petición o de la fila revocada, manteniendo `apps/accounts` desacoplada de
+  `apps/audit` y sin señales adicionales — [Cierto] — revertir: añadir una señal propia en
+  `apps/accounts/signals.py`. Validación pendiente en la máquina virtual del usuario.
 
-- [ ] T-007 Sincronización automática de sesiones al entrar, salir, desactivar, borrar o cambiar contraseña
+- [x] T-007 Sincronización automática de sesiones al entrar, salir, desactivar, borrar o cambiar contraseña
   RF: RF-003, RF-006, RF-007, RF-010 (M-02, invalidación automática por cuenta inactiva, borrado o cambio de contraseña; D-05, invalidación de sesiones en dos capas; C-03, alcance de invalidación por cambio de contraseña) | Depende de: T-006 (servicio de sesiones: cierre de otras sesiones, invalidación masiva y purga) | Archivos: 3
   Archivos: `models.py`, `sessions.py`, `tests/test_sessions_lifecycle.py`.
   Hecho cuando: iniciar o cerrar sesión mediante las señales de autenticación crea o borra la fila
   de `UserSession`; desactivar (`is_active=False`) o borrar físicamente un usuario, cambiar su
   contraseña en `User.save()` o completar `password_reset.complete` invalida sus sesiones en la
   caché `sessions` y vacía sus filas de `UserSession`; suite verde.
+  Decisiones: los receptores de ciclo de vida (`user_logged_in`, `user_logged_out`, `pre_delete` y
+  `password_reset_completed`) se registran en `models.py` (donde ya vive `_leave_password_reset_tombstone`
+  y que se carga al arrancar Django) importando `sessions` dentro de cada gancho para evitar
+  importaciones circulares sin tocar `apps.py` — [Cierto] — revertir: mover los receptores a
+  `sessions.py` e importarlo en `apps.py`. Al cambiar la contraseña con la cuenta activa,
+  `revoke_all_user_sessions(..., clear_only=True)` vacía el contenido de la sesión en Redis y borra
+  su fila de `UserSession` en vez de borrar la clave de Redis, de modo que deja de autenticar pero
+  `/_allauth/app/v1/auth/session` sigue respondiendo `401` y no `410` (preservando S-03 y CF-3 de
+  `cambio-contrasena` sin `sdd-cambio`) — [Cierto] — revertir: pasar `clear_only=False`. Validación
+  pendiente en la máquina virtual del usuario.
 
-- [ ] T-008 Limpieza de sesiones caducadas por consola y tarea periódica
+- [x] T-008 Limpieza de sesiones caducadas por consola y tarea periódica
   RF: RF-021 (M-05, comando de consola y tarea programada de limpieza; P-03, backend verificable desde CLI) | Depende de: T-006 | Archivos: 4
   Archivos: `management/commands/purge_expired_sessions.py`, `tasks.py`,
   `backend/config/settings.py`, `tests/test_purge_expired_sessions.py`.
@@ -111,15 +126,20 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   borran las filas caducadas o sin sesión viva e informan del número borrado; suite verde.
   Excepción: el comando, la tarea, su programación en `settings.py` y su test deben ir juntos para
   verificar tanto la orden de consola como la tarea periódica de RF-021.
+  Decisiones: el comando imprime `<N> expired user sessions deleted.` sin `--dry-run`, ya que RF-021
+  solo pide borrar e informar cuántos borró — [Cierto] — revertir: añadir `--dry-run` como en
+  `purge_security_events`. Validación pendiente en la máquina virtual del usuario.
 
-- [ ] T-009 Textos de la API de inicio y cierre de sesión en tres idiomas
+- [x] T-009 Textos de la API de inicio y cierre de sesión en tres idiomas
   RF: RF-019 (idioma de pantallas y mensajes; M-04, API de inicio y cierre de sesión, términos y sesiones activas) | Depende de: — | Archivos: 2
   Archivos: `api/messages.py`, `tests/test_registration_api_messages.py`.
   Hecho cuando: `invalid_credentials`, `too_many_login_attempts`, `already_authenticated`,
   `unauthenticated`, `terms_required` y `cannot_revoke_current_session` tienen texto en `es`,
   `pt-BR` y `en`, y el test de completitud de mensajes pasa; suite verde.
+  Decisiones: validación pendiente en la máquina virtual del usuario (alternativa sin dependencias
+  locales de `AGENTS.md`).
 
-- [ ] T-010 Rutas de inicio de sesión, consulta de sesión actual y cierre de sesión
+- [x] T-010 Rutas de inicio de sesión, consulta de sesión actual y cierre de sesión
   RF: RF-001 (acceso con correo y contraseña), RF-002, RF-003, RF-004, RF-005, RF-006, RF-018 (clientes web y de escritorio), RF-019 (M-04; D-01, vistas propias bajo `/api/.../auth/`; D-04, autenticación común para ambos clientes; C-04, rechazo de login con sesión activa; C-05; CF-2, test de respuesta neutra y bloqueo en cuenta inactiva; CF-3, test de invalidación al cerrar sesión o desactivar cuenta; CF-6, test de límites de intentos y por IP) | Depende de: T-002 (límite por IP del inicio de sesión), T-003 (bloqueo por intentos fallidos en cuenta inactiva), T-007 (sincronización automática de sesiones), T-009 (textos de la API en tres idiomas) | Archivos: 4
   Archivos: `api/auth_serializers.py`, `api/auth_views.py`, `api/urls.py`, `tests/test_auth_api.py`.
   Hecho cuando: `POST /api/{browser,app}/v1/auth/login`, `GET .../auth/session` y
@@ -130,6 +150,12 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   `QuerySet.update(is_active=False)`; suite verde.
   Excepción: las rutas nuevas requieren su serializador, su vista, el registro en `urls.py` y su
   test de integración para ser ejercitables.
+  Decisiones: `AppSessionView` en `browser` (`BrowserSessionView`) se decora con
+  `ensure_csrf_cookie` para que la consulta inicial de sesión entregue la cookie `csrftoken` al
+  navegador antes del login; en `app`, `AppLogoutView` asigna `user` y `session` al `HttpRequest`
+  subyacente antes de `django.contrib.auth.logout` para reutilizar el mismo receptor de auditoría —
+  [Cierto] — revertir: emitir `user_logged_out` manualmente para `app`. Validación pendiente en la
+  máquina virtual del usuario.
 
 - [ ] T-011 Test de neutralidad y bloqueo en el inicio de sesión
   RF: RF-002, RF-004 (CF-2, CF-6) | Depende de: T-010 (rutas de inicio de sesión, consulta de sesión actual y cierre de sesión) | Archivos: 1
@@ -280,9 +306,14 @@ Rama de integración: `feat/inicio-cierre-sesion` (los PR de las entregas van co
   Tareas: T-007, T-008 | Líneas estimadas: 280 | Rama: feat/inicio-cierre-sesion-purga
   Cómo probarlo: iniciar sesión desde consola/test, envejecer la fila en `UserSession` y ejecutar `python manage.py purge_expired_sessions`; desactivar o cambiar la contraseña de un usuario y comprobar que sus filas de `UserSession` desaparecen.
 
-- E-04 API de inicio de sesión, sesión actual, cierre de sesión y neutralidad
-  Tareas: T-009, T-010, T-011 | Líneas estimadas: 380 | Rama: feat/inicio-cierre-sesion-api-auth
-  Cómo probarlo: con `curl`, iniciar sesión en `/api/browser/v1/auth/login` y `/api/app/v1/auth/login`, consultar `/api/.../auth/session`, cerrar sesión en `/api/.../auth/logout`, y verificar la misma respuesta `400` ante cuenta inactiva y contraseña errónea.
+- E-04 API de inicio de sesión, sesión actual y cierre de sesión
+  Tareas: T-009, T-010 | Líneas estimadas: 427 | Rama: feat/inicio-cierre-sesion-api-auth
+  Cómo probarlo: con `curl`, iniciar sesión en `/api/browser/v1/auth/login` y `/api/app/v1/auth/login`, consultar `/api/.../auth/session` y cerrar sesión en `/api/.../auth/logout`.
+  Excepción: 427 líneas reales (dentro de `sdd.max_lineas_pr_excepcion`, 500): login, consulta de sesión y logout comparten autenticador y textos en `auth_views.py` y no deben exponerse por separado; T-011 pasa a E-04b para no superar 500 líneas.
+
+- E-04b Neutralidad y bloqueo por intentos fallidos en el inicio de sesión
+  Tareas: T-011 | Líneas estimadas: 70 | Rama: feat/inicio-cierre-sesion-neutralidad
+  Cómo probarlo: ejecutar `pytest apps/accounts/tests/test_auth_neutrality.py --no-cov -v` y comprobar con `curl` la respuesta idéntica y el bloqueo al 6.º intento entre correo inexistente, contraseña errónea y cuenta inactiva.
 
 - E-05 API de aceptación de términos vigentes y gestión de otras sesiones
   Tareas: T-012, T-013 | Líneas estimadas: 340 | Rama: feat/inicio-cierre-sesion-api-sesiones

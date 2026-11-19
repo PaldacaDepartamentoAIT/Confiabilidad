@@ -1,5 +1,13 @@
 from django.urls import path
 
+from apps.accounts.api.auth_views import (
+    AppLoginView,
+    AppLogoutView,
+    AppSessionView,
+    BrowserLoginView,
+    BrowserLogoutView,
+    BrowserSessionView,
+)
 from apps.accounts.api.flow_views import (
     AppCompleteView,
     AppOptionsView,
@@ -55,4 +63,10 @@ urlpatterns = [
         AppCompleteView.as_view(),
         name="registration-complete-app",
     ),
+    path("browser/v1/auth/login", BrowserLoginView.as_view(), name="auth-login-browser"),
+    path("app/v1/auth/login", AppLoginView.as_view(), name="auth-login-app"),
+    path("browser/v1/auth/session", BrowserSessionView.as_view(), name="auth-session-browser"),
+    path("app/v1/auth/session", AppSessionView.as_view(), name="auth-session-app"),
+    path("browser/v1/auth/logout", BrowserLogoutView.as_view(), name="auth-logout-browser"),
+    path("app/v1/auth/logout", AppLogoutView.as_view(), name="auth-logout-app"),
 ]
