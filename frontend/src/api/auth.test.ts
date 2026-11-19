@@ -56,7 +56,11 @@ describe("llamadas de autenticación y sesiones", () => {
     await login(appClient, { email: "ana@example.com", password: "secret" }, storage);
 
     expect(sent).toEqual([
-      { method: "post", path: "auth/login", body: { email: "ana@example.com", password: "secret" } },
+      {
+        method: "post",
+        path: "auth/login",
+        body: { email: "ana@example.com", password: "secret" },
+      },
     ]);
     expect(storage.get()).toBe("tok-123");
 

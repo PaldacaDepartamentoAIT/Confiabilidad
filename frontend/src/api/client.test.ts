@@ -172,7 +172,9 @@ describe("cliente de la API", () => {
   it("adjunta X-Session-Token en modo app cuando existe token guardado", async () => {
     tokenStorage.set("tok-app-1");
     const { calls, fetcher } = fakeFetch(json(200, {}));
-    const client = createClient(config(fetcher, { kind: "app", appBaseUrl: "https://api.example" }));
+    const client = createClient(
+      config(fetcher, { kind: "app", appBaseUrl: "https://api.example" }),
+    );
 
     await client.get("auth/session");
 

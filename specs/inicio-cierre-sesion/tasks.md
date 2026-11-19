@@ -341,9 +341,13 @@ Rama de integración: `feat/inicio-cierre-sesion` (los PR de las entregas van co
   Tareas: T-013 | Líneas estimadas: 312 | Rama: feat/inicio-cierre-sesion-gestion-sesiones
   Cómo probarlo: con `curl`, comprobar `403 terms_required` en `/api/app/v1/auth/sessions` sin términos vigentes y, tras aceptarlos, listar sesiones activas y revocar otra sesión o todas las demás.
 
-- E-06 Cliente de autenticación, token de escritorio y traducciones del frontend
-  Tareas: T-014, T-015, T-016, T-017 | Líneas estimadas: 350 | Rama: feat/inicio-cierre-sesion-cliente-auth
-  Cómo probarlo: ejecutar `pnpm --filter frontend test src/api/client.test.ts src/api/auth.test.ts src/i18n/locales/locales.test.ts src/registration/serverErrors.test.ts`.
+- E-06 Cliente de autenticación y almacenamiento de token para escritorio
+  Tareas: T-014, T-015 | Líneas estimadas: 333 | Rama: feat/inicio-cierre-sesion-cliente-auth
+  Cómo probarlo: ejecutar `pnpm --filter frontend test src/api/client.test.ts src/api/auth.test.ts`.
+
+- E-06b Textos multilingües y traducción de errores de autenticación en el cliente
+  Tareas: T-016, T-017 | Líneas estimadas: 140 | Rama: feat/inicio-cierre-sesion-textos-auth
+  Cómo probarlo: ejecutar `pnpm --filter frontend test src/i18n/locales/locales.test.ts src/registration/serverErrors.test.ts`.
 
 - E-07 Pantallas de inicio de sesión y de términos pendientes (sin ruta)
   Tareas: T-018, T-019 | Líneas estimadas: 360 | Rama: feat/inicio-cierre-sesion-pantallas-acceso
