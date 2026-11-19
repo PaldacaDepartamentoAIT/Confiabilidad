@@ -40,3 +40,15 @@
 .public-card > .btn {
   margin: 2px 0 14px;
 }
+
+.public-actions-row {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+a.btn {
+  text-decoration: none;
+}

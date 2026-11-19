@@ -1,6 +1,6 @@
 # Entrega E-07b · Pantalla de términos pendientes y rutas `/login` y `/terms`
 
-Rama: `feat/inicio-cierre-sesion-pantalla-terminos` · PR: pendiente · Líneas de código y tests: 317 (límite: 400).
+Rama: `feat/inicio-cierre-sesion-pantalla-terminos` · PR: pendiente · Líneas de código y tests: 355 (límite: 400).
 
 ## Qué se hizo
 - Se creó `frontend/src/auth/TermsPage.tsx` usando `PublicLayout`, `PublicPage`, `DocumentCheckbox` (modal con documento en Markdown), botón principal de aceptación y botón secundario de cierre de sesión (`T-019`, `RF-006`, `RF-011`, `RF-012`, `RF-015`, `RF-017`, `RF-019`).

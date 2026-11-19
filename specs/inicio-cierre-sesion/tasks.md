@@ -368,7 +368,7 @@ Rama de integración: `feat/inicio-cierre-sesion` (los PR de las entregas van co
   Cómo probarlo: ejecutar `pnpm --filter frontend test src/auth/LoginPage.test.tsx`.
 
 - E-07b Pantalla de términos pendientes y rutas `/login` y `/terms`
-  Tareas: T-019 | Líneas estimadas: 317 | Rama: feat/inicio-cierre-sesion-pantalla-terminos
+  Tareas: T-019 | Líneas estimadas: 355 | Rama: feat/inicio-cierre-sesion-pantalla-terminos
   Cómo probarlo: abrir `http://localhost:5173/login` y `http://localhost:5173/terms` en el navegador y ejecutar `pnpm --filter frontend test src/auth/TermsPage.test.tsx src/App.test.tsx`.
 
 - E-08 Pantalla del área privada, gestión de sesiones y rutas `/` y `/showcase`
