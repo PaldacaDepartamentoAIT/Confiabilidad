@@ -116,20 +116,20 @@ export function LoginPage({ client, storage, tokenStorage, onAuthenticated }: Lo
             error={errorText(allErrors.password)}
             onBlur={onBlur("password")}
           />
-          <Button
-            type="submit"
-            keepFocusOnMouseDown
-            processing={processing}
-            disabled={wait.remaining > 0}
-          >
-            {t("auth.loginSubmit")}
-          </Button>
+          <div className="public-actions-row">
+            <a href="/register" className="btn btn-ghost hov" onClick={goToRegister}>
+              {t("auth.createAccountLink")}
+            </a>
+            <Button
+              type="submit"
+              keepFocusOnMouseDown
+              processing={processing}
+              disabled={wait.remaining > 0}
+            >
+              {t("auth.loginSubmit")}
+            </Button>
+          </div>
         </form>
-        <p>
-          <a href="/register" onClick={goToRegister}>
-            {t("auth.createAccountLink")}
-          </a>
-        </p>
       </PublicPage>
     </PublicLayout>
   );
