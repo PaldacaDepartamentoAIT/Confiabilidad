@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { I18nextProvider } from "react-i18next";
 
@@ -85,9 +85,10 @@ test("muestra usuario y sesiones activas, permite cerrar una u otras sesiones y 
     return Promise.resolve(json(200, { result: "revoked", revoked_count: 1 }));
   });
 
+  expect(await screen.findByRole("combobox", { name: "Ana García" })).toBeInTheDocument();
   expect(
-    await screen.findByText("Sesión iniciada como Ana García (ana@empresa.com)"),
-  ).toBeInTheDocument();
+    screen.queryByText("Sesión iniciada como Ana García (ana@empresa.com)"),
+  ).not.toBeInTheDocument();
   expect(await screen.findByText("192.0.2.10")).toBeInTheDocument();
   expect(screen.getByText("Sesión actual")).toBeInTheDocument();
 
@@ -96,7 +97,9 @@ test("muestra usuario y sesiones activas, permite cerrar una u otras sesiones y 
 
   const otherRow = screen.getByText("198.51.100.5").closest("tr");
   expect(otherRow).not.toBeNull();
-  await userEvent.click(within(otherRow!).getByRole("button", { name: "Cerrar sesión" }));
+  const revokeButton = within(otherRow!).getByRole("button", { name: "Cerrar sesión" });
+  expect(revokeButton).toHaveAttribute("data-ui", "icon-button");
+  await userEvent.click(revokeButton);
 
   expect(screen.queryByText("198.51.100.5")).not.toBeInTheDocument();
   expect(revokeOthers).toBeDisabled();
@@ -104,6 +107,7 @@ test("muestra usuario y sesiones activas, permite cerrar una u otras sesiones y 
 
 test("cierra todas las demás sesiones de golpe y limpia cliente al cerrar la actual aunque falle la red", async () => {
   let loggedOut = false;
+  const user = userEvent.setup();
   const { storage } = renderHome(
     (url) => {
       const path = String(url).split("?")[0];
@@ -117,10 +121,11 @@ test("cierra todas las demás sesiones de golpe y limpia cliente al cerrar la ac
   );
 
   expect(await screen.findByText("198.51.100.5")).toBeInTheDocument();
-  await userEvent.click(screen.getByRole("button", { name: "Cerrar todas las demás sesiones" }));
+  await user.click(screen.getByRole("button", { name: "Cerrar todas las demás sesiones" }));
   expect(screen.queryByText("198.51.100.5")).not.toBeInTheDocument();
 
-  await userEvent.click(screen.getByRole("button", { name: "Cerrar sesión" }));
+  await user.click(screen.getByRole("combobox", { name: "Ana García" }));
+  await user.click(screen.getByRole("option", { name: "Cerrar sesión" }));
   expect(storage.get()).toBeNull();
   expect(loggedOut).toBe(true);
   expect(window.location.pathname).toBe("/login");
@@ -136,9 +141,8 @@ test("redirige a /terms ante 403 terms_required y a /login ante 401 al consultar
     { onTermsRequired: (status) => termsEvents.push(status) },
   );
 
-  await screen.findByText("Sesión iniciada como Ana García (ana@empresa.com)");
+  await waitFor(() => expect(window.location.pathname).toBe("/terms"));
   expect(termsEvents).toEqual(["not_accepted"]);
-  expect(window.location.pathname).toBe("/terms");
 
   window.history.pushState(null, "", "/");
   let loggedOut = false;

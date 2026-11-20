@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import {
@@ -16,9 +16,10 @@ import { Block } from "../components/Block";
 import { Button } from "../components/Button";
 import { Chip } from "../components/Chip";
 import { FormMessage } from "../components/FormMessage";
+import { IconButton } from "../components/IconButton";
 import { Table, type TableColumn, type TableRow } from "../components/data/Table";
 import type { LanguageStorage } from "../i18n/language";
-import { IconHouse } from "../icons";
+import { IconHouse, IconLogOut } from "../icons";
 import { AppLayout } from "../layouts/AppLayout";
 import type { SidebarItem } from "../layouts/Sidebar";
 import { translateCode } from "../registration/serverErrors";
@@ -62,7 +63,7 @@ export function HomePage({
   const [user, setUser] = useState<AuthenticatedUser | null>(session?.user ?? null);
   const [sessions, setSessions] = useState<ActiveSessionItem[]>([]);
   const [errorKey, setErrorKey] = useState<string | null>(null);
-  const [loggingOut, setLoggingOut] = useState(false);
+  const loggingOut = useRef(false);
   const [revokingId, setRevokingId] = useState<number | null>(null);
   const [revokingOthers, setRevokingOthers] = useState(false);
 
@@ -139,9 +140,10 @@ export function HomePage({
   }, [client, handleOutcomeFailure, redirectToTerms, session]);
 
   async function handleLogout() {
-    setLoggingOut(true);
+    if (loggingOut.current) return;
+    loggingOut.current = true;
     await logout(client, tokenStorage);
-    setLoggingOut(false);
+    loggingOut.current = false;
     onLoggedOut?.();
     navigate("/login");
   }
@@ -192,13 +194,13 @@ export function HomePage({
       lastSeenAt: formatTimestamp(item.last_seen_at, i18n.language),
       status: item.is_current ? <Chip>{t("auth.currentSession")}</Chip> : t("auth.otherSession"),
       action: item.is_current ? null : (
-        <Button
-          variant="secondary"
+        <IconButton
+          label={t("auth.revokeSession")}
+          icon={<IconLogOut />}
+          tooltipAlign="end"
           processing={revokingId === item.id}
           onClick={() => void handleRevoke(item.id)}
-        >
-          {t("auth.revokeSession")}
-        </Button>
+        />
       ),
     },
   }));
@@ -209,22 +211,25 @@ export function HomePage({
     <AppLayout
       items={navItems}
       activeId="home"
-      user={user ? { name: user.name || user.email, initials: userInitials(user) } : undefined}
+      user={
+        user
+          ? {
+              name: user.name || user.email,
+              initials: userInitials(user),
+              menu: [
+                {
+                  id: "logout",
+                  label: t("auth.logout"),
+                  icon: <IconLogOut />,
+                  onSelect: () => void handleLogout(),
+                },
+              ],
+            }
+          : undefined
+      }
       storage={storage}
     >
       <h1>{t("auth.homeTitle")}</h1>
-      <Block
-        as="section"
-        actions={
-          <Button variant="secondary" processing={loggingOut} onClick={() => void handleLogout()}>
-            {t("auth.logout")}
-          </Button>
-        }
-      >
-        {user && (
-          <p>{t("auth.signedInAs", { name: user.name || user.email, email: user.email })}</p>
-        )}
-      </Block>
       {errorKey && <FormMessage type="error" messageKey={errorKey as never} />}
       <Block
         as="section"
