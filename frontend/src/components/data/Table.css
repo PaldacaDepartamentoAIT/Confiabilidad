@@ -101,6 +101,79 @@
   background: transparent;
 }
 
+/* Selección de filas: casilla de la cabecera y de cada fila; las acciones van al extremo de la cabecera. */
+.table-root {
+  position: relative;
+}
+
+.data-table.selectable th {
+  height: 44px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.data-table .col-select {
+  width: 44px;
+  padding: 0 0 0 12px;
+  overflow: visible;
+}
+
+.tbl-check {
+  display: inline-flex;
+  align-items: center;
+  width: 18px;
+  height: 18px;
+}
+
+.tbl-check .cb {
+  margin-top: 0;
+}
+
+.tbl-check .cb input:indeterminate {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.tbl-check:hover .cb input:indeterminate {
+  background: color-mix(in srgb, var(--primary) 78%, #000);
+  border-color: color-mix(in srgb, var(--primary) 78%, #000);
+}
+
+.tbl-check .cb:has(input:indeterminate)::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  top: 8px;
+  height: 2px;
+  background: var(--on-primary);
+  pointer-events: none;
+}
+
+.tbl-check .cb input:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.data-table tbody tr.selected {
+  background: color-mix(in srgb, var(--ink) 9%, var(--bg));
+}
+
+.data-table tbody tr.selected td:first-child {
+  box-shadow: inset 2px 0 0 var(--primary);
+}
+
+.table-actions {
+  position: absolute;
+  top: 0;
+  right: 12px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 2;
+}
+
 .st {
   display: inline-flex;
   align-items: center;

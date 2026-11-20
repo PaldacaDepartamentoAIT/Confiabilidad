@@ -1,7 +1,8 @@
-import { useId } from "react";
+import { useId, useState } from "react";
 
 import { Block } from "../../components/Block";
 import { Chip } from "../../components/Chip";
+import { IconButton } from "../../components/IconButton";
 import { BarChart } from "../../components/data/BarChart";
 import type { ChartGroup } from "../../components/data/chartScale";
 import { Indicator, IndicatorGrid } from "../../components/data/Indicator";
@@ -11,6 +12,7 @@ import {
   type StatusGridLabels,
 } from "../../components/data/StatusGrid";
 import { Table, type TableColumn, type TableRow } from "../../components/data/Table";
+import { IconTrash } from "../../icons";
 import "./sections.css";
 
 const COLUMNS: TableColumn[] = [
@@ -77,6 +79,7 @@ export function DataSection() {
   const tableId = useId();
   const chartId = useId();
   const gridId = useId();
+  const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(new Set());
   return (
     <>
       <div role="region" aria-labelledby={indicatorsId} lang="es" className="catalog-section">
@@ -110,6 +113,21 @@ export function DataSection() {
             columns={COLUMNS}
             rows={ROWS}
             emptyMessage="Sin activos"
+            selection={{
+              selectedIds,
+              onChange: setSelectedIds,
+              selectAllLabel: "Seleccionar todos los activos",
+              rowLabel: (row) => `Seleccionar el activo ${row.id}`,
+              actions: (
+                <IconButton
+                  size="sm"
+                  label="Eliminar activos seleccionados"
+                  icon={<IconTrash />}
+                  tooltipAlign="end"
+                  onClick={() => setSelectedIds(new Set())}
+                />
+              ),
+            }}
           />
         </Block>
         <Block title="Tabla sin filas">
