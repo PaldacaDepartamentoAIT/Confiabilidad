@@ -49,9 +49,10 @@ export function Table({ label, columns, rows, emptyMessage }: TableProps) {
 
   const activeWidths =
     widths && columns.every((column) => typeof widths[column.key] === "number") ? widths : null;
-  const totalWidth = activeWidths
-    ? columns.reduce((sum, column) => sum + activeWidths[column.key], 0)
-    : undefined;
+  const fixedSum = activeWidths
+    ? columns.slice(0, -1).reduce((sum, column) => sum + activeWidths[column.key], 0)
+    : 0;
+  const minTableWidth = activeWidths ? Math.max(640, fixedSum + MIN_COLUMN_WIDTH) : undefined;
 
   function startResize(key: string, event: ReactMouseEvent<HTMLSpanElement>) {
     event.preventDefault();
@@ -94,22 +95,25 @@ export function Table({ label, columns, rows, emptyMessage }: TableProps) {
       <table
         data-ui="table"
         className={activeWidths ? "data-table resized" : "data-table"}
-        style={
-          totalWidth !== undefined
-            ? { width: `${totalWidth}px`, minWidth: `${totalWidth}px` }
-            : undefined
-        }
+        style={minTableWidth !== undefined ? { minWidth: `${minTableWidth}px` } : undefined}
       >
         {activeWidths && (
           <colgroup>
-            {columns.map((column) => (
-              <col key={column.key} style={{ width: `${activeWidths[column.key]}px` }} />
+            {columns.map((column, index) => (
+              <col
+                key={column.key}
+                style={
+                  index < columns.length - 1
+                    ? { width: `${activeWidths[column.key]}px` }
+                    : undefined
+                }
+              />
             ))}
           </colgroup>
         )}
         <thead>
           <tr>
-            {columns.map((column) => (
+            {columns.map((column, index) => (
               <th
                 key={column.key}
                 ref={(node) => {
@@ -119,11 +123,13 @@ export function Table({ label, columns, rows, emptyMessage }: TableProps) {
                 className={resizingKey === column.key ? "resizing" : undefined}
               >
                 <span className="th-label">{column.header}</span>
-                <span
-                  className="col-resize"
-                  aria-hidden="true"
-                  onMouseDown={(event) => startResize(column.key, event)}
-                />
+                {index < columns.length - 1 && (
+                  <span
+                    className="col-resize"
+                    aria-hidden="true"
+                    onMouseDown={(event) => startResize(column.key, event)}
+                  />
+                )}
               </th>
             ))}
           </tr>

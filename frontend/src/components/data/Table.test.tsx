@@ -137,6 +137,7 @@ test("resizes columns by dragging the border handle, clamps to minimum width and
 
   const handle = headers[1].querySelector(".col-resize") as HTMLElement;
   expect(handle).toHaveAttribute("aria-hidden", "true");
+  expect(headers[headers.length - 1].querySelector(".col-resize")).toBeNull();
 
   fireEvent.mouseDown(handle, { clientX: 200 });
   expect(headers[1]).toHaveClass("resizing");
@@ -146,7 +147,9 @@ test("resizes columns by dragging the border handle, clamps to minimum width and
   const cols = container.querySelectorAll("colgroup col");
   expect(cols).toHaveLength(4);
   expect(cols[1]).toHaveStyle({ width: "260px" });
-  expect(table).toHaveStyle({ width: "620px" });
+  expect(cols[3].getAttribute("style")).toBeNull();
+  expect(table).toHaveStyle({ minWidth: "640px" });
+  expect(table.style.width).toBe("");
 
   fireEvent.mouseMove(window, { clientX: 0 });
   expect(cols[1]).toHaveStyle({ width: "48px" });
