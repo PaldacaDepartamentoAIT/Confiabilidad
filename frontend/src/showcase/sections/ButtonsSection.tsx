@@ -2,7 +2,9 @@ import { useId } from "react";
 
 import { AlarmNotice } from "../../components/AlarmNotice";
 import { Button } from "../../components/Button";
+import { IconButton } from "../../components/IconButton";
 import { Notice } from "../../components/Notice";
+import { IconLogOut } from "../../icons";
 import "./sections.css";
 
 // Contenido de ejemplo del catálogo: inventado y en español (S-03), por eso lleva su propio `lang`.
@@ -15,6 +17,7 @@ export function ButtonsSection() {
         <Button>Guardar</Button>
         <Button variant="secondary">Cancelar</Button>
         <Button processing>Enviar</Button>
+        <IconButton label="Cerrar sesión" icon={<IconLogOut />} />
       </div>
       <Notice role="note">Los cambios se guardan como borrador.</Notice>
       <Notice kind="success" role="note">
