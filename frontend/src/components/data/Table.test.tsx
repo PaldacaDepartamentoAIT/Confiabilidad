@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import axe from "axe-core";
 
 import { Chip } from "../Chip";
@@ -115,4 +115,44 @@ test("has no accessibility violations with rows and without them", async () => {
   full.unmount();
   const empty = renderTable({ rows: [] });
   expect((await run(empty.container)).violations).toEqual([]);
+});
+
+test("resizes columns by dragging the border handle, clamps to minimum width and keeps ellipsis wrappers", () => {
+  const { container } = renderTable();
+  const table = screen.getByRole("table");
+  const headers = within(table).getAllByRole("columnheader");
+  headers.forEach((header, index) => {
+    vi.spyOn(header, "getBoundingClientRect").mockReturnValue({
+      width: index === 1 ? 200 : 120,
+      height: 36,
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    });
+  });
+
+  const handle = headers[1].querySelector(".col-resize") as HTMLElement;
+  expect(handle).toHaveAttribute("aria-hidden", "true");
+
+  fireEvent.mouseDown(handle, { clientX: 200 });
+  expect(headers[1]).toHaveClass("resizing");
+  expect(table).toHaveClass("resized");
+
+  fireEvent.mouseMove(window, { clientX: 260 });
+  const cols = container.querySelectorAll("colgroup col");
+  expect(cols).toHaveLength(4);
+  expect(cols[1]).toHaveStyle({ width: "260px" });
+  expect(table).toHaveStyle({ width: "620px" });
+
+  fireEvent.mouseMove(window, { clientX: 0 });
+  expect(cols[1]).toHaveStyle({ width: "48px" });
+
+  fireEvent.mouseUp(window);
+  expect(headers[1]).not.toHaveClass("resizing");
+  expect(headers[1].querySelector(".th-label")).toHaveTextContent("Name");
+  expect(container.querySelector(".st-text")).toHaveTextContent("Out of service");
 });

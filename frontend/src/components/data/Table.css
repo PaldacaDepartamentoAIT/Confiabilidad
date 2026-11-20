@@ -8,7 +8,12 @@
   min-width: 640px;
 }
 
+.data-table.resized {
+  table-layout: fixed;
+}
+
 .data-table th {
+  position: relative;
   font-size: 12.5px;
   font-weight: 500;
   color: var(--text2);
@@ -18,11 +23,57 @@
   white-space: nowrap;
 }
 
+.th-label {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.col-resize {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 8px;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.col-resize::after {
+  content: "";
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  right: 0;
+  width: 1px;
+  background: var(--gray);
+  transition:
+    width 0.08s ease,
+    background-color 0.08s ease;
+}
+
+.col-resize:hover::after,
+.data-table th.resizing .col-resize::after {
+  width: 2px;
+  background: var(--primary);
+}
+
 .data-table td {
   padding: 0 12px;
   height: 44px;
   border-bottom: 1px solid var(--gray);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.data-table:not(.resized) td {
+  max-width: 320px;
+}
+
+.data-table td:has(.icon-btn-wrap) {
+  overflow: visible;
 }
 
 .data-table td.mono {
@@ -43,6 +94,7 @@
   text-align: center;
   color: var(--text2);
   white-space: normal;
+  max-width: none;
 }
 
 .data-table tbody tr:has(td.empty):hover {
@@ -53,7 +105,15 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  max-width: 100%;
+  overflow: hidden;
   white-space: nowrap;
+}
+
+.st-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .st .shape {
