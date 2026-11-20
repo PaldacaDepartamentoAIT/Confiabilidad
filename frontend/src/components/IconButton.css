@@ -1,0 +1,73 @@
+.icon-btn-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+/* Botón cuadrado con borde e icono en el color principal (docs/identidad-visual.md). */
+.icon-btn.hov {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  border: 1px solid var(--primary);
+  border-radius: 6px;
+  color: var(--primary);
+}
+
+.icon-btn[aria-disabled="true"],
+.icon-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.icon-btn-tip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 6px);
+  z-index: 65;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--gray);
+  background: var(--black-fill);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.35;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateX(-50%) translateY(4px);
+  transition:
+    opacity 0.12s ease,
+    transform 0.12s ease,
+    visibility 0s linear 0.12s;
+}
+
+.icon-btn-tip-end,
+.data-table td:last-child .icon-btn-tip {
+  left: auto;
+  right: 0;
+  transform: translateY(4px);
+}
+
+.icon-btn:hover + .icon-btn-tip,
+.icon-btn:focus-visible + .icon-btn-tip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+  transition:
+    opacity 0.12s ease,
+    transform 0.12s ease,
+    visibility 0s;
+}
+
+.icon-btn:hover + .icon-btn-tip-end,
+.icon-btn:focus-visible + .icon-btn-tip-end,
+.data-table td:last-child .icon-btn:hover + .icon-btn-tip,
+.data-table td:last-child .icon-btn:focus-visible + .icon-btn-tip {
+  transform: translateY(0);
+}

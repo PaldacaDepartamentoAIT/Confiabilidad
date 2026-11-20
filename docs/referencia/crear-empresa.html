@@ -171,9 +171,11 @@ svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor;
 .avatar {
   width: 24px; height: 24px; flex: none;
   display: inline-flex; align-items: center; justify-content: center;
-  border-radius: 4px; background: var(--gray); color: var(--ink);
+  border-radius: 4px; background: var(--ink); color: var(--gray);
   font-family: var(--mono); font-size: 12px; font-weight: 500;
 }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .avatar { background: var(--gray); color: var(--ink); } }
+:root[data-theme="dark"] .avatar { background: var(--gray); color: var(--ink); }
 .user-btn .label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 
 .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }

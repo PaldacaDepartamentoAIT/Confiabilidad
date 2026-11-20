@@ -4,7 +4,7 @@ import axe from "axe-core";
 import { I18nextProvider } from "react-i18next";
 
 import { createI18n } from "../i18n";
-import { IconBell, IconHouse, IconWrench } from "../icons";
+import { IconBell, IconHouse, IconLogOut, IconWrench } from "../icons";
 import { Sidebar, type SidebarItem } from "./Sidebar";
 
 const ITEMS: SidebarItem[] = [
@@ -125,6 +125,32 @@ test("the user is a button when it has an action and plain information when it d
   );
   expect(screen.queryByRole("button", { name: "Laura Gómez" })).not.toBeInTheDocument();
   expect(screen.getByText("Laura Gómez").closest(".user-btn")).toBeInTheDocument();
+});
+
+test("the footer language and user menus open upward and trigger user actions", async () => {
+  const user = userEvent.setup();
+  const onSelect = vi.fn();
+  const { container } = renderSidebar({
+    user: {
+      name: "Laura Gómez",
+      initials: "LG",
+      menu: [{ id: "logout", label: "Cerrar sesión", icon: <IconLogOut />, onSelect }],
+    },
+  });
+
+  await user.click(screen.getByRole("combobox", { name: "Idioma: Español" }));
+  expect(screen.getByRole("listbox", { name: "Idioma" })).toHaveClass("menu-up");
+
+  const userTrigger = screen.getByRole("combobox", { name: "Laura Gómez" });
+  await user.click(userTrigger);
+  const userMenu = screen.getByRole("listbox", { name: "Laura Gómez" });
+  expect(userMenu).toHaveClass("menu-up");
+  expect(
+    (await axe.run(container, { rules: { "color-contrast": { enabled: false } } })).violations,
+  ).toEqual([]);
+
+  await user.click(screen.getByRole("option", { name: "Cerrar sesión" }));
+  expect(onSelect).toHaveBeenCalledTimes(1);
 });
 
 test("without a user there is no user row", () => {

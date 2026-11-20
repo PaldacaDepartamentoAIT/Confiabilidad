@@ -37,6 +37,12 @@
   transform: none;
 }
 
+.menu-up {
+  top: auto;
+  bottom: calc(100% + 4px);
+  transform: translateY(6px);
+}
+
 .menu-right {
   left: auto;
   right: 0;
@@ -54,7 +60,7 @@
   transition: background-color 0.35s ease;
 }
 
-.option svg {
+.option .option-check {
   visibility: hidden;
 }
 
@@ -62,7 +68,7 @@
   font-weight: 700;
 }
 
-.option[aria-selected="true"] svg {
+.option[aria-selected="true"] .option-check {
   visibility: visible;
 }
 
