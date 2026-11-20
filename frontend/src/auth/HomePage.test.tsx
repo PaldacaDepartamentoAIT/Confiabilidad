@@ -99,6 +99,7 @@ test("muestra usuario y sesiones activas, permite cerrar una u otras sesiones y 
   expect(otherRow).not.toBeNull();
   const revokeButton = within(otherRow!).getByRole("button", { name: "Cerrar sesión" });
   expect(revokeButton).toHaveAttribute("data-ui", "icon-button");
+  expect(revokeButton).toHaveClass("icon-btn-sm");
   await userEvent.click(revokeButton);
 
   expect(screen.queryByText("198.51.100.5")).not.toBeInTheDocument();

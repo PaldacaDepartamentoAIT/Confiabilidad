@@ -17,6 +17,11 @@
   color: var(--primary);
 }
 
+.icon-btn.icon-btn-sm {
+  width: 28px;
+  height: 28px;
+}
+
 .icon-btn[aria-disabled="true"],
 .icon-btn:disabled {
   cursor: not-allowed;

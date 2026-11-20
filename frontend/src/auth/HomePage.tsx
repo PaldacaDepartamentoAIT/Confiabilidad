@@ -197,6 +197,7 @@ export function HomePage({
         <IconButton
           label={t("auth.revokeSession")}
           icon={<IconLogOut />}
+          size="sm"
           tooltipAlign="end"
           processing={revokingId === item.id}
           onClick={() => void handleRevoke(item.id)}
