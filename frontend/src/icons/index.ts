@@ -23,6 +23,7 @@ import {
   Search,
   Settings,
   Sun,
+  Trash2,
   Wrench,
   type LucideIcon,
   type LucideProps,
@@ -61,4 +62,5 @@ export const IconPanelOpen = sized(PanelLeftOpen, "IconPanelOpen");
 export const IconSearch = sized(Search, "IconSearch");
 export const IconSettings = sized(Settings, "IconSettings");
 export const IconSun = sized(Sun, "IconSun");
+export const IconTrash = sized(Trash2, "IconTrash");
 export const IconWrench = sized(Wrench, "IconWrench");
