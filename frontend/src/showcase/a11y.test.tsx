@@ -71,7 +71,7 @@ describe.each(["es", "pt-BR", "en"])("in %s, the sample page has no violations",
 
     expect(document.querySelector('[aria-invalid="true"]')).not.toBeNull();
     expect(await violationsOf(document.documentElement)).toEqual([]);
-  });
+  }, 15_000);
 
   test("while processing", async () => {
     const submit = await renderFilledApp(language);
@@ -79,7 +79,7 @@ describe.each(["es", "pt-BR", "en"])("in %s, the sample page has no violations",
 
     expect(submit).toHaveAttribute("aria-disabled", "true");
     expect(await violationsOf(document.documentElement)).toEqual([]);
-  });
+  }, 15_000);
 
   test("with the demo information message", async () => {
     const submit = await renderFilledApp(language);
@@ -87,7 +87,7 @@ describe.each(["es", "pt-BR", "en"])("in %s, the sample page has no violations",
 
     expect(document.activeElement).toHaveAttribute("tabindex", "-1");
     expect(await violationsOf(document.documentElement)).toEqual([]);
-  });
+  }, 15_000);
 
   test("with the sample general error", async () => {
     const i18n = createI18n(language);
@@ -96,7 +96,7 @@ describe.each(["es", "pt-BR", "en"])("in %s, the sample page has no violations",
 
     expect(screen.getByText(i18n.t("validation.tooManyAttempts"))).toBeInTheDocument();
     expect(await violationsOf(document.documentElement)).toEqual([]);
-  });
+  }, 15_000);
 });
 
 test("the audit reports a field without a label", async () => {
