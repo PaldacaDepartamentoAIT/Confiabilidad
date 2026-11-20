@@ -83,7 +83,7 @@ test("while processing, announces once, updates label and ignores clicks", async
   const button = screen.getByRole("button", { name: "Procesando…" });
   expect(button).toHaveAttribute("aria-disabled", "true");
   expect(container.querySelector(".icon-btn-tip")).toHaveTextContent("Procesando…");
-  expect(announce).toHaveBeenCalledWith("Procesando, por favor espera.", "polite");
+  expect(announce).toHaveBeenCalledWith("Procesando", "polite");
   await userEvent.setup().click(button);
   expect(onClick).not.toHaveBeenCalled();
 });
