@@ -1,6 +1,6 @@
 # Entrega E-08 · Pantalla del área privada, gestión de sesiones y rutas `/` y `/showcase`
 
-Rama: `feat/inicio-cierre-sesion-pantalla-sesiones` · PR: pendiente · Líneas de código y tests: 462 (límite: 400; excepción hasta 500 por exponer `HomePage` en `/` y mover `ShowcasePage` a `/showcase` junto con sus tests unitarios y visuales en la misma entrega).
+Rama: `feat/inicio-cierre-sesion-pantalla-sesiones` · PR: pendiente · Líneas de código y tests: 470 (límite: 400; excepción hasta 500 por exponer `HomePage` en `/` y mover `ShowcasePage` a `/showcase` junto con sus tests unitarios y visuales en la misma entrega).
 
 ## Qué se hizo
 - Se creó `frontend/src/auth/HomePage.tsx` usando `AppLayout`, `Block` (con contador y acciones), `Table` (`ip` y fechas en monoespaciada), `Chip` y `Button` (`T-020`, `RF-006`, `RF-008`, `RF-009`, `RF-011`, `RF-016`, `RF-017`, `RF-019`):
@@ -16,7 +16,7 @@ El detalle de cada tarea, con su «Hecho cuando», está en [`tasks.md`](../../t
 
 | Tarea | Título | Commit |
 |---|---|---|
-| T-020 | Pantalla del área privada, gestión de sesiones y rutas `/` y `/showcase` | `c392fdd` |
+| T-020 | Pantalla del área privada, gestión de sesiones y rutas `/` y `/showcase` | `c392fdd`, `570ea80` |
 
 ## Cómo ejecutarlo y probarlo
 Actualiza las ramas remotas y cambia a la rama de la entrega:

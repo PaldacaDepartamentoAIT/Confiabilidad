@@ -380,9 +380,9 @@ Rama de integración: `feat/inicio-cierre-sesion` (los PR de las entregas van co
   Cómo probarlo: abrir `http://localhost:5173/login` y `http://localhost:5173/terms` en el navegador y ejecutar `pnpm --filter frontend test src/auth/TermsPage.test.tsx src/App.test.tsx`.
 
 - E-08 Pantalla del área privada, gestión de sesiones y rutas `/` y `/showcase`
-  Tareas: T-020 | Líneas estimadas: 462 | Rama: feat/inicio-cierre-sesion-pantalla-sesiones
+  Tareas: T-020 | Líneas estimadas: 470 | Rama: feat/inicio-cierre-sesion-pantalla-sesiones
   Cómo probarlo: abrir `http://localhost:5173/` y `http://localhost:5173/showcase` en el navegador y ejecutar `pnpm --filter frontend test src/auth/HomePage.test.tsx src/App.test.tsx`.
-  Excepción: 462 líneas reales (dentro de `sdd.max_lineas_pr_excepcion`, 500): al exponer `HomePage` en `/` en la misma entrega visual para cumplir `AGENTS.md`, `ShowcasePage` pasa a `/showcase` y obliga a actualizar sus tests unitarios y visuales además de la pantalla y sus tests.
+  Excepción: 470 líneas reales (dentro de `sdd.max_lineas_pr_excepcion`, 500): al exponer `HomePage` en `/` en la misma entrega visual para cumplir `AGENTS.md`, `ShowcasePage` pasa a `/showcase` y obliga a actualizar sus tests unitarios y visuales además de la pantalla y sus tests.
 
 - E-09 Enrutamiento completo, redirecciones, accesibilidad y resumen
   Tareas: T-021, T-022, T-023, T-024 | Líneas estimadas: 340 | Rama: feat/inicio-cierre-sesion-rutas
