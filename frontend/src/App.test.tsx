@@ -13,6 +13,7 @@ test.each([
   ["pt-BR", "Confiabilidade", "Prévia dos componentes"],
   ["en", "Reliability", "Preview of the shared components"],
 ])("renders the application in %s", (language, heading, intro) => {
+  window.history.replaceState(null, "", "/showcase");
   render(
     <I18nextProvider i18n={createI18n(language)}>
       <App />
@@ -22,9 +23,11 @@ test.each([
   expect(screen.getByRole("heading", { level: 1, name: heading })).toBeInTheDocument();
   expect(screen.getByText(intro, { exact: false })).toBeInTheDocument();
   expect(document.documentElement.lang).toBe(language);
+  window.history.replaceState(null, "", "/");
 });
 
 test("switches the whole page language from the keyboard and remembers it", async () => {
+  window.history.replaceState(null, "", "/showcase");
   const user = userEvent.setup();
   const values = new Map<string, string>();
   const storage: LanguageStorage = {
@@ -50,10 +53,11 @@ test("switches the whole page language from the keyboard and remembers it", asyn
   expect(document.title).toBe("Confiabilidade — Componentes");
   expect(portuguese).toHaveFocus();
   expect(storage.getItem(LANGUAGE_STORAGE_KEY)).toBe("pt-BR");
+  window.history.replaceState(null, "", "/");
 });
 
-test.each(["/", "/ruta-que-no-existe"])("shows the sample page at %s", (path) => {
-  window.history.replaceState(null, "", path);
+test("shows the sample page at /showcase", () => {
+  window.history.replaceState(null, "", "/showcase");
   render(
     <I18nextProvider i18n={createI18n("en")}>
       <App />
@@ -71,6 +75,12 @@ const answers: Record<string, unknown> = {
     marketing: null,
   },
   status: { code_expires_in: 900, resend_in: 60, resends_left: 5, locked: false, expired: false },
+  session: {
+    user: { email: "ana@example.com", name: "Ana" },
+    terms_status: "accepted",
+    terms: null,
+  },
+  sessions: { sessions: [] },
 };
 
 function fakeClient() {
@@ -87,12 +97,15 @@ function fakeClient() {
 }
 
 test.each([
+  ["/", "Main panel"],
+  ["/ruta-que-no-existe", "Main panel"],
+  ["/showcase", "Reliability"],
   ["/login", "Sign in"],
   ["/terms", "Pending terms and conditions"],
   ["/register", "Create your account"],
   ["/register/continue#pid-1", "Enter the verification code"],
   ["/register/done", "Account created"],
-])("shows the registration screen at %s", async (path, heading) => {
+])("shows the expected screen at %s", async (path, heading) => {
   window.history.replaceState(null, "", path);
   document.cookie = "csrftoken=token";
   render(

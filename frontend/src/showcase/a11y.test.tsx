@@ -16,6 +16,7 @@ async function violationsOf(element: Element): Promise<string[]> {
 test.each(["es", "pt-BR", "en"])(
   "the sample page has no accessibility violations in %s",
   async (language) => {
+    window.history.replaceState(null, "", "/showcase");
     render(
       <I18nextProvider i18n={createI18n(language)}>
         <App />
@@ -23,6 +24,7 @@ test.each(["es", "pt-BR", "en"])(
     );
 
     expect(await violationsOf(document.documentElement)).toEqual([]);
+    window.history.replaceState(null, "", "/");
   },
 );
 
@@ -35,6 +37,7 @@ const VALID_VALUES = {
 };
 
 async function renderFilledApp(language: string) {
+  window.history.replaceState(null, "", "/showcase");
   const i18n = createI18n(language);
   render(
     <I18nextProvider i18n={i18n}>
