@@ -3,7 +3,7 @@ import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode 
 import { IconChevronRight } from "../../icons";
 import "./Menu.css";
 
-export type MenuOption = { value: string; label: ReactNode; lang?: string };
+export type MenuOption = { value: string; label: ReactNode; lang?: string; icon?: ReactNode };
 
 export type MenuTriggerProps = {
   role: "combobox";
@@ -23,6 +23,8 @@ type MenuProps = {
   onSelect: (value: string) => void;
   renderTrigger: (props: MenuTriggerProps) => ReactNode;
   align?: "left" | "right";
+  placement?: "down" | "up";
+  selectable?: boolean;
 };
 
 const TYPE_AHEAD_MS = 700;
@@ -36,6 +38,8 @@ export function Menu({
   onSelect,
   renderTrigger,
   align = "left",
+  placement = "down",
+  selectable = true,
 }: MenuProps) {
   const id = useId();
   const listId = `${id}-list`;
@@ -168,7 +172,12 @@ export function Menu({
           id={listId}
           role="listbox"
           aria-label={label}
-          className={["menu", shown && "open", align === "right" && "menu-right"]
+          className={[
+            "menu",
+            shown && "open",
+            align === "right" && "menu-right",
+            placement === "up" && "menu-up",
+          ]
             .filter(Boolean)
             .join(" ")}
         >
@@ -178,13 +187,13 @@ export function Menu({
               id={optionId(index)}
               role="option"
               lang={option.lang}
-              aria-selected={index === selected}
+              aria-selected={selectable ? index === selected : false}
               className={["option", index === active && "highlight"].filter(Boolean).join(" ")}
               onMouseDown={(event) => event.preventDefault()}
               onMouseEnter={() => setActive(index)}
               onClick={() => choose(index)}
             >
-              <IconChevronRight />
+              {selectable ? <IconChevronRight className="option-check" /> : option.icon}
               {option.label}
             </li>
           ))}

@@ -15,6 +15,7 @@ import "./LanguageButton.css";
 type LanguageButtonProps = {
   storage?: LanguageStorage;
   align?: "left" | "right";
+  placement?: "down" | "up";
 };
 
 const OPTIONS: MenuOption[] = SUPPORTED_LANGUAGES.map((language) => ({
@@ -23,7 +24,7 @@ const OPTIONS: MenuOption[] = SUPPORTED_LANGUAGES.map((language) => ({
   lang: language,
 }));
 
-export function LanguageButton({ storage, align }: LanguageButtonProps) {
+export function LanguageButton({ storage, align, placement }: LanguageButtonProps) {
   const { t, i18n } = useTranslation();
   const current = i18n.language as Language;
 
@@ -39,6 +40,7 @@ export function LanguageButton({ storage, align }: LanguageButtonProps) {
       value={current}
       onSelect={choose}
       align={align}
+      placement={placement}
       renderTrigger={(props) => (
         <button
           {...props}
