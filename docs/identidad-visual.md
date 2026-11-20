@@ -245,7 +245,7 @@ sección manda sobre las descripciones generales de arriba.
 | Contador | 20 px de alto, ancho mínimo de 20 px, relleno horizontal de 5 px, fondo gris, texto en tinta, JetBrains Mono 12 px, 500, radio 4 px |
 | Pie | borde superior de 1 px en gris, relleno de 10 px, separación de 8 px entre botones |
 | Botones del pie | 36 px de alto, relleno horizontal de 12 px, separación de 10 px, peso 500 |
-| Botón de usuario | relleno horizontal de 8 px; avatar de 24 × 24 px (radio 4 px, fondo gris, JetBrains Mono 12 px 500), nombre y chevrons arriba y abajo; al pulsarlo abre hacia arriba el menú con «Cerrar sesión» y su icono |
+| Botón de usuario | relleno horizontal de 8 px; avatar de 24 × 24 px (radio 4 px, fondo en tinta y texto en gris en tema claro; fondo gris y texto en tinta en tema oscuro; JetBrains Mono 12 px 500), nombre y chevrons arriba y abajo; al pulsarlo abre hacia arriba el menú con «Cerrar sesión» y su icono |
 
 ### Barra superior
 

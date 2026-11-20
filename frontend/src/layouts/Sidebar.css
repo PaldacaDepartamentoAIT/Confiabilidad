@@ -157,11 +157,23 @@
   align-items: center;
   justify-content: center;
   border-radius: 4px;
-  background: var(--gray);
-  color: var(--ink);
+  background: var(--ink);
+  color: var(--gray);
   font-family: var(--mono);
   font-size: 12px;
   font-weight: 500;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .avatar {
+    background: var(--gray);
+    color: var(--ink);
+  }
+}
+
+:root[data-theme="dark"] .avatar {
+  background: var(--gray);
+  color: var(--ink);
 }
 
 .user-btn .label {
