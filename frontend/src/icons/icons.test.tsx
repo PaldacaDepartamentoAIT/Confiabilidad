@@ -18,6 +18,7 @@ const NAMES = [
   "IconGlobe",
   "IconHouse",
   "IconInfo",
+  "IconLogOut",
   "IconMenu",
   "IconMoon",
   "IconPackage",

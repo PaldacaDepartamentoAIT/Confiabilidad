@@ -3,7 +3,7 @@ import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode 
 import { IconChevronRight } from "../../icons";
 import "./Menu.css";
 
-export type MenuOption = { value: string; label: ReactNode; lang?: string };
+export type MenuOption = { value: string; label: ReactNode; lang?: string; icon?: ReactNode };
 
 export type MenuTriggerProps = {
   role: "combobox";
@@ -23,6 +23,8 @@ type MenuProps = {
   onSelect: (value: string) => void;
   renderTrigger: (props: MenuTriggerProps) => ReactNode;
   align?: "left" | "right";
+  placement?: "down" | "up";
+  selectable?: boolean;
 };
 
 const TYPE_AHEAD_MS = 700;
@@ -36,6 +38,8 @@ export function Menu({
   onSelect,
   renderTrigger,
   align = "left",
+  placement = "down",
+  selectable = true,
 }: MenuProps) {
   const id = useId();
   const listId = `${id}-list`;
@@ -66,8 +70,8 @@ export function Menu({
     return () => document.removeEventListener("mousedown", closeOutside);
   }, [open]);
 
-  function openMenu() {
-    setActive(options.length === 0 ? -1 : Math.max(selected, 0));
+  function openMenu(initialActive = options.length === 0 ? -1 : Math.max(selected, 0)) {
+    setActive(options.length === 0 ? -1 : initialActive);
     setOpen(true);
   }
 
@@ -112,7 +116,7 @@ export function Menu({
     if (!open) {
       if (["ArrowDown", "ArrowUp", "Enter", " "].includes(event.key)) {
         event.preventDefault();
-        openMenu();
+        openMenu(selectable ? Math.max(selected, 0) : 0);
       }
       return;
     }
@@ -121,7 +125,7 @@ export function Menu({
         setActive(Math.min(last, active + 1));
         break;
       case "ArrowUp":
-        setActive(Math.max(0, active - 1));
+        setActive(active < 0 ? last : Math.max(0, active - 1));
         break;
       case "Home":
         setActive(options.length === 0 ? -1 : 0);
@@ -156,7 +160,7 @@ export function Menu({
         "aria-expanded": open,
         "aria-controls": open ? listId : undefined,
         "aria-activedescendant": open && active >= 0 ? optionId(active) : undefined,
-        onClick: () => (open ? setOpen(false) : openMenu()),
+        onClick: () => (open ? setOpen(false) : openMenu(selectable ? Math.max(selected, 0) : -1)),
         onKeyDown: handleKeyDown,
         // El espacio activa el botón al soltarlo; ya se atendió al pulsarlo.
         onKeyUp: (event) => {
@@ -168,9 +172,17 @@ export function Menu({
           id={listId}
           role="listbox"
           aria-label={label}
-          className={["menu", shown && "open", align === "right" && "menu-right"]
+          className={[
+            "menu",
+            shown && "open",
+            align === "right" && "menu-right",
+            placement === "up" && "menu-up",
+          ]
             .filter(Boolean)
             .join(" ")}
+          onMouseLeave={() => {
+            if (!selectable) setActive(-1);
+          }}
         >
           {options.map((option, index) => (
             <li
@@ -178,13 +190,13 @@ export function Menu({
               id={optionId(index)}
               role="option"
               lang={option.lang}
-              aria-selected={index === selected}
+              aria-selected={selectable ? index === selected : false}
               className={["option", index === active && "highlight"].filter(Boolean).join(" ")}
               onMouseDown={(event) => event.preventDefault()}
               onMouseEnter={() => setActive(index)}
               onClick={() => choose(index)}
             >
-              <IconChevronRight />
+              {selectable ? <IconChevronRight className="option-check" /> : option.icon}
               {option.label}
             </li>
           ))}

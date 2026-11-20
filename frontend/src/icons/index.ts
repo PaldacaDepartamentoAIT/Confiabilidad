@@ -14,6 +14,7 @@ import {
   Globe,
   House,
   Info,
+  LogOut,
   Menu,
   Moon,
   Package,
@@ -51,6 +52,7 @@ export const IconFile = sized(FileText, "IconFile");
 export const IconGlobe = sized(Globe, "IconGlobe");
 export const IconHouse = sized(House, "IconHouse");
 export const IconInfo = sized(Info, "IconInfo");
+export const IconLogOut = sized(LogOut, "IconLogOut");
 export const IconMenu = sized(Menu, "IconMenu");
 export const IconMoon = sized(Moon, "IconMoon");
 export const IconPackage = sized(Package, "IconPackage");

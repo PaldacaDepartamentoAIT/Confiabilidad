@@ -397,3 +397,37 @@ describe("type-ahead", () => {
     expect(screen.getByRole("option", { name: "Cuba" })).toHaveClass("highlight");
   });
 });
+
+test("placement up marks the menu to open upward and selectable false renders action icons without default highlight", async () => {
+  const user = userEvent.setup();
+  const onSelect = vi.fn();
+  const { trigger, container } = renderMenu({
+    placement: "up",
+    selectable: false,
+    value: undefined,
+    options: [{ value: "logout", label: "Sign out", icon: <svg data-testid="action-icon" /> }],
+    onSelect,
+  });
+
+  await user.click(trigger);
+
+  const listbox = screen.getByRole("listbox", { name: "Language" });
+  expect(listbox).toHaveClass("menu-up");
+  expect(container.querySelector(".option-check")).not.toBeInTheDocument();
+  expect(screen.getByTestId("action-icon")).toBeInTheDocument();
+  const option = screen.getByRole("option", { name: "Sign out" });
+  expect(option).toHaveAttribute("aria-selected", "false");
+  expect(option).not.toHaveClass("highlight");
+
+  await user.hover(option);
+  expect(option).toHaveClass("highlight");
+  await user.unhover(option);
+  expect(option).not.toHaveClass("highlight");
+
+  await user.click(option);
+  expect(onSelect).toHaveBeenCalledWith("logout");
+
+  trigger.focus();
+  await user.keyboard("{ArrowDown}");
+  expect(screen.getByRole("option", { name: "Sign out" })).toHaveClass("highlight");
+});

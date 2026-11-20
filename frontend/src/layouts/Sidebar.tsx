@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 
 import { Counter } from "../components/Block";
 import { LanguageButton } from "../components/LanguageButton";
+import { Menu } from "../components/menu/Menu";
 import type { LanguageStorage } from "../i18n/language";
 import { IconChevronLeft, IconChevronRight, IconChevronsUpDown } from "../icons";
 import { ThemeButton } from "../theme/ThemeButton";
@@ -19,10 +20,18 @@ export type SidebarItem = {
   counterLabel?: string;
 };
 
+export type SidebarUserOption = {
+  id: string;
+  label: string;
+  icon?: ReactNode;
+  onSelect: () => void;
+};
+
 export type SidebarUser = {
   name: string;
   initials: string;
   onClick?: () => void;
+  menu?: readonly SidebarUserOption[];
 };
 
 type SidebarProps = {
@@ -151,10 +160,34 @@ export function Sidebar({
       <div className="sb-foot">
         <div className="sb-row">
           <ThemeButton storage={storage} />
-          <LanguageButton storage={storage} />
+          <LanguageButton storage={storage} placement="up" />
         </div>
         {user &&
-          (user.onClick ? (
+          (user.menu?.length ? (
+            <Menu
+              label={user.name}
+              placement="up"
+              selectable={false}
+              options={user.menu.map((item) => ({
+                value: item.id,
+                label: item.label,
+                icon: item.icon,
+              }))}
+              onSelect={(selectedId) =>
+                user.menu?.find((item) => item.id === selectedId)?.onSelect()
+              }
+              renderTrigger={(props) => (
+                <button
+                  {...props}
+                  type="button"
+                  className="sb-btn user-btn hov"
+                  aria-label={user.name}
+                >
+                  {userContent}
+                </button>
+              )}
+            />
+          ) : user.onClick ? (
             <button type="button" className="sb-btn user-btn hov" onClick={user.onClick}>
               {userContent}
             </button>

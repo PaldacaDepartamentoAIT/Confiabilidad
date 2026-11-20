@@ -48,7 +48,8 @@ Elementos comunes y de las pantallas con sesión:
     derecha; contraído, solo el botón, centrado;
   - navegación con icono y etiqueta; contraída, solo el icono, con la etiqueta como `title`;
   - pie con el botón de tema y, debajo, el de idioma, siempre uno encima del otro; debajo, el de
-    usuario (avatar con iniciales, nombre y flechas), a todo el ancho.
+    usuario (avatar con iniciales, nombre y flechas), a todo el ancho. Tanto el menú de idioma del
+    pie como el menú del usuario (con la acción «Cerrar sesión» e icono) se despliegan hacia arriba.
 - **Barra superior** de 64 px: secciones de la pantalla en pestañas a la izquierda y buscador a la
   derecha. Su línea inferior continúa por la cabecera del menú lateral, de modo que se ve como una
   sola línea.
@@ -192,7 +193,7 @@ Un solo color por prioridad en toda la aplicación.
 | Pestañas a selector y al revés | 0,15 s de salida y, a continuación, 0,2 s de entrada |
 | Buscador reducido: abrir y cerrar | 0,25 s, salida suave; 0,2 s de fundido de las pestañas y del botón |
 | Aparición del modal de documento | 0,2 s de fundido de la caja y de la cortina |
-| Aparición de un menú desplegable | 0,18 s (fundido y 6 px de desplazamiento hacia abajo); se cierra sin animación |
+| Aparición de un menú desplegable | 0,18 s (fundido y 6 px de desplazamiento hacia abajo, o hacia arriba si se despliega por encima); se cierra sin animación |
 | Panel lateral en móvil | 0,25 s de deslizamiento |
 | Cambio de tema | 0,4 s en todos los colores, solo durante el cambio |
 
@@ -244,7 +245,7 @@ sección manda sobre las descripciones generales de arriba.
 | Contador | 20 px de alto, ancho mínimo de 20 px, relleno horizontal de 5 px, fondo gris, texto en tinta, JetBrains Mono 12 px, 500, radio 4 px |
 | Pie | borde superior de 1 px en gris, relleno de 10 px, separación de 8 px entre botones |
 | Botones del pie | 36 px de alto, relleno horizontal de 12 px, separación de 10 px, peso 500 |
-| Botón de usuario | relleno horizontal de 8 px; avatar de 24 × 24 px (radio 4 px, fondo gris, JetBrains Mono 12 px 500), nombre y chevrons arriba y abajo |
+| Botón de usuario | relleno horizontal de 8 px; avatar de 24 × 24 px (radio 4 px, fondo en tinta y texto en gris en tema claro; fondo gris y texto en tinta en tema oscuro; JetBrains Mono 12 px 500), nombre y chevrons arriba y abajo; al pulsarlo abre hacia arriba el menú con «Cerrar sesión» y su icono |
 
 ### Barra superior
 
@@ -298,8 +299,8 @@ sección manda sobre las descripciones generales de arriba.
 |---|---|
 | Disparador | igual que un campo; texto a la izquierda y chevron hacia abajo a la derecha; sin valor, «Selecciona una opción» en texto secundario |
 | Ancho del disparador | todo el ancho disponible de su contenedor (100 %), sea un campo de formulario, un botón del menú lateral o un selector de la barra; el menú desplegado nunca es más estrecho que él |
-| Menú | aparece a 4 px bajo el disparador, ancho mínimo igual al del disparador, alto máximo de 260 px con desplazamiento, relleno de 4 px, fondo del lienzo, borde de 1 px en borde de control, radio 4 px |
-| Opción | 34 px de alto, relleno de 0 10 px 0 6 px, separación de 6 px, radio 6 px; la seleccionada en peso 700 y con un chevron «>» a la izquierda; el resto reserva el mismo hueco |
+| Menú | aparece a 4 px bajo el disparador (o a 4 px por encima en los botones del pie del menú lateral), ancho mínimo igual al del disparador, alto máximo de 260 px con desplazamiento, relleno de 4 px, fondo del lienzo, borde de 1 px en borde de control, radio 4 px |
+| Opción | 34 px de alto, relleno de 0 10 px 0 6 px, separación de 6 px, radio 6 px; la seleccionada en peso 700 y con un chevron «>» a la izquierda (el resto reserva el mismo hueco); en menús de acción como el de usuario, el icono de la acción va en su lugar |
 | Opción resaltada u opción bajo el cursor | fondo con el 9 % de la tinta mezclado con el lienzo |
 
 ### Casilla
@@ -334,6 +335,8 @@ Ventana modal que muestra un documento (términos, consentimientos) y se abre de
 | Medidas | 36 px de alto, relleno horizontal de 16 px, radio 6 px, 14 px, peso 600, separación de 8 px entre icono y texto |
 | Principal | fondo y borde en el principal, texto en el color de texto sobre el principal; hover con el principal oscurecido |
 | Secundario | sin relleno, borde de 1 px y texto en el principal; hover con el 9 % de la tinta |
+| Botón de icono | 36 × 36 px, radio 6 px, sin relleno, borde de 1 px e icono de 16 px en el principal; hover con el 9 % de la tinta |
+| Tooltip (botón de icono) | aparece hacia arriba a 6 px del botón al pasar el cursor o enfocar con el teclado; fondo en relleno negro del sistema, texto blanco `#ffffff`, borde de 1 px en gris, radio 4 px, 12 px |
 
 ### Aviso
 

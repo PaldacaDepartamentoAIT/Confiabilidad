@@ -2,7 +2,7 @@ import { useId, useState } from "react";
 
 import { Block } from "../../components/Block";
 import type { LanguageStorage } from "../../i18n/language";
-import { IconBell, IconFactory, IconHouse, IconPackage } from "../../icons";
+import { IconBell, IconFactory, IconHouse, IconLogOut, IconPackage } from "../../icons";
 import { AppLayout } from "../../layouts/AppLayout";
 import type { SidebarItem } from "../../layouts/Sidebar";
 import { TabPanel } from "../../layouts/TabPanel";
@@ -54,7 +54,13 @@ export function AppLayoutSection({ storage }: AppLayoutSectionProps) {
         <AppLayout
           items={ITEMS}
           activeId="assets"
-          user={{ name: "Laura Gómez", initials: "LG" }}
+          user={{
+            name: "Laura Gómez",
+            initials: "LG",
+            menu: [
+              { id: "logout", label: "Cerrar sesión", icon: <IconLogOut />, onSelect: () => {} },
+            ],
+          }}
           storage={storage}
           embedded
           topBar={
