@@ -1,12 +1,12 @@
 # Entrega E-08 · Pantalla del área privada, gestión de sesiones y rutas `/` y `/showcase`
 
-Rama: `feat/inicio-cierre-sesion-pantalla-sesiones` · PR: pendiente · Líneas de código y tests: 470 (límite: 400; excepción hasta 500 por exponer `HomePage` en `/` y mover `ShowcasePage` a `/showcase` junto con sus tests unitarios y visuales en la misma entrega).
+Rama: `feat/inicio-cierre-sesion-pantalla-sesiones` · PR: pendiente · Líneas de código y tests: 479 (límite: 400; excepción hasta 500 por exponer `HomePage` en `/` y mover `ShowcasePage` a `/showcase` junto con sus tests unitarios y visuales en la misma entrega).
 
 ## Qué se hizo
-- Se creó `frontend/src/auth/HomePage.tsx` usando `AppLayout`, `Block` (con contador y acciones), `Table` (`ip` y fechas en monoespaciada), `Chip` y `Button` (`T-020`, `RF-006`, `RF-008`, `RF-009`, `RF-011`, `RF-016`, `RF-017`, `RF-019`):
+- Se creó `frontend/src/auth/HomePage.tsx` usando `AppLayout`, `Block` (con contador y acciones), `Table` (`ip` y fechas en monoespaciada), `Chip`, `IconButton` y `Button` (`T-020`, `RF-006`, `RF-008`, `RF-009`, `RF-011`, `RF-016`, `RF-017`, `RF-019`):
   - Carga la sesión actual y la lista de sesiones activas; si recibe `401` (`unauthenticated`) redirige a `/login`, y si recibe `403` (`termsRequired`) o `terms_status !== "accepted"` redirige a `/terms`.
-  - Muestra el nombre y correo de la persona autenticada y el botón para cerrar la sesión actual (limpia siempre el cliente y lleva a `/login` aunque el servidor responda `401` o falle la red).
-  - Muestra la tabla de sesiones activas con `Chip` en la sesión actual, botón individual para cerrar cada otra sesión y botón «Cerrar todas las demás sesiones» en la cabecera (desactivado cuando solo existe la sesión actual, `C-05`).
+  - Conecta el nombre e iniciales de la persona autenticada con el menú desplegable del usuario en `Sidebar`, donde reside la acción «Cerrar sesión» con `IconLogOut` (limpia siempre el cliente y lleva a `/login` aunque el servidor responda `401` o falle la red).
+  - Muestra la tabla de sesiones activas con `Chip` en la sesión actual, un `IconButton` con `IconLogOut` y tooltip hacia arriba para cerrar cada otra sesión y el botón «Cerrar todas las demás sesiones» en la cabecera (desactivado cuando solo existe la sesión actual, `C-05`).
 - Se añadió el estilo de título principal `.content > h1` (`24px`, peso `600`) en `frontend/src/layouts/AppLayout.css` según `docs/identidad-visual.md`.
 - Se conectó `HomePage` en `/` y se movió `ShowcasePage` a `/showcase` en `frontend/src/App.tsx`, actualizando `App.test.tsx`, `ShowcasePage.test.tsx`, `showcase/a11y.test.tsx` y los tests visuales bajo `frontend/visual/`.
 - Se añadieron los tests `frontend/src/auth/HomePage.test.tsx` (`CF-4`, `CF-7`, `C-05`, `C-06`).
@@ -16,7 +16,7 @@ El detalle de cada tarea, con su «Hecho cuando», está en [`tasks.md`](../../t
 
 | Tarea | Título | Commit |
 |---|---|---|
-| T-020 | Pantalla del área privada, gestión de sesiones y rutas `/` y `/showcase` | `c392fdd`, `570ea80` |
+| T-020 | Pantalla del área privada, gestión de sesiones y rutas `/` y `/showcase` | `c392fdd`, `570ea80`, `dc69c2d` |
 
 ## Cómo ejecutarlo y probarlo
 Actualiza las ramas remotas y cambia a la rama de la entrega:

@@ -290,10 +290,11 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   Excepción: exponer `HomePage` en `/` y mover `ShowcasePage` a `/showcase` dentro de esta misma
   entrega exige actualizar los tests de `App`, `showcase` y `visual` que asumían el catálogo en `/`.
   Decisiones: `HomePage` reutiliza `Block` (con `count` y `actions`), `Table` (`kind: "code"` en IP
-  y fechas) y `Chip` del sistema de diseño, y añade `.content > h1` (24 px, peso 600) en
-  `AppLayout.css` según `docs/identidad-visual.md` — [Cierto] — revertir: crear un CSS propio
-  `HomePage.css`. Validación pendiente en la máquina virtual del usuario (alternativa sin
-  dependencias locales de `AGENTS.md`).
+  y fechas), `Chip` e `IconButton` (con `IconLogOut` y tooltip hacia arriba en la columna de acción)
+  del sistema de diseño; conecta «Cerrar sesión» al menú de usuario en `Sidebar` (sin bloque
+  separado de «Sesión iniciada»); y añade `.content > h1` (24 px, peso 600) en `AppLayout.css` según
+  `docs/identidad-visual.md` — [Cierto] — revertir: crear un CSS propio `HomePage.css`. Validación
+  pendiente en la máquina virtual del usuario (alternativa sin dependencias locales de `AGENTS.md`).
 
 - [ ] T-021 Enlaces a `/login` desde el formulario de registro y desde cuenta creada
   RF: RF-013 (M-07; S-08, enlace desde cuenta creada; CF-7) | Depende de: T-016 | Archivos: 3
@@ -379,10 +380,15 @@ Rama de integración: `feat/inicio-cierre-sesion` (los PR de las entregas van co
   Tareas: T-019 | Líneas estimadas: 355 | Rama: feat/inicio-cierre-sesion-pantalla-terminos
   Cómo probarlo: abrir `http://localhost:5173/login` y `http://localhost:5173/terms` en el navegador y ejecutar `pnpm --filter frontend test src/auth/TermsPage.test.tsx src/App.test.tsx`.
 
+- E-07c Botón de icono, menús hacia arriba y menú de usuario
+  Tareas: mejora de componentes del sistema de diseño | Líneas estimadas: 424 | Rama: feat/inicio-cierre-sesion-componentes-menu
+  Cómo probarlo: abrir el catálogo de componentes y comprobar el tooltip hacia arriba de `IconButton` y los menús de idioma y usuario desplegándose hacia arriba en `Sidebar`.
+  Excepción: 424 líneas reales (dentro de `sdd.max_lineas_pr_excepcion`, 500) por actualizar las referencias HTML (`docs/referencia/crear-empresa.html` y `activos.html`) al invertir los colores del avatar en tema claro.
+
 - E-08 Pantalla del área privada, gestión de sesiones y rutas `/` y `/showcase`
-  Tareas: T-020 | Líneas estimadas: 470 | Rama: feat/inicio-cierre-sesion-pantalla-sesiones
+  Tareas: T-020 | Líneas estimadas: 479 | Rama: feat/inicio-cierre-sesion-pantalla-sesiones
   Cómo probarlo: abrir `http://localhost:5173/` y `http://localhost:5173/showcase` en el navegador y ejecutar `pnpm --filter frontend test src/auth/HomePage.test.tsx src/App.test.tsx`.
-  Excepción: 470 líneas reales (dentro de `sdd.max_lineas_pr_excepcion`, 500): al exponer `HomePage` en `/` en la misma entrega visual para cumplir `AGENTS.md`, `ShowcasePage` pasa a `/showcase` y obliga a actualizar sus tests unitarios y visuales además de la pantalla y sus tests.
+  Excepción: 479 líneas reales (dentro de `sdd.max_lineas_pr_excepcion`, 500): al exponer `HomePage` en `/` en la misma entrega visual para cumplir `AGENTS.md`, `ShowcasePage` pasa a `/showcase` y obliga a actualizar sus tests unitarios y visuales además de la pantalla y sus tests.
 
 - E-09 Enrutamiento completo, redirecciones, accesibilidad y resumen
   Tareas: T-021, T-022, T-023, T-024 | Líneas estimadas: 340 | Rama: feat/inicio-cierre-sesion-rutas
