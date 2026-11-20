@@ -1,6 +1,6 @@
 # Entrega E-07c · Botón de icono, menús hacia arriba y menú de usuario
 
-Rama: `feat/inicio-cierre-sesion-componentes-menu` · PR: pendiente · Líneas de código y tests: 384 (límite: 400).
+Rama: `feat/inicio-cierre-sesion-componentes-menu` · PR: pendiente · Líneas de código y tests: 398 (límite: 400).
 
 ## Qué se hizo
 - Se actualizó [`docs/identidad-visual.md`](../../../../docs/identidad-visual.md) con las decisiones de diseño acordadas:
@@ -16,6 +16,7 @@ Rama: `feat/inicio-cierre-sesion-componentes-menu` · PR: pendiente · Líneas d
 - `0ec5a02` — actualiza `docs/identidad-visual.md`
 - `87d6ffe` — componente `IconButton` con tooltip hacia arriba y muestra en catálogo
 - `41327de` — menús hacia arriba en `Sidebar` (idioma y usuario) y muestra en catálogo
+- `62ead3e` — evita resaltar por defecto las acciones en `Menu` (`selectable={false}`) al abrir con ratón, aplicando el fondo solo al hacer hover (o navegar con teclado) como en el menú de idioma
 
 ## Cómo ejecutarlo y probarlo
 Actualiza las ramas remotas y cambia a la rama de la entrega:
