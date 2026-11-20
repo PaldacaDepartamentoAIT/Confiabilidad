@@ -1,6 +1,7 @@
 # Entrega E-07c · Botón de icono, menús hacia arriba y menú de usuario
 
-Rama: `feat/inicio-cierre-sesion-componentes-menu` · PR: pendiente · Líneas de código y tests: 398 (límite: 400).
+Rama: `feat/inicio-cierre-sesion-componentes-menu` · PR: pendiente · Líneas de código y tests: 422 (límite: 400).
+Excepción: 422 líneas reales (dentro de `sdd.max_lineas_pr_excepcion`, 500) por actualizar también las referencias HTML (`docs/referencia/crear-empresa.html` y `docs/referencia/activos.html`) al invertir los colores del avatar en tema claro para mantener en verde las pruebas visuales de comparación.
 
 ## Qué se hizo
 - Se actualizó [`docs/identidad-visual.md`](../../../../docs/identidad-visual.md) con las decisiones de diseño acordadas:
@@ -9,7 +10,7 @@ Rama: `feat/inicio-cierre-sesion-componentes-menu` · PR: pendiente · Líneas d
 - Se añadió `IconLogOut` en `frontend/src/icons/index.ts` y su verificación en `frontend/src/icons/icons.test.tsx`.
 - Se creó el componente reutilizable `IconButton` (`frontend/src/components/IconButton.tsx`, `IconButton.css`, `IconButton.test.tsx`) y se expuso un ejemplo en la sección «Botones y avisos» del catálogo (`frontend/src/showcase/sections/ButtonsSection.tsx`).
 - Se añadió `placement?: "down" | "up"` y soporte de menús de acción (`selectable?: boolean` e `icon` en cada opción) en `Menu` (`frontend/src/components/menu/Menu.tsx`, `Menu.css`, `Menu.test.tsx`).
-- Se pasó `placement="up"` en `LanguageButton` dentro de `Sidebar`, se eliminó el recorte horizontal/vertical del menú lateral al abrir desplegables en el pie (`Sidebar.css`), se añadió `user.menu` en `Sidebar` (`Sidebar.tsx`, `Sidebar.test.tsx`) y se expuso el menú de usuario con «Cerrar sesión» en «Diseño con sesión» del catálogo (`frontend/src/showcase/sections/AppLayoutSection.tsx`).
+- Se pasó `placement="up"` en `LanguageButton` dentro de `Sidebar`, se eliminó el recorte horizontal/vertical del menú lateral al abrir desplegables en el pie y se invirtieron los colores del avatar del botón de usuario en tema claro (fondo en `--ink` y texto en `--gray`, manteniendo el tema oscuro) en `Sidebar.css` y las referencias visuales (`docs/referencia/crear-empresa.html` y `activos.html`), se añadió `user.menu` en `Sidebar` (`Sidebar.tsx`, `Sidebar.test.tsx`) y se expuso el menú de usuario con «Cerrar sesión» en «Diseño con sesión» del catálogo (`frontend/src/showcase/sections/AppLayoutSection.tsx`).
 
 ## Commits
 
@@ -17,6 +18,7 @@ Rama: `feat/inicio-cierre-sesion-componentes-menu` · PR: pendiente · Líneas d
 - `87d6ffe` — componente `IconButton` con tooltip hacia arriba y muestra en catálogo
 - `41327de` — menús hacia arriba en `Sidebar` (idioma y usuario) y muestra en catálogo
 - `62ead3e` — evita resaltar por defecto las acciones en `Menu` (`selectable={false}`) al abrir con ratón, aplicando el fondo solo al hacer hover (o navegar con teclado) como en el menú de idioma
+- `635599a` — invierte colores del avatar de usuario en tema claro (`Sidebar.css`, referencias visuales y guía visual)
 
 ## Cómo ejecutarlo y probarlo
 Actualiza las ramas remotas y cambia a la rama de la entrega:
