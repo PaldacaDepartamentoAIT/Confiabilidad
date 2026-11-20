@@ -1,7 +1,7 @@
 # Entrega E-07c · Botón de icono, menús hacia arriba y menú de usuario
 
-Rama: `feat/inicio-cierre-sesion-componentes-menu` · PR: pendiente · Líneas de código y tests: 422 (límite: 400).
-Excepción: 422 líneas reales (dentro de `sdd.max_lineas_pr_excepcion`, 500) por actualizar también las referencias HTML (`docs/referencia/crear-empresa.html` y `docs/referencia/activos.html`) al invertir los colores del avatar en tema claro para mantener en verde las pruebas visuales de comparación.
+Rama: `feat/inicio-cierre-sesion-componentes-menu` · PR: pendiente · Líneas de código y tests: 424 (límite: 400).
+Excepción: 424 líneas reales (dentro de `sdd.max_lineas_pr_excepcion`, 500) por actualizar también las referencias HTML (`docs/referencia/crear-empresa.html` y `docs/referencia/activos.html`) al invertir los colores del avatar en tema claro para mantener en verde las pruebas visuales de comparación.
 
 ## Qué se hizo
 - Se actualizó [`docs/identidad-visual.md`](../../../../docs/identidad-visual.md) con las decisiones de diseño acordadas:
@@ -19,6 +19,7 @@ Excepción: 422 líneas reales (dentro de `sdd.max_lineas_pr_excepcion`, 500) po
 - `41327de` — menús hacia arriba en `Sidebar` (idioma y usuario) y muestra en catálogo
 - `62ead3e` — evita resaltar por defecto las acciones en `Menu` (`selectable={false}`) al abrir con ratón, aplicando el fondo solo al hacer hover (o navegar con teclado) como en el menú de idioma
 - `635599a` — invierte colores del avatar de usuario en tema claro (`Sidebar.css`, referencias visuales y guía visual)
+- `db73a5f` — incluye `IconButton.css` en `vite.config.ts` para tests y ajusta el texto del anuncio de procesando en `IconButton.test.tsx`
 
 ## Cómo ejecutarlo y probarlo
 Actualiza las ramas remotas y cambia a la rama de la entrega:
