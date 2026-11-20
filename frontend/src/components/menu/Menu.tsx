@@ -70,8 +70,8 @@ export function Menu({
     return () => document.removeEventListener("mousedown", closeOutside);
   }, [open]);
 
-  function openMenu() {
-    setActive(options.length === 0 ? -1 : Math.max(selected, 0));
+  function openMenu(initialActive = options.length === 0 ? -1 : Math.max(selected, 0)) {
+    setActive(options.length === 0 ? -1 : initialActive);
     setOpen(true);
   }
 
@@ -116,7 +116,7 @@ export function Menu({
     if (!open) {
       if (["ArrowDown", "ArrowUp", "Enter", " "].includes(event.key)) {
         event.preventDefault();
-        openMenu();
+        openMenu(selectable ? Math.max(selected, 0) : 0);
       }
       return;
     }
@@ -125,7 +125,7 @@ export function Menu({
         setActive(Math.min(last, active + 1));
         break;
       case "ArrowUp":
-        setActive(Math.max(0, active - 1));
+        setActive(active < 0 ? last : Math.max(0, active - 1));
         break;
       case "Home":
         setActive(options.length === 0 ? -1 : 0);
@@ -160,7 +160,7 @@ export function Menu({
         "aria-expanded": open,
         "aria-controls": open ? listId : undefined,
         "aria-activedescendant": open && active >= 0 ? optionId(active) : undefined,
-        onClick: () => (open ? setOpen(false) : openMenu()),
+        onClick: () => (open ? setOpen(false) : openMenu(selectable ? Math.max(selected, 0) : -1)),
         onKeyDown: handleKeyDown,
         // El espacio activa el botón al soltarlo; ya se atendió al pulsarlo.
         onKeyUp: (event) => {
@@ -180,6 +180,9 @@ export function Menu({
           ]
             .filter(Boolean)
             .join(" ")}
+          onMouseLeave={() => {
+            if (!selectable) setActive(-1);
+          }}
         >
           {options.map((option, index) => (
             <li

@@ -19,7 +19,7 @@ function renderInSpanish(element: ReactElement, announce = vi.fn()) {
   return { ...view, announce };
 }
 
-test("exposes its label as accessible name and upward tooltip text", () => {
+test("exposes its label as accessible name, upward tooltip and has no accessibility violations", async () => {
   const { container } = renderInSpanish(<IconButton label="Cerrar sesión" icon={<IconLogOut />} />);
 
   const button = screen.getByRole("button", { name: "Cerrar sesión" });
@@ -30,6 +30,12 @@ test("exposes its label as accessible name and upward tooltip text", () => {
   const tip = container.querySelector(".icon-btn-tip");
   expect(tip).toHaveTextContent("Cerrar sesión");
   expect(tip).toHaveAttribute("aria-hidden", "true");
+  expect(css).toMatch(/border:\s*1px solid var\(--primary\)/);
+  expect(css).toMatch(/bottom:\s*calc\(100% \+ 6px\)/);
+  expect(css).toMatch(/\.icon-btn:hover \+ \.icon-btn-tip/);
+  expect(
+    (await axe.run(container, { rules: { "color-contrast": { enabled: false } } })).violations,
+  ).toEqual([]);
 });
 
 test("responds to click, Enter and Space", async () => {
@@ -37,8 +43,7 @@ test("responds to click, Enter and Space", async () => {
   const onClick = vi.fn();
   renderInSpanish(<IconButton label="Cerrar sesión" icon={<IconLogOut />} onClick={onClick} />);
 
-  const button = screen.getByRole("button", { name: "Cerrar sesión" });
-  await user.click(button);
+  await user.click(screen.getByRole("button", { name: "Cerrar sesión" }));
   await user.keyboard("{Enter}");
   await user.keyboard(" ");
 
@@ -57,13 +62,11 @@ test("keeps focus when keepFocusOnMouseDown is enabled", async () => {
   const field = screen.getByRole("textbox", { name: "Campo" });
   await user.click(field);
   await user.click(screen.getByRole("button", { name: "Cerrar sesión" }));
-
   expect(field).toHaveFocus();
   expect(fireEvent.mouseDown(screen.getByRole("button", { name: "Cerrar sesión" }))).toBe(false);
 });
 
 test("while processing, announces once, updates label and ignores clicks", async () => {
-  const user = userEvent.setup();
   const onClick = vi.fn();
   const { rerender, announce, container } = renderInSpanish(
     <IconButton label="Cerrar sesión" icon={<IconLogOut />} onClick={onClick} />,
@@ -81,19 +84,6 @@ test("while processing, announces once, updates label and ignores clicks", async
   expect(button).toHaveAttribute("aria-disabled", "true");
   expect(container.querySelector(".icon-btn-tip")).toHaveTextContent("Procesando…");
   expect(announce).toHaveBeenCalledWith("Procesando, por favor espera.", "polite");
-
-  await user.click(button);
+  await userEvent.setup().click(button);
   expect(onClick).not.toHaveBeenCalled();
-});
-
-test("defines bordered icon button rules and upward hover tooltip in css", () => {
-  expect(css).toMatch(/border:\s*1px solid var\(--primary\)/);
-  expect(css).toMatch(/bottom:\s*calc\(100% \+ 6px\)/);
-  expect(css).toMatch(/\.icon-btn:hover \+ \.icon-btn-tip/);
-});
-
-test("has no accessibility violations", async () => {
-  const { container } = renderInSpanish(<IconButton label="Cerrar sesión" icon={<IconLogOut />} />);
-  const results = await axe.run(container, { rules: { "color-contrast": { enabled: false } } });
-  expect(results.violations).toEqual([]);
 });
