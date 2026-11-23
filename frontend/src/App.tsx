@@ -27,7 +27,10 @@ const ROUTES = [
   "/register/done",
 ] as const;
 
-type AppProps = { storage?: LanguageStorage; client?: ApiClient };
+type AppProps = {
+  storage?: LanguageStorage;
+  client?: ApiClient;
+};
 
 const redirectFor = (route: string, info: SessionInfo | null): string | null => {
   if (!info) return route === "/terms" ? "/login" : null;
@@ -53,8 +56,7 @@ export function App({ storage, client }: AppProps) {
     if (route === shownRoute) return;
     if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
       setShownRoute(route);
-      setPhase("idle");
-      return;
+      return setPhase("idle");
     }
     setPhase("out");
     const timer = window.setTimeout(() => {
@@ -66,20 +68,17 @@ export function App({ storage, client }: AppProps) {
 
   useEffect(() => {
     if (route !== "/login" && route !== "/register" && route !== "/terms") return;
-    if (session !== undefined) {
-      const target = redirectFor(route, session);
+    const go = (info: SessionInfo | null) => {
+      const target = redirectFor(route, info);
       if (target) navigate(target);
-      return;
-    }
+    };
+    if (session !== undefined) return go(session);
     let active = true;
-    void getSession(api).then((result) => {
-      if (!active) return;
-      const next =
-        result.kind === "ok" ? result.data : result.kind === "unauthenticated" ? null : undefined;
-      if (next === undefined) return;
+    void getSession(api).then((r) => {
+      const next = r.kind === "ok" ? r.data : r.kind === "unauthenticated" ? null : undefined;
+      if (!active || next === undefined) return;
       setSession(next);
-      const target = redirectFor(route, next);
-      if (target) navigate(target);
+      go(next);
     });
     return () => {
       active = false;
@@ -88,35 +87,22 @@ export function App({ storage, client }: AppProps) {
 
   const setTerms = (terms_status: TermsStatus) =>
     setSession((cur) => (cur ? { ...cur, terms_status, terms: null } : cur));
+  const shared = { client: api, storage };
+  const withSession = {
+    ...shared,
+    session: session ?? undefined,
+    onLoggedOut: () => setSession(null),
+  };
 
-  const screen =
-    shownRoute === "/" ? (
-      <HomePage
-        client={api}
-        session={session ?? undefined}
-        storage={storage}
-        onLoggedOut={() => setSession(null)}
-        onTermsRequired={setTerms}
-      />
-    ) : shownRoute === "/login" ? (
-      <LoginPage client={api} storage={storage} onAuthenticated={setSession} />
-    ) : shownRoute === "/terms" ? (
-      <TermsPage
-        client={api}
-        session={session ?? undefined}
-        storage={storage}
-        onAccepted={() => setTerms("accepted")}
-        onLoggedOut={() => setSession(null)}
-      />
-    ) : shownRoute === "/showcase" ? (
-      <ShowcasePage storage={storage} />
-    ) : shownRoute === "/register" ? (
-      <RegisterPage client={api} storage={storage} />
-    ) : shownRoute === "/register/continue" ? (
-      <VerifyPage client={api} storage={storage} />
-    ) : (
-      <DonePage storage={storage} />
-    );
+  const screen = {
+    "/": <HomePage {...withSession} onTermsRequired={setTerms} />,
+    "/login": <LoginPage {...shared} onAuthenticated={setSession} />,
+    "/terms": <TermsPage {...withSession} onAccepted={() => setTerms("accepted")} />,
+    "/showcase": <ShowcasePage storage={storage} />,
+    "/register": <RegisterPage {...shared} />,
+    "/register/continue": <VerifyPage {...shared} />,
+    "/register/done": <DonePage storage={storage} />,
+  }[shownRoute];
 
   return (
     <LiveAnnouncer>

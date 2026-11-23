@@ -202,14 +202,8 @@ type CodeFormProps = {
   resendAction?: ReactNode;
 };
 
-function CodeForm({
-  client,
-  publicId,
-  initiallyLocked,
-  onVerified,
-  onNotFound,
-  resendAction,
-}: CodeFormProps) {
+function CodeForm(props: CodeFormProps) {
+  const { client, publicId, initiallyLocked, onVerified, onNotFound, resendAction } = props;
   const { t } = useTranslation();
   const [processing, setProcessing] = useState(false);
   const [locked, setLocked] = useState(initiallyLocked);

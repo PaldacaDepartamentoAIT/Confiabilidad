@@ -107,7 +107,7 @@ const UNAUTH = { status: 401, body: { code: "unauthenticated", message: "x" } };
 const PENDING_TERMS = {
   status: 200,
   body: {
-    user: { email: "ana@example.com", name: "Ana" },
+    ...(answers.session as object),
     terms_status: "not_accepted",
     terms: { version: "1", locale: "en", content: "T" },
   },
@@ -119,25 +119,15 @@ const renderApp = (client?: ReturnType<typeof fakeClient>) =>
     </I18nextProvider>,
   );
 
-test.each([
-  ["/", "Main panel", undefined],
-  ["/ruta-que-no-existe", "Main panel", undefined],
-  ["/showcase", "Reliability", undefined],
-  ["/login", "Sign in", UNAUTH],
-  ["/terms", "Pending terms and conditions", PENDING_TERMS],
-  ["/register", "Create your account", UNAUTH],
-  ["/register/continue#pid-1", "Enter the verification code", UNAUTH],
-  ["/register/done", "Account created", UNAUTH],
-])("shows the expected screen at %s", async (path, heading, sessionReply) => {
-  window.history.replaceState(null, "", path);
-  document.cookie = "csrftoken=token";
-  renderApp(fakeClient(sessionReply));
-  expect(await screen.findByRole("heading", { level: 1, name: heading })).toBeInTheDocument();
-  window.history.replaceState(null, "", "/");
-  document.cookie = "csrftoken=; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-});
-
-test.each([
+const ROUTE_CASES = [
+  ["/", undefined, null, "Main panel"],
+  ["/ruta-que-no-existe", undefined, null, "Main panel"],
+  ["/showcase", undefined, null, "Reliability"],
+  ["/login", UNAUTH, null, "Sign in"],
+  ["/terms", PENDING_TERMS, null, "Pending terms and conditions"],
+  ["/register", UNAUTH, null, "Create your account"],
+  ["/register/continue#pid-1", UNAUTH, null, "Enter the verification code"],
+  ["/register/done", UNAUTH, null, "Account created"],
   ["/", UNAUTH, "/login", "Sign in"],
   ["/terms", UNAUTH, "/login", "Sign in"],
   ["/login", undefined, "/", "Main panel"],
@@ -146,14 +136,16 @@ test.each([
   ["/register", PENDING_TERMS, "/terms", "Pending terms and conditions"],
   ["/", PENDING_TERMS, "/terms", "Pending terms and conditions"],
   ["/terms", undefined, "/", "Main panel"],
-])(
-  "redirects %s according to session and terms state",
+] as const;
+
+test.each(ROUTE_CASES)(
+  "renders or redirects %s according to session and terms",
   async (from, sessionReply, target, heading) => {
     window.history.replaceState(null, "", from);
     document.cookie = "csrftoken=token";
     renderApp(fakeClient(sessionReply));
     expect(await screen.findByRole("heading", { level: 1, name: heading })).toBeInTheDocument();
-    expect(window.location.pathname).toBe(target);
+    if (target) expect(window.location.pathname).toBe(target);
     window.history.replaceState(null, "", "/");
     document.cookie = "csrftoken=; expires=Thu, 01 Jan 1970 00:00:00 GMT";
   },
