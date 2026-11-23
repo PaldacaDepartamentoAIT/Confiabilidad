@@ -1,0 +1,17 @@
+.route-out {
+  opacity: 0;
+  transition: opacity 0.15s ease-in;
+}
+
+.route-in {
+  animation: route-fade-in 0.2s ease-out;
+}
+
+@keyframes route-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

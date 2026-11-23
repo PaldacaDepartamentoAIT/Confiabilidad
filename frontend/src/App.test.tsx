@@ -112,6 +112,12 @@ const PENDING_TERMS = {
     terms: { version: "1", locale: "en", content: "T" },
   },
 };
+const renderApp = (client?: ReturnType<typeof fakeClient>) =>
+  render(
+    <I18nextProvider i18n={createI18n("en")}>
+      <App client={client} />
+    </I18nextProvider>,
+  );
 
 test.each([
   ["/", "Main panel", undefined],
@@ -125,12 +131,7 @@ test.each([
 ])("shows the expected screen at %s", async (path, heading, sessionReply) => {
   window.history.replaceState(null, "", path);
   document.cookie = "csrftoken=token";
-  render(
-    <I18nextProvider i18n={createI18n("en")}>
-      <App client={fakeClient(sessionReply)} />
-    </I18nextProvider>,
-  );
-
+  renderApp(fakeClient(sessionReply));
   expect(await screen.findByRole("heading", { level: 1, name: heading })).toBeInTheDocument();
   window.history.replaceState(null, "", "/");
   document.cookie = "csrftoken=; expires=Thu, 01 Jan 1970 00:00:00 GMT";
@@ -150,12 +151,7 @@ test.each([
   async (from, sessionReply, target, heading) => {
     window.history.replaceState(null, "", from);
     document.cookie = "csrftoken=token";
-    render(
-      <I18nextProvider i18n={createI18n("en")}>
-        <App client={fakeClient(sessionReply)} />
-      </I18nextProvider>,
-    );
-
+    renderApp(fakeClient(sessionReply));
     expect(await screen.findByRole("heading", { level: 1, name: heading })).toBeInTheDocument();
     expect(window.location.pathname).toBe(target);
     window.history.replaceState(null, "", "/");
@@ -163,19 +159,21 @@ test.each([
   },
 );
 
-test("moving between screens does not reload the page", async () => {
+test("moving between screens does not reload the page, keeps the bar and fades out then in", async () => {
   window.history.replaceState(null, "", "/register/done");
-  render(
-    <I18nextProvider i18n={createI18n("en")}>
-      <App client={fakeClient()} />
-    </I18nextProvider>,
-  );
+  const { container } = renderApp(fakeClient(UNAUTH));
+  await screen.findByRole("heading", { level: 1, name: "Account created" });
+  const barBefore = screen.getByRole("banner");
+  const content = container.querySelector(".public-content");
+  expect(content).not.toHaveClass("route-out", "route-in");
 
   act(() => navigate("/register"));
-
+  expect(content).toHaveClass("route-out");
   expect(
     await screen.findByRole("heading", { level: 1, name: "Create your account" }),
   ).toBeVisible();
+  expect(screen.getByRole("banner")).toBe(barBefore);
+  expect(container.querySelector(".public-content")).toHaveClass("route-in");
   window.history.replaceState(null, "", "/");
 });
 

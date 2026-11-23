@@ -41,6 +41,10 @@
   margin: 20px 0 14px;
 }
 
+.public-card form + p {
+  margin-top: 14px;
+}
+
 .public-actions-row {
   display: flex;
   justify-content: flex-end;

@@ -390,7 +390,11 @@ describe("sending another code", () => {
     const { fetcher } = replies(reply(200, { ...STATUS, resend_in: 2, resends_left: 3 }));
     renderPage(fetcher);
 
-    expect(await screen.findByRole("button", { name: "Enviar otro código en 2 s" })).toBeDisabled();
+    const resend = await screen.findByRole("button", { name: "Enviar otro código en 2 s" });
+    expect(resend).toBeDisabled();
+    expect(resend.closest(".public-actions-row")).toContainElement(
+      screen.getByRole("button", { name: "Verificar" }),
+    );
     expect(screen.getByText("Códigos que aún puedes pedir: 3.")).toBeInTheDocument();
     await act(() => vi.advanceTimersByTimeAsync(2000));
     expect(screen.getByRole("button", { name: "Enviar otro código" })).toBeEnabled();

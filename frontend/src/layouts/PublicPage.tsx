@@ -1,6 +1,7 @@
-import type { ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 
 import "../components/Block.css";
+import { useAnimatedHeight } from "./screenTransition";
 import "./PublicPage.css";
 
 type PublicPageProps = {
@@ -12,9 +13,12 @@ type PublicPageProps = {
 // Contenido de una pantalla pública (docs/identidad-visual.md, «Pantallas públicas»): una columna
 // centrada con un solo bloque cuyo título de pantalla es el `h1`.
 export function PublicPage({ title, titleId, children }: PublicPageProps) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  useAnimatedHeight(cardRef);
+
   return (
     <main className="public-page">
-      <div className="block public-card" data-ui="block">
+      <div ref={cardRef} className="block public-card" data-ui="block">
         <div className="blk-h">
           <h1 id={titleId} data-ui="block-title">
             {title}
