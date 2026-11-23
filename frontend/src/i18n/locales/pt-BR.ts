@@ -155,5 +155,8 @@ export const ptBR: Messages = {
     otherSession: "Ativa",
     revokeSession: "Encerrar",
     revokeOthers: "Encerrar todas as outras sessões",
+    selectSession: "Selecionar sessão {{agent}}",
+    selectedOne: "1 selecionada",
+    selectedMany: "{{count}} selecionadas",
   },
 };

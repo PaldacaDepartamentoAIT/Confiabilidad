@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
 import { createClient, environmentConfig, type ApiClient } from "./api/client";
+import { HomePage } from "./auth/HomePage";
 import { LoginPage } from "./auth/LoginPage";
 import { TermsPage } from "./auth/TermsPage";
 import { LiveAnnouncer } from "./components/LiveAnnouncer";
@@ -13,11 +14,11 @@ import { VerifyPage } from "./registration/VerifyPage";
 import { matchRoute, useLocation } from "./routing/router";
 import { ShowcasePage } from "./showcase/ShowcasePage";
 
-// La página de muestra sigue siendo la de inicio y la de reserva (S-06 de componentes-base-accesibles).
 const ROUTES = [
   "/",
   "/login",
   "/terms",
+  "/showcase",
   "/register",
   "/register/continue",
   "/register/done",
@@ -38,9 +39,10 @@ export function App({ storage, client }: AppProps) {
   const route = matchRoute(useLocation().path, ROUTES, "/");
   return (
     <LiveAnnouncer>
-      {route === "/" && <ShowcasePage storage={storage} />}
+      {route === "/" && <HomePage client={api} storage={storage} />}
       {route === "/login" && <LoginPage client={api} storage={storage} />}
       {route === "/terms" && <TermsPage client={api} storage={storage} />}
+      {route === "/showcase" && <ShowcasePage storage={storage} />}
       {route === "/register" && <RegisterPage client={api} storage={storage} />}
       {route === "/register/continue" && <VerifyPage client={api} storage={storage} />}
       {route === "/register/done" && <DonePage storage={storage} />}

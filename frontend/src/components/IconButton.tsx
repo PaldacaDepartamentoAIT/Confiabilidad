@@ -9,6 +9,7 @@ type IconButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "aria-label
   label: string;
   icon: ReactNode;
   type?: "button" | "submit";
+  size?: "md" | "sm";
   keepFocusOnMouseDown?: boolean;
   processing?: boolean;
   tooltipAlign?: "center" | "end";
@@ -18,6 +19,7 @@ export function IconButton({
   label,
   icon,
   type = "button",
+  size = "md",
   keepFocusOnMouseDown = false,
   processing = false,
   tooltipAlign = "center",
@@ -44,7 +46,9 @@ export function IconButton({
       <button
         {...buttonProps}
         type={type}
-        className={["icon-btn hov", className].filter(Boolean).join(" ")}
+        className={["icon-btn hov", size === "sm" && "icon-btn-sm", className]
+          .filter(Boolean)
+          .join(" ")}
         data-ui="icon-button"
         aria-label={accessibleLabel}
         aria-disabled={processing || undefined}

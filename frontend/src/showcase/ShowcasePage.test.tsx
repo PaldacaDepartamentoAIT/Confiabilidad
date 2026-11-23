@@ -314,6 +314,7 @@ test("submitting with a short new password focuses it", async () => {
 });
 
 test("in the whole app, entering the processing state is announced to screen readers", async () => {
+  window.history.replaceState(null, "", "/showcase");
   const user = userEvent.setup();
   render(
     <I18nextProvider i18n={createI18n("es")}>
@@ -332,6 +333,7 @@ test("in the whole app, entering the processing state is announced to screen rea
   } finally {
     vi.runOnlyPendingTimers();
     vi.useRealTimers();
+    window.history.replaceState(null, "", "/");
   }
 });
 

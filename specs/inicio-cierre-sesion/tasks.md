@@ -274,9 +274,12 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   revertir: pintar un `<Markdown>` en línea más un `<Checkbox>` simple. Validación pendiente en la
   máquina virtual del usuario (alternativa sin dependencias locales de `AGENTS.md`).
 
-- [ ] T-020 Pantalla del área privada, gestión de sesiones y rutas `/` y `/showcase`
-  RF: RF-006, RF-008, RF-009, RF-011, RF-016, RF-017 (redirecciones según el estado de la sesión), RF-019 (M-10, pantalla del área privada y gestión de sesiones; C-05, C-06, CF-4, CF-7) | Depende de: T-015, T-016 | Archivos: 4
-  Archivos: `auth/HomePage.tsx`, `auth/HomePage.test.tsx`, `App.tsx`, `App.test.tsx`.
+- [x] T-020 Pantalla del área privada, gestión de sesiones y rutas `/` y `/showcase`
+  RF: RF-006, RF-008, RF-009, RF-011, RF-016, RF-017 (redirecciones según el estado de la sesión), RF-019 (M-10, pantalla del área privada y gestión de sesiones; C-05, C-06, CF-4, CF-7) | Depende de: T-015, T-016 | Archivos: 12
+  Archivos: `auth/HomePage.tsx`, `auth/HomePage.test.tsx`, `layouts/AppLayout.css`, `App.tsx`,
+  `App.test.tsx`, `showcase/ShowcasePage.test.tsx`, `showcase/a11y.test.tsx`, `visual/app.ts`,
+  `visual/compare.visual.test.ts`, `visual/contrast.visual.test.ts`,
+  `visual/document-modal.visual.test.ts`, `visual/smoke.visual.test.ts`.
   Hecho cuando: `HomePage` muestra con `AppLayout` el nombre y correo del usuario, el botón de
   cerrar la sesión actual (que limpia el cliente y lleva a `/login` incluso si el servidor da `401`
   o falla la red) y la tabla de sesiones activas señalando la actual; permite cerrar otra sesión
@@ -284,8 +287,15 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   existe la sesión actual; si recibe `termsRequired` (`403`) o `unauthenticated` (`401`) al
   consultar o revocar sesiones, redirige a `/terms` o `/login`; y `App.tsx` expone `/` (`HomePage`) y
   `/showcase` (`ShowcasePage`) para verlas en el navegador; suite verde.
-  Excepción: 4 archivos para conectar `/` y `/showcase` en `App.tsx` y `App.test.tsx` en la misma
-  entrega visual.
+  Excepción: exponer `HomePage` en `/` y mover `ShowcasePage` a `/showcase` dentro de esta misma
+  entrega exige actualizar los tests de `App`, `showcase` y `visual` que asumían el catálogo en `/`.
+  Decisiones: `HomePage` reutiliza `Block` (con `count`), `Table` seleccionable (`kind: "code"` en IP
+  y fechas, columnas redimensionables y barra superpuesta sobre la cabecera al seleccionar), `Chip`
+  e `IconButton` (con `IconLogOut` de `28 × 28 px` y tooltip hacia arriba en la barra de selección)
+  del sistema de diseño; conecta «Cerrar sesión» al menú de usuario en `Sidebar` (sin bloque
+  separado de «Sesión iniciada»); y añade `.content > h1` (24 px, peso 600) en `AppLayout.css` según
+  `docs/identidad-visual.md` — [Cierto] — revertir: crear un CSS propio `HomePage.css`. Validación
+  pendiente en la máquina virtual del usuario (alternativa sin dependencias locales de `AGENTS.md`).
 
 - [ ] T-021 Enlaces a `/login` desde el formulario de registro y desde cuenta creada
   RF: RF-013 (M-07; S-08, enlace desde cuenta creada; CF-7) | Depende de: T-016 | Archivos: 3
@@ -371,9 +381,24 @@ Rama de integración: `feat/inicio-cierre-sesion` (los PR de las entregas van co
   Tareas: T-019 | Líneas estimadas: 355 | Rama: feat/inicio-cierre-sesion-pantalla-terminos
   Cómo probarlo: abrir `http://localhost:5173/login` y `http://localhost:5173/terms` en el navegador y ejecutar `pnpm --filter frontend test src/auth/TermsPage.test.tsx src/App.test.tsx`.
 
+- E-07c Botón de icono, menús hacia arriba y menú de usuario
+  Tareas: mejora de componentes del sistema de diseño | Líneas estimadas: 424 | Rama: feat/inicio-cierre-sesion-componentes-menu
+  Cómo probarlo: abrir el catálogo de componentes y comprobar el tooltip hacia arriba de `IconButton` y los menús de idioma y usuario desplegándose hacia arriba en `Sidebar`.
+  Excepción: 424 líneas reales (dentro de `sdd.max_lineas_pr_excepcion`, 500) por actualizar las referencias HTML (`docs/referencia/crear-empresa.html` y `activos.html`) al invertir los colores del avatar en tema claro.
+
+- E-07d Columnas redimensionables y elipsis en tablas
+  Tareas: mejora de componente compartido `Table` | Líneas estimadas: 208 | Rama: feat/inicio-cierre-sesion-tabla-redimensionable
+  Cómo probarlo: arrastrar los bordes derechos entre cabeceras en `Table` y comprobar el acorte dinámico con `...`.
+
+- E-07e Selección de filas con casillas en tablas
+  Tareas: mejora de componente compartido `Table` | Líneas estimadas: 420 | Rama: feat/inicio-cierre-sesion-tabla-seleccion
+  Cómo probarlo: marcar casillas en la tabla del catálogo y comprobar la barra de selección superpuesta sobre la cabecera con «n seleccionadas» y `IconButton`.
+  Excepción: 420 líneas reales (dentro de `sdd.max_lineas_pr_excepcion`, 500) por entregar `Table` seleccionable, `IconTrash`, sus tests y su muestra en un único corte vertical.
+
 - E-08 Pantalla del área privada, gestión de sesiones y rutas `/` y `/showcase`
-  Tareas: T-020 | Líneas estimadas: 320 | Rama: feat/inicio-cierre-sesion-pantalla-sesiones
-  Cómo probarlo: abrir `http://localhost:5173/` y `http://localhost:5173/showcase` en el navegador y ejecutar `pnpm --filter frontend test src/auth/HomePage.test.tsx`.
+  Tareas: T-020 | Líneas estimadas: 478 | Rama: feat/inicio-cierre-sesion-pantalla-sesiones
+  Cómo probarlo: abrir `http://localhost:5173/` y `http://localhost:5173/showcase` en el navegador y ejecutar `pnpm --filter frontend test src/auth/HomePage.test.tsx src/App.test.tsx`.
+  Excepción: 478 líneas reales (dentro de `sdd.max_lineas_pr_excepcion`, 500): al exponer `HomePage` en `/` en la misma entrega visual para cumplir `AGENTS.md`, `ShowcasePage` pasa a `/showcase` y obliga a actualizar sus tests unitarios y visuales además de la pantalla y sus tests.
 
 - E-09 Enrutamiento completo, redirecciones, accesibilidad y resumen
   Tareas: T-021, T-022, T-023, T-024 | Líneas estimadas: 340 | Rama: feat/inicio-cierre-sesion-rutas

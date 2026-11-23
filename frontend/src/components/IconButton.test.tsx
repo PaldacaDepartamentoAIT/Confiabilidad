@@ -33,6 +33,7 @@ test("exposes its label as accessible name, upward tooltip and has no accessibil
   expect(css).toMatch(/border:\s*1px solid var\(--primary\)/);
   expect(css).toMatch(/bottom:\s*calc\(100% \+ 6px\)/);
   expect(css).toMatch(/\.icon-btn:hover \+ \.icon-btn-tip/);
+  expect(css).toMatch(/\.icon-btn\.icon-btn-sm/);
   expect(
     (await axe.run(container, { rules: { "color-contrast": { enabled: false } } })).violations,
   ).toEqual([]);
