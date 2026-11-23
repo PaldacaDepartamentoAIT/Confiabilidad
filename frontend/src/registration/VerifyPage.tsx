@@ -1,4 +1,4 @@
-import { useEffect, useState, type MouseEvent } from "react";
+import { useEffect, useState, type MouseEvent, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 import type { ApiClient } from "../api/client";
@@ -148,11 +148,16 @@ export function VerifyPage({ client, storage }: VerifyPageProps) {
         {loaded === "ready" && status && !acceptedCode && (
           <>
             {rejection && <FormMessage type="error" messageKey={`validation.${rejection}`} />}
-            <p>
-              {expiry.remaining > 0
-                ? t("register.codeExpiresIn", { time: minutesAndSeconds(expiry.remaining) })
-                : t("register.codeExpiredNotice")}
-            </p>
+            <div className="public-meta-row">
+              <p>
+                {expiry.remaining > 0
+                  ? t("register.codeExpiresIn", { time: minutesAndSeconds(expiry.remaining) })
+                  : t("register.codeExpiredNotice")}
+              </p>
+              {status.resends_left > 0 && (
+                <p>{t("register.resendsLeft", { count: status.resends_left })}</p>
+              )}
+            </div>
             <CodeForm
               key={loads}
               client={client}
@@ -160,6 +165,17 @@ export function VerifyPage({ client, storage }: VerifyPageProps) {
               initiallyLocked={status.locked}
               onVerified={setAcceptedCode}
               onNotFound={() => setLoaded("notFound")}
+              resendAction={
+                <Button
+                  variant="secondary"
+                  disabled={resendWait.remaining > 0 || status.resends_left === 0}
+                  onClick={() => void resend()}
+                >
+                  {resendWait.remaining > 0
+                    ? t("register.resendIn", { seconds: resendWait.remaining })
+                    : t("register.resend")}
+                </Button>
+              }
             />
             {resendMessage && (
               <FormMessage type={resendMessage.type} messageKey={resendMessage.messageKey} />
@@ -167,18 +183,7 @@ export function VerifyPage({ client, storage }: VerifyPageProps) {
             {resendLimited && resendWait.remaining > 0 && (
               <p role="status">{t("validation.retryIn", { seconds: resendWait.remaining })}</p>
             )}
-            <Button
-              variant="secondary"
-              disabled={resendWait.remaining > 0 || status.resends_left === 0}
-              onClick={() => void resend()}
-            >
-              {resendWait.remaining > 0
-                ? t("register.resendIn", { seconds: resendWait.remaining })
-                : t("register.resend")}
-            </Button>
-            {status.resends_left > 0 ? (
-              <p>{t("register.resendsLeft", { count: status.resends_left })}</p>
-            ) : (
+            {status.resends_left === 0 && (
               <>
                 <p>{t("register.noResendsLeft")}</p>
                 <FormLink />
@@ -197,9 +202,11 @@ type CodeFormProps = {
   initiallyLocked: boolean;
   onVerified: (code: string) => void;
   onNotFound: () => void;
+  resendAction?: ReactNode;
 };
 
-function CodeForm({ client, publicId, initiallyLocked, onVerified, onNotFound }: CodeFormProps) {
+function CodeForm(props: CodeFormProps) {
+  const { client, publicId, initiallyLocked, onVerified, onNotFound, resendAction } = props;
   const { t } = useTranslation();
   const [processing, setProcessing] = useState(false);
   const [locked, setLocked] = useState(initiallyLocked);
@@ -255,14 +262,17 @@ function CodeForm({ client, publicId, initiallyLocked, onVerified, onNotFound }:
           error={errorText(errors.code)}
           onBlur={onBlur("code")}
         />
-        <Button
-          type="submit"
-          keepFocusOnMouseDown
-          processing={processing}
-          disabled={locked || wait.remaining > 0}
-        >
-          {t("register.verifySubmit")}
-        </Button>
+        <div className="public-actions-row">
+          {resendAction}
+          <Button
+            type="submit"
+            keepFocusOnMouseDown
+            processing={processing}
+            disabled={locked || wait.remaining > 0}
+          >
+            {t("register.verifySubmit")}
+          </Button>
+        </div>
       </form>
     </>
   );

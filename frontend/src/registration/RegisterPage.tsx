@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState, type MouseEvent } from "react";
 import { useTranslation } from "react-i18next";
 
 import type { ApiClient } from "../api/client";
@@ -216,14 +216,26 @@ function RegisterForm({ client, options, terms, language, titleId }: RegisterFor
             name="marketing"
           />
         )}
-        <Button
-          type="submit"
-          keepFocusOnMouseDown
-          processing={processing}
-          disabled={wait.remaining > 0}
-        >
-          {t("register.submit")}
-        </Button>
+        <div className="public-actions-row">
+          <a
+            href="/login"
+            className="btn btn-ghost hov"
+            onClick={(event: MouseEvent<HTMLAnchorElement>) => {
+              event.preventDefault();
+              navigate("/login");
+            }}
+          >
+            {t("register.signInLink")}
+          </a>
+          <Button
+            type="submit"
+            keepFocusOnMouseDown
+            processing={processing}
+            disabled={wait.remaining > 0}
+          >
+            {t("register.submit")}
+          </Button>
+        </div>
       </form>
     </>
   );

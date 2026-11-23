@@ -1,5 +1,6 @@
-import { useId, type ComponentPropsWithoutRef, type ReactNode } from "react";
+import { useId, useRef, type ComponentPropsWithoutRef, type ReactNode } from "react";
 
+import { useAnimatedHeight } from "../layouts/screenTransition";
 import "./Block.css";
 
 type BlockProps = Omit<ComponentPropsWithoutRef<"div">, "title"> & {
@@ -33,6 +34,8 @@ export function Block({
   ...rest
 }: BlockProps) {
   const titleId = useId();
+  const blockRef = useRef<HTMLDivElement>(null);
+  useAnimatedHeight(blockRef);
   const Heading = `h${headingLevel}` as "h2" | "h3" | "h4";
   const hasTitle = title !== undefined && title !== null;
   const hasCount = count !== undefined;
@@ -41,6 +44,7 @@ export function Block({
 
   return (
     <Tag
+      ref={blockRef as never}
       {...labelled}
       {...rest}
       className={["block", variant !== "default" && variant, className].filter(Boolean).join(" ")}

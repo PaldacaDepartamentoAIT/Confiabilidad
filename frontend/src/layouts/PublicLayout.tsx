@@ -1,9 +1,11 @@
-import type { ReactNode } from "react";
+import { useContext, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 import { LanguageButton } from "../components/LanguageButton";
 import type { LanguageStorage } from "../i18n/language";
 import { ThemeButton } from "../theme/ThemeButton";
+import { PublicShellContext, useTransitionClass } from "./screenTransition";
+import "./screenTransition.css";
 import "./PublicLayout.css";
 
 type PublicLayoutProps = {
@@ -15,6 +17,9 @@ type PublicLayoutProps = {
 // botones de idioma y de tema; el contenido va debajo, con su propio `<main>`.
 export function PublicLayout({ storage, children }: PublicLayoutProps) {
   const { t } = useTranslation();
+  const nested = useContext(PublicShellContext);
+  const phaseClass = useTransitionClass();
+  if (nested) return <>{children}</>;
   return (
     <div className="public-app">
       <header className="public-bar" data-ui="topbar">
@@ -26,7 +31,9 @@ export function PublicLayout({ storage, children }: PublicLayoutProps) {
           <ThemeButton storage={storage} />
         </div>
       </header>
-      <div className="public-content">{children}</div>
+      <div className={["public-content", phaseClass].filter(Boolean).join(" ")}>
+        <PublicShellContext.Provider value={true}>{children}</PublicShellContext.Provider>
+      </div>
     </div>
   );
 }
