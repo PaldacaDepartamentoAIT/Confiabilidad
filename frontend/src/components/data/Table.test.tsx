@@ -138,25 +138,27 @@ function SelectableTable({
   );
 }
 
-test("selection: the header checkbox selects and clears all rows and the bottom bar shows the count and actions", async () => {
+test("selection: the header checkbox selects and clears all rows and the overlay bar shows the checkbox, count and actions", async () => {
   const user = userEvent.setup();
   render(<SelectableTable />);
 
-  const all = screen.getByRole("checkbox", { name: "Select all assets" });
-  expect(all).not.toBeChecked();
+  const initialAll = screen.getByRole("checkbox", { name: "Select all assets" });
+  expect(initialAll).not.toBeChecked();
   expect(screen.queryByRole("button", { name: "Delete selected" })).not.toBeInTheDocument();
   expect(screen.getAllByRole("checkbox")).toHaveLength(3);
 
-  await user.click(all);
-  expect(all).toBeChecked();
+  await user.click(initialAll);
+  const bar = screen.getByRole("region", { name: "2 selected" });
+  const overlayAll = within(bar).getByRole("checkbox", { name: "Select all assets" });
+  expect(overlayAll).toBeChecked();
+  expect(screen.getAllByRole("checkbox")).toHaveLength(3);
   expect(screen.getByRole("checkbox", { name: "Select c-102" })).toBeChecked();
   expect(screen.getByRole("checkbox", { name: "Select v-033" })).toBeChecked();
-  const bar = screen.getByRole("region", { name: "2 selected" });
   expect(within(bar).getByText("2 selected")).toBeInTheDocument();
   expect(within(bar).getByRole("button", { name: "Delete selected" })).toBeInTheDocument();
   expect(screen.getByRole("cell", { name: "C-102" }).closest("tr")).toHaveClass("selected");
 
-  await user.click(all);
+  await user.click(overlayAll);
   expect(screen.getByRole("checkbox", { name: "Select c-102" })).not.toBeChecked();
   expect(screen.queryByRole("region", { name: /selected/ })).not.toBeInTheDocument();
 });
@@ -164,16 +166,19 @@ test("selection: the header checkbox selects and clears all rows and the bottom 
 test("selection: a partial selection leaves the header checkbox indeterminate and a row can be unmarked", async () => {
   const user = userEvent.setup();
   render(<SelectableTable />);
-  const all = screen.getByRole("checkbox", { name: "Select all assets" });
 
   await user.click(screen.getByRole("checkbox", { name: "Select c-102" }));
-  expect(all).not.toBeChecked();
-  expect((all as HTMLInputElement).indeterminate).toBe(true);
+  const allPartial = screen.getByRole("checkbox", {
+    name: "Select all assets",
+  }) as HTMLInputElement;
+  expect(allPartial).not.toBeChecked();
+  expect(allPartial.indeterminate).toBe(true);
   expect(screen.getByRole("button", { name: "Delete selected" })).toBeInTheDocument();
 
   await user.click(screen.getByRole("checkbox", { name: "Select v-033" }));
-  expect(all).toBeChecked();
-  expect((all as HTMLInputElement).indeterminate).toBe(false);
+  const allFull = screen.getByRole("checkbox", { name: "Select all assets" }) as HTMLInputElement;
+  expect(allFull).toBeChecked();
+  expect(allFull.indeterminate).toBe(false);
 
   await user.click(screen.getByRole("checkbox", { name: "Select c-102" }));
   await user.click(screen.getByRole("checkbox", { name: "Select v-033" }));

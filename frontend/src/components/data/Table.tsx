@@ -188,12 +188,11 @@ export function Table({ label, columns, rows, emptyMessage, selection }: TablePr
         <thead>
           <tr>
             {selection &&
-              (selection.selectAllLabel ? (
+              (selection.selectAllLabel && selectedCount === 0 ? (
                 <th scope="col" className="col-select">
                   <RowCheck
                     label={selection.selectAllLabel}
-                    checked={allSelected}
-                    indeterminate={selectedCount > 0 && !allSelected}
+                    checked={false}
                     disabled={selectableIds.length === 0}
                     onChange={toggleAll}
                   />
@@ -278,6 +277,14 @@ export function Table({ label, columns, rows, emptyMessage, selection }: TablePr
           role="region"
           aria-label={selection.selectedLabel(selectedCount)}
         >
+          {selection.selectAllLabel && (
+            <RowCheck
+              label={selection.selectAllLabel}
+              checked={allSelected}
+              indeterminate={!allSelected}
+              onChange={toggleAll}
+            />
+          )}
           <span className="table-selection-count">{selection.selectedLabel(selectedCount)}</span>
           {selection.actions && <div className="table-selection-actions">{selection.actions}</div>}
         </div>

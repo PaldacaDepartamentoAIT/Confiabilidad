@@ -165,16 +165,20 @@
 
 .table-selection-bar {
   --surface: var(--secondary);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  min-height: 44px;
-  padding: 6px 12px;
+  gap: 14px;
+  height: 44px;
+  padding: 0 12px;
   background: var(--secondary);
   color: var(--ink);
   border-bottom: 1px solid var(--gray);
-  border-left: 2px solid var(--primary);
+  box-shadow: inset 2px 0 0 var(--primary);
   animation: table-bar-in 0.18s ease-out;
 }
 
@@ -184,6 +188,7 @@
 }
 
 .table-selection-actions {
+  margin-left: auto;
   display: flex;
   align-items: center;
   gap: 8px;
