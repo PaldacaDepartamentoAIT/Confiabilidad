@@ -157,5 +157,8 @@ export const es: Messages = {
     otherSession: "Activa",
     revokeSession: "Cerrar sesión",
     revokeOthers: "Cerrar todas las demás sesiones",
+    selectSession: "Seleccionar sesión {{agent}}",
+    selectedOne: "1 seleccionada",
+    selectedMany: "{{count}} seleccionadas",
   },
 };

@@ -152,6 +152,9 @@ export const en = {
     otherSession: "Active",
     revokeSession: "Sign out",
     revokeOthers: "Sign out of all other sessions",
+    selectSession: "Select session {{agent}}",
+    selectedOne: "1 selected",
+    selectedMany: "{{count}} selected",
   },
 };
 

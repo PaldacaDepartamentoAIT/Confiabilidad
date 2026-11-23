@@ -13,7 +13,6 @@ import {
 } from "../api/auth";
 import type { ApiClient, TermsStatus } from "../api/client";
 import { Block } from "../components/Block";
-import { Button } from "../components/Button";
 import { Chip } from "../components/Chip";
 import { FormMessage } from "../components/FormMessage";
 import { IconButton } from "../components/IconButton";
@@ -21,7 +20,6 @@ import { Table, type TableColumn, type TableRow } from "../components/data/Table
 import type { LanguageStorage } from "../i18n/language";
 import { IconHouse, IconLogOut } from "../icons";
 import { AppLayout } from "../layouts/AppLayout";
-import type { SidebarItem } from "../layouts/Sidebar";
 import { translateCode } from "../registration/serverErrors";
 import { navigate } from "../routing/router";
 import type { TokenStorage } from "./tokenStorage";
@@ -36,19 +34,16 @@ type HomePageProps = {
 };
 
 function userInitials(user: AuthenticatedUser | null): string {
-  const source = (user?.name || user?.email || "U").trim();
-  const parts = source.split(/\s+/);
-  if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-  return source.slice(0, 2).toUpperCase();
+  const parts = (user?.name || user?.email || "U").trim().split(/\s+/);
+  return (parts.length >= 2 ? `${parts[0][0]}${parts[1][0]}` : parts[0].slice(0, 2)).toUpperCase();
 }
 
 function formatTimestamp(iso: string, language: string): string {
   const parsed = new Date(iso);
   if (Number.isNaN(parsed.getTime())) return iso;
-  return new Intl.DateTimeFormat(language, {
-    dateStyle: "short",
-    timeStyle: "short",
-  }).format(parsed);
+  return new Intl.DateTimeFormat(language, { dateStyle: "short", timeStyle: "short" }).format(
+    parsed,
+  );
 }
 
 export function HomePage({
@@ -62,10 +57,10 @@ export function HomePage({
   const { t, i18n } = useTranslation();
   const [user, setUser] = useState<AuthenticatedUser | null>(session?.user ?? null);
   const [sessions, setSessions] = useState<ActiveSessionItem[]>([]);
+  const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(new Set());
   const [errorKey, setErrorKey] = useState<string | null>(null);
   const loggingOut = useRef(false);
-  const [revokingId, setRevokingId] = useState<number | null>(null);
-  const [revokingOthers, setRevokingOthers] = useState(false);
+  const [revokingSelected, setRevokingSelected] = useState(false);
 
   const redirectToLogin = useCallback(() => {
     tokenStorage?.clear();
@@ -83,20 +78,16 @@ export function HomePage({
 
   const handleOutcomeFailure = useCallback(
     (result: { kind: string; termsStatus?: TermsStatus; code?: string }) => {
-      if (result.kind === "unauthenticated") {
-        redirectToLogin();
-        return;
-      }
+      if (result.kind === "unauthenticated") return redirectToLogin();
       if (result.kind === "termsRequired") {
-        redirectToTerms(result.termsStatus ?? "not_accepted");
-        return;
+        return redirectToTerms(result.termsStatus ?? "not_accepted");
       }
       if (result.kind === "refused" && result.code) {
         setErrorKey(`validation.${translateCode(result.code).key}`);
-      } else if (result.kind === "networkError") {
-        setErrorKey("validation.networkError");
       } else {
-        setErrorKey("validation.serverError");
+        setErrorKey(
+          result.kind === "networkError" ? "validation.networkError" : "validation.serverError",
+        );
       }
     },
     [redirectToLogin, redirectToTerms],
@@ -105,25 +96,15 @@ export function HomePage({
   useEffect(() => {
     let active = true;
     async function load() {
-      if (!session) {
+      let current = session;
+      if (!current) {
         const info = await getSession(client);
         if (!active) return;
-        if (info.kind !== "ok") {
-          handleOutcomeFailure(info);
-          return;
-        }
-        setUser(info.data.user);
-        if (info.data.terms_status !== "accepted") {
-          redirectToTerms(info.data.terms_status);
-          return;
-        }
-      } else {
-        setUser(session.user);
-        if (session.terms_status !== "accepted") {
-          redirectToTerms(session.terms_status);
-          return;
-        }
+        if (info.kind !== "ok") return handleOutcomeFailure(info);
+        current = info.data;
       }
+      setUser(current.user);
+      if (current.terms_status !== "accepted") return redirectToTerms(current.terms_status);
       const listed = await listSessions(client);
       if (!active) return;
       if (listed.kind === "ok") {
@@ -148,33 +129,42 @@ export function HomePage({
     navigate("/login");
   }
 
-  async function handleRevoke(sessionId: number) {
-    setRevokingId(sessionId);
-    setErrorKey(null);
-    const result = await revokeSession(client, sessionId);
-    setRevokingId(null);
-    if (result.kind === "ok") {
-      setSessions((current) => current.filter((item) => item.id !== sessionId));
-    } else {
-      handleOutcomeFailure(result);
-    }
-  }
+  const otherIdSet = new Set(
+    sessions.filter((item) => !item.is_current).map((item) => String(item.id)),
+  );
 
-  async function handleRevokeOthers() {
-    setRevokingOthers(true);
+  async function handleRevokeSelected() {
+    const targets = [...selectedIds].filter((id) => otherIdSet.has(id));
+    if (targets.length === 0) return;
+    setRevokingSelected(true);
     setErrorKey(null);
-    const result = await revokeOtherSessions(client);
-    setRevokingOthers(false);
-    if (result.kind === "ok") {
+
+    if (targets.length === otherIdSet.size && targets.length > 1) {
+      const result = await revokeOtherSessions(client);
+      setRevokingSelected(false);
+      if (result.kind !== "ok") return handleOutcomeFailure(result);
       setSessions((current) => current.filter((item) => item.is_current));
-    } else {
-      handleOutcomeFailure(result);
+      setSelectedIds(new Set());
+      return;
     }
-  }
 
-  const navItems: SidebarItem[] = [
-    { id: "home", label: t("auth.homeTitle"), href: "/", icon: <IconHouse /> },
-  ];
+    const removed = new Set<string>();
+    let failure: { kind: string; termsStatus?: TermsStatus; code?: string } | null = null;
+    for (const id of targets) {
+      const result = await revokeSession(client, Number(id));
+      if (result.kind === "ok") removed.add(id);
+      else {
+        failure = result;
+        break;
+      }
+    }
+    setRevokingSelected(false);
+    if (removed.size > 0) {
+      setSessions((current) => current.filter((item) => !removed.has(String(item.id))));
+      setSelectedIds((current) => new Set([...current].filter((id) => !removed.has(id))));
+    }
+    if (failure) handleOutcomeFailure(failure);
+  }
 
   const columns: TableColumn[] = [
     { key: "ip", header: t("auth.colIp"), kind: "code" },
@@ -182,7 +172,6 @@ export function HomePage({
     { key: "createdAt", header: t("auth.colCreatedAt"), kind: "code" },
     { key: "lastSeenAt", header: t("auth.colLastSeenAt"), kind: "code" },
     { key: "status", header: t("auth.colStatus") },
-    { key: "action", header: t("auth.colAction") },
   ];
 
   const rows: TableRow[] = sessions.map((item) => ({
@@ -193,24 +182,12 @@ export function HomePage({
       createdAt: formatTimestamp(item.created_at, i18n.language),
       lastSeenAt: formatTimestamp(item.last_seen_at, i18n.language),
       status: item.is_current ? <Chip>{t("auth.currentSession")}</Chip> : t("auth.otherSession"),
-      action: item.is_current ? null : (
-        <IconButton
-          label={t("auth.revokeSession")}
-          icon={<IconLogOut />}
-          size="sm"
-          tooltipAlign="end"
-          processing={revokingId === item.id}
-          onClick={() => void handleRevoke(item.id)}
-        />
-      ),
     },
   }));
 
-  const otherCount = sessions.filter((item) => !item.is_current).length;
-
   return (
     <AppLayout
-      items={navItems}
+      items={[{ id: "home", label: t("auth.homeTitle"), href: "/", icon: <IconHouse /> }]}
       activeId="home"
       user={
         user
@@ -232,26 +209,32 @@ export function HomePage({
     >
       <h1>{t("auth.homeTitle")}</h1>
       {errorKey && <FormMessage type="error" messageKey={errorKey as never} />}
-      <Block
-        as="section"
-        title={t("auth.sessionsTitle")}
-        count={sessions.length}
-        actions={
-          <Button
-            variant="secondary"
-            disabled={otherCount === 0}
-            processing={revokingOthers}
-            onClick={() => void handleRevokeOthers()}
-          >
-            {t("auth.revokeOthers")}
-          </Button>
-        }
-      >
+      <Block as="section" title={t("auth.sessionsTitle")} count={sessions.length}>
         <Table
           label={t("auth.sessionsTitle")}
           columns={columns}
           rows={rows}
           emptyMessage={t("auth.sessionsEmpty")}
+          selection={{
+            selectedIds,
+            onChange: setSelectedIds,
+            isSelectable: (row) => otherIdSet.has(row.id),
+            selectAllLabel: t("auth.revokeOthers"),
+            rowLabel: (row) =>
+              t("auth.selectSession", { agent: String(row.cells.userAgent ?? row.id) }),
+            selectedLabel: (count) =>
+              count === 1 ? t("auth.selectedOne") : t("auth.selectedMany", { count }),
+            actions: (
+              <IconButton
+                size="sm"
+                label={t("auth.revokeSession")}
+                icon={<IconLogOut />}
+                tooltipAlign="end"
+                processing={revokingSelected}
+                onClick={() => void handleRevokeSelected()}
+              />
+            ),
+          }}
         />
       </Block>
     </AppLayout>

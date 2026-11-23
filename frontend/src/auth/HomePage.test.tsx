@@ -34,12 +34,13 @@ const TWO_SESSIONS: ActiveSessionItem[] = [
   },
 ];
 
-function json(status: number, body: unknown): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { "Content-Type": "application/json" },
-  });
-}
+const THREE_SESSIONS: ActiveSessionItem[] = [
+  ...TWO_SESSIONS,
+  { ...TWO_SESSIONS[1], id: 30, ip: "203.0.113.9", user_agent: "Firefox/131" },
+];
+
+const json = (status: number, body: unknown) =>
+  new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 
 function renderHome(
   fetcher: typeof fetch,
@@ -58,63 +59,50 @@ function renderHome(
   render(
     <I18nextProvider i18n={i18n}>
       <LiveAnnouncer>
-        <HomePage
-          client={client}
-          session={SESSION}
-          tokenStorage={storage}
-          onLoggedOut={callbacks.onLoggedOut}
-          onTermsRequired={callbacks.onTermsRequired}
-        />
+        <HomePage client={client} session={SESSION} tokenStorage={storage} {...callbacks} />
       </LiveAnnouncer>
     </I18nextProvider>,
   );
   return { storage };
 }
 
-beforeEach(() => {
-  window.history.pushState(null, "", "/");
-});
+beforeEach(() => window.history.pushState(null, "", "/"));
 
-test("muestra usuario y sesiones activas, permite cerrar una u otras sesiones y desactiva el botón con solo una", async () => {
-  renderHome((url) => {
-    const path = String(url).split("?")[0];
-    if (path.endsWith("/sessions")) return Promise.resolve(json(200, { sessions: TWO_SESSIONS }));
-    if (path.endsWith("/sessions/revoke")) {
-      return Promise.resolve(json(200, { result: "revoked" }));
-    }
-    return Promise.resolve(json(200, { result: "revoked", revoked_count: 1 }));
-  });
+test("muestra usuario y sesiones activas, permite marcar y cerrar una sesión y desactiva seleccionar todo si queda solo la actual", async () => {
+  const user = userEvent.setup();
+  renderHome((url) =>
+    Promise.resolve(
+      String(url).split("?")[0].endsWith("/sessions")
+        ? json(200, { sessions: TWO_SESSIONS })
+        : json(200, { result: "revoked" }),
+    ),
+  );
 
   expect(await screen.findByRole("combobox", { name: "Ana García" })).toBeInTheDocument();
-  expect(
-    screen.queryByText("Sesión iniciada como Ana García (ana@empresa.com)"),
-  ).not.toBeInTheDocument();
   expect(await screen.findByText("192.0.2.10")).toBeInTheDocument();
   expect(screen.getByText("Sesión actual")).toBeInTheDocument();
+  expect(screen.queryByRole("checkbox", { name: /Chrome\/130/ })).not.toBeInTheDocument();
 
-  const revokeOthers = screen.getByRole("button", { name: "Cerrar todas las demás sesiones" });
-  expect(revokeOthers).toBeEnabled();
-
-  const otherRow = screen.getByText("198.51.100.5").closest("tr");
-  expect(otherRow).not.toBeNull();
-  const revokeButton = within(otherRow!).getByRole("button", { name: "Cerrar sesión" });
-  expect(revokeButton).toHaveAttribute("data-ui", "icon-button");
-  expect(revokeButton).toHaveClass("icon-btn-sm");
-  await userEvent.click(revokeButton);
+  await user.click(screen.getByRole("checkbox", { name: "Seleccionar sesión Tauri/2.0" }));
+  const bar = screen.getByRole("region", { name: "1 seleccionada" });
+  const revoke = within(bar).getByRole("button", { name: "Cerrar sesión" });
+  expect(revoke).toHaveAttribute("data-ui", "icon-button");
+  await user.click(revoke);
 
   expect(screen.queryByText("198.51.100.5")).not.toBeInTheDocument();
-  expect(revokeOthers).toBeDisabled();
+  expect(screen.getByRole("checkbox", { name: "Cerrar todas las demás sesiones" })).toBeDisabled();
 });
 
-test("cierra todas las demás sesiones de golpe y limpia cliente al cerrar la actual aunque falle la red", async () => {
+test("selecciona todas las demás sesiones desde la cabecera y limpia cliente al cerrar la actual aunque falle la red", async () => {
   let loggedOut = false;
   const user = userEvent.setup();
   const { storage } = renderHome(
     (url) => {
       const path = String(url).split("?")[0];
-      if (path.endsWith("/sessions")) return Promise.resolve(json(200, { sessions: TWO_SESSIONS }));
+      if (path.endsWith("/sessions"))
+        return Promise.resolve(json(200, { sessions: THREE_SESSIONS }));
       if (path.endsWith("/sessions/revoke-others")) {
-        return Promise.resolve(json(200, { result: "revoked", revoked_count: 1 }));
+        return Promise.resolve(json(200, { result: "revoked", revoked_count: 2 }));
       }
       return Promise.reject(new TypeError("offline"));
     },
@@ -122,8 +110,11 @@ test("cierra todas las demás sesiones de golpe y limpia cliente al cerrar la ac
   );
 
   expect(await screen.findByText("198.51.100.5")).toBeInTheDocument();
-  await user.click(screen.getByRole("button", { name: "Cerrar todas las demás sesiones" }));
+  await user.click(screen.getByRole("checkbox", { name: "Cerrar todas las demás sesiones" }));
+  const bar = screen.getByRole("region", { name: "2 seleccionadas" });
+  await user.click(within(bar).getByRole("button", { name: "Cerrar sesión" }));
   expect(screen.queryByText("198.51.100.5")).not.toBeInTheDocument();
+  expect(screen.queryByText("203.0.113.9")).not.toBeInTheDocument();
 
   await user.click(screen.getByRole("combobox", { name: "Ana García" }));
   await user.click(screen.getByRole("option", { name: "Cerrar sesión" }));
@@ -133,6 +124,7 @@ test("cierra todas las demás sesiones de golpe y limpia cliente al cerrar la ac
 });
 
 test("redirige a /terms ante 403 terms_required y a /login ante 401 al consultar o revocar", async () => {
+  const user = userEvent.setup();
   const termsEvents: TermsStatus[] = [];
   renderHome(
     () =>
@@ -141,25 +133,26 @@ test("redirige a /terms ante 403 terms_required y a /login ante 401 al consultar
       ),
     { onTermsRequired: (status) => termsEvents.push(status) },
   );
-
   await waitFor(() => expect(window.location.pathname).toBe("/terms"));
   expect(termsEvents).toEqual(["not_accepted"]);
 
   window.history.pushState(null, "", "/");
   let loggedOut = false;
   renderHome(
-    (url) => {
-      const path = String(url).split("?")[0];
-      if (path.endsWith("/sessions")) {
-        return Promise.resolve(json(200, { sessions: TWO_SESSIONS }));
-      }
-      return Promise.resolve(json(401, { code: "unauthenticated", message: "x" }));
-    },
+    (url) =>
+      Promise.resolve(
+        String(url).split("?")[0].endsWith("/sessions")
+          ? json(200, { sessions: TWO_SESSIONS })
+          : json(401, { code: "unauthenticated", message: "x" }),
+      ),
     { onLoggedOut: () => (loggedOut = true) },
   );
-
-  const otherRow = (await screen.findByText("198.51.100.5")).closest("tr");
-  await userEvent.click(within(otherRow!).getByRole("button", { name: "Cerrar sesión" }));
+  await user.click(await screen.findByRole("checkbox", { name: "Seleccionar sesión Tauri/2.0" }));
+  await user.click(
+    within(screen.getByRole("region", { name: "1 seleccionada" })).getByRole("button", {
+      name: "Cerrar sesión",
+    }),
+  );
   expect(loggedOut).toBe(true);
   expect(window.location.pathname).toBe("/login");
 });
