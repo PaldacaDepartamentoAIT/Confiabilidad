@@ -45,12 +45,28 @@
   margin-top: 14px;
 }
 
+.public-meta-row,
 .public-actions-row {
   display: flex;
+  flex-wrap: wrap;
+}
+
+.public-meta-row {
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 14px;
+  color: var(--text2);
+}
+
+.public-meta-row p {
+  margin: 0;
+}
+
+.public-actions-row {
   justify-content: flex-end;
   align-items: center;
   gap: 10px;
-  flex-wrap: wrap;
 }
 
 a.btn {

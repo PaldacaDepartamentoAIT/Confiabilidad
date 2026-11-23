@@ -51,12 +51,6 @@ const check = async () => {
   });
   expect(violations.map((v) => v.id)).toEqual([]);
 };
-const checkEl = async (el: ReactElement, waitForText?: string) => {
-  const view = mount(el);
-  if (waitForText) expect(await screen.findByText(waitForText)).toBeInTheDocument();
-  await check();
-  view.unmount();
-};
 
 test("LoginPage, TermsPage and HomePage have no a11y violations", async () => {
   const login = mount(<LoginPage {...ctxFor()} />);
@@ -65,12 +59,24 @@ test("LoginPage, TermsPage and HomePage have no a11y violations", async () => {
   expect(document.querySelector('[aria-invalid="true"]')).not.toBeNull();
   await check();
   login.unmount();
+
   const ctx = ctxFor();
-  await checkEl(<TermsPage {...ctx} session={info("not_accepted", "Términos.")} />);
-  await checkEl(<TermsPage {...ctx} session={info("no_current_version")} />);
-  await checkEl(<HomePage {...ctxFor()} session={info("accepted")} />, "192.0.2.1");
-  await checkEl(
-    <HomePage {...ctxFor(["192.0.2.1", "198.51.100.5"])} session={info("accepted")} />,
-    "198.51.100.5",
-  );
+  for (const el of [
+    <TermsPage key="1" {...ctx} session={info("not_accepted", "Términos.")} />,
+    <TermsPage key="2" {...ctx} session={info("no_current_version")} />,
+  ]) {
+    const v = mount(el);
+    await check();
+    v.unmount();
+  }
+
+  for (const [ips, text] of [
+    [["192.0.2.1"], "192.0.2.1"],
+    [["192.0.2.1", "198.51.100.5"], "198.51.100.5"],
+  ] as const) {
+    const v = mount(<HomePage {...ctxFor([...ips])} session={info("accepted")} />);
+    expect(await screen.findByText(text)).toBeInTheDocument();
+    await check();
+    v.unmount();
+  }
 }, 30_000);

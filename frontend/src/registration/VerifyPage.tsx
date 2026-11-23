@@ -148,11 +148,16 @@ export function VerifyPage({ client, storage }: VerifyPageProps) {
         {loaded === "ready" && status && !acceptedCode && (
           <>
             {rejection && <FormMessage type="error" messageKey={`validation.${rejection}`} />}
-            <p>
-              {expiry.remaining > 0
-                ? t("register.codeExpiresIn", { time: minutesAndSeconds(expiry.remaining) })
-                : t("register.codeExpiredNotice")}
-            </p>
+            <div className="public-meta-row">
+              <p>
+                {expiry.remaining > 0
+                  ? t("register.codeExpiresIn", { time: minutesAndSeconds(expiry.remaining) })
+                  : t("register.codeExpiredNotice")}
+              </p>
+              {status.resends_left > 0 && (
+                <p>{t("register.resendsLeft", { count: status.resends_left })}</p>
+              )}
+            </div>
             <CodeForm
               key={loads}
               client={client}
@@ -178,9 +183,7 @@ export function VerifyPage({ client, storage }: VerifyPageProps) {
             {resendLimited && resendWait.remaining > 0 && (
               <p role="status">{t("validation.retryIn", { seconds: resendWait.remaining })}</p>
             )}
-            {status.resends_left > 0 ? (
-              <p>{t("register.resendsLeft", { count: status.resends_left })}</p>
-            ) : (
+            {status.resends_left === 0 && (
               <>
                 <p>{t("register.noResendsLeft")}</p>
                 <FormLink />
