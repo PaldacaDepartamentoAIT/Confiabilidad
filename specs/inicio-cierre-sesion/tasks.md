@@ -289,8 +289,9 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   `/showcase` (`ShowcasePage`) para verlas en el navegador; suite verde.
   Excepción: exponer `HomePage` en `/` y mover `ShowcasePage` a `/showcase` dentro de esta misma
   entrega exige actualizar los tests de `App`, `showcase` y `visual` que asumían el catálogo en `/`.
-  Decisiones: `HomePage` reutiliza `Block` (con `count` y `actions`), `Table` (`kind: "code"` en IP
-  y fechas), `Chip` e `IconButton` (con `IconLogOut` y tooltip hacia arriba en la columna de acción)
+  Decisiones: `HomePage` reutiliza `Block` (con `count`), `Table` seleccionable (`kind: "code"` en IP
+  y fechas, columnas redimensionables y barra superpuesta sobre la cabecera al seleccionar), `Chip`
+  e `IconButton` (con `IconLogOut` de `28 × 28 px` y tooltip hacia arriba en la barra de selección)
   del sistema de diseño; conecta «Cerrar sesión» al menú de usuario en `Sidebar` (sin bloque
   separado de «Sesión iniciada»); y añade `.content > h1` (24 px, peso 600) en `AppLayout.css` según
   `docs/identidad-visual.md` — [Cierto] — revertir: crear un CSS propio `HomePage.css`. Validación
@@ -385,10 +386,19 @@ Rama de integración: `feat/inicio-cierre-sesion` (los PR de las entregas van co
   Cómo probarlo: abrir el catálogo de componentes y comprobar el tooltip hacia arriba de `IconButton` y los menús de idioma y usuario desplegándose hacia arriba en `Sidebar`.
   Excepción: 424 líneas reales (dentro de `sdd.max_lineas_pr_excepcion`, 500) por actualizar las referencias HTML (`docs/referencia/crear-empresa.html` y `activos.html`) al invertir los colores del avatar en tema claro.
 
+- E-07d Columnas redimensionables y elipsis en tablas
+  Tareas: mejora de componente compartido `Table` | Líneas estimadas: 208 | Rama: feat/inicio-cierre-sesion-tabla-redimensionable
+  Cómo probarlo: arrastrar los bordes derechos entre cabeceras en `Table` y comprobar el acorte dinámico con `...`.
+
+- E-07e Selección de filas con casillas en tablas
+  Tareas: mejora de componente compartido `Table` | Líneas estimadas: 420 | Rama: feat/inicio-cierre-sesion-tabla-seleccion
+  Cómo probarlo: marcar casillas en la tabla del catálogo y comprobar la barra de selección superpuesta sobre la cabecera con «n seleccionadas» y `IconButton`.
+  Excepción: 420 líneas reales (dentro de `sdd.max_lineas_pr_excepcion`, 500) por entregar `Table` seleccionable, `IconTrash`, sus tests y su muestra en un único corte vertical.
+
 - E-08 Pantalla del área privada, gestión de sesiones y rutas `/` y `/showcase`
-  Tareas: T-020 | Líneas estimadas: 493 | Rama: feat/inicio-cierre-sesion-pantalla-sesiones
+  Tareas: T-020 | Líneas estimadas: 478 | Rama: feat/inicio-cierre-sesion-pantalla-sesiones
   Cómo probarlo: abrir `http://localhost:5173/` y `http://localhost:5173/showcase` en el navegador y ejecutar `pnpm --filter frontend test src/auth/HomePage.test.tsx src/App.test.tsx`.
-  Excepción: 493 líneas reales (dentro de `sdd.max_lineas_pr_excepcion`, 500): al exponer `HomePage` en `/` en la misma entrega visual para cumplir `AGENTS.md`, `ShowcasePage` pasa a `/showcase` y obliga a actualizar sus tests unitarios y visuales además de la pantalla y sus tests.
+  Excepción: 478 líneas reales (dentro de `sdd.max_lineas_pr_excepcion`, 500): al exponer `HomePage` en `/` en la misma entrega visual para cumplir `AGENTS.md`, `ShowcasePage` pasa a `/showcase` y obliga a actualizar sus tests unitarios y visuales además de la pantalla y sus tests.
 
 - E-09 Enrutamiento completo, redirecciones, accesibilidad y resumen
   Tareas: T-021, T-022, T-023, T-024 | Líneas estimadas: 340 | Rama: feat/inicio-cierre-sesion-rutas
