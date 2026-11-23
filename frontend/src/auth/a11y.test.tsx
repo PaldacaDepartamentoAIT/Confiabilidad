@@ -53,12 +53,14 @@ const check = async () => {
 };
 
 test("LoginPage, TermsPage and HomePage have no a11y violations", async () => {
+  Element.prototype.scrollIntoView = () => {};
   const login = mount(<LoginPage {...ctxFor()} />);
   await check();
   await userEvent.setup().click(screen.getByRole("button", { name: "Iniciar sesión" }));
   expect(document.querySelector('[aria-invalid="true"]')).not.toBeNull();
   await check();
   login.unmount();
+  delete (Element.prototype as Partial<Element>).scrollIntoView;
 
   const ctx = ctxFor();
   for (const el of [
