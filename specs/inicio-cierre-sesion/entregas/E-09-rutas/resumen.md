@@ -9,7 +9,7 @@ Rama: `feat/inicio-cierre-sesion-rutas` · PR: pendiente · Líneas de código y
   - `/login` y `/register` con sesión activa redirigen a `/` (si los términos vigentes están aceptados) o a `/terms` (si faltan).
   - `/` con términos pendientes redirige a `/terms`, y `/terms` con los términos ya aceptados redirige a `/`.
 - Se añadieron transiciones entre pantallas (`screenTransition.tsx`, `screenTransition.css`, `PublicLayout.tsx`, `AppLayout.tsx`, `App.tsx`, `App.test.tsx`): al navegar cambia únicamente el contenido mediante fade-out (`0,15 s`) y fade-in (`0,2 s`), manteniendo montada y fija la estructura exterior (barra superior pública o barra superior y menú lateral privado), respetando `prefers-reduced-motion: reduce`.
-- Se añadió crecimiento animado de altura (`useAnimatedHeight` en `PublicPage.tsx` y `Block.tsx`): tarjetas `.public-card` y bloques `.block` animan su cambio de alto (`0,25 s ease-out`) cuando carga su contenido asíncrono, liberando `overflow` al terminar.
+- Se añadió crecimiento animado de altura sincronizado con aparición progresiva (`useAnimatedHeight` y `.reveal-item` en `PublicPage.tsx`, `Block.tsx`, `screenTransition.tsx` y `screenTransition.css`): cuando llegan los datos asíncronos, las tarjetas `.public-card` y bloques `.block` fijan el alto inicial mediante doble `requestAnimationFrame` y expanden su altura suavemente (`0,3–0,54 s`) mientras los elementos nuevos (campos de formulario o filas de tabla) van apareciendo poco a poco (`0,24 s` cada uno, escalonados `55 ms`), liberando `overflow` al terminar.
 - Se colocaron en la misma fila (`.public-actions-row`) los botones «Enviar otro código» y «Verificar» en `VerifyPage.tsx` (`VerifyPage.test.tsx`, `PublicPage.css`).
 - Se añadieron pruebas de accesibilidad con `axe-core` en `frontend/src/auth/a11y.test.tsx` cubriendo `LoginPage` (normal y con errores), `TermsPage` (con términos pendientes y sin versión vigente) y `HomePage` (con una y varias sesiones) (`T-023`).
 - Se redactó el resumen completo de la feature con guía ejecutable y marco teórico en [`specs/inicio-cierre-sesion/resumen.md`](../../resumen.md) (`T-024`).
@@ -22,7 +22,7 @@ El detalle de cada tarea, con su «Hecho cuando», está en [`tasks.md`](../../t
 | T-021 | Enlaces a `/login` desde el formulario de registro y desde cuenta creada | `f08360b` |
 | T-022 | Rutas y redirecciones según el estado de la sesión y de los términos | `af33fa2` |
 | T-023 | Accesibilidad de las pantallas de inicio de sesión, términos pendientes y área privada | `3301d8a` |
-| Ajuste visual | Transiciones fade-out/fade-in, altura animada y acciones en línea en `VerifyPage` | `c4ab0c0`, `74cfc25` |
+| Ajuste visual | Transiciones fade-out/fade-in, altura animada progresiva y acciones en línea en `VerifyPage` | `c4ab0c0`, `74cfc25`, `8cc8704`, `4845f44` |
 | T-024 | Resumen de la feature y guía de prueba | incluido en esta entrega |
 
 ## Cómo ejecutarlo y probarlo
