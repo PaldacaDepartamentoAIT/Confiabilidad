@@ -101,7 +101,7 @@
   background: transparent;
 }
 
-/* Selección de filas: casilla de la cabecera y de cada fila; las acciones van al extremo de la cabecera. */
+/* Selección de filas: casilla de la cabecera y de cada fila; barra inferior al haber selección. */
 .table-root {
   position: relative;
 }
@@ -163,15 +163,41 @@
   box-shadow: inset 2px 0 0 var(--primary);
 }
 
-.table-actions {
-  position: absolute;
-  top: 0;
-  right: 12px;
-  height: 44px;
+.table-selection-bar {
+  --surface: var(--secondary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  padding: 6px 12px;
+  background: var(--secondary);
+  color: var(--ink);
+  border-bottom: 1px solid var(--gray);
+  border-left: 2px solid var(--primary);
+  animation: table-bar-in 0.18s ease-out;
+}
+
+.table-selection-count {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.table-selection-actions {
   display: flex;
   align-items: center;
   gap: 8px;
-  z-index: 2;
+}
+
+@keyframes table-bar-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .st {

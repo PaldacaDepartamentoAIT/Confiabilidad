@@ -22,14 +22,15 @@ export type TableColumn = {
 
 export type TableRow = { id: string; cells: Record<string, ReactNode | StatusCell> };
 
-// Selección de filas con casillas: la de la cabecera marca o desmarca todas las seleccionables y
-// `actions` se muestra al extremo de la cabecera mientras haya alguna fila marcada.
+// Selección de filas con casillas: `selectAllLabel` añade la casilla en la cabecera para marcar o
+// desmarcar todas las seleccionables; al haber filas marcadas se muestra una barra inferior.
 export type TableSelection = {
   selectedIds: ReadonlySet<string>;
   onChange: (next: Set<string>) => void;
   isSelectable?: (row: TableRow) => boolean;
-  selectAllLabel: string;
+  selectAllLabel?: string;
   rowLabel: (row: TableRow) => string;
+  selectedLabel: (count: number) => string;
   actions?: ReactNode;
 };
 
@@ -186,17 +187,20 @@ export function Table({ label, columns, rows, emptyMessage, selection }: TablePr
         )}
         <thead>
           <tr>
-            {selection && (
-              <th scope="col" className="col-select">
-                <RowCheck
-                  label={selection.selectAllLabel}
-                  checked={allSelected}
-                  indeterminate={selectedCount > 0 && !allSelected}
-                  disabled={selectableIds.length === 0}
-                  onChange={toggleAll}
-                />
-              </th>
-            )}
+            {selection &&
+              (selection.selectAllLabel ? (
+                <th scope="col" className="col-select">
+                  <RowCheck
+                    label={selection.selectAllLabel}
+                    checked={allSelected}
+                    indeterminate={selectedCount > 0 && !allSelected}
+                    disabled={selectableIds.length === 0}
+                    onChange={toggleAll}
+                  />
+                </th>
+              ) : (
+                <td className="col-select" />
+              ))}
             {columns.map((column, index) => (
               <th
                 key={column.key}
@@ -268,8 +272,15 @@ export function Table({ label, columns, rows, emptyMessage, selection }: TablePr
   return (
     <div className="table-root">
       {region}
-      {selection.actions && selectedCount > 0 && (
-        <div className="table-actions">{selection.actions}</div>
+      {selectedCount > 0 && (
+        <div
+          className="table-selection-bar"
+          role="region"
+          aria-label={selection.selectedLabel(selectedCount)}
+        >
+          <span className="table-selection-count">{selection.selectedLabel(selectedCount)}</span>
+          {selection.actions && <div className="table-selection-actions">{selection.actions}</div>}
+        </div>
       )}
     </div>
   );

@@ -118,6 +118,7 @@ export function DataSection() {
               onChange: setSelectedIds,
               selectAllLabel: "Seleccionar todos los activos",
               rowLabel: (row) => `Seleccionar el activo ${row.id}`,
+              selectedLabel: (count) => (count === 1 ? "1 seleccionada" : `${count} seleccionadas`),
               actions: (
                 <IconButton
                   size="sm"

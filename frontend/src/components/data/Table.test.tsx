@@ -112,9 +112,11 @@ test("with rows it does not show the empty message", () => {
 function SelectableTable({
   isSelectable,
   rowsOverride = rows,
+  selectAllLabel = "Select all assets",
 }: {
   isSelectable?: (row: TableRow) => boolean;
   rowsOverride?: TableRow[];
+  selectAllLabel?: string;
 }) {
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(new Set());
   return (
@@ -127,15 +129,16 @@ function SelectableTable({
         selectedIds,
         onChange: setSelectedIds,
         isSelectable,
-        selectAllLabel: "Select all assets",
+        selectAllLabel,
         rowLabel: (row) => `Select ${row.id}`,
+        selectedLabel: (count) => `${count} selected`,
         actions: <button type="button">Delete selected</button>,
       }}
     />
   );
 }
 
-test("selection: the header checkbox selects and clears all rows and the actions appear only while something is selected", async () => {
+test("selection: the header checkbox selects and clears all rows and the bottom bar shows the count and actions", async () => {
   const user = userEvent.setup();
   render(<SelectableTable />);
 
@@ -148,12 +151,14 @@ test("selection: the header checkbox selects and clears all rows and the actions
   expect(all).toBeChecked();
   expect(screen.getByRole("checkbox", { name: "Select c-102" })).toBeChecked();
   expect(screen.getByRole("checkbox", { name: "Select v-033" })).toBeChecked();
-  expect(screen.getByRole("button", { name: "Delete selected" })).toBeInTheDocument();
+  const bar = screen.getByRole("region", { name: "2 selected" });
+  expect(within(bar).getByText("2 selected")).toBeInTheDocument();
+  expect(within(bar).getByRole("button", { name: "Delete selected" })).toBeInTheDocument();
   expect(screen.getByRole("cell", { name: "C-102" }).closest("tr")).toHaveClass("selected");
 
   await user.click(all);
   expect(screen.getByRole("checkbox", { name: "Select c-102" })).not.toBeChecked();
-  expect(screen.queryByRole("button", { name: "Delete selected" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("region", { name: /selected/ })).not.toBeInTheDocument();
 });
 
 test("selection: a partial selection leaves the header checkbox indeterminate and a row can be unmarked", async () => {
@@ -206,6 +211,19 @@ test("selection: the table keeps its first resize snapshot aligned with the chec
   expect(cols).toHaveLength(5);
   expect(cols[0]).toHaveStyle({ width: "44px" });
   expect(cols[4].getAttribute("style")).toBeNull();
+});
+
+test("selection: without selectAllLabel the header has no checkbox, row selection still shows the bottom bar and passes axe", async () => {
+  const user = userEvent.setup();
+  const { container } = render(<SelectableTable selectAllLabel="" />);
+
+  expect(screen.queryByRole("checkbox", { name: "Select all assets" })).not.toBeInTheDocument();
+  expect(screen.getAllByRole("checkbox")).toHaveLength(2);
+  await user.click(screen.getByRole("checkbox", { name: "Select c-102" }));
+  expect(screen.getByRole("region", { name: "1 selected" })).toBeInTheDocument();
+  expect(
+    (await axe.run(container, { rules: { "color-contrast": { enabled: false } } })).violations,
+  ).toEqual([]);
 });
 
 test("selection: has no accessibility violations with and without a selection", async () => {
