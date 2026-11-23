@@ -1,7 +1,7 @@
 # Entrega E-07e · Selección de filas con casillas en tablas
 
-Rama: `feat/inicio-cierre-sesion-tabla-seleccion` · PR: pendiente · Líneas de código y tests: 428 (límite: 400).
-Excepción: 428 líneas reales (dentro de `sdd.max_lineas_pr_excepcion`, 500) por entregar en un mismo corte vertical el componente `Table` seleccionable con su barra superpuesta animada, sus pruebas unitarias y de accesibilidad, el icono `IconTrash` y su muestra en `/`.
+Rama: `feat/inicio-cierre-sesion-tabla-seleccion` · PR: pendiente · Líneas de código y tests: 420 (límite: 400).
+Excepción: 420 líneas reales (dentro de `sdd.max_lineas_pr_excepcion`, 500) por entregar en un mismo corte vertical el componente `Table` seleccionable con su barra superpuesta, sus pruebas unitarias y de accesibilidad, el icono `IconTrash` y su muestra en `/`.
 
 ## Qué se hizo
 - Se documentó la selección de filas y la barra superpuesta animada en [`docs/identidad-visual.md`](../../../../docs/identidad-visual.md) (fila «Selección de filas» de la tabla).
@@ -22,6 +22,7 @@ Excepción: 428 líneas reales (dentro de `sdd.max_lineas_pr_excepcion`, 500) po
 - `b848b94` — mueve las acciones a barra animada con `n seleccionadas` y hace opcional `selectAllLabel`
 - `63bfb09` — documenta barra superpuesta sobre cabecera en `docs/identidad-visual.md`
 - `1a48276` — superpone la barra de selección sobre la cabecera (`44 px`) con la casilla alineada a `12 px`
+- `bbe9422` — quita la animación de entrada y ajusta los botones de acción de la barra a `28 × 28 px`
 
 ## Cómo ejecutarlo y probarlo
 Actualiza las ramas remotas y cambia a la rama de la entrega:
