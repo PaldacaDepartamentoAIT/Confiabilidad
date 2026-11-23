@@ -121,7 +121,6 @@ export function DataSection() {
               selectedLabel: (count) => (count === 1 ? "1 seleccionada" : `${count} seleccionadas`),
               actions: (
                 <IconButton
-                  size="sm"
                   label="Eliminar activos seleccionados"
                   icon={<IconTrash />}
                   tooltipAlign="end"
