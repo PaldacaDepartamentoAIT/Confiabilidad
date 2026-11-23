@@ -457,3 +457,15 @@ describe("sending the form", () => {
     vi.useRealTimers();
   });
 });
+
+test("shows a link to /login that navigates without reloading", async () => {
+  window.history.pushState(null, "", "/register");
+  const { fetcher } = fakeFetch(respondWith(OPTIONS));
+  renderPage(fetcher);
+
+  const link = await screen.findByRole("link", { name: "Iniciar sesión" });
+  expect(link).toHaveAttribute("href", "/login");
+  await userEvent.click(link);
+  expect(window.location.pathname).toBe("/login");
+  window.history.pushState(null, "", "/");
+});
