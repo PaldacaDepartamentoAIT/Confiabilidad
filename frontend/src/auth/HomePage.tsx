@@ -209,7 +209,7 @@ export function HomePage({
     >
       <h1>{t("auth.homeTitle")}</h1>
       {errorKey && <FormMessage type="error" messageKey={errorKey as never} />}
-      <Block as="section" title={t("auth.sessionsTitle")} count={sessions.length}>
+      <Block title={t("auth.sessionsTitle")} count={sessions.length}>
         <Table
           label={t("auth.sessionsTitle")}
           columns={columns}
