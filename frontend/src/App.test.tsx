@@ -83,9 +83,16 @@ const answers: Record<string, unknown> = {
   sessions: { sessions: [] },
 };
 
-function fakeClient() {
+function fakeClient(
+  sessionResponse: { status: number; body: unknown } = { status: 200, body: answers.session },
+) {
   const fetcher = (url: RequestInfo | URL) => {
     const route = String(url).split("?")[0].split("/").pop() ?? "";
+    if (route === "session") {
+      return Promise.resolve(
+        new Response(JSON.stringify(sessionResponse.body), { status: sessionResponse.status }),
+      );
+    }
     return Promise.resolve(new Response(JSON.stringify(answers[route] ?? {}), { status: 200 }));
   };
   return createClient({
@@ -96,21 +103,31 @@ function fakeClient() {
   });
 }
 
+const UNAUTH = { status: 401, body: { code: "unauthenticated", message: "x" } };
+const PENDING_TERMS = {
+  status: 200,
+  body: {
+    user: { email: "ana@example.com", name: "Ana" },
+    terms_status: "not_accepted",
+    terms: { version: "1", locale: "en", content: "T" },
+  },
+};
+
 test.each([
-  ["/", "Main panel"],
-  ["/ruta-que-no-existe", "Main panel"],
-  ["/showcase", "Reliability"],
-  ["/login", "Sign in"],
-  ["/terms", "Pending terms and conditions"],
-  ["/register", "Create your account"],
-  ["/register/continue#pid-1", "Enter the verification code"],
-  ["/register/done", "Account created"],
-])("shows the expected screen at %s", async (path, heading) => {
+  ["/", "Main panel", undefined],
+  ["/ruta-que-no-existe", "Main panel", undefined],
+  ["/showcase", "Reliability", undefined],
+  ["/login", "Sign in", UNAUTH],
+  ["/terms", "Pending terms and conditions", PENDING_TERMS],
+  ["/register", "Create your account", UNAUTH],
+  ["/register/continue#pid-1", "Enter the verification code", UNAUTH],
+  ["/register/done", "Account created", UNAUTH],
+])("shows the expected screen at %s", async (path, heading, sessionReply) => {
   window.history.replaceState(null, "", path);
   document.cookie = "csrftoken=token";
   render(
     <I18nextProvider i18n={createI18n("en")}>
-      <App client={fakeClient()} />
+      <App client={fakeClient(sessionReply)} />
     </I18nextProvider>,
   );
 
@@ -118,6 +135,33 @@ test.each([
   window.history.replaceState(null, "", "/");
   document.cookie = "csrftoken=; expires=Thu, 01 Jan 1970 00:00:00 GMT";
 });
+
+test.each([
+  ["/", UNAUTH, "/login", "Sign in"],
+  ["/terms", UNAUTH, "/login", "Sign in"],
+  ["/login", undefined, "/", "Main panel"],
+  ["/register", undefined, "/", "Main panel"],
+  ["/login", PENDING_TERMS, "/terms", "Pending terms and conditions"],
+  ["/register", PENDING_TERMS, "/terms", "Pending terms and conditions"],
+  ["/", PENDING_TERMS, "/terms", "Pending terms and conditions"],
+  ["/terms", undefined, "/", "Main panel"],
+])(
+  "redirects %s according to session and terms state",
+  async (from, sessionReply, target, heading) => {
+    window.history.replaceState(null, "", from);
+    document.cookie = "csrftoken=token";
+    render(
+      <I18nextProvider i18n={createI18n("en")}>
+        <App client={fakeClient(sessionReply)} />
+      </I18nextProvider>,
+    );
+
+    expect(await screen.findByRole("heading", { level: 1, name: heading })).toBeInTheDocument();
+    expect(window.location.pathname).toBe(target);
+    window.history.replaceState(null, "", "/");
+    document.cookie = "csrftoken=; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+  },
+);
 
 test("moving between screens does not reload the page", async () => {
   window.history.replaceState(null, "", "/register/done");

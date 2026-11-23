@@ -611,7 +611,8 @@ describe("password step and account created", () => {
   });
 });
 
-test("the account created screen says so without signing in", () => {
+test("the account created screen says so without signing in and links to /login", async () => {
+  window.history.pushState(null, "", "/register/done");
   render(
     <I18nextProvider i18n={createI18n("es")}>
       <DonePage />
@@ -622,4 +623,9 @@ test("the account created screen says so without signing in", () => {
   expect(screen.getByText("Tu cuenta se ha creado.")).toBeVisible();
   expect(screen.queryByRole("textbox")).toBeNull();
   expect(screen.queryByLabelText(/Contraseña/)).toBeNull();
+
+  const link = screen.getByRole("link", { name: "Iniciar sesión" });
+  expect(link).toHaveAttribute("href", "/login");
+  await userEvent.click(link);
+  expect(window.location.pathname).toBe("/login");
 });
