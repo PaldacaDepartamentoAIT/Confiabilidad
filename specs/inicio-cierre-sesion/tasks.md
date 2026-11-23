@@ -418,9 +418,12 @@ Rama de integración: `feat/inicio-cierre-sesion` (los PR de las entregas van co
   Excepción: 478 líneas reales (dentro de `sdd.max_lineas_pr_excepcion`, 500): al exponer `HomePage` en `/` en la misma entrega visual para cumplir `AGENTS.md`, `ShowcasePage` pasa a `/showcase` y obliga a actualizar sus tests unitarios y visuales además de la pantalla y sus tests.
 
 - E-09 Enrutamiento completo, redirecciones, accesibilidad y resumen
-  Tareas: T-021, T-022, T-023, T-024 | Líneas estimadas: 480 | Rama: feat/inicio-cierre-sesion-rutas
+  Tareas: T-021, T-022, T-023, T-024 | Líneas estimadas: 327 | Rama: feat/inicio-cierre-sesion-rutas
   Cómo probarlo: abrir `http://localhost:5173/login`, iniciar sesión, aceptar términos si están pendientes, ver y cerrar sesiones en `/` y cerrar la sesión actual, siguiendo `specs/inicio-cierre-sesion/resumen.md`.
-  Excepción: 480 líneas reales (dentro de `sdd.max_lineas_pr_excepcion`, 500) por incluir sobre las rutas y accesibilidad la transición de salida/entrada (`0,15 s` + `0,2 s`) sobre el contenido manteniendo fija la estructura exterior (`PublicLayout` / `AppLayout`).
+
+- E-09b Transiciones entre pantallas, altura animada en tarjetas y acciones en línea en verificación
+  Tareas: mejora visual tras revisión de E-09 | Líneas estimadas: 245 | Rama: feat/inicio-cierre-sesion-transiciones
+  Cómo probarlo: cambiar entre pantallas públicas comprobando el fade-out/fade-in del contenido sin mover la barra superior, recargar páginas con carga asíncrona viendo crecer la tarjeta sin saltos y abrir `/register/continue#...` para ver «Enviar otro código» junto a «Verificar».
 
 ## RF sin tarea
 Ninguno.

@@ -9,8 +9,6 @@ import { TermsPage } from "./auth/TermsPage";
 import { LiveAnnouncer } from "./components/LiveAnnouncer";
 import type { LanguageStorage } from "./i18n/language";
 import { useDocumentLanguage } from "./i18n/useDocumentLanguage";
-import { PublicLayout } from "./layouts/PublicLayout";
-import { TransitionPhaseContext, type TransitionPhase } from "./layouts/screenTransition";
 import { DonePage } from "./registration/DonePage";
 import { RegisterPage } from "./registration/RegisterPage";
 import { VerifyPage } from "./registration/VerifyPage";
@@ -27,8 +25,6 @@ const ROUTES = [
   "/register/done",
 ] as const;
 
-const FADE_OUT_MS = 150;
-
 type AppProps = {
   storage?: LanguageStorage;
   client?: ApiClient;
@@ -42,24 +38,7 @@ export function App({ storage, client }: AppProps) {
     [client, i18n],
   );
   const route = matchRoute(useLocation().path, ROUTES, "/");
-  const [shownRoute, setShownRoute] = useState(route);
-  const [phase, setPhase] = useState<TransitionPhase>("idle");
   const [session, setSession] = useState<SessionInfo | null | undefined>(undefined);
-
-  useEffect(() => {
-    if (route === shownRoute) return;
-    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
-      setShownRoute(route);
-      setPhase("idle");
-      return;
-    }
-    setPhase("out");
-    const timer = window.setTimeout(() => {
-      setShownRoute(route);
-      setPhase("in");
-    }, FADE_OUT_MS);
-    return () => window.clearTimeout(timer);
-  }, [route, shownRoute]);
 
   useEffect(() => {
     const needsSessionCheck = route === "/login" || route === "/register" || route === "/terms";
@@ -99,9 +78,9 @@ export function App({ storage, client }: AppProps) {
     };
   }, [api, route, session]);
 
-  const screen = (
-    <>
-      {shownRoute === "/" && (
+  return (
+    <LiveAnnouncer>
+      {route === "/" && (
         <HomePage
           client={api}
           session={session ?? undefined}
@@ -112,14 +91,14 @@ export function App({ storage, client }: AppProps) {
           }
         />
       )}
-      {shownRoute === "/login" && (
+      {route === "/login" && (
         <LoginPage
           client={api}
           storage={storage}
           onAuthenticated={(authenticated) => setSession(authenticated)}
         />
       )}
-      {shownRoute === "/terms" && (
+      {route === "/terms" && (
         <TermsPage
           client={api}
           session={session ?? undefined}
@@ -132,18 +111,10 @@ export function App({ storage, client }: AppProps) {
           onLoggedOut={() => setSession(null)}
         />
       )}
-      {shownRoute === "/showcase" && <ShowcasePage storage={storage} />}
-      {shownRoute === "/register" && <RegisterPage client={api} storage={storage} />}
-      {shownRoute === "/register/continue" && <VerifyPage client={api} storage={storage} />}
-      {shownRoute === "/register/done" && <DonePage storage={storage} />}
-    </>
-  );
-
-  return (
-    <LiveAnnouncer>
-      <TransitionPhaseContext.Provider value={phase}>
-        {shownRoute === "/" ? screen : <PublicLayout storage={storage}>{screen}</PublicLayout>}
-      </TransitionPhaseContext.Provider>
+      {route === "/showcase" && <ShowcasePage storage={storage} />}
+      {route === "/register" && <RegisterPage client={api} storage={storage} />}
+      {route === "/register/continue" && <VerifyPage client={api} storage={storage} />}
+      {route === "/register/done" && <DonePage storage={storage} />}
     </LiveAnnouncer>
   );
 }

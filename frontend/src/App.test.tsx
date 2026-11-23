@@ -163,27 +163,19 @@ test.each([
   },
 );
 
-test("moving between screens does not reload the page, keeps the bar and fades out then in", async () => {
+test("moving between screens does not reload the page", async () => {
   window.history.replaceState(null, "", "/register/done");
-  const { container } = render(
+  render(
     <I18nextProvider i18n={createI18n("en")}>
-      <App client={fakeClient(UNAUTH)} />
+      <App client={fakeClient()} />
     </I18nextProvider>,
   );
 
-  await screen.findByRole("heading", { level: 1, name: "Account created" });
-  const barBefore = screen.getByRole("banner");
-  const content = container.querySelector(".public-content");
-  expect(content).not.toHaveClass("route-out", "route-in");
-
   act(() => navigate("/register"));
-  expect(content).toHaveClass("route-out");
 
   expect(
     await screen.findByRole("heading", { level: 1, name: "Create your account" }),
   ).toBeVisible();
-  expect(screen.getByRole("banner")).toBe(barBefore);
-  expect(container.querySelector(".public-content")).toHaveClass("route-in");
   window.history.replaceState(null, "", "/");
 });
 
