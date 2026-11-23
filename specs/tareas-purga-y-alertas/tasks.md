@@ -37,9 +37,13 @@ Estado: aprobado
 ## Entregas
 Rama de integración: `feat/tareas-purga-y-alertas` (los PR de las entregas van contra ella; ver `AGENTS.md`)
 
-- E-01 Programación de las tres purgas y núcleo de registro y alertas
-  Tareas: T-001, T-002, T-003 | Líneas estimadas: 350 | Rama: `feat/tareas-purga-y-alertas-base-y-estado`
-  Cómo probarlo: ejecutar `pytest apps/audit/tests/test_purge_task.py apps/audit/tests/test_purge_access.py apps/core/tests/test_maintenance_models.py apps/core/tests/test_maintenance_runner.py` y lanzar `python manage.py migrate` seguido de `celery -A config call apps.audit.tasks.purge_security_events` para comprobar la purga de auditoría programada.
+- E-01 Programación configurable de las tres purgas y tarea periódica de auditoría
+  Tareas: T-001 | Líneas estimadas: 166 | Rama: `feat/tareas-purga-y-alertas-base-y-estado`
+  Cómo probarlo: ejecutar `pytest apps/audit/tests/test_purge_task.py apps/audit/tests/test_purge_access.py`, comprobar en `settings.CELERY_BEAT_SCHEDULE` / `DatabaseScheduler` los tres `PeriodicTask` y lanzar `celery -A config call apps.audit.tasks.purge_security_events`.
+
+- E-01b Modelos y ejecutor base de última ejecución y alertas
+  Tareas: T-002, T-003 | Líneas estimadas: 330 | Rama: `feat/tareas-purga-y-alertas-nucleo-estado`
+  Cómo probarlo: aplicar migraciones (`python manage.py migrate`), ejecutar `pytest apps/core/tests/test_maintenance_models.py apps/core/tests/test_maintenance_runner.py` y ejercitar `run_maintenance_task` desde consola (`manage.py shell`) comprobando registro de última ejecución, alerta persistente y cierre automático al recuperarse.
 
 - E-02 Serialización, alertas completas por correo y conexión de las tres tareas
   Tareas: T-004, T-005 | Líneas estimadas: 310 | Rama: `feat/tareas-purga-y-alertas-ejecucion-y-alertas`
