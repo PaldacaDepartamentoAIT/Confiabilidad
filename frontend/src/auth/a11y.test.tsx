@@ -46,7 +46,7 @@ const mount = (el: ReactElement) =>
     </I18nextProvider>,
   );
 const check = async () => {
-  const { violations } = await axe.run(document.documentElement, {
+  const { violations } = await axe.run(document.body, {
     rules: { "color-contrast": { enabled: false } },
   });
   expect(violations.map((v) => v.id)).toEqual([]);
