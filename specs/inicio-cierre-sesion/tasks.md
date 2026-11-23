@@ -297,14 +297,19 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   `docs/identidad-visual.md` — [Cierto] — revertir: crear un CSS propio `HomePage.css`. Validación
   pendiente en la máquina virtual del usuario (alternativa sin dependencias locales de `AGENTS.md`).
 
-- [ ] T-021 Enlaces a `/login` desde el formulario de registro y desde cuenta creada
+- [x] T-021 Enlaces a `/login` desde el formulario de registro y desde cuenta creada
   RF: RF-013 (M-07; S-08, enlace desde cuenta creada; CF-7) | Depende de: T-016 | Archivos: 3
   Archivos: `registration/RegisterPage.tsx`, `registration/DonePage.tsx`,
   `registration/RegisterPage.test.tsx`.
   Hecho cuando: tanto la pantalla de registro (`/register`) como la de cuenta creada
   (`/register/done`) muestran un enlace a `/login` que navega sin recargar la página; suite verde.
+  Decisiones: en `RegisterPage` el enlace «Iniciar sesión» comparte la fila `.public-actions-row`
+  como botón secundario junto al botón principal de envío (en simetría con `LoginPage`), y en
+  `DonePage` se muestra como botón principal — [Cierto] — revertir: mostrar enlaces de texto bajo
+  el botón. Validación pendiente en la máquina virtual del usuario (alternativa sin dependencias
+  locales de `AGENTS.md`).
 
-- [ ] T-022 Rutas y redirecciones según el estado de la sesión y de los términos
+- [x] T-022 Rutas y redirecciones según el estado de la sesión y de los términos
   RF: RF-013, RF-015, RF-016, RF-017 (M-07; C-07, rutas de navegación del cliente; S-10, identidad visual y traslado de la página de muestra; CF-5, CF-7) | Depende de: T-018 (pantalla de inicio de sesión), T-019 (pantalla de términos pendientes), T-020 (pantalla del área privada), T-021 (enlaces a `/login`) | Archivos: 3
   Archivos: `App.tsx`, `App.test.tsx`, `registration/VerifyPage.test.tsx`.
   Hecho cuando: `/` muestra el área privada, `/login` el inicio de sesión, `/terms` los términos
@@ -312,21 +317,33 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   `/login`; abrir `/login` o `/register` con sesión activa redirige a `/` (si los términos están
   aceptados) o a `/terms` (si faltan); abrir `/` con términos pendientes redirige a `/terms` y abrir
   `/terms` con ellos aceptados redirige a `/`; suite verde.
+  Decisiones: `App.tsx` mantiene un caché en memoria de `session` (`undefined` antes de consultar,
+  `null` sin sesión, `SessionInfo` con sesión) y verifica `getSession` en `/login`, `/register` y
+  `/terms` después del montaje inicial para conservar el orden de llamada inicial de `RegisterPage`
+  — [Cierto] — revertir: consultar sesión antes de montar las pantallas públicas. Validación
+  pendiente en la máquina virtual del usuario (alternativa sin dependencias locales de `AGENTS.md`).
 
-- [ ] T-023 Accesibilidad de las pantallas de inicio de sesión, términos pendientes y área privada
+- [x] T-023 Accesibilidad de las pantallas de inicio de sesión, términos pendientes y área privada
   RF: RF-013, RF-015, RF-016 (CF-1, tests para cada RF y análisis estático limpio; CF-7) | Depende de: T-022 (rutas y redirecciones) | Archivos: 1
   Archivos: `auth/a11y.test.tsx`.
   Hecho cuando: `axe-core` no encuentra fallos en `LoginPage` (normal y con errores), `TermsPage`
   (con términos pendientes y sin versión vigente) y `HomePage` (con una y varias sesiones); suite
   verde.
+  Decisiones: desactiva la regla `color-contrast` en jsdom como en el resto de pruebas unitarias
+  del repositorio (el contraste real se valida en Chromium en `visual/contrast.visual.test.ts`), y
+  fija límite de `15_000 ms` por test para evitar expiraciones bajo carga paralela — [Cierto] —
+  revertir: usar el tiempo límite por defecto. Validación pendiente en la máquina virtual del usuario.
 
-- [ ] T-024 Resumen de la feature y guía de prueba
+- [x] T-024 Resumen de la feature y guía de prueba
   RF: RF-001…RF-021 (M-10; CF-8, guía de prueba en aplicación y consola) | Depende de: T-013 (rutas de listado y cierre de otras sesiones), T-023 (accesibilidad de las pantallas) | Archivos: 1
   Archivos: `specs/inicio-cierre-sesion/resumen.md`.
   Hecho cuando: `resumen.md` explica qué se hizo, su marco teórico y los pasos ejecutables para
   probar en la aplicación y con `curl` / `manage.py` el inicio y cierre de sesión en ambos clientes,
   la cuenta inactiva, los límites, los términos pendientes, el listado y cierre de otras sesiones y
   la purga de sesiones caducadas.
+  Decisiones: documenta el estado real tras las entregas `E-01`..`E-09` (incluida la selección con
+  casillas en sesiones, barra superpuesta, menús de `Sidebar` hacia arriba e `IconButton`) — [Cierto]
+  — revertir: resumir solo la versión previa de la pantalla de sesiones.
 
 ## Entregas
 Rama de integración: `feat/inicio-cierre-sesion` (los PR de las entregas van contra ella; ver `AGENTS.md`)
@@ -401,7 +418,7 @@ Rama de integración: `feat/inicio-cierre-sesion` (los PR de las entregas van co
   Excepción: 478 líneas reales (dentro de `sdd.max_lineas_pr_excepcion`, 500): al exponer `HomePage` en `/` en la misma entrega visual para cumplir `AGENTS.md`, `ShowcasePage` pasa a `/showcase` y obliga a actualizar sus tests unitarios y visuales además de la pantalla y sus tests.
 
 - E-09 Enrutamiento completo, redirecciones, accesibilidad y resumen
-  Tareas: T-021, T-022, T-023, T-024 | Líneas estimadas: 340 | Rama: feat/inicio-cierre-sesion-rutas
+  Tareas: T-021, T-022, T-023, T-024 | Líneas estimadas: 358 | Rama: feat/inicio-cierre-sesion-rutas
   Cómo probarlo: abrir `http://localhost:5173/login`, iniciar sesión, aceptar términos si están pendientes, ver y cerrar sesiones en `/` y cerrar la sesión actual, siguiendo `specs/inicio-cierre-sesion/resumen.md`.
 
 ## RF sin tarea
