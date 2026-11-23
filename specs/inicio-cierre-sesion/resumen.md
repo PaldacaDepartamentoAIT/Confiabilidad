@@ -16,7 +16,7 @@ Se completó el flujo de inicio y cierre de sesión, aceptación de términos pe
   - `/terms` (`TermsPage`): muestra la versión vigente en Markdown dentro de `DocumentCheckbox`, botón para aceptar y salir o cerrar sesión si falta una versión vigente.
   - `/` (`HomePage`): área privada con `AppLayout`, nombre/iniciales y cierre de sesión en el menú de usuario del pie lateral, tabla seleccionable de sesiones activas (marcando la actual con `Chip` y permitiendo seleccionar y cerrar una o varias de las demás desde la barra superior de la tabla).
   - `/showcase` (`ShowcasePage`): catálogo de componentes trasladado fuera de `/`.
-  - Enlaces a `/login` desde `/register` y `/register/done`, guardas y redirecciones en `App.tsx` y pruebas de accesibilidad (`auth/a11y.test.tsx`).
+  - Enlaces a `/login` desde `/register` y `/register/done`, guardas y redirecciones en `App.tsx`, transición fade-out (`0,15 s`) / fade-in (`0,2 s`) entre pantallas manteniendo fija la barra y el menú lateral (`screenTransition.tsx`), altura animada (`0,25 s`) al cargar tarjetas/bloques (`PublicPage.tsx`, `Block.tsx`), botones «Enviar otro código» y «Verificar» en la misma fila en `VerifyPage.tsx` y pruebas de accesibilidad (`auth/a11y.test.tsx`).
 
 ### Entregas
 | Entrega | Rama |
