@@ -3,7 +3,9 @@ import { useTranslation } from "react-i18next";
 
 import type { LanguageStorage } from "../i18n/language";
 import { IconMenu } from "../icons";
+import { useTransitionClass } from "./screenTransition";
 import { Sidebar, type SidebarItem, type SidebarUser } from "./Sidebar";
+import "./screenTransition.css";
 import "./AppLayout.css";
 
 type AppLayoutProps = {
@@ -35,6 +37,8 @@ export function AppLayout({
   const [open, setOpen] = useState(false);
   const Bar = embedded ? "div" : "header";
   const Content = embedded ? "div" : "main";
+  const activePhase = useTransitionClass();
+  const phaseClass = embedded ? undefined : activePhase;
 
   const close = useCallback((restoreFocus: boolean) => {
     setOpen(false);
@@ -67,7 +71,7 @@ export function AppLayout({
           </button>
           {topBar}
         </Bar>
-        <Content className="content" data-ui="content">
+        <Content className={["content", phaseClass].filter(Boolean).join(" ")} data-ui="content">
           {children}
         </Content>
       </div>
