@@ -190,6 +190,8 @@ Un solo color por prioridad en toda la aplicación.
 | Etiquetas del menú lateral al abrir o cerrar | 0,15–0,2 s de fundido |
 | Desplazamiento de la línea de la pestaña activa | 0,25 s, salida suave |
 | Cambio del contenido al cambiar de sección | 0,2 s de fundido |
+| Cambio entre pantallas | 0,15 s de salida y, a continuación, 0,2 s de entrada en el contenido (la estructura exterior se mantiene) |
+| Cambio de altura de bloques y tarjetas al cargar | 0,25 s, salida suave |
 | Pestañas a selector y al revés | 0,15 s de salida y, a continuación, 0,2 s de entrada |
 | Buscador reducido: abrir y cerrar | 0,25 s, salida suave; 0,2 s de fundido de las pestañas y del botón |
 | Aparición del modal de documento | 0,2 s de fundido de la caja y de la cortina |
