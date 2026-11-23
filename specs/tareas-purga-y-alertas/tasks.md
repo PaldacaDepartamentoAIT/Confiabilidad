@@ -1,9 +1,10 @@
 # Tareas: tareas-purga-y-alertas
 Estado: aprobado
 
-- [ ] T-001 Programación configurable de las tres purgas y tarea periódica de auditoría
+- [x] T-001 Programación configurable de las tres purgas y tarea periódica de auditoría
   RF: RF-001, RF-002, RF-003 | Depende de: — | Archivos: 3 (`backend/config/settings.py`, `backend/apps/audit/tasks.py`, `backend/apps/audit/tests/test_purge_task.py`)
   Hecho cuando: `pytest apps/audit/tests/test_purge_task.py apps/audit/tests/test_purge_access.py` pasa: `CELERY_BEAT_SCHEDULE` incluye las tres tareas con intervalos configurables por entorno (`3600`, `3600`, `86400`), `DatabaseScheduler.setup_schedule()` registra los tres `PeriodicTask`, `apps.audit.tasks.purge_security_events` ejecuta `call_command("purge_security_events")` respetando el corte de un año y `test_purge_access.py` sigue en verde.
+  Decisiones: `apps.audit.tasks.purge_security_events` extrae el conteo desde el primer token de la salida estándar de `manage.py purge_security_events` y falla explícitamente con `RuntimeError` si la salida llega vacía. Confianza: [Cierto]. Cómo revertirla: exponer una función auxiliar pública en el propio comando `purge_security_events.py` que devuelva el entero directamente.
 
 - [ ] T-002 Modelos `MaintenanceTaskStatus` y `MaintenanceAlert` con migración
   RF: RF-004, RF-005 | Depende de: — | Archivos: 3 (`backend/apps/core/models.py`, `backend/apps/core/migrations/0002_maintenance_models.py`, `backend/apps/core/tests/test_maintenance_models.py`)
