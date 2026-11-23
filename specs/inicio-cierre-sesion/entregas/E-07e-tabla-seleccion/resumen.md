@@ -1,22 +1,25 @@
 # Entrega E-07e · Selección de filas con casillas en tablas
 
-Rama: `feat/inicio-cierre-sesion-tabla-seleccion` · PR: pendiente · Líneas de código y tests: 355 (límite: 400).
+Rama: `feat/inicio-cierre-sesion-tabla-seleccion` · PR: pendiente · Líneas de código y tests: 411 (límite: 400).
+Excepción: 411 líneas reales (dentro de `sdd.max_lineas_pr_excepcion`, 500) por entregar en un mismo corte vertical el componente `Table` seleccionable con su barra inferior animada, sus pruebas unitarias y de accesibilidad, el icono `IconTrash` y su muestra en `/showcase`.
 
 ## Qué se hizo
-- Se documentó la selección de filas en [`docs/identidad-visual.md`](../../../../docs/identidad-visual.md) (fila «Selección de filas» de la tabla).
+- Se documentó la selección de filas y la barra inferior animada en [`docs/identidad-visual.md`](../../../../docs/identidad-visual.md) (fila «Selección de filas» de la tabla).
 - `Table` ([`Table.tsx`](../../../../frontend/src/components/data/Table.tsx), [`Table.css`](../../../../frontend/src/components/data/Table.css)) admite ahora la propiedad opcional `selection`:
-  - Añade una primera columna de `44 px` con una casilla por fila y una casilla en la cabecera que marca o desmarca todas las filas seleccionables (estado intermedio con una raya si solo hay algunas).
-  - Las filas que `isSelectable` descarta no llevan casilla y `select all` las ignora.
+  - Añade una primera columna de `44 px` con una casilla por fila seleccionable y, cuando se indica `selectAllLabel` (para tablas con acciones sobre múltiples elementos), una casilla en la cabecera que marca o desmarca todas las filas seleccionables (estado intermedio con una raya si solo hay algunas). Si se omite `selectAllLabel`, la cabecera no muestra casilla de «seleccionar todo».
+  - Las filas que `isSelectable` descarta no llevan casilla y «seleccionar todo» las ignora.
   - Las filas marcadas se resaltan con el fondo del 9 % de la tinta y una línea de `2 px` en el color principal a su izquierda.
-  - La propiedad `actions` aparece en la misma fila de la cabecera, alineada al extremo derecho, solo mientras haya alguna fila marcada (queda fuera de la zona con desplazamiento para que el tooltip hacia arriba de `IconButton` no se recorte).
+  - Mientras haya alguna fila marcada, aparece debajo de la tabla una pestaña (`.table-selection-bar`) con animación de arriba hacia abajo (`0,18 s`, fundido y `6 px`), fondo `--secondary`, borde izquierdo de `2 px` en `--primary`, el conteo (`selectedLabel(count)`, por ejemplo `n seleccionadas`) a la izquierda y `actions` (botones de icono compactos) a la derecha.
 - Se añadió `IconTrash` a la librería de iconos.
 - El catálogo muestra el ejemplo en la tabla «Inventario de activos» ([`DataSection.tsx`](../../../../frontend/src/showcase/sections/DataSection.tsx)).
 
 ## Commits
 
-- docs: documenta la selección de filas en tablas
-- feat: añade `IconTrash` a la librería de iconos
-- feat: añade selección de filas con casillas y acciones en la cabecera de `Table`
+- `382d64d` — documenta la selección de filas en tablas
+- `68b87de` — añade `IconTrash` a la librería de iconos
+- `7894b3e` — añade selección de filas con casillas en `Table`
+- `01ba559` — actualiza especificación de barra de selección inferior en `docs/identidad-visual.md`
+- `b848b94` — mueve las acciones a la barra inferior animada con `n seleccionadas` y hace opcional `selectAllLabel`
 
 ## Cómo ejecutarlo y probarlo
 Actualiza las ramas remotas y cambia a la rama de la entrega:
@@ -36,9 +39,9 @@ Levanta el servidor de desarrollo del frontend:
 ```bash
 pnpm --filter frontend dev
 ```
-Deberías ver Vite sirviendo la aplicación en `http://localhost:5173/showcase`.
+Deberías ver Vite sirviendo la aplicación en `http://localhost:5173/`.
 
-Abre `http://localhost:5173/showcase` y baja hasta la tabla «Inventario de activos»: marca una casilla de fila y verás aparecer el botón de papelera en el extremo derecho de la cabecera; marca la casilla de la cabecera y se marcan todas las filas.
+Abre `http://localhost:5173/` y baja hasta la tabla «Inventario de activos»: marca una o varias casillas y verás desplegarse debajo de la tabla la pestaña animada con «n seleccionadas» a la izquierda y el botón de icono a la derecha.
 
 ### Tests y análisis estático
 Ejecuta las pruebas de la tabla, los iconos y el catálogo:
