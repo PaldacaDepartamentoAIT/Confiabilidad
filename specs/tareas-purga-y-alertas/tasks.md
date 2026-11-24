@@ -6,13 +6,15 @@ Estado: aprobado
   Hecho cuando: `pytest apps/audit/tests/test_purge_task.py apps/audit/tests/test_purge_access.py` pasa: `CELERY_BEAT_SCHEDULE` incluye las tres tareas con intervalos configurables por entorno (`3600`, `3600`, `86400`), `DatabaseScheduler.setup_schedule()` registra los tres `PeriodicTask`, `apps.audit.tasks.purge_security_events` ejecuta `call_command("purge_security_events")` respetando el corte de un año y `test_purge_access.py` sigue en verde.
   Decisiones: `apps.audit.tasks.purge_security_events` extrae el conteo desde el primer token de la salida estándar de `manage.py purge_security_events` y falla explícitamente con `RuntimeError` si la salida llega vacía. Confianza: [Cierto]. Cómo revertirla: exponer una función auxiliar pública en el propio comando `purge_security_events.py` que devuelva el entero directamente.
 
-- [ ] T-002 Modelos `MaintenanceTaskStatus` y `MaintenanceAlert` con migración
+- [x] T-002 Modelos `MaintenanceTaskStatus` y `MaintenanceAlert` con migración
   RF: RF-004, RF-005 | Depende de: — | Archivos: 3 (`backend/apps/core/models.py`, `backend/apps/core/migrations/0002_maintenance_models.py`, `backend/apps/core/tests/test_maintenance_models.py`)
   Hecho cuando: `pytest apps/core/tests/test_maintenance_models.py` pasa: `MaintenanceTaskStatus` exige unicidad por `task_name` (sin filas iniciales antes de ejecutarse), `MaintenanceAlert` distingue abiertas (`resolved_at=None`) de resueltas y la migración aplica limpia.
+  Decisiones: se define longitud máxima de 500 caracteres para `error_summary` en ambos modelos (en línea con `D-05` del plan). Confianza: [Cierto]. Cómo revertirla: ajustar `max_length` con una nueva migración.
 
-- [ ] T-003 Ejecutor base de mantenimiento con última ejecución, alerta persistente y cierre al recuperarse
+- [x] T-003 Ejecutor base de mantenimiento con última ejecución, alerta persistente y cierre al recuperarse
   RF: RF-004, RF-005, RF-007, RF-009 | Depende de: T-002 | Archivos: 2 (`backend/apps/core/maintenance.py`, `backend/apps/core/tests/test_maintenance_runner.py`)
   Hecho cuando: `pytest apps/core/tests/test_maintenance_runner.py` pasa: `run_maintenance_task` actualiza sobrescribiendo `MaintenanceTaskStatus` en éxito/fallo, aborta antes de ejecutar la acción cuando `simulate_failure=True`, crea `MaintenanceAlert` con resumen truncado al fallar, relanza la excepción sin reintentos silenciosos y marca resueltas las alertas abiertas de la tarea cuando la siguiente ejecución tiene éxito.
+  Decisiones: el resumen de error normaliza saltos de línea/espacios en `TipoExcepcion: mensaje` y trunca a 500 caracteres con `...`, definiendo `SimulatedMaintenanceFailure` para distinguir fallos simulados de errores reales. Confianza: [Cierto]. Cómo revertirla: usar `RuntimeError` directo o ajustar `MAX_ERROR_SUMMARY_LENGTH`.
 
 - [ ] T-004 Serialización por tarea en Redis, logs completos y envío resiliente de correo de alerta
   RF: RF-004, RF-005, RF-006 | Depende de: T-001, T-003 | Archivos: 2 (`backend/apps/core/maintenance.py`, `backend/apps/core/tests/test_maintenance_alerts.py`)
