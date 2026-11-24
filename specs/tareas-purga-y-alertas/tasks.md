@@ -31,9 +31,10 @@ Estado: aprobado
   Hecho cuando: `pytest apps/core/tests/test_maintenance_admin.py` pasa: operadores autorizados pueden listar y filtrar `MaintenanceTaskStatus` y `MaintenanceAlert` (por tarea y estado abierta/resuelta) en el admin de Django, con permisos de añadir, editar y borrar deshabilitados.
   Decisiones: el panel usa los permisos estándar `core.view_maintenancetaskstatus` y `core.view_maintenancealert` (además de superusuarios), deshabilitando alta, edición y borrado en `_ReadOnlyMaintenanceAdmin`. Confianza: [Cierto]. Cómo revertirla: restringir a un grupo específico como `Soporte técnico` si se requiere mayor segmentación.
 
-- [ ] T-007 Comando CLI `maintenance_tasks` y documentación de variables en `.env.example`
+- [x] T-007 Comando CLI `maintenance_tasks` y documentación de variables en `.env.example`
   RF: RF-002, RF-008, RF-009 | Depende de: T-005 | Archivos: 3 (`backend/apps/core/management/commands/maintenance_tasks.py`, `backend/.env.example`, `backend/apps/core/tests/test_maintenance_command.py`)
   Hecho cuando: `pytest apps/core/tests/test_maintenance_command.py` pasa: `manage.py maintenance_tasks status` muestra el estado de las tres tareas (indicando «sin ejecuciones» antes de la primera) y sus alertas, `run` ejecuta manualmente una o todas, y `simulate-failure <tarea>` encola la tarea con `simulate_failure=True` para verificar el flujo en el trabajador; `.env.example` documenta todas las variables nuevas.
+  Decisiones: `maintenance_tasks run` usa `import_string` para la ejecución síncrona directa sin depender de que el worker haya importado el módulo, y `simulate-failure` acepta `--wait` opcional (por defecto `0`) para esperar el fallo del worker en el mismo comando. Confianza: [Cierto]. Cómo revertirla: hacer que `simulate-failure` espere siempre o quitar `--wait`.
 
 - [ ] T-008 Pruebas end-to-end con trabajador Celery real sobre Redis
   RF: RF-001, RF-005, RF-007, RF-009 | Depende de: T-007 | Archivos: 1 (`backend/apps/core/tests/test_maintenance_worker_e2e.py`)
