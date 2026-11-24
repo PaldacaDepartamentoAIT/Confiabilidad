@@ -25,11 +25,16 @@ docker compose -f docker/docker-compose.yml up -d db redis backend worker beat
 ```
 Deberías ver los servicios en marcha.
 
-Ejecuta los tests de la entrega (incluida la guarda de acceso de auditoría):
+Ejecuta los tests de la entrega (sin el umbral global de cobertura por ser una ejecución parcial) y, por separado, la suite completa con cobertura:
 ```bash
-docker compose -f docker/docker-compose.yml exec backend pytest apps/audit/tests/test_purge_task.py apps/audit/tests/test_purge_access.py
+docker compose -f docker/docker-compose.yml exec backend pytest --no-cov apps/audit/tests/test_purge_task.py apps/audit/tests/test_purge_access.py
 ```
 Deberías ver todos los tests de ambos archivos en verde.
+
+```bash
+docker compose -f docker/docker-compose.yml exec backend pytest
+```
+Deberías ver toda la suite en verde con cobertura ≥ 80 %.
 
 Comprueba tipos, lint y formato en el backend:
 ```bash

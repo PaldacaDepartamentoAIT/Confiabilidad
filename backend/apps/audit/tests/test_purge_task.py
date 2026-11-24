@@ -70,7 +70,7 @@ def test_maintenance_tasks_have_expected_default_beat_schedule() -> None:
     )
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db(transaction=True)
 def test_database_scheduler_registers_all_three_maintenance_tasks() -> None:
     scheduler = DatabaseScheduler(app=celery_app)
     try:
