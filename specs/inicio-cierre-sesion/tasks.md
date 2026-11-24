@@ -345,6 +345,46 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   casillas en sesiones, barra superpuesta, menús de `Sidebar` hacia arriba e `IconButton`) — [Cierto]
   — revertir: resumir solo la versión previa de la pantalla de sesiones.
 
+### Correcciones tras validación
+
+- [x] T-025 Corrección: Mostrar el correo del usuario en el área privada y verificarlo en tests
+  Tipo: corrección | Origen: validación de RF-016
+  RF: RF-016 | Depende de: — | Archivos: 3
+  Archivos: `auth/HomePage.tsx`, `auth/HomePage.test.tsx`, `layouts/AppLayout.css`.
+  Causa: `frontend/src/auth/HomePage.tsx` solo usa `user.email` como respaldo cuando `user.name`
+  está vacío, por lo que nunca muestra el correo electrónico en la pantalla privada `/`, y
+  `frontend/src/auth/HomePage.test.tsx` no lo comprueba.
+  Hecho cuando: `HomePage` muestra de forma visible tanto `user.name` como `user.email` para la
+  persona autenticada (siguiendo `docs/identidad-visual.md`), `HomePage.test.tsx` afirma ambos
+  textos en pantalla, y la suite del frontend pasa.
+  Decisiones: se reutiliza la clave `auth.signedInAs` (ya existente en `es`, `pt-BR` y `en`)
+  dentro de `.page-head p` en `AppLayout.css` según «Descripción de página» de
+  `docs/identidad-visual.md` y `docs/referencia/activos.html` — [Cierto] — revertir: mover el
+  correo a un bloque dedicado o al menú de usuario.
+
+- [ ] T-026 Corrección: Ajustar formato de `eslint.config.js` y timeout de accesibilidad en `/showcase`
+  Tipo: corrección | Origen: validación de CF-1
+  RF: — | Depende de: — | Archivos: 2
+  Archivos: `frontend/eslint.config.js`, `showcase/a11y.test.tsx`.
+  Causa: `frontend/eslint.config.js` falla `prettier --check .` y los tres primeros tests de
+  `frontend/src/showcase/a11y.test.tsx` (líneas 16-29) superan o rozan el timeout por defecto de
+  `5000 ms` bajo `vitest run --coverage`.
+  Hecho cuando: `pnpm --filter frontend exec prettier --check .` devuelve código 0 y
+  `frontend/src/showcase/a11y.test.tsx` usa un timeout explícito de `15_000 ms` en los tres casos
+  iniciales pasando sin fallos incluso bajo carga.
+
+- [ ] T-027 Corrección: Completar casos ejecutables y corregir imprecisiones técnicas en `resumen.md`
+  Tipo: corrección | Origen: validación de CF-8
+  RF: RF-002, RF-005, RF-007, RF-012, RF-018 | Depende de: — | Archivos: 1
+  Archivos: `specs/inicio-cierre-sesion/resumen.md`.
+  Causa: `specs/inicio-cierre-sesion/resumen.md` omite pasos ejecutables para cuenta inactiva (app
+  y `curl`) y para aceptar términos pendientes por `curl`, y describe de forma inexacta la huella
+  HMAC-SHA256 (`UserSession`), el uso de `localStorage` en `tokenStorage.ts` y el alcance de
+  `check_login_ip` solo a `/auth/login`.
+  Hecho cuando: `specs/inicio-cierre-sesion/resumen.md` incluye pasos ejecutables para todos los
+  puntos de CF-8 en la aplicación y en consola (`curl` y `manage.py`) y alinea sus descripciones
+  técnicas con la implementación real.
+
 ## Entregas
 Rama de integración: `feat/inicio-cierre-sesion` (los PR de las entregas van contra ella; ver `AGENTS.md`)
 

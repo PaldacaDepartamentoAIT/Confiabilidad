@@ -35,10 +35,18 @@
   gap: 18px;
 }
 
-.content > h1 {
+.content > h1,
+.page-head h1 {
   margin: 0;
   font-size: 24px;
   font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+.page-head p {
+  margin: 4px 0 0;
+  color: var(--text2);
 }
 
 /* La lista del selector de pestañas vive dentro de la barra (z-index 30): mientras está abierta, la

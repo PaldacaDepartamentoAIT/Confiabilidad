@@ -79,6 +79,7 @@ test("muestra usuario y sesiones activas, permite marcar y cerrar una sesión y 
   );
 
   expect(await screen.findByRole("combobox", { name: "Ana García" })).toBeInTheDocument();
+  expect(screen.getByText("Sesión iniciada como Ana García (ana@empresa.com)")).toBeInTheDocument();
   expect(await screen.findByText("192.0.2.10")).toBeInTheDocument();
   expect(screen.getByText("Sesión actual")).toBeInTheDocument();
   expect(screen.queryByRole("checkbox", { name: /Chrome\/130/ })).not.toBeInTheDocument();

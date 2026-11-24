@@ -207,7 +207,14 @@ export function HomePage({
       }
       storage={storage}
     >
-      <h1>{t("auth.homeTitle")}</h1>
+      <div className="page-head">
+        <h1>{t("auth.homeTitle")}</h1>
+        {user && (
+          <p>
+            {user.name ? t("auth.signedInAs", { name: user.name, email: user.email }) : user.email}
+          </p>
+        )}
+      </div>
       {errorKey && <FormMessage type="error" messageKey={errorKey as never} />}
       <Block title={t("auth.sessionsTitle")} count={sessions.length}>
         <Table
