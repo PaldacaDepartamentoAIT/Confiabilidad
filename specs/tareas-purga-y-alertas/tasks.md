@@ -26,9 +26,10 @@ Estado: aprobado
   Hecho cuando: `pytest apps/core/tests/test_maintenance_tasks.py apps/accounts/tests/test_registration_background.py apps/accounts/tests/test_purge_expired_sessions.py apps/audit/tests/test_purge_access.py` pasa: las tres tareas aceptan `simulate_failure: bool = False`, delegan en `run_maintenance_task`, conservan sus reglas de borrado al ejecutarse normal y generan fallo + alerta sin borrar datos reales cuando `simulate_failure=True`.
   Decisiones: el parámetro `simulate_failure: bool = False` se acepta como argumento con valor por defecto para compatibilidad tanto con llamadas sin argumentos como con `kwargs` desde Celery. Confianza: [Cierto]. Cómo revertirla: eliminar el parámetro opcional de las firmas de las tres tareas.
 
-- [ ] T-006 Panel de administración interno de solo lectura para estado y alertas
+- [x] T-006 Panel de administración interno de solo lectura para estado y alertas
   RF: RF-008 | Depende de: T-002 | Archivos: 2 (`backend/apps/core/admin.py`, `backend/apps/core/tests/test_maintenance_admin.py`)
   Hecho cuando: `pytest apps/core/tests/test_maintenance_admin.py` pasa: operadores autorizados pueden listar y filtrar `MaintenanceTaskStatus` y `MaintenanceAlert` (por tarea y estado abierta/resuelta) en el admin de Django, con permisos de añadir, editar y borrar deshabilitados.
+  Decisiones: el panel usa los permisos estándar `core.view_maintenancetaskstatus` y `core.view_maintenancealert` (además de superusuarios), deshabilitando alta, edición y borrado en `_ReadOnlyMaintenanceAdmin`. Confianza: [Cierto]. Cómo revertirla: restringir a un grupo específico como `Soporte técnico` si se requiere mayor segmentación.
 
 - [ ] T-007 Comando CLI `maintenance_tasks` y documentación de variables en `.env.example`
   RF: RF-002, RF-008, RF-009 | Depende de: T-005 | Archivos: 3 (`backend/apps/core/management/commands/maintenance_tasks.py`, `backend/.env.example`, `backend/apps/core/tests/test_maintenance_command.py`)
