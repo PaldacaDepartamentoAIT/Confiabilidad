@@ -347,3 +347,4 @@ borró, y deberá ejecutar esa misma limpieza de forma automática y periódica 
   RF-015…RF-017 y RF-020 ajustados; RF-021 añadido; S-02, S-03 y S-10 ajustados; S-11…S-13 añadidos;
   CF-2, CF-5, CF-7 y CF-8 ajustados — Estado: clarificado
 - 2026-11-18 — Aprobación por el usuario — Estado: aprobada
+- 2026-11-24 — Validación: cerrada con riesgo residual aceptado — Riesgos: (1) `apps/emails/tests/test_rendering.py::test_template_syntax_is_checked_quickly[closed-blocks]` superó el umbral de 1 s de CPU (`1.408 s`) bajo `--cov=.` y carga paralela de Vitest (fuera de `inicio-cierre-sesion`); (2) `pnpm --filter frontend test:visual` no se ejecutó en `confiabilidad-dev-frontend-1` por ausencia de Chromium en ese contenedor.
