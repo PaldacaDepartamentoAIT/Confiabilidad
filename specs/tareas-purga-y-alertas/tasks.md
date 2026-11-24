@@ -16,9 +16,10 @@ Estado: aprobado
   Hecho cuando: `pytest apps/core/tests/test_maintenance_runner.py` pasa: `run_maintenance_task` actualiza sobrescribiendo `MaintenanceTaskStatus` en éxito/fallo, aborta antes de ejecutar la acción cuando `simulate_failure=True`, crea `MaintenanceAlert` con resumen truncado al fallar, relanza la excepción sin reintentos silenciosos y marca resueltas las alertas abiertas de la tarea cuando la siguiente ejecución tiene éxito.
   Decisiones: el resumen de error normaliza saltos de línea/espacios en `TipoExcepcion: mensaje` y trunca a 500 caracteres con `...`, definiendo `SimulatedMaintenanceFailure` para distinguir fallos simulados de errores reales. Confianza: [Cierto]. Cómo revertirla: usar `RuntimeError` directo o ajustar `MAX_ERROR_SUMMARY_LENGTH`.
 
-- [ ] T-004 Serialización por tarea en Redis, logs completos y envío resiliente de correo de alerta
+- [x] T-004 Serialización por tarea en Redis, logs completos y envío resiliente de correo de alerta
   RF: RF-004, RF-005, RF-006 | Depende de: T-001, T-003 | Archivos: 2 (`backend/apps/core/maintenance.py`, `backend/apps/core/tests/test_maintenance_alerts.py`)
   Hecho cuando: `pytest apps/core/tests/test_maintenance_alerts.py` pasa: dos ejecuciones concurrentes de la misma tarea se serializan en orden con el bloqueo Redis sin bloquear otras tareas; los fallos emiten `logger.exception` con traza completa; el correo operativo se envía solo si no había alerta abierta previa para esa tarea y `MAINTENANCE_ALERT_EMAILS` no está vacío; los fallos de envío SMTP se registran en logs conservando estado y alerta; y si falla la BD al persistir, se registran ambos errores en logs sin intentar enviar correo.
+  Decisiones: el bloqueo en Redis se solicita con `blocking=True` sobre `settings.CACHE_URL`, capturando `LockError` al liberar si expiró el timeout para no ocultar resultados/errores, y cerrando el cliente en `finally`. Confianza: [Cierto]. Cómo revertirla: reemplazar `_task_lock` por un contexto nulo o por bloqueo en base de datos.
 
 - [ ] T-005 Conexión de las tres tareas periódicas al ejecutor de mantenimiento
   RF: RF-001, RF-003, RF-004, RF-005, RF-007, RF-009 | Depende de: T-001, T-004 | Archivos: 3 (`backend/apps/accounts/tasks.py`, `backend/apps/audit/tasks.py`, `backend/apps/core/tests/test_maintenance_tasks.py`)
