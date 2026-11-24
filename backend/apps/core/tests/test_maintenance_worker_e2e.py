@@ -1,10 +1,11 @@
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from datetime import timedelta
 from io import StringIO
 from typing import Any
 
 import pytest
 from celery import current_app
+from celery.contrib.testing.worker import start_worker
 from django.core import mail
 from django.core.management import call_command
 from django.utils import timezone
@@ -14,6 +15,24 @@ from apps.accounts.tests.factories import make_pending, make_user
 from apps.audit.models import EventType, SecurityEvent
 from apps.core.management.commands.maintenance_tasks import TASK_PATHS
 from apps.core.models import MaintenanceAlert, MaintenanceTaskName, MaintenanceTaskStatus
+from config.celery import app as celery_app
+
+
+def _set_queue(queue: str, routing_key: str) -> None:
+    celery_app.conf.update(task_default_queue=queue, task_default_routing_key=routing_key)
+    celery_app.amqp.__dict__.pop("queues", None)
+    celery_app.amqp.__dict__.pop("router", None)
+
+
+@pytest.fixture
+def isolated_worker() -> Iterator[None]:
+    prev = (celery_app.conf.task_default_queue, celery_app.conf.task_default_routing_key)
+    _set_queue("test-maintenance", "test-maintenance")
+    try:
+        with start_worker(celery_app, perform_ping_check=False, shutdown_timeout=20):
+            yield
+    finally:
+        _set_queue(*prev)
 
 
 def _seed(name: MaintenanceTaskName) -> Callable[[], bool]:
@@ -32,7 +51,7 @@ def _seed(name: MaintenanceTaskName) -> Callable[[], bool]:
     row = SecurityEvent.objects.create(
         event_type=EventType.LOGIN, success=True, created_at=timezone.now() - timedelta(days=400)
     )
-    return SecurityEvent.objects.filter(pk=row.pk).exists()
+    return SecurityEvent.objects.filter(pk=row.pk).exists
 
 
 def _state(name: MaintenanceTaskName) -> tuple[str, int]:
@@ -45,7 +64,7 @@ def _state(name: MaintenanceTaskName) -> tuple[str, int]:
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.parametrize("name", list(MaintenanceTaskName))
 def test_real_worker_simulates_failure_and_recovers(
-    celery_worker: None, settings: Any, name: MaintenanceTaskName
+    isolated_worker: None, settings: Any, name: MaintenanceTaskName
 ) -> None:
     settings.MAINTENANCE_ALERT_EMAILS = ["ops@ejemplo.com"]
     still_exists = _seed(name)

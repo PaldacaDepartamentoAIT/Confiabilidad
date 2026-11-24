@@ -26,10 +26,7 @@ class Command(BaseCommand):
         run_parser.add_argument("--all", action="store_true", dest="run_all")
         run_parser.add_argument("--async", action="store_true", dest="run_async")
 
-        sim_parser = subparsers.add_parser(
-            "simulate-failure",
-            help="Queue a maintenance task in simulated-failure mode on the Celery worker.",
-        )
+        sim_parser = subparsers.add_parser("simulate-failure", help="Simulate task failure.")
         sim_parser.add_argument("task", choices=list(TASK_PATHS))
         sim_parser.add_argument("--wait", type=float, default=0.0)
 
@@ -69,7 +66,7 @@ class Command(BaseCommand):
             resolved = alert.resolved_at.isoformat() if alert.resolved_at else "-"
             self.stdout.write(
                 f"alert[{alert.pk}] {alert.task_name} state={state} "
-                f"created_at={alert.created_at.isoformat()} resolved_at={resolved} "
+                f"created={alert.created_at.isoformat()} resolved={resolved} "
                 f"error={alert.error_summary}"
             )
 

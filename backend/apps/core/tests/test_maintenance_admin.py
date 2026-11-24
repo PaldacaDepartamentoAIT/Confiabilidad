@@ -31,28 +31,22 @@ def test_authorized_staff_can_view_and_filter_maintenance_admin(client: Client) 
 
     staff = make_user(email="ops@ejemplo.com", is_staff=True)
     perms = Permission.objects.filter(
-        content_type__app_label="core",
-        codename__in=["view_maintenancetaskstatus", "view_maintenancealert"],
+        content_type__app_label="core", codename__startswith="view_maintenance"
     )
     staff.user_permissions.add(*perms)
     client.force_login(staff)
 
-    status_url = reverse("admin:core_maintenancetaskstatus_changelist")
     alerts_url = reverse("admin:core_maintenancealert_changelist")
-
-    status_resp = client.get(status_url)
+    status_resp = client.get(reverse("admin:core_maintenancetaskstatus_changelist"))
     assert status_resp.status_code == 200
     assert b"RuntimeError: fail" in status_resp.content
-
-    open_resp = client.get(f"{alerts_url}?state=open")
-    assert open_resp.status_code == 200
-    assert open_alert.error_summary.encode() in open_resp.content
-    assert resolved_alert.error_summary.encode() not in open_resp.content
-
-    resolved_resp = client.get(f"{alerts_url}?state=resolved")
-    assert resolved_resp.status_code == 200
-    assert resolved_alert.error_summary.encode() in resolved_resp.content
-    assert open_alert.error_summary.encode() not in resolved_resp.content
+    for state, present, absent in (
+        ("open", open_alert.error_summary.encode(), resolved_alert.error_summary.encode()),
+        ("resolved", resolved_alert.error_summary.encode(), open_alert.error_summary.encode()),
+    ):
+        resp = client.get(f"{alerts_url}?state={state}")
+        assert resp.status_code == 200
+        assert present in resp.content and absent not in resp.content
 
 
 def test_maintenance_admin_denies_unauthorized_staff_and_writes(client: Client) -> None:
@@ -67,8 +61,6 @@ def test_maintenance_admin_denies_unauthorized_staff_and_writes(client: Client) 
         error_summary="err",
     )
     client.force_login(superuser)
+    delete_url = reverse("admin:core_maintenancealert_delete", args=[alert.pk])
     assert client.post(reverse("admin:core_maintenancealert_add")).status_code == 403
-    assert (
-        client.post(reverse("admin:core_maintenancealert_delete", args=[alert.pk])).status_code
-        == 403
-    )
+    assert client.post(delete_url).status_code == 403
