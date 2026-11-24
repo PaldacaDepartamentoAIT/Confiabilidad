@@ -1,6 +1,7 @@
 # Entrega E-01 · Programación configurable y tarea periódica de auditoría
 
-Rama: `feat/tareas-purga-y-alertas-base-y-estado` · PR: pendiente ·
+Rama: `feat/tareas-purga-y-alertas-base-y-estado` · PR:
+[PaldacaDepartamentoAIT/Confiabilidad#146](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/146) ·
 Líneas de código y tests: 166 (límite: 400).
 
 ## Qué se hizo
