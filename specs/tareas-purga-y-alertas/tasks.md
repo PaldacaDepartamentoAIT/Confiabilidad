@@ -16,9 +16,10 @@ Estado: aprobado
   Hecho cuando: `pytest apps/core/tests/test_maintenance_runner.py` pasa: `run_maintenance_task` actualiza sobrescribiendo `MaintenanceTaskStatus` en éxito/fallo, aborta antes de ejecutar la acción cuando `simulate_failure=True`, crea `MaintenanceAlert` con resumen truncado al fallar, relanza la excepción sin reintentos silenciosos y marca resueltas las alertas abiertas de la tarea cuando la siguiente ejecución tiene éxito.
   Decisiones: el resumen de error normaliza saltos de línea/espacios en `TipoExcepcion: mensaje` y trunca a 500 caracteres con `...`, definiendo `SimulatedMaintenanceFailure` para distinguir fallos simulados de errores reales. Confianza: [Cierto]. Cómo revertirla: usar `RuntimeError` directo o ajustar `MAX_ERROR_SUMMARY_LENGTH`.
 
-- [ ] T-004 Serialización por tarea en Redis, logs completos y envío resiliente de correo de alerta
+- [x] T-004 Serialización por tarea en Redis, logs completos y envío resiliente de correo de alerta
   RF: RF-004, RF-005, RF-006 | Depende de: T-001, T-003 | Archivos: 2 (`backend/apps/core/maintenance.py`, `backend/apps/core/tests/test_maintenance_alerts.py`)
   Hecho cuando: `pytest apps/core/tests/test_maintenance_alerts.py` pasa: dos ejecuciones concurrentes de la misma tarea se serializan en orden con el bloqueo Redis sin bloquear otras tareas; los fallos emiten `logger.exception` con traza completa; el correo operativo se envía solo si no había alerta abierta previa para esa tarea y `MAINTENANCE_ALERT_EMAILS` no está vacío; los fallos de envío SMTP se registran en logs conservando estado y alerta; y si falla la BD al persistir, se registran ambos errores en logs sin intentar enviar correo.
+  Decisiones: el bloqueo en Redis se solicita con `blocking=True` sobre `settings.CACHE_URL`, capturando `LockError` al liberar si expiró el timeout para no ocultar resultados/errores, y cerrando el cliente en `finally`. Confianza: [Cierto]. Cómo revertirla: reemplazar `_task_lock` por un contexto nulo o por bloqueo en base de datos.
 
 - [ ] T-005 Conexión de las tres tareas periódicas al ejecutor de mantenimiento
   RF: RF-001, RF-003, RF-004, RF-005, RF-007, RF-009 | Depende de: T-001, T-004 | Archivos: 3 (`backend/apps/accounts/tasks.py`, `backend/apps/audit/tasks.py`, `backend/apps/core/tests/test_maintenance_tasks.py`)
@@ -47,9 +48,13 @@ Rama de integración: `feat/tareas-purga-y-alertas` (los PR de las entregas van 
   Tareas: T-002, T-003 | Líneas estimadas: 330 | Rama: `feat/tareas-purga-y-alertas-nucleo-estado`
   Cómo probarlo: aplicar migraciones (`python manage.py migrate`), ejecutar `pytest apps/core/tests/test_maintenance_models.py apps/core/tests/test_maintenance_runner.py` y ejercitar `run_maintenance_task` desde consola (`manage.py shell`) comprobando registro de última ejecución, alerta persistente y cierre automático al recuperarse.
 
-- E-02 Serialización, alertas completas por correo y conexión de las tres tareas
-  Tareas: T-004, T-005 | Líneas estimadas: 310 | Rama: `feat/tareas-purga-y-alertas-ejecucion-y-alertas`
-  Cómo probarlo: ejecutar `pytest apps/core/tests/test_maintenance_alerts.py apps/core/tests/test_maintenance_tasks.py` y disparar cualquiera de las tres tareas con `simulate_failure=True` mediante `celery -A config call apps.audit.tasks.purge_security_events --kwargs='{"simulate_failure": true}'` para observar la alerta abierta y el aviso por correo sin borrar datos, seguido de una ejecución normal que cierra la alerta.
+- E-02 Serialización en Redis y envío resiliente de alertas por correo
+  Tareas: T-004 | Líneas estimadas: 314 | Rama: `feat/tareas-purga-y-alertas-ejecucion-y-alertas`
+  Cómo probarlo: ejecutar `pytest --no-cov apps/core/tests/test_maintenance_runner.py apps/core/tests/test_maintenance_alerts.py` y ejercitar `run_maintenance_task` desde `manage.py shell` con `MAINTENANCE_ALERT_EMAILS` configurado para comprobar el primer correo, la supresión en fallos consecutivos y la resolución al recuperarse.
+
+- E-02b Conexión de las tres tareas periódicas al ejecutor de mantenimiento
+  Tareas: T-005 | Líneas estimadas: 130 | Rama: `feat/tareas-purga-y-alertas-conexion-tareas`
+  Cómo probarlo: ejecutar `pytest --no-cov apps/core/tests/test_maintenance_tasks.py apps/accounts/tests/test_registration_background.py apps/accounts/tests/test_purge_expired_sessions.py apps/audit/tests/test_purge_access.py` y disparar cualquiera de las tres tareas con `simulate_failure=True` mediante `celery -A config call apps.audit.tasks.purge_security_events --kwargs='{"simulate_failure": true}'`.
 
 - E-03 Panel de administración, comando CLI y verificación end-to-end con worker real
   Tareas: T-006, T-007, T-008 | Líneas estimadas: 310 | Rama: `feat/tareas-purga-y-alertas-admin-y-cli`
