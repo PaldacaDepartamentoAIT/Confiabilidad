@@ -1,6 +1,7 @@
 # Entrega E-02 · Serialización en Redis y alertas resilientes por correo
 
-Rama: `feat/tareas-purga-y-alertas-ejecucion-y-alertas` · PR: pendiente ·
+Rama: `feat/tareas-purga-y-alertas-ejecucion-y-alertas` · PR:
+[PaldacaDepartamentoAIT/Confiabilidad#148](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/148) ·
 Líneas de código y tests: 314 (límite: 400).
 
 ## Qué se hizo
