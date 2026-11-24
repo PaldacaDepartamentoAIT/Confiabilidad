@@ -157,16 +157,21 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   [Cierto] — revertir: emitir `user_logged_out` manualmente para `app`. Validación pendiente en la
   máquina virtual del usuario.
 
-- [ ] T-011 Test de neutralidad y bloqueo en el inicio de sesión
-  RF: RF-002, RF-004 (CF-2, CF-6) | Depende de: T-010 (rutas de inicio de sesión, consulta de sesión actual y cierre de sesión) | Archivos: 1
-  Archivos: `tests/test_auth_neutrality.py`.
+- [x] T-011 Test de neutralidad y bloqueo en el inicio de sesión
+  RF: RF-002, RF-004 (CF-2, CF-6) | Depende de: T-010 (rutas de inicio de sesión, consulta de sesión actual y cierre de sesión) | Archivos: 3
+  Archivos: `api/auth_views.py`, `apps/audit/adapters.py`, `tests/test_auth_neutrality.py`.
   Hecho cuando: un test demuestra que correo inexistente, contraseña incorrecta y cuenta inactiva
   (con contraseña correcta o incorrecta) reciben en `/api/{browser,app}/v1/auth/login` el mismo
   código (`400`), cuerpo, cabeceras y cookies en los intentos 1 a 5 y el mismo bloqueo
   (`too_many_login_attempts`) en el 6.º, mientras que `SecurityEvent` registra `inactive_account`
   antes del bloqueo cuando la contraseña de la cuenta inactiva es correcta; suite verde.
+  Decisiones: cada caso usa su propia IP aleatoria para no disparar el límite por IP (`RF-005`)
+  antes del 6.º intento por cuenta y un correo con sufijo aleatorio para aislar contadores de
+  Redis entre ejecuciones — [Cierto] — revertir: fijar correos/IPs estáticos si la suite limpia
+  la caché de sesiones entre parametrizaciones. Validación pendiente en la máquina virtual del
+  usuario (alternativa sin dependencias locales de `AGENTS.md`).
 
-- [ ] T-012 Ruta de aceptación de términos vigentes y guarda del área privada
+- [x] T-012 Ruta de aceptación de términos vigentes y guarda del área privada
   RF: RF-011 (bloqueo del área privada mientras falten los términos vigentes), RF-012 (aceptación de los términos vigentes con sesión iniciada), RF-018, RF-019 (M-04; D-06, comprobación de términos vigentes en cada petición privada; C-06, comprobación de términos en cada petición privada; CF-5, test de bloqueo y aceptación de términos vigentes) | Depende de: T-010 | Archivos: 4
   Archivos: `api/auth_serializers.py`, `api/auth_views.py`, `api/urls.py`,
   `tests/test_auth_terms_gate.py`.
@@ -177,8 +182,13 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   pero recibe `403 terms_required` en las rutas del área privada, también cuando se publica una
   versión obligatoria nueva con la sesión ya abierta; suite verde.
   Excepción: la ruta nueva requiere su serializador, su vista, su entrada en `urls.py` y su test.
+  Decisiones: `TermsAcceptSerializer` reutiliza `RegistrationSerializer().validate_terms` desde
+  `run_validation` para conservar exactamente las mismas reglas y códigos de RF-004 de
+  `registro-api` sin duplicar código — [Cierto] — revertir: extraer una función compartida en
+  `serializers.py`. Validación pendiente en la máquina virtual del usuario (alternativa sin
+  dependencias locales de `AGENTS.md`).
 
-- [ ] T-013 Rutas de listado y cierre de otras sesiones activas
+- [x] T-013 Rutas de listado y cierre de otras sesiones activas
   RF: RF-008, RF-009, RF-011, RF-018, RF-019 (M-04, D-06; C-01, C-05, C-06; CF-4, test de listado y cierre de otras sesiones) | Depende de: T-012 (ruta de aceptación de términos vigentes y guarda del área privada) | Archivos: 4
   Archivos: `api/auth_serializers.py`, `api/auth_views.py`, `api/urls.py`,
   `tests/test_sessions_api.py`.
@@ -189,18 +199,26 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   o todas las demás (`200` con `revoked_count: 0` y sin eventos si no hay otras), e invalidan al
   instante sus cookies y tokens; suite verde.
   Excepción: las rutas nuevas requieren su serializador, su vista, `urls.py` y su test.
+  Decisiones: en `sessions/revoke` se reutiliza la clave `not_found` ya presente en `messages.py`
+  para sesiones inexistentes o ajenas, y en `sessions/revoke-others` con 0 otras sesiones se
+  responde igualmente `200 {"result": "revoked", "revoked_count": 0}` sin tocar eventos —
+  [Cierto] — revertir: añadir una clave de mensaje específica `session_not_found`. Validación
+  pendiente en la máquina virtual del usuario (alternativa sin dependencias locales de `AGENTS.md`).
 
 ## Frontend
 
-- [ ] T-014 Almacenamiento de token para escritorio y soporte de autenticación en el cliente API
+- [x] T-014 Almacenamiento de token para escritorio y soporte de autenticación en el cliente API
   RF: RF-006, RF-011, RF-018 (M-06, cliente de autenticación y almacenamiento de token para escritorio; S-07, limpieza local garantizada al cerrar sesión) | Depende de: — | Archivos: 3
   Archivos: `auth/tokenStorage.ts`, `api/client.ts`, `api/client.test.ts`.
   Hecho cuando: en modo `app`, el cliente adjunta `X-Session-Token` cuando hay token guardado en
   `TokenStorage`; `client.ts` interpreta `401` como `{ kind: "unauthenticated" }` y `403` con
   `code: "terms_required"` como `{ kind: "termsRequired", termsStatus }`, conservando el resto de
   respuestas existentes; suite verde.
+  Decisiones: `createTokenStorage` usa `localStorage` como fuente de verdad cuando está disponible
+  y cae a memoria solo si el acceso lanza error o no existe — [Cierto] — revertir: priorizar el
+  valor en memoria sobre `localStorage`.
 
-- [ ] T-015 Llamadas de la API de autenticación y sesiones
+- [x] T-015 Llamadas de la API de autenticación y sesiones
   RF: RF-001, RF-006, RF-008, RF-009, RF-012, RF-018 (M-06, S-07) | Depende de: T-014 (almacenamiento de token para escritorio y soporte en el cliente API) | Archivos: 2
   Archivos: `api/auth.ts`, `api/auth.test.ts`.
   Hecho cuando: existen funciones tipadas `getSession`, `login` (que en modo `app` guarda el
@@ -208,7 +226,7 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   servidor devuelva `401` o falle la red), `acceptTerms`, `listSessions`, `revokeSession` y
   `revokeOtherSessions`; suite verde.
 
-- [ ] T-016 Textos de inicio de sesión, términos pendientes y sesiones activas en tres idiomas
+- [x] T-016 Textos de inicio de sesión, términos pendientes y sesiones activas en tres idiomas
   RF: RF-013 (pantalla de inicio de sesión y enlaces con el registro), RF-014 (validación en el cliente y mensajes de error al iniciar sesión), RF-015 (pantalla de aceptación de términos pendientes), RF-016 (área privada y gestión de sesiones en pantalla), RF-019 (M-07, enrutamiento, guardia de sesión y enlaces con registro) | Depende de: — | Archivos: 4
   Archivos: `i18n/locales/es.ts`, `i18n/locales/pt-BR.ts`, `i18n/locales/en.ts`,
   `i18n/locales/locales.test.ts`.
@@ -219,14 +237,14 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   actualizarse juntos para no romper la comprobación de RF-008 de `componentes-base-accesibles`
   (traducciones completas).
 
-- [ ] T-017 Traducción de errores de inicio de sesión y términos en el cliente
+- [x] T-017 Traducción de errores de inicio de sesión y términos en el cliente
   RF: RF-012, RF-014, RF-019 (M-08, pantalla de inicio de sesión; M-09, pantalla de términos pendientes) | Depende de: T-016 (textos en tres idiomas) | Archivos: 2
   Archivos: `registration/serverErrors.ts`, `registration/serverErrors.test.ts`.
   Hecho cuando: `serverErrors` traduce `invalid_credentials`, `too_many_login_attempts`,
   `already_authenticated` y `cannot_revoke_current_session` a sus claves de traducción, manteniendo
   todos los códigos existentes; suite verde.
 
-- [ ] T-018 Pantalla de inicio de sesión (sin ruta)
+- [x] T-018 Pantalla de inicio de sesión (sin ruta)
   RF: RF-013, RF-014, RF-019 (M-08; CF-7, tests de pantallas y redirecciones en frontend) | Depende de: T-015 (llamadas de la API de autenticación y sesiones), T-017 (traducción de errores en el cliente) | Archivos: 2
   Archivos: `auth/LoginPage.tsx`, `auth/LoginPage.test.tsx`.
   Hecho cuando: `LoginPage` valida al salir y al enviar que el correo y la contraseña no estén
@@ -235,34 +253,63 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   contraseña; ante `too_many_login_attempts` o fallo de red muestra el error general conservando el
   correo; ante `429` muestra la cuenta atrás y desactiva el botón hasta cero; incluye el enlace a
   `/register` y notifica al autenticar con éxito; suite verde.
+  Decisiones: al recibir `invalid_credentials` se vacía el `<input>` de contraseña mediante `ref`
+  para mantener el formulario no controlado compatible con `useFormValidation` — [Cierto] —
+  revertir: controlar el valor del campo en estado React. Validación pendiente en la máquina
+  virtual del usuario (alternativa sin dependencias locales de `AGENTS.md`).
 
-- [ ] T-019 Pantalla de términos pendientes (sin ruta)
-  RF: RF-011, RF-012, RF-015, RF-019 (M-09, CF-5, CF-7) | Depende de: T-015, T-017 | Archivos: 2
-  Archivos: `auth/TermsPage.tsx`, `auth/TermsPage.test.tsx`.
+- [x] T-019 Pantalla de términos pendientes y conexión de rutas `/login` y `/terms`
+  RF: RF-011, RF-012, RF-013, RF-015, RF-019 (M-09, CF-5, CF-7) | Depende de: T-015, T-017 | Archivos: 4
+  Archivos: `auth/TermsPage.tsx`, `auth/TermsPage.test.tsx`, `App.tsx`, `App.test.tsx`.
   Hecho cuando: con `terms_status === "not_accepted"`, `TermsPage` muestra el documento vigente en
   Markdown, exige marcar la casilla antes de enviar, llama a `acceptTerms` y notifica el paso al
   área privada, o permite cerrar la sesión actual (`logout`, incluso si falla la red); con
   `no_current_version`, oculta el formulario de aceptación, informa de que no se puede continuar y
-  ofrece cerrar la sesión; suite verde.
+  ofrece cerrar la sesión; y `App.tsx` expone `/login` y `/terms` para ver ambas pantallas en el
+  navegador; suite verde.
+  Excepción: 4 archivos para conectar `/login` y `/terms` en `App.tsx` y `App.test.tsx` dentro de
+  la misma entrega visual según la regla de visibilidad en `AGENTS.md`.
+  Decisiones: reutiliza `DocumentCheckbox` (de `casilla-con-documento`) para mostrar el documento en
+  Markdown dentro del modal del sistema de diseño y sincronizar el estado de la casilla — [Cierto] —
+  revertir: pintar un `<Markdown>` en línea más un `<Checkbox>` simple. Validación pendiente en la
+  máquina virtual del usuario (alternativa sin dependencias locales de `AGENTS.md`).
 
-- [ ] T-020 Pantalla del área privada y gestión de sesiones (sin ruta)
-  RF: RF-006, RF-008, RF-009, RF-011, RF-016, RF-017 (redirecciones según el estado de la sesión), RF-019 (M-10, pantalla del área privada y gestión de sesiones; C-05, C-06, CF-4, CF-7) | Depende de: T-015, T-016 | Archivos: 2
-  Archivos: `auth/HomePage.tsx`, `auth/HomePage.test.tsx`.
+- [x] T-020 Pantalla del área privada, gestión de sesiones y rutas `/` y `/showcase`
+  RF: RF-006, RF-008, RF-009, RF-011, RF-016, RF-017 (redirecciones según el estado de la sesión), RF-019 (M-10, pantalla del área privada y gestión de sesiones; C-05, C-06, CF-4, CF-7) | Depende de: T-015, T-016 | Archivos: 12
+  Archivos: `auth/HomePage.tsx`, `auth/HomePage.test.tsx`, `layouts/AppLayout.css`, `App.tsx`,
+  `App.test.tsx`, `showcase/ShowcasePage.test.tsx`, `showcase/a11y.test.tsx`, `visual/app.ts`,
+  `visual/compare.visual.test.ts`, `visual/contrast.visual.test.ts`,
+  `visual/document-modal.visual.test.ts`, `visual/smoke.visual.test.ts`.
   Hecho cuando: `HomePage` muestra con `AppLayout` el nombre y correo del usuario, el botón de
   cerrar la sesión actual (que limpia el cliente y lleva a `/login` incluso si el servidor da `401`
   o falla la red) y la tabla de sesiones activas señalando la actual; permite cerrar otra sesión
   individual o todas las demás; desactiva el botón «Cerrar todas las demás sesiones» cuando solo
-  existe la sesión actual; y si recibe `termsRequired` (`403`) o `unauthenticated` (`401`) al
-  consultar o revocar sesiones, redirige a `/terms` o `/login`; suite verde.
+  existe la sesión actual; si recibe `termsRequired` (`403`) o `unauthenticated` (`401`) al
+  consultar o revocar sesiones, redirige a `/terms` o `/login`; y `App.tsx` expone `/` (`HomePage`) y
+  `/showcase` (`ShowcasePage`) para verlas en el navegador; suite verde.
+  Excepción: exponer `HomePage` en `/` y mover `ShowcasePage` a `/showcase` dentro de esta misma
+  entrega exige actualizar los tests de `App`, `showcase` y `visual` que asumían el catálogo en `/`.
+  Decisiones: `HomePage` reutiliza `Block` (con `count`), `Table` seleccionable (`kind: "code"` en IP
+  y fechas, columnas redimensionables y barra superpuesta sobre la cabecera al seleccionar), `Chip`
+  e `IconButton` (con `IconLogOut` de `28 × 28 px` y tooltip hacia arriba en la barra de selección)
+  del sistema de diseño; conecta «Cerrar sesión» al menú de usuario en `Sidebar` (sin bloque
+  separado de «Sesión iniciada»); y añade `.content > h1` (24 px, peso 600) en `AppLayout.css` según
+  `docs/identidad-visual.md` — [Cierto] — revertir: crear un CSS propio `HomePage.css`. Validación
+  pendiente en la máquina virtual del usuario (alternativa sin dependencias locales de `AGENTS.md`).
 
-- [ ] T-021 Enlaces a `/login` desde el formulario de registro y desde cuenta creada
+- [x] T-021 Enlaces a `/login` desde el formulario de registro y desde cuenta creada
   RF: RF-013 (M-07; S-08, enlace desde cuenta creada; CF-7) | Depende de: T-016 | Archivos: 3
   Archivos: `registration/RegisterPage.tsx`, `registration/DonePage.tsx`,
   `registration/RegisterPage.test.tsx`.
   Hecho cuando: tanto la pantalla de registro (`/register`) como la de cuenta creada
   (`/register/done`) muestran un enlace a `/login` que navega sin recargar la página; suite verde.
+  Decisiones: en `RegisterPage` el enlace «Iniciar sesión» comparte la fila `.public-actions-row`
+  como botón secundario junto al botón principal de envío (en simetría con `LoginPage`), y en
+  `DonePage` se muestra como botón principal — [Cierto] — revertir: mostrar enlaces de texto bajo
+  el botón. Validación pendiente en la máquina virtual del usuario (alternativa sin dependencias
+  locales de `AGENTS.md`).
 
-- [ ] T-022 Rutas y redirecciones según el estado de la sesión y de los términos
+- [x] T-022 Rutas y redirecciones según el estado de la sesión y de los términos
   RF: RF-013, RF-015, RF-016, RF-017 (M-07; C-07, rutas de navegación del cliente; S-10, identidad visual y traslado de la página de muestra; CF-5, CF-7) | Depende de: T-018 (pantalla de inicio de sesión), T-019 (pantalla de términos pendientes), T-020 (pantalla del área privada), T-021 (enlaces a `/login`) | Archivos: 3
   Archivos: `App.tsx`, `App.test.tsx`, `registration/VerifyPage.test.tsx`.
   Hecho cuando: `/` muestra el área privada, `/login` el inicio de sesión, `/terms` los términos
@@ -270,21 +317,76 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   `/login`; abrir `/login` o `/register` con sesión activa redirige a `/` (si los términos están
   aceptados) o a `/terms` (si faltan); abrir `/` con términos pendientes redirige a `/terms` y abrir
   `/terms` con ellos aceptados redirige a `/`; suite verde.
+  Decisiones: `App.tsx` mantiene un caché en memoria de `session` (`undefined` antes de consultar,
+  `null` sin sesión, `SessionInfo` con sesión) y verifica `getSession` en `/login`, `/register` y
+  `/terms` después del montaje inicial para conservar el orden de llamada inicial de `RegisterPage`
+  — [Cierto] — revertir: consultar sesión antes de montar las pantallas públicas. Validación
+  pendiente en la máquina virtual del usuario (alternativa sin dependencias locales de `AGENTS.md`).
 
-- [ ] T-023 Accesibilidad de las pantallas de inicio de sesión, términos pendientes y área privada
+- [x] T-023 Accesibilidad de las pantallas de inicio de sesión, términos pendientes y área privada
   RF: RF-013, RF-015, RF-016 (CF-1, tests para cada RF y análisis estático limpio; CF-7) | Depende de: T-022 (rutas y redirecciones) | Archivos: 1
   Archivos: `auth/a11y.test.tsx`.
   Hecho cuando: `axe-core` no encuentra fallos en `LoginPage` (normal y con errores), `TermsPage`
   (con términos pendientes y sin versión vigente) y `HomePage` (con una y varias sesiones); suite
   verde.
+  Decisiones: desactiva la regla `color-contrast` en jsdom como en el resto de pruebas unitarias
+  del repositorio (el contraste real se valida en Chromium en `visual/contrast.visual.test.ts`), y
+  fija límite de `15_000 ms` por test para evitar expiraciones bajo carga paralela — [Cierto] —
+  revertir: usar el tiempo límite por defecto. Validación pendiente en la máquina virtual del usuario.
 
-- [ ] T-024 Resumen de la feature y guía de prueba
+- [x] T-024 Resumen de la feature y guía de prueba
   RF: RF-001…RF-021 (M-10; CF-8, guía de prueba en aplicación y consola) | Depende de: T-013 (rutas de listado y cierre de otras sesiones), T-023 (accesibilidad de las pantallas) | Archivos: 1
   Archivos: `specs/inicio-cierre-sesion/resumen.md`.
   Hecho cuando: `resumen.md` explica qué se hizo, su marco teórico y los pasos ejecutables para
   probar en la aplicación y con `curl` / `manage.py` el inicio y cierre de sesión en ambos clientes,
   la cuenta inactiva, los límites, los términos pendientes, el listado y cierre de otras sesiones y
   la purga de sesiones caducadas.
+  Decisiones: documenta el estado real tras las entregas `E-01`..`E-09` (incluida la selección con
+  casillas en sesiones, barra superpuesta, menús de `Sidebar` hacia arriba e `IconButton`) — [Cierto]
+  — revertir: resumir solo la versión previa de la pantalla de sesiones.
+
+### Correcciones tras validación
+
+- [x] T-025 Corrección: Mostrar el correo del usuario en el área privada y verificarlo en tests
+  Tipo: corrección | Origen: validación de RF-016
+  RF: RF-016 | Depende de: — | Archivos: 3
+  Archivos: `auth/HomePage.tsx`, `auth/HomePage.test.tsx`, `layouts/AppLayout.css`.
+  Causa: `frontend/src/auth/HomePage.tsx` solo usa `user.email` como respaldo cuando `user.name`
+  está vacío, por lo que nunca muestra el correo electrónico en la pantalla privada `/`, y
+  `frontend/src/auth/HomePage.test.tsx` no lo comprueba.
+  Hecho cuando: `HomePage` muestra de forma visible tanto `user.name` como `user.email` para la
+  persona autenticada (siguiendo `docs/identidad-visual.md`), `HomePage.test.tsx` afirma ambos
+  textos en pantalla, y la suite del frontend pasa.
+  Decisiones: se reutiliza la clave `auth.signedInAs` (ya existente en `es`, `pt-BR` y `en`)
+  dentro de `.page-head p` en `AppLayout.css` según «Descripción de página» de
+  `docs/identidad-visual.md` y `docs/referencia/activos.html` — [Cierto] — revertir: mover el
+  correo a un bloque dedicado o al menú de usuario.
+
+- [x] T-026 Corrección: Ajustar formato de `eslint.config.js` y timeout de accesibilidad en `/showcase`
+  Tipo: corrección | Origen: validación de CF-1
+  RF: — | Depende de: — | Archivos: 2
+  Archivos: `frontend/eslint.config.js`, `showcase/a11y.test.tsx`.
+  Causa: `frontend/eslint.config.js` falla `prettier --check .` y los tres primeros tests de
+  `frontend/src/showcase/a11y.test.tsx` (líneas 16-29) superan o rozan el timeout por defecto de
+  `5000 ms` bajo `vitest run --coverage`.
+  Hecho cuando: `pnpm --filter frontend exec prettier --check .` devuelve código 0 y
+  `frontend/src/showcase/a11y.test.tsx` usa un timeout explícito de `15_000 ms` en los tres casos
+  iniciales pasando sin fallos incluso bajo carga.
+  Decisiones: se usa `15_000 ms` en el `test.each` inicial igual que en los bloques restantes del
+  propio archivo (`a11y.test.tsx`) — [Cierto] — revertir: restaurar el límite por defecto de
+  Vitest.
+
+- [x] T-027 Corrección: Completar casos ejecutables y corregir imprecisiones técnicas en `resumen.md`
+  Tipo: corrección | Origen: validación de CF-8
+  RF: RF-002, RF-005, RF-007, RF-012, RF-018 | Depende de: — | Archivos: 1
+  Archivos: `specs/inicio-cierre-sesion/resumen.md`.
+  Causa: `specs/inicio-cierre-sesion/resumen.md` omite pasos ejecutables para cuenta inactiva (app
+  y `curl`) y para aceptar términos pendientes por `curl`, y describe de forma inexacta la huella
+  HMAC-SHA256 (`UserSession`), el uso de `localStorage` en `tokenStorage.ts` y el alcance de
+  `check_login_ip` solo a `/auth/login`.
+  Hecho cuando: `specs/inicio-cierre-sesion/resumen.md` incluye pasos ejecutables para todos los
+  puntos de CF-8 en la aplicación y en consola (`curl` y `manage.py`) y alinea sus descripciones
+  técnicas con la implementación real.
 
 ## Entregas
 Rama de integración: `feat/inicio-cierre-sesion` (los PR de las entregas van contra ella; ver `AGENTS.md`)
@@ -315,25 +417,53 @@ Rama de integración: `feat/inicio-cierre-sesion` (los PR de las entregas van co
   Tareas: T-011 | Líneas estimadas: 70 | Rama: feat/inicio-cierre-sesion-neutralidad
   Cómo probarlo: ejecutar `pytest apps/accounts/tests/test_auth_neutrality.py --no-cov -v` y comprobar con `curl` la respuesta idéntica y el bloqueo al 6.º intento entre correo inexistente, contraseña errónea y cuenta inactiva.
 
-- E-05 API de aceptación de términos vigentes y gestión de otras sesiones
-  Tareas: T-012, T-013 | Líneas estimadas: 340 | Rama: feat/inicio-cierre-sesion-api-sesiones
-  Cómo probarlo: con `curl`, iniciar sesión con una cuenta sin términos vigentes (ve `403 terms_required` en `/api/app/v1/auth/sessions`), aceptarlos en `/api/app/v1/auth/terms/accept`, listar sus sesiones activas y cerrar otra sesión o todas las demás.
+- E-05 API de aceptación de términos vigentes y guarda del área privada
+  Tareas: T-012 | Líneas estimadas: 293 | Rama: feat/inicio-cierre-sesion-api-sesiones
+  Cómo probarlo: con `curl`, iniciar sesión con una cuenta sin términos vigentes aceptados, aceptarlos en `/api/app/v1/auth/terms/accept` y comprobar en `/api/app/v1/auth/session` que `terms_status` pasa a `"accepted"`, además de ejecutar `pytest apps/accounts/tests/test_auth_terms_gate.py --no-cov -v`.
 
-- E-06 Cliente de autenticación, token de escritorio y traducciones del frontend
-  Tareas: T-014, T-015, T-016, T-017 | Líneas estimadas: 350 | Rama: feat/inicio-cierre-sesion-cliente-auth
-  Cómo probarlo: ejecutar `pnpm --filter frontend test src/api/client.test.ts src/api/auth.test.ts src/i18n/locales/locales.test.ts src/registration/serverErrors.test.ts`.
+- E-05b API de listado y cierre de otras sesiones activas
+  Tareas: T-013 | Líneas estimadas: 312 | Rama: feat/inicio-cierre-sesion-gestion-sesiones
+  Cómo probarlo: con `curl`, comprobar `403 terms_required` en `/api/app/v1/auth/sessions` sin términos vigentes y, tras aceptarlos, listar sesiones activas y revocar otra sesión o todas las demás.
 
-- E-07 Pantallas de inicio de sesión y de términos pendientes (sin ruta)
-  Tareas: T-018, T-019 | Líneas estimadas: 360 | Rama: feat/inicio-cierre-sesion-pantallas-acceso
-  Cómo probarlo: ejecutar `pnpm --filter frontend test src/auth/LoginPage.test.tsx src/auth/TermsPage.test.tsx`.
+- E-06 Cliente de autenticación y almacenamiento de token para escritorio
+  Tareas: T-014, T-015 | Líneas estimadas: 333 | Rama: feat/inicio-cierre-sesion-cliente-auth
+  Cómo probarlo: ejecutar `pnpm --filter frontend test src/api/client.test.ts src/api/auth.test.ts`.
 
-- E-08 Pantalla del área privada y gestión de sesiones (sin ruta)
-  Tareas: T-020 | Líneas estimadas: 320 | Rama: feat/inicio-cierre-sesion-pantalla-sesiones
-  Cómo probarlo: ejecutar `pnpm --filter frontend test src/auth/HomePage.test.tsx`.
+- E-06b Textos multilingües y traducción de errores de autenticación en el cliente
+  Tareas: T-016, T-017 | Líneas estimadas: 110 | Rama: feat/inicio-cierre-sesion-textos-auth
+  Cómo probarlo: ejecutar `pnpm --filter frontend test src/i18n/locales/locales.test.ts src/registration/serverErrors.test.ts`.
 
-- E-09 Enrutamiento completo, redirecciones, accesibilidad y resumen
-  Tareas: T-021, T-022, T-023, T-024 | Líneas estimadas: 340 | Rama: feat/inicio-cierre-sesion-rutas
-  Cómo probarlo: abrir `http://localhost:5173/login`, iniciar sesión, aceptar términos si están pendientes, ver y cerrar sesiones en `/` y cerrar la sesión actual, siguiendo `specs/inicio-cierre-sesion/resumen.md`.
+- E-07 Pantalla de inicio de sesión (sin ruta)
+  Tareas: T-018 | Líneas estimadas: 301 | Rama: feat/inicio-cierre-sesion-pantallas-acceso
+  Cómo probarlo: ejecutar `pnpm --filter frontend test src/auth/LoginPage.test.tsx`.
+
+- E-07b Pantalla de términos pendientes y rutas `/login` y `/terms`
+  Tareas: T-019 | Líneas estimadas: 355 | Rama: feat/inicio-cierre-sesion-pantalla-terminos
+  Cómo probarlo: abrir `http://localhost:5173/login` y `http://localhost:5173/terms` en el navegador y ejecutar `pnpm --filter frontend test src/auth/TermsPage.test.tsx src/App.test.tsx`.
+
+- E-07c Botón de icono, menús hacia arriba y menú de usuario
+  Tareas: mejora de componentes del sistema de diseño | Líneas estimadas: 424 | Rama: feat/inicio-cierre-sesion-componentes-menu
+  Cómo probarlo: abrir el catálogo de componentes y comprobar el tooltip hacia arriba de `IconButton` y los menús de idioma y usuario desplegándose hacia arriba en `Sidebar`.
+  Excepción: 424 líneas reales (dentro de `sdd.max_lineas_pr_excepcion`, 500) por actualizar las referencias HTML (`docs/referencia/crear-empresa.html` y `activos.html`) al invertir los colores del avatar en tema claro.
+
+- E-07d Columnas redimensionables y elipsis en tablas
+  Tareas: mejora de componente compartido `Table` | Líneas estimadas: 208 | Rama: feat/inicio-cierre-sesion-tabla-redimensionable
+  Cómo probarlo: arrastrar los bordes derechos entre cabeceras en `Table` y comprobar el acorte dinámico con `...`.
+
+- E-07e Selección de filas con casillas en tablas
+  Tareas: mejora de componente compartido `Table` | Líneas estimadas: 420 | Rama: feat/inicio-cierre-sesion-tabla-seleccion
+  Cómo probarlo: marcar casillas en la tabla del catálogo y comprobar la barra de selección superpuesta sobre la cabecera con «n seleccionadas» y `IconButton`.
+  Excepción: 420 líneas reales (dentro de `sdd.max_lineas_pr_excepcion`, 500) por entregar `Table` seleccionable, `IconTrash`, sus tests y su muestra en un único corte vertical.
+
+- E-08 Pantalla del área privada, gestión de sesiones y rutas `/` y `/showcase`
+  Tareas: T-020 | Líneas estimadas: 478 | Rama: feat/inicio-cierre-sesion-pantalla-sesiones
+  Cómo probarlo: abrir `http://localhost:5173/` y `http://localhost:5173/showcase` en el navegador y ejecutar `pnpm --filter frontend test src/auth/HomePage.test.tsx src/App.test.tsx`.
+  Excepción: 478 líneas reales (dentro de `sdd.max_lineas_pr_excepcion`, 500): al exponer `HomePage` en `/` en la misma entrega visual para cumplir `AGENTS.md`, `ShowcasePage` pasa a `/showcase` y obliga a actualizar sus tests unitarios y visuales además de la pantalla y sus tests.
+
+- E-09 Enrutamiento completo, redirecciones, transiciones, accesibilidad y resumen
+  Tareas: T-021, T-022, T-023, T-024 | Líneas estimadas: 500 | Rama: feat/inicio-cierre-sesion-rutas
+  Cómo probarlo: abrir `http://localhost:5173/login`, iniciar sesión, aceptar términos si están pendientes, ver y cerrar sesiones en `/`, cerrar la sesión actual y navegar entre pantallas públicas y privadas comprobando el fade-out/fade-in del contenido, el crecimiento animado de tarjetas y los botones en línea en `/register/continue#<PUBLIC_ID>`, siguiendo `specs/inicio-cierre-sesion/resumen.md`.
+  Excepción: 500 líneas reales (dentro de `sdd.max_lineas_pr_excepcion`, 500): reúne las tareas finales (`T-021`..`T-023`) con las transiciones entre pantallas, la altura animada de tarjetas y bloques y las acciones en línea en `VerifyPage` para que todo lo visual sea visible y verificable junto en la misma entrega.
 
 ## RF sin tarea
 Ninguno.

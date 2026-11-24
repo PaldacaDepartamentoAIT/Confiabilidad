@@ -3,10 +3,18 @@ from django.urls import path
 from apps.accounts.api.auth_views import (
     AppLoginView,
     AppLogoutView,
+    AppRevokeOthersView,
+    AppRevokeSessionView,
+    AppSessionsView,
     AppSessionView,
+    AppTermsAcceptView,
     BrowserLoginView,
     BrowserLogoutView,
+    BrowserRevokeOthersView,
+    BrowserRevokeSessionView,
+    BrowserSessionsView,
     BrowserSessionView,
+    BrowserTermsAcceptView,
 )
 from apps.accounts.api.flow_views import (
     AppCompleteView,
@@ -69,4 +77,36 @@ urlpatterns = [
     path("app/v1/auth/session", AppSessionView.as_view(), name="auth-session-app"),
     path("browser/v1/auth/logout", BrowserLogoutView.as_view(), name="auth-logout-browser"),
     path("app/v1/auth/logout", AppLogoutView.as_view(), name="auth-logout-app"),
+    path(
+        "browser/v1/auth/terms/accept",
+        BrowserTermsAcceptView.as_view(),
+        name="auth-terms-accept-browser",
+    ),
+    path(
+        "app/v1/auth/terms/accept",
+        AppTermsAcceptView.as_view(),
+        name="auth-terms-accept-app",
+    ),
+    path("browser/v1/auth/sessions", BrowserSessionsView.as_view(), name="auth-sessions-browser"),
+    path("app/v1/auth/sessions", AppSessionsView.as_view(), name="auth-sessions-app"),
+    path(
+        "browser/v1/auth/sessions/revoke",
+        BrowserRevokeSessionView.as_view(),
+        name="auth-sessions-revoke-browser",
+    ),
+    path(
+        "app/v1/auth/sessions/revoke",
+        AppRevokeSessionView.as_view(),
+        name="auth-sessions-revoke-app",
+    ),
+    path(
+        "browser/v1/auth/sessions/revoke-others",
+        BrowserRevokeOthersView.as_view(),
+        name="auth-sessions-revoke-others-browser",
+    ),
+    path(
+        "app/v1/auth/sessions/revoke-others",
+        AppRevokeOthersView.as_view(),
+        name="auth-sessions-revoke-others-app",
+    ),
 ]

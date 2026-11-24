@@ -161,8 +161,12 @@ Secretos:
   que un comportamiento funcione de extremo a extremo. Nunca se divide por capas horizontales (un
   PR solo con modelos, otro solo con serializadores), porque esos PR no se pueden probar. Cada
   entrega deja la rama de integración en verde y no expone en rutas ni en la UI nada que aún no
-  funcione. Una entrega puede llegar a `sdd.max_lineas_pr_excepcion` solo con una línea
-  `Excepción:` que explique por qué no se puede dividir; por encima, se divide o decide el usuario.
+  funcione. **Cuando una entrega cree o modifique pantallas o componentes visuales, debe exponerlos
+  para que el usuario pueda verlos en el navegador o en la app (conectados en su ruta o en
+  `/showcase`) dentro de esa misma entrega; nunca se entregan pantallas o componentes visuales «sin
+  ruta» o invisibles para conectarlos en una entrega posterior.** Una entrega puede llegar a
+  `sdd.max_lineas_pr_excepcion` solo con una línea `Excepción:` que explique por qué no se puede
+  dividir; por encima, se divide o decide el usuario.
   Si una entrega ya implementada rebasa `sdd.max_lineas_pr`, se divide en dos (`E-XX` y `E-XXb`)
   sin volver a preguntar, procurando que ambas muestren algo de funcionalidad (algo que se pueda
   ver o probar) y no solo una la parte visible y la otra la parte interna.

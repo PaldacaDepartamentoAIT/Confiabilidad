@@ -11,7 +11,7 @@ let app: RunningApp;
 let browser: Browser;
 
 beforeAll(async () => {
-  app = await startApp();
+  app = await startApp("showcase");
   browser = await chromium.launch();
 });
 

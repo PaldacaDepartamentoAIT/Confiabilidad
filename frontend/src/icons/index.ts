@@ -14,6 +14,7 @@ import {
   Globe,
   House,
   Info,
+  LogOut,
   Menu,
   Moon,
   Package,
@@ -22,6 +23,7 @@ import {
   Search,
   Settings,
   Sun,
+  Trash2,
   Wrench,
   type LucideIcon,
   type LucideProps,
@@ -51,6 +53,7 @@ export const IconFile = sized(FileText, "IconFile");
 export const IconGlobe = sized(Globe, "IconGlobe");
 export const IconHouse = sized(House, "IconHouse");
 export const IconInfo = sized(Info, "IconInfo");
+export const IconLogOut = sized(LogOut, "IconLogOut");
 export const IconMenu = sized(Menu, "IconMenu");
 export const IconMoon = sized(Moon, "IconMoon");
 export const IconPackage = sized(Package, "IconPackage");
@@ -59,4 +62,5 @@ export const IconPanelOpen = sized(PanelLeftOpen, "IconPanelOpen");
 export const IconSearch = sized(Search, "IconSearch");
 export const IconSettings = sized(Settings, "IconSettings");
 export const IconSun = sized(Sun, "IconSun");
+export const IconTrash = sized(Trash2, "IconTrash");
 export const IconWrench = sized(Wrench, "IconWrench");

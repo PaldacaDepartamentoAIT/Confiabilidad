@@ -390,7 +390,11 @@ describe("sending another code", () => {
     const { fetcher } = replies(reply(200, { ...STATUS, resend_in: 2, resends_left: 3 }));
     renderPage(fetcher);
 
-    expect(await screen.findByRole("button", { name: "Enviar otro código en 2 s" })).toBeDisabled();
+    const resend = await screen.findByRole("button", { name: "Enviar otro código en 2 s" });
+    expect(resend).toBeDisabled();
+    expect(resend.closest(".public-actions-row")).toContainElement(
+      screen.getByRole("button", { name: "Verificar" }),
+    );
     expect(screen.getByText("Códigos que aún puedes pedir: 3.")).toBeInTheDocument();
     await act(() => vi.advanceTimersByTimeAsync(2000));
     expect(screen.getByRole("button", { name: "Enviar otro código" })).toBeEnabled();
@@ -611,7 +615,8 @@ describe("password step and account created", () => {
   });
 });
 
-test("the account created screen says so without signing in", () => {
+test("the account created screen says so without signing in and links to /login", async () => {
+  window.history.pushState(null, "", "/register/done");
   render(
     <I18nextProvider i18n={createI18n("es")}>
       <DonePage />
@@ -622,4 +627,9 @@ test("the account created screen says so without signing in", () => {
   expect(screen.getByText("Tu cuenta se ha creado.")).toBeVisible();
   expect(screen.queryByRole("textbox")).toBeNull();
   expect(screen.queryByLabelText(/Contraseña/)).toBeNull();
+
+  const link = screen.getByRole("link", { name: "Iniciar sesión" });
+  expect(link).toHaveAttribute("href", "/login");
+  await userEvent.click(link);
+  expect(window.location.pathname).toBe("/login");
 });

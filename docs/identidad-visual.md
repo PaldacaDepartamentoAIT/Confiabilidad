@@ -48,7 +48,8 @@ Elementos comunes y de las pantallas con sesión:
     derecha; contraído, solo el botón, centrado;
   - navegación con icono y etiqueta; contraída, solo el icono, con la etiqueta como `title`;
   - pie con el botón de tema y, debajo, el de idioma, siempre uno encima del otro; debajo, el de
-    usuario (avatar con iniciales, nombre y flechas), a todo el ancho.
+    usuario (avatar con iniciales, nombre y flechas), a todo el ancho. Tanto el menú de idioma del
+    pie como el menú del usuario (con la acción «Cerrar sesión» e icono) se despliegan hacia arriba.
 - **Barra superior** de 64 px: secciones de la pantalla en pestañas a la izquierda y buscador a la
   derecha. Su línea inferior continúa por la cabecera del menú lateral, de modo que se ve como una
   sola línea.
@@ -189,10 +190,12 @@ Un solo color por prioridad en toda la aplicación.
 | Etiquetas del menú lateral al abrir o cerrar | 0,15–0,2 s de fundido |
 | Desplazamiento de la línea de la pestaña activa | 0,25 s, salida suave |
 | Cambio del contenido al cambiar de sección | 0,2 s de fundido |
+| Cambio entre pantallas | 0,15 s de salida y, a continuación, 0,2 s de entrada en el contenido (la estructura exterior se mantiene) |
+| Cambio de altura de bloques y tarjetas al cargar | 0,3–0,54 s, salida suave, con aparición escalonada de los nuevos elementos (0,24 s y 55 ms entre elementos) |
 | Pestañas a selector y al revés | 0,15 s de salida y, a continuación, 0,2 s de entrada |
 | Buscador reducido: abrir y cerrar | 0,25 s, salida suave; 0,2 s de fundido de las pestañas y del botón |
 | Aparición del modal de documento | 0,2 s de fundido de la caja y de la cortina |
-| Aparición de un menú desplegable | 0,18 s (fundido y 6 px de desplazamiento hacia abajo); se cierra sin animación |
+| Aparición de un menú desplegable | 0,18 s (fundido y 6 px de desplazamiento hacia abajo, o hacia arriba si se despliega por encima); se cierra sin animación |
 | Panel lateral en móvil | 0,25 s de deslizamiento |
 | Cambio de tema | 0,4 s en todos los colores, solo durante el cambio |
 
@@ -244,7 +247,7 @@ sección manda sobre las descripciones generales de arriba.
 | Contador | 20 px de alto, ancho mínimo de 20 px, relleno horizontal de 5 px, fondo gris, texto en tinta, JetBrains Mono 12 px, 500, radio 4 px |
 | Pie | borde superior de 1 px en gris, relleno de 10 px, separación de 8 px entre botones |
 | Botones del pie | 36 px de alto, relleno horizontal de 12 px, separación de 10 px, peso 500 |
-| Botón de usuario | relleno horizontal de 8 px; avatar de 24 × 24 px (radio 4 px, fondo gris, JetBrains Mono 12 px 500), nombre y chevrons arriba y abajo |
+| Botón de usuario | relleno horizontal de 8 px; avatar de 24 × 24 px (radio 4 px, fondo en tinta y texto en gris en tema claro; fondo gris y texto en tinta en tema oscuro; JetBrains Mono 12 px 500), nombre y chevrons arriba y abajo; al pulsarlo abre hacia arriba el menú con «Cerrar sesión» y su icono |
 
 ### Barra superior
 
@@ -298,8 +301,8 @@ sección manda sobre las descripciones generales de arriba.
 |---|---|
 | Disparador | igual que un campo; texto a la izquierda y chevron hacia abajo a la derecha; sin valor, «Selecciona una opción» en texto secundario |
 | Ancho del disparador | todo el ancho disponible de su contenedor (100 %), sea un campo de formulario, un botón del menú lateral o un selector de la barra; el menú desplegado nunca es más estrecho que él |
-| Menú | aparece a 4 px bajo el disparador, ancho mínimo igual al del disparador, alto máximo de 260 px con desplazamiento, relleno de 4 px, fondo del lienzo, borde de 1 px en borde de control, radio 4 px |
-| Opción | 34 px de alto, relleno de 0 10 px 0 6 px, separación de 6 px, radio 6 px; la seleccionada en peso 700 y con un chevron «>» a la izquierda; el resto reserva el mismo hueco |
+| Menú | aparece a 4 px bajo el disparador (o a 4 px por encima en los botones del pie del menú lateral), ancho mínimo igual al del disparador, alto máximo de 260 px con desplazamiento, relleno de 4 px, fondo del lienzo, borde de 1 px en borde de control, radio 4 px |
+| Opción | 34 px de alto, relleno de 0 10 px 0 6 px, separación de 6 px, radio 6 px; la seleccionada en peso 700 y con un chevron «>» a la izquierda (el resto reserva el mismo hueco); en menús de acción como el de usuario, el icono de la acción va en su lugar |
 | Opción resaltada u opción bajo el cursor | fondo con el 9 % de la tinta mezclado con el lienzo |
 
 ### Casilla
@@ -334,6 +337,8 @@ Ventana modal que muestra un documento (términos, consentimientos) y se abre de
 | Medidas | 36 px de alto, relleno horizontal de 16 px, radio 6 px, 14 px, peso 600, separación de 8 px entre icono y texto |
 | Principal | fondo y borde en el principal, texto en el color de texto sobre el principal; hover con el principal oscurecido |
 | Secundario | sin relleno, borde de 1 px y texto en el principal; hover con el 9 % de la tinta |
+| Botón de icono | 36 × 36 px (28 × 28 px en variante compacta, como en filas de tabla), radio 6 px, sin relleno, borde de 1 px e icono de 16 px en el principal; hover con el 9 % de la tinta |
+| Tooltip (botón de icono) | aparece hacia arriba a 6 px del botón al pasar el cursor o enfocar con el teclado; fondo en relleno negro del sistema, texto blanco `#ffffff`, borde de 1 px en gris, radio 4 px, 12 px |
 
 ### Aviso
 
@@ -363,8 +368,9 @@ Valores exactos tomados de la pantalla «Activos», aprobada como referencia
 | Leyenda de gráfica | separación de 16 px entre elementos; muestras de 12 × 12 px sin borde; 12 px, texto secundario |
 | Rejilla de estado | cuadros de 24 × 24 px con radio 0 y separación de 4 px, que continúan en la fila siguiente; los normales en gris; los de P1, P2 y advertencia en su color con el glifo de su forma (12 px, en color del lienzo) dentro, para no depender solo del color; el neutro, con borde de 2 px en texto secundario; cada cuadro con `title` y `aria-label` |
 | Leyenda de la rejilla | iconos de forma de 16 px y etiquetas de 12 px en tinta, 14 px por debajo de la rejilla |
-| Tabla | ancho completo con desplazamiento horizontal desde 640 px; cabecera de 12,5 px, 500, texto secundario, relleno de 8 px arriba y abajo y 12 px a los lados, borde inferior de 1 px en gris; filas de 44 px de alto con relleno horizontal de 12 px y borde inferior de 1 px en gris; códigos y fechas en JetBrains Mono 13 px |
+| Tabla | ancho completo con desplazamiento horizontal desde 640 px; cabecera de 12,5 px, 500, texto secundario, relleno de 8 px arriba y abajo y 12 px a los lados, borde inferior de 1 px en gris, borde derecho arrastrable entre columnas (línea de 1 px en gris, 2 px en el principal al pasar el cursor o arrastrar; la última columna ocupa el espacio restante sin borde derecho); filas de 44 px de alto con relleno horizontal de 12 px y borde inferior de 1 px en gris; el contenido que no cabe se acorta con «...»; códigos y fechas en JetBrains Mono 13 px |
 | Fila bajo el cursor o seleccionada | fondo con el 9 % de la tinta; la seleccionada lleva además una línea de 2 px en el principal a su izquierda, para distinguirla del hover |
+| Selección de filas | primera columna de 44 px (relleno izquierdo de 12 px) con casilla de 18 × 18 px en cada fila seleccionable y, cuando permite acciones sobre múltiples elementos, también en la cabecera (estado intermedio con una raya si solo hay algunas); las filas que no se pueden seleccionar no llevan casilla; mientras haya alguna fila marcada, aparece superpuesta sobre la cabecera (44 px de alto, sin aumentar el alto de la tabla) una barra con fondo secundario, línea izquierda de 2 px en el principal, la misma casilla alineada a 12 px, el conteo («n seleccionadas») a su lado y los botones de icono de 28 × 28 px a la derecha |
 | Pie de tabla | 12 px, texto secundario, a 12 px por debajo; muestra el número de filas seleccionadas |
 
 Regla de estado: **el texto del estado va siempre en tinta**; solo el icono de forma lleva el color de

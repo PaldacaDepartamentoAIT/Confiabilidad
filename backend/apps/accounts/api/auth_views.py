@@ -8,6 +8,7 @@ from django.http import HttpRequest
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework import status
+from rest_framework.exceptions import ErrorDetail
 from rest_framework.parsers import JSONParser
 from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
@@ -16,12 +17,16 @@ from rest_framework.views import APIView
 
 from apps.accounts import sessions, throttling
 from apps.accounts.api import messages
-from apps.accounts.api.auth_serializers import LoginSerializer
+from apps.accounts.api.auth_serializers import (
+    LoginSerializer,
+    RevokeSessionSerializer,
+    TermsAcceptSerializer,
+)
 from apps.accounts.api.language import request_language
 from apps.accounts.api.views import _enforce_csrf, _limited, _read_body, _render, _unreadable
 from apps.accounts.models import User
 from apps.consents.models import Terms
-from apps.consents.services import TermsState, consent_status
+from apps.consents.services import TermsState, accept_terms, consent_status
 from apps.consents.versions import current_document
 
 _AUTH_BACKEND = "allauth.account.auth_backends.AuthenticationBackend"
@@ -105,6 +110,28 @@ def _touch_request(django_request: HttpRequest, client_kind: str, raw_key: str) 
     return copy
 
 
+def _require_auth(
+    request: Request, client_kind: str, language: str, *, require_terms: bool = False
+) -> tuple[User, str] | Response:
+    auth = _authenticated_session(request, client_kind)
+    if auth is None:
+        return _err("unauthenticated", language, status.HTTP_401_UNAUTHORIZED)
+    user, raw_key = auth
+    sessions.touch_session(_touch_request(request._request, client_kind, raw_key), user)
+    if require_terms:
+        terms_state = consent_status(user).terms
+        if terms_state is not TermsState.ACCEPTED:
+            return Response(
+                {
+                    "code": "terms_required",
+                    "terms_status": terms_state.value,
+                    "message": messages.error_text("terms_required", language),
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+    return user, raw_key
+
+
 class _BrowserCsrfMixin(APIView):
     client_kind: ClassVar[str] = "browser"
 
@@ -154,7 +181,8 @@ class AppLoginView(APIView):
         if user is None:
             return _err("invalid_credentials", language)
         if not user.is_active:
-            adapter.pre_login(django_request, user)
+            # No llamamos a super().pre_login porque accede a sesión/mensajes y añade Vary: Cookie.
+            adapter.record_inactive_login_attempt(django_request, user)
             return _err("invalid_credentials", language)
         login(django_request, user, backend=_AUTH_BACKEND)
         payload = _session_info_payload(user, language)
@@ -176,11 +204,10 @@ class AppSessionView(APIView):
         language = request_language(
             request.query_params.get("language"), request.headers.get("Accept-Language")
         )
-        auth = _authenticated_session(request, self.client_kind)
-        if auth is None:
-            return _err("unauthenticated", language, status.HTTP_401_UNAUTHORIZED)
-        user, raw_key = auth
-        sessions.touch_session(_touch_request(request._request, self.client_kind, raw_key), user)
+        auth = _require_auth(request, self.client_kind, language)
+        if isinstance(auth, Response):
+            return auth
+        user, _ = auth
         return Response(_session_info_payload(user, language), status=status.HTTP_200_OK)
 
 
@@ -212,4 +239,133 @@ class AppLogoutView(APIView):
 
 
 class BrowserLogoutView(_BrowserCsrfMixin, AppLogoutView):
+    pass
+
+
+class AppTermsAcceptView(APIView):
+    authentication_classes: list[Any] = []
+    permission_classes = [AllowAny]
+    parser_classes = [JSONParser]
+    client_kind: ClassVar[str] = "app"
+
+    def post(self, request: Request) -> Response:
+        body, readable = _read_body(request) if request.content_type else ({}, True)
+        language = _body_language(request, body, readable)
+        auth = _require_auth(request, self.client_kind, language)
+        if isinstance(auth, Response):
+            return auth
+        if not readable:
+            return _unreadable(language)
+        serializer = TermsAcceptSerializer(data=body)
+        if not serializer.is_valid():
+            return Response(
+                {"errors": _render(serializer.errors, language)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        user, _ = auth
+        data = serializer.validated_data
+        try:
+            accept_terms(user, version=data["version"], locale=data["locale"])
+        except ValidationError as error:
+            detail = ErrorDetail(str(error.message), code=str(error.code or "invalid"))
+            return Response(
+                {"errors": _render({"non_field_errors": [detail]}, language)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return Response({"terms_status": TermsState.ACCEPTED.value}, status=status.HTTP_200_OK)
+
+
+class BrowserTermsAcceptView(_BrowserCsrfMixin, AppTermsAcceptView):
+    pass
+
+
+class AppSessionsView(APIView):
+    authentication_classes: list[Any] = []
+    permission_classes = [AllowAny]
+    client_kind: ClassVar[str] = "app"
+
+    def get(self, request: Request) -> Response:
+        language = request_language(
+            request.query_params.get("language"), request.headers.get("Accept-Language")
+        )
+        auth = _require_auth(request, self.client_kind, language, require_terms=True)
+        if isinstance(auth, Response):
+            return auth
+        user, raw_key = auth
+        items = sessions.list_active_sessions(user, raw_key)
+        return Response(
+            {
+                "sessions": [
+                    {
+                        "id": item.id,
+                        "ip": item.ip,
+                        "user_agent": item.user_agent,
+                        "created_at": item.created_at,
+                        "last_seen_at": item.last_seen_at,
+                        "is_current": item.is_current,
+                    }
+                    for item in items
+                ]
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class BrowserSessionsView(AppSessionsView):
+    client_kind = "browser"
+
+
+class AppRevokeSessionView(APIView):
+    authentication_classes: list[Any] = []
+    permission_classes = [AllowAny]
+    parser_classes = [JSONParser]
+    client_kind: ClassVar[str] = "app"
+
+    def post(self, request: Request) -> Response:
+        body, readable = _read_body(request) if request.content_type else ({}, True)
+        language = _body_language(request, body, readable)
+        auth = _require_auth(request, self.client_kind, language, require_terms=True)
+        if isinstance(auth, Response):
+            return auth
+        if not readable:
+            return _unreadable(language)
+        serializer = RevokeSessionSerializer(data=body)
+        if not serializer.is_valid():
+            return Response(
+                {"errors": _render(serializer.errors, language)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        user, raw_key = auth
+        result = sessions.revoke_other_session(
+            user, raw_key, serializer.validated_data["session_id"], request=request._request
+        )
+        if result is sessions.RevokeResult.CURRENT_SESSION:
+            return _err("cannot_revoke_current_session", language, status.HTTP_400_BAD_REQUEST)
+        if result is sessions.RevokeResult.NOT_FOUND:
+            return _err("not_found", language, status.HTTP_404_NOT_FOUND)
+        return Response({"result": "revoked"}, status=status.HTTP_200_OK)
+
+
+class BrowserRevokeSessionView(_BrowserCsrfMixin, AppRevokeSessionView):
+    pass
+
+
+class AppRevokeOthersView(APIView):
+    authentication_classes: list[Any] = []
+    permission_classes = [AllowAny]
+    parser_classes = [JSONParser]
+    client_kind: ClassVar[str] = "app"
+
+    def post(self, request: Request) -> Response:
+        body, readable = _read_body(request) if request.content_type else ({}, True)
+        language = _body_language(request, body, readable)
+        auth = _require_auth(request, self.client_kind, language, require_terms=True)
+        if isinstance(auth, Response):
+            return auth
+        user, raw_key = auth
+        revoked_count = sessions.revoke_all_other_sessions(user, raw_key, request=request._request)
+        return Response({"result": "revoked", "revoked_count": revoked_count}, status=200)
+
+
+class BrowserRevokeOthersView(_BrowserCsrfMixin, AppRevokeOthersView):
     pass

@@ -18,6 +18,7 @@ const NAMES = [
   "IconGlobe",
   "IconHouse",
   "IconInfo",
+  "IconLogOut",
   "IconMenu",
   "IconMoon",
   "IconPackage",
@@ -26,6 +27,7 @@ const NAMES = [
   "IconSearch",
   "IconSettings",
   "IconSun",
+  "IconTrash",
   "IconWrench",
 ] as const;
 
