@@ -18,9 +18,8 @@ def test_status_reports_unexecuted_tasks_then_statuses_and_alerts() -> None:
     empty_out = StringIO()
     call_command("maintenance_tasks", "status", stdout=empty_out)
     text = empty_out.getvalue()
-    assert "purge_stale_registrations: no executions recorded" in text
-    assert "purge_expired_sessions: no executions recorded" in text
-    assert "purge_security_events: no executions recorded" in text
+    for name in MaintenanceTaskName:
+        assert f"{name}: no executions recorded" in text
     assert "alerts: none" in text
 
     now = timezone.now()
@@ -62,11 +61,7 @@ def test_run_requires_target_and_executes_sync_or_async() -> None:
     with mock.patch("apps.core.management.commands.maintenance_tasks.current_app") as app:
         app.send_task.return_value = mock.Mock(id="task-123")
         call_command(
-            "maintenance_tasks",
-            "run",
-            "purge_expired_sessions",
-            "--async",
-            stdout=async_out,
+            "maintenance_tasks", "run", "purge_expired_sessions", "--async", stdout=async_out
         )
     app.send_task.assert_called_once_with("apps.accounts.tasks.purge_expired_sessions")
     assert "queued purge_expired_sessions: task-123" in async_out.getvalue()
@@ -79,12 +74,7 @@ def test_simulate_failure_queues_task_and_can_wait_for_failure() -> None:
     with mock.patch("apps.core.management.commands.maintenance_tasks.current_app") as app:
         app.send_task.return_value = async_result
         call_command(
-            "maintenance_tasks",
-            "simulate-failure",
-            "purge_security_events",
-            "--wait",
-            "5",
-            stdout=out,
+            "maintenance_tasks", "simulate-failure", "purge_security_events", "--wait=5", stdout=out
         )
 
     app.send_task.assert_called_once_with(
