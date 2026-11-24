@@ -21,9 +21,10 @@ Estado: aprobado
   Hecho cuando: `pytest apps/core/tests/test_maintenance_alerts.py` pasa: dos ejecuciones concurrentes de la misma tarea se serializan en orden con el bloqueo Redis sin bloquear otras tareas; los fallos emiten `logger.exception` con traza completa; el correo operativo se envía solo si no había alerta abierta previa para esa tarea y `MAINTENANCE_ALERT_EMAILS` no está vacío; los fallos de envío SMTP se registran en logs conservando estado y alerta; y si falla la BD al persistir, se registran ambos errores en logs sin intentar enviar correo.
   Decisiones: el bloqueo en Redis se solicita con `blocking=True` sobre `settings.CACHE_URL`, capturando `LockError` al liberar si expiró el timeout para no ocultar resultados/errores, y cerrando el cliente en `finally`. Confianza: [Cierto]. Cómo revertirla: reemplazar `_task_lock` por un contexto nulo o por bloqueo en base de datos.
 
-- [ ] T-005 Conexión de las tres tareas periódicas al ejecutor de mantenimiento
+- [x] T-005 Conexión de las tres tareas periódicas al ejecutor de mantenimiento
   RF: RF-001, RF-003, RF-004, RF-005, RF-007, RF-009 | Depende de: T-001, T-004 | Archivos: 3 (`backend/apps/accounts/tasks.py`, `backend/apps/audit/tasks.py`, `backend/apps/core/tests/test_maintenance_tasks.py`)
   Hecho cuando: `pytest apps/core/tests/test_maintenance_tasks.py apps/accounts/tests/test_registration_background.py apps/accounts/tests/test_purge_expired_sessions.py apps/audit/tests/test_purge_access.py` pasa: las tres tareas aceptan `simulate_failure: bool = False`, delegan en `run_maintenance_task`, conservan sus reglas de borrado al ejecutarse normal y generan fallo + alerta sin borrar datos reales cuando `simulate_failure=True`.
+  Decisiones: el parámetro `simulate_failure: bool = False` se acepta como argumento con valor por defecto para compatibilidad tanto con llamadas sin argumentos como con `kwargs` desde Celery. Confianza: [Cierto]. Cómo revertirla: eliminar el parámetro opcional de las firmas de las tres tareas.
 
 - [ ] T-006 Panel de administración interno de solo lectura para estado y alertas
   RF: RF-008 | Depende de: T-002 | Archivos: 2 (`backend/apps/core/admin.py`, `backend/apps/core/tests/test_maintenance_admin.py`)
