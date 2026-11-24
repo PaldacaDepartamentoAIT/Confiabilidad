@@ -36,9 +36,10 @@ Estado: aprobado
   Hecho cuando: `pytest apps/core/tests/test_maintenance_command.py` pasa: `manage.py maintenance_tasks status` muestra el estado de las tres tareas (indicando «sin ejecuciones» antes de la primera) y sus alertas, `run` ejecuta manualmente una o todas, y `simulate-failure <tarea>` encola la tarea con `simulate_failure=True` para verificar el flujo en el trabajador; `.env.example` documenta todas las variables nuevas.
   Decisiones: `maintenance_tasks run` usa `import_string` para la ejecución síncrona directa sin depender de que el worker haya importado el módulo, y `simulate-failure` acepta `--wait` opcional (por defecto `0`) para esperar el fallo del worker en el mismo comando. Confianza: [Cierto]. Cómo revertirla: hacer que `simulate-failure` espere siempre o quitar `--wait`.
 
-- [ ] T-008 Pruebas end-to-end con trabajador Celery real sobre Redis
+- [x] T-008 Pruebas end-to-end con trabajador Celery real sobre Redis
   RF: RF-001, RF-005, RF-007, RF-009 | Depende de: T-007 | Archivos: 1 (`backend/apps/core/tests/test_maintenance_worker_e2e.py`)
   Hecho cuando: `pytest apps/core/tests/test_maintenance_worker_e2e.py` pasa con el fixture `celery_worker`: el envío asíncrono de fallo simulado en las tres tareas registra el fallo, abre la alerta, emite el correo y deja intactos los registros expirados; una ejecución normal posterior en el trabajador real depura los registros elegibles y resuelve las alertas abiertas.
+  Decisiones: cada caso usa el comando `maintenance_tasks simulate-failure --wait 15` para ejercitar el flujo CLI → Redis → worker real y luego `task_fn.delay().get(timeout=15)` para comprobar la recuperación asíncrona determinista. Confianza: [Cierto]. Cómo revertirla: usar `task_fn.delay(simulate_failure=True)` directo en lugar de `call_command`.
 
 ## Entregas
 Rama de integración: `feat/tareas-purga-y-alertas` (los PR de las entregas van contra ella; ver `AGENTS.md`)
