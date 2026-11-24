@@ -1,6 +1,7 @@
 # Entrega E-01b · Modelos y ejecutor base de última ejecución y alertas
 
-Rama: `feat/tareas-purga-y-alertas-nucleo-estado` · PR: pendiente ·
+Rama: `feat/tareas-purga-y-alertas-nucleo-estado` · PR:
+[PaldacaDepartamentoAIT/Confiabilidad#147](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/147) ·
 Líneas de código y tests: 380 (límite: 400).
 
 ## Qué se hizo
