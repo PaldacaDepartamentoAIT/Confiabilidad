@@ -362,7 +362,7 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   `docs/identidad-visual.md` y `docs/referencia/activos.html` — [Cierto] — revertir: mover el
   correo a un bloque dedicado o al menú de usuario.
 
-- [ ] T-026 Corrección: Ajustar formato de `eslint.config.js` y timeout de accesibilidad en `/showcase`
+- [x] T-026 Corrección: Ajustar formato de `eslint.config.js` y timeout de accesibilidad en `/showcase`
   Tipo: corrección | Origen: validación de CF-1
   RF: — | Depende de: — | Archivos: 2
   Archivos: `frontend/eslint.config.js`, `showcase/a11y.test.tsx`.
@@ -372,6 +372,9 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   Hecho cuando: `pnpm --filter frontend exec prettier --check .` devuelve código 0 y
   `frontend/src/showcase/a11y.test.tsx` usa un timeout explícito de `15_000 ms` en los tres casos
   iniciales pasando sin fallos incluso bajo carga.
+  Decisiones: se usa `15_000 ms` en el `test.each` inicial igual que en los bloques restantes del
+  propio archivo (`a11y.test.tsx`) — [Cierto] — revertir: restaurar el límite por defecto de
+  Vitest.
 
 - [ ] T-027 Corrección: Completar casos ejecutables y corregir imprecisiones técnicas en `resumen.md`
   Tipo: corrección | Origen: validación de CF-8

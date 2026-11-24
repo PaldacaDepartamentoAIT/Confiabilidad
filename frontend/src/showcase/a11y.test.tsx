@@ -26,6 +26,7 @@ test.each(["es", "pt-BR", "en"])(
     expect(await violationsOf(document.documentElement)).toEqual([]);
     window.history.replaceState(null, "", "/");
   },
+  15_000,
 );
 
 const VALID_VALUES = {
