@@ -48,9 +48,13 @@ Rama de integración: `feat/tareas-purga-y-alertas` (los PR de las entregas van 
   Tareas: T-002, T-003 | Líneas estimadas: 330 | Rama: `feat/tareas-purga-y-alertas-nucleo-estado`
   Cómo probarlo: aplicar migraciones (`python manage.py migrate`), ejecutar `pytest apps/core/tests/test_maintenance_models.py apps/core/tests/test_maintenance_runner.py` y ejercitar `run_maintenance_task` desde consola (`manage.py shell`) comprobando registro de última ejecución, alerta persistente y cierre automático al recuperarse.
 
-- E-02 Serialización, alertas completas por correo y conexión de las tres tareas
-  Tareas: T-004, T-005 | Líneas estimadas: 310 | Rama: `feat/tareas-purga-y-alertas-ejecucion-y-alertas`
-  Cómo probarlo: ejecutar `pytest apps/core/tests/test_maintenance_alerts.py apps/core/tests/test_maintenance_tasks.py` y disparar cualquiera de las tres tareas con `simulate_failure=True` mediante `celery -A config call apps.audit.tasks.purge_security_events --kwargs='{"simulate_failure": true}'` para observar la alerta abierta y el aviso por correo sin borrar datos, seguido de una ejecución normal que cierra la alerta.
+- E-02 Serialización en Redis y envío resiliente de alertas por correo
+  Tareas: T-004 | Líneas estimadas: 314 | Rama: `feat/tareas-purga-y-alertas-ejecucion-y-alertas`
+  Cómo probarlo: ejecutar `pytest --no-cov apps/core/tests/test_maintenance_runner.py apps/core/tests/test_maintenance_alerts.py` y ejercitar `run_maintenance_task` desde `manage.py shell` con `MAINTENANCE_ALERT_EMAILS` configurado para comprobar el primer correo, la supresión en fallos consecutivos y la resolución al recuperarse.
+
+- E-02b Conexión de las tres tareas periódicas al ejecutor de mantenimiento
+  Tareas: T-005 | Líneas estimadas: 130 | Rama: `feat/tareas-purga-y-alertas-conexion-tareas`
+  Cómo probarlo: ejecutar `pytest --no-cov apps/core/tests/test_maintenance_tasks.py apps/accounts/tests/test_registration_background.py apps/accounts/tests/test_purge_expired_sessions.py apps/audit/tests/test_purge_access.py` y disparar cualquiera de las tres tareas con `simulate_failure=True` mediante `celery -A config call apps.audit.tasks.purge_security_events --kwargs='{"simulate_failure": true}'`.
 
 - E-03 Panel de administración, comando CLI y verificación end-to-end con worker real
   Tareas: T-006, T-007, T-008 | Líneas estimadas: 310 | Rama: `feat/tareas-purga-y-alertas-admin-y-cli`
