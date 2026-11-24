@@ -223,3 +223,8 @@ Guardar solo una marca booleana de «aceptó términos al registrarse» deja fue
 
 ### Doble cliente: cookie + CSRF en web frente a `X-Session-Token` en escritorio
 La versión web comparte origen a través del proxy y protege las mutaciones con cookie `HttpOnly` + cabecera CSRF. El cliente de escritorio (Tauri) puede operar contra el origen del servidor usando `X-Session-Token` por cabecera sin depender de cookies de terceros; `tokenStorage.ts` guarda el token en `localStorage` (`confiabilidad.sessionToken`, con respaldo en memoria si el almacenamiento no está disponible) y lo elimina siempre al cerrar sesión aunque falle la red. En el servidor, `UserSession` guarda únicamente la huella HMAC-SHA256 de la clave (`session_key`, calculada con `AUDIT_HASH_SECRET`) junto a un índice inverso efímero en Redis (`sessions`) para que una filtración de PostgreSQL no permita suplantar sesiones activas.
+
+## Riesgo residual aceptado
+Cierre de validación aprobado el 2026-11-24 con todos los requisitos funcionales (`RF-001`…`RF-021`) y `CF-2`…`CF-8` cumplidos, aceptando dos riesgos residuales en `CF-1`:
+1. **Umbral de tiempo bajo cobertura en otra app (`apps/emails/tests/test_rendering.py`):** en la ejecución paralela con Vitest bajo `--cov=.`, `test_template_syntax_is_checked_quickly[closed-blocks]` tardó `1.408 s` de CPU frente al límite `< 1 s`. Pertenece a `correo-asincrono-plantillas`, no afecta a `inicio-cierre-sesion`, y puede verificarse sin contención en CI o en local.
+2. **Suite visual (`pnpm --filter frontend test:visual`):** no se ejecutó dentro de `confiabilidad-dev-frontend-1` por no disponer de binario de Chromium en ese contenedor; requiere ejecutarse en un entorno con Playwright/Chromium instalado (o en el job `visual` de CI).
