@@ -34,11 +34,35 @@ docker compose -f docker/docker-compose.yml exec backend sh -c "mypy . && ruff c
 ```
 Deberías ver toda la suite en verde (cobertura ≥ 80 %) y sin errores de `mypy`, `ruff` ni `black`.
 
-Prueba desde Celery a disparar cualquiera de las tres tareas en modo fallo simulado y luego en modo normal:
+Reinicia el trabajador y el planificador si ya estaban arrancados para que carguen el código actualizado:
+```bash
+docker compose -f docker/docker-compose.yml restart worker beat
+```
+Deberías ver ambos servicios reiniciados.
+
+Prueba desde Celery a disparar cualquiera de las tres tareas en modo fallo simulado (guarda el identificador que imprime como `<TASK_ID>`):
 ```bash
 docker compose -f docker/docker-compose.yml exec backend celery -A config call apps.audit.tasks.purge_security_events --kwargs='{"simulate_failure": true}'
 ```
+Deberías ver un UUID de tarea.
+
+Comprueba el resultado de la tarea, los logs del worker y el estado abierto en base de datos:
+```bash
+docker compose -f docker/docker-compose.yml exec backend celery -A config result <TASK_ID>
+```
+```bash
+docker compose -f docker/docker-compose.yml logs --tail=80 worker
+```
+```bash
+docker compose -f docker/docker-compose.yml exec backend python manage.py shell -c "from apps.core.models import MaintenanceAlert, MaintenanceTaskStatus; print('STATUS:', list(MaintenanceTaskStatus.objects.values('task_name', 'status', 'deleted_count', 'error_summary', 'finished_at'))); print('ALERTS:', list(MaintenanceAlert.objects.values('task_name', 'created_at', 'resolved_at', 'error_summary')))"
+```
+Deberías ver `SimulatedMaintenanceFailure` en el resultado, la traza completa en los logs del worker, `status='failure'` en `MaintenanceTaskStatus` y una alerta con `resolved_at=None` en `MaintenanceAlert`.
+
+Ahora lanza la misma tarea en modo normal y vuelve a consultar el estado en base de datos:
 ```bash
 docker compose -f docker/docker-compose.yml exec backend celery -A config call apps.audit.tasks.purge_security_events
 ```
-Deberías ver en el primer disparo el fallo registrado en `MaintenanceTaskStatus` y una `MaintenanceAlert` abierta en BD, y en el segundo la actualización a `success` con todas las alertas abiertas de esa tarea resueltas.
+```bash
+docker compose -f docker/docker-compose.yml exec backend python manage.py shell -c "from apps.core.models import MaintenanceAlert, MaintenanceTaskStatus; print('STATUS:', list(MaintenanceTaskStatus.objects.values('task_name', 'status', 'deleted_count', 'error_summary', 'finished_at'))); print('ALERTS:', list(MaintenanceAlert.objects.values('task_name', 'created_at', 'resolved_at', 'error_summary')))"
+```
+Deberías ver `status='success'` y la alerta anterior marcada con `resolved_at` relleno.
