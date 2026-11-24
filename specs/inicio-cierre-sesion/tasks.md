@@ -376,7 +376,7 @@ conectan todas a la vez en `E-09`, para no exponer en la interfaz nada que aún 
   propio archivo (`a11y.test.tsx`) — [Cierto] — revertir: restaurar el límite por defecto de
   Vitest.
 
-- [ ] T-027 Corrección: Completar casos ejecutables y corregir imprecisiones técnicas en `resumen.md`
+- [x] T-027 Corrección: Completar casos ejecutables y corregir imprecisiones técnicas en `resumen.md`
   Tipo: corrección | Origen: validación de CF-8
   RF: RF-002, RF-005, RF-007, RF-012, RF-018 | Depende de: — | Archivos: 1
   Archivos: `specs/inicio-cierre-sesion/resumen.md`.
