@@ -1,6 +1,7 @@
 # Entrega E-02b · Conexión de las tres tareas periódicas al ejecutor
 
-Rama: `feat/tareas-purga-y-alertas-conexion-tareas` · PR: pendiente ·
+Rama: `feat/tareas-purga-y-alertas-conexion-tareas` · PR:
+[PaldacaDepartamentoAIT/Confiabilidad#149](https://github.com/PaldacaDepartamentoAIT/Confiabilidad/pull/149) ·
 Líneas de código y tests: 144 (límite: 400).
 
 ## Qué se hizo
