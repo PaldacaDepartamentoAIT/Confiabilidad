@@ -37,33 +37,28 @@ export function ProfilePage({
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loadError, setLoadError] = useState<ParseKeys | null>(null);
   const loggingOut = useRef(false);
-  const callbacksRef = useRef({ onLoggedOut, onTermsRequired });
-  callbacksRef.current = { onLoggedOut, onTermsRequired };
+  const cbRef = useRef({ onLoggedOut, onTermsRequired });
+  cbRef.current = { onLoggedOut, onTermsRequired };
 
   useEffect(() => {
-    const goTerms = (termsStatus: TermsStatus) => {
-      callbacksRef.current.onTermsRequired?.(termsStatus);
+    const goTerms = (status: TermsStatus) => {
+      cbRef.current.onTermsRequired?.(status);
       navigate("/terms");
     };
-    if (session && session.terms_status !== "accepted") {
-      goTerms(session.terms_status);
-      return;
-    }
+    if (session && session.terms_status !== "accepted") return goTerms(session.terms_status);
     let active = true;
     void getProfile(client).then((res) => {
       if (!active) return;
       if (res.kind === "unauthenticated") {
         tokenStorage?.clear();
-        callbacksRef.current.onLoggedOut?.();
-        navigate("/login");
-        return;
+        cbRef.current.onLoggedOut?.();
+        return navigate("/login");
       }
       if (res.kind === "termsRequired") return goTerms(res.termsStatus);
       if (res.kind !== "ok") {
-        setLoadError(
+        return setLoadError(
           res.kind === "networkError" ? "validation.networkError" : "validation.serverError",
         );
-        return;
       }
       setLoadError(null);
       setProfile(res.data);

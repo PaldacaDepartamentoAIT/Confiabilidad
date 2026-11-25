@@ -6,28 +6,22 @@ import { IconHouse, IconLogOut, IconUser } from "../icons";
 import type { SidebarItem, SidebarUser } from "../layouts/Sidebar";
 import { navigate } from "../routing/router";
 
-function go(href: string) {
-  return (event: MouseEvent<HTMLAnchorElement>) => {
-    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) {
-      return;
-    }
-    event.preventDefault();
-    navigate(href);
-  };
-}
+const go = (href: string) => (e: MouseEvent<HTMLAnchorElement>) => {
+  if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+  e.preventDefault();
+  navigate(href);
+};
 
-export function privateNavItems(t: TFunction): SidebarItem[] {
-  return [
-    { id: "home", label: t("auth.homeTitle"), href: "/", icon: <IconHouse />, onSelect: go("/") },
-    {
-      id: "profile",
-      label: t("auth.profileNav"),
-      href: "/profile",
-      icon: <IconUser />,
-      onSelect: go("/profile"),
-    },
-  ];
-}
+export const privateNavItems = (t: TFunction): SidebarItem[] => [
+  { id: "home", label: t("auth.homeTitle"), href: "/", icon: <IconHouse />, onSelect: go("/") },
+  {
+    id: "profile",
+    label: t("auth.profileNav"),
+    href: "/profile",
+    icon: <IconUser />,
+    onSelect: go("/profile"),
+  },
+];
 
 export function privateSidebarUser(
   user: AuthenticatedUser | null | undefined,

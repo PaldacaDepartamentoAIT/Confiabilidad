@@ -215,42 +215,40 @@ export function HomePage({
         as="section"
         title={t("auth.sessionsTitle")}
         count={sessionsLoaded ? sessions.length : undefined}
-        aria-busy={sessionsPending}
+        loading={sessionsPending}
+        loadingContent={
+          <div className="skel-rows">
+            <div className="skeleton skel-row" />
+            <div className="skeleton skel-row" />
+          </div>
+        }
       >
-        <div className={sessionsPending ? "skel-slot is-loading" : "skel-slot is-ready"}>
-          <div className="skel-content">
-            <Table
-              label={t("auth.sessionsTitle")}
-              columns={columns}
-              rows={rows}
-              emptyMessage={t("auth.sessionsEmpty")}
-              selection={{
-                selectedIds,
-                onChange: setSelectedIds,
-                isSelectable: (row) => otherIdSet.has(row.id),
-                selectAllLabel: t("auth.revokeOthers"),
-                rowLabel: (row) =>
-                  t("auth.selectSession", { agent: String(row.cells.userAgent ?? row.id) }),
-                selectedLabel: (count) =>
-                  count === 1 ? t("auth.selectedOne") : t("auth.selectedMany", { count }),
-                actions: (
-                  <IconButton
-                    size="sm"
-                    label={t("auth.revokeSession")}
-                    icon={<IconLogOut />}
-                    tooltipAlign="end"
-                    processing={revokingSelected}
-                    onClick={() => void handleRevokeSelected()}
-                  />
-                ),
-              }}
-            />
-          </div>
-          <div className="skel-mask skel-rows" aria-hidden="true">
-            <div className="skeleton skel-row" />
-            <div className="skeleton skel-row" />
-          </div>
-        </div>
+        <Table
+          label={t("auth.sessionsTitle")}
+          columns={columns}
+          rows={rows}
+          emptyMessage={t("auth.sessionsEmpty")}
+          selection={{
+            selectedIds,
+            onChange: setSelectedIds,
+            isSelectable: (row) => otherIdSet.has(row.id),
+            selectAllLabel: t("auth.revokeOthers"),
+            rowLabel: (row) =>
+              t("auth.selectSession", { agent: String(row.cells.userAgent ?? row.id) }),
+            selectedLabel: (count) =>
+              count === 1 ? t("auth.selectedOne") : t("auth.selectedMany", { count }),
+            actions: (
+              <IconButton
+                size="sm"
+                label={t("auth.revokeSession")}
+                icon={<IconLogOut />}
+                tooltipAlign="end"
+                processing={revokingSelected}
+                onClick={() => void handleRevokeSelected()}
+              />
+            ),
+          }}
+        />
       </Block>
     </AppLayout>
   );

@@ -40,12 +40,7 @@ function renderProfile(
 
 test("renders skeleton placeholders while loading, shows ZZ placeholder and passes a11y", async () => {
   let resolveFetch!: (res: Response) => void;
-  const { container } = renderProfile(
-    () =>
-      new Promise<Response>((resolve) => {
-        resolveFetch = resolve;
-      }),
-  );
+  const { container } = renderProfile(() => new Promise((resolve) => (resolveFetch = resolve)));
 
   const section = screen.getByRole("region", { name: "Información personal" });
   expect(section).toHaveAttribute("aria-busy", "true");
@@ -70,11 +65,9 @@ test("renders skeleton placeholders while loading, shows ZZ placeholder and pass
   expect(screen.getByLabelText("Nombre completo")).toHaveValue("Ana Real");
   expect(screen.getByLabelText("Fecha de nacimiento")).toHaveValue("1991-03-04");
   expect(screen.getByLabelText("País")).toHaveValue("Sin país asignado");
-
-  const { violations } = await axe.run(document.body, {
-    rules: { "color-contrast": { enabled: false } },
-  });
-  expect(violations).toEqual([]);
+  expect(
+    (await axe.run(document.body, { rules: { "color-contrast": { enabled: false } } })).violations,
+  ).toEqual([]);
 });
 
 test("redirects to /terms or /login when profile fails auth or terms gates", async () => {
@@ -83,19 +76,15 @@ test("redirects to /terms or /login when profile fails auth or terms gates", asy
     () => Promise.resolve(json(403, { code: "terms_required", terms_status: "not_accepted" })),
     { onTermsRequired: onTerms },
   );
-  await waitFor(() => {
-    expect(onTerms).toHaveBeenCalledWith("not_accepted");
-    expect(window.location.pathname).toBe("/terms");
-  });
+  await waitFor(() => expect(window.location.pathname).toBe("/terms"));
+  expect(onTerms).toHaveBeenCalledWith("not_accepted");
 
   const onOut = vi.fn();
   const { storage } = renderProfile(() => Promise.resolve(json(401, { code: "unauthenticated" })), {
     onLoggedOut: onOut,
   });
-  await waitFor(() => {
-    expect(onOut).toHaveBeenCalled();
-    expect(storage.get()).toBeNull();
-    expect(window.location.pathname).toBe("/login");
-  });
+  await waitFor(() => expect(window.location.pathname).toBe("/login"));
+  expect(onOut).toHaveBeenCalled();
+  expect(storage.get()).toBeNull();
   window.history.replaceState(null, "", "/");
 });
