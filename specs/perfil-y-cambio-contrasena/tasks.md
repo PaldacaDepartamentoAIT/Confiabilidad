@@ -1,9 +1,10 @@
 # Tareas: perfil-y-cambio-contrasena
 Estado: aprobado
 
-- [ ] T-001 Servicio de consulta y edición parcial del perfil
+- [x] T-001 Servicio de consulta y edición parcial del perfil
   RF: RF-001, RF-002, RF-005 | Depende de: — | Archivos: 2
   Hecho cuando: `pytest apps/accounts/tests/test_profile_service.py -k profile` pasa verificando lectura, edición parcial y completa, normalización, conservación y rechazo de `"ZZ"`, historial `HistoricalRecords` y emisión de `profile_edited` solo ante cambios reales.
+  Decisiones: usar centinela `_Unset` para distinguir campos omitidos en actualización parcial y delegar la validación/normalización/historial en `User.save(update_fields=...)` únicamente cuando al menos un campo normalizado cambia respecto al valor guardado (pendiente de ejecutar `pytest` y `mypy` en entorno con PostgreSQL/venv completo). — Motivo: reutiliza las reglas de `usuario-personalizado` y evita entradas vacías en `HistoricalRecords` y auditoría. — Confianza: [Probable] (lógica revisada contra `models.py`, sin ejecución local de `pytest`). — Cómo revertirla: reemplazar `profile.update_profile` y `test_profile_service.py`.
 
 - [ ] T-002 Validación estricta del cuerpo de perfil y mensajes multiidioma
   RF: RF-003, RF-004, RF-013 | Depende de: T-001 | Archivos: 3
