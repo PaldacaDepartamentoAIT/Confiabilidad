@@ -44,28 +44,29 @@ class Command(BaseCommand):
             self._simulate_failure(task=options["task"], wait=float(options["wait"]))
 
     def _status(self, *, open_only: bool) -> None:
+        self.stdout.write("CURRENT STATUS")
         statuses = {row.task_name: row for row in MaintenanceTaskStatus.objects.all()}
         for name in TASK_PATHS:
             row = statuses.get(name)
             if row is None:
-                self.stdout.write(f"{name}: no executions recorded")
+                self.stdout.write(f"  {name}: no executions recorded")
             else:
                 self.stdout.write(
-                    f"{name}: status={row.status} deleted={row.deleted_count} "
+                    f"  {name}: status={row.status} deleted={row.deleted_count} "
                     f"finished_at={row.finished_at.isoformat()} error={row.error_summary or '-'}"
                 )
+        self.stdout.write("LATEST ALERTS")
         alerts = MaintenanceAlert.objects.all()
         if open_only:
             alerts = alerts.filter(resolved_at__isnull=True)
-        alert_list = list(alerts)
-        if not alert_list:
-            self.stdout.write("alerts: none")
+        if not alerts:
+            self.stdout.write("  none")
             return
-        for alert in alert_list:
+        for alert in alerts:
             state = "open" if alert.is_open else "resolved"
             resolved = alert.resolved_at.isoformat() if alert.resolved_at else "-"
             self.stdout.write(
-                f"alert[{alert.pk}] {alert.task_name} state={state} "
+                f"  alert[{alert.pk}] {alert.task_name} state={state} "
                 f"created={alert.created_at.isoformat()} resolved={resolved} "
                 f"error={alert.error_summary}"
             )

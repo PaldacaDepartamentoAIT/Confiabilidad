@@ -19,9 +19,10 @@ def test_status_reports_unexecuted_tasks_then_statuses_and_alerts() -> None:
     empty_out = StringIO()
     call_command("maintenance_tasks", "status", stdout=empty_out)
     text = empty_out.getvalue()
+    assert "CURRENT STATUS" in text
     for name in MaintenanceTaskName:
-        assert f"{name}: no executions recorded" in text
-    assert "alerts: none" in text
+        assert f"  {name}: no executions recorded" in text
+    assert "LATEST ALERTS\n  none" in text
     now = timezone.now()
     MaintenanceTaskStatus.objects.create(
         task_name=MaintenanceTaskName.PURGE_SECURITY_EVENTS,
@@ -41,8 +42,7 @@ def test_status_reports_unexecuted_tasks_then_statuses_and_alerts() -> None:
     open_out = StringIO()
     call_command("maintenance_tasks", "status", "--open-only", stdout=open_out)
     open_text = open_out.getvalue()
-    assert "status=failure" in open_text
-    assert "RuntimeError: bad" in open_text
+    assert "status=failure" in open_text and "RuntimeError: bad" in open_text
     assert "old error" not in open_text
 
 

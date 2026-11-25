@@ -1,7 +1,7 @@
 # Entrega E-03 · Panel de administración, comando CLI y verificación E2E
 
 Rama: `feat/tareas-purga-y-alertas-admin-y-cli` · PR: pendiente ·
-Líneas de código y tests: 398 (límite: 400).
+Líneas de código y tests: 399 (límite: 400).
 
 ## Qué se hizo
 - **Panel de administración interno de solo lectura** (`RF-008`): se registró en `backend/apps/core/admin.py` el visor de `MaintenanceTaskStatus` (filtrado por tarea y resultado) y de `MaintenanceAlert` (con `AlertStateFilter` para filtrar abiertas o resueltas), deshabilitando alta, edición y borrado para preservar la integridad operativa.
