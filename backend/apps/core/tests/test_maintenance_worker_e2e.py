@@ -48,10 +48,10 @@ def _seed(name: MaintenanceTaskName) -> Callable[[], bool]:
             last_seen_at=timezone.now() - timedelta(days=15),
         )
         return UserSession.objects.filter(pk=row.pk).exists
-    row = SecurityEvent.objects.create(
+    event = SecurityEvent.objects.create(
         event_type=EventType.LOGIN, success=True, created_at=timezone.now() - timedelta(days=400)
     )
-    return SecurityEvent.objects.filter(pk=row.pk).exists
+    return SecurityEvent.objects.filter(pk=event.pk).exists
 
 
 def _state(name: MaintenanceTaskName) -> tuple[str, int]:
