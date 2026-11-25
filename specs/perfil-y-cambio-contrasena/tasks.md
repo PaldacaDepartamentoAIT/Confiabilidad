@@ -60,9 +60,10 @@ Estado: aprobado
   Excepción: los tres archivos de idioma (`es.ts`, `pt-BR.ts`, `en.ts`) deben actualizarse juntos por `i18n/keys.test.ts`, además de extraer `forms/countries.ts` desde `RegisterPage.tsx`.
   Decisiones: ubicar las claves de perfil dentro de `auth.*` en los catálogos de idioma para conservar los grupos raíz verificados por `locales.test.ts`, y añadir ya las claves `validation.{emailImmutable, unknownField, noProfileFields}` para que `serverErrors.ts` en `T-010` compile en todo momento (pendiente de ejecutar tests/typecheck de frontend en entorno con dependencias instaladas). — Motivo: evita romper `locales.test.ts` y mantiene `ValidationKey` sincronizado. — Confianza: [Cierto]. — Cómo revertirla: revertir el commit de `T-011`.
 
-- [ ] T-012 Bloque de información personal en `ProfilePage`
+- [x] T-012 Bloque de información personal en `ProfilePage`
   RF: RF-001, RF-002, RF-003, RF-004, RF-011, RF-012, RF-013 | Depende de: T-010, T-011 | Archivos: 3
   Hecho cuando: `pnpm --filter frontend test src/auth/ProfilePage.test.tsx` pasa verificando correo en solo lectura, estado `"ZZ"` como sin país asignado conservable al editar nombre/fecha, validación local en blur y submit, foco al primer error, mensajes por campo/confirmación, redirecciones y accesibilidad.
+  Decisiones: aislar `PersonalInfoBlock` dentro de `ProfilePage.tsx` manteniendo `email` en solo lectura y evitando enviar `country` cuando permanece en `"ZZ"` (pendiente de ejecutar Vitest y `tsc` en entorno con dependencias instaladas). — Motivo: respeta `C-02` sin perder la selección de país nuevo ni reordenar campos al fallar. — Confianza: [Cierto]. — Cómo revertirla: revertir el commit de `T-012`.
 
 - [ ] T-013 Conexión de `/profile` en `App` y menú lateral privado compartido
   RF: RF-001, RF-012 | Depende de: T-012 | Archivos: 5
