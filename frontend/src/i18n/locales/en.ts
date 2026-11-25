@@ -78,6 +78,9 @@ export const en = {
     tooManyLoginAttempts: "Too many failed login attempts. Wait a few minutes and try again.",
     alreadyAuthenticated: "You already have an active session.",
     cannotRevokeCurrentSession: "You cannot revoke your current session with this action.",
+    emailImmutable: "The email address cannot be changed.",
+    unknownField: "This field is not allowed.",
+    noProfileFields: "Provide at least one profile field to update.",
     retryIn: "Too many attempts. Try again in {{seconds}} s.",
     networkError: "Could not connect. Check your connection and try again.",
     unknownError: "Something did not work. Check the data and try again.",
@@ -155,6 +158,12 @@ export const en = {
     selectSession: "Select session {{agent}}",
     selectedOne: "1 selected",
     selectedMany: "{{count}} selected",
+    profileNav: "Profile",
+    profileTitle: "My profile",
+    profileInfoTitle: "Personal information",
+    profileCountryUnassigned: "No country assigned",
+    profileSave: "Save changes",
+    profileSaved: "Your personal information has been updated.",
   },
 };
 

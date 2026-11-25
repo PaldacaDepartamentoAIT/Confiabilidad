@@ -53,10 +53,11 @@ Estado: aprobado
   Hecho cuando: `pnpm --filter frontend test src/registration/serverErrors.test.ts` pasa verificando `patch` en `ApiClient`, `getProfile`/`updateProfile` y la traducción de `email_immutable`, `unknown_field` y `no_profile_fields`.
   Excepción: añade `patch` en `client.ts` junto al módulo consumidor `api/profile.ts`, `serverErrors.ts` y `serverErrors.test.ts`.
 
-- [ ] T-011 Helper compartido de países y traducciones de perfil en tres idiomas
+- [x] T-011 Helper compartido de países y traducciones de perfil en tres idiomas
   RF: RF-012, RF-013 | Depende de: — | Archivos: 5
   Hecho cuando: `pnpm --filter frontend test src/i18n/keys.test.ts src/i18n/locales/locales.test.ts src/registration/RegisterPage.test.tsx` pasa verificando las claves nuevas en `es`, `pt-BR` y `en` y el catálogo localizado compartido de países.
   Excepción: los tres archivos de idioma (`es.ts`, `pt-BR.ts`, `en.ts`) deben actualizarse juntos por `i18n/keys.test.ts`, además de extraer `forms/countries.ts` desde `RegisterPage.tsx`.
+  Decisiones: ubicar las claves de perfil dentro de `auth.*` en los catálogos de idioma para conservar los grupos raíz verificados por `locales.test.ts`, y añadir ya las claves `validation.{emailImmutable, unknownField, noProfileFields}` para que `serverErrors.ts` en `T-010` compile en todo momento (pendiente de ejecutar tests/typecheck de frontend en entorno con dependencias instaladas). — Motivo: evita romper `locales.test.ts` y mantiene `ValidationKey` sincronizado. — Confianza: [Cierto]. — Cómo revertirla: revertir el commit de `T-011`.
 
 - [ ] T-012 Bloque de información personal en `ProfilePage`
   RF: RF-001, RF-002, RF-003, RF-004, RF-011, RF-012, RF-013 | Depende de: T-010, T-011 | Archivos: 3
