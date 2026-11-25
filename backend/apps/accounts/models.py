@@ -95,6 +95,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     history = HistoricalRecords(excluded_fields=sorted(HISTORY_EXCLUDED_FIELDS))
     # simple-history omite el registro si este atributo existe en la instancia.
     skip_history_when_saving: bool
+    # Permite conservar la sesión actual cuando el cambio de contraseña proviene del perfil.
+    skip_password_session_revocation: bool
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS: ClassVar[list[str]] = ["name", "birthdate", "country"]
@@ -153,7 +155,9 @@ class User(AbstractBaseUser, PermissionsMixin):
         was_active, previous_password = previous
         deactivated = was_active and not self.is_active
         password_changed = previous_password != self.password
-        if deactivated or password_changed:
+        if deactivated or (
+            password_changed and not getattr(self, "skip_password_session_revocation", False)
+        ):
             from apps.accounts import sessions
 
             # Al cambiar la contraseña con cuenta activa, vaciamos el contenido de la sesión sin
