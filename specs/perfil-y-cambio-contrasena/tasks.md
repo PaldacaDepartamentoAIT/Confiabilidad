@@ -116,7 +116,7 @@ Rama de integración: `feat/perfil-y-cambio-contrasena` (los PR de las entregas 
   Cómo probarlo: ejecutar `pytest apps/accounts/tests/test_profile_api.py apps/accounts/tests/test_profile_service.py`, iniciar dos sesiones con `curl` (`/api/app/v1/auth/login`), llamar a `POST /api/app/v1/auth/password/change` con una de ellas y comprobar que la sesión actual sigue devolviendo `200` en `/api/app/v1/auth/profile` mientras la otra devuelve `401`, además de probar `python manage.py profile change-password`.
 
 - E-03 Pantalla `/profile`, *skeletons* con *fade*, usuario persistente y deduplicación de `GET`
-  Tareas: T-010, T-011, T-012, T-013, T-013b | Líneas reales: 765 | Rama: `feat/perfil-y-cambio-contrasena-ui-perfil`
+  Tareas: T-010, T-011, T-012, T-013, T-013b | Líneas reales: 780 | Rama: `feat/perfil-y-cambio-contrasena-ui-perfil`
   Excepción: el usuario autorizó explícitamente superar 500 líneas en este PR («continua en este pr») para probar en una sola entrega los *skeletons* con *fade out / fade in* tanto en `/profile` como en el panel principal (`HomePage`), el botón de usuario persistente en contexto (`UserProvider`) y la deduplicación de `GET` (`client.ts`), manteniendo fuera la edición del perfil (`E-03b`).
   Cómo probarlo: ejecutar `pnpm --filter frontend test`, recargar `/` observando los *skeletons* en gris claro de «Sesión iniciada como…» y la tabla de sesiones activas con *fade out / fade in*, pulsar «Perfil» en el menú lateral y comprobar que el botón de usuario no desaparece durante la carga de `/profile` y que en Network solo sale una petición `GET` por endpoint.
 
