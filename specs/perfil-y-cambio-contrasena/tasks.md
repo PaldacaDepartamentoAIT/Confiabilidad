@@ -6,9 +6,10 @@ Estado: aprobado
   Hecho cuando: `pytest apps/accounts/tests/test_profile_service.py -k profile` pasa verificando lectura, edición parcial y completa, normalización, conservación y rechazo de `"ZZ"`, historial `HistoricalRecords` y emisión de `profile_edited` solo ante cambios reales.
   Decisiones: usar centinela `_Unset` para distinguir campos omitidos en actualización parcial y delegar la validación/normalización/historial en `User.save(update_fields=...)` únicamente cuando al menos un campo normalizado cambia respecto al valor guardado (pendiente de ejecutar `pytest` y `mypy` en entorno con PostgreSQL/venv completo). — Motivo: reutiliza las reglas de `usuario-personalizado` y evita entradas vacías en `HistoricalRecords` y auditoría. — Confianza: [Probable] (lógica revisada contra `models.py`, sin ejecución local de `pytest`). — Cómo revertirla: reemplazar `profile.update_profile` y `test_profile_service.py`.
 
-- [ ] T-002 Validación estricta del cuerpo de perfil y mensajes multiidioma
+- [x] T-002 Validación estricta del cuerpo de perfil y mensajes multiidioma
   RF: RF-003, RF-004, RF-013 | Depende de: T-001 | Archivos: 3
   Hecho cuando: `pytest apps/accounts/tests/test_profile_api.py -k serializer` pasa verificando el rechazo de `email` (`email_immutable`), petición vacía (`no_profile_fields`), claves desconocidas (`unknown_field`) y reglas de campos en `es`, `pt-BR` y `en`.
+  Decisiones: permitir la clave `language` en el cuerpo sin marcarla como `unknown_field` para mantener compatibilidad con `_body_language` del cliente API, y emitir `no_profile_fields` únicamente cuando no hay campos editables ni otros errores de clave (`email`/`unknown_field`) (pendiente de ejecutar `pytest` y `mypy` en entorno completo). — Motivo: evita ruido de errores redundantes cuando el usuario intenta enviar `email`. — Confianza: [Cierto]. — Cómo revertirla: ajustar `ProfileUpdateSerializer.to_internal_value`.
 
 - [ ] T-003 Endpoints `GET` y `PATCH` de `auth/profile` para web y escritorio
   RF: RF-001, RF-002, RF-003, RF-004, RF-011, RF-013 | Depende de: T-002 | Archivos: 3
