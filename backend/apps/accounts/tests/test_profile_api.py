@@ -7,7 +7,7 @@ import pytest
 from django.test import Client
 
 from apps.accounts.api import messages
-from apps.accounts.api.profile_serializers import ProfileUpdateSerializer
+from apps.accounts.api.profile_serializers import PasswordChangeSerializer, ProfileUpdateSerializer
 from apps.accounts.api.views import _render
 from apps.accounts.models import User
 from apps.accounts.tests.factories import DEFAULT_PASSWORD, make_user
@@ -193,3 +193,24 @@ def test_profile_api_enforces_terms_and_active_account(kind: str) -> None:
 
     User.objects.filter(pk=user.pk).update(is_active=False)
     assert client.get(f"/api/{kind}/v1/auth/profile", headers=headers).status_code == 401
+
+
+@pytest.mark.parametrize("language", locales.SUPPORTED)
+def test_password_serializer_messages_and_forbidden_chars(language: str) -> None:
+    assert messages.error_text("current_password_incorrect", language).strip()
+
+    missing = PasswordChangeSerializer(data={})
+    assert not missing.is_valid()
+    assert _render(missing.errors, language)["current_password"][0]["code"] == "required"
+
+    surrogate = PasswordChangeSerializer(
+        data={"current_password": "ok", "new_password": "bad\ud800"}
+    )
+    assert not surrogate.is_valid()
+    assert (
+        _render(surrogate.errors, language)["new_password"][0]["code"]
+        == "surrogate_characters_not_allowed"
+    )
+
+    partial = PasswordChangeSerializer(data={"current_password": "wrong"})
+    assert partial.is_valid(), partial.errors

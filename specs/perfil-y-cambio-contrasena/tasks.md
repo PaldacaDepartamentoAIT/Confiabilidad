@@ -33,9 +33,10 @@ Estado: aprobado
   Excepción: coordina `_skip_password_session_revocation` en `models.py`, actualización/cierre selectivo en `sessions.py` y transacción en `profile.py` junto con `test_profile_service.py` para respetar `RF-010` de `inicio-cierre-sesion`.
   Decisiones: en `sessions.refresh_current_session`, actualizar explícitamente `session[HASH_SESSION_KEY]` y llamar a `session.cycle_key()` + `session.save()` en navegador en lugar de `django.contrib.auth.update_session_auth_hash` (y actualizar `HASH_SESSION_KEY` sin rotar `raw_key` en `app`/CLI) (pendiente de ejecutar `pytest` y `mypy` en entorno completo). — Motivo: DRF con `authentication_classes=[]` deja `request.user` como `AnonymousUser`, lo que impediría a `update_session_auth_hash` actualizar la huella, mientras que mantener `raw_key` en `app` evita invalidar `X-Session-Token` en escritorio. — Confianza: [Cierto]. — Cómo revertirla: reemplazar `refresh_current_session` y `skip_password_session_revocation`.
 
-- [ ] T-007 Serializador de cambio de contraseña y mensajes multiidioma
+- [x] T-007 Serializador de cambio de contraseña y mensajes multiidioma
   RF: RF-007, RF-013 | Depende de: T-006 | Archivos: 3
   Hecho cuando: `pytest apps/accounts/tests/test_profile_api.py -k password_serializer` pasa verificando presencia, caracteres prohibidos y textos `current_password_incorrect` en `es`, `pt-BR` y `en`.
+  Decisiones: permitir `new_password` ausente, `null` o vacía en `PasswordChangeSerializer` para que la vista pueda evaluar primero la contraseña actual y contabilizar el fallo de `RF-008` aunque falte la nueva (`RF-007`) (pendiente de ejecutar `pytest` y `mypy` en entorno completo). — Motivo: garantiza que enviar solo `current_password` errónea cuente como intento fallido antes de devolver `required`/`blank` en `new_password`. — Confianza: [Cierto]. — Cómo revertirla: exigir `new_password` directamente en `PasswordChangeSerializer`.
 
 - [ ] T-008 Endpoints `POST` de `auth/password/change` para web y escritorio
   RF: RF-006, RF-007, RF-008, RF-009, RF-011, RF-013 | Depende de: T-007 | Archivos: 3
