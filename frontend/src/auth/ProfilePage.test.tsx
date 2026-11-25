@@ -38,19 +38,32 @@ function renderProfile(
   };
 }
 
-test("loads personal data in read-only fields, displays ZZ placeholder and passes a11y", async () => {
-  renderProfile(() =>
-    Promise.resolve(
-      json(200, {
-        email: "ana@empresa.com",
-        name: "Ana Real",
-        birthdate: "1991-03-04",
-        country: "ZZ",
+test("renders skeleton placeholders while loading, shows ZZ placeholder and passes a11y", async () => {
+  let resolveFetch!: (res: Response) => void;
+  const { container } = renderProfile(
+    () =>
+      new Promise<Response>((resolve) => {
+        resolveFetch = resolve;
       }),
-    ),
+  );
+
+  const section = screen.getByRole("region", { name: "Información personal" });
+  expect(section).toHaveAttribute("aria-busy", "true");
+  expect(screen.getByText("Correo electrónico")).toBeInTheDocument();
+  expect(container.querySelectorAll(".skeleton")).toHaveLength(4);
+
+  resolveFetch(
+    json(200, {
+      email: "ana@empresa.com",
+      name: "Ana Real",
+      birthdate: "1991-03-04",
+      country: "ZZ",
+    }),
   );
 
   const emailField = await screen.findByLabelText("Correo electrónico");
+  expect(section).toHaveAttribute("aria-busy", "false");
+  expect(container.querySelectorAll(".skeleton")).toHaveLength(0);
   expect(emailField).toHaveValue("ana@empresa.com");
   expect(emailField).toHaveAttribute("readonly");
   expect(screen.getByLabelText("Nombre completo")).toHaveValue("Ana Real");

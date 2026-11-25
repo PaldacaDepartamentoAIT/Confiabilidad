@@ -25,6 +25,26 @@ type ProfilePageProps = {
   onTermsRequired?: (termsStatus: TermsStatus) => void;
 };
 
+function ProfileField({
+  label,
+  value,
+  type = "text",
+  loading,
+}: {
+  label: string;
+  value: string;
+  type?: "text" | "date";
+  loading: boolean;
+}) {
+  if (!loading) return <TextField label={label} type={type} value={value} readOnly />;
+  return (
+    <div className="fld">
+      <span className="lbl">{label}</span>
+      <div className="skeleton profile-skeleton" aria-hidden="true" />
+    </div>
+  );
+}
+
 export function ProfilePage({
   client,
   session,
@@ -37,10 +57,12 @@ export function ProfilePage({
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loadError, setLoadError] = useState<ParseKeys | null>(null);
   const loggingOut = useRef(false);
+  const callbacksRef = useRef({ onLoggedOut, onTermsRequired });
+  callbacksRef.current = { onLoggedOut, onTermsRequired };
 
   useEffect(() => {
     const goTerms = (termsStatus: TermsStatus) => {
-      onTermsRequired?.(termsStatus);
+      callbacksRef.current.onTermsRequired?.(termsStatus);
       navigate("/terms");
     };
     if (session && session.terms_status !== "accepted") {
@@ -52,7 +74,7 @@ export function ProfilePage({
       if (!active) return;
       if (res.kind === "unauthenticated") {
         tokenStorage?.clear();
-        onLoggedOut?.();
+        callbacksRef.current.onLoggedOut?.();
         navigate("/login");
         return;
       }
@@ -69,7 +91,7 @@ export function ProfilePage({
     return () => {
       active = false;
     };
-  }, [client, onLoggedOut, onTermsRequired, session, tokenStorage]);
+  }, [client, session, tokenStorage]);
 
   async function handleLogout() {
     if (loggingOut.current) return;
@@ -85,6 +107,7 @@ export function ProfilePage({
       ? t("auth.profileCountryUnassigned")
       : (countryOptions([profile.country], i18n.language)[0]?.label ?? profile.country)
     : "";
+  const loading = profile === null;
 
   return (
     <AppLayout
@@ -96,23 +119,36 @@ export function ProfilePage({
       <div className="page-head">
         <h1>{t("auth.profileTitle")}</h1>
       </div>
-      {loadError && <FormMessage type="error" messageKey={loadError} />}
-      {profile && (
+      {loadError ? (
+        <FormMessage type="error" messageKey={loadError} />
+      ) : (
         <div className="profile-blocks">
-          <Block as="section" title={t("auth.profileInfoTitle")}>
+          <Block as="section" title={t("auth.profileInfoTitle")} aria-busy={loading}>
             <div className="profile-grid">
               <div className="full">
-                <TextField label={t("auth.emailLabel")} value={profile.email} readOnly />
+                <ProfileField
+                  label={t("auth.emailLabel")}
+                  value={profile?.email ?? ""}
+                  loading={loading}
+                />
               </div>
-              <TextField label={t("register.nameLabel")} value={profile.name} readOnly />
-              <TextField
+              <ProfileField
+                label={t("register.nameLabel")}
+                value={profile?.name ?? ""}
+                loading={loading}
+              />
+              <ProfileField
                 label={t("register.birthdateLabel")}
                 type="date"
-                value={profile.birthdate}
-                readOnly
+                value={profile?.birthdate ?? ""}
+                loading={loading}
               />
               <div className="full">
-                <TextField label={t("register.countryLabel")} value={countryLabel} readOnly />
+                <ProfileField
+                  label={t("register.countryLabel")}
+                  value={countryLabel}
+                  loading={loading}
+                />
               </div>
             </div>
           </Block>
