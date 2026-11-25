@@ -1,6 +1,6 @@
 # Entrega E-01b · Endpoints HTTP de consulta y edición de perfil (`GET`/`PATCH auth/profile`)
 
-Rama: `feat/perfil-y-cambio-contrasena-api-perfil-http` · PR: pendiente · Líneas de código y tests: 368 (límite: 400).
+Rama: `feat/perfil-y-cambio-contrasena-api-perfil-http` · PR: pendiente · Líneas de código y tests: 367 (límite: 400).
 
 ## Qué se hizo
 - En `backend/apps/accounts/api/profile_serializers.py` y `backend/apps/accounts/api/messages.py` se implementó `ProfileUpdateSerializer` (`RF-002`, `RF-003`, `RF-004`, `RF-013`):
