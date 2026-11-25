@@ -85,13 +85,16 @@ def test_update_profile_preserves_placeholder_zz_only_while_unchanged() -> None:
     user = make_user(name="Usuario sin nombre", birthdate=date(1900, 1, 1), country="ES")
     User.objects.filter(pk=user.pk).update(country="ZZ")
     user.refresh_from_db()
-    SecurityEvent.objects.all().delete()
+    before_events = SecurityEvent.objects.filter(
+        event_type=EventType.PROFILE_EDIT, success=True
+    ).count()
 
     updated = profile.update_profile(user, name="Nombre Real")
     assert updated.country == "ZZ"
     assert updated.name == "Nombre Real"
     assert (
-        SecurityEvent.objects.filter(event_type=EventType.PROFILE_EDIT, success=True).count() == 1
+        SecurityEvent.objects.filter(event_type=EventType.PROFILE_EDIT, success=True).count()
+        == before_events + 1
     )
 
     updated_country = profile.update_profile(user, country="es")
@@ -147,18 +150,28 @@ def test_cli_profile_show_and_edit() -> None:
         "cli@example.com",
         "--name",
         "Cli Updated",
+        "--birthdate",
+        "1992-07-08",
         "--country",
         "br",
         stdout=edit_out,
     )
     assert "name: Cli Updated" in edit_out.getvalue()
+    assert "birthdate: 1992-07-08" in edit_out.getvalue()
     assert "country: BR" in edit_out.getvalue()
     user.refresh_from_db()
     assert user.name == "Cli Updated"
+    assert user.birthdate == date(1992, 7, 8)
     assert user.country == "BR"
 
     with pytest.raises(CommandError):
         call_command("profile", "edit", "--email", "cli@example.com")
+
+    with pytest.raises(CommandError):
+        call_command("profile", "edit", "--email", "cli@example.com", "--country", "XX")
+
+    with pytest.raises(CommandError):
+        call_command("profile", "edit", "--email", "cli@example.com", "--birthdate", "not-a-date")
 
     with pytest.raises(CommandError):
         call_command("profile", "show", "--email", "missing@example.com")
