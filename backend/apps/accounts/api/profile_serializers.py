@@ -71,12 +71,12 @@ class ProfileUpdateSerializer(serializers.Serializer[dict[str, Any]]):
             parsed = cast(dict[str, Any], super().to_internal_value(editable_data))
         except serializers.ValidationError as error:
             detail = error.detail
-            merged: dict[str, Any] = (
-                {**detail, **extra_errors}
+            detail_map = (
+                {str(key): value for key, value in detail.items()}
                 if isinstance(detail, dict)
-                else {**extra_errors, "non_field_errors": detail}
+                else {"non_field_errors": detail}
             )
-            raise serializers.ValidationError(merged) from error
+            raise serializers.ValidationError({**detail_map, **extra_errors}) from error
 
         if extra_errors:
             raise serializers.ValidationError(extra_errors)
