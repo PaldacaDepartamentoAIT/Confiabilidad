@@ -190,7 +190,8 @@ Un solo color por prioridad en toda la aplicación.
   de alto y radio `6 px` en campos de formulario) para evitar saltos de diseño. Al llegar los datos,
   el skeleton hace un *fade out* (`0,16 s`) seguido de un *fade in* del contenido real (`0,2 s` con
   `0,1 s` de retardo) para que nunca aparezca de golpe. Los placeholders llevan `aria-hidden="true"`
-  y la región en carga marca `aria-busy="true"`.
+  y la región en carga marca `aria-busy="true"`. El botón de usuario del menú lateral conserva su
+  identidad en contexto durante la sesión para no desaparecer al navegar o recargar.
 
 ## Movimiento
 

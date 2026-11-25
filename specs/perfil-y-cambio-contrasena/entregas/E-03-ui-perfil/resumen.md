@@ -1,14 +1,14 @@
-# Entrega E-03 · Pantalla `/profile` de consulta y navegación lateral privada
+# Entrega E-03 · Pantalla `/profile`, *skeletons* con *fade*, usuario contextual y deduplicación de `GET`
 
-Rama: `feat/perfil-y-cambio-contrasena-ui-perfil` · Líneas de código y tests: 493 (límite con excepción justificada en `tasks.md`: 500).
+Rama: `feat/perfil-y-cambio-contrasena-ui-perfil` · Líneas de código y tests: 728 (excepción autorizada explícitamente por el usuario para unificar E-03 y los ajustes de carga del panel principal en el mismo PR).
 
 ## Qué se hizo
-- En `docs/identidad-visual.md` y `frontend/src/styles/base.css` se documentó e implementó el patrón visual de *placeholders* de carga (*skeleton*) en gris claro (`color-mix(in srgb, var(--grid) 55%, var(--bg))` con reflejo al `22%`) y transición suave (*fade out* de `0,16 s` del skeleton seguido de *fade in* de `0,2 s` del contenido real, respetando `prefers-reduced-motion`).
+- En `docs/identidad-visual.md` y `frontend/src/styles/base.css` se documentó e implementó el patrón visual de *placeholders* de carga (*skeleton*) en gris claro (`color-mix(in srgb, var(--grid) 55%, var(--bg))` con reflejo al `22%`), transición *fade out* (`0,16 s`) del skeleton y *fade in* (`0,2 s`) del contenido real (respetando `prefers-reduced-motion`) y conservación contextual de la identidad del usuario en la barra lateral.
 - En `frontend/src/api/client.ts`, `frontend/src/api/client.test.ts` y `frontend/src/api/profile.ts` (`T-010`, `RF-001`) se añadió `getProfile` sobre `GET /auth/profile` y la deduplicación de peticiones `GET` concurrentes idénticas en vuelo para evitar llamadas duplicadas en desarrollo (`StrictMode`).
 - En `frontend/src/forms/countries.ts`, `frontend/src/registration/RegisterPage.tsx` y `frontend/src/i18n/locales/{en,es,pt-BR}.ts` (`T-011`, `RF-012` y `RF-013`) se extrajo el catálogo localizado compartido de países y se incorporaron las traducciones de perfil y navegación en los tres idiomas.
 - En `frontend/src/auth/ProfilePage.tsx`, `frontend/src/auth/ProfilePage.css` y `frontend/src/auth/ProfilePage.test.tsx` (`T-012`, `RF-001`, `RF-011`…`RF-013`) se creó la pantalla `/profile` manteniendo siempre visible el bloque con *placeholders* *skeleton* de 36 px (`aria-busy="true"`) y transición de entrada al recibir los datos, mostrando los campos en solo lectura (incluyendo `"ZZ"` como «Sin país asignado»), redirecciones por sesión o términos pendientes y comprobación de accesibilidad con `axe-core`.
-- En `frontend/src/icons/index.ts`, `frontend/src/icons/icons.test.tsx`, `frontend/src/layouts/Sidebar.tsx`, `frontend/src/auth/privateNav.tsx`, `frontend/src/auth/HomePage.tsx`, `frontend/src/App.tsx` y `frontend/src/App.test.tsx` (`T-013`, `RF-001`, `RF-012`) se añadió el icono `IconUser`, navegación SPA en `SidebarItem`, barra lateral privada compartida entre `/` y `/profile` y la ruta `/profile` en el enrutador.
-- División de entrega: la extensión homóloga del *skeleton* al panel principal (`HomePage`, `T-013b`) pasa a `E-03b` y la edición parcial del perfil (`T-010b`, `T-012b`) pasa a `E-03c` para mantener cada PR dentro del límite de líneas.
+- En `frontend/src/icons/index.ts`, `frontend/src/icons/icons.test.tsx`, `frontend/src/layouts/Sidebar.tsx`, `frontend/src/components/Block.tsx`, `frontend/src/auth/UserProvider.tsx`, `frontend/src/auth/privateNav.tsx`, `frontend/src/auth/HomePage.tsx`, `frontend/src/auth/HomePage.test.tsx`, `frontend/src/App.tsx`, `frontend/src/App.test.tsx` y `frontend/src/setupTests.ts` (`T-013` y `T-013b`, `RF-001`, `RF-012`) se añadió `IconUser`, navegación SPA compartida, soporte `loading`/`loadingContent` en `Block`, *skeletons* con *fade* en `HomePage` («Sesión iniciada como…» y tabla de sesiones activas) y contexto de usuario persistente con respaldo en `sessionStorage` para que el botón de usuario del menú lateral permanezca visible al navegar o recargar.
+- División de entrega: la edición parcial del perfil (`patch`, `updateProfile`, validaciones y actualización en vivo del menú lateral) queda en `E-03b` (`T-010b` y `T-012b`).
 
 ## Tareas
 El detalle de cada tarea, con su «Hecho cuando», está en [`tasks.md`](../../tasks.md).
@@ -19,6 +19,7 @@ El detalle de cada tarea, con su «Hecho cuando», está en [`tasks.md`](../../t
 | T-011 | Helper compartido de países y traducciones de perfil en tres idiomas | `5c1703a` |
 | T-012 | Vista de consulta y *skeletons* con *fade* en `ProfilePage` | `d38f772` / `8683bf5` / `775a465` |
 | T-013 | Conexión de `/profile` en `App` y menú lateral privado compartido | `6e7e78e` / `dee2a35` |
+| T-013b | *Skeletons* con *fade* en el panel principal (`HomePage`) y usuario contextual persistente | `ebbe6ab` |
 
 ## Cómo ejecutarlo y probarlo
 En tu máquina virtual o VPS con las dependencias de frontend instaladas, actualiza las ramas remotas y cambia a la rama de la entrega:

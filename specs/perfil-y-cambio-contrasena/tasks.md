@@ -81,10 +81,11 @@ Estado: aprobado
   Excepción: conecta la navegación privada compartida (`privateNav.tsx`, `icons/index.ts`, `Sidebar.tsx`, `HomePage.tsx`), el enrutador (`App.tsx`) y sus pruebas en `App.test.tsx`.
   Decisiones: añadir `onSelect` opcional a `SidebarItem` para interceptar clics primarios en SPA sin romper enlaces externos ni `role="link"`, y extraer `privateNavItems` y `privateSidebarUser` en `frontend/src/auth/privateNav.tsx` para compartir menú lateral y cierre de sesión entre `HomePage` y `ProfilePage` (pendiente de ejecutar Vitest y `tsc` en entorno con dependencias instaladas). — Motivo: evita duplicación entre vistas privadas y cumple `C-01`. — Confianza: [Cierto]. — Cómo revertirla: revertir `6e7e78e`.
 
-- [ ] T-013b Placeholders *skeleton* con *fade* en el panel principal (`HomePage`) y usuario persistente en contexto
-  RF: RF-012 | Depende de: T-013 | Archivos: 8
-  Hecho cuando: `pnpm --filter frontend test src/auth/HomePage.test.tsx src/auth/ProfilePage.test.tsx src/App.test.tsx` pasa verificando los placeholders *skeleton* con *fade out / fade in* para el subtítulo («Sesión iniciada como…») y la tabla de sesiones activas en `HomePage` (`Block.tsx`), y que el usuario (nombre/correo) se preserva en contexto (`App.tsx` / `privateNav.tsx`) para que el botón de usuario de la barra lateral no desaparezca al navegar ni al recargar.
-  Excepción: extiende `Block.tsx` (`loading` / `loadingContent`) junto con `base.css`, `HomePage.tsx`, `HomePage.test.tsx`, `ProfilePage.tsx`, `privateNav.tsx` y `App.tsx`.
+- [x] T-013b Placeholders *skeleton* con *fade* en el panel principal (`HomePage`) y usuario persistente en contexto
+  RF: RF-012 | Depende de: T-013 | Archivos: 9
+  Hecho cuando: `pnpm --filter frontend test src/auth/HomePage.test.tsx src/auth/ProfilePage.test.tsx src/App.test.tsx` pasa verificando los placeholders *skeleton* con *fade out / fade in* para el subtítulo («Sesión iniciada como…») y la tabla de sesiones activas en `HomePage` (`Block.tsx`), y que el usuario (nombre/correo) se preserva en contexto (`UserProvider.tsx` / `privateNav.tsx`) para que el botón de usuario de la barra lateral no desaparezca al navegar ni al recargar.
+  Excepción: extiende `Block.tsx` (`loading` / `loadingContent`) junto con `base.css`, `HomePage.tsx`, `HomePage.test.tsx`, `ProfilePage.tsx`, `UserProvider.tsx`, `privateNav.tsx`, `setupTests.ts` y `App.tsx`.
+  Decisiones: incorporar `loading` y `loadingContent` en `Block.tsx` para reutilizar `.skel-slot` sin reindentar `Table`, y aislar `UserProvider` en `UserProvider.tsx` manteniendo `usePrivateUser` y el respaldo en `sessionStorage` (`confiabilidad.user`, limpiado en `401`, cierre de sesión y `setupTests.ts`) en `privateNav.tsx` para evitar avisos de `react-refresh` (pendiente de ejecutar Vitest y `tsc` en entorno con dependencias instaladas). — Motivo: mantiene visible el botón de usuario entre pantallas y recargas y respeta las reglas de ESLint. — Confianza: [Cierto]. — Cómo revertirla: revertir `ebbe6ab`.
 
 - [ ] T-014 Cliente y traducciones para cambio de contraseña en `/profile`
   RF: RF-006, RF-007, RF-008, RF-012, RF-013 | Depende de: T-008, T-010 | Archivos: 5
@@ -114,16 +115,12 @@ Rama de integración: `feat/perfil-y-cambio-contrasena` (los PR de las entregas 
   Tareas: T-007, T-008, T-009 | Líneas reales: 394 | Rama: `feat/perfil-y-cambio-contrasena-api-password-http`
   Cómo probarlo: ejecutar `pytest apps/accounts/tests/test_profile_api.py apps/accounts/tests/test_profile_service.py`, iniciar dos sesiones con `curl` (`/api/app/v1/auth/login`), llamar a `POST /api/app/v1/auth/password/change` con una de ellas y comprobar que la sesión actual sigue devolviendo `200` en `/api/app/v1/auth/profile` mientras la otra devuelve `401`, además de probar `python manage.py profile change-password`.
 
-- E-03 Pantalla `/profile` para consultar datos personales, *skeletons* con *fade* y deduplicación de `GET`
-  Tareas: T-010, T-011, T-012, T-013 | Líneas reales: 493 | Rama: `feat/perfil-y-cambio-contrasena-ui-perfil`
-  Excepción: incorpora el patrón de *placeholders skeleton* en gris claro con transición *fade out / fade in* en `/profile` (`base.css`, `ProfilePage.{tsx,css,test.tsx}`) y la deduplicación de `GET` en vuelo (`client.ts`, `client.test.ts`); la adaptación homóloga del panel principal (`HomePage`) pasa a `E-03b` para no exceder `sdd.max_lineas_pr_excepcion`.
-  Cómo probarlo: ejecutar `pnpm --filter frontend test` y entrar con sesión iniciada en el navegador a `/`, pulsar «Perfil» en el menú lateral para abrir `/profile`, comprobar en Network que solo se lanza una petición `GET` por endpoint y verificar los placeholders en gris claro con *fade out / fade in* al cargar los datos reales.
+- E-03 Pantalla `/profile`, *skeletons* con *fade*, usuario persistente y deduplicación de `GET`
+  Tareas: T-010, T-011, T-012, T-013, T-013b | Líneas reales: 728 | Rama: `feat/perfil-y-cambio-contrasena-ui-perfil`
+  Excepción: el usuario autorizó explícitamente superar 500 líneas en este PR («continua en este pr») para probar en una sola entrega los *skeletons* con *fade out / fade in* tanto en `/profile` como en el panel principal (`HomePage`), el botón de usuario persistente en contexto (`UserProvider`) y la deduplicación de `GET` (`client.ts`), manteniendo fuera la edición del perfil (`E-03b`).
+  Cómo probarlo: ejecutar `pnpm --filter frontend test`, recargar `/` observando los *skeletons* en gris claro de «Sesión iniciada como…» y la tabla de sesiones activas con *fade out / fade in*, pulsar «Perfil» en el menú lateral y comprobar que el botón de usuario no desaparece durante la carga de `/profile` y que en Network solo sale una petición `GET` por endpoint.
 
-- E-03b Placeholders *skeleton* con *fade* en el panel principal y usuario contextual persistente
-  Tareas: T-013b | Líneas estimadas: 140 | Rama: `feat/perfil-y-cambio-contrasena-ui-panel-skeleton`
-  Cómo probarlo: ejecutar `pnpm --filter frontend test`, recargar `/` observando los *skeletons* de «Sesión iniciada como…» y tabla de sesiones activas con *fade out / fade in*, navegar a `/profile` y volver a `/` comprobando que el botón de usuario del menú lateral no desaparece y no se vuelve a pedir `session`.
-
-- E-03c Edición parcial de datos personales en `/profile`
+- E-03b Edición parcial de datos personales en `/profile`
   Tareas: T-010b, T-012b | Líneas estimadas: 320 | Rama: `feat/perfil-y-cambio-contrasena-ui-perfil-edicion`
   Cómo probarlo: ejecutar `pnpm --filter frontend test`, abrir `/profile` con sesión iniciada y editar nombre, fecha o país comprobando validación local/remota, conservación de `"ZZ"` mientras no se elija país y actualización inmediata del nombre en el menú lateral.
 
