@@ -48,10 +48,10 @@ Estado: aprobado
   Hecho cuando: `pytest apps/accounts/tests/test_profile_service.py -k cli_password` pasa verificando `manage.py profile change-password` con entrada interactiva o argumentos y conservación opcional de `--keep-session-key`.
   Decisiones: solicitar `--current-password` y `--new-password` sin eco con `getpass` cuando se omiten y aceptar `--keep-session-key` opcional para verificar desde CLI tanto el cierre total como la conservación de la sesión indicada (pendiente de ejecutar `pytest` y `mypy` en entorno completo). — Motivo: coherencia con `password_reset.py` y cobertura completa de `RF-015`. — Confianza: [Cierto]. — Cómo revertirla: eliminar `_change_password` de `management/commands/profile.py` y su test.
 
-- [x] T-010 Cliente HTTP de consulta de perfil (`getProfile` en `api/profile.ts`)
-  RF: RF-001 | Depende de: T-003 | Archivos: 1
-  Hecho cuando: `pnpm --filter frontend typecheck` y las pruebas de perfil verifican `getProfile` contra `/auth/profile`.
-  Decisiones: dividir el alcance cliente de perfil dejando `getProfile` en `E-03` y aplazando `client.patch`, `updateProfile` y los códigos de edición en `serverErrors.ts` a `T-010b` (`E-03b`) para mantener la entrega bajo 400 líneas y sin código sin usar (pendiente de ejecutar Vitest y `tsc` en entorno con dependencias instaladas). — Motivo: evita que `E-03` supere `sdd.max_lineas_pr`. — Confianza: [Cierto]. — Cómo revertirla: revertir `0801f25`.
+- [x] T-010 Cliente HTTP de consulta de perfil (`getProfile`) y deduplicación de `GET` en vuelo
+  RF: RF-001 | Depende de: T-003 | Archivos: 3
+  Hecho cuando: `pnpm --filter frontend test src/api/client.test.ts` y `pnpm --filter frontend typecheck` verifican `getProfile` contra `/auth/profile` y la compartición de `GET` concurrentes en `client.ts`.
+  Decisiones: dividir el alcance cliente de perfil dejando `getProfile` + deduplicación de `GET` concurrentes (`inflight` por URL y token en `client.ts`) en `E-03`, y aplazar `patch`, `updateProfile` y códigos de edición en `serverErrors.ts` a `T-010b` (pendiente de ejecutar Vitest y `tsc` en entorno con dependencias instaladas). — Motivo: evita peticiones duplicadas bajo `<StrictMode>` detrás del túnel SSH/VPS y mantiene `E-03` bajo 500 líneas. — Confianza: [Cierto]. — Cómo revertirla: revertir `775a465` / `0801f25`.
 
 - [ ] T-010b Cliente HTTP `patch`, `updateProfile` y mapeo de errores de edición de perfil
   RF: RF-002, RF-003, RF-004, RF-013 | Depende de: T-010 | Archivos: 6
@@ -81,6 +81,11 @@ Estado: aprobado
   Excepción: conecta la navegación privada compartida (`privateNav.tsx`, `icons/index.ts`, `Sidebar.tsx`, `HomePage.tsx`), el enrutador (`App.tsx`) y sus pruebas en `App.test.tsx`.
   Decisiones: añadir `onSelect` opcional a `SidebarItem` para interceptar clics primarios en SPA sin romper enlaces externos ni `role="link"`, y extraer `privateNavItems` y `privateSidebarUser` en `frontend/src/auth/privateNav.tsx` para compartir menú lateral y cierre de sesión entre `HomePage` y `ProfilePage` (pendiente de ejecutar Vitest y `tsc` en entorno con dependencias instaladas). — Motivo: evita duplicación entre vistas privadas y cumple `C-01`. — Confianza: [Cierto]. — Cómo revertirla: revertir `6e7e78e`.
 
+- [ ] T-013b Placeholders *skeleton* con *fade* en el panel principal (`HomePage`) y conservación de `session`
+  RF: RF-012 | Depende de: T-013 | Archivos: 6
+  Hecho cuando: `pnpm --filter frontend test src/auth/HomePage.test.tsx src/App.test.tsx` pasa verificando los placeholders *skeleton* con *fade out / fade in* para el subtítulo de sesión y el bloque de sesiones activas en `HomePage` (`Block.tsx`), así como la conservación de `session` hacia `App.tsx` para no re-pedirla al volver desde `/profile`.
+  Excepción: extiende `Block.tsx` (`loading` / `loadingContent`) junto con `base.css`, `HomePage.tsx`, `HomePage.test.tsx` y `App.tsx`.
+
 - [ ] T-014 Cliente y traducciones para cambio de contraseña en `/profile`
   RF: RF-006, RF-007, RF-008, RF-012, RF-013 | Depende de: T-008, T-010 | Archivos: 5
   Hecho cuando: `pnpm --filter frontend test src/i18n/keys.test.ts src/registration/serverErrors.test.ts` pasa verificando `changePassword` en `api/profile.ts`, el mapeo de `current_password_incorrect` y las claves en `es`, `pt-BR` y `en`.
@@ -109,12 +114,16 @@ Rama de integración: `feat/perfil-y-cambio-contrasena` (los PR de las entregas 
   Tareas: T-007, T-008, T-009 | Líneas reales: 394 | Rama: `feat/perfil-y-cambio-contrasena-api-password-http`
   Cómo probarlo: ejecutar `pytest apps/accounts/tests/test_profile_api.py apps/accounts/tests/test_profile_service.py`, iniciar dos sesiones con `curl` (`/api/app/v1/auth/login`), llamar a `POST /api/app/v1/auth/password/change` con una de ellas y comprobar que la sesión actual sigue devolviendo `200` en `/api/app/v1/auth/profile` mientras la otra devuelve `401`, además de probar `python manage.py profile change-password`.
 
-- E-03 Pantalla `/profile` para consultar datos personales y navegación lateral en web y escritorio
-  Tareas: T-010, T-011, T-012, T-013 | Líneas reales: 465 | Rama: `feat/perfil-y-cambio-contrasena-ui-perfil`
-  Excepción: estaba en 396 líneas y el usuario pidió incorporar el patrón visual de placeholders *skeleton* de carga directamente en `/profile` (`+69` líneas entre `.skeleton` en `base.css`, `ProfilePage.{tsx,css}` y sus pruebas); dividirlo dejaría la pantalla recién entregada sin el estado de carga solicitado o duplicaría la vista.
-  Cómo probarlo: ejecutar `pnpm --filter frontend test` y entrar con sesión iniciada en el navegador a `/`, pulsar «Perfil» en el menú lateral para abrir `/profile` y verificar los placeholders grises animados durante la carga y luego correo, nombre, fecha de nacimiento y país localizado (o «Sin país asignado» si es `"ZZ"`).
+- E-03 Pantalla `/profile` para consultar datos personales, *skeletons* con *fade* y deduplicación de `GET`
+  Tareas: T-010, T-011, T-012, T-013 | Líneas reales: 493 | Rama: `feat/perfil-y-cambio-contrasena-ui-perfil`
+  Excepción: incorpora el patrón de *placeholders skeleton* en gris claro con transición *fade out / fade in* en `/profile` (`base.css`, `ProfilePage.{tsx,css,test.tsx}`) y la deduplicación de `GET` en vuelo (`client.ts`, `client.test.ts`); la adaptación homóloga del panel principal (`HomePage`) pasa a `E-03b` para no exceder `sdd.max_lineas_pr_excepcion`.
+  Cómo probarlo: ejecutar `pnpm --filter frontend test` y entrar con sesión iniciada en el navegador a `/`, pulsar «Perfil» en el menú lateral para abrir `/profile`, comprobar en Network que solo se lanza una petición `GET` por endpoint y verificar los placeholders en gris claro con *fade out / fade in* al cargar los datos reales.
 
-- E-03b Edición parcial de datos personales en `/profile`
+- E-03b Placeholders *skeleton* con *fade* en el panel principal y conservación de sesión
+  Tareas: T-013b | Líneas estimadas: 120 | Rama: `feat/perfil-y-cambio-contrasena-ui-panel-skeleton`
+  Cómo probarlo: ejecutar `pnpm --filter frontend test`, recargar `/` observando los *skeletons* de subtítulo y tabla de sesiones con *fade out / fade in*, navegar a `/profile` y volver a `/` comprobando que no se vuelve a pedir `session`.
+
+- E-03c Edición parcial de datos personales en `/profile`
   Tareas: T-010b, T-012b | Líneas estimadas: 320 | Rama: `feat/perfil-y-cambio-contrasena-ui-perfil-edicion`
   Cómo probarlo: ejecutar `pnpm --filter frontend test`, abrir `/profile` con sesión iniciada y editar nombre, fecha o país comprobando validación local/remota, conservación de `"ZZ"` mientras no se elija país y actualización inmediata del nombre en el menú lateral.
 
