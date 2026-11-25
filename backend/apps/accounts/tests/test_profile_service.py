@@ -2,14 +2,18 @@ from datetime import date
 from io import StringIO
 
 import pytest
-from django.core.exceptions import ValidationError
+from django.contrib.auth import HASH_SESSION_KEY, SESSION_KEY
+from django.core.cache import cache
+from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.management import call_command
 from django.core.management.base import CommandError
+from django.test import override_settings
 
-from apps.accounts import profile
-from apps.accounts.models import User
+from apps.accounts import conf, profile, sessions, throttling
+from apps.accounts.models import User, UserSession
 from apps.accounts.tests.factories import make_user
 from apps.audit.models import EventType, SecurityEvent
+from apps.emails.models import OutboundEmail
 
 pytestmark = pytest.mark.django_db
 
@@ -175,3 +179,159 @@ def test_cli_profile_show_and_edit() -> None:
 
     with pytest.raises(CommandError):
         call_command("profile", "show", "--email", "missing@example.com")
+
+
+def test_password_change_throttle_defaults_settings_and_clear() -> None:
+    cache.clear()
+    assert conf.password_change_max_failed_attempts() == 5
+    assert conf.password_change_attempt_window().total_seconds() == 300
+    assert conf.password_change_lockout_duration().total_seconds() == 300
+
+    base = 1000.0
+    for offset in range(4):
+        verdict = throttling.record_password_change_failure(42, now=base + offset)
+        assert verdict.allowed
+    assert throttling.check_password_change(42, now=base + 5).allowed
+
+    armed = throttling.record_password_change_failure(42, now=base + 10)
+    assert not armed.allowed and armed.retry_after == 300
+    blocked = throttling.check_password_change(42, now=base + 20)
+    assert not blocked.allowed and blocked.retry_after == 290
+    assert throttling.check_password_change(42, now=base + 310).allowed
+
+    throttling.clear_password_change_failures(42)
+    assert throttling.check_password_change(42, now=base + 20).allowed
+
+    with (
+        override_settings(
+            PASSWORD_CHANGE_MAX_FAILED_ATTEMPTS=2,
+            PASSWORD_CHANGE_ATTEMPT_WINDOW_MINUTES=10,
+            PASSWORD_CHANGE_LOCKOUT_MINUTES=3,
+        ),
+    ):
+        assert conf.password_change_max_failed_attempts() == 2
+        assert throttling.record_password_change_failure(99, now=base).allowed
+        assert not throttling.record_password_change_failure(99, now=base + 1).allowed
+        assert throttling.check_password_change(99, now=base + 2).retry_after == 179
+
+    with override_settings(PASSWORD_CHANGE_MAX_FAILED_ATTEMPTS=0):
+        with pytest.raises(ImproperlyConfigured):
+            conf.password_change_max_failed_attempts()
+
+
+def _create_app_session(user: User, key: str) -> str:
+    store = sessions._session_store()
+    store[SESSION_KEY] = str(user.pk)
+    store[HASH_SESSION_KEY] = user.get_session_auth_hash()
+    store.save()
+    raw_key = str(store.session_key)
+    from django.http import HttpRequest
+
+    req = HttpRequest()
+    req.session = store
+    req.META["REMOTE_ADDR"] = "127.0.0.1"
+    req.META["HTTP_USER_AGENT"] = key
+    sessions.register_session(req, user)
+    return raw_key
+
+
+def test_password_change_keeps_current_session_closes_others_audits_and_emails() -> None:
+    cache.clear()
+    user = make_user(
+        email="pw@example.com", name="Ana", password="OldStrongPassword1!", language="pt-BR"
+    )
+    current_key = _create_app_session(user, "current-agent")
+    other_key = _create_app_session(user, "other-agent")
+    before_pw = SecurityEvent.objects.filter(event_type=EventType.PASSWORD_CHANGE).count()
+    before_out = OutboundEmail.objects.count()
+
+    result = profile.change_password(
+        user,
+        current_password="OldStrongPassword1!",
+        new_password="NewStrongPassword2!",
+        current_session_key=current_key,
+    )
+    assert isinstance(result, profile.PasswordChanged)
+    assert result.revoked_sessions == 1
+    user.refresh_from_db()
+    assert user.check_password("NewStrongPassword2!")
+    assert sessions.is_session_active(current_key, user.pk)
+    assert (
+        sessions._session_store(current_key).load()[HASH_SESSION_KEY]
+        == user.get_session_auth_hash()
+    )
+    assert not sessions.is_session_active(other_key, user.pk)
+    assert UserSession.objects.filter(user=user).count() == 1
+    assert (
+        SecurityEvent.objects.filter(event_type=EventType.PASSWORD_CHANGE).count() == before_pw + 1
+    )
+    assert SecurityEvent.objects.filter(event_type=EventType.LOGOUT).count() >= 1
+
+    queued = list(OutboundEmail.objects.order_by("pk")[before_out:])
+    assert [(item.kind, item.locale) for item in queued] == [
+        ("password_changed", "pt-BR"),
+        ("sessions_closed", "pt-BR"),
+    ]
+
+    # Sin otras sesiones abiertas: admite la misma contraseña válida y no envía sessions_closed.
+    before_second = OutboundEmail.objects.count()
+    same = profile.change_password(
+        user,
+        current_password="NewStrongPassword2!",
+        new_password="NewStrongPassword2!",
+        current_session_key=current_key,
+    )
+    assert isinstance(same, profile.PasswordChanged)
+    assert same.revoked_sessions == 0
+    assert [item.kind for item in OutboundEmail.objects.order_by("pk")[before_second:]] == [
+        "password_changed"
+    ]
+
+
+@override_settings(PASSWORD_CHANGE_MAX_FAILED_ATTEMPTS=2)
+def test_password_change_rejections_lockout_and_external_save() -> None:
+    cache.clear()
+    user = make_user(password="ValidPass1234!")
+    key = _create_app_session(user, "agent-1")
+    before_pw = SecurityEvent.objects.filter(event_type=EventType.PASSWORD_CHANGE).count()
+    before_mail = OutboundEmail.objects.count()
+
+    weak = profile.change_password(
+        user, current_password="ValidPass1234!", new_password="123", current_session_key=key
+    )
+    assert isinstance(weak, profile.PasswordChangeInvalid)
+    assert not weak.current_password_incorrect and "password_too_short" in weak.new_password_codes
+    assert throttling.check_password_change(user.pk).allowed
+
+    bad_and_missing_new = profile.change_password(
+        user, current_password="Wrong!", new_password="", current_session_key=key
+    )
+    assert isinstance(bad_and_missing_new, profile.PasswordChangeInvalid)
+    assert bad_and_missing_new.current_password_incorrect
+
+    second_bad = profile.change_password(
+        user,
+        current_password="WrongAgain!",
+        new_password="ValidNewPass99!",
+        current_session_key=key,
+    )
+    assert (
+        isinstance(second_bad, profile.PasswordChangeInvalid)
+        and second_bad.current_password_incorrect
+    )
+
+    locked = profile.change_password(
+        user,
+        current_password="ValidPass1234!",
+        new_password="ValidNewPass99!",
+        current_session_key=key,
+    )
+    assert isinstance(locked, profile.PasswordChangeLocked) and locked.retry_after > 0
+    assert sessions.is_session_active(key, user.pk)
+    assert SecurityEvent.objects.filter(event_type=EventType.PASSWORD_CHANGE).count() == before_pw
+    assert OutboundEmail.objects.count() == before_mail
+
+    # Guardado externo directo sigue revocando todas las sesiones (RF-010 de inicio-cierre-sesion).
+    user.set_password("ExternalChange99!")
+    user.save(update_fields=["password"])
+    assert not UserSession.objects.filter(user=user).exists()
