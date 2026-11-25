@@ -11,8 +11,6 @@ type BlockProps = Omit<ComponentPropsWithoutRef<"div">, "title"> & {
   count?: number | string;
   countLabel?: string;
   actions?: ReactNode;
-  loading?: boolean;
-  loadingContent?: ReactNode;
 };
 
 export function Counter({ children, label }: { children: ReactNode; label?: string }) {
@@ -31,8 +29,6 @@ export function Block({
   count,
   countLabel,
   actions,
-  loading,
-  loadingContent,
   className,
   children,
   ...rest
@@ -51,7 +47,6 @@ export function Block({
       ref={blockRef as never}
       {...labelled}
       {...rest}
-      aria-busy={loading || rest["aria-busy"] || undefined}
       className={["block", variant !== "default" && variant, className].filter(Boolean).join(" ")}
       data-ui="block"
     >
@@ -71,16 +66,7 @@ export function Block({
           )}
         </div>
       )}
-      {loadingContent !== undefined ? (
-        <div className={loading ? "skel-slot is-loading" : "skel-slot is-ready"}>
-          <div className="skel-content">{children}</div>
-          <div className="skel-mask" aria-hidden="true">
-            {loadingContent}
-          </div>
-        </div>
-      ) : (
-        children
-      )}
+      {children}
     </Tag>
   );
 }
