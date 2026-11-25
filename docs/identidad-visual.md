@@ -181,6 +181,13 @@ Un solo color por prioridad en toda la aplicación.
   desvanecen. Al perder el foco, aunque haya texto escrito, o con Escape, el campo se pliega y vuelve
   a verse el botón.
 - **Estado del menú lateral.** No se recuerda: cada sesión empieza con el menú abierto.
+- **Estado de carga (placeholders *skeleton*).** La estructura fija de la pantalla (título de página,
+  cabeceras y bloques) se muestra siempre desde el primer instante; mientras llegan los datos de la
+  API, el contenido pendiente se sustituye por marcadores grises con degradado animado (*shimmer*)
+  usando `--grid` y `--gray` (`linear-gradient(90deg, var(--grid) 25%, var(--gray) 50%, var(--grid) 75%)`),
+  con las mismas medidas que el contenido definitivo (por ejemplo, `36 px` de alto y radio `6 px`
+  bajo su etiqueta real en campos de formulario) para evitar saltos de diseño. Los placeholders
+  llevan `aria-hidden="true"` y el bloque en carga marca `aria-busy="true"`.
 
 ## Movimiento
 
@@ -198,6 +205,7 @@ Un solo color por prioridad en toda la aplicación.
 | Aparición de un menú desplegable | 0,18 s (fundido y 6 px de desplazamiento hacia abajo, o hacia arriba si se despliega por encima); se cierra sin animación |
 | Panel lateral en móvil | 0,25 s de deslizamiento |
 | Cambio de tema | 0,4 s en todos los colores, solo durante el cambio |
+| Placeholder de carga (*skeleton*) | 1,4 s lineal continuo (barrido de fondo `200%`) |
 
 Si el sistema pide reducir el movimiento, no se anima nada, incluidos el hover y el cambio de tema.
 
