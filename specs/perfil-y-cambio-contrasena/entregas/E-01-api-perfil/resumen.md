@@ -1,6 +1,6 @@
 # Entrega E-01 · Servicio y comandos CLI de consulta y edición de perfil
 
-Rama: `feat/perfil-y-cambio-contrasena-api-perfil` · PR: pendiente · Líneas de código y tests: 320 (límite: 400).
+Rama: `feat/perfil-y-cambio-contrasena-api-perfil` · PR: #153 · Líneas de código y tests: 320 (límite: 400).
 
 ## Qué se hizo
 - Se dividió la entrega original `E-01` en `E-01` (servicio + CLI, 320 líneas) y `E-01b` (endpoints HTTP `GET`/`PATCH auth/profile`, pendiente tras fusionar `E-01`) para mantener cada PR por debajo del límite de 400 líneas de código y tests.
