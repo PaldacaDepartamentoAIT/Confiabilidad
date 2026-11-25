@@ -48,27 +48,37 @@ Estado: aprobado
   Hecho cuando: `pytest apps/accounts/tests/test_profile_service.py -k cli_password` pasa verificando `manage.py profile change-password` con entrada interactiva o argumentos y conservación opcional de `--keep-session-key`.
   Decisiones: solicitar `--current-password` y `--new-password` sin eco con `getpass` cuando se omiten y aceptar `--keep-session-key` opcional para verificar desde CLI tanto el cierre total como la conservación de la sesión indicada (pendiente de ejecutar `pytest` y `mypy` en entorno completo). — Motivo: coherencia con `password_reset.py` y cobertura completa de `RF-015`. — Confianza: [Cierto]. — Cómo revertirla: eliminar `_change_password` de `management/commands/profile.py` y su test.
 
-- [x] T-010 Cliente HTTP `patch`, `api/profile.ts` y mapeo de errores de perfil
-  RF: RF-001, RF-002, RF-003, RF-004, RF-013 | Depende de: T-003 | Archivos: 6
-  Hecho cuando: `pnpm --filter frontend test src/registration/serverErrors.test.ts` pasa verificando `patch` en `ApiClient`, `getProfile`/`updateProfile` y la traducción de `email_immutable`, `unknown_field` y `no_profile_fields`.
-  Excepción: añade `patch` en `client.ts` junto al módulo consumidor `api/profile.ts`, `serverErrors.ts`, `serverErrors.test.ts` y los mocks de `ApiClient` en `api/auth.test.ts` y `api/registration.test.ts` para mantener `tsc --noEmit` limpio.
-  Decisiones: extraer `jsonSend` en `client.ts` para compartir `POST` y `PATCH` con `language` inyectado automáticamente (pendiente de ejecutar Vitest y `tsc` en entorno con dependencias instaladas). — Motivo: evita duplicación y conserva el envío homogéneo del idioma en mutaciones. — Confianza: [Cierto]. — Cómo revertirla: revertir el commit de `T-010`.
+- [x] T-010 Cliente HTTP de consulta de perfil (`getProfile` en `api/profile.ts`)
+  RF: RF-001 | Depende de: T-003 | Archivos: 1
+  Hecho cuando: `pnpm --filter frontend typecheck` y las pruebas de perfil verifican `getProfile` contra `/auth/profile`.
+  Decisiones: dividir el alcance cliente de perfil dejando `getProfile` en `E-03` y aplazando `client.patch`, `updateProfile` y los códigos de edición en `serverErrors.ts` a `T-010b` (`E-03b`) para mantener la entrega bajo 400 líneas y sin código sin usar (pendiente de ejecutar Vitest y `tsc` en entorno con dependencias instaladas). — Motivo: evita que `E-03` supere `sdd.max_lineas_pr`. — Confianza: [Cierto]. — Cómo revertirla: revertir `0801f25`.
+
+- [ ] T-010b Cliente HTTP `patch`, `updateProfile` y mapeo de errores de edición de perfil
+  RF: RF-002, RF-003, RF-004, RF-013 | Depende de: T-010 | Archivos: 6
+  Hecho cuando: `pnpm --filter frontend test src/registration/serverErrors.test.ts` pasa verificando `patch` en `ApiClient`, `updateProfile` en `api/profile.ts` y la traducción de `email_immutable`, `unknown_field` y `no_profile_fields`.
+  Excepción: añade `patch` en `client.ts` junto a `api/profile.ts`, `serverErrors.ts`, `serverErrors.test.ts` y los mocks de `ApiClient` en `api/auth.test.ts` y `api/registration.test.ts` para mantener `tsc --noEmit` limpio.
 
 - [x] T-011 Helper compartido de países y traducciones de perfil en tres idiomas
   RF: RF-012, RF-013 | Depende de: — | Archivos: 5
   Hecho cuando: `pnpm --filter frontend test src/i18n/keys.test.ts src/i18n/locales/locales.test.ts src/registration/RegisterPage.test.tsx` pasa verificando las claves nuevas en `es`, `pt-BR` y `en` y el catálogo localizado compartido de países.
   Excepción: los tres archivos de idioma (`es.ts`, `pt-BR.ts`, `en.ts`) deben actualizarse juntos por `i18n/keys.test.ts`, además de extraer `forms/countries.ts` desde `RegisterPage.tsx`.
-  Decisiones: ubicar las claves de perfil dentro de `auth.*` en los catálogos de idioma para conservar los grupos raíz verificados por `locales.test.ts`, y añadir ya las claves `validation.{emailImmutable, unknownField, noProfileFields}` para que `serverErrors.ts` en `T-010` compile en todo momento (pendiente de ejecutar tests/typecheck de frontend en entorno con dependencias instaladas). — Motivo: evita romper `locales.test.ts` y mantiene `ValidationKey` sincronizado. — Confianza: [Cierto]. — Cómo revertirla: revertir el commit de `T-011`.
+  Decisiones: ubicar las claves de perfil dentro de `auth.*` en los catálogos de idioma para conservar los grupos raíz verificados por `locales.test.ts`, y añadir ya las claves `validation.{emailImmutable, unknownField, noProfileFields}` para que `locales.test.ts` y `T-010b` permanezcan alineados (pendiente de ejecutar tests/typecheck de frontend en entorno con dependencias instaladas). — Motivo: evita romper `locales.test.ts` y mantiene `ValidationKey` sincronizado. — Confianza: [Cierto]. — Cómo revertirla: revertir el commit de `T-011`.
 
-- [x] T-012 Bloque de información personal en `ProfilePage`
-  RF: RF-001, RF-002, RF-003, RF-004, RF-011, RF-012, RF-013 | Depende de: T-010, T-011 | Archivos: 3
-  Hecho cuando: `pnpm --filter frontend test src/auth/ProfilePage.test.tsx` pasa verificando correo en solo lectura, estado `"ZZ"` como sin país asignado conservable al editar nombre/fecha, validación local en blur y submit, foco al primer error, mensajes por campo/confirmación, redirecciones y accesibilidad.
-  Decisiones: aislar `PersonalInfoBlock` dentro de `ProfilePage.tsx` manteniendo `email` en solo lectura y evitando enviar `country` cuando permanece en `"ZZ"` (pendiente de ejecutar Vitest y `tsc` en entorno con dependencias instaladas). — Motivo: respeta `C-02` sin perder la selección de país nuevo ni reordenar campos al fallar. — Confianza: [Cierto]. — Cómo revertirla: revertir el commit de `T-012`.
+- [x] T-012 Vista de consulta de información personal en `ProfilePage`
+  RF: RF-001, RF-011, RF-012, RF-013 | Depende de: T-010, T-011 | Archivos: 3
+  Hecho cuando: `pnpm --filter frontend test src/auth/ProfilePage.test.tsx` pasa verificando correo y datos personales en solo lectura, estado `"ZZ"` mostrado como sin país asignado, redirecciones ante `401`/`terms_required` y accesibilidad con `axe-core`.
+  Decisiones: mostrar los cuatro campos de perfil en solo lectura usando `countryOptions` para resolver el nombre localizado del país o `auth.profileCountryUnassigned` para `"ZZ"`, aplazando el formulario editable de `PersonalInfoBlock` a `T-012b` (`E-03b`) (pendiente de ejecutar Vitest y `tsc` en entorno con dependencias instaladas). — Motivo: mantiene `E-03` como un corte vertical navegable y comprobable bajo 400 líneas. — Confianza: [Cierto]. — Cómo revertirla: revertir el bloque en `ProfilePage.tsx`.
 
-- [ ] T-013 Conexión de `/profile` en `App` y menú lateral privado compartido
-  RF: RF-001, RF-012 | Depende de: T-012 | Archivos: 5
-  Hecho cuando: `pnpm --filter frontend test src/App.test.tsx` pasa verificando el enlace a `/profile` en el menú lateral de `/` y `/profile`, el acceso autenticado, las redirecciones sin sesión o con términos pendientes y la actualización inmediata del nombre en el menú lateral tras editar el perfil.
-  Excepción: conecta la navegación privada compartida (`privateNav.ts`, `icons/index.ts`, `HomePage.tsx`), el enrutador (`App.tsx`) y sus pruebas en `App.test.tsx`.
+- [ ] T-012b Edición parcial, validación y sincronización lateral del perfil en `ProfilePage`
+  RF: RF-002, RF-003, RF-004, RF-011, RF-012, RF-013 | Depende de: T-010b, T-012, T-013 | Archivos: 4
+  Hecho cuando: `pnpm --filter frontend test src/auth/ProfilePage.test.tsx src/App.test.tsx` pasa verificando edición parcial y completa de nombre, fecha y país, conservación de `"ZZ"` mientras no cambie, validación local en blur y submit, foco al primer error, errores de servidor, recorte reflejado en input, actualización inmediata del nombre en el menú lateral y accesibilidad.
+  Excepción: actualiza `ProfilePage.tsx`, `ProfilePage.css`, `ProfilePage.test.tsx` y `App.test.tsx` para verificar de extremo a extremo el reflejo inmediato en la barra lateral.
+
+- [x] T-013 Conexión de `/profile` en `App` y menú lateral privado compartido
+  RF: RF-001, RF-012 | Depende de: T-012 | Archivos: 7
+  Hecho cuando: `pnpm --filter frontend test src/App.test.tsx` pasa verificando el enlace a `/profile` en el menú lateral de `/` y `/profile`, el acceso autenticado sin recarga, y las redirecciones sin sesión o con términos pendientes.
+  Excepción: conecta la navegación privada compartida (`privateNav.tsx`, `icons/index.ts`, `Sidebar.tsx`, `HomePage.tsx`), el enrutador (`App.tsx`) y sus pruebas en `App.test.tsx`.
+  Decisiones: añadir `onSelect` opcional a `SidebarItem` para interceptar clics primarios en SPA sin romper enlaces externos ni `role="link"`, y extraer `privateNavItems` y `privateSidebarUser` en `frontend/src/auth/privateNav.tsx` para compartir menú lateral y cierre de sesión entre `HomePage` y `ProfilePage` (pendiente de ejecutar Vitest y `tsc` en entorno con dependencias instaladas). — Motivo: evita duplicación entre vistas privadas y cumple `C-01`. — Confianza: [Cierto]. — Cómo revertirla: revertir `6e7e78e`.
 
 - [ ] T-014 Cliente y traducciones para cambio de contraseña en `/profile`
   RF: RF-006, RF-007, RF-008, RF-012, RF-013 | Depende de: T-008, T-010 | Archivos: 5
@@ -98,9 +108,13 @@ Rama de integración: `feat/perfil-y-cambio-contrasena` (los PR de las entregas 
   Tareas: T-007, T-008, T-009 | Líneas reales: 394 | Rama: `feat/perfil-y-cambio-contrasena-api-password-http`
   Cómo probarlo: ejecutar `pytest apps/accounts/tests/test_profile_api.py apps/accounts/tests/test_profile_service.py`, iniciar dos sesiones con `curl` (`/api/app/v1/auth/login`), llamar a `POST /api/app/v1/auth/password/change` con una de ellas y comprobar que la sesión actual sigue devolviendo `200` en `/api/app/v1/auth/profile` mientras la otra devuelve `401`, además de probar `python manage.py profile change-password`.
 
-- E-03 Pantalla `/profile` para consultar y editar datos personales en web y escritorio
-  Tareas: T-010, T-011, T-012, T-013 | Líneas estimadas: 340 | Rama: `feat/perfil-y-cambio-contrasena-ui-perfil`
-  Cómo probarlo: ejecutar `pnpm --filter frontend test` y entrar con sesión iniciada en el navegador a `/`, pulsar «Perfil» en el menú lateral para abrir `/profile`, verificar el correo en solo lectura y editar nombre, fecha o país comprobando que el nombre se actualiza al instante en el menú lateral.
+- E-03 Pantalla `/profile` para consultar datos personales y navegación lateral en web y escritorio
+  Tareas: T-010, T-011, T-012, T-013 | Líneas reales: 399 | Rama: `feat/perfil-y-cambio-contrasena-ui-perfil`
+  Cómo probarlo: ejecutar `pnpm --filter frontend test` y entrar con sesión iniciada en el navegador a `/`, pulsar «Perfil» en el menú lateral para abrir `/profile` y verificar correo, nombre, fecha de nacimiento y país localizado (o «Sin país asignado» si es `"ZZ"`).
+
+- E-03b Edición parcial de datos personales en `/profile`
+  Tareas: T-010b, T-012b | Líneas estimadas: 320 | Rama: `feat/perfil-y-cambio-contrasena-ui-perfil-edicion`
+  Cómo probarlo: ejecutar `pnpm --filter frontend test`, abrir `/profile` con sesión iniciada y editar nombre, fecha o país comprobando validación local/remota, conservación de `"ZZ"` mientras no se elija país y actualización inmediata del nombre en el menú lateral.
 
 - E-04 Formulario de cambio de contraseña en `/profile`
   Tareas: T-014, T-015 | Líneas estimadas: 250 | Rama: `feat/perfil-y-cambio-contrasena-ui-password`
