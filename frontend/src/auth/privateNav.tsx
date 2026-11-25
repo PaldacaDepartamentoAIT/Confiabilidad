@@ -39,6 +39,8 @@ export function writeStoredUser(user: AuthenticatedUser | null) {
 export const UserContext = createContext<{
   user: AuthenticatedUser | null;
   setUser: (user: AuthenticatedUser | null) => void;
+  collapsed?: boolean;
+  setCollapsed?: (collapsed: boolean) => void;
 }>({
   user: null,
   setUser: writeStoredUser,

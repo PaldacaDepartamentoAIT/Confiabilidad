@@ -189,8 +189,11 @@ test("navigates from home sidebar to /profile keeping user button visible during
   renderApp(client);
   await screen.findByRole("heading", { level: 1, name: "Main panel" });
   expect(await screen.findByRole("combobox", { name: "Ana" })).toBeInTheDocument();
+  act(() => screen.getByRole("button", { name: "Collapse menu" }).click());
+  expect(screen.getByRole("complementary", { name: "Main menu" })).toHaveClass("collapsed");
   act(() => screen.getByRole("link", { name: "Profile" }).click());
   expect(await screen.findByRole("heading", { level: 1, name: "My profile" })).toBeInTheDocument();
+  expect(screen.getByRole("complementary", { name: "Main menu" })).toHaveClass("collapsed");
   expect(screen.getByRole("combobox", { name: "Ana" })).toBeInTheDocument();
   releaseProfile(new Response(JSON.stringify(answers.profile), { status: 200 }));
   expect(await screen.findByLabelText("Email")).toHaveValue("ana@example.com");

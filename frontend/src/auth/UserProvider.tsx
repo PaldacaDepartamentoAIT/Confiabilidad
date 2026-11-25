@@ -13,6 +13,7 @@ export function UserProvider({
   const [user, setState] = useState<AuthenticatedUser | null>(
     () => sessionUser ?? readStoredUser(),
   );
+  const [collapsed, setCollapsed] = useState(false);
   const setUser = useCallback((next: AuthenticatedUser | null) => {
     writeStoredUser(next);
     setState(next);
@@ -20,7 +21,12 @@ export function UserProvider({
 
   useEffect(() => {
     if (sessionUser !== undefined) setUser(sessionUser);
+    if (sessionUser === null) setCollapsed(false);
   }, [sessionUser, setUser]);
 
-  return <UserContext.Provider value={{ user, setUser }}>{children}</UserContext.Provider>;
+  return (
+    <UserContext.Provider value={{ user, setUser, collapsed, setCollapsed }}>
+      {children}
+    </UserContext.Provider>
+  );
 }

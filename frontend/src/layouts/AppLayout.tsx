@@ -13,6 +13,8 @@ type AppLayoutProps = {
   activeId?: string;
   user?: SidebarUser;
   storage?: LanguageStorage;
+  collapsed?: boolean;
+  onCollapsedChange?: (collapsed: boolean) => void;
   topBar?: ReactNode;
   // Para enseñar el diseño dentro de otra página que ya tiene su `<main>` y su barra (catálogo):
   // la barra y el contenido pasan a ser bloques sin significado de zona.
@@ -27,6 +29,8 @@ export function AppLayout({
   activeId,
   user,
   storage,
+  collapsed,
+  onCollapsedChange,
   topBar,
   embedded = false,
   children,
@@ -53,6 +57,8 @@ export function AppLayout({
         activeId={activeId}
         user={user}
         storage={storage}
+        collapsed={collapsed}
+        onCollapsedChange={onCollapsedChange}
         mobileOpen={open}
         onMobileClose={close}
       />

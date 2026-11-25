@@ -53,7 +53,7 @@ export function HomePage({
   onSessionLoaded,
 }: HomePageProps) {
   const { t, i18n } = useTranslation();
-  const { user: ctxUser, setUser: setCtxUser } = usePrivateUser();
+  const { user: ctxUser, setUser: setCtxUser, collapsed, setCollapsed } = usePrivateUser();
   const [user, setUser] = useState<AuthenticatedUser | null>(session?.user ?? null);
   const [sessions, setSessions] = useState<ActiveSessionItem[]>([]);
   const [sessionsLoaded, setSessionsLoaded] = useState(false);
@@ -197,6 +197,8 @@ export function HomePage({
       activeId="home"
       user={privateSidebarUser(user ?? ctxUser, t, () => void handleLogout())}
       storage={storage}
+      collapsed={collapsed}
+      onCollapsedChange={setCollapsed}
     >
       <div className="page-head">
         <h1>{t("auth.homeTitle")}</h1>

@@ -42,6 +42,8 @@ type SidebarProps = {
   user?: SidebarUser;
   storage?: LanguageStorage;
   defaultCollapsed?: boolean;
+  collapsed?: boolean;
+  onCollapsedChange?: (collapsed: boolean) => void;
   // En pantallas de menos de 768 px el menú es un panel superpuesto que abre y cierra quien lo usa.
   mobileOpen?: boolean;
   onMobileClose?: (restoreFocus: boolean) => void;
@@ -54,13 +56,20 @@ export function Sidebar({
   user,
   storage,
   defaultCollapsed = false,
+  collapsed: collapsedProp,
+  onCollapsedChange,
   mobileOpen = false,
   onMobileClose,
 }: SidebarProps) {
   const { t } = useTranslation();
   const generatedId = useId();
   const id = idProp ?? generatedId;
-  const [collapsedState, setCollapsed] = useState(defaultCollapsed);
+  const [uncontrolledCollapsed, setUncontrolledCollapsed] = useState(defaultCollapsed);
+  const collapsedState = collapsedProp ?? uncontrolledCollapsed;
+  const setCollapsed = (next: boolean) => {
+    onCollapsedChange?.(next);
+    if (collapsedProp === undefined) setUncontrolledCollapsed(next);
+  };
   const narrow = useMediaQuery("(max-width: 767px)");
   const asideRef = useRef<HTMLElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);

@@ -37,7 +37,7 @@ export function ProfilePage({
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loadError, setLoadError] = useState<ParseKeys | null>(null);
   const loggingOut = useRef(false);
-  const { user: ctxUser, setUser: setCtxUser } = usePrivateUser();
+  const { user: ctxUser, setUser: setCtxUser, collapsed, setCollapsed } = usePrivateUser();
   const cbRef = useRef({ onLoggedOut, onTermsRequired, setCtxUser });
   cbRef.current = { onLoggedOut, onTermsRequired, setCtxUser };
 
@@ -100,6 +100,8 @@ export function ProfilePage({
       activeId="profile"
       user={privateSidebarUser(profile ?? session?.user ?? ctxUser, t, () => void handleLogout())}
       storage={storage}
+      collapsed={collapsed}
+      onCollapsedChange={setCollapsed}
     >
       <div className="page-head">
         <h1>{t("auth.profileTitle")}</h1>
