@@ -38,9 +38,10 @@ Estado: aprobado
   Hecho cuando: `pytest apps/accounts/tests/test_profile_api.py -k password_serializer` pasa verificando presencia, caracteres prohibidos y textos `current_password_incorrect` en `es`, `pt-BR` y `en`.
   Decisiones: permitir `new_password` ausente, `null` o vacía en `PasswordChangeSerializer` para que la vista pueda evaluar primero la contraseña actual y contabilizar el fallo de `RF-008` aunque falte la nueva (`RF-007`) (pendiente de ejecutar `pytest` y `mypy` en entorno completo). — Motivo: garantiza que enviar solo `current_password` errónea cuente como intento fallido antes de devolver `required`/`blank` en `new_password`. — Confianza: [Cierto]. — Cómo revertirla: exigir `new_password` directamente en `PasswordChangeSerializer`.
 
-- [ ] T-008 Endpoints `POST` de `auth/password/change` para web y escritorio
+- [x] T-008 Endpoints `POST` de `auth/password/change` para web y escritorio
   RF: RF-006, RF-007, RF-008, RF-009, RF-011, RF-013 | Depende de: T-007 | Archivos: 3
   Hecho cuando: `pytest apps/accounts/tests/test_profile_api.py -k password_change` pasa verificando `200`, `400`, `429` (`Retry-After` y `retry_after`), `403 terms_required`, `401`, continuidad real de la sesión actual e invalidación inmediata `401` de otras sesiones abiertas en web y escritorio.
+  Decisiones: comprobar `throttling.check_password_change` antes de evaluar el cuerpo/contraseñas en `AppPasswordChangeView.post` y traducir `new_password` ausente/vacía o inválida tras evaluar la contraseña actual (pendiente de ejecutar `pytest` y `mypy` en entorno completo). — Motivo: cumple `RF-008` (rechazo sin evaluar contraseñas durante el bloqueo) y `RF-007` (contar intento fallido de contraseña actual incluso sin `new_password`). — Confianza: [Cierto]. — Cómo revertirla: eliminar `AppPasswordChangeView`, `BrowserPasswordChangeView` y sus rutas en `urls.py`.
 
 - [ ] T-009 Subcomando CLI `profile change-password`
   RF: RF-015 | Depende de: T-006 | Archivos: 2

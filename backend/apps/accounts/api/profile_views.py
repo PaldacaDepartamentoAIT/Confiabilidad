@@ -9,11 +9,13 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts import profile
+from apps.accounts import profile, throttling
+from apps.accounts.api import messages
 from apps.accounts.api.auth_views import _body_language, _BrowserCsrfMixin, _require_auth
+from apps.accounts.api.flow_views import _password_params
 from apps.accounts.api.language import request_language
-from apps.accounts.api.profile_serializers import ProfileUpdateSerializer
-from apps.accounts.api.views import _read_body, _render, _unreadable
+from apps.accounts.api.profile_serializers import PasswordChangeSerializer, ProfileUpdateSerializer
+from apps.accounts.api.views import _known, _limited, _read_body, _render, _unreadable
 
 
 def _profile_payload(data: profile.ProfileData) -> dict[str, str]:
@@ -68,4 +70,90 @@ class AppProfileView(APIView):
 
 @method_decorator(ensure_csrf_cookie, name="get")
 class BrowserProfileView(_BrowserCsrfMixin, AppProfileView):
+    pass
+
+
+def _password_change_errors(
+    result: profile.PasswordChangeInvalid,
+    body: Any,
+    raw_new: Any,
+    language: str,
+) -> dict[str, list[dict[str, str]]]:
+    errors: dict[str, list[dict[str, str]]] = {}
+    if result.current_password_incorrect:
+        errors["current_password"] = [
+            {
+                "code": "current_password_incorrect",
+                "message": messages.error_text("current_password_incorrect", language),
+            }
+        ]
+    if raw_new is None:
+        code = (
+            "null"
+            if isinstance(body, dict) and "new_password" in body and body["new_password"] is None
+            else "required"
+        )
+        errors["new_password"] = [{"code": code, "message": messages.error_text(code, language)}]
+    elif raw_new == "":
+        errors["new_password"] = [
+            {"code": "blank", "message": messages.error_text("blank", language)}
+        ]
+    elif result.new_password_codes:
+        params = _password_params()
+        errors["new_password"] = [
+            {
+                "code": code,
+                "message": messages.error_text(_known(code), language, params=params),
+            }
+            for code in result.new_password_codes
+        ]
+    return errors
+
+
+class AppPasswordChangeView(APIView):
+    authentication_classes: list[Any] = []
+    permission_classes = [AllowAny]
+    parser_classes = [JSONParser]
+    client_kind: ClassVar[str] = "app"
+
+    def post(self, request: Request) -> Response:
+        body, readable = _read_body(request)
+        language = _body_language(request, body, readable)
+        auth = _require_auth(request, self.client_kind, language, require_terms=True)
+        if isinstance(auth, Response):
+            return auth
+        user, raw_key = auth
+        verdict = throttling.check_password_change(user.pk)
+        if not verdict.allowed:
+            return _limited(verdict, language)
+        if not readable:
+            return _unreadable(language)
+        serializer = PasswordChangeSerializer(data=body)
+        if not serializer.is_valid():
+            return Response(
+                {"errors": _render(serializer.errors, language)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        raw_new = serializer.validated_data.get("new_password")
+        new_password = raw_new if isinstance(raw_new, str) else ""
+        result = profile.change_password(
+            user,
+            current_password=serializer.validated_data["current_password"],
+            new_password=new_password,
+            current_session_key=raw_key,
+            request=request._request,
+        )
+        if isinstance(result, profile.PasswordChangeLocked):
+            return _limited(
+                throttling.Verdict(allowed=False, retry_after=result.retry_after), language
+            )
+        if isinstance(result, profile.PasswordChangeInvalid):
+            return Response(
+                {"errors": _password_change_errors(result, body, raw_new, language)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return Response({"result": "password_changed"}, status=status.HTTP_200_OK)
+
+
+class BrowserPasswordChangeView(_BrowserCsrfMixin, AppPasswordChangeView):
     pass
