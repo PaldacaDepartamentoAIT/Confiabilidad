@@ -43,9 +43,10 @@ Estado: aprobado
   Hecho cuando: `pytest apps/accounts/tests/test_profile_api.py -k password_change` pasa verificando `200`, `400`, `429` (`Retry-After` y `retry_after`), `403 terms_required`, `401`, continuidad real de la sesión actual e invalidación inmediata `401` de otras sesiones abiertas en web y escritorio.
   Decisiones: comprobar `throttling.check_password_change` antes de evaluar el cuerpo/contraseñas en `AppPasswordChangeView.post` y traducir `new_password` ausente/vacía o inválida tras evaluar la contraseña actual (pendiente de ejecutar `pytest` y `mypy` en entorno completo). — Motivo: cumple `RF-008` (rechazo sin evaluar contraseñas durante el bloqueo) y `RF-007` (contar intento fallido de contraseña actual incluso sin `new_password`). — Confianza: [Cierto]. — Cómo revertirla: eliminar `AppPasswordChangeView`, `BrowserPasswordChangeView` y sus rutas en `urls.py`.
 
-- [ ] T-009 Subcomando CLI `profile change-password`
+- [x] T-009 Subcomando CLI `profile change-password`
   RF: RF-015 | Depende de: T-006 | Archivos: 2
   Hecho cuando: `pytest apps/accounts/tests/test_profile_service.py -k cli_password` pasa verificando `manage.py profile change-password` con entrada interactiva o argumentos y conservación opcional de `--keep-session-key`.
+  Decisiones: solicitar `--current-password` y `--new-password` sin eco con `getpass` cuando se omiten y aceptar `--keep-session-key` opcional para verificar desde CLI tanto el cierre total como la conservación de la sesión indicada (pendiente de ejecutar `pytest` y `mypy` en entorno completo). — Motivo: coherencia con `password_reset.py` y cobertura completa de `RF-015`. — Confianza: [Cierto]. — Cómo revertirla: eliminar `_change_password` de `management/commands/profile.py` y su test.
 
 - [ ] T-010 Cliente HTTP `patch`, `api/profile.ts` y mapeo de errores de perfil
   RF: RF-001, RF-002, RF-003, RF-004, RF-013 | Depende de: T-003 | Archivos: 4

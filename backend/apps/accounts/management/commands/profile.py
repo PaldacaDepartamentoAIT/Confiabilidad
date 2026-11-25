@@ -1,4 +1,5 @@
 import argparse
+import getpass
 from datetime import date
 from typing import Any
 
@@ -39,6 +40,15 @@ class Command(BaseCommand):
         edit.add_argument("--birthdate", type=_birthdate)
         edit.add_argument("--country")
 
+        change_pw = actions.add_parser(
+            "change-password",
+            help="Change password using the current one; closes other sessions.",
+        )
+        change_pw.add_argument("--email", required=True)
+        change_pw.add_argument("--current-password", help="Visible in shell history; avoid it.")
+        change_pw.add_argument("--new-password", help="Visible in shell history; avoid it.")
+        change_pw.add_argument("--keep-session-key", default=None)
+
     def handle(self, *args: Any, **options: Any) -> None:
         action = str(options["action"]).replace("-", "_")
         getattr(self, f"_{action}")(options)
@@ -70,4 +80,35 @@ class Command(BaseCommand):
             f"name: {data.name}\n"
             f"birthdate: {data.birthdate.isoformat()}\n"
             f"country: {data.country}"
+        )
+
+    def _change_password(self, options: dict[str, Any]) -> None:
+        user = _active_user(options["email"])
+        current = options["current_password"]
+        if current is None:
+            current = getpass.getpass(_("Current password: "))
+        new = options["new_password"]
+        if new is None:
+            new = getpass.getpass(_("New password: "))
+        result = profile.change_password(
+            user,
+            current_password=current,
+            new_password=new,
+            current_session_key=options["keep_session_key"],
+        )
+        if isinstance(result, profile.PasswordChangeLocked):
+            raise CommandError(
+                _("Too many failed attempts. Wait %(seconds)d seconds.")
+                % {"seconds": result.retry_after}
+            )
+        if isinstance(result, profile.PasswordChangeInvalid):
+            reasons: list[str] = []
+            if result.current_password_incorrect:
+                reasons.append(_("Current password is incorrect."))
+            reasons.extend(result.new_password_codes)
+            if not reasons:
+                reasons.append(_("New password is required."))
+            raise CommandError("\n".join(reasons))
+        self.stdout.write(
+            f"account: {result.user.email}\nrevoked_sessions: {result.revoked_sessions}"
         )
