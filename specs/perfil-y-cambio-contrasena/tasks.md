@@ -48,10 +48,11 @@ Estado: aprobado
   Hecho cuando: `pytest apps/accounts/tests/test_profile_service.py -k cli_password` pasa verificando `manage.py profile change-password` con entrada interactiva o argumentos y conservación opcional de `--keep-session-key`.
   Decisiones: solicitar `--current-password` y `--new-password` sin eco con `getpass` cuando se omiten y aceptar `--keep-session-key` opcional para verificar desde CLI tanto el cierre total como la conservación de la sesión indicada (pendiente de ejecutar `pytest` y `mypy` en entorno completo). — Motivo: coherencia con `password_reset.py` y cobertura completa de `RF-015`. — Confianza: [Cierto]. — Cómo revertirla: eliminar `_change_password` de `management/commands/profile.py` y su test.
 
-- [ ] T-010 Cliente HTTP `patch`, `api/profile.ts` y mapeo de errores de perfil
-  RF: RF-001, RF-002, RF-003, RF-004, RF-013 | Depende de: T-003 | Archivos: 4
+- [x] T-010 Cliente HTTP `patch`, `api/profile.ts` y mapeo de errores de perfil
+  RF: RF-001, RF-002, RF-003, RF-004, RF-013 | Depende de: T-003 | Archivos: 6
   Hecho cuando: `pnpm --filter frontend test src/registration/serverErrors.test.ts` pasa verificando `patch` en `ApiClient`, `getProfile`/`updateProfile` y la traducción de `email_immutable`, `unknown_field` y `no_profile_fields`.
-  Excepción: añade `patch` en `client.ts` junto al módulo consumidor `api/profile.ts`, `serverErrors.ts` y `serverErrors.test.ts`.
+  Excepción: añade `patch` en `client.ts` junto al módulo consumidor `api/profile.ts`, `serverErrors.ts`, `serverErrors.test.ts` y los mocks de `ApiClient` en `api/auth.test.ts` y `api/registration.test.ts` para mantener `tsc --noEmit` limpio.
+  Decisiones: extraer `jsonSend` en `client.ts` para compartir `POST` y `PATCH` con `language` inyectado automáticamente (pendiente de ejecutar Vitest y `tsc` en entorno con dependencias instaladas). — Motivo: evita duplicación y conserva el envío homogéneo del idioma en mutaciones. — Confianza: [Cierto]. — Cómo revertirla: revertir el commit de `T-010`.
 
 - [x] T-011 Helper compartido de países y traducciones de perfil en tres idiomas
   RF: RF-012, RF-013 | Depende de: — | Archivos: 5
