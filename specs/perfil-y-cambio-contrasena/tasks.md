@@ -11,9 +11,10 @@ Estado: aprobado
   Hecho cuando: `pytest apps/accounts/tests/test_profile_api.py -k serializer` pasa verificando el rechazo de `email` (`email_immutable`), petición vacía (`no_profile_fields`), claves desconocidas (`unknown_field`) y reglas de campos en `es`, `pt-BR` y `en`.
   Decisiones: permitir la clave `language` en el cuerpo sin marcarla como `unknown_field` para mantener compatibilidad con `_body_language` del cliente API, y emitir `no_profile_fields` únicamente cuando no hay campos editables ni otros errores de clave (`email`/`unknown_field`) (pendiente de ejecutar `pytest` y `mypy` en entorno completo). — Motivo: evita ruido de errores redundantes cuando el usuario intenta enviar `email`. — Confianza: [Cierto]. — Cómo revertirla: ajustar `ProfileUpdateSerializer.to_internal_value`.
 
-- [ ] T-003 Endpoints `GET` y `PATCH` de `auth/profile` para web y escritorio
+- [x] T-003 Endpoints `GET` y `PATCH` de `auth/profile` para web y escritorio
   RF: RF-001, RF-002, RF-003, RF-004, RF-011, RF-013 | Depende de: T-002 | Archivos: 3
   Hecho cuando: `pytest apps/accounts/tests/test_profile_api.py -k profile` pasa verificando sesión por cookie (con CSRF), token de escritorio (`X-Session-Token`), bloqueo `401` por cuenta inactiva y `403 terms_required` sin términos vigentes, e idioma de respuesta.
+  Decisiones: reutilizar `_require_auth(..., require_terms=True)` y `_BrowserCsrfMixin` con `@method_decorator(ensure_csrf_cookie, name="get")` en `BrowserProfileView` (pendiente de ejecutar `pytest` y `mypy` en entorno completo). — Motivo: coherencia con `auth_views.py` y disponibilidad de cookie CSRF al abrir `/profile` directamente. — Confianza: [Probable]. — Cómo revertirla: eliminar `profile_views.py` y sus rutas en `urls.py`.
 
 - [x] T-004 Subcomandos CLI `profile show` y `profile edit`
   RF: RF-015 | Depende de: T-001 | Archivos: 2
