@@ -1,5 +1,5 @@
 import type { ParseKeys } from "i18next";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { logout, type SessionInfo } from "../api/auth";
@@ -38,30 +38,25 @@ export function ProfilePage({
   const [loadError, setLoadError] = useState<ParseKeys | null>(null);
   const loggingOut = useRef(false);
 
-  const redirectToLogin = useCallback(() => {
-    tokenStorage?.clear();
-    onLoggedOut?.();
-    navigate("/login");
-  }, [onLoggedOut, tokenStorage]);
-
-  const redirectToTerms = useCallback(
-    (termsStatus: TermsStatus) => {
+  useEffect(() => {
+    const goTerms = (termsStatus: TermsStatus) => {
       onTermsRequired?.(termsStatus);
       navigate("/terms");
-    },
-    [onTermsRequired],
-  );
-
-  useEffect(() => {
+    };
     if (session && session.terms_status !== "accepted") {
-      redirectToTerms(session.terms_status);
+      goTerms(session.terms_status);
       return;
     }
     let active = true;
     void getProfile(client).then((res) => {
       if (!active) return;
-      if (res.kind === "unauthenticated") return redirectToLogin();
-      if (res.kind === "termsRequired") return redirectToTerms(res.termsStatus);
+      if (res.kind === "unauthenticated") {
+        tokenStorage?.clear();
+        onLoggedOut?.();
+        navigate("/login");
+        return;
+      }
+      if (res.kind === "termsRequired") return goTerms(res.termsStatus);
       if (res.kind !== "ok") {
         setLoadError(
           res.kind === "networkError" ? "validation.networkError" : "validation.serverError",
@@ -74,7 +69,7 @@ export function ProfilePage({
     return () => {
       active = false;
     };
-  }, [client, redirectToLogin, redirectToTerms, session]);
+  }, [client, onLoggedOut, onTermsRequired, session, tokenStorage]);
 
   async function handleLogout() {
     if (loggingOut.current) return;

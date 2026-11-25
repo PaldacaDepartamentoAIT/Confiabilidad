@@ -18,6 +18,7 @@ import { FormMessage } from "../components/FormMessage";
 import { IconButton } from "../components/IconButton";
 import { Table, type TableColumn, type TableRow } from "../components/data/Table";
 import type { LanguageStorage } from "../i18n/language";
+import { IconLogOut } from "../icons";
 import { AppLayout } from "../layouts/AppLayout";
 import { translateCode } from "../registration/serverErrors";
 import { navigate } from "../routing/router";
