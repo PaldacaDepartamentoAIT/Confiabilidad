@@ -12,7 +12,7 @@ import { countryOptions } from "../forms/countries";
 import type { LanguageStorage } from "../i18n/language";
 import { AppLayout } from "../layouts/AppLayout";
 import { navigate } from "../routing/router";
-import { privateNavItems, privateSidebarUser } from "./privateNav";
+import { privateNavItems, privateSidebarUser, usePrivateUser } from "./privateNav";
 import type { TokenStorage } from "./tokenStorage";
 import "./ProfilePage.css";
 
@@ -37,8 +37,9 @@ export function ProfilePage({
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loadError, setLoadError] = useState<ParseKeys | null>(null);
   const loggingOut = useRef(false);
-  const cbRef = useRef({ onLoggedOut, onTermsRequired });
-  cbRef.current = { onLoggedOut, onTermsRequired };
+  const { user: ctxUser, setUser: setCtxUser } = usePrivateUser();
+  const cbRef = useRef({ onLoggedOut, onTermsRequired, setCtxUser });
+  cbRef.current = { onLoggedOut, onTermsRequired, setCtxUser };
 
   useEffect(() => {
     const goTerms = (status: TermsStatus) => {
@@ -51,6 +52,7 @@ export function ProfilePage({
       if (!active) return;
       if (res.kind === "unauthenticated") {
         tokenStorage?.clear();
+        cbRef.current.setCtxUser(null);
         cbRef.current.onLoggedOut?.();
         return navigate("/login");
       }
@@ -62,6 +64,7 @@ export function ProfilePage({
       }
       setLoadError(null);
       setProfile(res.data);
+      cbRef.current.setCtxUser({ email: res.data.email, name: res.data.name });
     });
     return () => {
       active = false;
@@ -73,6 +76,7 @@ export function ProfilePage({
     loggingOut.current = true;
     await logout(client, tokenStorage);
     loggingOut.current = false;
+    setCtxUser(null);
     onLoggedOut?.();
     navigate("/login");
   }
@@ -94,7 +98,7 @@ export function ProfilePage({
     <AppLayout
       items={privateNavItems(t)}
       activeId="profile"
-      user={privateSidebarUser(profile ?? session?.user, t, () => void handleLogout())}
+      user={privateSidebarUser(profile ?? session?.user ?? ctxUser, t, () => void handleLogout())}
       storage={storage}
     >
       <div className="page-head">

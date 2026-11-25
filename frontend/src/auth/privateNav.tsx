@@ -1,10 +1,52 @@
 import type { TFunction } from "i18next";
-import type { MouseEvent } from "react";
+import { createContext, useContext, type MouseEvent } from "react";
 
 import type { AuthenticatedUser } from "../api/auth";
 import { IconHouse, IconLogOut, IconUser } from "../icons";
 import type { SidebarItem, SidebarUser } from "../layouts/Sidebar";
 import { navigate } from "../routing/router";
+
+export const USER_STORAGE_KEY = "confiabilidad.user";
+
+export function readStoredUser(): AuthenticatedUser | null {
+  try {
+    const raw = window.sessionStorage.getItem(USER_STORAGE_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw) as Partial<AuthenticatedUser>;
+    return typeof data.email === "string"
+      ? { email: data.email, name: typeof data.name === "string" ? data.name : "" }
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+export function writeStoredUser(user: AuthenticatedUser | null) {
+  try {
+    if (user) {
+      window.sessionStorage.setItem(
+        USER_STORAGE_KEY,
+        JSON.stringify({ email: user.email, name: user.name }),
+      );
+    } else {
+      window.sessionStorage.removeItem(USER_STORAGE_KEY);
+    }
+  } catch {
+    // El almacenamiento de sesión puede estar deshabilitado.
+  }
+}
+
+export const UserContext = createContext<{
+  user: AuthenticatedUser | null;
+  setUser: (user: AuthenticatedUser | null) => void;
+}>({
+  user: null,
+  setUser: writeStoredUser,
+});
+
+export function usePrivateUser() {
+  return useContext(UserContext);
+}
 
 const go = (href: string) => (e: MouseEvent<HTMLAnchorElement>) => {
   if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;

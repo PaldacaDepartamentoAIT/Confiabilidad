@@ -173,12 +173,27 @@ test("moving between screens does not reload the page, keeps the bar and fades o
   window.history.replaceState(null, "", "/");
 });
 
-test("navigates from home sidebar to /profile without reloading", async () => {
+test("navigates from home sidebar to /profile keeping user button visible during load", async () => {
   window.history.replaceState(null, "", "/");
-  renderApp(fakeClient());
+  let releaseProfile!: (r: Response) => void;
+  const client = createClient({
+    kind: "browser",
+    appBaseUrl: "",
+    language: () => "en",
+    fetch: ((url: RequestInfo | URL) => {
+      const route = String(url).split("?")[0].split("/").pop() ?? "";
+      if (route === "profile") return new Promise((resolve) => (releaseProfile = resolve));
+      return Promise.resolve(new Response(JSON.stringify(answers[route] ?? {}), { status: 200 }));
+    }) as typeof fetch,
+  });
+  renderApp(client);
   await screen.findByRole("heading", { level: 1, name: "Main panel" });
+  expect(await screen.findByRole("combobox", { name: "Ana" })).toBeInTheDocument();
   act(() => screen.getByRole("link", { name: "Profile" }).click());
   expect(await screen.findByRole("heading", { level: 1, name: "My profile" })).toBeInTheDocument();
+  expect(screen.getByRole("combobox", { name: "Ana" })).toBeInTheDocument();
+  releaseProfile(new Response(JSON.stringify(answers.profile), { status: 200 }));
+  expect(await screen.findByLabelText("Email")).toHaveValue("ana@example.com");
   expect(window.location.pathname).toBe("/profile");
   window.history.replaceState(null, "", "/");
 });
