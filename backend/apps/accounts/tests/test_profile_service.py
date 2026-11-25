@@ -2,11 +2,13 @@ from datetime import date
 from io import StringIO
 
 import pytest
-from django.core.exceptions import ValidationError
+from django.core.cache import cache
+from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.management import call_command
 from django.core.management.base import CommandError
+from django.test import override_settings
 
-from apps.accounts import profile
+from apps.accounts import conf, profile, throttling
 from apps.accounts.models import User
 from apps.accounts.tests.factories import make_user
 from apps.audit.models import EventType, SecurityEvent
@@ -175,3 +177,41 @@ def test_cli_profile_show_and_edit() -> None:
 
     with pytest.raises(CommandError):
         call_command("profile", "show", "--email", "missing@example.com")
+
+
+def test_password_change_throttle_defaults_settings_and_clear() -> None:
+    cache.clear()
+    assert conf.password_change_max_failed_attempts() == 5
+    assert conf.password_change_attempt_window().total_seconds() == 300
+    assert conf.password_change_lockout_duration().total_seconds() == 300
+
+    base = 1000.0
+    for offset in range(4):
+        verdict = throttling.record_password_change_failure(42, now=base + offset)
+        assert verdict.allowed
+    assert throttling.check_password_change(42, now=base + 5).allowed
+
+    armed = throttling.record_password_change_failure(42, now=base + 10)
+    assert not armed.allowed and armed.retry_after == 300
+    blocked = throttling.check_password_change(42, now=base + 20)
+    assert not blocked.allowed and blocked.retry_after == 290
+    assert throttling.check_password_change(42, now=base + 310).allowed
+
+    throttling.clear_password_change_failures(42)
+    assert throttling.check_password_change(42, now=base + 20).allowed
+
+    with (
+        override_settings(
+            PASSWORD_CHANGE_MAX_FAILED_ATTEMPTS=2,
+            PASSWORD_CHANGE_ATTEMPT_WINDOW_MINUTES=10,
+            PASSWORD_CHANGE_LOCKOUT_MINUTES=3,
+        ),
+    ):
+        assert conf.password_change_max_failed_attempts() == 2
+        assert throttling.record_password_change_failure(99, now=base).allowed
+        assert not throttling.record_password_change_failure(99, now=base + 1).allowed
+        assert throttling.check_password_change(99, now=base + 2).retry_after == 179
+
+    with override_settings(PASSWORD_CHANGE_MAX_FAILED_ATTEMPTS=0):
+        with pytest.raises(ImproperlyConfigured):
+            conf.password_change_max_failed_attempts()

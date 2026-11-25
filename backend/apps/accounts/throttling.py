@@ -61,6 +61,42 @@ def check_login_ip(ip: str, *, now: float | None = None) -> Verdict:
     )
 
 
+def _pw_attempts_key(user_id: int) -> str:
+    return f"password-change:attempts:{user_id}"
+
+
+def _pw_lock_key(user_id: int) -> str:
+    return f"password-change:lock:{user_id}"
+
+
+def check_password_change(user_id: int, *, now: float | None = None) -> Verdict:
+    moment = time.time() if now is None else now
+    locked_until = cache.get(_pw_lock_key(user_id))
+    if isinstance(locked_until, (int, float)) and locked_until > moment:
+        return Verdict(allowed=False, retry_after=math.ceil(locked_until - moment))
+    return Verdict(allowed=True, retry_after=0)
+
+
+def record_password_change_failure(user_id: int, *, now: float | None = None) -> Verdict:
+    moment = time.time() if now is None else now
+    window = conf.password_change_attempt_window().total_seconds()
+    max_attempts = conf.password_change_max_failed_attempts()
+    lockout = conf.password_change_lockout_duration().total_seconds()
+    key = _pw_attempts_key(user_id)
+    stamps = [*_recent(key, moment, window), moment]
+    if len(stamps) >= max_attempts:
+        cache.set(_pw_lock_key(user_id), moment + lockout, timeout=int(lockout))
+        cache.delete(key)
+        return Verdict(allowed=False, retry_after=math.ceil(lockout))
+    cache.set(key, stamps, timeout=int(window))
+    return Verdict(allowed=True, retry_after=0)
+
+
+def clear_password_change_failures(user_id: int) -> None:
+    cache.delete(_pw_attempts_key(user_id))
+    cache.delete(_pw_lock_key(user_id))
+
+
 def record_ip(ip: str, *, now: float | None = None) -> None:
     key = _ip_key(ip)
     moment = time.time() if now is None else now

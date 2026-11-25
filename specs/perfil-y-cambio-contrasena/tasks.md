@@ -21,10 +21,11 @@ Estado: aprobado
   Hecho cuando: `pytest apps/accounts/tests/test_profile_service.py -k cli_profile` pasa verificando `manage.py profile show --email ...` y `manage.py profile edit --email ...`.
   Decisiones: exigir cuenta activa en `manage.py profile` (consultando `User.active`) e imprimir pares clave-valor legibles para inspección y scripts (pendiente de ejecutar `pytest` y `mypy` en entorno completo). — Motivo: coherencia con `RF-007` de `usuario-personalizado` y `management/commands/registration.py`. — Confianza: [Cierto]. — Cómo revertirla: eliminar `management/commands/profile.py` y su test.
 
-- [ ] T-005 Límite configurable por cuenta ante intentos fallidos de contraseña actual
+- [x] T-005 Límite configurable por cuenta ante intentos fallidos de contraseña actual
   RF: RF-008, RF-014 | Depende de: — | Archivos: 4
   Hecho cuando: `pytest apps/accounts/tests/test_profile_service.py -k throttle` pasa verificando el bloqueo tras `5` fallos en `5` minutos durante `5` minutos por defecto, su configuración por settings y el reinicio del contador al completar con éxito.
   Excepción: configuración compartida repartida entre `backend/config/settings.py` y `backend/apps/accounts/conf.py`, limitador en `backend/apps/accounts/throttling.py` y su test unitario en `test_profile_service.py`.
+  Decisiones: usar dos claves independientes en caché (`password-change:attempts:<user_id>` y `password-change:lock:<user_id>`) con limpieza al bloquear y al completar con éxito (pendiente de ejecutar `pytest` y `mypy` en entorno completo). — Motivo: al expirar el bloqueo la cuenta recupera una ventana limpia de 5 intentos y no queda bloqueada al primer fallo siguiente. — Confianza: [Probable]. — Cómo revertirla: eliminar los helpers de `throttling.py`, `conf.py` y las variables en `settings.py`.
 
 - [ ] T-006 Servicio de cambio de contraseña, conservación de sesión actual, cierre de otras sesiones, auditoría y avisos
   RF: RF-006, RF-007, RF-009, RF-010 | Depende de: T-005 | Archivos: 4
@@ -82,9 +83,13 @@ Rama de integración: `feat/perfil-y-cambio-contrasena` (los PR de las entregas 
   Tareas: T-002, T-003 | Líneas reales: 368 | Rama: `feat/perfil-y-cambio-contrasena-api-perfil-http`
   Cómo probarlo: ejecutar `pytest apps/accounts/tests/test_profile_api.py` y hacer `GET`/`PATCH` con `curl` a `/api/app/v1/auth/profile` verificando que cambiar el correo, enviar peticiones vacías o campos desconocidos se rechaza.
 
-- E-02 Cambio de contraseña con cierre de otras sesiones en backend (API y consola)
-  Tareas: T-005, T-006, T-007, T-008, T-009 | Líneas estimadas: 340 | Rama: `feat/perfil-y-cambio-contrasena-api-password`
-  Cómo probarlo: ejecutar `pytest apps/accounts/tests/test_profile_service.py apps/accounts/tests/test_profile_api.py`, iniciar dos sesiones con `curl` (`/api/app/v1/auth/login`), llamar a `POST /api/app/v1/auth/password/change` con una de ellas y comprobar que la sesión actual sigue devolviendo `200` en `/api/app/v1/auth/profile` mientras la otra devuelve `401`, revisando además los correos encolados y el comando `python manage.py profile change-password`.
+- E-02 Servicio y comandos CLI de cambio de contraseña con cierre de otras sesiones
+  Tareas: T-005, T-006, T-009 | Líneas estimadas: 350 | Rama: `feat/perfil-y-cambio-contrasena-api-password`
+  Cómo probarlo: ejecutar `pytest apps/accounts/tests/test_profile_service.py` y probar `python manage.py profile change-password --email <EMAIL> --keep-session-key <SESSION_KEY>` comprobando que la sesión indicada sigue activa y el resto se cierran junto con los correos encolados.
+
+- E-02b Endpoints HTTP de cambio de contraseña (`POST auth/password/change`)
+  Tareas: T-007, T-008 | Líneas estimadas: 275 | Rama: `feat/perfil-y-cambio-contrasena-api-password-http`
+  Cómo probarlo: ejecutar `pytest apps/accounts/tests/test_profile_api.py`, iniciar dos sesiones con `curl` (`/api/app/v1/auth/login`), llamar a `POST /api/app/v1/auth/password/change` con una de ellas y comprobar que la sesión actual sigue devolviendo `200` en `/api/app/v1/auth/profile` mientras la otra devuelve `401`.
 
 - E-03 Pantalla `/profile` para consultar y editar datos personales en web y escritorio
   Tareas: T-010, T-011, T-012, T-013 | Líneas estimadas: 340 | Rama: `feat/perfil-y-cambio-contrasena-ui-perfil`
