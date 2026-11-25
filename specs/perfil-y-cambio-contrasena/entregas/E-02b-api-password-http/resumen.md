@@ -1,6 +1,6 @@
 # Entrega E-02b · Endpoints HTTP y CLI de cambio de contraseña (`POST auth/password/change` y `profile change-password`)
 
-Rama: `feat/perfil-y-cambio-contrasena-api-password-http` · PR: pendiente · Líneas de código y tests: 394 (límite: 400).
+Rama: `feat/perfil-y-cambio-contrasena-api-password-http` · PR: #156 · Líneas de código y tests: 394 (límite: 400).
 
 ## Qué se hizo
 - En `backend/apps/accounts/api/profile_serializers.py` y `backend/apps/accounts/api/messages.py` (`T-007`, `RF-007` y `RF-013`) se añadió `PasswordChangeSerializer` y el mensaje `current_password_incorrect` en `es`, `pt-BR` y `en`, permitiendo evaluar primero la contraseña actual incluso cuando `new_password` falte o esté vacía para que cuente en el límite de `RF-008`.
