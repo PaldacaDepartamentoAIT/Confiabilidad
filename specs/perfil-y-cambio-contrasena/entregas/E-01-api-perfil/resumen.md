@@ -1,9 +1,9 @@
 # Entrega E-01 · Servicio y comandos CLI de consulta y edición de perfil
 
-Rama: `feat/perfil-y-cambio-contrasena-api-perfil` · PR: pendiente · Líneas de código y tests: 307 (límite: 400).
+Rama: `feat/perfil-y-cambio-contrasena-api-perfil` · PR: pendiente · Líneas de código y tests: 320 (límite: 400).
 
 ## Qué se hizo
-- Se dividió la entrega original `E-01` en `E-01` (servicio + CLI, 307 líneas) y `E-01b` (endpoints HTTP `GET`/`PATCH auth/profile`, pendiente tras fusionar `E-01`) para mantener cada PR por debajo del límite de 400 líneas de código y tests.
+- Se dividió la entrega original `E-01` en `E-01` (servicio + CLI, 320 líneas) y `E-01b` (endpoints HTTP `GET`/`PATCH auth/profile`, pendiente tras fusionar `E-01`) para mantener cada PR por debajo del límite de 400 líneas de código y tests.
 - En `backend/apps/accounts/profile.py` se implementó `get_profile` (`RF-001`, consulta del perfil autenticado) y `update_profile` (`RF-002`, modificación de datos personales, y `RF-005`, edición sin cambios reales y auditoría de perfil):
   - lee exclusivamente `email`, `name`, `birthdate` y `country` sin exponer idioma guardado ni consentimientos;
   - admite actualización parcial mediante el centinela `UNSET` (`_Unset`), normaliza `name` y `country` y reutiliza `User.save(update_fields=...)` para validar las reglas de `usuario-personalizado`, conservar `"ZZ"` mientras el país no cambie y registrar la versión en `HistoricalRecords`;
@@ -27,9 +27,9 @@ git fetch origin
 ```bash
 git checkout feat/perfil-y-cambio-contrasena-api-perfil
 ```
-Ejecuta los tests nuevos de esta entrega:
+Ejecuta los tests nuevos de esta entrega (sin medir cobertura global de otros módulos; la cobertura ≥ 80 % se valida en la suite completa):
 ```bash
-docker compose -f docker/docker-compose.yml exec backend pytest apps/accounts/tests/test_profile_service.py -v
+docker compose -f docker/docker-compose.yml exec backend pytest apps/accounts/tests/test_profile_service.py -v --no-cov
 ```
 Deberías ver los 6 tests de `test_profile_service.py` en verde.
 

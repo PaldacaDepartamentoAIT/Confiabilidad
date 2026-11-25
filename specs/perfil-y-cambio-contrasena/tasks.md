@@ -73,7 +73,7 @@ Estado: aprobado
 Rama de integración: `feat/perfil-y-cambio-contrasena` (los PR de las entregas van contra ella; ver `AGENTS.md`).
 
 - E-01 Servicio y comandos CLI de consulta y edición de perfil
-  Tareas: T-001, T-004 | Líneas reales: 307 | Rama: `feat/perfil-y-cambio-contrasena-api-perfil`
+  Tareas: T-001, T-004 | Líneas reales: 320 | Rama: `feat/perfil-y-cambio-contrasena-api-perfil`
   Cómo probarlo: ejecutar `pytest apps/accounts/tests/test_profile_service.py` y probar `python manage.py profile show --email <EMAIL>` y `python manage.py profile edit --email <EMAIL> --name "..."` comprobando la persistencia y que `"ZZ"` se conserva si no se cambia.
 
 - E-01b Endpoints HTTP de consulta y edición de perfil (`GET`/`PATCH auth/profile`)
