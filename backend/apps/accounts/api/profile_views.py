@@ -142,6 +142,7 @@ class AppPasswordChangeView(APIView):
             new_password=new_password,
             current_session_key=raw_key,
             request=request._request,
+            rotate_session_key=self.client_kind == "browser",
         )
         if isinstance(result, profile.PasswordChangeLocked):
             return _limited(

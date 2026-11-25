@@ -114,6 +114,7 @@ def change_password(
     new_password: str,
     current_session_key: str | None = None,
     request: HttpRequest | None = None,
+    rotate_session_key: bool = True,
 ) -> PasswordChanged | PasswordChangeLocked | PasswordChangeInvalid:
     with transaction.atomic():
         locked = User.objects.select_for_update().get(pk=user.pk)
@@ -145,7 +146,9 @@ def change_password(
             del locked.skip_password_session_revocation
 
         active_key = (
-            sessions.refresh_current_session(locked, current_session_key, request=request)
+            sessions.refresh_current_session(
+                locked, current_session_key, request=request, rotate=rotate_session_key
+            )
             if current_session_key
             else None
         )
