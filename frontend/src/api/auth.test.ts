@@ -10,7 +10,7 @@ import {
 } from "./auth";
 import type { ApiClient, ApiResult } from "./client";
 
-type Sent = { method: "get" | "post" | "patch"; path: string; body?: Record<string, unknown> };
+type Sent = { method: "get" | "post"; path: string; body?: Record<string, unknown> };
 
 function recordingClient(result: ApiResult = { kind: "ok", status: 200, data: {} }) {
   const sent: Sent[] = [];
@@ -21,10 +21,6 @@ function recordingClient(result: ApiResult = { kind: "ok", status: 200, data: {}
     },
     post: <Data>(path: string, body: Record<string, unknown>) => {
       sent.push({ method: "post", path, body });
-      return Promise.resolve(result as ApiResult<Data>);
-    },
-    patch: <Data>(path: string, body: Record<string, unknown>) => {
-      sent.push({ method: "patch", path, body });
       return Promise.resolve(result as ApiResult<Data>);
     },
   };

@@ -7,19 +7,6 @@ export type ProfileData = {
   country: string;
 };
 
-export type ProfileUpdate = {
-  name?: string;
-  birthdate?: string;
-  country?: string;
-};
-
 export function getProfile(client: ApiClient): Promise<ApiResult<ProfileData>> {
   return client.get("auth/profile");
-}
-
-export function updateProfile(
-  client: ApiClient,
-  data: ProfileUpdate,
-): Promise<ApiResult<ProfileData>> {
-  return client.patch("auth/profile", data);
 }
