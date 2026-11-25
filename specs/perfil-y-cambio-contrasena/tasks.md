@@ -65,9 +65,10 @@ Estado: aprobado
   Decisiones: ubicar las claves de perfil dentro de `auth.*` en los catálogos de idioma para conservar los grupos raíz verificados por `locales.test.ts`, y añadir ya las claves `validation.{emailImmutable, unknownField, noProfileFields}` para que `locales.test.ts` y `T-010b` permanezcan alineados (pendiente de ejecutar tests/typecheck de frontend en entorno con dependencias instaladas). — Motivo: evita romper `locales.test.ts` y mantiene `ValidationKey` sincronizado. — Confianza: [Cierto]. — Cómo revertirla: revertir el commit de `T-011`.
 
 - [x] T-012 Vista de consulta de información personal en `ProfilePage`
-  RF: RF-001, RF-011, RF-012, RF-013 | Depende de: T-010, T-011 | Archivos: 3
-  Hecho cuando: `pnpm --filter frontend test src/auth/ProfilePage.test.tsx` pasa verificando correo y datos personales en solo lectura, estado `"ZZ"` mostrado como sin país asignado, redirecciones ante `401`/`terms_required` y accesibilidad con `axe-core`.
-  Decisiones: mostrar los cuatro campos de perfil en solo lectura usando `countryOptions` para resolver el nombre localizado del país o `auth.profileCountryUnassigned` para `"ZZ"`, aplazando el formulario editable de `PersonalInfoBlock` a `T-012b` (`E-03b`) (pendiente de ejecutar Vitest y `tsc` en entorno con dependencias instaladas). — Motivo: mantiene `E-03` como un corte vertical navegable y comprobable bajo 400 líneas. — Confianza: [Cierto]. — Cómo revertirla: revertir el bloque en `ProfilePage.tsx`.
+  RF: RF-001, RF-011, RF-012, RF-013 | Depende de: T-010, T-011 | Archivos: 4
+  Hecho cuando: `pnpm --filter frontend test src/auth/ProfilePage.test.tsx` pasa verificando estructura visible desde el inicio con placeholders *skeleton* (`aria-busy="true"`), correo y datos personales en solo lectura, estado `"ZZ"` mostrado como sin país asignado, redirecciones ante `401`/`terms_required` y accesibilidad con `axe-core`.
+  Excepción: añade la clase global `.skeleton` en `frontend/src/styles/base.css` siguiendo el patrón incorporado en `docs/identidad-visual.md`.
+  Decisiones: mantener visible desde el primer frame el `<Block>` de información personal con placeholders `.skeleton` de 36 px (`.profile-skeleton`) mientras carga `GET /auth/profile` y estabilizar `onLoggedOut`/`onTermsRequired` en un `ref` para evitar re-peticiones al re-renderizar `App` (pendiente de ejecutar Vitest y `tsc` en entorno con dependencias instaladas). — Motivo: evita pantalla vacía y saltos de altura cuando la respuesta del backend tarda tras un túnel SSH o red lenta. — Confianza: [Cierto]. — Cómo revertirla: revertir `8683bf5`.
 
 - [ ] T-012b Edición parcial, validación y sincronización lateral del perfil en `ProfilePage`
   RF: RF-002, RF-003, RF-004, RF-011, RF-012, RF-013 | Depende de: T-010b, T-012, T-013 | Archivos: 4
@@ -109,8 +110,9 @@ Rama de integración: `feat/perfil-y-cambio-contrasena` (los PR de las entregas 
   Cómo probarlo: ejecutar `pytest apps/accounts/tests/test_profile_api.py apps/accounts/tests/test_profile_service.py`, iniciar dos sesiones con `curl` (`/api/app/v1/auth/login`), llamar a `POST /api/app/v1/auth/password/change` con una de ellas y comprobar que la sesión actual sigue devolviendo `200` en `/api/app/v1/auth/profile` mientras la otra devuelve `401`, además de probar `python manage.py profile change-password`.
 
 - E-03 Pantalla `/profile` para consultar datos personales y navegación lateral en web y escritorio
-  Tareas: T-010, T-011, T-012, T-013 | Líneas reales: 396 | Rama: `feat/perfil-y-cambio-contrasena-ui-perfil`
-  Cómo probarlo: ejecutar `pnpm --filter frontend test` y entrar con sesión iniciada en el navegador a `/`, pulsar «Perfil» en el menú lateral para abrir `/profile` y verificar correo, nombre, fecha de nacimiento y país localizado (o «Sin país asignado» si es `"ZZ"`).
+  Tareas: T-010, T-011, T-012, T-013 | Líneas reales: 465 | Rama: `feat/perfil-y-cambio-contrasena-ui-perfil`
+  Excepción: estaba en 396 líneas y el usuario pidió incorporar el patrón visual de placeholders *skeleton* de carga directamente en `/profile` (`+69` líneas entre `.skeleton` en `base.css`, `ProfilePage.{tsx,css}` y sus pruebas); dividirlo dejaría la pantalla recién entregada sin el estado de carga solicitado o duplicaría la vista.
+  Cómo probarlo: ejecutar `pnpm --filter frontend test` y entrar con sesión iniciada en el navegador a `/`, pulsar «Perfil» en el menú lateral para abrir `/profile` y verificar los placeholders grises animados durante la carga y luego correo, nombre, fecha de nacimiento y país localizado (o «Sin país asignado» si es `"ZZ"`).
 
 - E-03b Edición parcial de datos personales en `/profile`
   Tareas: T-010b, T-012b | Líneas estimadas: 320 | Rama: `feat/perfil-y-cambio-contrasena-ui-perfil-edicion`
