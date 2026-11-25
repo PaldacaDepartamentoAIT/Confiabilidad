@@ -12,8 +12,8 @@ from apps.accounts.api.views import _render
 from apps.accounts.models import User
 from apps.accounts.tests.factories import DEFAULT_PASSWORD, make_user
 from apps.audit.models import EventType, SecurityEvent
-from apps.consents.models import Terms, UserTerms
-from apps.consents.tests.factories import make_document, publish_version
+from apps.consents.models import UserTerms
+from apps.consents.tests.factories import publish_version
 from apps.emails import locales
 
 
@@ -70,9 +70,8 @@ def _csrf(client: Client) -> str:
 
 def _login_headers(client: Client, kind: str, user: User, *, accept_terms: bool) -> dict[str, str]:
     if accept_terms:
-        doc = make_document(Terms.Kind.TERMS, version="1.0", locale="es")
-        publish_version(Terms.Kind.TERMS, "1.0")
-        UserTerms.objects.create(user=user, document=doc)
+        docs = publish_version()
+        UserTerms.objects.create(user=user, terms=docs["es"])
     headers = {"X-CSRFToken": _csrf(client)} if kind == "browser" else {}
     resp = client.post(
         f"/api/{kind}/v1/auth/login",
