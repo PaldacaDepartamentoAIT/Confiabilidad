@@ -1,6 +1,6 @@
 # Entrega E-03 · Pantalla `/profile` de consulta y navegación lateral privada
 
-Rama: `feat/perfil-y-cambio-contrasena-ui-perfil` · Líneas de código y tests: 399 (límite: 400).
+Rama: `feat/perfil-y-cambio-contrasena-ui-perfil` · Líneas de código y tests: 396 (límite: 400).
 
 ## Qué se hizo
 - En `frontend/src/api/profile.ts` (`T-010`, `RF-001`) se añadió `getProfile` y el tipo `ProfileData` sobre `GET /auth/profile`.

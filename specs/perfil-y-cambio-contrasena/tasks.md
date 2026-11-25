@@ -109,7 +109,7 @@ Rama de integración: `feat/perfil-y-cambio-contrasena` (los PR de las entregas 
   Cómo probarlo: ejecutar `pytest apps/accounts/tests/test_profile_api.py apps/accounts/tests/test_profile_service.py`, iniciar dos sesiones con `curl` (`/api/app/v1/auth/login`), llamar a `POST /api/app/v1/auth/password/change` con una de ellas y comprobar que la sesión actual sigue devolviendo `200` en `/api/app/v1/auth/profile` mientras la otra devuelve `401`, además de probar `python manage.py profile change-password`.
 
 - E-03 Pantalla `/profile` para consultar datos personales y navegación lateral en web y escritorio
-  Tareas: T-010, T-011, T-012, T-013 | Líneas reales: 399 | Rama: `feat/perfil-y-cambio-contrasena-ui-perfil`
+  Tareas: T-010, T-011, T-012, T-013 | Líneas reales: 396 | Rama: `feat/perfil-y-cambio-contrasena-ui-perfil`
   Cómo probarlo: ejecutar `pnpm --filter frontend test` y entrar con sesión iniciada en el navegador a `/`, pulsar «Perfil» en el menú lateral para abrir `/profile` y verificar correo, nombre, fecha de nacimiento y país localizado (o «Sin país asignado» si es `"ZZ"`).
 
 - E-03b Edición parcial de datos personales en `/profile`
