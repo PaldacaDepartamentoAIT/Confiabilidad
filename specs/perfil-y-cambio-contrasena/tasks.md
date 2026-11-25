@@ -84,13 +84,13 @@ Rama de integración: `feat/perfil-y-cambio-contrasena` (los PR de las entregas 
   Tareas: T-002, T-003 | Líneas reales: 368 | Rama: `feat/perfil-y-cambio-contrasena-api-perfil-http`
   Cómo probarlo: ejecutar `pytest apps/accounts/tests/test_profile_api.py` y hacer `GET`/`PATCH` con `curl` a `/api/app/v1/auth/profile` verificando que cambiar el correo, enviar peticiones vacías o campos desconocidos se rechaza.
 
-- E-02 Servicio y comandos CLI de cambio de contraseña con cierre de otras sesiones
-  Tareas: T-005, T-006, T-009 | Líneas estimadas: 350 | Rama: `feat/perfil-y-cambio-contrasena-api-password`
-  Cómo probarlo: ejecutar `pytest apps/accounts/tests/test_profile_service.py` y probar `python manage.py profile change-password --email <EMAIL> --keep-session-key <SESSION_KEY>` comprobando que la sesión indicada sigue activa y el resto se cierran junto con los correos encolados.
+- E-02 Servicio de cambio de contraseña con límite configurable y cierre de otras sesiones
+  Tareas: T-005, T-006 | Líneas reales: 353 | Rama: `feat/perfil-y-cambio-contrasena-api-password`
+  Cómo probarlo: ejecutar `pytest apps/accounts/tests/test_profile_service.py` o probar `profile.change_password(...)` desde `python manage.py shell` verificando conservación de la sesión actual, cierre del resto, auditoría y correos encolados.
 
-- E-02b Endpoints HTTP de cambio de contraseña (`POST auth/password/change`)
-  Tareas: T-007, T-008 | Líneas estimadas: 275 | Rama: `feat/perfil-y-cambio-contrasena-api-password-http`
-  Cómo probarlo: ejecutar `pytest apps/accounts/tests/test_profile_api.py`, iniciar dos sesiones con `curl` (`/api/app/v1/auth/login`), llamar a `POST /api/app/v1/auth/password/change` con una de ellas y comprobar que la sesión actual sigue devolviendo `200` en `/api/app/v1/auth/profile` mientras la otra devuelve `401`.
+- E-02b Endpoints HTTP y CLI de cambio de contraseña (`POST auth/password/change` y `profile change-password`)
+  Tareas: T-007, T-008, T-009 | Líneas estimadas: 350 | Rama: `feat/perfil-y-cambio-contrasena-api-password-http`
+  Cómo probarlo: ejecutar `pytest apps/accounts/tests/test_profile_api.py apps/accounts/tests/test_profile_service.py`, iniciar dos sesiones con `curl` (`/api/app/v1/auth/login`), llamar a `POST /api/app/v1/auth/password/change` con una de ellas y comprobar que la sesión actual sigue devolviendo `200` en `/api/app/v1/auth/profile` mientras la otra devuelve `401`, además de probar `python manage.py profile change-password`.
 
 - E-03 Pantalla `/profile` para consultar y editar datos personales en web y escritorio
   Tareas: T-010, T-011, T-012, T-013 | Líneas estimadas: 340 | Rama: `feat/perfil-y-cambio-contrasena-ui-perfil`
