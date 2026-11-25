@@ -18,10 +18,10 @@ import { FormMessage } from "../components/FormMessage";
 import { IconButton } from "../components/IconButton";
 import { Table, type TableColumn, type TableRow } from "../components/data/Table";
 import type { LanguageStorage } from "../i18n/language";
-import { IconHouse, IconLogOut } from "../icons";
 import { AppLayout } from "../layouts/AppLayout";
 import { translateCode } from "../registration/serverErrors";
 import { navigate } from "../routing/router";
+import { privateNavItems, privateSidebarUser } from "./privateNav";
 import type { TokenStorage } from "./tokenStorage";
 
 type HomePageProps = {
@@ -32,11 +32,6 @@ type HomePageProps = {
   onLoggedOut?: () => void;
   onTermsRequired?: (termsStatus: TermsStatus) => void;
 };
-
-function userInitials(user: AuthenticatedUser | null): string {
-  const parts = (user?.name || user?.email || "U").trim().split(/\s+/);
-  return (parts.length >= 2 ? `${parts[0][0]}${parts[1][0]}` : parts[0].slice(0, 2)).toUpperCase();
-}
 
 function formatTimestamp(iso: string, language: string): string {
   const parsed = new Date(iso);
@@ -187,24 +182,9 @@ export function HomePage({
 
   return (
     <AppLayout
-      items={[{ id: "home", label: t("auth.homeTitle"), href: "/", icon: <IconHouse /> }]}
+      items={privateNavItems(t)}
       activeId="home"
-      user={
-        user
-          ? {
-              name: user.name || user.email,
-              initials: userInitials(user),
-              menu: [
-                {
-                  id: "logout",
-                  label: t("auth.logout"),
-                  icon: <IconLogOut />,
-                  onSelect: () => void handleLogout(),
-                },
-              ],
-            }
-          : undefined
-      }
+      user={privateSidebarUser(user, t, () => void handleLogout())}
       storage={storage}
     >
       <div className="page-head">

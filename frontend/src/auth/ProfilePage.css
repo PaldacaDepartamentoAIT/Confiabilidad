@@ -5,12 +5,6 @@
   max-width: 760px;
 }
 
-.profile-form {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
 .profile-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -21,18 +15,6 @@
   grid-column: 1 / -1;
 }
 
-.profile-form .field[readonly] {
+.profile-grid .field[readonly] {
   color: var(--text2);
-}
-
-.profile-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 14px;
-}
-
-.profile-form .profile-actions + .help {
-  margin: 14px 0 0;
-  text-align: right;
 }

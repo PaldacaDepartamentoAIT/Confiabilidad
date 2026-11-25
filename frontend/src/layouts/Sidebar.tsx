@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Counter } from "../components/Block";
@@ -18,6 +18,7 @@ export type SidebarItem = {
   icon: ReactNode;
   counter?: number;
   counterLabel?: string;
+  onSelect?: (event: MouseEvent<HTMLAnchorElement>) => void;
 };
 
 export type SidebarUserOption = {
@@ -145,7 +146,10 @@ export function Sidebar({
               data-ui={current ? "nav-item-active" : "nav-item"}
               aria-current={current ? "page" : undefined}
               title={collapsed ? item.label : undefined}
-              onClick={() => narrow && onMobileClose?.(false)}
+              onClick={(event) => {
+                item.onSelect?.(event);
+                if (narrow) onMobileClose?.(false);
+              }}
             >
               {item.icon}
               <span className="label">{item.label}</span>

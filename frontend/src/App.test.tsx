@@ -80,6 +80,7 @@ const answers: Record<string, unknown> = {
     terms_status: "accepted",
     terms: null,
   },
+  profile: { email: "ana@example.com", name: "Ana", birthdate: "1991-03-04", country: "ES" },
   sessions: { sessions: [] },
 };
 
@@ -121,6 +122,7 @@ const renderApp = (client?: ReturnType<typeof fakeClient>) =>
 
 const ROUTE_CASES = [
   ["/", undefined, null, "Main panel"],
+  ["/profile", undefined, null, "My profile"],
   ["/ruta-que-no-existe", undefined, null, "Main panel"],
   ["/showcase", undefined, null, "Reliability"],
   ["/login", UNAUTH, null, "Sign in"],
@@ -129,12 +131,14 @@ const ROUTE_CASES = [
   ["/register/continue#pid-1", UNAUTH, null, "Enter the verification code"],
   ["/register/done", UNAUTH, null, "Account created"],
   ["/", UNAUTH, "/login", "Sign in"],
+  ["/profile", UNAUTH, "/login", "Sign in"],
   ["/terms", UNAUTH, "/login", "Sign in"],
   ["/login", undefined, "/", "Main panel"],
   ["/register", undefined, "/", "Main panel"],
   ["/login", PENDING_TERMS, "/terms", "Pending terms and conditions"],
   ["/register", PENDING_TERMS, "/terms", "Pending terms and conditions"],
   ["/", PENDING_TERMS, "/terms", "Pending terms and conditions"],
+  ["/profile", PENDING_TERMS, "/terms", "Pending terms and conditions"],
   ["/terms", undefined, "/", "Main panel"],
 ] as const;
 
@@ -166,6 +170,16 @@ test("moving between screens does not reload the page, keeps the bar and fades o
   ).toBeVisible();
   expect(screen.getByRole("banner")).toBe(barBefore);
   expect(container.querySelector(".public-content")).toHaveClass("route-in");
+  window.history.replaceState(null, "", "/");
+});
+
+test("navigates from home sidebar to /profile without reloading", async () => {
+  window.history.replaceState(null, "", "/");
+  renderApp(fakeClient());
+  await screen.findByRole("heading", { level: 1, name: "Main panel" });
+  act(() => screen.getByRole("link", { name: "Profile" }).click());
+  expect(await screen.findByRole("heading", { level: 1, name: "My profile" })).toBeInTheDocument();
+  expect(window.location.pathname).toBe("/profile");
   window.history.replaceState(null, "", "/");
 });
 
