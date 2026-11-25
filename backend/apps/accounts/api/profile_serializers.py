@@ -81,3 +81,14 @@ class ProfileUpdateSerializer(serializers.Serializer[dict[str, Any]]):
         if extra_errors:
             raise serializers.ValidationError(extra_errors)
         return parsed
+
+
+class PasswordChangeSerializer(serializers.Serializer[dict[str, Any]]):
+    current_password = serializers.CharField(trim_whitespace=False, validators=[_reject_surrogates])
+    new_password = serializers.CharField(
+        trim_whitespace=False,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        validators=[_reject_surrogates],
+    )

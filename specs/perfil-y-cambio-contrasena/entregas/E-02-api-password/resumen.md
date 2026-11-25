@@ -1,6 +1,6 @@
 # Entrega E-02 · Servicio de cambio de contraseña con límite configurable y cierre de otras sesiones
 
-Rama: `feat/perfil-y-cambio-contrasena-api-password` · PR: pendiente · Líneas de código y tests: 353 (límite: 400).
+Rama: `feat/perfil-y-cambio-contrasena-api-password` · PR: #155 · Líneas de código y tests: 353 (límite: 400).
 
 ## Qué se hizo
 - Se ajustó la división de entregas trasladando `T-009` a `E-02b` para mantener esta entrega por debajo del límite de 400 líneas (353 líneas reales).

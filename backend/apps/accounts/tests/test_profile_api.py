@@ -4,17 +4,19 @@ from datetime import date
 from typing import Any
 
 import pytest
-from django.test import Client
+from django.core.cache import cache
+from django.test import Client, override_settings
 
 from apps.accounts.api import messages
-from apps.accounts.api.profile_serializers import ProfileUpdateSerializer
+from apps.accounts.api.profile_serializers import PasswordChangeSerializer, ProfileUpdateSerializer
 from apps.accounts.api.views import _render
-from apps.accounts.models import User
+from apps.accounts.models import User, UserSession
 from apps.accounts.tests.factories import DEFAULT_PASSWORD, make_user
 from apps.audit.models import EventType, SecurityEvent
 from apps.consents.models import UserTerms
 from apps.consents.tests.factories import publish_version
 from apps.emails import locales
+from apps.emails.models import OutboundEmail
 
 
 @pytest.mark.parametrize("language", locales.SUPPORTED)
@@ -68,14 +70,16 @@ def _csrf(client: Client) -> str:
     return client.cookies["csrftoken"].value
 
 
-def _login_headers(client: Client, kind: str, user: User, *, accept_terms: bool) -> dict[str, str]:
+def _login_headers(
+    client: Client, kind: str, user: User, *, accept_terms: bool, password: str = DEFAULT_PASSWORD
+) -> dict[str, str]:
     if accept_terms:
         docs = publish_version()
         UserTerms.objects.create(user=user, terms=docs["es"])
     headers = {"X-CSRFToken": _csrf(client)} if kind == "browser" else {}
     resp = client.post(
         f"/api/{kind}/v1/auth/login",
-        data=json.dumps({"email": user.email, "password": DEFAULT_PASSWORD, "language": "es"}),
+        data=json.dumps({"email": user.email, "password": password, "language": "es"}),
         content_type="application/json",
         headers=headers,
     )
@@ -193,3 +197,158 @@ def test_profile_api_enforces_terms_and_active_account(kind: str) -> None:
 
     User.objects.filter(pk=user.pk).update(is_active=False)
     assert client.get(f"/api/{kind}/v1/auth/profile", headers=headers).status_code == 401
+
+
+@pytest.mark.parametrize("language", locales.SUPPORTED)
+def test_password_serializer_messages_and_forbidden_chars(language: str) -> None:
+    assert messages.error_text("current_password_incorrect", language).strip()
+
+    missing = PasswordChangeSerializer(data={})
+    assert not missing.is_valid()
+    assert _render(missing.errors, language)["current_password"][0]["code"] == "required"
+
+    surrogate = PasswordChangeSerializer(
+        data={"current_password": "ok", "new_password": "bad\ud800"}
+    )
+    assert not surrogate.is_valid()
+    assert (
+        _render(surrogate.errors, language)["new_password"][0]["code"]
+        == "surrogate_characters_not_allowed"
+    )
+
+    partial = PasswordChangeSerializer(data={"current_password": "wrong"})
+    assert partial.is_valid(), partial.errors
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("kind", ["browser", "app"])
+def test_password_change_endpoint_keeps_current_session_and_revokes_others(kind: str) -> None:
+    cache.clear()
+    user = make_user(email="pwapi@example.com", password="OldPassword123!", language="en")
+    current_client = _client()
+    current_headers = _login_headers(
+        current_client, kind, user, accept_terms=True, password="OldPassword123!"
+    )
+    other_kind = "app" if kind == "browser" else "browser"
+    other_client = _client()
+    other_headers = _login_headers(
+        other_client, other_kind, user, accept_terms=False, password="OldPassword123!"
+    )
+    before_pw = SecurityEvent.objects.filter(event_type=EventType.PASSWORD_CHANGE).count()
+    before_mail = OutboundEmail.objects.count()
+
+    resp = current_client.post(
+        f"/api/{kind}/v1/auth/password/change",
+        data=json.dumps(
+            {
+                "current_password": "OldPassword123!",
+                "new_password": "NewPassword456!",
+                "language": "es",
+            }
+        ),
+        content_type="application/json",
+        headers=current_headers,
+    )
+    assert resp.status_code == 200
+    assert resp.json() == {"result": "password_changed"}
+    if kind == "browser":
+        current_headers = {"X-CSRFToken": current_client.cookies["csrftoken"].value}
+
+    assert (
+        current_client.get(f"/api/{kind}/v1/auth/profile", headers=current_headers).status_code
+        == 200
+    )
+    assert (
+        other_client.get(f"/api/{other_kind}/v1/auth/session", headers=other_headers).status_code
+        == 401
+    )
+    assert UserSession.objects.filter(user=user).count() == 1
+    assert (
+        SecurityEvent.objects.filter(event_type=EventType.PASSWORD_CHANGE).count() == before_pw + 1
+    )
+    queued = list(OutboundEmail.objects.order_by("pk")[before_mail:])
+    assert [(m.kind, m.locale) for m in queued] == [
+        ("password_changed", "en"),
+        ("sessions_closed", "en"),
+    ]
+
+    # Nueva contraseña inicia sesión; antigua falla.
+    assert (
+        _client()
+        .post(
+            "/api/app/v1/auth/login",
+            data=json.dumps({"email": user.email, "password": "NewPassword456!"}),
+            content_type="application/json",
+        )
+        .status_code
+        == 200
+    )
+
+
+@pytest.mark.django_db
+@override_settings(PASSWORD_CHANGE_MAX_FAILED_ATTEMPTS=2)
+def test_password_change_endpoint_validation_lockout_terms_and_csrf() -> None:
+    cache.clear()
+    user = make_user(email="pwlock@example.com", password="ValidPassword1!")
+    client = _client()
+    assert (
+        client.post(
+            "/api/app/v1/auth/password/change", data="{}", content_type="application/json"
+        ).status_code
+        == 401
+    )
+
+    app_headers = _login_headers(
+        client, "app", user, accept_terms=False, password="ValidPassword1!"
+    )
+    terms_blocked = client.post(
+        "/api/app/v1/auth/password/change",
+        data=json.dumps({"current_password": "ValidPassword1!", "new_password": "NewPassword9!"}),
+        content_type="application/json",
+        headers=app_headers,
+    )
+    assert terms_blocked.status_code == 403 and terms_blocked.json()["code"] == "terms_required"
+
+    browser = _client()
+    b_headers = _login_headers(
+        browser, "browser", user, accept_terms=True, password="ValidPassword1!"
+    )
+    no_csrf = browser.post(
+        "/api/browser/v1/auth/password/change",
+        data=json.dumps({"current_password": "ValidPassword1!", "new_password": "NewPassword9!"}),
+        content_type="application/json",
+    )
+    assert no_csrf.status_code == 403
+
+    # Fallo 1 con new_password ausente también cuenta en RF-008.
+    fail1 = browser.post(
+        "/api/browser/v1/auth/password/change",
+        data=json.dumps({"current_password": "wrong", "language": "pt-BR"}),
+        content_type="application/json",
+        headers=b_headers,
+    )
+    assert fail1.status_code == 400
+    assert fail1.json()["errors"]["current_password"][0]["code"] == "current_password_incorrect"
+    assert fail1.json()["errors"]["new_password"][0]["code"] == "required"
+
+    # Fallo 2 con new_password débil activa el bloqueo tras este intento.
+    fail2 = browser.post(
+        "/api/browser/v1/auth/password/change",
+        data=json.dumps({"current_password": "wrong", "new_password": "123", "language": "es"}),
+        content_type="application/json",
+        headers=b_headers,
+    )
+    assert fail2.status_code == 400
+    assert fail2.json()["errors"]["current_password"][0]["code"] == "current_password_incorrect"
+    assert fail2.json()["errors"]["new_password"][0]["code"] == "password_too_short"
+
+    # Petición 3 recibe 429 sin evaluar contraseñas y mantiene la sesión actual abierta.
+    locked = browser.post(
+        "/api/browser/v1/auth/password/change",
+        data=json.dumps({"current_password": "ValidPassword1!", "new_password": "NewPassword9!"}),
+        content_type="application/json",
+        headers=b_headers,
+    )
+    assert locked.status_code == 429
+    assert int(locked.headers["Retry-After"]) > 0 and locked.json()["retry_after"] > 0
+    assert browser.get("/api/browser/v1/auth/profile", headers=b_headers).status_code == 200

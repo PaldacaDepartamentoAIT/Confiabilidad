@@ -335,3 +335,48 @@ def test_password_change_rejections_lockout_and_external_save() -> None:
     user.set_password("ExternalChange99!")
     user.save(update_fields=["password"])
     assert not UserSession.objects.filter(user=user).exists()
+
+
+def test_cli_password_change_keeps_selected_session_and_reports_errors(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    cache.clear()
+    user = make_user(email="clipw@example.com", password="OldCliPassword1!")
+    keep_key = _create_app_session(user, "cli-keep")
+    drop_key = _create_app_session(user, "cli-drop")
+
+    out = StringIO()
+    call_command(
+        "profile",
+        "change-password",
+        "--email",
+        "clipw@example.com",
+        "--current-password",
+        "OldCliPassword1!",
+        "--new-password",
+        "NewCliPassword2!",
+        "--keep-session-key",
+        keep_key,
+        stdout=out,
+    )
+    assert "account: clipw@example.com" in out.getvalue()
+    assert "revoked_sessions: 1" in out.getvalue()
+    assert sessions.is_session_active(keep_key, user.pk)
+    assert not sessions.is_session_active(drop_key, user.pk)
+
+    answers = iter(["WrongPass!", "NewCliPassword3!"])
+    monkeypatch.setattr("getpass.getpass", lambda _prompt="": next(answers))
+    with override_settings(PASSWORD_CHANGE_MAX_FAILED_ATTEMPTS=1):
+        with pytest.raises(CommandError, match="incorrect"):
+            call_command("profile", "change-password", "--email", "clipw@example.com")
+        with pytest.raises(CommandError, match="Wait"):
+            call_command(
+                "profile",
+                "change-password",
+                "--email",
+                "clipw@example.com",
+                "--current-password",
+                "NewCliPassword2!",
+                "--new-password",
+                "NewCliPassword3!",
+            )

@@ -184,8 +184,10 @@ def close_current_session(user: User, session_key: str) -> None:
     _delete_from_store(session_key)
 
 
-def refresh_current_session(user: User, raw_key: str, *, request: HttpRequest | None = None) -> str:
-    session = getattr(request, "session", None) if request is not None else None
+def refresh_current_session(
+    user: User, raw_key: str, *, request: HttpRequest | None = None, rotate: bool = True
+) -> str:
+    session = getattr(request, "session", None) if rotate and request is not None else None
     if session is not None and getattr(session, "session_key", None) == raw_key:
         old_hash = audit_session_fingerprint(raw_key)
         session[HASH_SESSION_KEY] = user.get_session_auth_hash()

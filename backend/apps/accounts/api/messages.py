@@ -216,6 +216,11 @@ ERRORS: dict[str, dict[str, str]] = {
         "pt-BR": "Informe pelo menos um dado do perfil para atualizar.",
         "en": "Provide at least one profile field to update.",
     },
+    "current_password_incorrect": {
+        "es": "La contraseña actual no es correcta.",
+        "pt-BR": "A senha atual não está correta.",
+        "en": "The current password is incorrect.",
+    },
 }
 
 FIELD_ERRORS: dict[str, dict[str, str]] = {

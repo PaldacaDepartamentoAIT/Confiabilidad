@@ -33,17 +33,20 @@ Estado: aprobado
   Excepción: coordina `_skip_password_session_revocation` en `models.py`, actualización/cierre selectivo en `sessions.py` y transacción en `profile.py` junto con `test_profile_service.py` para respetar `RF-010` de `inicio-cierre-sesion`.
   Decisiones: en `sessions.refresh_current_session`, actualizar explícitamente `session[HASH_SESSION_KEY]` y llamar a `session.cycle_key()` + `session.save()` en navegador en lugar de `django.contrib.auth.update_session_auth_hash` (y actualizar `HASH_SESSION_KEY` sin rotar `raw_key` en `app`/CLI) (pendiente de ejecutar `pytest` y `mypy` en entorno completo). — Motivo: DRF con `authentication_classes=[]` deja `request.user` como `AnonymousUser`, lo que impediría a `update_session_auth_hash` actualizar la huella, mientras que mantener `raw_key` en `app` evita invalidar `X-Session-Token` en escritorio. — Confianza: [Cierto]. — Cómo revertirla: reemplazar `refresh_current_session` y `skip_password_session_revocation`.
 
-- [ ] T-007 Serializador de cambio de contraseña y mensajes multiidioma
+- [x] T-007 Serializador de cambio de contraseña y mensajes multiidioma
   RF: RF-007, RF-013 | Depende de: T-006 | Archivos: 3
   Hecho cuando: `pytest apps/accounts/tests/test_profile_api.py -k password_serializer` pasa verificando presencia, caracteres prohibidos y textos `current_password_incorrect` en `es`, `pt-BR` y `en`.
+  Decisiones: permitir `new_password` ausente, `null` o vacía en `PasswordChangeSerializer` para que la vista pueda evaluar primero la contraseña actual y contabilizar el fallo de `RF-008` aunque falte la nueva (`RF-007`) (pendiente de ejecutar `pytest` y `mypy` en entorno completo). — Motivo: garantiza que enviar solo `current_password` errónea cuente como intento fallido antes de devolver `required`/`blank` en `new_password`. — Confianza: [Cierto]. — Cómo revertirla: exigir `new_password` directamente en `PasswordChangeSerializer`.
 
-- [ ] T-008 Endpoints `POST` de `auth/password/change` para web y escritorio
+- [x] T-008 Endpoints `POST` de `auth/password/change` para web y escritorio
   RF: RF-006, RF-007, RF-008, RF-009, RF-011, RF-013 | Depende de: T-007 | Archivos: 3
   Hecho cuando: `pytest apps/accounts/tests/test_profile_api.py -k password_change` pasa verificando `200`, `400`, `429` (`Retry-After` y `retry_after`), `403 terms_required`, `401`, continuidad real de la sesión actual e invalidación inmediata `401` de otras sesiones abiertas en web y escritorio.
+  Decisiones: comprobar `throttling.check_password_change` antes de evaluar el cuerpo/contraseñas en `AppPasswordChangeView.post` y traducir `new_password` ausente/vacía o inválida tras evaluar la contraseña actual (pendiente de ejecutar `pytest` y `mypy` en entorno completo). — Motivo: cumple `RF-008` (rechazo sin evaluar contraseñas durante el bloqueo) y `RF-007` (contar intento fallido de contraseña actual incluso sin `new_password`). — Confianza: [Cierto]. — Cómo revertirla: eliminar `AppPasswordChangeView`, `BrowserPasswordChangeView` y sus rutas en `urls.py`.
 
-- [ ] T-009 Subcomando CLI `profile change-password`
+- [x] T-009 Subcomando CLI `profile change-password`
   RF: RF-015 | Depende de: T-006 | Archivos: 2
   Hecho cuando: `pytest apps/accounts/tests/test_profile_service.py -k cli_password` pasa verificando `manage.py profile change-password` con entrada interactiva o argumentos y conservación opcional de `--keep-session-key`.
+  Decisiones: solicitar `--current-password` y `--new-password` sin eco con `getpass` cuando se omiten y aceptar `--keep-session-key` opcional para verificar desde CLI tanto el cierre total como la conservación de la sesión indicada (pendiente de ejecutar `pytest` y `mypy` en entorno completo). — Motivo: coherencia con `password_reset.py` y cobertura completa de `RF-015`. — Confianza: [Cierto]. — Cómo revertirla: eliminar `_change_password` de `management/commands/profile.py` y su test.
 
 - [ ] T-010 Cliente HTTP `patch`, `api/profile.ts` y mapeo de errores de perfil
   RF: RF-001, RF-002, RF-003, RF-004, RF-013 | Depende de: T-003 | Archivos: 4
@@ -89,7 +92,7 @@ Rama de integración: `feat/perfil-y-cambio-contrasena` (los PR de las entregas 
   Cómo probarlo: ejecutar `pytest apps/accounts/tests/test_profile_service.py` o probar `profile.change_password(...)` desde `python manage.py shell` verificando conservación de la sesión actual, cierre del resto, auditoría y correos encolados.
 
 - E-02b Endpoints HTTP y CLI de cambio de contraseña (`POST auth/password/change` y `profile change-password`)
-  Tareas: T-007, T-008, T-009 | Líneas estimadas: 350 | Rama: `feat/perfil-y-cambio-contrasena-api-password-http`
+  Tareas: T-007, T-008, T-009 | Líneas reales: 394 | Rama: `feat/perfil-y-cambio-contrasena-api-password-http`
   Cómo probarlo: ejecutar `pytest apps/accounts/tests/test_profile_api.py apps/accounts/tests/test_profile_service.py`, iniciar dos sesiones con `curl` (`/api/app/v1/auth/login`), llamar a `POST /api/app/v1/auth/password/change` con una de ellas y comprobar que la sesión actual sigue devolviendo `200` en `/api/app/v1/auth/profile` mientras la otra devuelve `401`, además de probar `python manage.py profile change-password`.
 
 - E-03 Pantalla `/profile` para consultar y editar datos personales en web y escritorio
