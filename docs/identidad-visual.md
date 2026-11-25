@@ -182,12 +182,15 @@ Un solo color por prioridad en toda la aplicación.
   a verse el botón.
 - **Estado del menú lateral.** No se recuerda: cada sesión empieza con el menú abierto.
 - **Estado de carga (placeholders *skeleton*).** La estructura fija de la pantalla (título de página,
-  cabeceras y bloques) se muestra siempre desde el primer instante; mientras llegan los datos de la
-  API, el contenido pendiente se sustituye por marcadores grises con degradado animado (*shimmer*)
-  usando `--grid` y `--gray` (`linear-gradient(90deg, var(--grid) 25%, var(--gray) 50%, var(--grid) 75%)`),
-  con las mismas medidas que el contenido definitivo (por ejemplo, `36 px` de alto y radio `6 px`
-  bajo su etiqueta real en campos de formulario) para evitar saltos de diseño. Los placeholders
-  llevan `aria-hidden="true"` y el bloque en carga marca `aria-busy="true"`.
+  cabeceras, bloques y etiquetas) se muestra siempre desde el primer instante; mientras llegan los
+  datos de la API, el contenido pendiente (campos, subtítulos dependientes de sesión o filas de
+  tabla en carga) se sustituye por marcadores en gris claro con degradado animado (*shimmer*)
+  calculado con `color-mix(in srgb, var(--grid) 55%, var(--bg))` y un reflejo más claro en `22%`
+  de `--grid` sobre `--bg`, con las mismas medidas que el contenido definitivo (por ejemplo, `36 px`
+  de alto y radio `6 px` en campos de formulario) para evitar saltos de diseño. Al llegar los datos,
+  el skeleton hace un *fade out* (`0,16 s`) seguido de un *fade in* del contenido real (`0,2 s` con
+  `0,1 s` de retardo) para que nunca aparezca de golpe. Los placeholders llevan `aria-hidden="true"`
+  y la región en carga marca `aria-busy="true"`.
 
 ## Movimiento
 
@@ -205,7 +208,7 @@ Un solo color por prioridad en toda la aplicación.
 | Aparición de un menú desplegable | 0,18 s (fundido y 6 px de desplazamiento hacia abajo, o hacia arriba si se despliega por encima); se cierra sin animación |
 | Panel lateral en móvil | 0,25 s de deslizamiento |
 | Cambio de tema | 0,4 s en todos los colores, solo durante el cambio |
-| Placeholder de carga (*skeleton*) | 1,4 s lineal continuo (barrido de fondo `200%`) |
+| Placeholder de carga (*skeleton*) | barrido continuo de 1,4 s; *fade out* de 0,16 s y *fade in* del contenido en 0,2 s |
 
 Si el sistema pide reducir el movimiento, no se anima nada, incluidos el hover y el cambio de tema.
 
