@@ -76,10 +76,14 @@ small {
 
 .skel-slot {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
 }
 
 .skel-slot > * {
   grid-area: 1 / 1;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .skel-slot.is-loading > .skel-content {
