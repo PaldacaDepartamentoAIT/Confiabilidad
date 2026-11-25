@@ -92,7 +92,7 @@ Rama de integración: `feat/perfil-y-cambio-contrasena` (los PR de las entregas 
   Cómo probarlo: ejecutar `pytest apps/accounts/tests/test_profile_service.py` o probar `profile.change_password(...)` desde `python manage.py shell` verificando conservación de la sesión actual, cierre del resto, auditoría y correos encolados.
 
 - E-02b Endpoints HTTP y CLI de cambio de contraseña (`POST auth/password/change` y `profile change-password`)
-  Tareas: T-007, T-008, T-009 | Líneas estimadas: 350 | Rama: `feat/perfil-y-cambio-contrasena-api-password-http`
+  Tareas: T-007, T-008, T-009 | Líneas reales: 382 | Rama: `feat/perfil-y-cambio-contrasena-api-password-http`
   Cómo probarlo: ejecutar `pytest apps/accounts/tests/test_profile_api.py apps/accounts/tests/test_profile_service.py`, iniciar dos sesiones con `curl` (`/api/app/v1/auth/login`), llamar a `POST /api/app/v1/auth/password/change` con una de ellas y comprobar que la sesión actual sigue devolviendo `200` en `/api/app/v1/auth/profile` mientras la otra devuelve `401`, además de probar `python manage.py profile change-password`.
 
 - E-03 Pantalla `/profile` para consultar y editar datos personales en web y escritorio
