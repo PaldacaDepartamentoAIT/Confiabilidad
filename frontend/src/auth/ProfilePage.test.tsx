@@ -50,7 +50,7 @@ test("renders skeleton placeholders while loading, shows ZZ placeholder and pass
   const section = screen.getByRole("region", { name: "Información personal" });
   expect(section).toHaveAttribute("aria-busy", "true");
   expect(screen.getByText("Correo electrónico")).toBeInTheDocument();
-  expect(container.querySelectorAll(".skeleton")).toHaveLength(4);
+  expect(container.querySelectorAll(".is-loading .skeleton")).toHaveLength(4);
 
   resolveFetch(
     json(200, {
@@ -63,7 +63,8 @@ test("renders skeleton placeholders while loading, shows ZZ placeholder and pass
 
   const emailField = await screen.findByLabelText("Correo electrónico");
   expect(section).toHaveAttribute("aria-busy", "false");
-  expect(container.querySelectorAll(".skeleton")).toHaveLength(0);
+  expect(container.querySelectorAll(".is-loading")).toHaveLength(0);
+  expect(container.querySelectorAll(".is-ready")).toHaveLength(4);
   expect(emailField).toHaveValue("ana@empresa.com");
   expect(emailField).toHaveAttribute("readonly");
   expect(screen.getByLabelText("Nombre completo")).toHaveValue("Ana Real");

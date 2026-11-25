@@ -97,7 +97,7 @@ export function App({ storage, client }: AppProps) {
   };
 
   const screen = {
-    "/": <HomePage {...withSession} onTermsRequired={setTerms} />,
+    "/": <HomePage {...withSession} onTermsRequired={setTerms} onSessionLoaded={setSession} />,
     "/profile": <ProfilePage {...withSession} onTermsRequired={setTerms} />,
     "/login": <LoginPage {...shared} onAuthenticated={setSession} />,
     "/terms": <TermsPage {...withSession} onAccepted={() => setTerms("accepted")} />,

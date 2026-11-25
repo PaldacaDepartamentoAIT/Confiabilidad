@@ -70,17 +70,23 @@ beforeEach(() => window.history.pushState(null, "", "/"));
 
 test("muestra usuario y sesiones activas, permite marcar y cerrar una sesión y desactiva seleccionar todo si queda solo la actual", async () => {
   const user = userEvent.setup();
+  let releaseSessions!: (r: Response) => void;
   renderHome((url) =>
-    Promise.resolve(
-      String(url).split("?")[0].endsWith("/sessions")
-        ? json(200, { sessions: TWO_SESSIONS })
-        : json(200, { result: "revoked" }),
-    ),
+    String(url).split("?")[0].endsWith("/sessions")
+      ? new Promise((resolve) => {
+          releaseSessions = resolve;
+        })
+      : Promise.resolve(json(200, { result: "revoked" })),
   );
+
+  const sessionsRegion = screen.getByRole("region", { name: "Sesiones activas" });
+  expect(sessionsRegion).toHaveAttribute("aria-busy", "true");
+  releaseSessions(json(200, { sessions: TWO_SESSIONS }));
 
   expect(await screen.findByRole("combobox", { name: "Ana García" })).toBeInTheDocument();
   expect(screen.getByText("Sesión iniciada como Ana García (ana@empresa.com)")).toBeInTheDocument();
   expect(await screen.findByText("192.0.2.10")).toBeInTheDocument();
+  expect(sessionsRegion).toHaveAttribute("aria-busy", "false");
   expect(screen.getByText("Sesión actual")).toBeInTheDocument();
   expect(screen.queryByRole("checkbox", { name: /Chrome\/130/ })).not.toBeInTheDocument();
 

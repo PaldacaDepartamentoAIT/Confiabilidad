@@ -32,6 +32,7 @@ type HomePageProps = {
   tokenStorage?: TokenStorage;
   onLoggedOut?: () => void;
   onTermsRequired?: (termsStatus: TermsStatus) => void;
+  onSessionLoaded?: (session: SessionInfo) => void;
 };
 
 function formatTimestamp(iso: string, language: string): string {
@@ -49,14 +50,18 @@ export function HomePage({
   tokenStorage,
   onLoggedOut,
   onTermsRequired,
+  onSessionLoaded,
 }: HomePageProps) {
   const { t, i18n } = useTranslation();
   const [user, setUser] = useState<AuthenticatedUser | null>(session?.user ?? null);
   const [sessions, setSessions] = useState<ActiveSessionItem[]>([]);
+  const [sessionsLoaded, setSessionsLoaded] = useState(false);
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(new Set());
   const [errorKey, setErrorKey] = useState<string | null>(null);
   const loggingOut = useRef(false);
   const [revokingSelected, setRevokingSelected] = useState(false);
+  const onSessionLoadedRef = useRef(onSessionLoaded);
+  onSessionLoadedRef.current = onSessionLoaded;
 
   const redirectToLogin = useCallback(() => {
     tokenStorage?.clear();
@@ -98,6 +103,7 @@ export function HomePage({
         if (!active) return;
         if (info.kind !== "ok") return handleOutcomeFailure(info);
         current = info.data;
+        onSessionLoadedRef.current?.(current);
       }
       setUser(current.user);
       if (current.terms_status !== "accepted") return redirectToTerms(current.terms_status);
@@ -106,6 +112,7 @@ export function HomePage({
       if (listed.kind === "ok") {
         setErrorKey(null);
         setSessions(listed.data.sessions);
+        setSessionsLoaded(true);
       } else {
         handleOutcomeFailure(listed);
       }
@@ -181,6 +188,8 @@ export function HomePage({
     },
   }));
 
+  const sessionsPending = !sessionsLoaded && !errorKey;
+
   return (
     <AppLayout
       items={privateNavItems(t)}
@@ -190,40 +199,58 @@ export function HomePage({
     >
       <div className="page-head">
         <h1>{t("auth.homeTitle")}</h1>
-        {user && (
-          <p>
-            {user.name ? t("auth.signedInAs", { name: user.name, email: user.email }) : user.email}
+        <div className={user ? "skel-slot is-ready" : "skel-slot is-loading"}>
+          <p className="skel-content">
+            {user
+              ? user.name
+                ? t("auth.signedInAs", { name: user.name, email: user.email })
+                : user.email
+              : "\u00a0"}
           </p>
-        )}
+          <span className="skeleton skel-mask skel-line" aria-hidden="true" />
+        </div>
       </div>
       {errorKey && <FormMessage type="error" messageKey={errorKey as never} />}
-      <Block title={t("auth.sessionsTitle")} count={sessions.length}>
-        <Table
-          label={t("auth.sessionsTitle")}
-          columns={columns}
-          rows={rows}
-          emptyMessage={t("auth.sessionsEmpty")}
-          selection={{
-            selectedIds,
-            onChange: setSelectedIds,
-            isSelectable: (row) => otherIdSet.has(row.id),
-            selectAllLabel: t("auth.revokeOthers"),
-            rowLabel: (row) =>
-              t("auth.selectSession", { agent: String(row.cells.userAgent ?? row.id) }),
-            selectedLabel: (count) =>
-              count === 1 ? t("auth.selectedOne") : t("auth.selectedMany", { count }),
-            actions: (
-              <IconButton
-                size="sm"
-                label={t("auth.revokeSession")}
-                icon={<IconLogOut />}
-                tooltipAlign="end"
-                processing={revokingSelected}
-                onClick={() => void handleRevokeSelected()}
-              />
-            ),
-          }}
-        />
+      <Block
+        as="section"
+        title={t("auth.sessionsTitle")}
+        count={sessionsLoaded ? sessions.length : undefined}
+        aria-busy={sessionsPending}
+      >
+        <div className={sessionsPending ? "skel-slot is-loading" : "skel-slot is-ready"}>
+          <div className="skel-content">
+            <Table
+              label={t("auth.sessionsTitle")}
+              columns={columns}
+              rows={rows}
+              emptyMessage={t("auth.sessionsEmpty")}
+              selection={{
+                selectedIds,
+                onChange: setSelectedIds,
+                isSelectable: (row) => otherIdSet.has(row.id),
+                selectAllLabel: t("auth.revokeOthers"),
+                rowLabel: (row) =>
+                  t("auth.selectSession", { agent: String(row.cells.userAgent ?? row.id) }),
+                selectedLabel: (count) =>
+                  count === 1 ? t("auth.selectedOne") : t("auth.selectedMany", { count }),
+                actions: (
+                  <IconButton
+                    size="sm"
+                    label={t("auth.revokeSession")}
+                    icon={<IconLogOut />}
+                    tooltipAlign="end"
+                    processing={revokingSelected}
+                    onClick={() => void handleRevokeSelected()}
+                  />
+                ),
+              }}
+            />
+          </div>
+          <div className="skel-mask skel-rows" aria-hidden="true">
+            <div className="skeleton skel-row" />
+            <div className="skeleton skel-row" />
+          </div>
+        </div>
       </Block>
     </AppLayout>
   );

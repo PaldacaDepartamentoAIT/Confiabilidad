@@ -25,26 +25,6 @@ type ProfilePageProps = {
   onTermsRequired?: (termsStatus: TermsStatus) => void;
 };
 
-function ProfileField({
-  label,
-  value,
-  type = "text",
-  loading,
-}: {
-  label: string;
-  value: string;
-  type?: "text" | "date";
-  loading: boolean;
-}) {
-  if (!loading) return <TextField label={label} type={type} value={value} readOnly />;
-  return (
-    <div className="fld">
-      <span className="lbl">{label}</span>
-      <div className="skeleton profile-skeleton" aria-hidden="true" />
-    </div>
-  );
-}
-
 export function ProfilePage({
   client,
   session,
@@ -108,6 +88,12 @@ export function ProfilePage({
       : (countryOptions([profile.country], i18n.language)[0]?.label ?? profile.country)
     : "";
   const loading = profile === null;
+  const fields: readonly { label: string; value: string; type?: "date"; full?: boolean }[] = [
+    { label: t("auth.emailLabel"), value: profile?.email ?? "", full: true },
+    { label: t("register.nameLabel"), value: profile?.name ?? "" },
+    { label: t("register.birthdateLabel"), value: profile?.birthdate ?? "", type: "date" },
+    { label: t("register.countryLabel"), value: countryLabel, full: true },
+  ];
 
   return (
     <AppLayout
@@ -125,31 +111,22 @@ export function ProfilePage({
         <div className="profile-blocks">
           <Block as="section" title={t("auth.profileInfoTitle")} aria-busy={loading}>
             <div className="profile-grid">
-              <div className="full">
-                <ProfileField
-                  label={t("auth.emailLabel")}
-                  value={profile?.email ?? ""}
-                  loading={loading}
-                />
-              </div>
-              <ProfileField
-                label={t("register.nameLabel")}
-                value={profile?.name ?? ""}
-                loading={loading}
-              />
-              <ProfileField
-                label={t("register.birthdateLabel")}
-                type="date"
-                value={profile?.birthdate ?? ""}
-                loading={loading}
-              />
-              <div className="full">
-                <ProfileField
-                  label={t("register.countryLabel")}
-                  value={countryLabel}
-                  loading={loading}
-                />
-              </div>
+              {fields.map(({ label, value, type, full }) => (
+                <div
+                  key={label}
+                  className={[full && "full", "skel-slot", loading ? "is-loading" : "is-ready"]
+                    .filter(Boolean)
+                    .join(" ")}
+                >
+                  <div className="skel-content">
+                    <TextField label={label} type={type} value={value} readOnly />
+                  </div>
+                  <div className="fld skel-mask" aria-hidden="true">
+                    <span className="lbl">{label}</span>
+                    <div className="skeleton skel-field" />
+                  </div>
+                </div>
+              ))}
             </div>
           </Block>
         </div>
