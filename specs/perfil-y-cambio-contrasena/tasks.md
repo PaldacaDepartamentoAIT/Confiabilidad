@@ -14,9 +14,10 @@ Estado: aprobado
   RF: RF-001, RF-002, RF-003, RF-004, RF-011, RF-013 | Depende de: T-002 | Archivos: 3
   Hecho cuando: `pytest apps/accounts/tests/test_profile_api.py -k profile` pasa verificando sesión por cookie (con CSRF), token de escritorio (`X-Session-Token`), bloqueo `401` por cuenta inactiva y `403 terms_required` sin términos vigentes, e idioma de respuesta.
 
-- [ ] T-004 Subcomandos CLI `profile show` y `profile edit`
+- [x] T-004 Subcomandos CLI `profile show` y `profile edit`
   RF: RF-015 | Depende de: T-001 | Archivos: 2
   Hecho cuando: `pytest apps/accounts/tests/test_profile_service.py -k cli_profile` pasa verificando `manage.py profile show --email ...` y `manage.py profile edit --email ...`.
+  Decisiones: exigir cuenta activa en `manage.py profile` (consultando `User.active`) e imprimir pares clave-valor legibles para inspección y scripts (pendiente de ejecutar `pytest` y `mypy` en entorno completo). — Motivo: coherencia con `RF-007` de `usuario-personalizado` y `management/commands/registration.py`. — Confianza: [Cierto]. — Cómo revertirla: eliminar `management/commands/profile.py` y su test.
 
 - [ ] T-005 Límite configurable por cuenta ante intentos fallidos de contraseña actual
   RF: RF-008, RF-014 | Depende de: — | Archivos: 4
@@ -71,9 +72,13 @@ Estado: aprobado
 ## Entregas
 Rama de integración: `feat/perfil-y-cambio-contrasena` (los PR de las entregas van contra ella; ver `AGENTS.md`).
 
-- E-01 Consulta y edición de perfil en backend (API y consola)
-  Tareas: T-001, T-002, T-003, T-004 | Líneas estimadas: 290 | Rama: `feat/perfil-y-cambio-contrasena-api-perfil`
-  Cómo probarlo: ejecutar `pytest apps/accounts/tests/test_profile_service.py apps/accounts/tests/test_profile_api.py`, probar `python manage.py profile show --email <EMAIL>` y `python manage.py profile edit --email <EMAIL> --name "..."` y hacer `GET`/`PATCH` con `curl` a `/api/app/v1/auth/profile` verificando que cambiar el correo se rechaza.
+- E-01 Servicio y comandos CLI de consulta y edición de perfil
+  Tareas: T-001, T-004 | Líneas reales: 307 | Rama: `feat/perfil-y-cambio-contrasena-api-perfil`
+  Cómo probarlo: ejecutar `pytest apps/accounts/tests/test_profile_service.py` y probar `python manage.py profile show --email <EMAIL>` y `python manage.py profile edit --email <EMAIL> --name "..."` comprobando la persistencia y que `"ZZ"` se conserva si no se cambia.
+
+- E-01b Endpoints HTTP de consulta y edición de perfil (`GET`/`PATCH auth/profile`)
+  Tareas: T-002, T-003 | Líneas estimadas: 385 | Rama: `feat/perfil-y-cambio-contrasena-api-perfil-http`
+  Cómo probarlo: ejecutar `pytest apps/accounts/tests/test_profile_api.py` y hacer `GET`/`PATCH` con `curl` a `/api/app/v1/auth/profile` verificando que cambiar el correo, enviar peticiones vacías o campos desconocidos se rechaza.
 
 - E-02 Cambio de contraseña con cierre de otras sesiones en backend (API y consola)
   Tareas: T-005, T-006, T-007, T-008, T-009 | Líneas estimadas: 340 | Rama: `feat/perfil-y-cambio-contrasena-api-password`

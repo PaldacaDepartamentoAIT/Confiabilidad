@@ -1,7 +1,10 @@
 from datetime import date
+from io import StringIO
 
 import pytest
 from django.core.exceptions import ValidationError
+from django.core.management import call_command
+from django.core.management.base import CommandError
 
 from apps.accounts import profile
 from apps.accounts.models import User
@@ -119,3 +122,43 @@ def test_update_profile_rejects_invalid_values_without_saving_or_auditing() -> N
     assert user.birthdate == date(1990, 1, 1)
     assert user.country == "ES"
     assert not SecurityEvent.objects.filter(event_type=EventType.PROFILE_EDIT).exists()
+
+
+def test_cli_profile_show_and_edit() -> None:
+    user = make_user(
+        email="cli@example.com",
+        name="Cli User",
+        birthdate=date(1991, 6, 7),
+        country="ES",
+    )
+    out = StringIO()
+    call_command("profile", "show", "--email", " CLI@example.com ", stdout=out)
+    shown = out.getvalue()
+    assert "email: cli@example.com" in shown
+    assert "name: Cli User" in shown
+    assert "birthdate: 1991-06-07" in shown
+    assert "country: ES" in shown
+
+    edit_out = StringIO()
+    call_command(
+        "profile",
+        "edit",
+        "--email",
+        "cli@example.com",
+        "--name",
+        "Cli Updated",
+        "--country",
+        "br",
+        stdout=edit_out,
+    )
+    assert "name: Cli Updated" in edit_out.getvalue()
+    assert "country: BR" in edit_out.getvalue()
+    user.refresh_from_db()
+    assert user.name == "Cli Updated"
+    assert user.country == "BR"
+
+    with pytest.raises(CommandError):
+        call_command("profile", "edit", "--email", "cli@example.com")
+
+    with pytest.raises(CommandError):
+        call_command("profile", "show", "--email", "missing@example.com")
