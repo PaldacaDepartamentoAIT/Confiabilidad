@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, cast
 
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
@@ -39,7 +39,7 @@ class ProfileUpdateSerializer(serializers.Serializer[dict[str, Any]]):
 
     def to_internal_value(self, data: Any) -> dict[str, Any]:
         if not isinstance(data, dict):
-            return super().to_internal_value(data)
+            return cast(dict[str, Any], super().to_internal_value(data))
 
         extra_errors: dict[str, list[serializers.ErrorDetail]] = {}
         for key in data:
@@ -68,13 +68,14 @@ class ProfileUpdateSerializer(serializers.Serializer[dict[str, Any]]):
             ]
 
         try:
-            parsed = super().to_internal_value(editable_data)
+            parsed = cast(dict[str, Any], super().to_internal_value(editable_data))
         except serializers.ValidationError as error:
             detail = error.detail
-            if isinstance(detail, dict):
-                merged = {**detail, **extra_errors}
-            else:
-                merged = {**extra_errors, "non_field_errors": detail}
+            merged: dict[str, Any] = (
+                {**detail, **extra_errors}
+                if isinstance(detail, dict)
+                else {**extra_errors, "non_field_errors": detail}
+            )
             raise serializers.ValidationError(merged) from error
 
         if extra_errors:
