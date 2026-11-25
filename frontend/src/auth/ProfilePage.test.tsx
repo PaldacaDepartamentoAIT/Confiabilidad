@@ -44,7 +44,7 @@ test("renders skeleton placeholders while loading, shows ZZ placeholder and pass
 
   const section = screen.getByRole("region", { name: "Información personal" });
   expect(section).toHaveAttribute("aria-busy", "true");
-  expect(screen.getByText("Correo electrónico")).toBeInTheDocument();
+  expect(section.querySelector(".skel-mask .lbl")).toHaveTextContent("Correo electrónico");
   expect(container.querySelectorAll(".is-loading .skeleton")).toHaveLength(4);
 
   resolveFetch(

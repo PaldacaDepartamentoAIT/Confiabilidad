@@ -77,14 +77,16 @@ test("muestra usuario y sesiones activas, permite marcar y cerrar una sesión y 
       : Promise.resolve(json(200, { result: "revoked" })),
   );
 
-  const sessionsRegion = screen.getByRole("region", { name: "Sesiones activas" });
-  expect(sessionsRegion).toHaveAttribute("aria-busy", "true");
+  const sessionsBlock = screen
+    .getByRole("heading", { name: "Sesiones activas" })
+    .closest("[data-ui='block']") as HTMLElement;
+  expect(sessionsBlock).toHaveAttribute("aria-busy", "true");
   releaseSessions(json(200, { sessions: TWO_SESSIONS }));
 
   expect(await screen.findByRole("combobox", { name: "Ana García" })).toBeInTheDocument();
   expect(screen.getByText("Sesión iniciada como Ana García (ana@empresa.com)")).toBeInTheDocument();
   expect(await screen.findByText("192.0.2.10")).toBeInTheDocument();
-  expect(sessionsRegion).toHaveAttribute("aria-busy", "false");
+  expect(sessionsBlock).not.toHaveAttribute("aria-busy");
   expect(screen.getByText("Sesión actual")).toBeInTheDocument();
   expect(screen.queryByRole("checkbox", { name: /Chrome\/130/ })).not.toBeInTheDocument();
 
@@ -183,10 +185,9 @@ test("muestra skeleton en subtítulo y tabla mientras llegan session y sessions 
   );
 
   expect(container.querySelectorAll(".is-loading .skel-line")).toHaveLength(1);
-  expect(screen.getByRole("region", { name: "Sesiones activas" })).toHaveAttribute(
-    "aria-busy",
-    "true",
-  );
+  expect(
+    screen.getByRole("heading", { name: "Sesiones activas" }).closest("[data-ui='block']"),
+  ).toHaveAttribute("aria-busy", "true");
   releaseSession(json(200, SESSION));
   expect(
     await screen.findByText("Sesión iniciada como Ana García (ana@empresa.com)"),

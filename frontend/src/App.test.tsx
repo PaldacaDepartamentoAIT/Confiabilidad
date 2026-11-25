@@ -94,6 +94,21 @@ function fakeClient(
         new Response(JSON.stringify(sessionResponse.body), { status: sessionResponse.status }),
       );
     }
+    if (route === "profile") {
+      if (sessionResponse.status !== 200) {
+        return Promise.resolve(
+          new Response(JSON.stringify(sessionResponse.body), { status: sessionResponse.status }),
+        );
+      }
+      const terms = (sessionResponse.body as { terms_status?: string }).terms_status;
+      if (terms && terms !== "accepted") {
+        return Promise.resolve(
+          new Response(JSON.stringify({ code: "terms_required", terms_status: terms }), {
+            status: 403,
+          }),
+        );
+      }
+    }
     return Promise.resolve(new Response(JSON.stringify(answers[route] ?? {}), { status: 200 }));
   };
   return createClient({

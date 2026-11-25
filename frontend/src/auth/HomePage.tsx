@@ -215,7 +215,6 @@ export function HomePage({
       </div>
       {errorKey && <FormMessage type="error" messageKey={errorKey as never} />}
       <Block
-        as="section"
         title={t("auth.sessionsTitle")}
         count={sessionsLoaded ? sessions.length : undefined}
         loading={sessionsPending}
