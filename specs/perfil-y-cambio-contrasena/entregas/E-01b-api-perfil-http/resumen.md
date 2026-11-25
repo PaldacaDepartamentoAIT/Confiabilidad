@@ -32,7 +32,7 @@ Ejecuta los tests de esta entrega (sin umbral global sobre otros módulos):
 ```bash
 docker compose -f docker/docker-compose.yml exec backend pytest apps/accounts/tests/test_profile_api.py -v --no-cov
 ```
-Deberías ver los 10 tests de `test_profile_api.py` en verde.
+Deberías ver todos los tests de `test_profile_api.py` en verde.
 
 Ejecuta la suite completa y `mypy`:
 ```bash
