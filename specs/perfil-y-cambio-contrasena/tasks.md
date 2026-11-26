@@ -71,10 +71,11 @@ Estado: aprobado
   Excepción: añade la clase global `.skeleton` en `frontend/src/styles/base.css` siguiendo el patrón incorporado en `docs/identidad-visual.md`.
   Decisiones: mantener visible desde el primer frame el `<Block>` de información personal con placeholders `.skeleton` de 36 px (`.profile-skeleton`) mientras carga `GET /auth/profile` y estabilizar `onLoggedOut`/`onTermsRequired` en un `ref` para evitar re-peticiones al re-renderizar `App` (pendiente de ejecutar Vitest y `tsc` en entorno con dependencias instaladas). — Motivo: evita pantalla vacía y saltos de altura cuando la respuesta del backend tarda tras un túnel SSH o red lenta. — Confianza: [Cierto]. — Cómo revertirla: revertir `8683bf5`.
 
-- [ ] T-012b Edición parcial, validación y sincronización lateral del perfil en `ProfilePage`
-  RF: RF-002, RF-003, RF-004, RF-011, RF-012, RF-013 | Depende de: T-010b, T-012, T-013 | Archivos: 4
+- [x] T-012b Edición parcial, validación y sincronización lateral del perfil en `ProfilePage`
+  RF: RF-002, RF-003, RF-004, RF-011, RF-012, RF-013 | Depende de: T-010b, T-012, T-013 | Archivos: 5
   Hecho cuando: `pnpm --filter frontend test src/auth/ProfilePage.test.tsx src/App.test.tsx` pasa verificando edición parcial y completa de nombre, fecha y país, conservación de `"ZZ"` mientras no cambie, validación local en blur y submit, foco al primer error, errores de servidor, recorte reflejado en input, actualización inmediata del nombre en el menú lateral y accesibilidad.
-  Excepción: actualiza `ProfilePage.tsx`, `ProfilePage.css`, `ProfilePage.test.tsx` y `App.test.tsx` para verificar de extremo a extremo el reflejo inmediato en la barra lateral.
+  Excepción: actualiza `ProfilePage.tsx`, `ProfilePage.css`, `ProfilePage.test.tsx`, `App.tsx` y `App.test.tsx` para verificar de extremo a extremo el reflejo inmediato en la barra lateral y mantener el estado de *skeleton* y *drawer* de `E-03`.
+  Decisiones: montar `PersonalInfoBlock` como contenido de `Block` (`loadingContent={<ProfileSkeleton />}`) para conservar los placeholders en gris claro con *fade out / fade in* antes de inicializar `useFormValidation` con los datos reales de la API, propagar el usuario actualizado a `setCtxUser` y `onProfileUpdated`, y omitir `country` al guardar si permanece en `"ZZ"` (pendiente de ejecutar Vitest y `tsc` en entorno con dependencias instaladas). — Motivo: evita valores iniciales obsoletos en `useFormValidation`, conserva `C-02` y refleja al instante el nuevo nombre en todo el layout. — Confianza: [Cierto]. — Cómo revertirla: revertir `1ed9ec9` y `2d95604`.
 
 - [x] T-013 Conexión de `/profile` en `App` y menú lateral privado compartido
   RF: RF-001, RF-012 | Depende de: T-012 | Archivos: 7
@@ -122,7 +123,8 @@ Rama de integración: `feat/perfil-y-cambio-contrasena` (los PR de las entregas 
   Cómo probarlo: ejecutar `pnpm --filter frontend test`, recargar `/` observando los *skeletons* en gris claro de «Sesión iniciada como…» y la tabla de sesiones activas con *fade out / fade in*, pulsar «Perfil» en el menú lateral y comprobar que el botón de usuario no desaparece durante la carga de `/profile` y que en Network solo sale una petición `GET` por endpoint.
 
 - E-03b Edición parcial de datos personales en `/profile`
-  Tareas: T-010b, T-012b | Líneas estimadas: 320 | Rama: `feat/perfil-y-cambio-contrasena-ui-perfil-edicion`
+  Tareas: T-010b, T-012b | Líneas reales: 460 | Rama: `feat/perfil-y-cambio-contrasena-ui-perfil-edicion`
+  Excepción: agrupa en un solo bloque funcional el cliente `patch`/`updateProfile`, el formulario completo con validación/errores/`"ZZ"` y la sincronización con `UserProvider`/`App.test.tsx`; dividirlo en dos dejaría un formulario incompleto o código sin consumidor UI.
   Cómo probarlo: ejecutar `pnpm --filter frontend test`, abrir `/profile` con sesión iniciada y editar nombre, fecha o país comprobando validación local/remota, conservación de `"ZZ"` mientras no se elija país y actualización inmediata del nombre en el menú lateral.
 
 - E-04 Formulario de cambio de contraseña en `/profile`
