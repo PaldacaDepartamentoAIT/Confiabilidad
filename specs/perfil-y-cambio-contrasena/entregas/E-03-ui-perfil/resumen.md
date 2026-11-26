@@ -1,6 +1,6 @@
 # Entrega E-03 · Pantalla `/profile`, *skeletons* con *fade*, usuario contextual y deduplicación de `GET`
 
-Rama: `feat/perfil-y-cambio-contrasena-ui-perfil` · Líneas de código y tests: 780 (excepción autorizada explícitamente por el usuario para unificar E-03 y los ajustes de carga del panel principal en el mismo PR).
+Rama: `feat/perfil-y-cambio-contrasena-ui-perfil` · Líneas de código y tests: 787 (excepción autorizada explícitamente por el usuario para unificar E-03 y los ajustes de carga del panel principal en el mismo PR).
 
 ## Qué se hizo
 - En `docs/identidad-visual.md` y `frontend/src/styles/base.css` se documentó e implementó el patrón visual de *placeholders* de carga (*skeleton*) en gris claro (`color-mix(in srgb, var(--grid) 55%, var(--bg))` con reflejo al `22%`), transición *fade out* (`0,16 s`) del skeleton y *fade in* (`0,2 s`) del contenido real (respetando `prefers-reduced-motion`) y conservación contextual de la identidad del usuario en la barra lateral.
