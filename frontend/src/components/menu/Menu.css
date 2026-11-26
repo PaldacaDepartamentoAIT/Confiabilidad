@@ -15,7 +15,7 @@
   top: calc(100% + 4px);
   z-index: 60;
   min-width: 100%;
-  max-height: 260px;
+  max-height: 200px;
   overflow-y: auto;
   margin: 0;
   padding: 4px;
