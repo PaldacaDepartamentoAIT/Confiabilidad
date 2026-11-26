@@ -39,6 +39,9 @@ export const ptBR: Messages = {
     success: "Sucesso:",
     info: "Informação:",
   },
+  toast: {
+    close: "Fechar notificação",
+  },
   validation: {
     required: "Preencha este campo.",
     email: "Digite um e-mail como nome@empresa.com.",
@@ -165,6 +168,11 @@ export const ptBR: Messages = {
     profileTitle: "Meu perfil",
     profileInfoTitle: "Informações pessoais",
     profileCountryUnassigned: "Sem país atribuído",
+    profileActions: "Ações do perfil",
+    profileEdit: "Editar",
+    profileChangePassword: "Alterar senha",
+    profileDisable: "Desativar",
+    profileCancel: "Cancelar",
     profileSave: "Salvar alterações",
     profileSaved: "Seus dados pessoais foram atualizados.",
   },

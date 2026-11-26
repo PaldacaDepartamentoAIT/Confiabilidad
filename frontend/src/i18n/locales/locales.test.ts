@@ -61,6 +61,7 @@ test("every language covers the groups used by the components", () => {
     "button",
     "field",
     "message",
+    "toast",
     "validation",
     "showcase",
     "register",

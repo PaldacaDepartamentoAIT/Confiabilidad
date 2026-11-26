@@ -37,6 +37,9 @@ export const en = {
     success: "Success:",
     info: "Information:",
   },
+  toast: {
+    close: "Dismiss notification",
+  },
   validation: {
     required: "Fill in this field.",
     email: "Enter an email like name@company.com.",
@@ -162,6 +165,11 @@ export const en = {
     profileTitle: "My profile",
     profileInfoTitle: "Personal information",
     profileCountryUnassigned: "No country assigned",
+    profileActions: "Profile actions",
+    profileEdit: "Edit",
+    profileChangePassword: "Change password",
+    profileDisable: "Disable",
+    profileCancel: "Cancel",
     profileSave: "Save changes",
     profileSaved: "Your personal information has been updated.",
   },

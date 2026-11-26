@@ -1,9 +1,23 @@
-import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import {
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type ReactNode,
+} from "react";
 
 import { IconChevronRight } from "../../icons";
 import "./Menu.css";
 
-export type MenuOption = { value: string; label: ReactNode; lang?: string; icon?: ReactNode };
+export type MenuOption = {
+  value: string;
+  label: ReactNode;
+  lang?: string;
+  icon?: ReactNode;
+  disabled?: boolean;
+};
 
 export type MenuTriggerProps = {
   role: "combobox";
@@ -28,6 +42,9 @@ type MenuProps = {
 };
 
 const TYPE_AHEAD_MS = 700;
+const MAX_MENU_HEIGHT = 200;
+const VIEWPORT_PAD = 12;
+const FLIP_BELOW_THRESHOLD = 140;
 
 // Menú desplegable compartido: patrón «select-only combobox» de WAI-ARIA. El foco no sale del
 // disparador; la opción resaltada se señala con `aria-activedescendant` (D-05).
@@ -48,9 +65,48 @@ export function Menu({
   const [open, setOpen] = useState(false);
   const [shown, setShown] = useState(false);
   const [active, setActive] = useState(-1);
+  const [layout, setLayout] = useState<{ openUp: boolean; maxHeight?: number }>({
+    openUp: placement === "up",
+  });
   const typed = useRef({ text: "", timer: 0 });
   const selected = options.findIndex((option) => option.value === value);
   const last = options.length - 1;
+
+  useLayoutEffect(() => {
+    if (!open) {
+      setLayout({ openUp: placement === "up" });
+      return;
+    }
+    function updateLayout() {
+      const el = wrapperRef.current;
+      const viewportH = window.innerHeight;
+      if (!el || viewportH <= 0) {
+        setLayout({ openUp: placement === "up" });
+        return;
+      }
+      const rect = el.getBoundingClientRect();
+      if (rect.height <= 0 && rect.width <= 0) {
+        setLayout({ openUp: placement === "up" });
+        return;
+      }
+      const spaceBelow = Math.max(0, viewportH - rect.bottom - VIEWPORT_PAD);
+      const spaceAbove = Math.max(0, rect.top - VIEWPORT_PAD);
+      const openUp =
+        placement === "up" || (spaceBelow < FLIP_BELOW_THRESHOLD && spaceAbove > spaceBelow);
+      const available = openUp ? spaceAbove : spaceBelow;
+      setLayout({
+        openUp,
+        maxHeight: Math.min(MAX_MENU_HEIGHT, Math.floor(available)),
+      });
+    }
+    updateLayout();
+    window.addEventListener("resize", updateLayout);
+    window.addEventListener("scroll", updateLayout, true);
+    return () => {
+      window.removeEventListener("resize", updateLayout);
+      window.removeEventListener("scroll", updateLayout, true);
+    };
+  }, [open, placement]);
 
   useEffect(() => {
     if (!open) {
@@ -76,7 +132,7 @@ export function Menu({
   }
 
   function choose(index: number) {
-    if (index < 0) return;
+    if (index < 0 || options[index].disabled) return;
     onSelect(options[index].value);
     setOpen(false);
   }
@@ -172,11 +228,12 @@ export function Menu({
           id={listId}
           role="listbox"
           aria-label={label}
+          style={layout.maxHeight === undefined ? undefined : { maxHeight: layout.maxHeight }}
           className={[
             "menu",
             shown && "open",
             align === "right" && "menu-right",
-            placement === "up" && "menu-up",
+            layout.openUp && "menu-up",
           ]
             .filter(Boolean)
             .join(" ")}
@@ -191,9 +248,12 @@ export function Menu({
               role="option"
               lang={option.lang}
               aria-selected={selectable ? index === selected : false}
+              aria-disabled={option.disabled || undefined}
               className={["option", index === active && "highlight"].filter(Boolean).join(" ")}
               onMouseDown={(event) => event.preventDefault()}
-              onMouseEnter={() => setActive(index)}
+              onMouseEnter={() => {
+                if (!option.disabled) setActive(index);
+              }}
               onClick={() => choose(index)}
             >
               {selectable ? <IconChevronRight className="option-check" /> : option.icon}

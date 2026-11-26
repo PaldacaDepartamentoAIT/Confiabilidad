@@ -26,6 +26,7 @@ export type ApiResult<Data = unknown> =
 export type ApiClient = {
   get: <Data = unknown>(path: string) => Promise<ApiResult<Data>>;
   post: <Data = unknown>(path: string, body: Record<string, unknown>) => Promise<ApiResult<Data>>;
+  patch: <Data = unknown>(path: string, body: Record<string, unknown>) => Promise<ApiResult<Data>>;
 };
 
 const CSRF_COOKIE = "csrftoken";
@@ -133,6 +134,14 @@ export function createClient(config: ClientConfig): ApiClient {
     return interpret<Data>(response);
   }
 
+  function jsonSend<Data>(method: "POST" | "PATCH", path: string, body: Record<string, unknown>) {
+    return send<Data>(path, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...body, language: config.language() }),
+    });
+  }
+
   return {
     get: <Data>(path: string) => {
       const target = `${path}?language=${encodeURIComponent(config.language())}`;
@@ -145,11 +154,7 @@ export function createClient(config: ClientConfig): ApiClient {
       inflight.set(key, request);
       return request;
     },
-    post: (path, body) =>
-      send(path, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...body, language: config.language() }),
-      }),
+    post: (path, body) => jsonSend("POST", path, body),
+    patch: (path, body) => jsonSend("PATCH", path, body),
   };
 }

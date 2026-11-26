@@ -40,6 +40,9 @@ export const es: Messages = {
     success: "Éxito:",
     info: "Información:",
   },
+  toast: {
+    close: "Cerrar notificación",
+  },
   validation: {
     required: "Completa este campo.",
     email: "Escribe un correo como nombre@empresa.com.",
@@ -167,6 +170,11 @@ export const es: Messages = {
     profileTitle: "Mi perfil",
     profileInfoTitle: "Información personal",
     profileCountryUnassigned: "Sin país asignado",
+    profileActions: "Acciones del perfil",
+    profileEdit: "Editar",
+    profileChangePassword: "Cambiar contraseña",
+    profileDisable: "Deshabilitar",
+    profileCancel: "Cancelar",
     profileSave: "Guardar cambios",
     profileSaved: "Tus datos personales se han actualizado.",
   },

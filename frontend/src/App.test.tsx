@@ -188,15 +188,23 @@ test("moving between screens does not reload the page, keeps the bar and fades o
   window.history.replaceState(null, "", "/");
 });
 
-test("navigates from home sidebar to /profile keeping user button visible during load", async () => {
+test("navigates from home sidebar to /profile keeping user button visible and updates name live", async () => {
   window.history.replaceState(null, "", "/");
   let releaseProfile!: (r: Response) => void;
+  const user = userEvent.setup();
   const client = createClient({
     kind: "browser",
     appBaseUrl: "",
     language: () => "en",
-    fetch: ((url: RequestInfo | URL) => {
+    fetch: ((url: RequestInfo | URL, init?: RequestInit) => {
       const route = String(url).split("?")[0].split("/").pop() ?? "";
+      if (route === "profile" && init?.method === "PATCH") {
+        return Promise.resolve(
+          new Response(JSON.stringify({ ...(answers.profile as object), name: "Ana Updated" }), {
+            status: 200,
+          }),
+        );
+      }
       if (route === "profile") return new Promise((resolve) => (releaseProfile = resolve));
       return Promise.resolve(new Response(JSON.stringify(answers[route] ?? {}), { status: 200 }));
     }) as typeof fetch,
@@ -211,7 +219,17 @@ test("navigates from home sidebar to /profile keeping user button visible during
   expect(screen.getByRole("complementary", { name: "Main menu" })).toHaveClass("collapsed");
   expect(screen.getByRole("combobox", { name: "Ana" })).toBeInTheDocument();
   releaseProfile(new Response(JSON.stringify(answers.profile), { status: 200 }));
-  expect(await screen.findByLabelText("Email")).toHaveValue("ana@example.com");
+  await screen.findByLabelText("Email");
+  await user.click(screen.getByRole("combobox", { name: "Profile actions" }));
+  await user.click(screen.getByRole("option", { name: "Edit" }));
+  const nameInput = screen.getByRole("textbox", { name: "Full name" });
+  await user.clear(nameInput);
+  await user.type(nameInput, "Ana Updated");
+  await user.click(screen.getByRole("button", { name: "Save changes" }));
+  expect(await screen.findByRole("combobox", { name: "Ana Updated" })).toBeInTheDocument();
+  expect(
+    screen.getByText("Your personal information has been updated.").closest('[data-ui="toast"]'),
+  ).toBeInTheDocument();
   expect(window.location.pathname).toBe("/profile");
   window.history.replaceState(null, "", "/");
 });
