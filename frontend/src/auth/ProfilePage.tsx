@@ -146,6 +146,7 @@ export function ProfilePage({
   const [countryCodes, setCountryCodes] = useState<string[]>([]);
   const [loadError, setLoadError] = useState<ParseKeys | null>(null);
   const [mode, setMode] = useState<CardMode>("view");
+  const passwordWait = useCountdown();
   const loggingOut = useRef(false);
   const { notify } = useToast();
   const { user: ctxUser, setUser: setCtxUser, collapsed, setCollapsed } = usePrivateUser();
@@ -256,6 +257,7 @@ export function ProfilePage({
               (mode === "password" ? (
                 <PasswordChangeBlock
                   client={client}
+                  wait={passwordWait}
                   onCancel={() => setMode("view")}
                   onSaved={() => {
                     setMode("view");
@@ -419,12 +421,14 @@ function PersonalInfoBlock({
 
 function PasswordChangeBlock({
   client,
+  wait,
   onCancel,
   onSaved,
   onUnauthenticated,
   onTermsRequired,
 }: {
   client: ApiClient;
+  wait: ReturnType<typeof useCountdown>;
   onCancel: () => void;
   onSaved: () => void;
   onUnauthenticated: () => void;
@@ -433,11 +437,11 @@ function PasswordChangeBlock({
   const { t } = useTranslation();
   const errorText = useErrorText();
   const [processing, setProcessing] = useState(false);
-  const wait = useCountdown();
   const { allErrors, onBlur, handleSubmit, showResult, message, formRef, messageRef } =
     useFormValidation(PASSWORD_FIELDS, { scrollToError: true, processing });
 
   async function send(values: Record<PasswordFieldName, string>) {
+    if (wait.remaining > 0) return;
     setProcessing(true);
     const result = await changePassword(client, values);
     setProcessing(false);

@@ -319,10 +319,16 @@ test("handles 429 countdown, network failures, cancel, i18n and gate redirects o
     expect(await screen.findByText("Too many attempts. Try again in 2 s.")).toBeInTheDocument();
     const submit = screen.getByRole("button", { name: "Change password" });
     expect(submit).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+    await user.click(screen.getByRole("combobox", { name: "Profile actions" }));
+    await user.click(screen.getByRole("option", { name: "Change password" }));
+    expect(screen.getByRole("button", { name: "Change password" })).toBeDisabled();
     await act(() => vi.advanceTimersByTimeAsync(2000));
-    expect(submit).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Change password" })).toBeEnabled();
 
-    await user.click(submit);
+    await user.type(screen.getByLabelText(/^Current password/), "old-secret-1");
+    await user.type(screen.getByLabelText(/^New password/), "new-turbine-123");
+    await user.click(screen.getByRole("button", { name: "Change password" }));
     await waitFor(() => expect(window.location.pathname).toBe("/terms"));
     expect(onTerms).toHaveBeenCalledWith("not_accepted");
   } finally {

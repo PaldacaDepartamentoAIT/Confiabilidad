@@ -20,7 +20,7 @@
   border: 1px solid var(--primary);
 }
 
-.btn-primary:hover {
+.btn-primary:hover:not(:disabled):not([aria-disabled="true"]) {
   background: color-mix(in srgb, var(--primary) 78%, #000);
   border-color: color-mix(in srgb, var(--primary) 78%, #000);
   transition-duration: 0.08s;
@@ -31,9 +31,25 @@
   color: var(--primary);
 }
 
+.btn:disabled,
 .btn[aria-disabled="true"] {
   cursor: not-allowed;
-  opacity: 0.6;
+}
+
+.btn-primary:disabled,
+.btn-primary[aria-disabled="true"] {
+  background: color-mix(in srgb, var(--gray) 28%, var(--bg));
+  border-color: var(--gray);
+  color: var(--text2);
+}
+
+.btn.btn-ghost:disabled,
+.btn.btn-ghost[aria-disabled="true"],
+.btn.btn-ghost.hov:disabled:hover,
+.btn.btn-ghost.hov[aria-disabled="true"]:hover {
+  background: transparent;
+  border-color: var(--gray);
+  color: var(--text2);
 }
 
 /* Hover de 9 % de la tinta, compartido con el resto de elementos interactivos de las referencias. */
@@ -45,7 +61,7 @@
     color 0.35s ease;
 }
 
-.btn-ghost.hov:hover {
+.btn-ghost.hov:hover:not(:disabled):not([aria-disabled="true"]) {
   background: color-mix(in srgb, var(--ink) 9%, var(--surface));
   transition-duration: 0.08s;
 }

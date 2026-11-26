@@ -23,9 +23,13 @@
 }
 
 .icon-btn[aria-disabled="true"],
-.icon-btn:disabled {
+.icon-btn:disabled,
+.icon-btn.hov[aria-disabled="true"]:hover,
+.icon-btn.hov:disabled:hover {
   cursor: not-allowed;
-  opacity: 0.6;
+  background: transparent;
+  border-color: var(--gray);
+  color: var(--text2);
 }
 
 .icon-btn-tip {

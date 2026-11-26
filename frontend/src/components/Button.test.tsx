@@ -209,14 +209,20 @@ test("the processing state keeps the variant", () => {
   expect(screen.getByRole("button", { name: "Procesando…" })).toHaveClass("btn-ghost");
 });
 
-test("has no accessibility violations in either variant or while processing", async () => {
+test("has no accessibility violations in either variant, disabled or while processing", async () => {
   const { container } = render(
     <div>
       <Button>One</Button>
       <Button variant="secondary">Two</Button>
       <Button processing>Three</Button>
+      <Button disabled>Four</Button>
+      <Button variant="secondary" disabled>
+        Five
+      </Button>
     </div>,
   );
+  expect(screen.getByRole("button", { name: "Four" })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Five" })).toBeDisabled();
   const results = await axe.run(container, { rules: { "color-contrast": { enabled: false } } });
   expect(results.violations).toEqual([]);
 });
