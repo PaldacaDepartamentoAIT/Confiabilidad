@@ -89,6 +89,7 @@ export const es: Messages = {
     emailImmutable: "El correo electrónico no se puede modificar.",
     unknownField: "Este campo no está permitido.",
     noProfileFields: "Indica al menos un dato del perfil para actualizar.",
+    currentPasswordIncorrect: "La contraseña actual no es correcta.",
     retryIn: "Demasiados intentos. Vuelve a intentarlo en {{seconds}} s.",
     networkError: "No se pudo conectar. Revisa tu conexión y vuelve a intentarlo.",
     unknownError: "Algo no ha funcionado. Revisa los datos y vuelve a intentarlo.",
@@ -177,5 +178,10 @@ export const es: Messages = {
     profileCancel: "Cancelar",
     profileSave: "Guardar cambios",
     profileSaved: "Tus datos personales se han actualizado.",
+    passwordChangeTitle: "Cambiar contraseña",
+    currentPasswordLabel: "Contraseña actual",
+    newPasswordLabel: "Nueva contraseña",
+    passwordChangeSubmit: "Cambiar contraseña",
+    passwordChanged: "Tu contraseña se ha actualizado y se han cerrado tus demás sesiones.",
   },
 };

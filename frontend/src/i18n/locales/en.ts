@@ -84,6 +84,7 @@ export const en = {
     emailImmutable: "The email address cannot be changed.",
     unknownField: "This field is not allowed.",
     noProfileFields: "Provide at least one profile field to update.",
+    currentPasswordIncorrect: "The current password is incorrect.",
     retryIn: "Too many attempts. Try again in {{seconds}} s.",
     networkError: "Could not connect. Check your connection and try again.",
     unknownError: "Something did not work. Check the data and try again.",
@@ -172,6 +173,11 @@ export const en = {
     profileCancel: "Cancel",
     profileSave: "Save changes",
     profileSaved: "Your personal information has been updated.",
+    passwordChangeTitle: "Change password",
+    currentPasswordLabel: "Current password",
+    newPasswordLabel: "New password",
+    passwordChangeSubmit: "Change password",
+    passwordChanged: "Your password has been updated and your other sessions have been signed out.",
   },
 };
 
