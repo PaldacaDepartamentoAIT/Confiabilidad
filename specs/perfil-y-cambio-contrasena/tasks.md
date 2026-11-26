@@ -94,9 +94,9 @@ Estado: aprobado
   Hecho cuando: `pnpm --filter frontend test src/i18n/keys.test.ts src/registration/serverErrors.test.ts` pasa verificando `changePassword` en `api/profile.ts`, el mapeo de `current_password_incorrect` y las claves en `es`, `pt-BR` y `en`.
   Excepción: los tres archivos de idioma (`es.ts`, `pt-BR.ts`, `en.ts`) deben actualizarse juntos por `i18n/keys.test.ts`, junto con `api/profile.ts` y `serverErrors.test.ts`.
 
-- [ ] T-015 Bloque de cambio de contraseña en `ProfilePage`
+- [ ] T-015 Modo de cambio de contraseña en `ProfilePage` desde el menú contextual
   RF: RF-006, RF-007, RF-008, RF-011, RF-012, RF-013 | Depende de: T-013, T-014 | Archivos: 3
-  Hecho cuando: `pnpm --filter frontend test src/auth/ProfilePage.test.tsx` pasa verificando contraseña actual y nueva contraseña única con mostrar/ocultar y lista de requisitos en vivo, validación local, vaciado selectivo tras éxito o error de actual/política/red, cuenta atrás con botón deshabilitado ante `429`, redirección ante términos pendientes o `401`, idiomas y accesibilidad.
+  Hecho cuando: `pnpm --filter frontend test src/auth/ProfilePage.test.tsx` pasa verificando que «Cambiar contraseña» está habilitada en el menú de tres puntos y conmuta la tarjeta al formulario (con «Cancelar», contraseña actual y nueva contraseña única con mostrar/ocultar y lista de requisitos en vivo), validación local, vaciado selectivo tras éxito (vuelta a solo lectura + notificación flotante *toast*) o error de actual/política/red, cuenta atrás con botón deshabilitado ante `429`, redirección ante términos pendientes o `401`, idiomas y accesibilidad.
 
 ## Entregas
 Rama de integración: `feat/perfil-y-cambio-contrasena` (los PR de las entregas van contra ella; ver `AGENTS.md`).
@@ -123,13 +123,13 @@ Rama de integración: `feat/perfil-y-cambio-contrasena` (los PR de las entregas 
   Cómo probarlo: ejecutar `pnpm --filter frontend test`, recargar `/` observando los *skeletons* en gris claro de «Sesión iniciada como…» y la tabla de sesiones activas con *fade out / fade in*, pulsar «Perfil» en el menú lateral y comprobar que el botón de usuario no desaparece durante la carga de `/profile` y que en Network solo sale una petición `GET` por endpoint.
 
 - E-03b Edición parcial de datos personales y menú de tarjeta en `/profile`
-  Tareas: T-010b, T-012b | Líneas reales: 1160 | Rama: `feat/perfil-y-cambio-contrasena-ui-perfil-edicion`
+  Tareas: T-010b, T-012b | Líneas reales: 1162 (PR #158) | Rama: `feat/perfil-y-cambio-contrasena-ui-perfil-edicion`
   Excepción: pendiente de confirmación del usuario por superar las 500 líneas (`sdd.max_lineas_pr_excepcion`): además del cliente `patch`/`updateProfile`, la edición con validación/errores/`"ZZ"` y la sincronización con `UserProvider`/`App.test.tsx`, incluye la tarjeta a ancho completo en fila de tres columnas con correo deshabilitado, el icono `IconMoreVertical` y `IconX`, las opciones deshabilitadas y el ajuste de altura/volteo en `Menu`, el menú de tres opciones (`Editar`, `Cambiar contraseña`, `Deshabilitar`) y el componente reutilizable `ToastProvider`/`useToast` pedidos por el usuario en esta rama.
   Cómo probarlo: ejecutar `pnpm --filter frontend test`, abrir `/profile` con sesión iniciada, verificar la tarjeta a ancho completo en solo lectura con el correo deshabilitado, abrir el botón de tres puntos y pulsar «Editar» para probar la edición de nombre, país y fecha, comprobar la notificación flotante inferior derecha al guardar (reinicio de plazo al pasar el cursor y cierre con «×»), «Cancelar», el despliegue del selector sin alargar la página y el estado deshabilitado de «Cambiar contraseña» y «Deshabilitar».
 
 - E-04 Formulario de cambio de contraseña en `/profile`
-  Tareas: T-014, T-015 | Líneas estimadas: 250 | Rama: `feat/perfil-y-cambio-contrasena-ui-password`
-  Cómo probarlo: ejecutar `pnpm --filter frontend test`, abrir `/profile` con sesión iniciada, cambiar la contraseña introduciendo la contraseña actual y la nueva, y comprobar la confirmación, el vaciado de campos y que otra sesión abierta pasa a `/login` al hacer una acción.
+  Tareas: T-014, T-015 | Líneas estimadas: 280 | Rama: `feat/perfil-y-cambio-contrasena-ui-password`
+  Cómo probarlo: ejecutar `pnpm --filter frontend test`, abrir `/profile` con sesión iniciada, pulsar el botón de tres puntos -> «Cambiar contraseña», cambiar la contraseña introduciendo la contraseña actual y la nueva, y comprobar la notificación flotante (*toast*), el regreso a solo lectura y que otra sesión abierta pasa a `/login` al hacer una acción.
 
 ## RF sin tarea
 ninguno
