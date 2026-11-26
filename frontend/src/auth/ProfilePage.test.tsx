@@ -57,7 +57,7 @@ test("renders skeleton placeholders while loading, shows ZZ placeholder and pass
   );
 
   const emailField = await screen.findByLabelText("Correo electrónico");
-  expect(section).toHaveAttribute("aria-busy", "false");
+  expect(section).not.toHaveAttribute("aria-busy");
   expect(container.querySelectorAll(".is-loading")).toHaveLength(0);
   expect(container.querySelectorAll(".is-ready")).toHaveLength(4);
   expect(emailField).toHaveValue("ana@empresa.com");
