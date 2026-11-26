@@ -1,12 +1,12 @@
 # Entrega E-03b · Edición parcial de datos personales y menú de tarjeta en `/profile`
 
-Rama: `feat/perfil-y-cambio-contrasena-ui-perfil-edicion` · Líneas de código y tests: 605 (supera el límite de 500 líneas de `sdd.max_lineas_pr_excepcion` por añadir la tarjeta a ancho completo y el menú contextual de tres puntos en esta misma entrega; pendiente de confirmación del usuario para aceptarlo en un único PR o dividir el menú aparte).
+Rama: `feat/perfil-y-cambio-contrasena-ui-perfil-edicion` · Líneas de código y tests: 619 (supera el límite de 500 líneas de `sdd.max_lineas_pr_excepcion` por añadir la tarjeta a ancho completo y el menú contextual de tres puntos en esta misma entrega; pendiente de confirmación del usuario para aceptarlo en un único PR o dividir el menú aparte).
 
 ## Qué se hizo
 - En `frontend/src/api/client.ts`, `frontend/src/api/profile.ts`, `frontend/src/registration/serverErrors.ts`, `frontend/src/registration/serverErrors.test.ts`, `frontend/src/api/auth.test.ts` y `frontend/src/api/registration.test.ts` (`T-010b`, `RF-002`…`RF-004`, `RF-013`) se añadió `patch` al `ApiClient` compartiendo `jsonSend` con `post`, `updateProfile` (`PATCH /auth/profile`) y la traducción de `email_immutable`, `unknown_field` y `no_profile_fields`.
 - En `frontend/src/icons/index.ts`, `frontend/src/icons/icons.test.tsx`, `frontend/src/components/menu/Menu.tsx`, `frontend/src/components/menu/Menu.css` y `frontend/src/i18n/locales/{en,es,pt-BR}.ts` (`T-012b`) se añadió `IconMoreVertical`, el soporte de opciones `disabled` (`aria-disabled="true"`) en `Menu` y los textos del menú contextual y «Cancelar».
 - En `frontend/src/auth/ProfilePage.tsx`, `frontend/src/auth/ProfilePage.css` y `frontend/src/auth/ProfilePage.test.tsx` (`T-012b`, `RF-002`…`RF-004`, `RF-011`…`RF-013`) se actualizó la tarjeta de información personal dentro del `Block` con *skeletons* de carga (`ProfileSkeleton`):
-  - ocupa todo el ancho disponible de la vista (sin `max-width: 760px`);
+  - ocupa todo el ancho disponible de la vista (sin `max-width: 760px`), con el correo arriba a ancho completo y debajo `Nombre completo`, `País` y `Fecha de nacimiento` en una sola fila de tres columnas que abarca todo el ancho en escritorio (y se apila en móvil);
   - arranca en modo solo lectura con un botón de tres puntos verticales (`IconMoreVertical`) en la esquina superior derecha que despliega «Editar», «Cambiar contraseña» (deshabilitada) y «Deshabilitar» (deshabilitada);
   - al elegir «Editar» cambia a modo edición con «Cancelar» y «Guardar cambios»;
   - mantiene `email` en solo lectura, muestra «Sin país asignado» cuando está en `"ZZ"` y omite `country` del `PATCH` mientras siga sin seleccionarse (`C-02`), exigiéndolo una vez asignado;
@@ -19,7 +19,7 @@ El detalle de cada tarea, con su «Hecho cuando», está en [`tasks.md`](../../t
 | Tarea | Título | Commit |
 |---|---|---|
 | T-010b | Cliente HTTP `patch`, `updateProfile` y mapeo de errores de edición | `41ec34f` |
-| T-012b | Edición parcial, tarjeta a ancho completo, menú contextual y sincronización lateral en `ProfilePage` | `1ed9ec9`, `2d95604`, `1548ac7`, `4308632` |
+| T-012b | Edición parcial, tarjeta a ancho completo, fila de tres columnas, menú contextual y sincronización lateral en `ProfilePage` | `1ed9ec9`, `2d95604`, `1548ac7`, `4308632`, `6e970cf` |
 
 ## Cómo ejecutarlo y probarlo
 En tu máquina virtual o VPS con las dependencias de frontend instaladas, actualiza ramas y pasa a la rama de la entrega:
