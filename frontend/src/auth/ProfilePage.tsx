@@ -1,5 +1,5 @@
 import type { ParseKeys } from "i18next";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { logout, type AuthenticatedUser, type SessionInfo } from "../api/auth";
@@ -85,36 +85,25 @@ export function ProfilePage({
   const cbRef = useRef({ onLoggedOut, onTermsRequired, setCtxUser });
   cbRef.current = { onLoggedOut, onTermsRequired, setCtxUser };
 
-  const goLogin = () => {
+  const goLogin = useCallback(() => {
     tokenStorage?.clear();
     cbRef.current.setCtxUser(null);
     cbRef.current.onLoggedOut?.();
     navigate("/login");
-  };
+  }, [tokenStorage]);
 
-  const goTerms = (status: TermsStatus) => {
+  const goTerms = useCallback((status: TermsStatus) => {
     cbRef.current.onTermsRequired?.(status);
     navigate("/terms");
-  };
+  }, []);
 
   useEffect(() => {
-    if (session && session.terms_status !== "accepted") {
-      cbRef.current.onTermsRequired?.(session.terms_status);
-      return navigate("/terms");
-    }
+    if (session && session.terms_status !== "accepted") return goTerms(session.terms_status);
     let active = true;
     void Promise.all([getProfile(client), fetchOptions(client)]).then(([prof, opts]) => {
       if (!active) return;
-      if (prof.kind === "unauthenticated") {
-        tokenStorage?.clear();
-        cbRef.current.setCtxUser(null);
-        cbRef.current.onLoggedOut?.();
-        return navigate("/login");
-      }
-      if (prof.kind === "termsRequired") {
-        cbRef.current.onTermsRequired?.(prof.termsStatus);
-        return navigate("/terms");
-      }
+      if (prof.kind === "unauthenticated") return goLogin();
+      if (prof.kind === "termsRequired") return goTerms(prof.termsStatus);
       if (prof.kind !== "ok" || opts.kind !== "ok") {
         const err = prof.kind !== "ok" ? prof : opts;
         return setLoadError(
@@ -129,7 +118,7 @@ export function ProfilePage({
     return () => {
       active = false;
     };
-  }, [client, session, tokenStorage]);
+  }, [client, goLogin, goTerms, session]);
 
   async function handleLogout() {
     if (loggingOut.current) return;
