@@ -99,7 +99,17 @@ export function App({ storage, client }: AppProps) {
 
   const screen = {
     "/": <HomePage {...withSession} onTermsRequired={setTerms} onSessionLoaded={setSession} />,
-    "/profile": <ProfilePage {...withSession} onTermsRequired={setTerms} />,
+    "/profile": (
+      <ProfilePage
+        {...withSession}
+        onTermsRequired={setTerms}
+        onProfileUpdated={(user) =>
+          setSession((cur) =>
+            cur ? { ...cur, user } : { user, terms_status: "accepted", terms: null },
+          )
+        }
+      />
+    ),
     "/login": <LoginPage {...shared} onAuthenticated={setSession} />,
     "/terms": <TermsPage {...withSession} onAccepted={() => setTerms("accepted")} />,
     "/showcase": <ShowcasePage storage={storage} />,
