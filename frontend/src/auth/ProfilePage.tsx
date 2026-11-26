@@ -193,27 +193,26 @@ export function ProfilePage({
               )
             }
           >
-            {profile &&
-              (editing ? (
-                <PersonalInfoBlock
-                  client={client}
-                  profile={profile}
-                  countries={countries}
-                  onCancel={() => setEditing(false)}
-                  onSaved={(updated) => {
-                    const next = { email: updated.email, name: updated.name };
-                    setProfile(updated);
-                    setCtxUser(next);
-                    onProfileUpdated?.(next);
-                    setEditing(false);
-                    setSaved(true);
-                  }}
-                  onUnauthenticated={goLogin}
-                  onTermsRequired={goTerms}
-                />
-              ) : (
-                <ProfileView profile={profile} countries={countries} saved={saved} />
-              ))}
+            {profile && (
+              <PersonalInfoBlock
+                client={client}
+                profile={profile}
+                countries={countries}
+                editing={editing}
+                saved={saved}
+                onCancel={() => setEditing(false)}
+                onSaved={(updated) => {
+                  const next = { email: updated.email, name: updated.name };
+                  setProfile(updated);
+                  setCtxUser(next);
+                  onProfileUpdated?.(next);
+                  setEditing(false);
+                  setSaved(true);
+                }}
+                onUnauthenticated={goLogin}
+                onTermsRequired={goTerms}
+              />
+            )}
           </Block>
         </div>
       )}
@@ -221,47 +220,12 @@ export function ProfilePage({
   );
 }
 
-function ProfileView({
-  profile,
-  countries,
-  saved,
-}: {
-  profile: ProfileData;
-  countries: readonly CountryOption[];
-  saved: boolean;
-}) {
-  const { t } = useTranslation();
-  const countryLabel =
-    profile.country === "ZZ"
-      ? t("auth.profileCountryUnassigned")
-      : (countries.find((item) => item.value === profile.country)?.label ?? profile.country);
-
-  return (
-    <>
-      {saved && <FormMessage type="success" messageKey="auth.profileSaved" />}
-      <div className="profile-grid">
-        <div className="full">
-          <TextField label={t("auth.emailLabel")} type="email" value={profile.email} readOnly />
-        </div>
-        <TextField label={t("register.nameLabel")} value={profile.name} readOnly />
-        <TextField
-          label={t("register.birthdateLabel")}
-          type="date"
-          value={profile.birthdate}
-          readOnly
-        />
-        <div className="full">
-          <TextField label={t("register.countryLabel")} value={countryLabel} readOnly />
-        </div>
-      </div>
-    </>
-  );
-}
-
 function PersonalInfoBlock({
   client,
   profile,
   countries,
+  editing,
+  saved,
   onCancel,
   onSaved,
   onUnauthenticated,
@@ -270,6 +234,8 @@ function PersonalInfoBlock({
   client: ApiClient;
   profile: ProfileData;
   countries: readonly CountryOption[];
+  editing: boolean;
+  saved: boolean;
   onCancel: () => void;
   onSaved: (updated: ProfileData) => void;
   onUnauthenticated: () => void;
@@ -281,6 +247,7 @@ function PersonalInfoBlock({
     useFormValidation(FIELDS, { scrollToError: true, processing });
 
   async function send(values: Record<Field, string>) {
+    if (!editing) return;
     if (profile.country !== "ZZ" && !values.country) {
       return showResult({ fieldErrors: { country: { key: "countryInvalid" } } });
     }
@@ -289,8 +256,10 @@ function PersonalInfoBlock({
     setProcessing(true);
     const result = await updateProfile(client, payload);
     setProcessing(false);
-    if (result.kind === "ok") onSaved(result.data);
-    else if (result.kind === "unauthenticated") onUnauthenticated();
+    if (result.kind === "ok") {
+      showResult({});
+      onSaved(result.data);
+    } else if (result.kind === "unauthenticated") onUnauthenticated();
     else if (result.kind === "termsRequired") onTermsRequired(result.termsStatus);
     else if (result.kind === "fieldErrors") showResult(fieldResult(result.errors));
     else if (result.kind === "networkError") {
@@ -304,13 +273,19 @@ function PersonalInfoBlock({
 
   const errorText = (list: readonly FieldError[] | undefined) =>
     list?.map((error) => t(`validation.${error.key}`, error.params)).join(" ") || undefined;
+  const countryLabel =
+    profile.country === "ZZ"
+      ? t("auth.profileCountryUnassigned")
+      : (countries.find((item) => item.value === profile.country)?.label ?? profile.country);
 
   return (
     <>
-      {message && (
+      {editing && message && (
         <FormMessage ref={messageRef} type={message.type} messageKey={message.messageKey} />
       )}
+      {!editing && saved && <FormMessage type="success" messageKey="auth.profileSaved" />}
       <form
+        key={editing ? "edit" : "view"}
         ref={formRef}
         className="profile-form"
         noValidate
@@ -322,49 +297,68 @@ function PersonalInfoBlock({
           </div>
           <TextField
             label={t("register.nameLabel")}
-            name="name"
+            name={editing ? "name" : undefined}
             autoComplete="name"
-            required
-            defaultValue={profile.name}
-            error={errorText(allErrors.name)}
-            onBlur={onBlur("name")}
+            required={editing}
+            readOnly={!editing}
+            value={editing ? undefined : profile.name}
+            defaultValue={editing ? profile.name : undefined}
+            error={editing ? errorText(allErrors.name) : undefined}
+            onBlur={editing ? onBlur("name") : undefined}
           />
           <TextField
             label={t("register.birthdateLabel")}
-            name="birthdate"
+            name={editing ? "birthdate" : undefined}
             type="date"
             autoComplete="bday"
-            required
-            defaultValue={profile.birthdate}
-            error={errorText(allErrors.birthdate)}
-            onBlur={onBlur("birthdate")}
+            required={editing}
+            readOnly={!editing}
+            value={editing ? undefined : profile.birthdate}
+            defaultValue={editing ? profile.birthdate : undefined}
+            error={editing ? errorText(allErrors.birthdate) : undefined}
+            onBlur={editing ? onBlur("birthdate") : undefined}
           />
           <div className="full">
-            <SelectField
-              label={t("register.countryLabel")}
-              name="country"
-              placeholder={
-                profile.country === "ZZ"
-                  ? t("auth.profileCountryUnassigned")
-                  : t("register.countryPlaceholder")
-              }
-              options={countries}
-              required={profile.country !== "ZZ"}
-              defaultValue={profile.country === "ZZ" ? "" : profile.country}
-              error={errorText(allErrors.country)}
-              onBlur={onBlur("country")}
-            />
+            {editing ? (
+              <SelectField
+                label={t("register.countryLabel")}
+                name="country"
+                placeholder={
+                  profile.country === "ZZ"
+                    ? t("auth.profileCountryUnassigned")
+                    : t("register.countryPlaceholder")
+                }
+                options={countries}
+                required={profile.country !== "ZZ"}
+                defaultValue={profile.country === "ZZ" ? "" : profile.country}
+                error={errorText(allErrors.country)}
+                onBlur={onBlur("country")}
+              />
+            ) : (
+              <TextField label={t("register.countryLabel")} value={countryLabel} readOnly />
+            )}
           </div>
         </div>
-        <div className="profile-actions">
-          <Button type="button" variant="secondary" onClick={onCancel}>
-            {t("auth.profileCancel")}
-          </Button>
-          <Button type="submit" keepFocusOnMouseDown processing={processing}>
-            {t("auth.profileSave")}
-          </Button>
-        </div>
-        <RequiredLegend />
+        {editing && (
+          <>
+            <div className="profile-actions">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  showResult({});
+                  onCancel();
+                }}
+              >
+                {t("auth.profileCancel")}
+              </Button>
+              <Button type="submit" keepFocusOnMouseDown processing={processing}>
+                {t("auth.profileSave")}
+              </Button>
+            </div>
+            <RequiredLegend />
+          </>
+        )}
       </form>
     </>
   );
