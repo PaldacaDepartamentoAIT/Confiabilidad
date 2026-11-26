@@ -306,6 +306,7 @@ sección manda sobre las descripciones generales de arriba.
 | Ayuda | 12 px, texto secundario |
 | Contador de caracteres | JetBrains Mono 12 px, texto secundario, a la derecha de la ayuda |
 | Error | borde en P1; debajo, el icono `circle-alert` en P1 y el mensaje en tinta, 12,5 px, con 6 px de separación; `aria-invalid` activo |
+| Deshabilitado | fondo con el 28 % de gris mezclado con el lienzo, borde y texto en gris/texto secundario (`not-allowed`), sin cambio de borde al pasar el cursor ni enfocar |
 
 ### Menú de selección
 
@@ -358,6 +359,16 @@ Ventana modal que muestra un documento (términos, consentimientos) y se abre de
 Borde de 1 px en gris y de 4 px a la izquierda, radio 4 px, relleno de 12 px arriba y abajo y 14 px a
 los lados, separación de 10 px entre icono y texto, texto en tinta. El borde izquierdo y el icono
 usan el color de la prioridad; en un aviso informativo, el texto secundario.
+
+### Notificación flotante (toast)
+
+| Parte | Valor |
+|---|---|
+| Posición | fija en la esquina inferior derecha a 22 px de los bordes (16 px en móvil), ancho máximo de 380 px (sin pasar del ancho visible menos 32 px), apiladas en vertical con 10 px de separación |
+| Caja | igual que «Aviso»: fondo del lienzo, borde de 1 px en gris y de 4 px a la izquierda, radio 4 px, sin sombra, relleno de 12 px arriba/abajo, 14 px a la izquierda y 10 px a la derecha |
+| Contenido | icono de 16 px (`check` en confirmación, `info` en información, `circle-alert` en advertencia o error) con el color de la prioridad o texto secundario; título opcional en peso 600 y mensaje en tinta |
+| Botón de cierre | botón «×» (`X`, 16 px) de 28 × 28 px a la derecha, radio 4 px, texto secundario (tinta y fondo al 9 % en hover) |
+| Movimiento y plazo | entra deslizándose de derecha a izquierda en 0,22 s y sale de izquierda a derecha en 0,2 s; se cierra tras 5 s por defecto y reinicia el plazo al situar el cursor encima o tomar el foco |
 
 ### Datos
 
