@@ -460,9 +460,6 @@ function PasswordChangeBlock({
 
   return (
     <>
-      {wait.remaining > 0 && (
-        <p role="status">{t("validation.retryIn", { seconds: wait.remaining })}</p>
-      )}
       {message && (
         <FormMessage ref={messageRef} type={message.type} messageKey={message.messageKey} />
       )}
@@ -491,6 +488,11 @@ function PasswordChangeBlock({
           />
         </div>
         <div className="profile-actions">
+          {wait.remaining > 0 && (
+            <p className="profile-wait" role="status">
+              {t("validation.retryIn", { seconds: wait.remaining })}
+            </p>
+          )}
           <Button
             type="button"
             variant="secondary"

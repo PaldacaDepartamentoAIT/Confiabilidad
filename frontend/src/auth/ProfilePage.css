@@ -47,9 +47,17 @@
 
 .profile-actions {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
-  gap: 10px;
+  flex-wrap: wrap;
+  gap: 10px 18px;
   margin-top: 14px;
+}
+
+.profile-wait {
+  margin-right: auto;
+  font-size: 13px;
+  color: var(--text2);
 }
 
 .profile-form .profile-actions + .help {
