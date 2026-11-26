@@ -18,6 +18,8 @@ Si falta alguno, pídelo al usuario en un solo mensaje y no continúes hasta ten
 
 El agente que implementó tiende a darse la razón a sí mismo. En ambos modos, los pasos 1 a 8 del procedimiento se ejecutan en un subagente sin el contexto de la implementación, que devuelve el informe sin modificar nada. Los pasos 9 y 10 los ejecuta el agente que lo lanzó, porque el resumen necesita el contexto de las dudas del usuario para el marco teórico. Si el entorno no admite subagentes y en esta conversación se ha implementado código de esta feature, no valides aquí: pide al usuario que lance la validación en una sesión nueva.
 
+Mientras el subagente de validación esté en ejecución, el agente principal debe mantener informado al usuario cada 45 segundos sobre el estado del subagente y su progreso (qué paso, suite o archivos está revisando), hasta que el subagente devuelva el informe final.
+
 ## Precondiciones
 
 - [ ] Existe `specs/<feature>/spec.md` con `Estado: aprobada`.

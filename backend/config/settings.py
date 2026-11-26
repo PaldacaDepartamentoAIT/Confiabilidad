@@ -251,17 +251,34 @@ EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=False)
 EMAIL_TIMEOUT = env.int("EMAIL_TIMEOUT", default=10)
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="no-responder@localhost")
 
+# Tareas periódicas de mantenimiento y alertas (tareas-purga-y-alertas).
+PURGE_STALE_REGISTRATIONS_INTERVAL_SECONDS = env.float(
+    "PURGE_STALE_REGISTRATIONS_INTERVAL_SECONDS", default=3600.0
+)
+PURGE_EXPIRED_SESSIONS_INTERVAL_SECONDS = env.float(
+    "PURGE_EXPIRED_SESSIONS_INTERVAL_SECONDS", default=3600.0
+)
+PURGE_SECURITY_EVENTS_INTERVAL_SECONDS = env.float(
+    "PURGE_SECURITY_EVENTS_INTERVAL_SECONDS", default=86400.0
+)
+MAINTENANCE_ALERT_EMAILS: list[str] = env.list("MAINTENANCE_ALERT_EMAILS", default=[])
+MAINTENANCE_LOCK_TIMEOUT_SECONDS = env.int("MAINTENANCE_LOCK_TIMEOUT_SECONDS", default=3600)
+
 # Barrido de la bandeja de salida: encola los correos pendientes con el intento vencido (D-14).
 CELERY_BEAT_SCHEDULE = {
     "emails-dispatch-due": {"task": "apps.emails.tasks.dispatch_due", "schedule": 30.0},
     "accounts-sweep-unresolved": {"task": "apps.accounts.tasks.sweep_unresolved", "schedule": 60.0},
     "accounts-purge-stale-registrations": {
         "task": "apps.accounts.tasks.purge_stale_registrations",
-        "schedule": 3600.0,
+        "schedule": PURGE_STALE_REGISTRATIONS_INTERVAL_SECONDS,
     },
     "accounts-purge-expired-sessions": {
         "task": "apps.accounts.tasks.purge_expired_sessions",
-        "schedule": 3600.0,
+        "schedule": PURGE_EXPIRED_SESSIONS_INTERVAL_SECONDS,
+    },
+    "audit-purge-security-events": {
+        "task": "apps.audit.tasks.purge_security_events",
+        "schedule": PURGE_SECURITY_EVENTS_INTERVAL_SECONDS,
     },
 }
 

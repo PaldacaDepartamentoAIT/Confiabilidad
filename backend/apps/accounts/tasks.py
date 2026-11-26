@@ -7,6 +7,8 @@ from django.utils import timezone
 
 from apps.accounts import conf, password_reset, registration, sessions
 from apps.accounts.models import PhantomProcess
+from apps.core.maintenance import run_maintenance_task
+from apps.core.models import MaintenanceTaskName
 
 logger = logging.getLogger(__name__)
 
@@ -75,14 +77,22 @@ def sweep_unresolved() -> int:
 
 
 @shared_task(name="apps.accounts.tasks.purge_stale_registrations")  # type: ignore[untyped-decorator]
-def purge_stale_registrations() -> int:
+def purge_stale_registrations(simulate_failure: bool = False) -> int:
     # Cada hora: un registro se borra entre 24 y 25 h después de caducar su código (RF-020).
-    return registration.purge_stale()
+    return run_maintenance_task(
+        MaintenanceTaskName.PURGE_STALE_REGISTRATIONS,
+        registration.purge_stale,
+        simulate_failure=simulate_failure,
+    )
 
 
 @shared_task(name="apps.accounts.tasks.purge_expired_sessions")  # type: ignore[untyped-decorator]
-def purge_expired_sessions() -> int:
-    return sessions.purge_expired()
+def purge_expired_sessions(simulate_failure: bool = False) -> int:
+    return run_maintenance_task(
+        MaintenanceTaskName.PURGE_EXPIRED_SESSIONS,
+        sessions.purge_expired,
+        simulate_failure=simulate_failure,
+    )
 
 
 def _unresolved_after_window(public_id: str) -> bool:
