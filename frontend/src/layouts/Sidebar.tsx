@@ -1,4 +1,11 @@
-import { useEffect, useId, useRef, useState, type MouseEvent, type ReactNode } from "react";
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type MouseEvent as ReactMouseEvent,
+  type ReactNode,
+} from "react";
 import { useTranslation } from "react-i18next";
 
 import { Counter } from "../components/Block";
@@ -18,7 +25,7 @@ export type SidebarItem = {
   icon: ReactNode;
   counter?: number;
   counterLabel?: string;
-  onSelect?: (event: MouseEvent<HTMLAnchorElement>) => void;
+  onSelect?: (event: ReactMouseEvent<HTMLAnchorElement>) => void;
 };
 
 export type SidebarUserOption = {
