@@ -1,6 +1,6 @@
 # Entrega E-04 · Formulario de cambio de contraseña en `/profile`
 
-Rama: `feat/perfil-y-cambio-contrasena-ui-password` · Líneas de código y tests: 492 (límite con excepción justificada en `tasks.md`: 500).
+Rama: `feat/perfil-y-cambio-contrasena-ui-password` · PR: `#159` · Líneas de código y tests: 504 (aprobado y fusionado en `#159`; incluye ajuste visual de cuenta atrás junto a botones).
 
 ## Qué se hizo
 - En `frontend/src/api/profile.ts`, `frontend/src/registration/serverErrors.ts`, `frontend/src/registration/serverErrors.test.ts` y `frontend/src/i18n/locales/{en,es,pt-BR}.ts` (`T-014`, `RF-006`…`RF-008`, `RF-013`) se añadió `changePassword` (`POST /auth/password/change`), la traducción de `current_password_incorrect` y las claves de interfaz y notificación en español, portugués de Brasil e inglés.
