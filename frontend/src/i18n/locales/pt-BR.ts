@@ -39,6 +39,9 @@ export const ptBR: Messages = {
     success: "Sucesso:",
     info: "Informação:",
   },
+  toast: {
+    close: "Fechar notificação",
+  },
   validation: {
     required: "Preencha este campo.",
     email: "Digite um e-mail como nome@empresa.com.",

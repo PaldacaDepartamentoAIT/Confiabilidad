@@ -14,6 +14,7 @@ import { RequiredLegend } from "../components/fields/RequiredLegend";
 import { SelectField } from "../components/fields/SelectField";
 import { TextField } from "../components/fields/TextField";
 import { Menu } from "../components/menu/Menu";
+import { useToast } from "../components/toast/toastContext";
 import { countryOptions, type CountryOption } from "../forms/countries";
 import { useFormValidation, type FieldError, type SubmitResult } from "../forms/useFormValidation";
 import type { LanguageStorage } from "../i18n/language";
@@ -89,8 +90,8 @@ export function ProfilePage({
   const [countryCodes, setCountryCodes] = useState<string[]>([]);
   const [loadError, setLoadError] = useState<ParseKeys | null>(null);
   const [editing, setEditing] = useState(false);
-  const [saved, setSaved] = useState(false);
   const loggingOut = useRef(false);
+  const { notify } = useToast();
   const { user: ctxUser, setUser: setCtxUser, collapsed, setCollapsed } = usePrivateUser();
   const cbRef = useRef({ onLoggedOut, onTermsRequired, setCtxUser });
   cbRef.current = { onLoggedOut, onTermsRequired, setCtxUser };
@@ -179,10 +180,7 @@ export function ProfilePage({
                       { value: "disable", label: t("auth.profileDisable"), disabled: true },
                     ]}
                     onSelect={(action) => {
-                      if (action === "edit") {
-                        setSaved(false);
-                        setEditing(true);
-                      }
+                      if (action === "edit") setEditing(true);
                     }}
                     renderTrigger={(triggerProps) => (
                       <IconButton
@@ -204,7 +202,6 @@ export function ProfilePage({
                 profile={profile}
                 countries={countries}
                 editing={editing}
-                saved={saved}
                 onCancel={() => setEditing(false)}
                 onSaved={(updated) => {
                   const next = { email: updated.email, name: updated.name };
@@ -212,7 +209,7 @@ export function ProfilePage({
                   setCtxUser(next);
                   onProfileUpdated?.(next);
                   setEditing(false);
-                  setSaved(true);
+                  notify({ kind: "success", message: t("auth.profileSaved") });
                 }}
                 onUnauthenticated={goLogin}
                 onTermsRequired={goTerms}
@@ -230,7 +227,6 @@ function PersonalInfoBlock({
   profile,
   countries,
   editing,
-  saved,
   onCancel,
   onSaved,
   onUnauthenticated,
@@ -240,7 +236,6 @@ function PersonalInfoBlock({
   profile: ProfileData;
   countries: readonly CountryOption[];
   editing: boolean;
-  saved: boolean;
   onCancel: () => void;
   onSaved: (updated: ProfileData) => void;
   onUnauthenticated: () => void;
@@ -288,7 +283,6 @@ function PersonalInfoBlock({
       {editing && message && (
         <FormMessage ref={messageRef} type={message.type} messageKey={message.messageKey} />
       )}
-      {!editing && saved && <FormMessage type="success" messageKey="auth.profileSaved" />}
       <form
         key={editing ? "edit" : "view"}
         ref={formRef}
@@ -296,7 +290,7 @@ function PersonalInfoBlock({
         noValidate
         onSubmit={handleSubmit((values) => void send(values))}
       >
-        <TextField label={t("auth.emailLabel")} type="email" value={profile.email} readOnly />
+        <TextField label={t("auth.emailLabel")} type="email" value={profile.email} disabled />
         <div className="profile-grid">
           <TextField
             label={t("register.nameLabel")}

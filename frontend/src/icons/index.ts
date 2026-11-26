@@ -27,6 +27,7 @@ import {
   Trash2,
   User,
   Wrench,
+  X,
   type LucideIcon,
   type LucideProps,
 } from "lucide-react";
@@ -68,3 +69,4 @@ export const IconSun = sized(Sun, "IconSun");
 export const IconTrash = sized(Trash2, "IconTrash");
 export const IconUser = sized(User, "IconUser");
 export const IconWrench = sized(Wrench, "IconWrench");
+export const IconX = sized(X, "IconX");

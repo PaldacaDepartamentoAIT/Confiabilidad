@@ -227,6 +227,9 @@ test("navigates from home sidebar to /profile keeping user button visible and up
   await user.type(nameInput, "Ana Updated");
   await user.click(screen.getByRole("button", { name: "Save changes" }));
   expect(await screen.findByRole("combobox", { name: "Ana Updated" })).toBeInTheDocument();
+  expect(screen.getByRole("status")).toHaveTextContent(
+    "Your personal information has been updated.",
+  );
   expect(window.location.pathname).toBe("/profile");
   window.history.replaceState(null, "", "/");
 });

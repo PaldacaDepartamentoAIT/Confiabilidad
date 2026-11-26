@@ -37,6 +37,9 @@ export const en = {
     success: "Success:",
     info: "Information:",
   },
+  toast: {
+    close: "Dismiss notification",
+  },
   validation: {
     required: "Fill in this field.",
     email: "Enter an email like name@company.com.",

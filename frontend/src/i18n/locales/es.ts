@@ -40,6 +40,9 @@ export const es: Messages = {
     success: "Éxito:",
     info: "Información:",
   },
+  toast: {
+    close: "Cerrar notificación",
+  },
   validation: {
     required: "Completa este campo.",
     email: "Escribe un correo como nombre@empresa.com.",

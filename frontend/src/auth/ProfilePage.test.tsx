@@ -7,6 +7,7 @@ import { I18nextProvider } from "react-i18next";
 import { createClient } from "../api/client";
 import type { ProfileData } from "../api/profile";
 import { LiveAnnouncer } from "../components/LiveAnnouncer";
+import { ToastProvider } from "../components/toast/ToastProvider";
 import { createI18n } from "../i18n";
 import { ProfilePage } from "./ProfilePage";
 import { createTokenStorage } from "./tokenStorage";
@@ -36,7 +37,9 @@ function renderProfile(
     ...render(
       <I18nextProvider i18n={i18n}>
         <LiveAnnouncer>
-          <ProfilePage client={client} tokenStorage={storage} {...props} />
+          <ToastProvider>
+            <ProfilePage client={client} tokenStorage={storage} {...props} />
+          </ToastProvider>
         </LiveAnnouncer>
       </I18nextProvider>,
     ),
@@ -78,7 +81,7 @@ test("starts in read-only mode with 3-dot menu, enters edit mode, preserves ZZ a
   const emailField = await screen.findByLabelText("Correo electrónico");
   expect(section).not.toHaveAttribute("aria-busy");
   expect(emailField).toHaveValue("ana@empresa.com");
-  expect(emailField).toHaveAttribute("readonly");
+  expect(emailField).toBeDisabled();
   expect([...section.querySelectorAll(".profile-grid label")].map((el) => el.textContent)).toEqual([
     "Nombre completo",
     "País",
@@ -109,7 +112,10 @@ test("starts in read-only mode with 3-dot menu, enters edit mode, preserves ZZ a
   await user.type(nameInput, "  Ana Real  ");
   await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
 
-  expect(await screen.findByText("Tus datos personales se han actualizado.")).toBeInTheDocument();
+  const toast = await screen.findByRole("status");
+  expect(toast).toHaveTextContent("Tus datos personales se han actualizado.");
+  expect(section.contains(toast)).toBe(false);
+  expect(screen.getByLabelText("Correo electrónico")).toBeDisabled();
   expect(patches).toEqual([{ name: "  Ana Real  ", birthdate: "1991-03-04", language: "es" }]);
   expect(onProfileUpdated).toHaveBeenCalledWith({ email: "ana@empresa.com", name: "Ana Real" });
   expect(screen.getByLabelText("Nombre completo")).toHaveValue("Ana Real");

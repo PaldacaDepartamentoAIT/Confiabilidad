@@ -31,6 +31,7 @@ const NAMES = [
   "IconTrash",
   "IconUser",
   "IconWrench",
+  "IconX",
 ] as const;
 
 test("exports exactly the icons used by the design guide", () => {
