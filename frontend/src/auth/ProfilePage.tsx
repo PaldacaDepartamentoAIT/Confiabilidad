@@ -11,11 +11,11 @@ import { Button } from "../components/Button";
 import { FormMessage } from "../components/FormMessage";
 import { IconButton } from "../components/IconButton";
 import { RequiredLegend } from "../components/fields/RequiredLegend";
-import { SelectField } from "../components/fields/SelectField";
+import { SelectField, type SelectOption } from "../components/fields/SelectField";
 import { TextField } from "../components/fields/TextField";
 import { Menu } from "../components/menu/Menu";
 import { useToast } from "../components/toast/toastContext";
-import { countryOptions, type CountryOption } from "../forms/countries";
+import { countryOptions } from "../forms/countries";
 import { useFormValidation, type FieldError, type SubmitResult } from "../forms/useFormValidation";
 import type { LanguageStorage } from "../i18n/language";
 import { IconMoreVertical } from "../icons";
@@ -234,7 +234,7 @@ function PersonalInfoBlock({
 }: {
   client: ApiClient;
   profile: ProfileData;
-  countries: readonly CountryOption[];
+  countries: readonly SelectOption[];
   editing: boolean;
   onCancel: () => void;
   onSaved: (updated: ProfileData) => void;
