@@ -52,20 +52,25 @@ function fieldResult(errors: Record<string, string[]>): SubmitResult<Field> {
 
 function ProfileSkeleton() {
   const { t } = useTranslation();
-  const labels: readonly [string, boolean?][] = [
-    [t("auth.emailLabel"), true],
-    [t("register.nameLabel")],
-    [t("register.birthdateLabel")],
-    [t("register.countryLabel"), true],
+  const rowLabels = [
+    t("register.nameLabel"),
+    t("register.countryLabel"),
+    t("register.birthdateLabel"),
   ];
   return (
-    <div className="profile-grid">
-      {labels.map(([label, full]) => (
-        <div key={label} className={full ? "fld full" : "fld"}>
-          <span className="lbl">{label}</span>
-          <div className="skeleton skel-field" />
-        </div>
-      ))}
+    <div className="profile-form">
+      <div className="fld">
+        <span className="lbl">{t("auth.emailLabel")}</span>
+        <div className="skeleton skel-field" />
+      </div>
+      <div className="profile-grid">
+        {rowLabels.map((label) => (
+          <div key={label} className="fld">
+            <span className="lbl">{label}</span>
+            <div className="skeleton skel-field" />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -291,10 +296,8 @@ function PersonalInfoBlock({
         noValidate
         onSubmit={handleSubmit((values) => void send(values))}
       >
+        <TextField label={t("auth.emailLabel")} type="email" value={profile.email} readOnly />
         <div className="profile-grid">
-          <div className="full">
-            <TextField label={t("auth.emailLabel")} type="email" value={profile.email} readOnly />
-          </div>
           <TextField
             label={t("register.nameLabel")}
             name={editing ? "name" : undefined}
@@ -306,6 +309,24 @@ function PersonalInfoBlock({
             error={editing ? errorText(allErrors.name) : undefined}
             onBlur={editing ? onBlur("name") : undefined}
           />
+          {editing ? (
+            <SelectField
+              label={t("register.countryLabel")}
+              name="country"
+              placeholder={
+                profile.country === "ZZ"
+                  ? t("auth.profileCountryUnassigned")
+                  : t("register.countryPlaceholder")
+              }
+              options={countries}
+              required={profile.country !== "ZZ"}
+              defaultValue={profile.country === "ZZ" ? "" : profile.country}
+              error={errorText(allErrors.country)}
+              onBlur={onBlur("country")}
+            />
+          ) : (
+            <TextField label={t("register.countryLabel")} value={countryLabel} readOnly />
+          )}
           <TextField
             label={t("register.birthdateLabel")}
             name={editing ? "birthdate" : undefined}
@@ -318,26 +339,6 @@ function PersonalInfoBlock({
             error={editing ? errorText(allErrors.birthdate) : undefined}
             onBlur={editing ? onBlur("birthdate") : undefined}
           />
-          <div className="full">
-            {editing ? (
-              <SelectField
-                label={t("register.countryLabel")}
-                name="country"
-                placeholder={
-                  profile.country === "ZZ"
-                    ? t("auth.profileCountryUnassigned")
-                    : t("register.countryPlaceholder")
-                }
-                options={countries}
-                required={profile.country !== "ZZ"}
-                defaultValue={profile.country === "ZZ" ? "" : profile.country}
-                error={errorText(allErrors.country)}
-                onBlur={onBlur("country")}
-              />
-            ) : (
-              <TextField label={t("register.countryLabel")} value={countryLabel} readOnly />
-            )}
-          </div>
         </div>
         {editing && (
           <>

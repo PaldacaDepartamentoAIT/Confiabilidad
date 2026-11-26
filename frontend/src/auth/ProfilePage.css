@@ -17,12 +17,14 @@
 
 .profile-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 2px 18px;
 }
 
-.profile-grid .full {
-  grid-column: 1 / -1;
+@media (max-width: 767px) {
+  .profile-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .profile-grid .field[readonly] {

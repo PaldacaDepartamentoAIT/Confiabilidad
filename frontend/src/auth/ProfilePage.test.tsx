@@ -79,6 +79,11 @@ test("starts in read-only mode with 3-dot menu, enters edit mode, preserves ZZ a
   expect(section).not.toHaveAttribute("aria-busy");
   expect(emailField).toHaveValue("ana@empresa.com");
   expect(emailField).toHaveAttribute("readonly");
+  expect([...section.querySelectorAll(".profile-grid label")].map((el) => el.textContent)).toEqual([
+    "Nombre completo",
+    "País",
+    "Fecha de nacimiento",
+  ]);
   expect(screen.getByLabelText("País")).toHaveValue("Sin país asignado");
   expect(screen.queryByRole("button", { name: "Guardar cambios" })).not.toBeInTheDocument();
 
