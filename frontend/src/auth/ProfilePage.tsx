@@ -62,7 +62,12 @@ function fieldResult<Name extends string>(
     : known
       ? undefined
       : ({ type: "error", messageKey: "validation.unknownError" } as const);
-  return { fieldErrors: translateFieldErrors(errors), message };
+  const translated = translateFieldErrors(errors);
+  const fieldErrors: Partial<Record<Name, FieldError[]>> = {};
+  for (const name of Object.keys(fields) as Name[]) {
+    if (translated[name]) fieldErrors[name] = translated[name];
+  }
+  return { fieldErrors, message };
 }
 
 function handleFailure<Name extends string>(
