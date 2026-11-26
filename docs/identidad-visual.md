@@ -353,6 +353,7 @@ Ventana modal que muestra un documento (términos, consentimientos) y se abre de
 | Secundario | sin relleno, borde de 1 px y texto en el principal; hover con el 9 % de la tinta |
 | Botón de icono | 36 × 36 px (28 × 28 px en variante compacta, como en filas de tabla), radio 6 px, sin relleno, borde de 1 px e icono de 16 px en el principal; hover con el 9 % de la tinta |
 | Tooltip (botón de icono) | aparece hacia arriba a 6 px del botón al pasar el cursor o enfocar con el teclado; fondo en relleno negro del sistema, texto blanco `#ffffff`, borde de 1 px en gris, radio 4 px, 12 px |
+| Deshabilitado | si un botón no puede accionarse por el estado actual (procesando, envío bloqueado u otro impedimento), debe mostrarse deshabilitado (`disabled` o `aria-disabled="true"`): fondo con el 28 % de gris mezclado con el lienzo en el principal (transparente en secundario y de icono), borde en gris, texto o icono en texto secundario, cursor `not-allowed` y sin efecto hover |
 
 ### Aviso
 

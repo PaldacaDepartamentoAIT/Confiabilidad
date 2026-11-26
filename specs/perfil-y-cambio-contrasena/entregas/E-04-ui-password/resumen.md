@@ -1,16 +1,17 @@
 # Entrega E-04 · Formulario de cambio de contraseña en `/profile`
 
-Rama: `feat/perfil-y-cambio-contrasena-ui-password` · Líneas de código y tests: 444 (límite con excepción justificada en `tasks.md`: 500).
+Rama: `feat/perfil-y-cambio-contrasena-ui-password` · Líneas de código y tests: 492 (límite con excepción justificada en `tasks.md`: 500).
 
 ## Qué se hizo
 - En `frontend/src/api/profile.ts`, `frontend/src/registration/serverErrors.ts`, `frontend/src/registration/serverErrors.test.ts` y `frontend/src/i18n/locales/{en,es,pt-BR}.ts` (`T-014`, `RF-006`…`RF-008`, `RF-013`) se añadió `changePassword` (`POST /auth/password/change`), la traducción de `current_password_incorrect` y las claves de interfaz y notificación en español, portugués de Brasil e inglés.
+- En `frontend/src/components/Button.css`, `frontend/src/components/IconButton.css` y `frontend/src/components/Button.test.tsx` (siguiendo `docs/identidad-visual.md`) se añadió el aspecto visual deshabilitado tanto para `:disabled` como para `[aria-disabled="true"]` (fondo gris claro mezclado en primario, transparente en secundario y de icono, borde gris, texto secundario, `cursor: not-allowed` y sin resalte al pasar el cursor).
 - En `frontend/src/auth/ProfilePage.tsx`, `frontend/src/auth/ProfilePage.css` y `frontend/src/auth/ProfilePage.test.tsx` (`T-015`, `RF-006`…`RF-008`, `RF-011`…`RF-013`):
   - se habilitó «Cambiar contraseña» en el menú vertical de tres puntos de la tarjeta de perfil (manteniendo «Deshabilitar» deshabilitada hasta su propia feature);
   - al seleccionarla, la tarjeta pasa al modo `password` con `PasswordChangeBlock`, mostrando `Contraseña actual` (`kind="current"`) y `Nueva contraseña` (`kind="new"`, con botón de mostrar/ocultar y pista de requisitos coherente con `registro-flujo`) en `.profile-password-grid` (dos columnas en escritorio y una en móvil), más «Cancelar» y el botón de envío;
   - se extrajeron los helpers compartidos `fieldResult`, `handleFailure` y `useErrorText` para reutilizar la traducción de errores, el foco al primer error y las redirecciones ante `401` o `terms_required`;
   - se aplicó el vaciado selectivo: ambos campos se limpian al completar con éxito (volviendo a solo lectura con notificación flotante *toast*), solo `current_password` se limpia si falla la contraseña actual, ambos se conservan ante errores de política o red/servidor y se descartan al pulsar «Cancelar» o cambiar de modo;
-  - ante `429` (`rateLimited`) se muestra la cuenta atrás (`useCountdown`) y se deshabilita el botón de envío hasta llegar a cero;
-  - se ampliaron las pruebas de `ProfilePage.test.tsx` cubriendo cambio desde el menú, `axe-core`, validación local, vaciado selectivo, notificación *toast*, `429`, errores de red, «Cancelar», redirección por términos e idioma inglés.
+  - ante `429` (`rateLimited`) se muestra la cuenta atrás (`useCountdown`, conservada en `ProfilePage` aunque se cancele y reabra el formulario) y se deshabilita física y visualmente el botón de envío hasta llegar a cero;
+  - se ampliaron las pruebas de `ProfilePage.test.tsx` cubriendo cambio desde el menú, `axe-core`, validación local, vaciado selectivo, notificación *toast*, `429` con persistencia al cancelar, errores de red, «Cancelar», redirección por términos e idioma inglés.
 
 ## Tareas
 El detalle de cada tarea, con su «Hecho cuando», está en [`tasks.md`](../../tasks.md).
@@ -18,7 +19,7 @@ El detalle de cada tarea, con su «Hecho cuando», está en [`tasks.md`](../../t
 | Tarea | Título | Commit |
 |---|---|---|
 | T-014 | Cliente y traducciones para cambio de contraseña en `/profile` | `248bb47` |
-| T-015 | Modo de cambio de contraseña en `ProfilePage` desde el menú contextual | `dab7391`, `3b2fa16` |
+| T-015 | Modo de cambio de contraseña en `ProfilePage` desde el menú contextual y botones deshabilitados | `dab7391`, `3b2fa16`, `c20a16e` |
 
 ## Cómo ejecutarlo y probarlo
 En tu máquina virtual o VPS con las dependencias de frontend instaladas, actualiza ramas y pasa a la rama de la entrega:
