@@ -3,24 +3,38 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { logout, type AuthenticatedUser, type SessionInfo } from "../api/auth";
-import type { ApiClient, TermsStatus } from "../api/client";
-import { getProfile, updateProfile, type ProfileData, type ProfileUpdate } from "../api/profile";
+import type { ApiClient, ApiResult, TermsStatus } from "../api/client";
+import {
+  changePassword,
+  getProfile,
+  updateProfile,
+  type ProfileData,
+  type ProfileUpdate,
+} from "../api/profile";
 import { fetchOptions } from "../api/registration";
 import { Block } from "../components/Block";
 import { Button } from "../components/Button";
 import { FormMessage } from "../components/FormMessage";
 import { IconButton } from "../components/IconButton";
+import { PasswordField } from "../components/fields/PasswordField";
 import { RequiredLegend } from "../components/fields/RequiredLegend";
 import { SelectField, type SelectOption } from "../components/fields/SelectField";
 import { TextField } from "../components/fields/TextField";
 import { Menu } from "../components/menu/Menu";
 import { useToast } from "../components/toast/toastContext";
 import { countryOptions } from "../forms/countries";
-import { useFormValidation, type FieldError, type SubmitResult } from "../forms/useFormValidation";
+import { newPasswordRules } from "../forms/passwordRules";
+import {
+  useFormValidation,
+  type FieldError,
+  type SubmitResult,
+  type Validator,
+} from "../forms/useFormValidation";
 import type { LanguageStorage } from "../i18n/language";
 import { IconMoreVertical } from "../icons";
 import { AppLayout } from "../layouts/AppLayout";
 import { translateCode, translateFieldErrors } from "../registration/serverErrors";
+import { useCountdown } from "../registration/useCountdown";
 import { navigate } from "../routing/router";
 import { required } from "../showcase/validators";
 import { privateNavItems, privateSidebarUser, usePrivateUser } from "./privateNav";
@@ -29,6 +43,59 @@ import "./ProfilePage.css";
 
 const FIELDS = { name: [required], birthdate: [required], country: [] };
 type Field = keyof typeof FIELDS;
+
+const PASSWORD_FIELDS = {
+  current_password: [required],
+  new_password: [required, ...newPasswordRules],
+};
+type PasswordFieldName = keyof typeof PASSWORD_FIELDS;
+type CardMode = "view" | "edit" | "password";
+
+function fieldResult<Name extends string>(
+  errors: Record<string, string[]>,
+  fields: Record<Name, readonly Validator[]>,
+): SubmitResult<Name> {
+  const known = Object.keys(errors).every((name) => name in fields);
+  const nonField = errors.non_field_errors?.[0];
+  const message = nonField
+    ? ({ type: "error", messageKey: `validation.${translateCode(nonField).key}` } as const)
+    : known
+      ? undefined
+      : ({ type: "error", messageKey: "validation.unknownError" } as const);
+  const translated = translateFieldErrors(errors);
+  const fieldErrors: Partial<Record<Name, FieldError[]>> = {};
+  for (const name of Object.keys(fields) as Name[]) {
+    if (translated[name]) fieldErrors[name] = translated[name];
+  }
+  return { fieldErrors, message };
+}
+
+function handleFailure<Name extends string>(
+  result: Exclude<ApiResult<unknown>, { kind: "ok" }>,
+  fields: Record<Name, readonly Validator[]>,
+  showResult: (result: SubmitResult<Name>) => void,
+  onUnauthenticated: () => void,
+  onTermsRequired: (status: TermsStatus) => void,
+) {
+  if (result.kind === "unauthenticated") return onUnauthenticated();
+  if (result.kind === "termsRequired") return onTermsRequired(result.termsStatus);
+  if (result.kind === "fieldErrors") return showResult(fieldResult(result.errors, fields));
+  if (result.kind === "networkError") {
+    return showResult({ message: { type: "error", messageKey: "validation.networkError" } });
+  }
+  if (result.kind === "refused") {
+    return showResult({
+      message: { type: "error", messageKey: `validation.${translateCode(result.code).key}` },
+    });
+  }
+  showResult({ message: { type: "error", messageKey: "validation.serverError" } });
+}
+
+function useErrorText() {
+  const { t } = useTranslation();
+  return (list: readonly FieldError[] | undefined) =>
+    list?.map((error) => t(`validation.${error.key}`, error.params)).join(" ") || undefined;
+}
 
 type ProfilePageProps = {
   client: ApiClient;
@@ -39,17 +106,6 @@ type ProfilePageProps = {
   onTermsRequired?: (termsStatus: TermsStatus) => void;
   onProfileUpdated?: (user: AuthenticatedUser) => void;
 };
-
-function fieldResult(errors: Record<string, string[]>): SubmitResult<Field> {
-  const known = Object.keys(errors).every((name) => name in FIELDS);
-  const nonField = errors.non_field_errors?.[0];
-  const message = nonField
-    ? ({ type: "error", messageKey: `validation.${translateCode(nonField).key}` } as const)
-    : known
-      ? undefined
-      : ({ type: "error", messageKey: "validation.unknownError" } as const);
-  return { fieldErrors: translateFieldErrors(errors), message };
-}
 
 function ProfileSkeleton() {
   const { t } = useTranslation();
@@ -89,7 +145,8 @@ export function ProfilePage({
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [countryCodes, setCountryCodes] = useState<string[]>([]);
   const [loadError, setLoadError] = useState<ParseKeys | null>(null);
-  const [editing, setEditing] = useState(false);
+  const [mode, setMode] = useState<CardMode>("view");
+  const passwordWait = useCountdown();
   const loggingOut = useRef(false);
   const { notify } = useToast();
   const { user: ctxUser, setUser: setCtxUser, collapsed, setCollapsed } = usePrivateUser();
@@ -164,7 +221,7 @@ export function ProfilePage({
         <div className="profile-blocks">
           <Block
             as="section"
-            title={t("auth.profileInfoTitle")}
+            title={mode === "password" ? t("auth.passwordChangeTitle") : t("auth.profileInfoTitle")}
             loading={profile === null}
             loadingContent={<ProfileSkeleton />}
             actions={
@@ -176,11 +233,11 @@ export function ProfilePage({
                     selectable={false}
                     options={[
                       { value: "edit", label: t("auth.profileEdit") },
-                      { value: "password", label: t("auth.profileChangePassword"), disabled: true },
+                      { value: "password", label: t("auth.profileChangePassword") },
                       { value: "disable", label: t("auth.profileDisable"), disabled: true },
                     ]}
                     onSelect={(action) => {
-                      if (action === "edit") setEditing(true);
+                      if (action === "edit" || action === "password") setMode(action);
                     }}
                     renderTrigger={(triggerProps) => (
                       <IconButton
@@ -196,25 +253,38 @@ export function ProfilePage({
               )
             }
           >
-            {profile && (
-              <PersonalInfoBlock
-                client={client}
-                profile={profile}
-                countries={countries}
-                editing={editing}
-                onCancel={() => setEditing(false)}
-                onSaved={(updated) => {
-                  const next = { email: updated.email, name: updated.name };
-                  setProfile(updated);
-                  setCtxUser(next);
-                  onProfileUpdated?.(next);
-                  setEditing(false);
-                  notify({ kind: "success", message: t("auth.profileSaved") });
-                }}
-                onUnauthenticated={goLogin}
-                onTermsRequired={goTerms}
-              />
-            )}
+            {profile &&
+              (mode === "password" ? (
+                <PasswordChangeBlock
+                  client={client}
+                  wait={passwordWait}
+                  onCancel={() => setMode("view")}
+                  onSaved={() => {
+                    setMode("view");
+                    notify({ kind: "success", message: t("auth.passwordChanged") });
+                  }}
+                  onUnauthenticated={goLogin}
+                  onTermsRequired={goTerms}
+                />
+              ) : (
+                <PersonalInfoBlock
+                  client={client}
+                  profile={profile}
+                  countries={countries}
+                  editing={mode === "edit"}
+                  onCancel={() => setMode("view")}
+                  onSaved={(updated) => {
+                    const next = { email: updated.email, name: updated.name };
+                    setProfile(updated);
+                    setCtxUser(next);
+                    onProfileUpdated?.(next);
+                    setMode("view");
+                    notify({ kind: "success", message: t("auth.profileSaved") });
+                  }}
+                  onUnauthenticated={goLogin}
+                  onTermsRequired={goTerms}
+                />
+              ))}
           </Block>
         </div>
       )}
@@ -242,6 +312,7 @@ function PersonalInfoBlock({
   onTermsRequired: (status: TermsStatus) => void;
 }) {
   const { t } = useTranslation();
+  const errorText = useErrorText();
   const [processing, setProcessing] = useState(false);
   const { allErrors, onBlur, handleSubmit, showResult, message, formRef, messageRef } =
     useFormValidation(FIELDS, { scrollToError: true, processing });
@@ -259,20 +330,9 @@ function PersonalInfoBlock({
     if (result.kind === "ok") {
       showResult({});
       onSaved(result.data);
-    } else if (result.kind === "unauthenticated") onUnauthenticated();
-    else if (result.kind === "termsRequired") onTermsRequired(result.termsStatus);
-    else if (result.kind === "fieldErrors") showResult(fieldResult(result.errors));
-    else if (result.kind === "networkError") {
-      showResult({ message: { type: "error", messageKey: "validation.networkError" } });
-    } else if (result.kind === "refused") {
-      showResult({
-        message: { type: "error", messageKey: `validation.${translateCode(result.code).key}` },
-      });
-    } else showResult({ message: { type: "error", messageKey: "validation.serverError" } });
+    } else handleFailure(result, FIELDS, showResult, onUnauthenticated, onTermsRequired);
   }
 
-  const errorText = (list: readonly FieldError[] | undefined) =>
-    list?.map((error) => t(`validation.${error.key}`, error.params)).join(" ") || undefined;
   const countryLabel =
     profile.country === "ZZ"
       ? t("auth.profileCountryUnassigned")
@@ -354,6 +414,106 @@ function PersonalInfoBlock({
             <RequiredLegend />
           </>
         )}
+      </form>
+    </>
+  );
+}
+
+function PasswordChangeBlock({
+  client,
+  wait,
+  onCancel,
+  onSaved,
+  onUnauthenticated,
+  onTermsRequired,
+}: {
+  client: ApiClient;
+  wait: ReturnType<typeof useCountdown>;
+  onCancel: () => void;
+  onSaved: () => void;
+  onUnauthenticated: () => void;
+  onTermsRequired: (status: TermsStatus) => void;
+}) {
+  const { t } = useTranslation();
+  const errorText = useErrorText();
+  const [processing, setProcessing] = useState(false);
+  const { allErrors, onBlur, handleSubmit, showResult, message, formRef, messageRef } =
+    useFormValidation(PASSWORD_FIELDS, { scrollToError: true, processing });
+
+  async function send(values: Record<PasswordFieldName, string>) {
+    if (wait.remaining > 0) return;
+    setProcessing(true);
+    const result = await changePassword(client, values);
+    setProcessing(false);
+    if (result.kind === "ok") {
+      formRef.current?.reset();
+      showResult({});
+      return onSaved();
+    }
+    if (result.kind === "rateLimited") return wait.start(result.retryAfter);
+    if (result.kind === "fieldErrors" && "current_password" in result.errors) {
+      const currentInput = formRef.current?.elements.namedItem("current_password");
+      if (currentInput instanceof HTMLInputElement) currentInput.value = "";
+    }
+    handleFailure(result, PASSWORD_FIELDS, showResult, onUnauthenticated, onTermsRequired);
+  }
+
+  return (
+    <>
+      {message && (
+        <FormMessage ref={messageRef} type={message.type} messageKey={message.messageKey} />
+      )}
+      <form
+        ref={formRef}
+        className="profile-form"
+        noValidate
+        onSubmit={handleSubmit((values) => void send(values))}
+      >
+        <div className="profile-password-grid">
+          <PasswordField
+            label={t("auth.currentPasswordLabel")}
+            name="current_password"
+            kind="current"
+            required
+            error={errorText(allErrors.current_password)}
+            onBlur={onBlur("current_password")}
+          />
+          <PasswordField
+            label={t("auth.newPasswordLabel")}
+            name="new_password"
+            kind="new"
+            required
+            error={errorText(allErrors.new_password)}
+            onBlur={onBlur("new_password")}
+          />
+        </div>
+        <div className="profile-actions">
+          {wait.remaining > 0 && (
+            <p className="profile-wait" role="status">
+              {t("validation.retryIn", { seconds: wait.remaining })}
+            </p>
+          )}
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => {
+              formRef.current?.reset();
+              showResult({});
+              onCancel();
+            }}
+          >
+            {t("auth.profileCancel")}
+          </Button>
+          <Button
+            type="submit"
+            keepFocusOnMouseDown
+            processing={processing}
+            disabled={wait.remaining > 0}
+          >
+            {t("auth.passwordChangeSubmit")}
+          </Button>
+        </div>
+        <RequiredLegend />
       </form>
     </>
   );

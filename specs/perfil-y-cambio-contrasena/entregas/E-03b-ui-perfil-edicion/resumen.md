@@ -1,6 +1,6 @@
 # Entrega E-03b · Edición parcial de datos personales y menú de tarjeta en `/profile`
 
-Rama: `feat/perfil-y-cambio-contrasena-ui-perfil-edicion` · Líneas de código y tests: 1160 (supera el límite de 500 líneas de `sdd.max_lineas_pr_excepcion` por añadir la tarjeta a ancho completo, el límite de altura en `Menu`, el menú contextual de tres puntos y el componente reutilizable de notificaciones flotantes en esta misma entrega; pendiente de confirmación del usuario para aceptarlo en un único PR o dividirlo).
+Rama: `feat/perfil-y-cambio-contrasena-ui-perfil-edicion` · PR: `#158` · Líneas de código y tests: 1162 (supera el límite de 500 líneas de `sdd.max_lineas_pr_excepcion` por añadir la tarjeta a ancho completo, el límite de altura en `Menu`, el menú contextual de tres puntos y el componente reutilizable de notificaciones flotantes en esta misma entrega; aprobado y fusionado en `#158`).
 
 ## Qué se hizo
 - En `frontend/src/api/client.ts`, `frontend/src/api/profile.ts`, `frontend/src/registration/serverErrors.ts`, `frontend/src/registration/serverErrors.test.ts`, `frontend/src/api/auth.test.ts` y `frontend/src/api/registration.test.ts` (`T-010b`, `RF-002`…`RF-004`, `RF-013`) se añadió `patch` al `ApiClient` compartiendo `jsonSend` con `post`, `updateProfile` (`PATCH /auth/profile`) y la traducción de `email_immutable`, `unknown_field` y `no_profile_fields`.

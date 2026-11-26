@@ -41,6 +41,7 @@ const KEYS: Record<string, ValidationKey> = {
   email_immutable: "emailImmutable",
   unknown_field: "unknownField",
   no_profile_fields: "noProfileFields",
+  current_password_incorrect: "currentPasswordIncorrect",
 };
 
 // Los mismos códigos tienen un texto más preciso en estos campos, como en el servidor.

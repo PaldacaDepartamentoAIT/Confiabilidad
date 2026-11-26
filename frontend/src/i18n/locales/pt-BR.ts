@@ -87,6 +87,7 @@ export const ptBR: Messages = {
     emailImmutable: "O e-mail não pode ser alterado.",
     unknownField: "Este campo não é permitido.",
     noProfileFields: "Informe pelo menos um dado do perfil para atualizar.",
+    currentPasswordIncorrect: "A senha atual não está correta.",
     retryIn: "Muitas tentativas. Tente novamente em {{seconds}} s.",
     networkError: "Não foi possível conectar. Verifique sua conexão e tente novamente.",
     unknownError: "Algo não funcionou. Revise os dados e tente novamente.",
@@ -175,5 +176,10 @@ export const ptBR: Messages = {
     profileCancel: "Cancelar",
     profileSave: "Salvar alterações",
     profileSaved: "Seus dados pessoais foram atualizados.",
+    passwordChangeTitle: "Alterar senha",
+    currentPasswordLabel: "Senha atual",
+    newPasswordLabel: "Nova senha",
+    passwordChangeSubmit: "Alterar senha",
+    passwordChanged: "Sua senha foi atualizada e suas outras sessões foram encerradas.",
   },
 };

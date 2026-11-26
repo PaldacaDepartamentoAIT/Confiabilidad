@@ -13,6 +13,11 @@ export type ProfileUpdate = {
   country?: string;
 };
 
+export type PasswordChange = {
+  current_password: string;
+  new_password: string;
+};
+
 export function getProfile(client: ApiClient): Promise<ApiResult<ProfileData>> {
   return client.get("auth/profile");
 }
@@ -22,4 +27,11 @@ export function updateProfile(
   data: ProfileUpdate,
 ): Promise<ApiResult<ProfileData>> {
   return client.patch("auth/profile", data);
+}
+
+export function changePassword(
+  client: ApiClient,
+  data: PasswordChange,
+): Promise<ApiResult<{ result: string }>> {
+  return client.post("auth/password/change", data);
 }

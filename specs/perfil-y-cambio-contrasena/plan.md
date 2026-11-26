@@ -32,10 +32,10 @@ RF: RF-001, RF-002, RF-003, RF-004, RF-006, RF-007, RF-008, RF-012, RF-013
 ### M-05 Pantalla `/profile` y navegación del área privada (`frontend/src/auth/ProfilePage.tsx`, `ProfilePage.css`, `privateNav.ts`, `HomePage.tsx`, `App.tsx`, `icons/index.ts`)
 Responsabilidad:
 - Registrar la ruta `/profile` en `App.tsx` dentro de `AppLayout` (con las mismas redirecciones de sesión/términos que `/`) y añadir el enlace «Perfil» en el menú lateral compartido (`privateNav.ts`) usado por `HomePage` y `ProfilePage`.
-- Construir `ProfilePage.tsx` siguiendo `docs/identidad-visual.md` con dos bloques independientes:
-  1. **Información personal**: correo electrónico en solo lectura (`readOnly`), `name`, `birthdate` y `country` (mostrando estado sin seleccionar «Sin país asignado» cuando el valor almacenado es `"ZZ"` y conservándolo si no se elige un país nuevo).
-  2. **Cambio de contraseña**: `current_password` y `new_password` (un solo campo con mostrar/ocultar y lista de requisitos en vivo, sin confirmación adicional).
-- Validación local al salir de campo y al enviar, foco al primer campo con error, confirmación al guardar cada bloque, vaciado selectivo en contraseña (ambos al éxito, solo `current_password` al fallar esta, ambos conservados en error de política/red) y cuenta atrás con bloqueo de envío (`useCountdown`) ante `429`. Propagar el `name` actualizado al estado de sesión en `App.tsx`.
+- Construir `ProfilePage.tsx` siguiendo `docs/identidad-visual.md` como una tarjeta única a ancho completo en solo lectura por defecto (correo `disabled` arriba y `name`, `country` y `birthdate` en una fila de tres columnas debajo) con menú vertical de tres puntos (`Editar`, `Cambiar contraseña` y `Deshabilitar` deshabilitada):
+  1. **Edición de información personal** (modo `edit`): `name`, `country` (con `"ZZ"` representado como «Sin país asignado» y omitido si no se cambia) y `birthdate`, con «Cancelar» y «Guardar cambios».
+  2. **Cambio de contraseña** (modo `password`): `current_password` y `new_password` (un solo campo con mostrar/ocultar y lista de requisitos en vivo, sin confirmación adicional), con «Cancelar» y envío.
+- Validación local al salir de campo y al enviar, foco al primer campo con error, confirmación mediante `ToastProvider`/`useToast` al volver a solo lectura, vaciado selectivo en contraseña (ambos al éxito, solo `current_password` al fallar esta, ambos conservados en error de política/red) y cuenta atrás con bloqueo de envío (`useCountdown`) ante `429`. Propagar el `name` actualizado al estado de sesión en `App.tsx`.
 RF: RF-001, RF-002, RF-003, RF-004, RF-006, RF-007, RF-008, RF-011, RF-012, RF-013
 
 ## Modelo de datos
@@ -77,7 +77,7 @@ Descartada: Añadir señales nuevas duplicadas o enviar correos fuera de la tran
 Motivo: Reutiliza receptores y outbox transaccional existentes (`RF-003` de `correo-asincrono-plantillas`, `RF-010` de `auditoria-eventos-seguridad`).
 
 ### D-07 Catálogo de países y diseño visual de `/profile`
-Elegida: Reutilizar `registration/options` (`fetchOptions`) junto con `Intl.DisplayNames` en un helper compartido (`forms/countries.ts`) para el selector de países, y maquetar `ProfilePage.tsx` con los componentes del sistema de diseño (`AppLayout`, `Block`, `TextField`, `SelectField`, `PasswordField`, `Button`, `FormMessage`, `RequiredLegend`) y las reglas de `docs/identidad-visual.md`.
+Elegida: Reutilizar `registration/options` (`fetchOptions`) junto con `Intl.DisplayNames` en un helper compartido (`forms/countries.ts`) para el selector de países, y maquetar `ProfilePage.tsx` con los componentes del sistema de diseño (`AppLayout`, `Block`, `Menu`, `IconButton`, `TextField`, `SelectField`, `PasswordField`, `Button`, `FormMessage`, `RequiredLegend`, `ToastProvider`/`useToast`) y las reglas de `docs/identidad-visual.md`.
 Descartada: Duplicar el listado ISO 3166-1 en frontend o crear controles fuera de `components/`.
 Motivo: Única fuente de verdad para códigos ISO válidos y cumplimiento estricto de `docs/identidad-visual.md` y WCAG 2.2 AA.
 
@@ -92,7 +92,7 @@ Motivo: Respuesta inmediata en la interfaz y mantenimiento sencillo sin duplicar
 - **Integración API (backend, `pytest`)**:
   - `apps/accounts/tests/test_profile_api.py`: `GET`/`PATCH auth/profile` y `POST auth/password/change` en rutas `browser/v1` (cookie + CSRF obligatorio) y `app/v1` (`X-Session-Token`, exento de CSRF), inmutabilidad de `email` (`RF-003`), rechazo de payload vacío y campos desconocidos (`RF-004`), bloqueo `401` con cuenta inactiva y `403 terms_required` sin términos vigentes (`RF-011`), `429` con `Retry-After` (`RF-008`), continuidad real de la sesión actual e invalidación inmediata `401` de las otras sesiones en ambos clientes (`RF-009`), e idiomas `es`/`pt-BR`/`en` (`RF-013`).
 - **Unitarios y de componente (frontend, Vitest + Testing Library + axe)**:
-  - `frontend/src/auth/ProfilePage.test.tsx` y actualización de `frontend/src/App.test.tsx`: enlace en menú lateral, redirecciones `/profile` ↔ `/login` y `/terms` (`RF-011`, `RF-012`), lectura de correo en solo lectura, estado `"ZZ"` como sin país asignado conservable al editar nombre/fecha, validación local en blur y submit, foco al primer error, errores de servidor por campo, actualización de nombre reflejada en el menú lateral, vaciado selectivo de campos de contraseña, cuenta atrás con botón deshabilitado ante `429`, idiomas `es`/`pt-BR`/`en` y chequeo de accesibilidad (`axe`) (`RF-012`, `RF-013`).
+  - `frontend/src/auth/ProfilePage.test.tsx` y actualización de `frontend/src/App.test.tsx`: enlace en menú lateral, redirecciones `/profile` ↔ `/login` y `/terms` (`RF-011`, `RF-012`), tarjeta en solo lectura con correo deshabilitado, menú contextual de acciones (`Editar`, `Cambiar contraseña`, `Deshabilitar` deshabilitada), estado `"ZZ"` como sin país asignado conservable al editar nombre/fecha, validación local en blur y submit, foco al primer error, errores de servidor por campo, confirmación por notificación flotante (*toast*), actualización de nombre reflejada en el menú lateral, vaciado selectivo de campos de contraseña, cuenta atrás con botón deshabilitado ante `429`, idiomas `es`/`pt-BR`/`en` y chequeo de accesibilidad (`axe`) (`RF-012`, `RF-013`).
 
 ## Trazabilidad
 | RF | Módulo(s) | Nivel de test |
