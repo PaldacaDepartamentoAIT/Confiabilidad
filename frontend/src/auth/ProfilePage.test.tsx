@@ -107,13 +107,14 @@ test("starts in read-only mode with 3-dot menu, enters edit mode, preserves ZZ a
     (await axe.run(document.body, { rules: { "color-contrast": { enabled: false } } })).violations,
   ).toEqual([]);
 
-  const nameInput = screen.getByLabelText("Nombre completo");
+  const nameInput = screen.getByRole("textbox", { name: "Nombre completo" });
   await user.clear(nameInput);
   await user.type(nameInput, "  Ana Real  ");
   await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
 
-  const toast = await screen.findByRole("status");
-  expect(toast).toHaveTextContent("Tus datos personales se han actualizado.");
+  const toastMessage = await screen.findByText("Tus datos personales se han actualizado.");
+  const toast = toastMessage.closest('[data-ui="toast"]');
+  expect(toast).toHaveAttribute("role", "status");
   expect(section.contains(toast)).toBe(false);
   expect(screen.getByLabelText("Correo electrónico")).toBeDisabled();
   expect(patches).toEqual([{ name: "  Ana Real  ", birthdate: "1991-03-04", language: "es" }]);
@@ -141,7 +142,7 @@ test("validates fields in edit mode, focuses first error, shows server error and
   await user.click(screen.getByRole("combobox", { name: "Acciones del perfil" }));
   await user.click(screen.getByRole("option", { name: "Editar" }));
 
-  const nameInput = screen.getByLabelText("Nombre completo");
+  const nameInput = screen.getByRole("textbox", { name: "Nombre completo" });
   await user.clear(nameInput);
   await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
   expect(screen.getByText("Completa este campo.")).toBeInTheDocument();

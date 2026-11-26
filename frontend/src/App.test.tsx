@@ -222,14 +222,14 @@ test("navigates from home sidebar to /profile keeping user button visible and up
   await screen.findByLabelText("Email");
   await user.click(screen.getByRole("combobox", { name: "Profile actions" }));
   await user.click(screen.getByRole("option", { name: "Edit" }));
-  const nameInput = screen.getByLabelText("Full name");
+  const nameInput = screen.getByRole("textbox", { name: "Full name" });
   await user.clear(nameInput);
   await user.type(nameInput, "Ana Updated");
   await user.click(screen.getByRole("button", { name: "Save changes" }));
   expect(await screen.findByRole("combobox", { name: "Ana Updated" })).toBeInTheDocument();
-  expect(screen.getByRole("status")).toHaveTextContent(
-    "Your personal information has been updated.",
-  );
+  expect(
+    screen.getByText("Your personal information has been updated.").closest('[data-ui="toast"]'),
+  ).toBeInTheDocument();
   expect(window.location.pathname).toBe("/profile");
   window.history.replaceState(null, "", "/");
 });
