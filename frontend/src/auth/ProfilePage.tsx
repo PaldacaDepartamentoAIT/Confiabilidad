@@ -9,12 +9,15 @@ import { fetchOptions } from "../api/registration";
 import { Block } from "../components/Block";
 import { Button } from "../components/Button";
 import { FormMessage } from "../components/FormMessage";
+import { IconButton } from "../components/IconButton";
 import { RequiredLegend } from "../components/fields/RequiredLegend";
 import { SelectField } from "../components/fields/SelectField";
 import { TextField } from "../components/fields/TextField";
-import { countryOptions } from "../forms/countries";
+import { Menu } from "../components/menu/Menu";
+import { countryOptions, type CountryOption } from "../forms/countries";
 import { useFormValidation, type FieldError, type SubmitResult } from "../forms/useFormValidation";
 import type { LanguageStorage } from "../i18n/language";
+import { IconMoreVertical } from "../icons";
 import { AppLayout } from "../layouts/AppLayout";
 import { translateCode, translateFieldErrors } from "../registration/serverErrors";
 import { navigate } from "../routing/router";
@@ -76,10 +79,12 @@ export function ProfilePage({
   onTermsRequired,
   onProfileUpdated,
 }: ProfilePageProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [countryCodes, setCountryCodes] = useState<string[]>([]);
   const [loadError, setLoadError] = useState<ParseKeys | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [saved, setSaved] = useState(false);
   const loggingOut = useRef(false);
   const { user: ctxUser, setUser: setCtxUser, collapsed, setCollapsed } = usePrivateUser();
   const cbRef = useRef({ onLoggedOut, onTermsRequired, setCtxUser });
@@ -130,6 +135,11 @@ export function ProfilePage({
     navigate("/login");
   }
 
+  const countries = useMemo(
+    () => countryOptions(countryCodes, i18n.language),
+    [countryCodes, i18n.language],
+  );
+
   return (
     <AppLayout
       items={privateNavItems(t)}
@@ -151,22 +161,59 @@ export function ProfilePage({
             title={t("auth.profileInfoTitle")}
             loading={profile === null}
             loadingContent={<ProfileSkeleton />}
+            actions={
+              profile && (
+                <div className="profile-menu">
+                  <Menu
+                    label={t("auth.profileActions")}
+                    align="right"
+                    selectable={false}
+                    options={[
+                      { value: "edit", label: t("auth.profileEdit") },
+                      { value: "password", label: t("auth.profileChangePassword"), disabled: true },
+                      { value: "disable", label: t("auth.profileDisable"), disabled: true },
+                    ]}
+                    onSelect={(action) => {
+                      if (action === "edit") {
+                        setSaved(false);
+                        setEditing(true);
+                      }
+                    }}
+                    renderTrigger={(triggerProps) => (
+                      <IconButton
+                        {...triggerProps}
+                        size="sm"
+                        tooltipAlign="end"
+                        label={t("auth.profileActions")}
+                        icon={<IconMoreVertical />}
+                      />
+                    )}
+                  />
+                </div>
+              )
+            }
           >
-            {profile && (
-              <PersonalInfoBlock
-                client={client}
-                profile={profile}
-                countryCodes={countryCodes}
-                onSaved={(updated) => {
-                  const next = { email: updated.email, name: updated.name };
-                  setProfile(updated);
-                  setCtxUser(next);
-                  onProfileUpdated?.(next);
-                }}
-                onUnauthenticated={goLogin}
-                onTermsRequired={goTerms}
-              />
-            )}
+            {profile &&
+              (editing ? (
+                <PersonalInfoBlock
+                  client={client}
+                  profile={profile}
+                  countries={countries}
+                  onCancel={() => setEditing(false)}
+                  onSaved={(updated) => {
+                    const next = { email: updated.email, name: updated.name };
+                    setProfile(updated);
+                    setCtxUser(next);
+                    onProfileUpdated?.(next);
+                    setEditing(false);
+                    setSaved(true);
+                  }}
+                  onUnauthenticated={goLogin}
+                  onTermsRequired={goTerms}
+                />
+              ) : (
+                <ProfileView profile={profile} countries={countries} saved={saved} />
+              ))}
           </Block>
         </div>
       )}
@@ -174,29 +221,64 @@ export function ProfilePage({
   );
 }
 
+function ProfileView({
+  profile,
+  countries,
+  saved,
+}: {
+  profile: ProfileData;
+  countries: readonly CountryOption[];
+  saved: boolean;
+}) {
+  const { t } = useTranslation();
+  const countryLabel =
+    profile.country === "ZZ"
+      ? t("auth.profileCountryUnassigned")
+      : (countries.find((item) => item.value === profile.country)?.label ?? profile.country);
+
+  return (
+    <>
+      {saved && <FormMessage type="success" messageKey="auth.profileSaved" />}
+      <div className="profile-grid">
+        <div className="full">
+          <TextField label={t("auth.emailLabel")} type="email" value={profile.email} readOnly />
+        </div>
+        <TextField label={t("register.nameLabel")} value={profile.name} readOnly />
+        <TextField
+          label={t("register.birthdateLabel")}
+          type="date"
+          value={profile.birthdate}
+          readOnly
+        />
+        <div className="full">
+          <TextField label={t("register.countryLabel")} value={countryLabel} readOnly />
+        </div>
+      </div>
+    </>
+  );
+}
+
 function PersonalInfoBlock({
   client,
   profile,
-  countryCodes,
+  countries,
+  onCancel,
   onSaved,
   onUnauthenticated,
   onTermsRequired,
 }: {
   client: ApiClient;
   profile: ProfileData;
-  countryCodes: readonly string[];
+  countries: readonly CountryOption[];
+  onCancel: () => void;
   onSaved: (updated: ProfileData) => void;
   onUnauthenticated: () => void;
   onTermsRequired: (status: TermsStatus) => void;
 }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [processing, setProcessing] = useState(false);
   const { allErrors, onBlur, handleSubmit, showResult, message, formRef, messageRef } =
     useFormValidation(FIELDS, { scrollToError: true, processing });
-  const countries = useMemo(
-    () => countryOptions(countryCodes, i18n.language),
-    [countryCodes, i18n.language],
-  );
 
   async function send(values: Record<Field, string>) {
     if (profile.country !== "ZZ" && !values.country) {
@@ -207,12 +289,8 @@ function PersonalInfoBlock({
     setProcessing(true);
     const result = await updateProfile(client, payload);
     setProcessing(false);
-    if (result.kind === "ok") {
-      const nameInput = formRef.current?.elements.namedItem("name");
-      if (nameInput instanceof HTMLInputElement) nameInput.value = result.data.name;
-      onSaved(result.data);
-      showResult({ message: { type: "success", messageKey: "auth.profileSaved" } });
-    } else if (result.kind === "unauthenticated") onUnauthenticated();
+    if (result.kind === "ok") onSaved(result.data);
+    else if (result.kind === "unauthenticated") onUnauthenticated();
     else if (result.kind === "termsRequired") onTermsRequired(result.termsStatus);
     else if (result.kind === "fieldErrors") showResult(fieldResult(result.errors));
     else if (result.kind === "networkError") {
@@ -279,6 +357,9 @@ function PersonalInfoBlock({
           </div>
         </div>
         <div className="profile-actions">
+          <Button type="button" variant="secondary" onClick={onCancel}>
+            {t("auth.profileCancel")}
+          </Button>
           <Button type="submit" keepFocusOnMouseDown processing={processing}>
             {t("auth.profileSave")}
           </Button>

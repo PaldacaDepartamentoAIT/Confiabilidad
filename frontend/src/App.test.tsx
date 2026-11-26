@@ -219,7 +219,10 @@ test("navigates from home sidebar to /profile keeping user button visible and up
   expect(screen.getByRole("complementary", { name: "Main menu" })).toHaveClass("collapsed");
   expect(screen.getByRole("combobox", { name: "Ana" })).toBeInTheDocument();
   releaseProfile(new Response(JSON.stringify(answers.profile), { status: 200 }));
-  const nameInput = await screen.findByLabelText("Full name");
+  await screen.findByLabelText("Email");
+  await user.click(screen.getByRole("combobox", { name: "Profile actions" }));
+  await user.click(screen.getByRole("option", { name: "Edit" }));
+  const nameInput = screen.getByLabelText("Full name");
   await user.clear(nameInput);
   await user.type(nameInput, "Ana Updated");
   await user.click(screen.getByRole("button", { name: "Save changes" }));

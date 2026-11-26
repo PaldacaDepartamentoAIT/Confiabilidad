@@ -2,7 +2,11 @@
   display: flex;
   flex-direction: column;
   gap: 18px;
-  max-width: 760px;
+}
+
+.profile-menu .select,
+.profile-menu .select > [role="combobox"] {
+  width: auto;
 }
 
 .profile-form {

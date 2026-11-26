@@ -43,7 +43,7 @@ function renderProfile(
   };
 }
 
-test("shows skeleton while loading, preserves ZZ when unchanged, trims name, updates and passes a11y", async () => {
+test("starts in read-only mode with 3-dot menu, enters edit mode, preserves ZZ and passes a11y", async () => {
   const patches: unknown[] = [];
   const onProfileUpdated = vi.fn();
   const initial: ProfileData = {
@@ -79,7 +79,22 @@ test("shows skeleton while loading, preserves ZZ when unchanged, trims name, upd
   expect(section).not.toHaveAttribute("aria-busy");
   expect(emailField).toHaveValue("ana@empresa.com");
   expect(emailField).toHaveAttribute("readonly");
-  expect(screen.getByText("Sin país asignado")).toBeInTheDocument();
+  expect(screen.getByLabelText("País")).toHaveValue("Sin país asignado");
+  expect(screen.queryByRole("button", { name: "Guardar cambios" })).not.toBeInTheDocument();
+
+  await user.click(screen.getByRole("combobox", { name: "Acciones del perfil" }));
+  expect(screen.getByRole("option", { name: "Cambiar contraseña" })).toHaveAttribute(
+    "aria-disabled",
+    "true",
+  );
+  expect(screen.getByRole("option", { name: "Deshabilitar" })).toHaveAttribute(
+    "aria-disabled",
+    "true",
+  );
+  await user.click(screen.getByRole("option", { name: "Cambiar contraseña" }));
+  expect(screen.getByRole("listbox", { name: "Acciones del perfil" })).toBeInTheDocument();
+
+  await user.click(screen.getByRole("option", { name: "Editar" }));
   expect(
     (await axe.run(document.body, { rules: { "color-contrast": { enabled: false } } })).violations,
   ).toEqual([]);
@@ -92,10 +107,11 @@ test("shows skeleton while loading, preserves ZZ when unchanged, trims name, upd
   expect(await screen.findByText("Tus datos personales se han actualizado.")).toBeInTheDocument();
   expect(patches).toEqual([{ name: "  Ana Real  ", birthdate: "1991-03-04", language: "es" }]);
   expect(onProfileUpdated).toHaveBeenCalledWith({ email: "ana@empresa.com", name: "Ana Real" });
-  expect(nameInput).toHaveValue("Ana Real");
+  expect(screen.getByLabelText("Nombre completo")).toHaveValue("Ana Real");
+  expect(screen.getByLabelText("Nombre completo")).toHaveAttribute("readonly");
 });
 
-test("validates required fields on blur/submit, focuses first error and displays server errors", async () => {
+test("validates fields in edit mode, focuses first error, shows server error and supports cancel", async () => {
   const user = userEvent.setup();
   renderProfile((url, init) => {
     const path = String(url).split("?")[0];
@@ -110,7 +126,11 @@ test("validates required fields on blur/submit, focuses first error and displays
     );
   });
 
-  const nameInput = await screen.findByLabelText("Nombre completo");
+  await screen.findByLabelText("Correo electrónico");
+  await user.click(screen.getByRole("combobox", { name: "Acciones del perfil" }));
+  await user.click(screen.getByRole("option", { name: "Editar" }));
+
+  const nameInput = screen.getByLabelText("Nombre completo");
   await user.clear(nameInput);
   await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
   expect(screen.getByText("Completa este campo.")).toBeInTheDocument();
@@ -122,6 +142,10 @@ test("validates required fields on blur/submit, focuses first error and displays
     await screen.findByText("El nombre no puede tener espacios seguidos."),
   ).toBeInTheDocument();
   expect(nameInput).toHaveFocus();
+
+  await user.click(screen.getByRole("button", { name: "Cancelar" }));
+  expect(screen.queryByRole("button", { name: "Guardar cambios" })).not.toBeInTheDocument();
+  expect(screen.getByLabelText("Nombre completo")).toHaveValue("Eva");
 });
 
 test("redirects to /terms or /login when profile fails auth or terms gates", async () => {

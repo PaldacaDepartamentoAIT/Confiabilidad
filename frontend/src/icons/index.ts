@@ -17,6 +17,7 @@ import {
   LogOut,
   Menu,
   Moon,
+  MoreVertical,
   Package,
   PanelLeftClose,
   PanelLeftOpen,
@@ -57,6 +58,7 @@ export const IconInfo = sized(Info, "IconInfo");
 export const IconLogOut = sized(LogOut, "IconLogOut");
 export const IconMenu = sized(Menu, "IconMenu");
 export const IconMoon = sized(Moon, "IconMoon");
+export const IconMoreVertical = sized(MoreVertical, "IconMoreVertical");
 export const IconPackage = sized(Package, "IconPackage");
 export const IconPanelClose = sized(PanelLeftClose, "IconPanelClose");
 export const IconPanelOpen = sized(PanelLeftOpen, "IconPanelOpen");

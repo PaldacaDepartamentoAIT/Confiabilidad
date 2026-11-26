@@ -72,8 +72,14 @@
   visibility: visible;
 }
 
-.option:hover,
-.option.highlight {
+.option[aria-disabled="true"] {
+  color: var(--text2);
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.option:not([aria-disabled="true"]):hover,
+.option:not([aria-disabled="true"]).highlight {
   background: color-mix(in srgb, var(--ink) 9%, var(--bg));
   transition-duration: 0.08s;
 }

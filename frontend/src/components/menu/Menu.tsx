@@ -3,7 +3,13 @@ import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode 
 import { IconChevronRight } from "../../icons";
 import "./Menu.css";
 
-export type MenuOption = { value: string; label: ReactNode; lang?: string; icon?: ReactNode };
+export type MenuOption = {
+  value: string;
+  label: ReactNode;
+  lang?: string;
+  icon?: ReactNode;
+  disabled?: boolean;
+};
 
 export type MenuTriggerProps = {
   role: "combobox";
@@ -76,7 +82,7 @@ export function Menu({
   }
 
   function choose(index: number) {
-    if (index < 0) return;
+    if (index < 0 || options[index].disabled) return;
     onSelect(options[index].value);
     setOpen(false);
   }
@@ -191,9 +197,12 @@ export function Menu({
               role="option"
               lang={option.lang}
               aria-selected={selectable ? index === selected : false}
+              aria-disabled={option.disabled || undefined}
               className={["option", index === active && "highlight"].filter(Boolean).join(" ")}
               onMouseDown={(event) => event.preventDefault()}
-              onMouseEnter={() => setActive(index)}
+              onMouseEnter={() => {
+                if (!option.disabled) setActive(index);
+              }}
               onClick={() => choose(index)}
             >
               {selectable ? <IconChevronRight className="option-check" /> : option.icon}

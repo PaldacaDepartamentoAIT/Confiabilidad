@@ -21,6 +21,7 @@ const NAMES = [
   "IconLogOut",
   "IconMenu",
   "IconMoon",
+  "IconMoreVertical",
   "IconPackage",
   "IconPanelClose",
   "IconPanelOpen",
