@@ -100,6 +100,18 @@ Estado: aprobado
   Hecho cuando: `pnpm --filter frontend test src/auth/ProfilePage.test.tsx` pasa verificando que «Cambiar contraseña» está habilitada en el menú de tres puntos y conmuta la tarjeta al formulario (con «Cancelar», contraseña actual y nueva contraseña única con mostrar/ocultar y lista de requisitos en vivo), validación local, vaciado selectivo tras éxito (vuelta a solo lectura + notificación flotante *toast*) o error de actual/política/red, cuenta atrás con botón deshabilitado ante `429`, redirección ante términos pendientes o `401`, idiomas y accesibilidad.
   Decisiones: sustituir el booleano `editing` por `mode: "view" | "edit" | "password"` en `ProfilePage.tsx`, activar la opción «Cambiar contraseña» en el menú vertical y extraer `fieldResult`, `handleFailure` y `useErrorText` compartidos entre `PersonalInfoBlock` y `PasswordChangeBlock`; reutilizar `PasswordField` (`kind="current"` y `kind="new"`), `newPasswordRules` y `useCountdown` (elevado a `ProfilePage` para conservar la cuenta atrás al cancelar/reabrir) dentro de `.profile-password-grid` (2 columnas en escritorio, 1 en móvil), añadir en `Button.css` / `IconButton.css` / `docs/identidad-visual.md` el aspecto visual deshabilitado tanto para `:disabled` como para `[aria-disabled="true"]` sin efecto hover, vaciar solo `current_password` en DOM cuando el servidor devuelva error en ese campo y limpiar todo al guardar o cancelar regresando a `"view"` con la notificación *toast* (pendiente de ejecutar Vitest y `tsc` completo en entorno con dependencias instaladas). — Motivo: evita duplicar lógica de manejo de errores HTTP y controles de contraseña, asegura que todo botón bloqueado se vea deshabilitado y respeta `RF-012`. — Confianza: [Cierto]. — Cómo revertirla: revertir `dab7391`, `3b2fa16` y `c20a16e`.
 
+- [ ] T-016 Corrección: descartar errores locales al cancelar en `PersonalInfoBlock` y cubrir `onBlur` y cancelación en `ProfilePage.test.tsx`
+  Tipo: corrección | Origen: validación de RF-012
+  RF: RF-012 | Depende de: — | Archivos: 2
+  Causa: `PersonalInfoBlock` (`frontend/src/auth/ProfilePage.tsx`) permanece montado al pasar de `edit` a `view` y `showResult({})` no limpia `localErrors` de `useFormValidation`, haciendo reaparecer errores locales antiguos al reabrir «Editar»; además `ProfilePage.test.tsx` no cubre `onBlur` ni esa secuencia de cancelación.
+  Hecho cuando: al cancelar tras un error local y reabrir «Editar» no aparece ningún error previo, el test que reproduce el fallo y valida `onBlur` pasa en `pnpm --filter frontend test` y la suite completa sigue en verde.
+
+- [ ] T-017 Corrección: verificar en tests el contador compartido entre sesiones y el reinicio tras cambio de contraseña exitoso
+  Tipo: corrección | Origen: validación de RF-008
+  RF: RF-008 | Depende de: — | Archivos: 2
+  Causa: `test_profile_service.py` y `test_profile_api.py` no prueban que el contador de intentos fallidos se comparta entre distintas sesiones de una misma cuenta ni que `change_password` lo reinicie al completarse con éxito.
+  Hecho cuando: `pytest apps/accounts/tests/test_profile_service.py apps/accounts/tests/test_profile_api.py` verifica ambos comportamientos y la suite completa sigue en verde.
+
 ## Entregas
 Rama de integración: `feat/perfil-y-cambio-contrasena` (los PR de las entregas van contra ella; ver `AGENTS.md`).
 
