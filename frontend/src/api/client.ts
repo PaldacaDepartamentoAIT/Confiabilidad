@@ -109,6 +109,7 @@ async function interpret<Data>(response: Response): Promise<ApiResult<Data>> {
 
 export function createClient(config: ClientConfig): ApiClient {
   const base = config.kind === "app" ? `${config.appBaseUrl}/api/app/v1` : "/api/browser/v1";
+  const inflight = new Map<string, Promise<ApiResult<unknown>>>();
 
   async function send<Data>(path: string, init: RequestInit): Promise<ApiResult<Data>> {
     const headers = new Headers(init.headers);
@@ -133,8 +134,17 @@ export function createClient(config: ClientConfig): ApiClient {
   }
 
   return {
-    get: (path) =>
-      send(`${path}?language=${encodeURIComponent(config.language())}`, { method: "GET" }),
+    get: <Data>(path: string) => {
+      const target = `${path}?language=${encodeURIComponent(config.language())}`;
+      const token =
+        config.kind === "app" ? ((config.tokenStorage ?? tokenStorage).get() ?? "") : "";
+      const key = `${target}\0${token}`;
+      const pending = inflight.get(key) as Promise<ApiResult<Data>> | undefined;
+      if (pending) return pending;
+      const request = send<Data>(target, { method: "GET" }).finally(() => inflight.delete(key));
+      inflight.set(key, request);
+      return request;
+    },
     post: (path, body) =>
       send(path, {
         method: "POST",

@@ -1,0 +1,20 @@
+.profile-blocks {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 760px;
+}
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  gap: 2px 18px;
+}
+
+.profile-grid .full {
+  grid-column: 1 / -1;
+}
+
+.profile-grid .field[readonly] {
+  color: var(--text2);
+}

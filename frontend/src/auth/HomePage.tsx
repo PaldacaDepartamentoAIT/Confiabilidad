@@ -18,10 +18,11 @@ import { FormMessage } from "../components/FormMessage";
 import { IconButton } from "../components/IconButton";
 import { Table, type TableColumn, type TableRow } from "../components/data/Table";
 import type { LanguageStorage } from "../i18n/language";
-import { IconHouse, IconLogOut } from "../icons";
+import { IconLogOut } from "../icons";
 import { AppLayout } from "../layouts/AppLayout";
 import { translateCode } from "../registration/serverErrors";
 import { navigate } from "../routing/router";
+import { privateNavItems, privateSidebarUser, usePrivateUser } from "./privateNav";
 import type { TokenStorage } from "./tokenStorage";
 
 type HomePageProps = {
@@ -31,12 +32,8 @@ type HomePageProps = {
   tokenStorage?: TokenStorage;
   onLoggedOut?: () => void;
   onTermsRequired?: (termsStatus: TermsStatus) => void;
+  onSessionLoaded?: (session: SessionInfo) => void;
 };
-
-function userInitials(user: AuthenticatedUser | null): string {
-  const parts = (user?.name || user?.email || "U").trim().split(/\s+/);
-  return (parts.length >= 2 ? `${parts[0][0]}${parts[1][0]}` : parts[0].slice(0, 2)).toUpperCase();
-}
 
 function formatTimestamp(iso: string, language: string): string {
   const parsed = new Date(iso);
@@ -53,28 +50,31 @@ export function HomePage({
   tokenStorage,
   onLoggedOut,
   onTermsRequired,
+  onSessionLoaded,
 }: HomePageProps) {
   const { t, i18n } = useTranslation();
+  const { user: ctxUser, setUser: setCtxUser, collapsed, setCollapsed } = usePrivateUser();
   const [user, setUser] = useState<AuthenticatedUser | null>(session?.user ?? null);
   const [sessions, setSessions] = useState<ActiveSessionItem[]>([]);
+  const [sessionsLoaded, setSessionsLoaded] = useState(false);
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(new Set());
   const [errorKey, setErrorKey] = useState<string | null>(null);
   const loggingOut = useRef(false);
   const [revokingSelected, setRevokingSelected] = useState(false);
+  const cbRef = useRef({ onLoggedOut, onTermsRequired, onSessionLoaded, setCtxUser });
+  cbRef.current = { onLoggedOut, onTermsRequired, onSessionLoaded, setCtxUser };
 
   const redirectToLogin = useCallback(() => {
     tokenStorage?.clear();
-    onLoggedOut?.();
+    cbRef.current.setCtxUser(null);
+    cbRef.current.onLoggedOut?.();
     navigate("/login");
-  }, [onLoggedOut, tokenStorage]);
+  }, [tokenStorage]);
 
-  const redirectToTerms = useCallback(
-    (termsStatus: TermsStatus) => {
-      onTermsRequired?.(termsStatus);
-      navigate("/terms");
-    },
-    [onTermsRequired],
-  );
+  const redirectToTerms = useCallback((termsStatus: TermsStatus) => {
+    cbRef.current.onTermsRequired?.(termsStatus);
+    navigate("/terms");
+  }, []);
 
   const handleOutcomeFailure = useCallback(
     (result: { kind: string; termsStatus?: TermsStatus; code?: string }) => {
@@ -102,14 +102,17 @@ export function HomePage({
         if (!active) return;
         if (info.kind !== "ok") return handleOutcomeFailure(info);
         current = info.data;
+        cbRef.current.onSessionLoaded?.(current);
       }
       setUser(current.user);
+      cbRef.current.setCtxUser(current.user);
       if (current.terms_status !== "accepted") return redirectToTerms(current.terms_status);
       const listed = await listSessions(client);
       if (!active) return;
       if (listed.kind === "ok") {
         setErrorKey(null);
         setSessions(listed.data.sessions);
+        setSessionsLoaded(true);
       } else {
         handleOutcomeFailure(listed);
       }
@@ -125,6 +128,7 @@ export function HomePage({
     loggingOut.current = true;
     await logout(client, tokenStorage);
     loggingOut.current = false;
+    setCtxUser(null);
     onLoggedOut?.();
     navigate("/login");
   }
@@ -185,38 +189,42 @@ export function HomePage({
     },
   }));
 
+  const sessionsPending = !sessionsLoaded && !errorKey;
+
   return (
     <AppLayout
-      items={[{ id: "home", label: t("auth.homeTitle"), href: "/", icon: <IconHouse /> }]}
+      items={privateNavItems(t)}
       activeId="home"
-      user={
-        user
-          ? {
-              name: user.name || user.email,
-              initials: userInitials(user),
-              menu: [
-                {
-                  id: "logout",
-                  label: t("auth.logout"),
-                  icon: <IconLogOut />,
-                  onSelect: () => void handleLogout(),
-                },
-              ],
-            }
-          : undefined
-      }
+      user={privateSidebarUser(user ?? ctxUser, t, () => void handleLogout())}
       storage={storage}
+      collapsed={collapsed}
+      onCollapsedChange={setCollapsed}
     >
       <div className="page-head">
         <h1>{t("auth.homeTitle")}</h1>
-        {user && (
-          <p>
-            {user.name ? t("auth.signedInAs", { name: user.name, email: user.email }) : user.email}
+        <div className={user ? "skel-slot is-ready" : "skel-slot is-loading"}>
+          <p className="skel-content">
+            {user
+              ? user.name
+                ? t("auth.signedInAs", { name: user.name, email: user.email })
+                : user.email
+              : "\u00a0"}
           </p>
-        )}
+          <span className="skeleton skel-mask skel-line" aria-hidden="true" />
+        </div>
       </div>
       {errorKey && <FormMessage type="error" messageKey={errorKey as never} />}
-      <Block title={t("auth.sessionsTitle")} count={sessions.length}>
+      <Block
+        title={t("auth.sessionsTitle")}
+        count={sessionsLoaded ? sessions.length : undefined}
+        loading={sessionsPending}
+        loadingContent={
+          <div className="skel-rows">
+            <div className="skeleton skel-row" />
+            <div className="skeleton skel-row" />
+          </div>
+        }
+      >
         <Table
           label={t("auth.sessionsTitle")}
           columns={columns}

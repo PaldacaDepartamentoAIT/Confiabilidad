@@ -24,6 +24,7 @@ import {
   Settings,
   Sun,
   Trash2,
+  User,
   Wrench,
   type LucideIcon,
   type LucideProps,
@@ -63,4 +64,5 @@ export const IconSearch = sized(Search, "IconSearch");
 export const IconSettings = sized(Settings, "IconSettings");
 export const IconSun = sized(Sun, "IconSun");
 export const IconTrash = sized(Trash2, "IconTrash");
+export const IconUser = sized(User, "IconUser");
 export const IconWrench = sized(Wrench, "IconWrench");

@@ -217,4 +217,26 @@ describe("cliente de la API", () => {
       termsStatus: "no_current_version",
     });
   });
+
+  it("comparte peticiones GET concurrentes iguales y vuelve a pedir tras finalizar", async () => {
+    let calls = 0;
+    let release!: (res: Response) => void;
+    const client = createClient(
+      config(() => {
+        calls += 1;
+        return calls === 1
+          ? new Promise((resolve) => (release = resolve))
+          : Promise.resolve(json(200, { ok: 2 }));
+      }),
+    );
+    const [a, b] = [client.get("auth/profile"), client.get("auth/profile")];
+    expect(calls).toBe(1);
+    release(json(200, { ok: 1 }));
+    expect(await Promise.all([a, b])).toEqual([
+      { kind: "ok", status: 200, data: { ok: 1 } },
+      { kind: "ok", status: 200, data: { ok: 1 } },
+    ]);
+    expect(await client.get("auth/profile")).toEqual({ kind: "ok", status: 200, data: { ok: 2 } });
+    expect(calls).toBe(2);
+  });
 });

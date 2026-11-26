@@ -5,7 +5,9 @@ import { getSession, type SessionInfo } from "./api/auth";
 import { createClient, environmentConfig, type ApiClient, type TermsStatus } from "./api/client";
 import { HomePage } from "./auth/HomePage";
 import { LoginPage } from "./auth/LoginPage";
+import { ProfilePage } from "./auth/ProfilePage";
 import { TermsPage } from "./auth/TermsPage";
+import { UserProvider } from "./auth/UserProvider";
 import { LiveAnnouncer } from "./components/LiveAnnouncer";
 import type { LanguageStorage } from "./i18n/language";
 import { useDocumentLanguage } from "./i18n/useDocumentLanguage";
@@ -19,6 +21,7 @@ import { ShowcasePage } from "./showcase/ShowcasePage";
 
 const ROUTES = [
   "/",
+  "/profile",
   "/login",
   "/terms",
   "/showcase",
@@ -95,7 +98,8 @@ export function App({ storage, client }: AppProps) {
   };
 
   const screen = {
-    "/": <HomePage {...withSession} onTermsRequired={setTerms} />,
+    "/": <HomePage {...withSession} onTermsRequired={setTerms} onSessionLoaded={setSession} />,
+    "/profile": <ProfilePage {...withSession} onTermsRequired={setTerms} />,
     "/login": <LoginPage {...shared} onAuthenticated={setSession} />,
     "/terms": <TermsPage {...withSession} onAccepted={() => setTerms("accepted")} />,
     "/showcase": <ShowcasePage storage={storage} />,
@@ -104,11 +108,19 @@ export function App({ storage, client }: AppProps) {
     "/register/done": <DonePage storage={storage} />,
   }[shownRoute];
 
+  const sessionUser = session === undefined ? undefined : (session?.user ?? null);
+
   return (
     <LiveAnnouncer>
-      <TransitionPhaseContext.Provider value={phase}>
-        {shownRoute === "/" ? screen : <PublicLayout storage={storage}>{screen}</PublicLayout>}
-      </TransitionPhaseContext.Provider>
+      <UserProvider sessionUser={sessionUser}>
+        <TransitionPhaseContext.Provider value={phase}>
+          {shownRoute === "/" || shownRoute === "/profile" ? (
+            screen
+          ) : (
+            <PublicLayout storage={storage}>{screen}</PublicLayout>
+          )}
+        </TransitionPhaseContext.Provider>
+      </UserProvider>
     </LiveAnnouncer>
   );
 }

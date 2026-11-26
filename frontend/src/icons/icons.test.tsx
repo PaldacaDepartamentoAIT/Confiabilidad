@@ -28,6 +28,7 @@ const NAMES = [
   "IconSettings",
   "IconSun",
   "IconTrash",
+  "IconUser",
   "IconWrench",
 ] as const;
 

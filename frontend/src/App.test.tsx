@@ -80,6 +80,7 @@ const answers: Record<string, unknown> = {
     terms_status: "accepted",
     terms: null,
   },
+  profile: { email: "ana@example.com", name: "Ana", birthdate: "1991-03-04", country: "ES" },
   sessions: { sessions: [] },
 };
 
@@ -92,6 +93,21 @@ function fakeClient(
       return Promise.resolve(
         new Response(JSON.stringify(sessionResponse.body), { status: sessionResponse.status }),
       );
+    }
+    if (route === "profile") {
+      if (sessionResponse.status !== 200) {
+        return Promise.resolve(
+          new Response(JSON.stringify(sessionResponse.body), { status: sessionResponse.status }),
+        );
+      }
+      const terms = (sessionResponse.body as { terms_status?: string }).terms_status;
+      if (terms && terms !== "accepted") {
+        return Promise.resolve(
+          new Response(JSON.stringify({ code: "terms_required", terms_status: terms }), {
+            status: 403,
+          }),
+        );
+      }
     }
     return Promise.resolve(new Response(JSON.stringify(answers[route] ?? {}), { status: 200 }));
   };
@@ -121,6 +137,7 @@ const renderApp = (client?: ReturnType<typeof fakeClient>) =>
 
 const ROUTE_CASES = [
   ["/", undefined, null, "Main panel"],
+  ["/profile", undefined, null, "My profile"],
   ["/ruta-que-no-existe", undefined, null, "Main panel"],
   ["/showcase", undefined, null, "Reliability"],
   ["/login", UNAUTH, null, "Sign in"],
@@ -129,12 +146,14 @@ const ROUTE_CASES = [
   ["/register/continue#pid-1", UNAUTH, null, "Enter the verification code"],
   ["/register/done", UNAUTH, null, "Account created"],
   ["/", UNAUTH, "/login", "Sign in"],
+  ["/profile", UNAUTH, "/login", "Sign in"],
   ["/terms", UNAUTH, "/login", "Sign in"],
   ["/login", undefined, "/", "Main panel"],
   ["/register", undefined, "/", "Main panel"],
   ["/login", PENDING_TERMS, "/terms", "Pending terms and conditions"],
   ["/register", PENDING_TERMS, "/terms", "Pending terms and conditions"],
   ["/", PENDING_TERMS, "/terms", "Pending terms and conditions"],
+  ["/profile", PENDING_TERMS, "/terms", "Pending terms and conditions"],
   ["/terms", undefined, "/", "Main panel"],
 ] as const;
 
@@ -166,6 +185,34 @@ test("moving between screens does not reload the page, keeps the bar and fades o
   ).toBeVisible();
   expect(screen.getByRole("banner")).toBe(barBefore);
   expect(container.querySelector(".public-content")).toHaveClass("route-in");
+  window.history.replaceState(null, "", "/");
+});
+
+test("navigates from home sidebar to /profile keeping user button visible during load", async () => {
+  window.history.replaceState(null, "", "/");
+  let releaseProfile!: (r: Response) => void;
+  const client = createClient({
+    kind: "browser",
+    appBaseUrl: "",
+    language: () => "en",
+    fetch: ((url: RequestInfo | URL) => {
+      const route = String(url).split("?")[0].split("/").pop() ?? "";
+      if (route === "profile") return new Promise((resolve) => (releaseProfile = resolve));
+      return Promise.resolve(new Response(JSON.stringify(answers[route] ?? {}), { status: 200 }));
+    }) as typeof fetch,
+  });
+  renderApp(client);
+  await screen.findByRole("heading", { level: 1, name: "Main panel" });
+  expect(await screen.findByRole("combobox", { name: "Ana" })).toBeInTheDocument();
+  act(() => screen.getByRole("button", { name: "Collapse menu" }).click());
+  expect(screen.getByRole("complementary", { name: "Main menu" })).toHaveClass("collapsed");
+  act(() => screen.getByRole("link", { name: "Profile" }).click());
+  expect(await screen.findByRole("heading", { level: 1, name: "My profile" })).toBeInTheDocument();
+  expect(screen.getByRole("complementary", { name: "Main menu" })).toHaveClass("collapsed");
+  expect(screen.getByRole("combobox", { name: "Ana" })).toBeInTheDocument();
+  releaseProfile(new Response(JSON.stringify(answers.profile), { status: 200 }));
+  expect(await screen.findByLabelText("Email")).toHaveValue("ana@example.com");
+  expect(window.location.pathname).toBe("/profile");
   window.history.replaceState(null, "", "/");
 });
 
