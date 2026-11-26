@@ -53,10 +53,11 @@ Estado: aprobado
   Hecho cuando: `pnpm --filter frontend test src/api/client.test.ts` y `pnpm --filter frontend typecheck` verifican `getProfile` contra `/auth/profile` y la compartición de `GET` concurrentes en `client.ts`.
   Decisiones: dividir el alcance cliente de perfil dejando `getProfile` + deduplicación de `GET` concurrentes (`inflight` por URL y token en `client.ts`) en `E-03`, y aplazar `patch`, `updateProfile` y códigos de edición en `serverErrors.ts` a `T-010b` (pendiente de ejecutar Vitest y `tsc` en entorno con dependencias instaladas). — Motivo: evita peticiones duplicadas bajo `<StrictMode>` detrás del túnel SSH/VPS y mantiene `E-03` bajo 500 líneas. — Confianza: [Cierto]. — Cómo revertirla: revertir `775a465` / `0801f25`.
 
-- [ ] T-010b Cliente HTTP `patch`, `updateProfile` y mapeo de errores de edición de perfil
+- [x] T-010b Cliente HTTP `patch`, `updateProfile` y mapeo de errores de edición de perfil
   RF: RF-002, RF-003, RF-004, RF-013 | Depende de: T-010 | Archivos: 6
   Hecho cuando: `pnpm --filter frontend test src/registration/serverErrors.test.ts` pasa verificando `patch` en `ApiClient`, `updateProfile` en `api/profile.ts` y la traducción de `email_immutable`, `unknown_field` y `no_profile_fields`.
   Excepción: añade `patch` en `client.ts` junto a `api/profile.ts`, `serverErrors.ts`, `serverErrors.test.ts` y los mocks de `ApiClient` en `api/auth.test.ts` y `api/registration.test.ts` para mantener `tsc --noEmit` limpio.
+  Decisiones: extraer `jsonSend` en `client.ts` para compartir `POST` y `PATCH` manteniendo la deduplicación de `GET` concurrentes intacta (pendiente de ejecutar Vitest y `tsc` en entorno con dependencias instaladas). — Motivo: evita duplicación en mutaciones JSON con idioma automático. — Confianza: [Cierto]. — Cómo revertirla: revertir el commit de `T-010b`.
 
 - [x] T-011 Helper compartido de países y traducciones de perfil en tres idiomas
   RF: RF-012, RF-013 | Depende de: — | Archivos: 5
