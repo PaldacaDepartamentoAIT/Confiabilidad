@@ -1,15 +1,17 @@
-# Entrega E-03b · Edición parcial de datos personales en `/profile`
+# Entrega E-03b · Edición parcial de datos personales y menú de tarjeta en `/profile`
 
-Rama: `feat/perfil-y-cambio-contrasena-ui-perfil-edicion` · Líneas de código y tests: 460 (límite con excepción justificada en `tasks.md`: 500).
+Rama: `feat/perfil-y-cambio-contrasena-ui-perfil-edicion` · Líneas de código y tests: 605 (supera el límite de 500 líneas de `sdd.max_lineas_pr_excepcion` por añadir la tarjeta a ancho completo y el menú contextual de tres puntos en esta misma entrega; pendiente de confirmación del usuario para aceptarlo en un único PR o dividir el menú aparte).
 
 ## Qué se hizo
 - En `frontend/src/api/client.ts`, `frontend/src/api/profile.ts`, `frontend/src/registration/serverErrors.ts`, `frontend/src/registration/serverErrors.test.ts`, `frontend/src/api/auth.test.ts` y `frontend/src/api/registration.test.ts` (`T-010b`, `RF-002`…`RF-004`, `RF-013`) se añadió `patch` al `ApiClient` compartiendo `jsonSend` con `post`, `updateProfile` (`PATCH /auth/profile`) y la traducción de `email_immutable`, `unknown_field` y `no_profile_fields`.
-- En `frontend/src/auth/ProfilePage.tsx`, `frontend/src/auth/ProfilePage.css` y `frontend/src/auth/ProfilePage.test.tsx` (`T-012b`, `RF-002`…`RF-004`, `RF-011`…`RF-013`) se añadió el formulario `PersonalInfoBlock` dentro del `Block` con *skeletons* de carga (`ProfileSkeleton`):
-  - mantiene `email` en solo lectura;
-  - carga el catálogo localizado de países (`fetchOptions` + `countryOptions`), muestra «Sin país asignado» cuando está en `"ZZ"` y omite `country` del `PATCH` mientras siga sin seleccionarse (`C-02`), exigiéndolo una vez asignado;
-  - valida en `blur` y al enviar con `useFormValidation` (foco al primer error, errores de servidor y texto recortado sincronizado en el input);
-  - actualiza al instante `ProfilePage`, `UserProvider` y `App`.
-- En `frontend/src/App.tsx` y `frontend/src/App.test.tsx` (`T-012b`) se conectó `onProfileUpdated` y se verificó que editar el nombre en `/profile` actualiza en vivo el botón de usuario de la barra lateral.
+- En `frontend/src/icons/index.ts`, `frontend/src/icons/icons.test.tsx`, `frontend/src/components/menu/Menu.tsx`, `frontend/src/components/menu/Menu.css` y `frontend/src/i18n/locales/{en,es,pt-BR}.ts` (`T-012b`) se añadió `IconMoreVertical`, el soporte de opciones `disabled` (`aria-disabled="true"`) en `Menu` y los textos del menú contextual y «Cancelar».
+- En `frontend/src/auth/ProfilePage.tsx`, `frontend/src/auth/ProfilePage.css` y `frontend/src/auth/ProfilePage.test.tsx` (`T-012b`, `RF-002`…`RF-004`, `RF-011`…`RF-013`) se actualizó la tarjeta de información personal dentro del `Block` con *skeletons* de carga (`ProfileSkeleton`):
+  - ocupa todo el ancho disponible de la vista (sin `max-width: 760px`);
+  - arranca en modo solo lectura con un botón de tres puntos verticales (`IconMoreVertical`) en la esquina superior derecha que despliega «Editar», «Cambiar contraseña» (deshabilitada) y «Deshabilitar» (deshabilitada);
+  - al elegir «Editar» cambia a modo edición con «Cancelar» y «Guardar cambios»;
+  - mantiene `email` en solo lectura, muestra «Sin país asignado» cuando está en `"ZZ"` y omite `country` del `PATCH` mientras siga sin seleccionarse (`C-02`), exigiéndolo una vez asignado;
+  - valida en `blur` y al enviar con `useFormValidation` (foco al primer error, errores de servidor y texto recortado reflejado al guardar), actualizando al instante `ProfilePage`, `UserProvider` y `App`.
+- En `frontend/src/App.tsx` y `frontend/src/App.test.tsx` (`T-012b`) se conectó `onProfileUpdated` y se verificó que abrir «Editar» desde el menú de tres puntos y guardar el nombre actualiza en vivo el botón de usuario de la barra lateral.
 
 ## Tareas
 El detalle de cada tarea, con su «Hecho cuando», está en [`tasks.md`](../../tasks.md).
@@ -17,7 +19,7 @@ El detalle de cada tarea, con su «Hecho cuando», está en [`tasks.md`](../../t
 | Tarea | Título | Commit |
 |---|---|---|
 | T-010b | Cliente HTTP `patch`, `updateProfile` y mapeo de errores de edición | `41ec34f` |
-| T-012b | Edición parcial, validación y sincronización lateral en `ProfilePage` | `1ed9ec9` / `2d95604` |
+| T-012b | Edición parcial, tarjeta a ancho completo, menú contextual y sincronización lateral en `ProfilePage` | `1ed9ec9`, `2d95604`, `1548ac7`, `4308632` |
 
 ## Cómo ejecutarlo y probarlo
 En tu máquina virtual o VPS con las dependencias de frontend instaladas, actualiza ramas y pasa a la rama de la entrega:
@@ -26,6 +28,9 @@ git fetch origin
 ```
 ```bash
 git checkout feat/perfil-y-cambio-contrasena-ui-perfil-edicion
+```
+```bash
+git pull origin feat/perfil-y-cambio-contrasena-ui-perfil-edicion
 ```
 Ejecuta los tests, comprobación de tipos, ESLint y Prettier:
 ```bash
@@ -47,6 +52,8 @@ Deberías ver `All matched files use Prettier code style!`.
 
 Para probarlo manualmente en el navegador (o en Tauri) con el stack levantado:
 1. Inicia sesión y abre `/profile` desde el menú lateral («Perfil»).
-2. Comprueba que el correo es de solo lectura, edita el nombre con espacios alrededor o cambia la fecha/país y pulsa «Guardar cambios».
-3. Verifica el mensaje de confirmación, que el nombre queda recortado en el campo y que el botón de usuario del menú lateral cambia al instante (y en Network que `PATCH /api/browser/v1/auth/profile` devuelve `200`).
-4. Prueba enviar el nombre vacío o con dos espacios seguidos para comprobar la validación local y la del servidor con foco en el campo.
+2. Comprueba que la tarjeta abarca todo el ancho disponible, los campos están en solo lectura y en la esquina superior derecha aparece el botón con tres puntos verticales.
+3. Pulsa el botón de tres puntos y comprueba las opciones «Editar», «Cambiar contraseña» (deshabilitada) y «Deshabilitar» (deshabilitada).
+4. Pulsa «Editar»: los campos pasan a editables y aparecen «Cancelar» y «Guardar cambios». Prueba «Cancelar» para verificar que vuelve a solo lectura sin guardar cambios.
+5. Vuelve a pulsar «Editar», modifica el nombre con espacios alrededor o cambia fecha/país y pulsa «Guardar cambios». Verifica que regresa a solo lectura con el mensaje de confirmación, el nombre recortado y el botón de usuario del menú lateral actualizado al instante (y en Network que `PATCH /api/browser/v1/auth/profile` devuelve `200`).
+6. Prueba enviar el nombre vacío o con dos espacios seguidos para comprobar la validación local y la del servidor con foco en el campo.

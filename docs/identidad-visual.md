@@ -316,6 +316,7 @@ sección manda sobre las descripciones generales de arriba.
 | Menú | aparece a 4 px bajo el disparador (o a 4 px por encima en los botones del pie del menú lateral), ancho mínimo igual al del disparador, alto máximo de 260 px con desplazamiento, relleno de 4 px, fondo del lienzo, borde de 1 px en borde de control, radio 4 px |
 | Opción | 34 px de alto, relleno de 0 10 px 0 6 px, separación de 6 px, radio 6 px; la seleccionada en peso 700 y con un chevron «>» a la izquierda (el resto reserva el mismo hueco); en menús de acción como el de usuario, el icono de la acción va en su lugar |
 | Opción resaltada u opción bajo el cursor | fondo con el 9 % de la tinta mezclado con el lienzo |
+| Opción deshabilitada | texto secundario al 55 % de opacidad, cursor `not-allowed` y `aria-disabled="true"`; no se resalta ni activa al pulsar |
 
 ### Casilla
 
