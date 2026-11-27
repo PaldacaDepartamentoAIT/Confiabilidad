@@ -1,10 +1,11 @@
 # Entrega E-06b · Confirmación de deshabilitación en dos pasos desde `/profile`
 
-Rama: `feat/deshabilitar-cuenta-ui-perfil` · PR: pendiente · Líneas de código y tests: 394 (límite: 400).
+Rama: `feat/deshabilitar-cuenta-ui-perfil` · PR: pendiente · Líneas de código y tests: 391 (límite: 400).
 
 ## Qué se hizo
 - En [ProfilePage.tsx](../../../../frontend/src/auth/ProfilePage.tsx) y [ProfilePage.css](../../../../frontend/src/auth/ProfilePage.css) se habilitó la opción «Deshabilitar» del menú de acciones de `/profile` y se incorporó el flujo en dos pasos (`DisableAccountBlock`) dentro de la tarjeta principal (`RF-001`, `RF-014`, `D-08`):
   - En el paso 1 se informan las consecuencias de la baja y, si `ProfileData` indica bloqueo por empresa (`owns_company`) o por ser el último superusuario activo (`last_superuser`), se muestra un aviso `<Notice>` manteniendo inhabilitada la acción de continuar (`RF-003`, `RF-016`).
+  - Se omitió `loadingContent` fuera de `mode === "view"` (evitando que `.skel-mask` con el esqueleto completo mantuviera una altura mínima fija de dos filas de campos en modos compactos) y se ajustó `.profile-disable .profile-actions { margin-top: 0; }` para que los botones queden pegados a la parte inferior del bloque sin margen adicional.
   - En el paso 2 se solicita confirmación explícita con la contraseña actual (`PasswordField` con mostrar/ocultar, validación local obligatoria, vaciado selectivo ante `current_password_incorrect` y errores generales en *toast* roja vía `useFormValidation`), manteniendo persistente la cuenta atrás de bloqueo (`disable_retry_after` al cargar `/profile` y respuestas `429`) (`RF-004`, `RF-005`, `RF-014`).
   - Al confirmarse la baja (`POST auth/account/disable` `200`), se limpian el token y los datos locales de sesión, se marca el aviso de confirmación post-baja (`markAccountDisabledNotice()`) y se redirige a `/login` (`RF-014`, `RF-015`).
   - Ante `401` o `403 terms_required` redirige a `/login` o `/terms` igual que el resto de acciones de perfil (`RF-013`).
@@ -15,7 +16,7 @@ El detalle de cada tarea, con su «Hecho cuando», está en [tasks.md](../../tas
 
 | Tarea | Título | Commit |
 |---|---|---|
-| T-013 | Interfaz de deshabilitación en dos pasos desde el menú de `/profile` con bloqueos preventivos y cuenta atrás persistente | `574cd7b` |
+| T-013 | Interfaz de deshabilitación en dos pasos desde el menú de `/profile` con bloqueos preventivos y cuenta atrás persistente | `574cd7b`, `05fd87e` |
 
 ## Cómo ejecutarlo y probarlo
 En tu máquina virtual o VPS con las dependencias de frontend instaladas:

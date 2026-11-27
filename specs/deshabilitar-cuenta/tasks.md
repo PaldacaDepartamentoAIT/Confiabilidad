@@ -104,7 +104,7 @@ Rama de integración: `feat/deshabilitar-cuenta` (los PR de las entregas van con
   Excepción: el cambio pedido por el usuario para mover todos los errores generales de formularios a *toast* roja en lugar de sobre el formulario requirió adaptar la infraestructura común (`ToastProvider`, `useFormValidation`, `VerifyPage`) y las aserciones/proveedores de sus suites existentes dentro del mismo corte de `E-06a`, quedando en `430` líneas por debajo del límite excepcional de `500`.
 
 - E-06b Confirmación en dos pasos desde el menú de `/profile` (web y escritorio)
-  Tareas: T-013 | Líneas reales: 394 | Rama: `feat/deshabilitar-cuenta-ui-perfil`
+  Tareas: T-013 | Líneas reales: 391 | Rama: `feat/deshabilitar-cuenta-ui-perfil`
   Cómo probarlo: ejecutar `pnpm --filter frontend test src/auth/ProfilePage.test.tsx src/auth/a11y.test.tsx`, abrir `/profile`, seleccionar «Deshabilitar cuenta» en el menú de acciones y verificar el bloqueo preventivo (con empresa o último superusuario), la cuenta atrás tras fallos y la redirección a `/login` tras confirmar.
 
 ## RF sin tarea
