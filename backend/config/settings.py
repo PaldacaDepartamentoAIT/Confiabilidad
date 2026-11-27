@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     "apps.consents",
     "apps.emails",
     "apps.audit",
+    "apps.companies",
 ]
 
 TRUSTED_PROXY_IPS: list[str] = env.list("TRUSTED_PROXY_IPS", default=[])

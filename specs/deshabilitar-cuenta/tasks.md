@@ -6,10 +6,11 @@ Estado: aprobado
   Hecho cuando: `pytest apps/accounts/tests/test_disable_account.py -k disabled_at` pasa verificando que pasar `is_active` de `True` a `False` (también en `User.save()` directo o administración) registra `disabled_at` en UTC, que reactivar limpia `disabled_at` a `None` y que `HistoricalRecords` guarda ambos cambios.
   Decisiones: sincronizar `disabled_at` dentro de `User._sync_disabled_at` en `User.save()` antes de `full_clean` y añadir `"disabled_at"` a `update_fields` cuando se guarde solo `is_active` (pendiente de ejecutar `pytest` y `mypy` en entorno con PostgreSQL/venv completo; `ruff` y `black` limpios). — Motivo: asegura que cualquier desactivación o reactivación desde modelo o administración registre o limpie la fecha UTC incluso con guardado parcial. — Confianza: [Probable]. — Cómo revertirla: revertir el commit de T-001.
 
-- [ ] T-002 Modelo preliminar `Company`, panel de administración y comando CLI
+- [x] T-002 Modelo preliminar `Company`, panel de administración y comando CLI
   RF: RF-002, RF-015 | Depende de: — | Archivos: 8
   Hecho cuando: `pytest apps/companies/tests/test_companies.py` pasa verificando creación sin unicidad de nombre, `on_delete=PROTECT` sobre `owner`, múltiples empresas por propietario, helper `owns_company`, alta/gestión en el panel de administración y ejecución de `manage.py company create --email <EMAIL> --name "..."` y `manage.py company list --email <EMAIL>`.
   Excepción: andamiaje inicial de la nueva app `apps.companies` (`__init__.py`, `apps.py`, `models.py`, `admin.py`, `migrations/0001_initial.py`, `management/commands/company.py`, `tests/test_companies.py`) más su registro en `backend/config/settings.py`.
+  Decisiones: configurar `on_delete=models.PROTECT` en `Company.owner`, normalizar el nombre con `strip()` + `full_clean(validate_unique=False)` en `Company.save()`, exponer `owns_company(user)` y añadir `delete --id` en `manage.py company` para pruebas CLI (pendiente de ejecutar `pytest` y `mypy` en entorno con PostgreSQL/venv completo; `ruff` y `black` limpios). — Motivo: protege al propietario frente a borrados accidentales a nivel de BD y facilita crear/limpiar empresas desde consola (`P-03`). — Confianza: [Probable]. — Cómo revertirla: revertir el commit de T-002.
 
 - [ ] T-003 Límite configurable e independiente de reautenticación para deshabilitar cuenta
   RF: RF-005, RF-010 | Depende de: T-001 | Archivos: 4
