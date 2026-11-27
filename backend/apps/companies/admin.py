@@ -4,7 +4,7 @@ from apps.companies.models import Company
 
 
 @admin.register(Company)
-class CompanyAdmin(admin.ModelAdmin[Company]):
+class CompanyAdmin(admin.ModelAdmin):  # type: ignore[type-arg]
     list_display = ("name", "owner", "created_at")
     search_fields = ("name", "owner__email")
     raw_id_fields = ("owner",)
