@@ -91,8 +91,9 @@ Rama de integración: `feat/deshabilitar-cuenta` (los PR de las entregas van con
   Cómo probarlo: ejecutar `pytest apps/accounts/tests/test_reactivation_and_purge.py` y correr `python manage.py maintenance_tasks run purge_disabled_accounts`, `python manage.py maintenance_tasks status` y `python manage.py maintenance_tasks simulate-failure purge_disabled_accounts`.
 
 - E-05 Endpoints HTTP de perfil ampliado, baja de cuenta y login de cuentas deshabilitadas
-  Tareas: T-009, T-010 | Líneas estimadas: 360 | Rama: `feat/deshabilitar-cuenta-api`
-  Cómo probarlo: ejecutar `pytest apps/accounts/tests/test_disable_api.py`, consultar `GET /api/app/v1/auth/profile` con token, llamar a `POST /api/app/v1/auth/account/disable` verificando el `401` inmediato en sesiones activas y probar `POST /api/app/v1/auth/login` con las credenciales de la cuenta deshabilitada.
+  Tareas: T-009, T-010 | Líneas reales: 448 | Rama: `feat/deshabilitar-cuenta-api`
+  Cómo probarlo: ejecutar `pytest apps/accounts/tests/test_disable_api.py apps/accounts/tests/test_auth_neutrality.py apps/accounts/tests/test_profile_api.py`, consultar `GET /api/app/v1/auth/profile` con token, llamar a `POST /api/app/v1/auth/account/disable` verificando el `401` inmediato en sesiones activas y probar `POST /api/app/v1/auth/login` con las credenciales de la cuenta deshabilitada.
+  Excepción: `T-009` (extensión de perfil, serializador y catálogo de mensajes) y `T-010` (endpoint de baja, ajuste en login y pruebas integradas en `test_disable_api.py`) conforman un único corte vertical HTTP de 448 líneas reales dentro del tope excepcional de 500 líneas; separar `T-009` dejaría el serializador y los códigos de baja sin endpoint que los ejercite.
 
 - E-06a Cliente API, traducciones y avisos de cuenta deshabilitada en `/login`
   Tareas: T-011, T-012 | Líneas estimadas: 260 | Rama: `feat/deshabilitar-cuenta-ui-login`
