@@ -4,7 +4,7 @@
 Se completó el flujo de inicio y cierre de sesión, aceptación de términos pendientes tras un cambio de versión, listado y revocación selectiva o masiva de otras sesiones activas y limpieza de sesiones caducadas, tanto en el navegador (`browser`) como en el cliente de escritorio (`app`). Cada entrega tiene su propio resumen en [`entregas/`](entregas/).
 
 **Backend** (`backend/apps/accounts/`):
-- **Seguridad e intentos (`E-01`, `E-04b`):** configuración y límites de tasa por IP (`30/m` en `/auth/login`), cálculo de intentos fallidos y bloqueo al sexto fallo (también en cuentas inactivas mediante `AuditAccountAdapter.record_inactive_login_attempt`) con respuestas idénticas y sin filtrar existencia ni estado de la cuenta (neutralidad en el cuerpo y en la cabecera `Vary: Cookie`).
+- **Seguridad e intentos (`E-01`, `E-04b`):** configuración y límites de tasa por IP (`30/m` en `/auth/login`), cálculo de intentos fallidos y bloqueo al sexto fallo (también en cuentas inactivas mediante `AuditAccountAdapter.record_inactive_login_attempt`), manteniendo respuestas neutras ante correo inexistente o contraseña errónea y distinguiendo el aviso específico (`account_disabled` o `account_disabled_expired`) cuando correo y contraseña coinciden con una cuenta deshabilitada (actualizado por coordinación con `deshabilitar-cuenta`, `RF-008`).
 - **Modelo y ciclo de vida (`E-02`, `E-02b`, `E-03`):** modelo `UserSession` (`session_key` como huella HMAC-SHA256 calculada con `AUDIT_HASH_SECRET`, sin guardar el token en claro, junto con un índice inverso efímero en la caché `sessions`, IP, `user_agent`, fechas de creación y última actividad), servicio de listado y revocación individual o masiva de sesiones, invalidación automática al cerrar sesión, desactivar la cuenta, borrarla o cambiar/restablecer la contraseña, y purga periódica (`purge_expired_sessions` cada hora en Celery beat y como comando `manage.py purge_expired_sessions`).
 - **API propia (`E-04`, `E-05`, `E-05b`):** endpoints bajo `/api/browser/v1/auth/…` (cookie + CSRF) y `/api/app/v1/auth/…` (`X-Session-Token`): `login`, `session`, `logout`, `terms/accept`, `sessions`, `sessions/revoke` y `sessions/revoke-others`. Las rutas de gestión de sesiones exigen sesión activa y términos vigentes aceptados (`401 unauthenticated` o `403 terms_required`), mientras que `session`, `logout` y `terms/accept` quedan accesibles con términos pendientes.
 
@@ -71,7 +71,7 @@ Deberías ver las migraciones aplicadas sin errores pendientes.
 ```bash
 docker compose -f docker/docker-compose.yml exec backend python manage.py shell -c "from apps.accounts.models import User; User.objects.filter(email='ana@planta.com').update(is_active=False)"
 ```
-Deberías ver el comando terminar sin errores. Después intenta iniciar sesión en `http://localhost:5173/login` con esa cuenta (incluso con su contraseña correcta): verás exactamente el mismo mensaje genérico de credenciales incorrectas que con una clave errónea o un correo inexistente, y al 6.º intento fallido verás el bloqueo temporal. Para reactivarla antes de seguir probando:
+Deberías ver el comando terminar sin errores. Después intenta iniciar sesión en `http://localhost:5173/login` con esa cuenta: con contraseña incorrecta verás el mismo mensaje genérico de credenciales incorrectas que con un correo inexistente; con la contraseña correcta verás el aviso de cuenta deshabilitada (con opción de reactivación vía soporte dentro de 12 meses o plazo vencido, según `deshabilitar-cuenta`) y al 6.º intento fallido verás el bloqueo temporal. Para reactivarla antes de seguir probando:
 
 ```bash
 docker compose -f docker/docker-compose.yml exec backend python manage.py shell -c "from apps.accounts.models import User; User.objects.filter(email='ana@planta.com').update(is_active=True)"
@@ -136,7 +136,7 @@ Deberías ver el comando terminar sin errores. Envía una petición de inicio de
 ```bash
 curl -i -s -X POST http://localhost:8000/api/app/v1/auth/login -H "Content-Type: application/json" -d '{"email":"ana@planta.com","password":"turbina-compresor-7-marea"}'
 ```
-Deberías ver HTTP `400` con `{"code":"invalid_credentials",...}`, idéntico en código, cuerpo y cabeceras a una contraseña errónea o un correo inexistente. Si repites 5 intentos fallidos y envías un 6.º:
+Deberías ver HTTP `400` con `{"code":"account_disabled",...}` (o `account_disabled_expired` si vencieron los 12 meses), mientras que con contraseña incorrecta o correo inexistente verás `{"code":"invalid_credentials",...}`. Si repites 5 intentos fallidos y envías un 6.º:
 
 ```bash
 curl -i -s -X POST http://localhost:8000/api/app/v1/auth/login -H "Content-Type: application/json" -d '{"email":"ana@planta.com","password":"turbina-compresor-7-marea"}'
@@ -216,7 +216,7 @@ Deberías ver todas las pruebas visuales en Chromium en verde.
 ## Marco teórico
 
 ### Neutralidad de respuesta y cabecera `Vary: Cookie`
-Si un endpoint responde distinto cuando una cuenta existe pero está inactiva frente a cuando no existe —ya sea en el código HTTP, en el mensaje o incluso en las cabeceras HTTP como `Vary: Cookie`—, un atacante puede enumerar correos registrados. Delegar en allauth las rutas reales sin sesión ni efecto distinto garantiza respuestas indistinguibles mientras se registra la auditoría (`LOCKOUT`) en cuentas reales inactivas.
+Si un endpoint responde distinto cuando una cuenta existe pero está inactiva frente a un correo inexistente cuando la contraseña falla —ya sea en el código HTTP, en el mensaje o en las cabeceras HTTP como `Vary: Cookie`—, un atacante puede enumerar correos registrados. Delegar en allauth las rutas de error mantiene respuestas indistinguibles ante correo inexistente o contraseña incorrecta y registra la auditoría (`inactive_account` / `LOCKOUT`) en cuentas reales inactivas; únicamente cuando tanto el correo como la contraseña coinciden con una cuenta deshabilitada (`RF-002`, coordinado con `RF-008` de `deshabilitar-cuenta`) se informa del estado de deshabilitación y de la vía de reactivación dentro de los 12 meses.
 
 ### Puerta de términos vigentes en el área privada
 Guardar solo una marca booleana de «aceptó términos al registrarse» deja fuera de cumplimiento a los usuarios antiguos cuando cambia la versión legal vigente. Comprobar en cada acceso al área privada el estado frente al documento publicado en vigor (`terms_status: "accepted" | "not_accepted" | "no_current_version"`) obliga a aceptar la nueva versión en `/terms` sin permitir llamadas de negocio (`403 terms_required`), pero manteniendo accesibles `session`, `logout` y `terms/accept`.

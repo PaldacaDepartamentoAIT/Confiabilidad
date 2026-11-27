@@ -3,10 +3,10 @@
 Estado: cerrada con riesgo residual aceptado (2026-11-25).
 
 ## Qué se hizo
-- **Programación configurable de las tres purgas (`RF-001`, `RF-002`, `RF-003`)**:
-  - Se añadieron en `backend/config/settings.py` (y se documentaron en `backend/.env.example`) las variables `PURGE_STALE_REGISTRATIONS_INTERVAL_SECONDS` (`3600`), `PURGE_EXPIRED_SESSIONS_INTERVAL_SECONDS` (`3600`), `PURGE_SECURITY_EVENTS_INTERVAL_SECONDS` (`86400`), `MAINTENANCE_ALERT_EMAILS` y `MAINTENANCE_LOCK_TIMEOUT_SECONDS` (`3600`).
-  - Se registraron las tres tareas en `CELERY_BEAT_SCHEDULE` (`apps.accounts.tasks.purge_stale_registrations`, `apps.accounts.tasks.purge_expired_sessions` y la nueva `apps.audit.tasks.purge_security_events`) para su sincronización mediante `DatabaseScheduler`.
-  - `apps.audit.tasks.purge_security_events` ejecuta `call_command("purge_security_events")` respetando el corte de un año y la protección de solo inserción de auditoría (`test_purge_access.py`).
+- **Programación configurable de las cuatro purgas (`RF-001`, `RF-002`, `RF-003`)**:
+  - Se añadieron en `backend/config/settings.py` (y se documentaron en `backend/.env.example`) las variables `PURGE_STALE_REGISTRATIONS_INTERVAL_SECONDS` (`3600`), `PURGE_EXPIRED_SESSIONS_INTERVAL_SECONDS` (`3600`), `PURGE_SECURITY_EVENTS_INTERVAL_SECONDS` (`86400`), `PURGE_DISABLED_ACCOUNTS_INTERVAL_SECONDS` (`86400`, incorporada por coordinación con `deshabilitar-cuenta`), `MAINTENANCE_ALERT_EMAILS` y `MAINTENANCE_LOCK_TIMEOUT_SECONDS` (`3600`).
+  - Se registraron las cuatro tareas en `CELERY_BEAT_SCHEDULE` (`apps.accounts.tasks.purge_stale_registrations`, `apps.accounts.tasks.purge_expired_sessions`, `apps.audit.tasks.purge_security_events` y, desde `deshabilitar-cuenta` `E-04`, `apps.accounts.tasks.purge_disabled_accounts`) para su sincronización mediante `DatabaseScheduler`.
+  - `apps.audit.tasks.purge_security_events` ejecuta `call_command("purge_security_events")` respetando el corte de un año y la protección de solo inserción de auditoría (`test_purge_access.py`), y `apps.accounts.tasks.purge_disabled_accounts` depura cuentas deshabilitadas vencidas tras 12 meses con purga parcial y alerta operativa ante anomalía de empresa (`RF-011` de `deshabilitar-cuenta`).
 - **Modelos y ejecutor común de mantenimiento (`RF-004`, `RF-005`, `RF-006`, `RF-007`)**:
   - Se crearon `MaintenanceTaskStatus` (una única fila por tarea, ausente antes de su primera ejecución) y `MaintenanceAlert` (abiertas con `resolved_at=None` o resueltas) en `backend/apps/core/models.py` con la migración `0002_maintenance_models`.
   - Se implementó `run_maintenance_task` en `backend/apps/core/maintenance.py` con bloqueo distribuido en Redis por tarea (`_task_lock`), sobrescritura de última ejecución, resumen truncado de error a 500 caracteres sin trazas ni secretos, traza completa vía `logger.exception`, creación de alerta persistente y envío de correo operativo solo en el primer fallo mientras la alerta siga abierta, resiliencia ante fallos SMTP o lista vacía de destinatarios, registro exclusivo en logs si falla la base de datos y cierre automático de alertas abiertas al recuperarse la tarea.
@@ -64,17 +64,17 @@ docker compose -f docker/docker-compose.yml exec -T backend python manage.py mai
 ```bash
 docker compose -f docker/docker-compose.yml exec -T backend python manage.py maintenance_tasks status
 ```
-Deberías ver las tres tareas en `status=success` y la alerta anterior con `state=resolved`.
+Deberías ver las cuatro tareas en `status=success` y la alerta anterior con `state=resolved`.
 
 4. Para verificar el disparo autónomo de `beat` + `worker` con intervalos cortos (10 segundos) sin esperar una hora ni un día:
 ```bash
-PURGE_STALE_REGISTRATIONS_INTERVAL_SECONDS=10 PURGE_EXPIRED_SESSIONS_INTERVAL_SECONDS=10 PURGE_SECURITY_EVENTS_INTERVAL_SECONDS=10 docker compose -f docker/docker-compose.yml up -d --force-recreate beat worker
+PURGE_STALE_REGISTRATIONS_INTERVAL_SECONDS=10 PURGE_EXPIRED_SESSIONS_INTERVAL_SECONDS=10 PURGE_SECURITY_EVENTS_INTERVAL_SECONDS=10 PURGE_DISABLED_ACCOUNTS_INTERVAL_SECONDS=10 docker compose -f docker/docker-compose.yml up -d --force-recreate beat worker
 ```
 Espera ~15 segundos y consulta el estado:
 ```bash
 docker compose -f docker/docker-compose.yml exec -T backend python manage.py maintenance_tasks status
 ```
-Deberías ver `finished_at` actualizado automáticamente en las tres tareas. Después restablece los intervalos estándar:
+Deberías ver `finished_at` actualizado automáticamente en las cuatro tareas. Después restablece los intervalos estándar:
 ```bash
 docker compose -f docker/docker-compose.yml up -d --force-recreate beat worker
 ```
@@ -90,7 +90,7 @@ La validación estricta (`2026-11-25`) dejó **8 de 9** requisitos cumplidos y e
    - El disparo periódico autónomo en bucle de `beat` + `worker` con intervalos cortos se valida en vivo con el entorno Docker (paso 4 de «Cómo probarlo») y en `pytest` mediante `DatabaseScheduler` + `start_worker`.
 
 ## Marco teórico
-- **Bloqueo distribuido en Redis frente a bloqueo en base de datos**: las tareas periódicas pueden dispararse desde varios procesos worker o coincidir con una ejecución manual desde CLI. Un bloqueo en Redis por nombre de tarea serializa las ejecuciones de esa misma tarea entre procesos distintos sin bloquear a las otras dos tareas y sigue funcionando aunque la base de datos esté caída.
+- **Bloqueo distribuido en Redis frente a bloqueo en base de datos**: las tareas periódicas pueden dispararse desde varios procesos worker o coincidir con una ejecución manual desde CLI. Un bloqueo en Redis por nombre de tarea serializa las ejecuciones de esa misma tarea entre procesos distintos sin bloquear a las otras tareas y sigue funcionando aunque la base de datos esté caída.
 - **Envío directo de correo de alerta fuera del outbox**: normalmente los correos transaccionales pasan por la cola en base de datos (`OutboundEmail`). Sin embargo, si el fallo operativo ocurre precisamente por saturación de cola o incidencias de mantenimiento, el aviso operativo se envía de forma inmediata con `EmailMessage` dentro de un `try/except` para no depender del ciclo de `dispatch_due`.
 - **Supresión de correos repetidos mientras existe alerta abierta**: ante un fallo persistente (por ejemplo, en una tarea horaria), crear una alerta por cada fallo conserva la trazabilidad de cuántas veces falló, mientras que enviar correo solo al abrirse el incidente evita inundar el buzón operativo hasta que la tarea se recupere y cierre sus alertas abiertas.
 - **Simulación de fallo en el trabajador real sin borrar datos**: probar una alerta llamando solo a una función local no comprueba el broker Redis ni la serialización Celery. El comando `simulate-failure` encola la tarea con `simulate_failure=True` para que recorra Redis y el trabajador real, falle antes de ejecutar la purga y dispare el flujo completo de estado, alerta, log y correo sin riesgo para los datos.

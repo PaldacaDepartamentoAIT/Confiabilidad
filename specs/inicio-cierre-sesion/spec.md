@@ -1,6 +1,7 @@
 # Spec: inicio-cierre-sesion
 Estado: aprobada
 Aprobación: ligera
+Validación: ligera
 
 ## Objetivo (por qué)
 La autenticación base para web y escritorio ya existe como prueba (`auth-headless`), junto con el
@@ -9,7 +10,8 @@ modelo de cuenta (`usuario-personalizado`), los términos legales (`consentimien
 puede aún iniciar ni cerrar sesión desde la aplicación, ni están activos los límites contra fuerza
 bruta ni el inventario de sesiones abiertas (`UserSession` del [diagrama ER](../procesos-pendientes/diagramas/er.png)).
 Esta feature completa el acceso y la salida en ambos clientes y en el servidor: permite entrar con
-correo y contraseña solo a cuentas activas sin revelar si una cuenta está deshabilitada, exige
+correo y contraseña solo a cuentas activas distinguiendo el aviso específico cuando una cuenta está
+deshabilitada y coinciden correo y contraseña (RF-008 de `deshabilitar-cuenta`), exige
 aceptar los términos vigentes pendientes antes de pasar al área privada, registra las sesiones
 abiertas permitiendo cerrar la actual, otra concreta o todas las demás, e invalida de forma efectiva
 la sesión tanto en el cliente como en el servidor.
@@ -20,10 +22,11 @@ la sesión tanto en el cliente como en el servidor.
    y mensajes de error al iniciar sesión).
 2. Si las credenciales corresponden a una cuenta activa y no se ha superado ningún límite, el
    servidor abre la sesión, la registra en el inventario de sesiones activas y responde al cliente
-   (RF-001, acceso con correo y contraseña; RF-007, registro de sesiones activas). Si la cuenta está
-   inactiva o las credenciales fallan, responde con el mismo mensaje neutro y suma al contador de
-   intentos fallidos (RF-002, rechazo neutro de credenciales inválidas o cuenta inactiva; RF-004,
-   bloqueo temporal por intentos fallidos).
+   (RF-001, acceso con correo y contraseña; RF-007, registro de sesiones activas). Si el correo no
+   existe o la contraseña no coincide, responde con el mismo mensaje neutro y suma al contador de
+   intentos fallidos; si correo y contraseña coinciden con una cuenta deshabilitada, suma igualmente
+   al contador e informa del estado según el plazo de 12 meses (RF-002, rechazo de credenciales
+   inválidas o cuenta deshabilitada; RF-004, bloqueo temporal por intentos fallidos).
 3. Si la cuenta no tiene aceptada la versión vigente obligatoria de los términos (o no hay ninguna
    vigente), se muestra la pantalla de términos pendientes (`/terms`), donde solo puede aceptarlos o
    cerrar sesión (RF-011, bloqueo del área privada mientras falten los términos vigentes; RF-012,
@@ -55,16 +58,17 @@ sesión exitoso). Si la petición de inicio de sesión ya incluye una sesión ac
 sistema deberá rechazarla indicando que ya existe una sesión iniciada, sin alterar la sesión en
 curso ni crear otra fila en `UserSession` (RF-007, registro de sesiones activas).
 
-### RF-002 Rechazo neutro de credenciales inválidas o cuenta inactiva
-Si el correo no pertenece a ninguna cuenta, la contraseña no coincide o la cuenta está inactiva
-(RF-007 de `usuario-personalizado`, estado de la cuenta), entonces el sistema deberá rechazar el
-inicio de sesión sin establecer sesión ni emitir credencial de sesión, sumar el intento al contador
-de intentos fallidos (RF-004, bloqueo temporal por intentos fallidos) y devolver el mismo código de
-estado, la misma estructura y el mismo mensaje de credenciales incorrectas en los tres casos, sin
-revelar si el correo pertenece a una cuenta ni si esta se encuentra inactiva. Mientras no se haya
-alcanzado el bloqueo de RF-004, el registro interno de auditoría deberá guardar el motivo real del
-rechazo (`invalid_credentials` o `inactive_account`, según RF-004 de
-`auditoria-eventos-seguridad`, inicio de sesión fallido).
+### RF-002 Rechazo neutro de credenciales inválidas o aviso en cuenta deshabilitada
+Si el correo no pertenece a ninguna cuenta o la contraseña no coincide (incluida una cuenta
+inactiva con contraseña incorrecta), entonces el sistema deberá rechazar el inicio de sesión sin
+establecer sesión ni emitir credencial de sesión, sumar el intento al contador de intentos fallidos
+(RF-004, bloqueo temporal por intentos fallidos) y devolver el mismo código de estado, la misma
+estructura y el mismo mensaje neutro de credenciales incorrectas en los tres casos. Si el correo y la
+contraseña coinciden con una cuenta inactiva y no se ha alcanzado el bloqueo de RF-004, el sistema
+deberá rechazar igualmente el acceso sin abrir sesión, sumar al contador de intentos fallidos,
+registrar en auditoría el motivo `inactive_account` (RF-004 de `auditoria-eventos-seguridad`) y
+devolver el aviso específico de cuenta deshabilitada indicando la reactivación vía soporte dentro de
+12 meses o que el plazo ya venció (`RF-008` de `deshabilitar-cuenta`).
 
 ### RF-003 Invalidación inmediata al desactivar o borrar una cuenta
 Mientras una cuenta esté inactiva (RF-007 de `usuario-personalizado`), el sistema deberá rechazar
@@ -249,15 +253,12 @@ borró, y deberá ejecutar esa misma limpieza de forma automática y periódica 
   consultar las sesiones de la cuenta, con una orden de consola y mediante una tarea periódica
   (C-01, RF-008, RF-021). La trazabilidad histórica de los inicios y cierres de sesión ya la
   conserva `SecurityEvent` (`auditoria-eventos-seguridad`).
-- S-03 Una cuenta inactiva que intenta iniciar sesión recibe en el cliente exactamente el mismo
-  error genérico que una contraseña incorrecta o un correo inexistente (pregunta 3) y suma igual al
-  contador de intentos fallidos para que el bloqueo de RF-004 no permita distinguirla al sexto
-  intento (C-02). *Por qué:* evita que el formulario de inicio de sesión sirva para enumerar qué
-  correos tienen una cuenta deshabilitada. Esto cambia el comportamiento actual del servidor en
-  `auth-headless` / `auditoria-eventos-seguridad`, donde una cuenta inactiva con contraseña correcta
-  devolvía un código específico de cuenta inactiva al cliente; la auditoría interna sigue
-  registrando el motivo `inactive_account` antes del bloqueo y `too_many_login_attempts` una vez
-  bloqueada (RF-004 de `auditoria-eventos-seguridad`).
+- S-03 La neutralidad estricta aplica frente a correos inexistentes o contraseñas incorrectas
+  (también cuando la cuenta está inactiva pero la contraseña falla). Cuando tanto el correo como la
+  contraseña coinciden con una cuenta deshabilitada (`S-06` y `RF-008` de `deshabilitar-cuenta`), el
+  sistema sigue sumando al contador de intentos fallidos (RF-004) y registrando `inactive_account`
+  antes del bloqueo (`too_many_login_attempts` al superarlo), pero informa al titular si puede
+  reactivarla con soporte dentro de los 12 meses o si ese plazo ya venció.
 - S-04 Si una cuenta se desactiva o se borra mientras tiene sesiones abiertas, todas sus sesiones se
   invalidan en el servidor y dejan de autenticar de inmediato (pregunta 3).
 - S-05 Se reactivan los límites contra fuerza bruta en el inicio de sesión que S-09 de
@@ -314,10 +315,10 @@ borró, y deberá ejecutar esa misma limpieza de forma automática y periódica 
 - CF-1 Hay tests para cada RF en backend y frontend. `pytest` y `pnpm --filter frontend test` están
   en verde con cobertura ≥ 80 %, y `mypy`, `ruff`, `black`, `tsc`, ESLint y Prettier están limpios.
 - CF-2 Un test demuestra que iniciar sesión con un correo sin cuenta, con contraseña incorrecta y
-  con una cuenta inactiva (con contraseña correcta o incorrecta) devuelve al cliente la misma
-  respuesta (código de estado, estructura y mensaje) y se bloquea al mismo número de intentos,
-  mientras que `SecurityEvent` registra `inactive_account` antes del bloqueo cuando la contraseña de
-  la cuenta inactiva es correcta (RF-002, RF-004).
+  con una cuenta inactiva con contraseña incorrecta devuelve al cliente la misma respuesta neutra,
+  mientras que una cuenta deshabilitada con contraseña correcta suma al mismo límite de intentos,
+  registra `inactive_account` antes del bloqueo y devuelve el mensaje específico según siga dentro o
+  fuera del plazo de 12 meses (RF-002, RF-004).
 - CF-3 Un test demuestra que al cerrar la sesión actual (en web por cookie y en escritorio por
   token), y también al desactivar una cuenta con sesiones abiertas, la cookie y el token dejan de
   autenticar de inmediato en el servidor y desaparece su fila de `UserSession` (RF-003, RF-006,
@@ -348,3 +349,4 @@ borró, y deberá ejecutar esa misma limpieza de forma automática y periódica 
   CF-2, CF-5, CF-7 y CF-8 ajustados — Estado: clarificado
 - 2026-11-18 — Aprobación por el usuario — Estado: aprobada
 - 2026-11-24 — Validación: cerrada con riesgo residual aceptado — Riesgos: (1) `apps/emails/tests/test_rendering.py::test_template_syntax_is_checked_quickly[closed-blocks]` superó el umbral de 1 s de CPU (`1.408 s`) bajo `--cov=.` y carga paralela de Vitest (fuera de `inicio-cierre-sesion`); (2) `pnpm --filter frontend test:visual` no se ejecutó en `confiabilidad-dev-frontend-1` por ausencia de Chromium en ese contenedor.
+- 2026-11-27 — Clarificación del cambio (`S-06`, sin hallazgos; `Validación: ligera`) y aprobación de la spec — RF: RF-002 — Estado: impacto analizado (sin código pendiente; implementado y validado en `deshabilitar-cuenta`)
