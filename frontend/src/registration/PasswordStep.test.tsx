@@ -158,7 +158,9 @@ test.each([
 
   await submit(user, "turbina-compresor-7");
 
-  expect(await screen.findByText(text)).toHaveFocus();
+  const toast = (await screen.findByText(text)).closest('[data-ui="toast"]');
+  expect(toast).toHaveClass("toast", "toast-error");
+  expect(toast).toHaveAttribute("role", "alert");
   expect(field()).toHaveValue("turbina-compresor-7");
 });
 

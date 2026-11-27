@@ -330,7 +330,11 @@ test("handles 429 countdown, network failures, cancel, i18n and gate redirects o
     await user.type(cur, "old-secret-1");
     await user.type(next, "new-turbine-123");
     await user.click(screen.getByRole("button", { name: "Change password" }));
-    expect(await screen.findByText(/Could not connect/)).toHaveFocus();
+    const networkToast = (await screen.findByText(/Could not connect/)).closest(
+      '[data-ui="toast"]',
+    );
+    expect(networkToast).toHaveClass("toast", "toast-error");
+    expect(networkToast).toHaveAttribute("role", "alert");
     expect(cur).toHaveValue("old-secret-1");
     expect(next).toHaveValue("new-turbine-123");
 

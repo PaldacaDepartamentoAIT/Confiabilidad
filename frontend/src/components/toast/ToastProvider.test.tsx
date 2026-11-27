@@ -88,10 +88,14 @@ test("renders error toasts as assertive alerts with error accent class and react
   fireEvent.click(screen.getByRole("button", { name: "Notify" }));
   const toast = screen.getByRole("alert");
   expect(toast).toHaveClass("toast", "toast-error");
-  expect(toast).toHaveTextContent("Algo falló en nuestro servidor. Vuelve a intentarlo.");
+  expect(toast).toHaveTextContent(
+    "Algo falló en nuestro servidor. Vuelve a intentarlo en unos minutos.",
+  );
 
   act(() => {
     void i18n.changeLanguage("en");
   });
-  expect(toast).toHaveTextContent("Something went wrong on our server.");
+  expect(toast).toHaveTextContent(
+    "Something went wrong on our server. Try again in a few minutes.",
+  );
 });

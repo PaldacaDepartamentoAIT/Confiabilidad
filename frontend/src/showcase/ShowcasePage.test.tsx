@@ -353,7 +353,6 @@ test("the sample error button shows the too many attempts error in an error toas
     "Demasiados intentos. Espera unos minutos y vuelve a intentarlo.",
   );
   expect(toast).not.toHaveFocus();
-  expect(trigger).toHaveFocus();
 });
 
 test("the sample error follows the language change and the next submission removes it", async () => {

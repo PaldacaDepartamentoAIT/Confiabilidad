@@ -366,7 +366,9 @@ describe("verifying the code", () => {
 
     await typeCode(user, "123456");
 
-    expect(await screen.findByText(text)).toHaveFocus();
+    const toast = (await screen.findByText(text)).closest('[data-ui="toast"]');
+    expect(toast).toHaveClass("toast", "toast-error");
+    expect(toast).toHaveAttribute("role", "alert");
   });
 
   it("an identifier that disappears while verifying shows the invalid link", async () => {

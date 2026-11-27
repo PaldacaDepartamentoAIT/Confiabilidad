@@ -219,7 +219,7 @@ test.each([
     lang,
   );
   await userEvent.type(screen.getByRole("textbox", { name: /Email|E-mail/ }), "ana@empresa.com");
-  await userEvent.type(screen.getByLabelText(/Password|Senha/), "secreto123");
+  await userEvent.type(screen.getByLabelText(/^(Password|Senha)/), "secreto123");
   await userEvent.click(screen.getByRole("button", { name: /Sign in|Iniciar sessão/ }));
 
   expect(await screen.findByText(pattern)).toBeInTheDocument();

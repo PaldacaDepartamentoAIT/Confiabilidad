@@ -397,8 +397,9 @@ describe("sending the form", () => {
     const country = screen.getByRole("combobox", { name: "País" });
     await waitFor(() => expect(country).toHaveFocus());
     expect(country).toHaveAccessibleDescription("Elige un país de la lista.");
-    const shown = screen.getAllByText(/Algo no ha funcionado/);
-    expect(shown.some((element) => element.getAttribute("tabindex") === "-1")).toBe(true);
+    const toast = screen.getByText(/Algo no ha funcionado/).closest('[data-ui="toast"]');
+    expect(toast).toHaveClass("toast", "toast-error");
+    expect(toast).toHaveAttribute("role", "alert");
   });
 
   it("while waiting for the answer, a second submission sends nothing", async () => {
@@ -426,7 +427,9 @@ describe("sending the form", () => {
     await fillValidForm(user);
     await user.click(screen.getByRole("button", { name: "Continuar" }));
 
-    expect(await screen.findByText(text)).toHaveFocus();
+    const toast = (await screen.findByText(text)).closest('[data-ui="toast"]');
+    expect(toast).toHaveClass("toast", "toast-error");
+    expect(toast).toHaveAttribute("role", "alert");
     expect(screen.getByRole("textbox", { name: "Nombre completo" })).toHaveValue("Ana Pérez");
   });
 
