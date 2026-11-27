@@ -352,3 +352,105 @@ def test_password_change_endpoint_validation_lockout_terms_and_csrf() -> None:
     assert locked.status_code == 429
     assert int(locked.headers["Retry-After"]) > 0 and locked.json()["retry_after"] > 0
     assert browser.get("/api/browser/v1/auth/profile", headers=b_headers).status_code == 200
+
+
+@pytest.mark.django_db(transaction=True)
+@override_settings(PASSWORD_CHANGE_MAX_FAILED_ATTEMPTS=2)
+def test_password_change_lockout_shared_across_sessions_and_reset_on_success() -> None:
+    cache.clear()
+    user = make_user(email="sharedlock@example.com", password="ValidPassword1!")
+    browser = _client()
+    b_headers = _login_headers(
+        browser, "browser", user, accept_terms=True, password="ValidPassword1!"
+    )
+    app = _client()
+    app_headers = _login_headers(app, "app", user, accept_terms=True, password="ValidPassword1!")
+
+    # Fallo 1 desde web y fallo 2 desde escritorio comparten el mismo contador de la cuenta.
+    fail_web = browser.post(
+        "/api/browser/v1/auth/password/change",
+        data=json.dumps({"current_password": "wrong-web", "new_password": "NewPassword9!"}),
+        content_type="application/json",
+        headers=b_headers,
+    )
+    assert fail_web.status_code == 400
+
+    fail_app = app.post(
+        "/api/app/v1/auth/password/change",
+        data=json.dumps({"current_password": "wrong-app", "new_password": "NewPassword9!"}),
+        content_type="application/json",
+        headers=app_headers,
+    )
+    assert fail_app.status_code == 400
+
+    locked_web = browser.post(
+        "/api/browser/v1/auth/password/change",
+        data=json.dumps({"current_password": "ValidPassword1!", "new_password": "NewPassword9!"}),
+        content_type="application/json",
+        headers=b_headers,
+    )
+    locked_app = app.post(
+        "/api/app/v1/auth/password/change",
+        data=json.dumps({"current_password": "ValidPassword1!", "new_password": "NewPassword9!"}),
+        content_type="application/json",
+        headers=app_headers,
+    )
+    assert locked_web.status_code == 429 and int(locked_web.headers["Retry-After"]) > 0
+    assert locked_app.status_code == 429 and int(locked_app.headers["Retry-After"]) > 0
+    assert browser.get("/api/browser/v1/auth/profile", headers=b_headers).status_code == 200
+    assert app.get("/api/app/v1/auth/profile", headers=app_headers).status_code == 200
+
+    # Otra cuenta acumula 1 fallo, acierta (reinicia contador) y vuelve a disponer de 2 fallos.
+    user2 = make_user(email="resetapi@example.com", password="ValidPassword1!")
+    client2 = _client()
+    headers2 = _login_headers(client2, "app", user2, accept_terms=True, password="ValidPassword1!")
+
+    assert (
+        client2.post(
+            "/api/app/v1/auth/password/change",
+            data=json.dumps({"current_password": "wrong-1", "new_password": "NewPassword9!"}),
+            content_type="application/json",
+            headers=headers2,
+        ).status_code
+        == 400
+    )
+    assert (
+        client2.post(
+            "/api/app/v1/auth/password/change",
+            data=json.dumps(
+                {"current_password": "ValidPassword1!", "new_password": "NewPassword9!"}
+            ),
+            content_type="application/json",
+            headers=headers2,
+        ).status_code
+        == 200
+    )
+    assert (
+        client2.post(
+            "/api/app/v1/auth/password/change",
+            data=json.dumps({"current_password": "wrong-2", "new_password": "NewPassword10!"}),
+            content_type="application/json",
+            headers=headers2,
+        ).status_code
+        == 400
+    )
+    assert (
+        client2.post(
+            "/api/app/v1/auth/password/change",
+            data=json.dumps({"current_password": "wrong-3", "new_password": "NewPassword10!"}),
+            content_type="application/json",
+            headers=headers2,
+        ).status_code
+        == 400
+    )
+    assert (
+        client2.post(
+            "/api/app/v1/auth/password/change",
+            data=json.dumps(
+                {"current_password": "NewPassword9!", "new_password": "NewPassword10!"}
+            ),
+            content_type="application/json",
+            headers=headers2,
+        ).status_code
+        == 429
+    )
