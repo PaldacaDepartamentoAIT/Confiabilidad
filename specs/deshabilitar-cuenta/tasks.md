@@ -65,7 +65,7 @@ Estado: aprobado
 - [x] T-012 Mensajes específicos de cuenta deshabilitada y confirmación post-baja en `LoginPage`
   RF: RF-008, RF-014 | Depende de: T-011 | Archivos: 2
   Hecho cuando: `pnpm --filter frontend test src/auth/LoginPage.test.tsx` pasa verificando la visualización de `account_disabled` (soporte/12 meses) y `account_disabled_expired` en el formulario de acceso y el aviso informativo de confirmación cuando se llega redirigido tras deshabilitar la cuenta, en `es`, `pt-BR` y `en`.
-  Decisiones: leer `consumeAccountDisabledNotice()` al montar `LoginPage` para mostrar `FormMessage` informativo (`auth.accountDisabledNotice`) y limpiarlo al iniciar un nuevo intento de login, reutilizando `translateCode` para `account_disabled` y `account_disabled_expired` (Prettier en verde; Vitest de `LoginPage`, ESLint y `tsc` pendientes de entorno con `node_modules` completos). — Motivo: evita mostrar avisos obsoletos cuando la persona intenta volver a iniciar sesión y conserva el patrón existente de mensajes. — Confianza: [Probable]. — Cómo revertirla: revertir el commit de T-012.
+  Decisiones: leer `consumeAccountDisabledNotice()` al montar `LoginPage` para mostrar `FormMessage` informativo inline (`auth.accountDisabledNotice`) y limpiarlo al iniciar un nuevo intento de login, reutilizando `translateCode` para `account_disabled` y `account_disabled_expired`; además, tras la preferencia de UX confirmada por el usuario, mover en `useFormValidation` y `VerifyPage` todos los errores generales no asociados a un campo hacia la notificación flotante *toast* de error (`.toast-error`, franja lateral `--p1` `#a47070` de `docs/identidad-visual.md`, con `messageKey` traducido en vivo al cambiar de idioma y cierre inmediato al reenviar el formulario), envolviendo las suites afectadas en `<ToastProvider>` (ESLint, Prettier, `locales.test.ts` 4/4 y `client.test.ts` 20/20 en verde; resto de suites Vitest y `tsc` completo pendientes de entorno con `node_modules` completos). — Motivo: evita mostrar avisos obsoletos al reintentar el acceso y presenta cualquier error general de formulario en *toast* roja sin desplazar el formulario ni robar el foco. — Confianza: [Probable]. — Cómo revertirla: revertir `c37271b` y `fa22601`.
 
 - [ ] T-013 Interfaz de deshabilitación en dos pasos desde el menú de `/profile` con bloqueos preventivos y cuenta atrás persistente
   RF: RF-001, RF-003, RF-004, RF-005, RF-013, RF-014, RF-015, RF-016 | Depende de: T-011, T-012 | Archivos: 3
@@ -98,7 +98,7 @@ Rama de integración: `feat/deshabilitar-cuenta` (los PR de las entregas van con
   Excepción: `T-009` (extensión de perfil, serializador y catálogo de mensajes) y `T-010` (endpoint de baja, ajuste en login y pruebas integradas en `test_disable_api.py`) conforman un único corte vertical HTTP de 448 líneas reales dentro del tope excepcional de 500 líneas; separar `T-009` dejaría el serializador y los códigos de baja sin endpoint que los ejercite.
 
 - E-06a Cliente API, traducciones y avisos de cuenta deshabilitada en `/login`
-  Tareas: T-011, T-012 | Líneas reales: 149 | Rama: `feat/deshabilitar-cuenta-ui-login`
+  Tareas: T-011, T-012 | Líneas reales: 396 | Rama: `feat/deshabilitar-cuenta-ui-login`
   Cómo probarlo: ejecutar `pnpm --filter frontend test src/auth/LoginPage.test.tsx src/registration/serverErrors.test.ts src/i18n/keys.test.ts src/i18n/locales/locales.test.ts` y comprobar en `/login` los avisos de confirmación y error en `es`, `pt-BR` y `en`.
 
 - E-06b Confirmación en dos pasos desde el menú de `/profile` (web y escritorio)

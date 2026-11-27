@@ -1,12 +1,13 @@
 # Entrega E-06a · Cliente API, traducciones y avisos de cuenta deshabilitada en `/login`
 
-Rama: `feat/deshabilitar-cuenta-ui-login` · PR: pendiente · Líneas de código y tests: 149 (límite: 400).
+Rama: `feat/deshabilitar-cuenta-ui-login` · PR: pendiente · Líneas de código y tests: 396 (límite: 400).
 
 ## Qué se hizo
 - En [profile.ts](../../../../frontend/src/api/profile.ts) se añadió `disableAccount(client, { current_password })`, se amplió `ProfileData` con los campos opcionales de elegibilidad (`can_disable`, `disable_block_reason`, `disable_retry_after`) y se añadieron `markAccountDisabledNotice` y `consumeAccountDisabledNotice` sobre `sessionStorage` (`RF-001`, `RF-014`, `RF-015`).
 - En [serverErrors.ts](../../../../frontend/src/registration/serverErrors.ts), [en.ts](../../../../frontend/src/i18n/locales/en.ts), [es.ts](../../../../frontend/src/i18n/locales/es.ts) y [pt-BR.ts](../../../../frontend/src/i18n/locales/pt-BR.ts) se añadieron las traducciones y mapeos en los tres idiomas para `owns_company`, `last_superuser`, `account_disabled`, `account_disabled_expired` y los textos del flujo de deshabilitación y confirmación (`RF-008`, `RF-014`).
-- En [LoginPage.tsx](../../../../frontend/src/auth/LoginPage.tsx) se mostró el aviso informativo de confirmación post-baja (`auth.accountDisabledNotice`) al llegar tras deshabilitar una cuenta (limpiándose al intentar un nuevo acceso) junto con la traducción de `account_disabled` y `account_disabled_expired` (`RF-008`, `RF-014`).
-- En [serverErrors.test.ts](../../../../frontend/src/registration/serverErrors.test.ts) y [LoginPage.test.tsx](../../../../frontend/src/auth/LoginPage.test.tsx) se añadieron pruebas de mapeo de códigos, confirmación post-baja y errores de cuenta deshabilitada en los tres idiomas.
+- En [LoginPage.tsx](../../../../frontend/src/auth/LoginPage.tsx) se mostró el aviso informativo inline de confirmación post-baja (`auth.accountDisabledNotice`) al llegar tras deshabilitar una cuenta (limpiándose al intentar un nuevo acceso) junto con la traducción de `account_disabled` y `account_disabled_expired` (`RF-008`, `RF-014`).
+- En [toastContext.ts](../../../../frontend/src/components/toast/toastContext.ts), [ToastProvider.tsx](../../../../frontend/src/components/toast/ToastProvider.tsx), [useFormValidation.ts](../../../../frontend/src/forms/useFormValidation.ts) y [VerifyPage.tsx](../../../../frontend/src/registration/VerifyPage.tsx) se movieron los errores generales de formulario (no asociados a un campo) para mostrarse como *toast* de error con franja lateral roja (`--p1: #a47070` de [identidad-visual.md](../../../../docs/identidad-visual.md), `role="alert"`), soporte de `messageKey` reactivo al cambio de idioma y cierre inmediato al reenviar.
+- En [serverErrors.test.ts](../../../../frontend/src/registration/serverErrors.test.ts), [LoginPage.test.tsx](../../../../frontend/src/auth/LoginPage.test.tsx), [ToastProvider.test.tsx](../../../../frontend/src/components/toast/ToastProvider.test.tsx), [useFormValidation.test.tsx](../../../../frontend/src/forms/useFormValidation.test.tsx), [ShowcasePage.test.tsx](../../../../frontend/src/showcase/ShowcasePage.test.tsx), [RegisterPage.test.tsx](../../../../frontend/src/registration/RegisterPage.test.tsx), [PasswordStep.test.tsx](../../../../frontend/src/registration/PasswordStep.test.tsx), [VerifyPage.test.tsx](../../../../frontend/src/registration/VerifyPage.test.tsx) y [TermsPage.test.tsx](../../../../frontend/src/auth/TermsPage.test.tsx) se actualizaron los entornos con `<ToastProvider>` y se añadieron pruebas de mapeo, confirmación post-baja y *toast* roja de error.
 
 ## Tareas
 El detalle de cada tarea, con su «Hecho cuando», está en [tasks.md](../../tasks.md).
@@ -14,7 +15,7 @@ El detalle de cada tarea, con su «Hecho cuando», está en [tasks.md](../../tas
 | Tarea | Título | Commit |
 |---|---|---|
 | T-011 | Cliente `disableAccount`, `ProfileData` ampliado y traducciones en `es`, `pt-BR` y `en` | `8ad81d5` |
-| T-012 | Mensajes específicos de cuenta deshabilitada y confirmación post-baja en `LoginPage` | `c37271b` |
+| T-012 | Mensajes de cuenta deshabilitada en `LoginPage` y errores generales de formularios en *toast* roja | `c37271b`, `fa22601` |
 
 ## Cómo ejecutarlo y probarlo
 En tu máquina virtual o VPS con las dependencias de frontend instaladas:
