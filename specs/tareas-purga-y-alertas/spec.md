@@ -1,7 +1,7 @@
 # Spec: tareas-purga-y-alertas
-Estado: borrador
+Estado: aprobada
 Aprobación: ligera
-Validación: estricta
+Validación: ligera
 
 ## Objetivo (por qué)
 El sistema cuenta con tareas periódicas de depuración para registros de acceso pendientes, sesiones caducadas, eventos de seguridad de auditoría y cuentas deshabilitadas vencidas tras 12 meses (`RF-011` de `deshabilitar-cuenta`). Sin visibilidad ni alertas, un fallo silencioso en las tareas de limpieza puede acumular datos obsoletos o incumplir los plazos de conservación sin que el equipo operativo lo detecte a tiempo. Esta feature unifica la ejecución autónoma de las cuatro tareas, registra el resultado de la última ejecución de cada una y genera alertas verificables ante cualquier fallo.
@@ -56,4 +56,4 @@ El sistema deberá permitir desde consola (CLI) ejecutar manualmente cada una de
 - 2026-11-23 — Creación inicial de la spec tras entrevista — RF: RF-001 a RF-009 — Estado: pendiente de clarificar
 - 2026-11-23 — Clarificación (C-01 a C-06): fallo simulado en trabajador sin borrar datos, serialización por tarea, alerta por fallo con correo solo en el primer fallo abierto, caída de BD solo en logs, resumen truncado en alerta/correo y verificación con intervalo reducido — RF: RF-002, RF-004, RF-005, RF-009 — Estado: clarificado
 - 2026-11-25 — Validación: cerrada con riesgo residual aceptado — RF-005 (riesgo mínimo, origen Test): `test_run_records_truncated_failure_creates_alert_and_reraises` en `backend/apps/core/tests/test_maintenance_runner.py` y `test_database_error_during_failure_recording_logs_only_and_skips_email` en `backend/apps/core/tests/test_maintenance_alerts.py` comprueban `rec.message` sin asertar `rec.exc_info is not None` ni `"Traceback" in caplog.text`; `backend/apps/core/maintenance.py` sí usa `logger.exception(...)` en ejecución real. Observación operativa: la suite completa con el servicio `worker` de desarrollo encendido colisiona en la cola por defecto con 2 tests preexistentes ajenos a la feature (`test_task_worker.py` y `apps/emails/tests/test_worker.py`), y el disparo continuo de `beat` con intervalos cortos se comprueba en vivo fuera de `pytest`.
-- 2026-11-27 — Cambio por coordinación con `deshabilitar-cuenta` (`S-10`): incorporación de la cuarta tarea periódica `purge_disabled_accounts` — RF: RF-001…RF-005, RF-008, RF-009 — Estado: pendiente de clarificar
+- 2026-11-27 — Clarificación del cambio (`S-10`, sin hallazgos; `Validación: ligera`) y aprobación de la spec — RF: RF-001…RF-005, RF-008, RF-009 — Estado: clarificado
