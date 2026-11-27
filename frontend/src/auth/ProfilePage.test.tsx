@@ -95,12 +95,7 @@ test("starts in read-only mode with 3-dot menu, enters edit mode, preserves ZZ a
   expect(screen.getByRole("option", { name: "Cambiar contraseña" })).not.toHaveAttribute(
     "aria-disabled",
   );
-  expect(screen.getByRole("option", { name: "Deshabilitar" })).toHaveAttribute(
-    "aria-disabled",
-    "true",
-  );
-  await user.click(screen.getByRole("option", { name: "Deshabilitar" }));
-  expect(screen.getByRole("listbox", { name: "Acciones del perfil" })).toBeInTheDocument();
+  expect(screen.getByRole("option", { name: "Deshabilitar" })).not.toHaveAttribute("aria-disabled");
 
   await user.click(screen.getByRole("option", { name: "Editar" }));
   expect(
@@ -352,6 +347,203 @@ test("handles 429 countdown, network failures, cancel, i18n and gate redirects o
     await user.type(screen.getByLabelText(/^Current password/), "old-secret-1");
     await user.type(screen.getByLabelText(/^New password/), "new-turbine-123");
     await user.click(screen.getByRole("button", { name: "Change password" }));
+    await waitFor(() => expect(window.location.pathname).toBe("/terms"));
+    expect(onTerms).toHaveBeenCalledWith("not_accepted");
+  } finally {
+    vi.useRealTimers();
+    window.history.replaceState(null, "", "/");
+  }
+});
+
+function disableFetcher(
+  overrides: Partial<ProfileData>,
+  onDisable: (body: unknown) => Promise<Response>,
+): typeof fetch {
+  const prof: ProfileData = {
+    email: "ana@empresa.com",
+    name: "Ana",
+    birthdate: "1991-03-04",
+    country: "ES",
+    can_disable: true,
+    disable_block_reason: null,
+    disable_retry_after: 0,
+    ...overrides,
+  };
+  return (url, init) => {
+    const path = String(url).split("?")[0];
+    if (path.endsWith("/registration/options")) return Promise.resolve(json(200, OK_OPTS));
+    if (path.endsWith("/account/disable")) {
+      return onDisable(init?.body ? JSON.parse(String(init.body)) : undefined);
+    }
+    return Promise.resolve(json(200, prof));
+  };
+}
+
+test.each([
+  [
+    "es",
+    "owns_company",
+    /Eres propietario de al menos una empresa/,
+    "Acciones del perfil",
+    "Deshabilitar",
+    "Deshabilitar cuenta",
+    "Continuar para confirmar",
+    "Cancelar",
+    "Información personal",
+  ],
+  [
+    "en",
+    "last_superuser",
+    /cannot disable the last active superuser/i,
+    "Profile actions",
+    "Disable",
+    "Disable account",
+    "Continue to confirm",
+    "Cancel",
+    "Personal information",
+  ],
+] as const)(
+  "shows proactive disable block notice in %s for %s without allowing confirmation",
+  async (
+    lang,
+    reason,
+    pattern,
+    menuLabel,
+    optionLabel,
+    titleLabel,
+    continueLabel,
+    cancelLabel,
+    infoTitle,
+  ) => {
+    const user = userEvent.setup();
+    const disableCalls: unknown[] = [];
+    renderProfile(
+      disableFetcher({ can_disable: false, disable_block_reason: reason }, (body) => {
+        disableCalls.push(body);
+        return Promise.resolve(json(400, { code: reason, message: "x" }));
+      }),
+      {},
+      lang,
+    );
+
+    await screen.findByDisplayValue("ana@empresa.com");
+    await user.click(screen.getByRole("combobox", { name: menuLabel }));
+    await user.click(screen.getByRole("option", { name: optionLabel }));
+
+    expect(screen.getByRole("heading", { level: 2, name: titleLabel })).toBeVisible();
+    expect(screen.getByText(pattern)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: continueLabel })).toBeDisabled();
+    expect(disableCalls).toEqual([]);
+    expect(
+      (await axe.run(document.body, { rules: { "color-contrast": { enabled: false } } }))
+        .violations,
+    ).toEqual([]);
+
+    await user.click(screen.getByRole("button", { name: cancelLabel }));
+    expect(screen.getByRole("heading", { level: 2, name: infoTitle })).toBeVisible();
+  },
+);
+
+test("completes two-step account disable, validates password, clears local session and redirects to /login", async () => {
+  const user = userEvent.setup();
+  const sent: unknown[] = [];
+  const onLoggedOut = vi.fn();
+  const replies = [
+    json(400, {
+      errors: { current_password: [{ code: "current_password_incorrect", message: "x" }] },
+    }),
+    json(200, { result: "account_disabled" }),
+  ];
+
+  const { storage } = renderProfile(
+    disableFetcher({}, (body) => {
+      sent.push(body);
+      return Promise.resolve(replies.shift()!);
+    }),
+    { onLoggedOut },
+  );
+
+  await screen.findByLabelText("Correo electrónico");
+  await user.click(screen.getByRole("combobox", { name: "Acciones del perfil" }));
+  await user.click(screen.getByRole("option", { name: "Deshabilitar" }));
+
+  expect(screen.getByText(/se revocarán de inmediato todos tus accesos/)).toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: "Continuar para confirmar" }));
+  expect(
+    (await axe.run(document.body, { rules: { "color-contrast": { enabled: false } } })).violations,
+  ).toEqual([]);
+
+  const cur = screen.getByLabelText(/^Contraseña actual/);
+  await user.click(screen.getByRole("button", { name: "Mostrar contraseña (Contraseña actual)" }));
+  expect(cur).toHaveAttribute("type", "text");
+
+  await user.click(screen.getByRole("button", { name: "Deshabilitar mi cuenta" }));
+  expect(screen.getByText("Completa este campo.")).toBeInTheDocument();
+  expect(sent).toEqual([]);
+
+  await user.type(cur, "clave-erronea");
+  await user.click(screen.getByRole("button", { name: "Deshabilitar mi cuenta" }));
+  expect(await screen.findByText("La contraseña actual no es correcta.")).toBeInTheDocument();
+  expect(cur).toHaveValue("");
+  expect(cur).toHaveFocus();
+
+  await user.type(cur, "clave-correcta");
+  await user.click(screen.getByRole("button", { name: "Deshabilitar mi cuenta" }));
+  expect(sent).toEqual([
+    { current_password: "clave-erronea", language: "es" },
+    { current_password: "clave-correcta", language: "es" },
+  ]);
+  expect(storage.get()).toBeNull();
+  expect(onLoggedOut).toHaveBeenCalled();
+  expect(window.location.pathname).toBe("/login");
+  expect(window.sessionStorage.getItem("confiabilidad.accountDisabled")).toBe("1");
+  window.sessionStorage.removeItem("confiabilidad.accountDisabled");
+  window.history.replaceState(null, "", "/");
+});
+
+test("initializes persistent disable countdown from profile, handles 429, network errors and gate redirects", async () => {
+  vi.useFakeTimers({ shouldAdvanceTime: true });
+  const onTerms = vi.fn();
+  try {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const answers = [
+      () => Promise.reject(new TypeError("Failed to fetch")),
+      () => Promise.resolve(json(429, { retry_after: 3 })),
+      () => Promise.resolve(json(403, { code: "terms_required", terms_status: "not_accepted" })),
+    ];
+    renderProfile(
+      disableFetcher({ country: "BR", disable_retry_after: 2 }, () => answers.shift()!()),
+      { onTermsRequired: onTerms },
+      "pt-BR",
+    );
+
+    await screen.findByLabelText("E-mail");
+    await user.click(screen.getByRole("combobox", { name: "Ações do perfil" }));
+    await user.click(screen.getByRole("option", { name: "Desativar" }));
+    await user.click(screen.getByRole("button", { name: "Continuar para confirmar" }));
+
+    expect(await screen.findByText("Muitas tentativas. Tente novamente em 2 s.")).toBeVisible();
+    const submit = screen.getByRole("button", { name: "Desativar minha conta" });
+    expect(submit).toBeDisabled();
+
+    await act(() => vi.advanceTimersByTimeAsync(2000));
+    expect(submit).toBeEnabled();
+
+    await user.type(screen.getByLabelText(/^Senha atual/), "minha-senha-1");
+    await user.click(submit);
+    const toast = (await screen.findByText(/Não foi possível conectar/)).closest(
+      '[data-ui="toast"]',
+    );
+    expect(toast).toHaveClass("toast", "toast-error");
+    expect(toast).toHaveAttribute("role", "alert");
+
+    await user.click(submit);
+    expect(await screen.findByText("Muitas tentativas. Tente novamente em 3 s.")).toBeVisible();
+    expect(submit).toBeDisabled();
+    await act(() => vi.advanceTimersByTimeAsync(3000));
+    expect(submit).toBeEnabled();
+
+    await user.click(submit);
     await waitFor(() => expect(window.location.pathname).toBe("/terms"));
     expect(onTerms).toHaveBeenCalledWith("not_accepted");
   } finally {

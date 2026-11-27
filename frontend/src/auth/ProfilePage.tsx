@@ -6,8 +6,11 @@ import { logout, type AuthenticatedUser, type SessionInfo } from "../api/auth";
 import type { ApiClient, ApiResult, TermsStatus } from "../api/client";
 import {
   changePassword,
+  disableAccount,
   getProfile,
+  markAccountDisabledNotice,
   updateProfile,
+  type DisableBlockReason,
   type ProfileData,
   type ProfileUpdate,
 } from "../api/profile";
@@ -16,6 +19,7 @@ import { Block } from "../components/Block";
 import { Button } from "../components/Button";
 import { FormMessage } from "../components/FormMessage";
 import { IconButton } from "../components/IconButton";
+import { Notice } from "../components/Notice";
 import { PasswordField } from "../components/fields/PasswordField";
 import { RequiredLegend } from "../components/fields/RequiredLegend";
 import { SelectField, type SelectOption } from "../components/fields/SelectField";
@@ -49,7 +53,10 @@ const PASSWORD_FIELDS = {
   new_password: [required, ...newPasswordRules],
 };
 type PasswordFieldName = keyof typeof PASSWORD_FIELDS;
-type CardMode = "view" | "edit" | "password";
+
+const DISABLE_FIELDS = { current_password: [required] };
+type DisableFieldName = keyof typeof DISABLE_FIELDS;
+type CardMode = "view" | "edit" | "password" | "disable";
 
 function fieldResult<Name extends string>(
   errors: Record<string, string[]>,
@@ -147,6 +154,8 @@ export function ProfilePage({
   const [loadError, setLoadError] = useState<ParseKeys | null>(null);
   const [mode, setMode] = useState<CardMode>("view");
   const passwordWait = useCountdown();
+  const disableWait = useCountdown();
+  const { start: startDisableWait } = disableWait;
   const loggingOut = useRef(false);
   const { notify } = useToast();
   const { user: ctxUser, setUser: setCtxUser, collapsed, setCollapsed } = usePrivateUser();
@@ -182,11 +191,14 @@ export function ProfilePage({
       setProfile(prof.data);
       setCountryCodes(opts.data.countries);
       cbRef.current.setCtxUser({ email: prof.data.email, name: prof.data.name });
+      if (prof.data.disable_retry_after && prof.data.disable_retry_after > 0) {
+        startDisableWait(prof.data.disable_retry_after);
+      }
     });
     return () => {
       active = false;
     };
-  }, [client, goLogin, goTerms, session]);
+  }, [client, goLogin, goTerms, session, startDisableWait]);
 
   async function handleLogout() {
     if (loggingOut.current) return;
@@ -221,7 +233,13 @@ export function ProfilePage({
         <div className="profile-blocks">
           <Block
             as="section"
-            title={mode === "password" ? t("auth.passwordChangeTitle") : t("auth.profileInfoTitle")}
+            title={
+              mode === "password"
+                ? t("auth.passwordChangeTitle")
+                : mode === "disable"
+                  ? t("auth.disableAccountTitle")
+                  : t("auth.profileInfoTitle")
+            }
             loading={profile === null}
             loadingContent={<ProfileSkeleton />}
             actions={
@@ -234,10 +252,12 @@ export function ProfilePage({
                     options={[
                       { value: "edit", label: t("auth.profileEdit") },
                       { value: "password", label: t("auth.profileChangePassword") },
-                      { value: "disable", label: t("auth.profileDisable"), disabled: true },
+                      { value: "disable", label: t("auth.profileDisable") },
                     ]}
                     onSelect={(action) => {
-                      if (action === "edit" || action === "password") setMode(action);
+                      if (action === "edit" || action === "password" || action === "disable") {
+                        setMode(action);
+                      }
                     }}
                     renderTrigger={(triggerProps) => (
                       <IconButton
@@ -262,6 +282,24 @@ export function ProfilePage({
                   onSaved={() => {
                     setMode("view");
                     notify({ kind: "success", message: t("auth.passwordChanged") });
+                  }}
+                  onUnauthenticated={goLogin}
+                  onTermsRequired={goTerms}
+                />
+              ) : mode === "disable" ? (
+                <DisableAccountBlock
+                  client={client}
+                  profile={profile}
+                  wait={disableWait}
+                  onCancel={() => setMode("view")}
+                  onBlocked={(reason) =>
+                    setProfile((cur) =>
+                      cur ? { ...cur, can_disable: false, disable_block_reason: reason } : cur,
+                    )
+                  }
+                  onDisabled={() => {
+                    markAccountDisabledNotice();
+                    goLogin();
                   }}
                   onUnauthenticated={goLogin}
                   onTermsRequired={goTerms}
@@ -516,5 +554,131 @@ function PasswordChangeBlock({
         <RequiredLegend />
       </form>
     </>
+  );
+}
+
+function DisableAccountBlock({
+  client,
+  profile,
+  wait,
+  onCancel,
+  onBlocked,
+  onDisabled,
+  onUnauthenticated,
+  onTermsRequired,
+}: {
+  client: ApiClient;
+  profile: ProfileData;
+  wait: ReturnType<typeof useCountdown>;
+  onCancel: () => void;
+  onBlocked: (reason: DisableBlockReason) => void;
+  onDisabled: () => void;
+  onUnauthenticated: () => void;
+  onTermsRequired: (status: TermsStatus) => void;
+}) {
+  const { t } = useTranslation();
+  const errorText = useErrorText();
+  const [step, setStep] = useState<1 | 2>(1);
+  const [processing, setProcessing] = useState(false);
+  const { allErrors, onBlur, handleSubmit, showResult, formRef } = useFormValidation(
+    DISABLE_FIELDS,
+    { scrollToError: true, processing },
+  );
+
+  const blockedReason =
+    profile.disable_block_reason ?? (profile.can_disable === false ? "owns_company" : null);
+  const blocked = blockedReason !== null;
+
+  async function send(values: Record<DisableFieldName, string>) {
+    if (wait.remaining > 0 || blocked) return;
+    setProcessing(true);
+    const result = await disableAccount(client, values);
+    setProcessing(false);
+    if (result.kind === "ok") {
+      formRef.current?.reset();
+      showResult({});
+      return onDisabled();
+    }
+    if (result.kind === "rateLimited") return wait.start(result.retryAfter);
+    if (result.kind === "fieldErrors" && "current_password" in result.errors) {
+      const currentInput = formRef.current?.elements.namedItem("current_password");
+      if (currentInput instanceof HTMLInputElement) currentInput.value = "";
+    }
+    if (
+      result.kind === "refused" &&
+      (result.code === "owns_company" || result.code === "last_superuser")
+    ) {
+      onBlocked(result.code);
+      setStep(1);
+    }
+    handleFailure(result, DISABLE_FIELDS, showResult, onUnauthenticated, onTermsRequired);
+  }
+
+  if (step === 1 || blocked) {
+    return (
+      <div className="profile-disable">
+        <p className="profile-intro">{t("auth.disableAccountIntro")}</p>
+        {blocked && <Notice>{t(`validation.${translateCode(blockedReason).key}`)}</Notice>}
+        <div className="profile-actions">
+          {wait.remaining > 0 && (
+            <p className="profile-wait" role="status">
+              {t("validation.retryIn", { seconds: wait.remaining })}
+            </p>
+          )}
+          <Button type="button" variant="secondary" onClick={onCancel}>
+            {t("auth.profileCancel")}
+          </Button>
+          <Button type="button" disabled={blocked} onClick={() => setStep(2)}>
+            {t("auth.disableAccountContinue")}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <form
+      ref={formRef}
+      className="profile-form"
+      noValidate
+      onSubmit={handleSubmit((values) => void send(values))}
+    >
+      <p className="profile-intro">{t("auth.disableAccountConfirmPrompt")}</p>
+      <PasswordField
+        label={t("auth.currentPasswordLabel")}
+        name="current_password"
+        kind="current"
+        required
+        error={errorText(allErrors.current_password)}
+        onBlur={onBlur("current_password")}
+      />
+      <div className="profile-actions">
+        {wait.remaining > 0 && (
+          <p className="profile-wait" role="status">
+            {t("validation.retryIn", { seconds: wait.remaining })}
+          </p>
+        )}
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => {
+            formRef.current?.reset();
+            showResult({});
+            onCancel();
+          }}
+        >
+          {t("auth.profileCancel")}
+        </Button>
+        <Button
+          type="submit"
+          keepFocusOnMouseDown
+          processing={processing}
+          disabled={wait.remaining > 0}
+        >
+          {t("auth.disableAccountSubmit")}
+        </Button>
+      </div>
+      <RequiredLegend />
+    </form>
   );
 }

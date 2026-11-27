@@ -64,3 +64,19 @@
   margin: 14px 0 0;
   text-align: right;
 }
+
+.profile-disable {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.profile-intro {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.profile-form > .profile-intro {
+  margin-bottom: 14px;
+}
