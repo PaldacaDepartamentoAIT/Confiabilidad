@@ -268,6 +268,9 @@ PURGE_EXPIRED_SESSIONS_INTERVAL_SECONDS = env.float(
 PURGE_SECURITY_EVENTS_INTERVAL_SECONDS = env.float(
     "PURGE_SECURITY_EVENTS_INTERVAL_SECONDS", default=86400.0
 )
+PURGE_DISABLED_ACCOUNTS_INTERVAL_SECONDS = env.float(
+    "PURGE_DISABLED_ACCOUNTS_INTERVAL_SECONDS", default=86400.0
+)
 MAINTENANCE_ALERT_EMAILS: list[str] = env.list("MAINTENANCE_ALERT_EMAILS", default=[])
 MAINTENANCE_LOCK_TIMEOUT_SECONDS = env.int("MAINTENANCE_LOCK_TIMEOUT_SECONDS", default=3600)
 
@@ -286,6 +289,10 @@ CELERY_BEAT_SCHEDULE = {
     "audit-purge-security-events": {
         "task": "apps.audit.tasks.purge_security_events",
         "schedule": PURGE_SECURITY_EVENTS_INTERVAL_SECONDS,
+    },
+    "accounts-purge-disabled-accounts": {
+        "task": "apps.accounts.tasks.purge_disabled_accounts",
+        "schedule": PURGE_DISABLED_ACCOUNTS_INTERVAL_SECONDS,
     },
 }
 

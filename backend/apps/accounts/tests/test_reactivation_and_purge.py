@@ -3,7 +3,9 @@ from datetime import UTC, date, datetime, timedelta
 from io import StringIO
 
 import pytest
+from django.conf import settings as django_settings
 from django.contrib.auth.models import Group, Permission
+from django.core import mail
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import Client, override_settings
@@ -11,12 +13,15 @@ from django.urls import reverse
 from django.utils import timezone
 
 from apps.accounts import disable, registration
+from apps.accounts import tasks as account_tasks
 from apps.accounts.models import PendingRegistration, User
 from apps.accounts.tests.factories import DEFAULT_PASSWORD, make_user
 from apps.audit.models import EventType, SecurityEvent
 from apps.companies.models import Company
 from apps.consents.models import Terms
 from apps.consents.services import TermsState, accept_terms, consent_status
+from apps.core.maintenance import SimulatedMaintenanceFailure
+from apps.core.models import MaintenanceAlert, MaintenanceTaskName, MaintenanceTaskStatus
 
 
 def test_retention_deadline_handles_leap_day_and_configurable_months() -> None:
@@ -231,6 +236,57 @@ def test_purge_accounts_is_partial_when_expired_account_owns_company(
     assert not User.objects.filter(pk=valid_expired.pk).exists()
     assert User.objects.filter(pk=anomalous_owner.pk).exists()
     assert "still owns at least one company" in caplog.text
+
+
+@pytest.mark.django_db
+def test_maintenance_task_purge_disabled_accounts_alerts_and_cli() -> None:
+    assert "accounts-purge-disabled-accounts" in django_settings.CELERY_BEAT_SCHEDULE
+    now = timezone.now()
+    valid = make_user(
+        email="maint-ok@example.com",
+        is_active=False,
+        disabled_at=now - timedelta(days=400),
+    )
+    owner = make_user(email="maint-owner@example.com")
+    company = Company.objects.create(name="Pendiente", owner=owner)
+    User.objects.filter(pk=owner.pk).update(
+        is_active=False,
+        disabled_at=now - timedelta(days=400),
+    )
+
+    with override_settings(MAINTENANCE_ALERT_EMAILS=["ops@example.com"]):
+        with pytest.raises(SimulatedMaintenanceFailure):
+            account_tasks.purge_disabled_accounts(simulate_failure=True)
+        assert User.objects.filter(pk=valid.pk).exists()
+        assert len(mail.outbox) == 1
+
+        # En ejecución real con anomalía: purga la cuenta válida, omite la propietaria y alerta.
+        with pytest.raises(disable.DisabledAccountPurgeAnomaly):
+            account_tasks.purge_disabled_accounts()
+        assert not User.objects.filter(pk=valid.pk).exists()
+        assert User.objects.filter(pk=owner.pk).exists()
+        status_row = MaintenanceTaskStatus.objects.get(
+            task_name=MaintenanceTaskName.PURGE_DISABLED_ACCOUNTS
+        )
+        assert status_row.status == MaintenanceTaskStatus.Status.FAILURE
+        assert (
+            MaintenanceAlert.objects.filter(
+                task_name=MaintenanceTaskName.PURGE_DISABLED_ACCOUNTS,
+                resolved_at__isnull=True,
+            ).count()
+            == 2
+        )
+
+        # Al borrarse la empresa, la siguiente corrida purga la cuenta y resuelve alertas.
+        company.delete()
+        out = StringIO()
+        call_command("maintenance_tasks", "run", "purge_disabled_accounts", stdout=out)
+        assert "completed purge_disabled_accounts: deleted=1" in out.getvalue()
+        assert not User.objects.filter(pk=owner.pk).exists()
+        assert not MaintenanceAlert.objects.filter(
+            task_name=MaintenanceTaskName.PURGE_DISABLED_ACCOUNTS,
+            resolved_at__isnull=True,
+        ).exists()
 
 
 @pytest.mark.django_db

@@ -5,7 +5,7 @@ from typing import Any
 from celery import current_app, shared_task
 from django.utils import timezone
 
-from apps.accounts import conf, password_reset, registration, sessions
+from apps.accounts import conf, disable, password_reset, registration, sessions
 from apps.accounts.models import PhantomProcess
 from apps.core.maintenance import run_maintenance_task
 from apps.core.models import MaintenanceTaskName
@@ -91,6 +91,15 @@ def purge_expired_sessions(simulate_failure: bool = False) -> int:
     return run_maintenance_task(
         MaintenanceTaskName.PURGE_EXPIRED_SESSIONS,
         sessions.purge_expired,
+        simulate_failure=simulate_failure,
+    )
+
+
+@shared_task(name="apps.accounts.tasks.purge_disabled_accounts")  # type: ignore[untyped-decorator]
+def purge_disabled_accounts(simulate_failure: bool = False) -> int:
+    return run_maintenance_task(
+        MaintenanceTaskName.PURGE_DISABLED_ACCOUNTS,
+        disable.purge_expired_accounts,
         simulate_failure=simulate_failure,
     )
 
