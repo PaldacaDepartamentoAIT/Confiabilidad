@@ -11,7 +11,8 @@ from apps.audit.models import EventType, SecurityEvent
 
 pytestmark = pytest.mark.django_db
 
-CASES = ["unknown", "wrong_password", "inactive_wrong", "inactive_right"]
+CASES = ["unknown", "wrong_password", "inactive_wrong"]
+ALL_CASES = [*CASES, "inactive_right"]
 
 
 def _client() -> Client:
@@ -60,7 +61,7 @@ def test_login_failures_and_lockout_are_neutral_across_all_cases(kind: str) -> N
     attempt_shapes: dict[str, list[tuple[Any, ...]]] = {}
     lockout_shapes: dict[str, tuple[Any, ...]] = {}
 
-    for case in CASES:
+    for case in ALL_CASES:
         email, password = _prepare(case)
         client = _client()
         shapes = [_shape(_login(client, kind, email, password)) for _ in range(5)]
@@ -72,11 +73,13 @@ def test_login_failures_and_lockout_are_neutral_across_all_cases(kind: str) -> N
     assert all(shape[1]["code"] == "invalid_credentials" for shape in baseline_attempts)
     for case in CASES:
         assert attempt_shapes[case] == baseline_attempts, case
+    assert all(shape[0] == 400 for shape in attempt_shapes["inactive_right"])
+    assert all(shape[1]["code"] == "account_disabled" for shape in attempt_shapes["inactive_right"])
 
     baseline_lockout = lockout_shapes["unknown"]
     assert baseline_lockout[0] == 400
     assert baseline_lockout[1]["code"] == "too_many_login_attempts"
-    for case in CASES:
+    for case in ALL_CASES:
         assert lockout_shapes[case] == baseline_lockout, case
 
     assert not UserSession.objects.exists()
@@ -89,7 +92,7 @@ def test_inactive_account_with_right_password_audits_reason_before_lockout(kind:
 
     for _ in range(5):
         resp = _login(client, kind, email, password)
-        assert resp.status_code == 400 and resp.json()["code"] == "invalid_credentials"
+        assert resp.status_code == 400 and resp.json()["code"] == "account_disabled"
 
     locked = _login(client, kind, email, password)
     assert locked.status_code == 400 and locked.json()["code"] == "too_many_login_attempts"
