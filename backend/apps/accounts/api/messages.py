@@ -221,6 +221,45 @@ ERRORS: dict[str, dict[str, str]] = {
         "pt-BR": "A senha atual não está correta.",
         "en": "The current password is incorrect.",
     },
+    # Deshabilitación de cuenta (deshabilitar-cuenta).
+    "owns_company": {
+        "es": (
+            "Eres propietario de al menos una empresa. "
+            "Debes transferirla o eliminarla primero antes de deshabilitar tu cuenta."
+        ),
+        "pt-BR": (
+            "Você é proprietário de pelo menos uma empresa. "
+            "Transfira-a ou exclua-a primeiro antes de desativar sua conta."
+        ),
+        "en": (
+            "You own at least one company. "
+            "You must transfer or delete it first before disabling your account."
+        ),
+    },
+    "last_superuser": {
+        "es": "No puedes deshabilitar el último superusuario activo del sistema.",
+        "pt-BR": "Você não pode desativar o último superusuário ativo do sistema.",
+        "en": "You cannot disable the last active superuser in the system.",
+    },
+    "account_disabled": {
+        "es": (
+            "Tu cuenta está deshabilitada. Puedes solicitar su reactivación contactando "
+            "a soporte (%(support_email)s) dentro de los 12 meses posteriores a la baja."
+        ),
+        "pt-BR": (
+            "Sua conta está desativada. Você pode solicitar a reativação entrando em "
+            "contato com o suporte (%(support_email)s) dentro de 12 meses após a desativação."
+        ),
+        "en": (
+            "Your account is disabled. You can request reactivation by contacting "
+            "support (%(support_email)s) within 12 months of deactivation."
+        ),
+    },
+    "account_disabled_expired": {
+        "es": "Tu cuenta está deshabilitada y el plazo de 12 meses para reactivarla ya ha vencido.",
+        "pt-BR": "Sua conta está desativada e o prazo de 12 meses para reativá-la já expirou.",
+        "en": "Your account is disabled and the 12-month reactivation period has expired.",
+    },
 }
 
 FIELD_ERRORS: dict[str, dict[str, str]] = {

@@ -90,6 +90,13 @@ export const es: Messages = {
     unknownField: "Este campo no está permitido.",
     noProfileFields: "Indica al menos un dato del perfil para actualizar.",
     currentPasswordIncorrect: "La contraseña actual no es correcta.",
+    ownsCompany:
+      "Eres propietario de al menos una empresa. Debes transferirla o eliminarla primero antes de deshabilitar tu cuenta.",
+    lastSuperuser: "No puedes deshabilitar el último superusuario activo del sistema.",
+    accountDisabled:
+      "Tu cuenta está deshabilitada. Puedes solicitar su reactivación contactando a soporte dentro de los 12 meses posteriores a la baja.",
+    accountDisabledExpired:
+      "Tu cuenta está deshabilitada y el plazo de 12 meses para reactivarla ya ha vencido.",
     retryIn: "Demasiados intentos. Vuelve a intentarlo en {{seconds}} s.",
     networkError: "No se pudo conectar. Revisa tu conexión y vuelve a intentarlo.",
     unknownError: "Algo no ha funcionado. Revisa los datos y vuelve a intentarlo.",
@@ -183,5 +190,14 @@ export const es: Messages = {
     newPasswordLabel: "Nueva contraseña",
     passwordChangeSubmit: "Cambiar contraseña",
     passwordChanged: "Tu contraseña se ha actualizado y se han cerrado tus demás sesiones.",
+    accountDisabledNotice:
+      "Tu cuenta ha sido deshabilitada y se han cerrado tus sesiones. Puedes reactivarla contactando a soporte en un plazo máximo de 12 meses.",
+    disableAccountTitle: "Deshabilitar cuenta",
+    disableAccountIntro:
+      "Al deshabilitar tu cuenta se revocarán de inmediato todos tus accesos y no podrás iniciar sesión. Podrás reactivarla contactando a soporte durante 12 meses.",
+    disableAccountContinue: "Continuar para confirmar",
+    disableAccountConfirmPrompt:
+      "Introduce tu contraseña actual para confirmar que deseas deshabilitar tu cuenta.",
+    disableAccountSubmit: "Deshabilitar mi cuenta",
   },
 };

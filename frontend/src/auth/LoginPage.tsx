@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 
 import { login, type SessionInfo } from "../api/auth";
 import type { ApiClient } from "../api/client";
+import { consumeAccountDisabledNotice } from "../api/profile";
 import type { TokenStorage } from "./tokenStorage";
 import { Button } from "../components/Button";
 import { FormMessage } from "../components/FormMessage";
@@ -46,11 +47,13 @@ export function LoginPage({ client, storage, tokenStorage, onAuthenticated }: Lo
   const titleId = useId();
   const passwordRef = useRef<HTMLInputElement>(null);
   const [processing, setProcessing] = useState(false);
+  const [disabledNotice, setDisabledNotice] = useState(() => consumeAccountDisabledNotice());
   const wait = useCountdown();
   const { allErrors, onBlur, handleSubmit, showResult, message, formRef, messageRef } =
     useFormValidation(FIELDS, { scrollToError: true, processing });
 
   async function send(values: Record<Field, string>) {
+    setDisabledNotice(false);
     setProcessing(true);
     const result = await login(client, values, tokenStorage);
     setProcessing(false);
@@ -88,6 +91,9 @@ export function LoginPage({ client, storage, tokenStorage, onAuthenticated }: Lo
         <RequiredLegend />
         {wait.remaining > 0 && (
           <p role="status">{t("validation.retryIn", { seconds: wait.remaining })}</p>
+        )}
+        {disabledNotice && !message && (
+          <FormMessage type="info" messageKey="auth.accountDisabledNotice" />
         )}
         {message && (
           <FormMessage ref={messageRef} type={message.type} messageKey={message.messageKey} />

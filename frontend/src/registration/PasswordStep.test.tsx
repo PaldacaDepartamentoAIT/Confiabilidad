@@ -4,6 +4,7 @@ import { I18nextProvider } from "react-i18next";
 
 import { createClient } from "../api/client";
 import { LiveAnnouncer } from "../components/LiveAnnouncer";
+import { ToastProvider } from "../components/toast/ToastProvider";
 import { createI18n } from "../i18n";
 import { PasswordStep } from "./PasswordStep";
 
@@ -33,13 +34,15 @@ function renderStep(fetcher: typeof fetch) {
   render(
     <I18nextProvider i18n={i18n}>
       <LiveAnnouncer>
-        <PasswordStep
-          client={client}
-          publicId="pid-1"
-          code="123456"
-          onCreated={onCreated}
-          onCodeRejected={onCodeRejected}
-        />
+        <ToastProvider>
+          <PasswordStep
+            client={client}
+            publicId="pid-1"
+            code="123456"
+            onCreated={onCreated}
+            onCodeRejected={onCodeRejected}
+          />
+        </ToastProvider>
       </LiveAnnouncer>
     </I18nextProvider>,
   );
@@ -155,7 +158,9 @@ test.each([
 
   await submit(user, "turbina-compresor-7");
 
-  expect(await screen.findByText(text)).toHaveFocus();
+  const toast = (await screen.findByText(text)).closest('[data-ui="toast"]');
+  expect(toast).toHaveClass("toast", "toast-error");
+  expect(toast).toHaveAttribute("role", "alert");
   expect(field()).toHaveValue("turbina-compresor-7");
 });
 

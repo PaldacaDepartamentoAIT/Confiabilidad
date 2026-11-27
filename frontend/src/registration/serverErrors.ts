@@ -42,6 +42,10 @@ const KEYS: Record<string, ValidationKey> = {
   unknown_field: "unknownField",
   no_profile_fields: "noProfileFields",
   current_password_incorrect: "currentPasswordIncorrect",
+  owns_company: "ownsCompany",
+  last_superuser: "lastSuperuser",
+  account_disabled: "accountDisabled",
+  account_disabled_expired: "accountDisabledExpired",
 };
 
 // Los mismos códigos tienen un texto más preciso en estos campos, como en el servidor.

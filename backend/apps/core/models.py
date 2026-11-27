@@ -17,6 +17,7 @@ class MaintenanceTaskName(models.TextChoices):
     PURGE_STALE_REGISTRATIONS = "purge_stale_registrations", _("Purge stale registrations")
     PURGE_EXPIRED_SESSIONS = "purge_expired_sessions", _("Purge expired sessions")
     PURGE_SECURITY_EVENTS = "purge_security_events", _("Purge security events")
+    PURGE_DISABLED_ACCOUNTS = "purge_disabled_accounts", _("Purge disabled accounts")
 
 
 class MaintenanceTaskStatus(models.Model):

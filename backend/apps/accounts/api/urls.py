@@ -29,8 +29,10 @@ from apps.accounts.api.flow_views import (
     BrowserVerifyView,
 )
 from apps.accounts.api.profile_views import (
+    AppAccountDisableView,
     AppPasswordChangeView,
     AppProfileView,
+    BrowserAccountDisableView,
     BrowserPasswordChangeView,
     BrowserProfileView,
 )
@@ -126,5 +128,15 @@ urlpatterns = [
         "app/v1/auth/password/change",
         AppPasswordChangeView.as_view(),
         name="auth-password-change-app",
+    ),
+    path(
+        "browser/v1/auth/account/disable",
+        BrowserAccountDisableView.as_view(),
+        name="auth-account-disable-browser",
+    ),
+    path(
+        "app/v1/auth/account/disable",
+        AppAccountDisableView.as_view(),
+        name="auth-account-disable-app",
     ),
 ]
