@@ -12,14 +12,16 @@ Estado: aprobado
   Excepción: andamiaje inicial de la nueva app `apps.companies` (`__init__.py`, `apps.py`, `models.py`, `admin.py`, `migrations/0001_initial.py`, `management/commands/company.py`, `tests/test_companies.py`) más su registro en `backend/config/settings.py`.
   Decisiones: configurar `on_delete=models.PROTECT` en `Company.owner`, normalizar el nombre con `strip()` + `full_clean(validate_unique=False)` en `Company.save()`, exponer `owns_company(user)` y añadir `delete --id` en `manage.py company` para pruebas CLI (pendiente de ejecutar `pytest` y `mypy` en entorno con PostgreSQL/venv completo; `ruff` y `black` limpios). — Motivo: protege al propietario frente a borrados accidentales a nivel de BD y facilita crear/limpiar empresas desde consola (`P-03`). — Confianza: [Probable]. — Cómo revertirla: revertir el commit de T-002.
 
-- [ ] T-003 Límite configurable e independiente de reautenticación para deshabilitar cuenta
+- [x] T-003 Límite configurable e independiente de reautenticación para deshabilitar cuenta
   RF: RF-005, RF-010 | Depende de: T-001 | Archivos: 4
   Hecho cuando: `pytest apps/accounts/tests/test_disable_account.py -k throttle` pasa verificando el contador independiente en caché (5 fallos en 5 minutos con bloqueo de 5 minutos por defecto), la lectura sin consumo (`check_account_disable`), la independencia frente a `change_password` y la configuración por entorno de límites y `ACCOUNT_DISABLE_RETENTION_MONTHS`.
   Excepción: la configuración por entorno se reparte entre `backend/config/settings.py` y `backend/apps/accounts/conf.py`, junto con el limitador en `backend/apps/accounts/throttling.py` y su test en `backend/apps/accounts/tests/test_disable_account.py`.
+  Decisiones: extraer helpers parametrizados `_check_user_lock`, `_record_user_failure` y `_clear_user_failures` en `throttling.py` compartidos entre `password-change` y `account-disable` con prefijos de caché separados, y añadir `ACCOUNT_DISABLE_RETENTION_MONTHS` en `conf.py`/`settings.py` (pendiente de ejecutar `pytest` y `mypy` en entorno con PostgreSQL/venv completo; `ruff` y `black` limpios). — Motivo: evita duplicación manteniendo contadores totalmente independientes por operación. — Confianza: [Probable]. — Cómo revertirla: revertir el commit de T-003.
 
-- [ ] T-004 Servicio atómico `disable_account` (empresa, último superusuario, reautenticación, revocación, auditoría y correo) y subcomando CLI
+- [x] T-004 Servicio atómico `disable_account` (empresa, último superusuario, reautenticación, revocación, auditoría y correo) y subcomando CLI
   RF: RF-001, RF-003, RF-004, RF-005, RF-006, RF-007, RF-012, RF-015, RF-016 | Depende de: T-001, T-002, T-003 | Archivos: 3
   Hecho cuando: `pytest apps/accounts/tests/test_disable_account.py` pasa verificando el orden prioritario (`owns_company` → `last_superuser` → `throttling` → contraseña actual sin consumir intentos en rechazos previos), desactivación atómica con `disabled_at`, revocación inmediata de sesiones web/escritorio (`UserSession` y caché), invalidación de `PasswordResetRequest` pendientes, evento de auditoría `account_disabled`, encolado en `outbox` en el idioma de la cuenta, impedimento de registro con el mismo correo sin aviso «ya tienes cuenta» y ejecución de `manage.py account disable --email <EMAIL>`.
+  Decisiones: al deshabilitar, invalidar `PasswordResetRequest` sustituyéndolo por una tumba `PhantomProcess(answers_expired=True)` igual que en el borrado físico de `User`, bloquear filas de superusuarios activos con `select_for_update()` para evitar condición de carrera en `last_superuser` y exponer `disable_block_reason(user)` para consulta preventiva (pendiente de ejecutar `pytest` y `mypy` en entorno con PostgreSQL/venv completo; `ruff` y `black` limpios). — Motivo: evita que un enlace de restablecimiento previo quede usable tras una posible reactivación y protege la unicidad de al menos un superusuario activo bajo concurrencia. — Confianza: [Probable]. — Cómo revertirla: revertir el commit de T-004.
 
 - [ ] T-005 Servicio `reactivate_account` con regla de 12 meses calendario UTC (incluido 29 de febrero) y subcomando CLI
   RF: RF-009, RF-010, RF-015 | Depende de: T-001, T-004 | Archivos: 3
@@ -69,8 +71,9 @@ Rama de integración: `feat/deshabilitar-cuenta` (los PR de las entregas van con
   Cómo probarlo: ejecutar `pytest apps/companies/tests/test_companies.py apps/accounts/tests/test_disable_account.py -k disabled_at` y probar `python manage.py company create --email <EMAIL> --name "Planta Norte"` y `python manage.py company list --email <EMAIL>`.
 
 - E-02 Servicio de deshabilitación con reautenticación, límites, revocación inmediata y CLI
-  Tareas: T-003, T-004 | Líneas estimadas: 340 | Rama: `feat/deshabilitar-cuenta-servicio`
+  Tareas: T-003, T-004 | Líneas reales: 498 | Rama: `feat/deshabilitar-cuenta-servicio`
   Cómo probarlo: ejecutar `pytest apps/accounts/tests/test_disable_account.py` y verificar con `python manage.py account disable --email <EMAIL>` que rechaza si posee empresa, bloquea tras 5 fallos, revoca sesiones al completarse y registra auditoría y correo en bandeja de salida.
+  Excepción: `T-003` (limitador y configuración) y `T-004` (servicio atómico `disable_account` y CLI) conforman un único corte vertical indivisible por debajo del tope excepcional de 500 líneas (`498`); separar `T-003` dejaría un limitador sin consumidor ni comportamiento funcional observable en la entrega.
 
 - E-03 Reactivación por soporte técnico en administración y consola con regla de 12 meses
   Tareas: T-005, T-006 | Líneas estimadas: 300 | Rama: `feat/deshabilitar-cuenta-reactivacion`

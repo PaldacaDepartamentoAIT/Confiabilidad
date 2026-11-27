@@ -89,6 +89,22 @@ def password_change_lockout_duration() -> timedelta:
     return timedelta(minutes=_at_least_one("PASSWORD_CHANGE_LOCKOUT_MINUTES"))
 
 
+def account_disable_max_failed_attempts() -> int:
+    return _at_least_one("ACCOUNT_DISABLE_MAX_FAILED_ATTEMPTS")
+
+
+def account_disable_attempt_window() -> timedelta:
+    return timedelta(minutes=_at_least_one("ACCOUNT_DISABLE_ATTEMPT_WINDOW_MINUTES"))
+
+
+def account_disable_lockout_duration() -> timedelta:
+    return timedelta(minutes=_at_least_one("ACCOUNT_DISABLE_LOCKOUT_MINUTES"))
+
+
+def account_disable_retention_months() -> int:
+    return _at_least_one("ACCOUNT_DISABLE_RETENTION_MONTHS")
+
+
 def _at_least_one(name: str) -> int:
     # Un límite de 0 no tiene significado definido: es un error de configuración, no un cierre.
     value = int(getattr(settings, name))
