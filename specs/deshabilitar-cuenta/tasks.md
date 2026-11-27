@@ -12,10 +12,11 @@ Estado: aprobado
   Excepción: andamiaje inicial de la nueva app `apps.companies` (`__init__.py`, `apps.py`, `models.py`, `admin.py`, `migrations/0001_initial.py`, `management/commands/company.py`, `tests/test_companies.py`) más su registro en `backend/config/settings.py`.
   Decisiones: configurar `on_delete=models.PROTECT` en `Company.owner`, normalizar el nombre con `strip()` + `full_clean(validate_unique=False)` en `Company.save()`, exponer `owns_company(user)` y añadir `delete --id` en `manage.py company` para pruebas CLI (pendiente de ejecutar `pytest` y `mypy` en entorno con PostgreSQL/venv completo; `ruff` y `black` limpios). — Motivo: protege al propietario frente a borrados accidentales a nivel de BD y facilita crear/limpiar empresas desde consola (`P-03`). — Confianza: [Probable]. — Cómo revertirla: revertir el commit de T-002.
 
-- [ ] T-003 Límite configurable e independiente de reautenticación para deshabilitar cuenta
+- [x] T-003 Límite configurable e independiente de reautenticación para deshabilitar cuenta
   RF: RF-005, RF-010 | Depende de: T-001 | Archivos: 4
   Hecho cuando: `pytest apps/accounts/tests/test_disable_account.py -k throttle` pasa verificando el contador independiente en caché (5 fallos en 5 minutos con bloqueo de 5 minutos por defecto), la lectura sin consumo (`check_account_disable`), la independencia frente a `change_password` y la configuración por entorno de límites y `ACCOUNT_DISABLE_RETENTION_MONTHS`.
   Excepción: la configuración por entorno se reparte entre `backend/config/settings.py` y `backend/apps/accounts/conf.py`, junto con el limitador en `backend/apps/accounts/throttling.py` y su test en `backend/apps/accounts/tests/test_disable_account.py`.
+  Decisiones: extraer helpers parametrizados `_check_user_lock`, `_record_user_failure` y `_clear_user_failures` en `throttling.py` compartidos entre `password-change` y `account-disable` con prefijos de caché separados, y añadir `ACCOUNT_DISABLE_RETENTION_MONTHS` en `conf.py`/`settings.py` (pendiente de ejecutar `pytest` y `mypy` en entorno con PostgreSQL/venv completo; `ruff` y `black` limpios). — Motivo: evita duplicación manteniendo contadores totalmente independientes por operación. — Confianza: [Probable]. — Cómo revertirla: revertir el commit de T-003.
 
 - [ ] T-004 Servicio atómico `disable_account` (empresa, último superusuario, reautenticación, revocación, auditoría y correo) y subcomando CLI
   RF: RF-001, RF-003, RF-004, RF-005, RF-006, RF-007, RF-012, RF-015, RF-016 | Depende de: T-001, T-002, T-003 | Archivos: 3

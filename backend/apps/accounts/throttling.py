@@ -61,40 +61,83 @@ def check_login_ip(ip: str, *, now: float | None = None) -> Verdict:
     )
 
 
-def _pw_attempts_key(user_id: int) -> str:
-    return f"password-change:attempts:{user_id}"
+def _user_attempts_key(prefix: str, user_id: int) -> str:
+    return f"{prefix}:attempts:{user_id}"
 
 
-def _pw_lock_key(user_id: int) -> str:
-    return f"password-change:lock:{user_id}"
+def _user_lock_key(prefix: str, user_id: int) -> str:
+    return f"{prefix}:lock:{user_id}"
 
 
-def check_password_change(user_id: int, *, now: float | None = None) -> Verdict:
+def _check_user_lock(prefix: str, user_id: int, *, now: float | None = None) -> Verdict:
     moment = time.time() if now is None else now
-    locked_until = cache.get(_pw_lock_key(user_id))
+    locked_until = cache.get(_user_lock_key(prefix, user_id))
     if isinstance(locked_until, (int, float)) and locked_until > moment:
         return Verdict(allowed=False, retry_after=math.ceil(locked_until - moment))
     return Verdict(allowed=True, retry_after=0)
 
 
-def record_password_change_failure(user_id: int, *, now: float | None = None) -> Verdict:
+def _record_user_failure(
+    prefix: str,
+    user_id: int,
+    *,
+    window: float,
+    max_attempts: int,
+    lockout: float,
+    now: float | None = None,
+) -> Verdict:
     moment = time.time() if now is None else now
-    window = conf.password_change_attempt_window().total_seconds()
-    max_attempts = conf.password_change_max_failed_attempts()
-    lockout = conf.password_change_lockout_duration().total_seconds()
-    key = _pw_attempts_key(user_id)
+    key = _user_attempts_key(prefix, user_id)
     stamps = [*_recent(key, moment, window), moment]
     if len(stamps) >= max_attempts:
-        cache.set(_pw_lock_key(user_id), moment + lockout, timeout=int(lockout))
+        cache.set(_user_lock_key(prefix, user_id), moment + lockout, timeout=int(lockout))
         cache.delete(key)
         return Verdict(allowed=False, retry_after=math.ceil(lockout))
     cache.set(key, stamps, timeout=int(window))
     return Verdict(allowed=True, retry_after=0)
 
 
+def _clear_user_failures(prefix: str, user_id: int) -> None:
+    cache.delete(_user_attempts_key(prefix, user_id))
+    cache.delete(_user_lock_key(prefix, user_id))
+
+
+def check_password_change(user_id: int, *, now: float | None = None) -> Verdict:
+    return _check_user_lock("password-change", user_id, now=now)
+
+
+def record_password_change_failure(user_id: int, *, now: float | None = None) -> Verdict:
+    return _record_user_failure(
+        "password-change",
+        user_id,
+        window=conf.password_change_attempt_window().total_seconds(),
+        max_attempts=conf.password_change_max_failed_attempts(),
+        lockout=conf.password_change_lockout_duration().total_seconds(),
+        now=now,
+    )
+
+
 def clear_password_change_failures(user_id: int) -> None:
-    cache.delete(_pw_attempts_key(user_id))
-    cache.delete(_pw_lock_key(user_id))
+    _clear_user_failures("password-change", user_id)
+
+
+def check_account_disable(user_id: int, *, now: float | None = None) -> Verdict:
+    return _check_user_lock("account-disable", user_id, now=now)
+
+
+def record_account_disable_failure(user_id: int, *, now: float | None = None) -> Verdict:
+    return _record_user_failure(
+        "account-disable",
+        user_id,
+        window=conf.account_disable_attempt_window().total_seconds(),
+        max_attempts=conf.account_disable_max_failed_attempts(),
+        lockout=conf.account_disable_lockout_duration().total_seconds(),
+        now=now,
+    )
+
+
+def clear_account_disable_failures(user_id: int) -> None:
+    _clear_user_failures("account-disable", user_id)
 
 
 def record_ip(ip: str, *, now: float | None = None) -> None:
