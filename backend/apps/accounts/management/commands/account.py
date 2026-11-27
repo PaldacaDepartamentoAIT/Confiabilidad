@@ -9,7 +9,7 @@ from apps.accounts.models import User
 
 
 class Command(BaseCommand):
-    help = "Disable an active account from the console."
+    help = "Disable or reactivate an account from the console."
 
     def add_arguments(self, parser: CommandParser) -> None:
         actions = parser.add_subparsers(dest="action", required=True)
@@ -20,6 +20,11 @@ class Command(BaseCommand):
             default=None,
             help="Visible in shell history; avoid passing inline.",
         )
+
+        reactivate_parser = actions.add_parser(
+            "reactivate", help="Reactivate a disabled account within the retention period."
+        )
+        reactivate_parser.add_argument("--email", required=True)
 
     def handle(self, *args: Any, **options: Any) -> None:
         action = str(options["action"]).replace("-", "_")
@@ -50,3 +55,17 @@ class Command(BaseCommand):
                 raise CommandError(_("Current password is required."))
             raise CommandError(_("Current password is incorrect."))
         self.stdout.write(f"disabled: {result.user.email}")
+
+    def _reactivate(self, options: dict[str, Any]) -> None:
+        email = str(options["email"]).strip()
+        user = User.objects.filter(email__iexact=email).first()
+        if user is None:
+            raise CommandError(_("Unknown account: %(email)s") % {"email": email})
+        result = disable.reactivate_account(user)
+        if isinstance(result, disable.ReactivationAlreadyActive):
+            raise CommandError(_("Account is already active: %(email)s") % {"email": email})
+        if isinstance(result, disable.ReactivationExpired):
+            raise CommandError(
+                _("The 12-month reactivation period has expired for %(email)s.") % {"email": email}
+            )
+        self.stdout.write(f"reactivated: {result.user.email}")

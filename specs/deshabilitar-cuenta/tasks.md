@@ -23,13 +23,15 @@ Estado: aprobado
   Hecho cuando: `pytest apps/accounts/tests/test_disable_account.py` pasa verificando el orden prioritario (`owns_company` → `last_superuser` → `throttling` → contraseña actual sin consumir intentos en rechazos previos), desactivación atómica con `disabled_at`, revocación inmediata de sesiones web/escritorio (`UserSession` y caché), invalidación de `PasswordResetRequest` pendientes, evento de auditoría `account_disabled`, encolado en `outbox` en el idioma de la cuenta, impedimento de registro con el mismo correo sin aviso «ya tienes cuenta» y ejecución de `manage.py account disable --email <EMAIL>`.
   Decisiones: al deshabilitar, invalidar `PasswordResetRequest` sustituyéndolo por una tumba `PhantomProcess(answers_expired=True)` igual que en el borrado físico de `User`, bloquear filas de superusuarios activos con `select_for_update()` para evitar condición de carrera en `last_superuser` y exponer `disable_block_reason(user)` para consulta preventiva (pendiente de ejecutar `pytest` y `mypy` en entorno con PostgreSQL/venv completo; `ruff` y `black` limpios). — Motivo: evita que un enlace de restablecimiento previo quede usable tras una posible reactivación y protege la unicidad de al menos un superusuario activo bajo concurrencia. — Confianza: [Probable]. — Cómo revertirla: revertir el commit de T-004.
 
-- [ ] T-005 Servicio `reactivate_account` con regla de 12 meses calendario UTC (incluido 29 de febrero) y subcomando CLI
+- [x] T-005 Servicio `reactivate_account` con regla de 12 meses calendario UTC (incluido 29 de febrero) y subcomando CLI
   RF: RF-009, RF-010, RF-015 | Depende de: T-001, T-004 | Archivos: 3
   Hecho cuando: `pytest apps/accounts/tests/test_reactivation_and_purge.py -k reactivate` pasa verificando la aritmética de 12 meses calendario en UTC (29 de febrero venciendo el 28 de febrero en año no bisiesto) y umbral configurable, reactivación exitosa antes del vencimiento conservando contraseña y consentimientos y limpiando `disabled_at`, rechazo al alcanzarse o superarse los 12 meses, y ejecución de `manage.py account reactivate --email <EMAIL>`.
+  Decisiones: implementar `retention_deadline`, `is_retention_expired` y `reactivate_account` con `calendar.monthrange` en `disable.py` y el subcomando `account reactivate` sobre `User.objects` (pendiente de ejecutar `pytest` y `mypy` en entorno con PostgreSQL/venv completo; `ruff` y `black` limpios). — Motivo: evita dependencias externas y calcula con exactitud los 12 meses calendario en UTC incluyendo años bisiestos. — Confianza: [Probable]. — Cómo revertirla: revertir el commit de T-005.
 
-- [ ] T-006 Panel de administración de `User` con reactivación restringida a «Soporte técnico» y superusuarios
+- [x] T-006 Panel de administración de `User` con reactivación restringida a «Soporte técnico» y superusuarios
   RF: RF-009, RF-010 | Depende de: T-005 | Archivos: 2
   Hecho cuando: `pytest apps/accounts/tests/test_reactivation_and_purge.py -k admin` pasa verificando que miembros del grupo «Soporte técnico» y superusuarios pueden reactivar cuentas dentro de los 12 meses (conservando el autor en `HistoricalUser`), que otro personal `staff` queda impedido, que tras 12 meses el panel rechaza la reactivación y que desactivar manualmente desde admin registra `disabled_at`.
+  Decisiones: registrar `UserAdmin(SimpleHistoryAdmin)` con `UserAdminForm` validando `is_support(request)` e `is_retention_expired` (además de `has_change_permission` bloqueando cuentas inactivas para otro `staff`), protegiendo campos de privilegios (`is_staff`, `is_superuser`, `groups`, `user_permissions`) como solo lectura para no superusuarios y bloqueando la reversión del historial por `POST` (pendiente de ejecutar `pytest` y `mypy` en entorno con PostgreSQL/venv completo; `ruff` y `black` limpios). — Motivo: evita escalada de privilegios por soporte y respeta la inmutabilidad del historial. — Confianza: [Probable]. — Cómo revertirla: revertir el commit de T-006.
 
 - [ ] T-007 Lógica de purga parcial de cuentas deshabilitadas vencidas tras 12 meses
   RF: RF-011, RF-012 | Depende de: T-002, T-005 | Archivos: 2
@@ -76,8 +78,9 @@ Rama de integración: `feat/deshabilitar-cuenta` (los PR de las entregas van con
   Excepción: `T-003` (limitador y configuración) y `T-004` (servicio atómico `disable_account` y CLI) conforman un único corte vertical indivisible por debajo del tope excepcional de 500 líneas (`498`); separar `T-003` dejaría un limitador sin consumidor ni comportamiento funcional observable en la entrega.
 
 - E-03 Reactivación por soporte técnico en administración y consola con regla de 12 meses
-  Tareas: T-005, T-006 | Líneas estimadas: 300 | Rama: `feat/deshabilitar-cuenta-reactivacion`
+  Tareas: T-005, T-006 | Líneas reales: 425 | Rama: `feat/deshabilitar-cuenta-reactivacion`
   Cómo probarlo: ejecutar `pytest apps/accounts/tests/test_reactivation_and_purge.py -k "reactivate or admin"` y verificar `python manage.py account reactivate --email <EMAIL>` y la reactivación desde Django Admin como miembro de «Soporte técnico» (< 12 meses permitido, ≥ 12 meses rechazado).
+  Excepción: `T-005` (servicio y CLI) y `T-006` (panel de administración `UserAdmin` y pruebas conjuntas en `test_reactivation_and_purge.py`) cubren las dos vías de reactivación de `RF-009` y `RF-010` en un único corte por debajo del límite excepcional de 500 líneas (`425`).
 
 - E-04 Purga periódica a los 12 meses integrada en `tareas-purga-y-alertas`
   Tareas: T-007, T-008 | Líneas estimadas: 290 | Rama: `feat/deshabilitar-cuenta-purga`
