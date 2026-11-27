@@ -377,9 +377,11 @@ describe("sending the form", () => {
     await fillValidForm(user);
     await user.click(screen.getByRole("button", { name: "Continuar" }));
 
-    expect(
-      await screen.findByText(/Algo no ha funcionado\. Revisa los datos y vuelve a intentarlo\./),
-    ).toHaveFocus();
+    const toast = (
+      await screen.findByText(/Algo no ha funcionado\. Revisa los datos y vuelve a intentarlo\./)
+    ).closest('[data-ui="toast"]');
+    expect(toast).toHaveClass("toast", "toast-error");
+    expect(toast).toHaveAttribute("role", "alert");
   });
 
   it("with errors in and outside the fields, shows both", async () => {
