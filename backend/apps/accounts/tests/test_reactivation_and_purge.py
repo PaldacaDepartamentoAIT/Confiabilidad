@@ -27,14 +27,15 @@ def test_retention_deadline_handles_leap_day_and_configurable_months() -> None:
 
 @pytest.mark.django_db
 def test_reactivate_account_before_and_after_12_months() -> None:
-    Terms.objects.create(
-        kind=Terms.Kind.TERMS,
-        version="1.0",
-        locale="es",
-        content="Terminos",
-        published_at=datetime(2024, 1, 1, tzinfo=UTC),
-        requires_reacceptance=True,
-    )
+    for locale in ("es", "pt-BR", "en"):
+        Terms.objects.create(
+            kind=Terms.Kind.TERMS,
+            version="1.0",
+            locale=locale,
+            content=f"Terminos {locale}",
+            published_at=datetime(2024, 1, 1, tzinfo=UTC),
+            requires_reacceptance=True,
+        )
     user = make_user(email="react@example.com", password=DEFAULT_PASSWORD)
     accept_terms(user, version="1.0", locale="es")
 
