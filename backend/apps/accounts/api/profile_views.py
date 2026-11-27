@@ -14,7 +14,11 @@ from apps.accounts.api import messages
 from apps.accounts.api.auth_views import _body_language, _BrowserCsrfMixin, _require_auth
 from apps.accounts.api.flow_views import _password_params
 from apps.accounts.api.language import request_language
-from apps.accounts.api.profile_serializers import PasswordChangeSerializer, ProfileUpdateSerializer
+from apps.accounts.api.profile_serializers import (
+    AccountDisableSerializer,
+    PasswordChangeSerializer,
+    ProfileUpdateSerializer,
+)
 from apps.accounts.api.views import _known, _limited, _read_body, _render, _unreadable
 from apps.accounts.models import User
 
@@ -165,4 +169,75 @@ class AppPasswordChangeView(APIView):
 
 
 class BrowserPasswordChangeView(_BrowserCsrfMixin, AppPasswordChangeView):
+    pass
+
+
+class AppAccountDisableView(APIView):
+    authentication_classes: list[Any] = []
+    permission_classes = [AllowAny]
+    parser_classes = [JSONParser]
+    client_kind: ClassVar[str] = "app"
+
+    def post(self, request: Request) -> Response:
+        body, readable = _read_body(request)
+        language = _body_language(request, body, readable)
+        auth = _require_auth(request, self.client_kind, language, require_terms=True)
+        if isinstance(auth, Response):
+            return auth
+        user, _ = auth
+        block_reason = disable.disable_block_reason(user)
+        if block_reason is not None:
+            return Response(
+                {
+                    "code": block_reason.value,
+                    "message": messages.error_text(block_reason.value, language),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        verdict = throttling.check_account_disable(user.pk)
+        if not verdict.allowed:
+            return _limited(verdict, language)
+        if not readable:
+            return _unreadable(language)
+        serializer = AccountDisableSerializer(data=body)
+        if not serializer.is_valid():
+            return Response(
+                {"errors": _render(serializer.errors, language)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        result = disable.disable_account(
+            user, current_password=serializer.validated_data["current_password"]
+        )
+        if isinstance(result, disable.DisableBlocked):
+            return Response(
+                {
+                    "code": result.reason.value,
+                    "message": messages.error_text(result.reason.value, language),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if isinstance(result, disable.DisableLocked):
+            return _limited(
+                throttling.Verdict(allowed=False, retry_after=result.retry_after), language
+            )
+        if isinstance(result, disable.DisableInvalid):
+            return Response(
+                {
+                    "errors": {
+                        "current_password": [
+                            {
+                                "code": "current_password_incorrect",
+                                "message": messages.error_text(
+                                    "current_password_incorrect", language
+                                ),
+                            }
+                        ]
+                    }
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return Response({"result": "account_disabled"}, status=status.HTTP_200_OK)
+
+
+class BrowserAccountDisableView(_BrowserCsrfMixin, AppAccountDisableView):
     pass

@@ -2,6 +2,7 @@ import secrets
 from typing import Any, ClassVar
 
 from allauth.account.adapter import get_adapter
+from django.conf import settings
 from django.contrib.auth import HASH_SESSION_KEY, SESSION_KEY, get_user, login, logout
 from django.core.exceptions import ValidationError
 from django.http import HttpRequest
@@ -15,7 +16,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts import sessions, throttling
+from apps.accounts import disable, sessions, throttling
 from apps.accounts.api import messages
 from apps.accounts.api.auth_serializers import (
     LoginSerializer,
@@ -183,7 +184,19 @@ class AppLoginView(APIView):
         if not user.is_active:
             # No llamamos a super().pre_login porque accede a sesión/mensajes y añade Vary: Cookie.
             adapter.record_inactive_login_attempt(django_request, user)
-            return _err("invalid_credentials", language)
+            if disable.is_retention_expired(user):
+                return _err("account_disabled_expired", language)
+            return Response(
+                {
+                    "code": "account_disabled",
+                    "message": messages.error_text(
+                        "account_disabled",
+                        language,
+                        params={"support_email": settings.EMAIL_SUPPORT_ADDRESS},
+                    ),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         login(django_request, user, backend=_AUTH_BACKEND)
         payload = _session_info_payload(user, language)
         if self.client_kind == "app":
