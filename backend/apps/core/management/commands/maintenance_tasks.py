@@ -10,6 +10,7 @@ TASK_PATHS: dict[str, str] = {
     MaintenanceTaskName.PURGE_STALE_REGISTRATIONS: "apps.accounts.tasks.purge_stale_registrations",
     MaintenanceTaskName.PURGE_EXPIRED_SESSIONS: "apps.accounts.tasks.purge_expired_sessions",
     MaintenanceTaskName.PURGE_SECURITY_EVENTS: "apps.audit.tasks.purge_security_events",
+    MaintenanceTaskName.PURGE_DISABLED_ACCOUNTS: "apps.accounts.tasks.purge_disabled_accounts",
 }
 
 

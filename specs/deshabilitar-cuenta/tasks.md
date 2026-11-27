@@ -33,14 +33,16 @@ Estado: aprobado
   Hecho cuando: `pytest apps/accounts/tests/test_reactivation_and_purge.py -k admin` pasa verificando que miembros del grupo «Soporte técnico» y superusuarios pueden reactivar cuentas dentro de los 12 meses (conservando el autor en `HistoricalUser`), que otro personal `staff` queda impedido, que tras 12 meses el panel rechaza la reactivación y que desactivar manualmente desde admin registra `disabled_at`.
   Decisiones: registrar `UserAdmin(SimpleHistoryAdmin)` con `UserAdminForm` validando `is_support(request)` e `is_retention_expired` (además de `has_change_permission` bloqueando cuentas inactivas para otro `staff`), protegiendo campos de privilegios (`is_staff`, `is_superuser`, `groups`, `user_permissions`) como solo lectura para no superusuarios y bloqueando la reversión del historial por `POST` (pendiente de ejecutar `pytest` y `mypy` en entorno con PostgreSQL/venv completo; `ruff` y `black` limpios). — Motivo: evita escalada de privilegios por soporte y respeta la inmutabilidad del historial. — Confianza: [Probable]. — Cómo revertirla: revertir el commit de T-006.
 
-- [ ] T-007 Lógica de purga parcial de cuentas deshabilitadas vencidas tras 12 meses
+- [x] T-007 Lógica de purga parcial de cuentas deshabilitadas vencidas tras 12 meses
   RF: RF-011, RF-012 | Depende de: T-002, T-005 | Archivos: 2
   Hecho cuando: `pytest apps/accounts/tests/test_reactivation_and_purge.py -k purge_accounts` pasa verificando la eliminación física de cuentas con `disabled_at` vencido (conservando `HistoricalUser` y `SecurityEvent` y liberando el correo para un nuevo registro), la preservación de cuentas sin `disabled_at` heredadas, y la omisión parcial sin abortar el resto del lote si alguna cuenta vencida conservara una empresa.
+  Decisiones: ejecutar el borrado físico por cada cuenta vencida en su propia transacción atómica dentro de `purge_expired_accounts`, registrando el `id` en logs sin correo en claro y elevando `DisabledAccountPurgeAnomaly` al finalizar si hubo cuentas omitidas por empresa (pendiente de ejecutar `pytest` y `mypy` en entorno con PostgreSQL/venv completo; `ruff` y `black` limpios). — Motivo: garantiza que una anomalía de empresa en una cuenta no haga rollback sobre las cuentas válidas ya purgadas y permite al runner de mantenimiento registrar la alerta operativa. — Confianza: [Probable]. — Cómo revertirla: revertir el commit de T-007.
 
-- [ ] T-008 Cuarta tarea periódica `purge_disabled_accounts` integrada en `tareas-purga-y-alertas`, Celery Beat y CLI
-  RF: RF-011, RF-015 | Depende de: T-007 | Archivos: 6
+- [x] T-008 Cuarta tarea periódica `purge_disabled_accounts` integrada en `tareas-purga-y-alertas`, Celery Beat y CLI
+  RF: RF-011, RF-015 | Depende de: T-007 | Archivos: 7
   Hecho cuando: `pytest apps/accounts/tests/test_reactivation_and_purge.py -k maintenance` pasa verificando el registro en `MaintenanceTaskName`, programación diaria configurable en `CELERY_BEAT_SCHEDULE`, ejecución mediante `run_maintenance_task` y `manage.py maintenance_tasks run purge_disabled_accounts` (incluido `simulate-failure`), y generación de `MaintenanceAlert` + correo operativo cuando el lote omite alguna cuenta por empresa anómala.
-  Excepción: añade `PURGE_DISABLED_ACCOUNTS` en `apps/core/models.py` (con su migración en `apps/core/migrations/`), registra la tarea en `apps/core/management/commands/maintenance_tasks.py`, implementa la tarea Celery en `apps/accounts/tasks.py`, configura `CELERY_BEAT_SCHEDULE` en `backend/config/settings.py` y cubre el flujo en `apps/accounts/tests/test_reactivation_and_purge.py`.
+  Excepción: añade `PURGE_DISABLED_ACCOUNTS` en `apps/core/models.py` (con su migración en `apps/core/migrations/`), registra la tarea en `apps/core/management/commands/maintenance_tasks.py`, implementa la tarea Celery en `apps/accounts/tasks.py`, configura `CELERY_BEAT_SCHEDULE` en `backend/config/settings.py`, documenta la variable en `backend/.env.example` (exigido por `test_maintenance_command.py`) y cubre el flujo en `apps/accounts/tests/test_reactivation_and_purge.py`.
+  Decisiones: integrar `purge_disabled_accounts` mediante `run_maintenance_task` con `PURGE_DISABLED_ACCOUNTS_INTERVAL_SECONDS=86400` y documentar la variable en `.env.example` para mantener consistencia con `test_env_example_documents_all_maintenance_variables` (pendiente de ejecutar `pytest` y `mypy` en entorno con PostgreSQL/venv completo; `ruff` y `black` limpios). — Motivo: aprovecha el bloqueo distribuido, historial de estado y alertas operativas ya existentes sin duplicar infraestructura. — Confianza: [Probable]. — Cómo revertirla: revertir el commit de T-008.
 
 - [ ] T-009 Extensión de `GET auth/profile` con estado de baja, serializador y mensajes multiidioma
   RF: RF-003, RF-004, RF-005, RF-014, RF-016 | Depende de: T-004 | Archivos: 4
@@ -83,7 +85,7 @@ Rama de integración: `feat/deshabilitar-cuenta` (los PR de las entregas van con
   Excepción: `T-005` (servicio y CLI) y `T-006` (panel de administración `UserAdmin` y pruebas conjuntas en `test_reactivation_and_purge.py`) cubren las dos vías de reactivación de `RF-009` y `RF-010` en un único corte por debajo del límite excepcional de 500 líneas (`425`).
 
 - E-04 Purga periódica a los 12 meses integrada en `tareas-purga-y-alertas`
-  Tareas: T-007, T-008 | Líneas estimadas: 290 | Rama: `feat/deshabilitar-cuenta-purga`
+  Tareas: T-007, T-008 | Líneas reales: 255 | Rama: `feat/deshabilitar-cuenta-purga`
   Cómo probarlo: ejecutar `pytest apps/accounts/tests/test_reactivation_and_purge.py` y correr `python manage.py maintenance_tasks run purge_disabled_accounts`, `python manage.py maintenance_tasks status` y `python manage.py maintenance_tasks simulate-failure purge_disabled_accounts`.
 
 - E-05 Endpoints HTTP de perfil ampliado, baja de cuenta y login de cuentas deshabilitadas

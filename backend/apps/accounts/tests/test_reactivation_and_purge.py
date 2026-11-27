@@ -1,18 +1,27 @@
-from datetime import UTC, datetime
+import logging
+from datetime import UTC, date, datetime, timedelta
 from io import StringIO
 
 import pytest
+from django.conf import settings as django_settings
 from django.contrib.auth.models import Group, Permission
+from django.core import mail
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import Client, override_settings
 from django.urls import reverse
+from django.utils import timezone
 
-from apps.accounts import disable
-from apps.accounts.models import User
+from apps.accounts import disable, registration
+from apps.accounts import tasks as account_tasks
+from apps.accounts.models import PendingRegistration, User
 from apps.accounts.tests.factories import DEFAULT_PASSWORD, make_user
+from apps.audit.models import EventType, SecurityEvent
+from apps.companies.models import Company
 from apps.consents.models import Terms
 from apps.consents.services import TermsState, accept_terms, consent_status
+from apps.core.maintenance import SimulatedMaintenanceFailure
+from apps.core.models import MaintenanceAlert, MaintenanceTaskName, MaintenanceTaskStatus
 
 
 def test_retention_deadline_handles_leap_day_and_configurable_months() -> None:
@@ -160,6 +169,124 @@ def test_admin_support_can_reactivate_within_12_months_and_is_blocked_after() ->
     # El historial no puede revertirse mediante POST desde el panel.
     history_url = reverse("admin:accounts_user_history", args=[target.pk])
     assert client.get(history_url).status_code == 200
+
+
+@pytest.mark.django_db
+def test_purge_accounts_deletes_expired_preserves_history_and_frees_email() -> None:
+    now = timezone.now()
+    expired = make_user(email="old@example.com")
+    expired_pk = expired.pk
+    disable.disable_account(expired, current_password=DEFAULT_PASSWORD)
+    User.objects.filter(pk=expired_pk).update(disabled_at=now - timedelta(days=400))
+
+    recent = make_user(email="recent@example.com")
+    recent.is_active = False
+    recent.disabled_at = now - timedelta(days=30)
+    recent.save(update_fields=["is_active", "disabled_at"])
+
+    legacy_null = make_user(email="legacy@example.com", is_active=False)
+    User.objects.filter(pk=legacy_null.pk).update(disabled_at=None)
+
+    active = make_user(email="active@example.com")
+    before_events = SecurityEvent.objects.filter(event_type=EventType.ACCOUNT_DISABLE).count()
+
+    deleted = disable.purge_expired_accounts(now=now)
+    assert deleted == 1
+    assert not User.objects.filter(pk=expired_pk).exists()
+    assert User.objects.filter(pk=recent.pk).exists()
+    assert User.objects.filter(pk=legacy_null.pk).exists()
+    assert User.objects.filter(pk=active.pk).exists()
+    assert User.history.filter(id=expired_pk).exists()
+    assert SecurityEvent.objects.filter(event_type=EventType.ACCOUNT_DISABLE).count() == (
+        before_events
+    )
+
+    # Al quedar libre el correo tras la purga física, admite un nuevo registro.
+    started = registration.start(
+        email="old@example.com",
+        name="Nueva Persona",
+        birthdate=date(1992, 4, 10),
+        country="ES",
+    )
+    registration.resolve_registration(started.public_id)
+    assert PendingRegistration.objects.filter(email__iexact="old@example.com").exists()
+
+
+@pytest.mark.django_db
+def test_purge_accounts_is_partial_when_expired_account_owns_company(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    now = timezone.now()
+    valid_expired = make_user(
+        email="purge-ok@example.com",
+        is_active=False,
+        disabled_at=now - timedelta(days=400),
+    )
+    anomalous_owner = make_user(email="purge-owner@example.com")
+    Company.objects.create(name="Anomalia", owner=anomalous_owner)
+    User.objects.filter(pk=anomalous_owner.pk).update(
+        is_active=False,
+        disabled_at=now - timedelta(days=400),
+    )
+
+    with caplog.at_level(logging.ERROR):
+        with pytest.raises(disable.DisabledAccountPurgeAnomaly):
+            disable.purge_expired_accounts(now=now)
+
+    assert not User.objects.filter(pk=valid_expired.pk).exists()
+    assert User.objects.filter(pk=anomalous_owner.pk).exists()
+    assert "still owns at least one company" in caplog.text
+
+
+@pytest.mark.django_db
+def test_maintenance_task_purge_disabled_accounts_alerts_and_cli() -> None:
+    assert "accounts-purge-disabled-accounts" in django_settings.CELERY_BEAT_SCHEDULE
+    now = timezone.now()
+    valid = make_user(
+        email="maint-ok@example.com",
+        is_active=False,
+        disabled_at=now - timedelta(days=400),
+    )
+    owner = make_user(email="maint-owner@example.com")
+    company = Company.objects.create(name="Pendiente", owner=owner)
+    User.objects.filter(pk=owner.pk).update(
+        is_active=False,
+        disabled_at=now - timedelta(days=400),
+    )
+
+    with override_settings(MAINTENANCE_ALERT_EMAILS=["ops@example.com"]):
+        with pytest.raises(SimulatedMaintenanceFailure):
+            account_tasks.purge_disabled_accounts(simulate_failure=True)
+        assert User.objects.filter(pk=valid.pk).exists()
+        assert len(mail.outbox) == 1
+
+        # En ejecución real con anomalía: purga la cuenta válida, omite la propietaria y alerta.
+        with pytest.raises(disable.DisabledAccountPurgeAnomaly):
+            account_tasks.purge_disabled_accounts()
+        assert not User.objects.filter(pk=valid.pk).exists()
+        assert User.objects.filter(pk=owner.pk).exists()
+        status_row = MaintenanceTaskStatus.objects.get(
+            task_name=MaintenanceTaskName.PURGE_DISABLED_ACCOUNTS
+        )
+        assert status_row.status == MaintenanceTaskStatus.Status.FAILURE
+        assert (
+            MaintenanceAlert.objects.filter(
+                task_name=MaintenanceTaskName.PURGE_DISABLED_ACCOUNTS,
+                resolved_at__isnull=True,
+            ).count()
+            == 2
+        )
+
+        # Al borrarse la empresa, la siguiente corrida purga la cuenta y resuelve alertas.
+        company.delete()
+        out = StringIO()
+        call_command("maintenance_tasks", "run", "purge_disabled_accounts", stdout=out)
+        assert "completed purge_disabled_accounts: deleted=1" in out.getvalue()
+        assert not User.objects.filter(pk=owner.pk).exists()
+        assert not MaintenanceAlert.objects.filter(
+            task_name=MaintenanceTaskName.PURGE_DISABLED_ACCOUNTS,
+            resolved_at__isnull=True,
+        ).exists()
 
 
 @pytest.mark.django_db
