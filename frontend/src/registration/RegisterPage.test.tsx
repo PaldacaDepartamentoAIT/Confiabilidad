@@ -5,6 +5,7 @@ import { I18nextProvider } from "react-i18next";
 import { createClient } from "../api/client";
 import type { RegistrationOptions } from "../api/registration";
 import { LiveAnnouncer } from "../components/LiveAnnouncer";
+import { ToastProvider } from "../components/toast/ToastProvider";
 import { createI18n } from "../i18n";
 import { RegisterPage } from "./RegisterPage";
 
@@ -38,7 +39,9 @@ function renderPage(fetcher: typeof fetch, language = "es") {
   render(
     <I18nextProvider i18n={i18n}>
       <LiveAnnouncer>
-        <RegisterPage client={client} />
+        <ToastProvider>
+          <RegisterPage client={client} />
+        </ToastProvider>
       </LiveAnnouncer>
     </I18nextProvider>,
   );
@@ -374,9 +377,11 @@ describe("sending the form", () => {
     await fillValidForm(user);
     await user.click(screen.getByRole("button", { name: "Continuar" }));
 
-    expect(
-      await screen.findByText(/Algo no ha funcionado\. Revisa los datos y vuelve a intentarlo\./),
-    ).toHaveFocus();
+    const toast = (
+      await screen.findByText(/Algo no ha funcionado\. Revisa los datos y vuelve a intentarlo\./)
+    ).closest('[data-ui="toast"]');
+    expect(toast).toHaveClass("toast", "toast-error");
+    expect(toast).toHaveAttribute("role", "alert");
   });
 
   it("with errors in and outside the fields, shows both", async () => {
@@ -394,8 +399,9 @@ describe("sending the form", () => {
     const country = screen.getByRole("combobox", { name: "País" });
     await waitFor(() => expect(country).toHaveFocus());
     expect(country).toHaveAccessibleDescription("Elige un país de la lista.");
-    const shown = screen.getAllByText(/Algo no ha funcionado/);
-    expect(shown.some((element) => element.getAttribute("tabindex") === "-1")).toBe(true);
+    const toast = screen.getByText(/Algo no ha funcionado/).closest('[data-ui="toast"]');
+    expect(toast).toHaveClass("toast", "toast-error");
+    expect(toast).toHaveAttribute("role", "alert");
   });
 
   it("while waiting for the answer, a second submission sends nothing", async () => {
@@ -423,7 +429,9 @@ describe("sending the form", () => {
     await fillValidForm(user);
     await user.click(screen.getByRole("button", { name: "Continuar" }));
 
-    expect(await screen.findByText(text)).toHaveFocus();
+    const toast = (await screen.findByText(text)).closest('[data-ui="toast"]');
+    expect(toast).toHaveClass("toast", "toast-error");
+    expect(toast).toHaveAttribute("role", "alert");
     expect(screen.getByRole("textbox", { name: "Nombre completo" })).toHaveValue("Ana Pérez");
   });
 

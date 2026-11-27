@@ -74,3 +74,28 @@ test("dismisses quickly when clicking the X close button and passes a11y", async
     vi.useRealTimers();
   }
 });
+
+test("renders error toasts as assertive alerts with error accent class and reactive i18n key", () => {
+  const i18n = createI18n("es");
+  render(
+    <I18nextProvider i18n={i18n}>
+      <ToastProvider>
+        <Trigger input={{ kind: "error", messageKey: "validation.serverError" }} />
+      </ToastProvider>
+    </I18nextProvider>,
+  );
+
+  fireEvent.click(screen.getByRole("button", { name: "Notify" }));
+  const toast = screen.getByRole("alert");
+  expect(toast).toHaveClass("toast", "toast-error");
+  expect(toast).toHaveTextContent(
+    "Algo falló en nuestro servidor. Vuelve a intentarlo en unos minutos.",
+  );
+
+  act(() => {
+    void i18n.changeLanguage("en");
+  });
+  expect(toast).toHaveTextContent(
+    "Something went wrong on our server. Try again in a few minutes.",
+  );
+});

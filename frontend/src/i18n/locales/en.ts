@@ -85,6 +85,13 @@ export const en = {
     unknownField: "This field is not allowed.",
     noProfileFields: "Provide at least one profile field to update.",
     currentPasswordIncorrect: "The current password is incorrect.",
+    ownsCompany:
+      "You own at least one company. You must transfer or delete it first before disabling your account.",
+    lastSuperuser: "You cannot disable the last active superuser in the system.",
+    accountDisabled:
+      "Your account is disabled. You can request reactivation by contacting support within 12 months of deactivation.",
+    accountDisabledExpired:
+      "Your account is disabled and the 12-month reactivation period has expired.",
     retryIn: "Too many attempts. Try again in {{seconds}} s.",
     networkError: "Could not connect. Check your connection and try again.",
     unknownError: "Something did not work. Check the data and try again.",
@@ -178,6 +185,14 @@ export const en = {
     newPasswordLabel: "New password",
     passwordChangeSubmit: "Change password",
     passwordChanged: "Your password has been updated and your other sessions have been signed out.",
+    accountDisabledNotice:
+      "Your account has been disabled and your sessions have been signed out. You can reactivate it by contacting support within 12 months.",
+    disableAccountTitle: "Disable account",
+    disableAccountIntro:
+      "Disabling your account will immediately sign out all your sessions and block access. You can reactivate it by contacting support within 12 months.",
+    disableAccountContinue: "Continue to confirm",
+    disableAccountConfirmPrompt: "Enter your current password to confirm disabling your account.",
+    disableAccountSubmit: "Disable my account",
   },
 };
 

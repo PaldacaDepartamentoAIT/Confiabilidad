@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { I18nextProvider } from "react-i18next";
 
 import { App } from "../App";
+import { ToastProvider } from "../components/toast/ToastProvider";
 import { createI18n } from "../i18n";
 import { THEME_STORAGE_KEY } from "../theme/theme";
 import { ShowcasePage } from "./ShowcasePage";
@@ -10,7 +11,9 @@ import { ShowcasePage } from "./ShowcasePage";
 function renderPage(language = "es") {
   render(
     <I18nextProvider i18n={createI18n(language)}>
-      <ShowcasePage />
+      <ToastProvider>
+        <ShowcasePage />
+      </ToastProvider>
     </I18nextProvider>,
   );
 }
@@ -337,17 +340,19 @@ test("in the whole app, entering the processing state is announced to screen rea
   }
 });
 
-test("the sample error button shows the too many attempts error and focuses it", async () => {
+test("the sample error button shows the too many attempts error in an error toast without moving focus", async () => {
   const user = userEvent.setup();
   renderPage();
 
-  await user.click(screen.getByRole("button", { name: "Mostrar error general de ejemplo" }));
+  const trigger = screen.getByRole("button", { name: "Mostrar error general de ejemplo" });
+  await user.click(trigger);
 
-  const message = screen.getByText("Demasiados intentos", { exact: false }).closest("div");
-  expect(message).toHaveTextContent(
-    "Error: Demasiados intentos. Espera unos minutos y vuelve a intentarlo.",
+  const toast = screen.getByRole("alert");
+  expect(toast).toHaveClass("toast", "toast-error");
+  expect(toast).toHaveTextContent(
+    "Demasiados intentos. Espera unos minutos y vuelve a intentarlo.",
   );
-  expect(message).toHaveFocus();
+  expect(toast).not.toHaveFocus();
 });
 
 test("the sample error follows the language change and the next submission removes it", async () => {
@@ -357,8 +362,8 @@ test("the sample error follows the language change and the next submission remov
   await user.click(screen.getByRole("button", { name: "Mostrar error general de ejemplo" }));
   await user.click(screen.getByRole("button", { name: "English" }));
 
-  expect(screen.getByText("Too many attempts", { exact: false }).closest("div")).toHaveTextContent(
-    "Error: Too many attempts. Wait a few minutes and try again.",
+  expect(screen.getByRole("alert")).toHaveTextContent(
+    "Too many attempts. Wait a few minutes and try again.",
   );
 
   await user.click(screen.getByRole("button", { name: "Verify" }));
@@ -376,7 +381,9 @@ test("has a theme button that saves the chosen theme in the storage it receives"
   };
   render(
     <I18nextProvider i18n={createI18n("es")}>
-      <ShowcasePage storage={storage} />
+      <ToastProvider>
+        <ShowcasePage storage={storage} />
+      </ToastProvider>
     </I18nextProvider>,
   );
 

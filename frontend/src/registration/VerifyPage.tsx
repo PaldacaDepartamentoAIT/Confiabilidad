@@ -1,5 +1,6 @@
-import { useEffect, useState, type MouseEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import type { ParseKeys } from "i18next";
 
 import type { ApiClient } from "../api/client";
 import {
@@ -12,11 +13,11 @@ import {
 import { Button } from "../components/Button";
 import { FormMessage } from "../components/FormMessage";
 import { CodeField } from "../components/fields/CodeField";
+import { useToast } from "../components/toast/toastContext";
 import {
   useFormValidation,
   type FieldError,
   type GeneralMessage,
-  type ValidationKey,
 } from "../forms/useFormValidation";
 import type { LanguageStorage } from "../i18n/language";
 import { PublicLayout } from "../layouts/PublicLayout";
@@ -50,6 +51,7 @@ type VerifyPageProps = {
 
 export function VerifyPage({ client, storage }: VerifyPageProps) {
   const { t } = useTranslation();
+  const { notify, dismiss } = useToast();
   const publicId = useLocation().hash;
   const [loaded, setLoaded] = useState<Loaded>(publicId ? "loading" : "notFound");
   const [status, setStatus] = useState<RegistrationStatus | null>(null);
@@ -62,11 +64,27 @@ export function VerifyPage({ client, storage }: VerifyPageProps) {
   const [resendLimited, setResendLimited] = useState(false);
   // El código aceptado solo vive en memoria: recargar vuelve a la verificación (RF-011, S-08).
   const [acceptedCode, setAcceptedCode] = useState<string | null>(null);
-  const [rejection, setRejection] = useState<ValidationKey | null>(null);
+  const errorToastId = useRef<string | null>(null);
   const expiry = useCountdown();
   const resendWait = useCountdown();
   const { start } = expiry;
   const { start: startResendWait } = resendWait;
+
+  const clearErrorToast = useCallback(() => {
+    if (!errorToastId.current) return;
+    dismiss(errorToastId.current, true);
+    errorToastId.current = null;
+  }, [dismiss]);
+
+  const showErrorToast = useCallback(
+    (messageKey: ParseKeys) => {
+      clearErrorToast();
+      errorToastId.current = notify({ kind: "error", messageKey });
+    },
+    [clearErrorToast, notify],
+  );
+
+  useEffect(() => clearErrorToast, [clearErrorToast]);
 
   useEffect(() => {
     if (!publicId) return;
@@ -93,6 +111,7 @@ export function VerifyPage({ client, storage }: VerifyPageProps) {
   }, [client, publicId, start, startResendWait, generation]);
 
   async function resend() {
+    clearErrorToast();
     setResendMessage(null);
     setResendLimited(false);
     const result = await resendCode(client, publicId);
@@ -104,25 +123,24 @@ export function VerifyPage({ client, storage }: VerifyPageProps) {
       setResendLimited(true);
       resendWait.start(result.retryAfter);
     } else {
-      setResendMessage({
-        type: "error",
-        messageKey:
-          result.kind === "refused"
-            ? "validation.resendUnavailable"
-            : result.kind === "networkError"
-              ? "validation.networkError"
-              : "validation.serverError",
-      });
+      showErrorToast(
+        result.kind === "refused"
+          ? "validation.resendUnavailable"
+          : result.kind === "networkError"
+            ? "validation.networkError"
+            : "validation.serverError",
+      );
     }
   }
 
   function codeRejected(code: string) {
     setAcceptedCode(null);
     if (code === "not_found") {
+      clearErrorToast();
       setLoaded("notFound");
       return;
     }
-    setRejection(translateCode(code).key);
+    showErrorToast(`validation.${translateCode(code).key}`);
     setGeneration((current) => current + 1);
   }
 
@@ -147,7 +165,6 @@ export function VerifyPage({ client, storage }: VerifyPageProps) {
         )}
         {loaded === "ready" && status && !acceptedCode && (
           <>
-            {rejection && <FormMessage type="error" messageKey={`validation.${rejection}`} />}
             <div className="public-meta-row">
               <p>
                 {expiry.remaining > 0
@@ -163,6 +180,7 @@ export function VerifyPage({ client, storage }: VerifyPageProps) {
               client={client}
               publicId={publicId}
               initiallyLocked={status.locked}
+              onSubmit={clearErrorToast}
               onVerified={setAcceptedCode}
               onNotFound={() => setLoaded("notFound")}
               resendAction={
@@ -200,13 +218,15 @@ type CodeFormProps = {
   client: ApiClient;
   publicId: string;
   initiallyLocked: boolean;
+  onSubmit?: () => void;
   onVerified: (code: string) => void;
   onNotFound: () => void;
   resendAction?: ReactNode;
 };
 
 function CodeForm(props: CodeFormProps) {
-  const { client, publicId, initiallyLocked, onVerified, onNotFound, resendAction } = props;
+  const { client, publicId, initiallyLocked, onSubmit, onVerified, onNotFound, resendAction } =
+    props;
   const { t } = useTranslation();
   const [processing, setProcessing] = useState(false);
   const [locked, setLocked] = useState(initiallyLocked);
@@ -223,6 +243,7 @@ function CodeForm(props: CodeFormProps) {
   }
 
   async function send({ code }: { code: string }) {
+    onSubmit?.();
     setProcessing(true);
     const result = await verifyCode(client, publicId, code);
     setProcessing(false);

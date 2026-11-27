@@ -5,6 +5,7 @@ import { I18nextProvider } from "react-i18next";
 import type { SessionInfo } from "../api/auth";
 import { createClient } from "../api/client";
 import { LiveAnnouncer } from "../components/LiveAnnouncer";
+import { ToastProvider } from "../components/toast/ToastProvider";
 import { createI18n } from "../i18n";
 import { createTokenStorage } from "./tokenStorage";
 import { TermsPage } from "./TermsPage";
@@ -46,13 +47,15 @@ function renderTerms(
   render(
     <I18nextProvider i18n={i18n}>
       <LiveAnnouncer>
-        <TermsPage
-          client={client}
-          session={session}
-          tokenStorage={storage}
-          onAccepted={callbacks.onAccepted}
-          onLoggedOut={callbacks.onLoggedOut}
-        />
+        <ToastProvider>
+          <TermsPage
+            client={client}
+            session={session}
+            tokenStorage={storage}
+            onAccepted={callbacks.onAccepted}
+            onLoggedOut={callbacks.onLoggedOut}
+          />
+        </ToastProvider>
       </LiveAnnouncer>
     </I18nextProvider>,
   );

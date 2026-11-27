@@ -1,3 +1,4 @@
+import type { ParseKeys } from "i18next";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -15,7 +16,8 @@ type ToastEntry = {
   id: string;
   kind: ToastKind;
   title?: string;
-  message: string;
+  message?: string;
+  messageKey?: ParseKeys;
   leaving: boolean;
 };
 
@@ -62,13 +64,13 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   );
 
   const dismiss = useCallback(
-    (id: string) => {
+    (id: string, immediate = false) => {
       clearAuto(id);
-      if (exitTimers.current.has(id)) return;
-      if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+      if (immediate || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
         remove(id);
         return;
       }
+      if (exitTimers.current.has(id)) return;
       setItems((cur) => cur.map((item) => (item.id === id ? { ...item, leaving: true } : item)));
       exitTimers.current.set(
         id,
@@ -110,11 +112,17 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   );
 
   const notify = useCallback(
-    ({ kind = "info", title, message, durationMs = DEFAULT_TOAST_DURATION_MS }: ToastInput) => {
+    ({
+      kind = "info",
+      title,
+      message,
+      messageKey,
+      durationMs = DEFAULT_TOAST_DURATION_MS,
+    }: ToastInput) => {
       counter.current += 1;
       const id = `toast-${counter.current}`;
       durations.current.set(id, durationMs);
-      setItems((cur) => [...cur, { id, kind, title, message, leaving: false }]);
+      setItems((cur) => [...cur, { id, kind, title, message, messageKey, leaving: false }]);
       scheduleAuto(id, durationMs);
       return id;
     },
@@ -162,7 +170,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               </span>
               <div className="toast-body">
                 {item.title && <strong className="toast-title">{item.title}</strong>}
-                <span>{item.message}</span>
+                <span>{item.messageKey ? t(item.messageKey) : item.message}</span>
               </div>
               <button
                 type="button"
