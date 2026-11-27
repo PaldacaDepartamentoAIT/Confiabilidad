@@ -1,6 +1,6 @@
 # Entrega E-04 · Purga periódica a los 12 meses integrada en `tareas-purga-y-alertas`
 
-Rama: `feat/deshabilitar-cuenta-purga` · PR: pendiente · Líneas de código y tests: 247 (límite: 400).
+Rama: `feat/deshabilitar-cuenta-purga` · PR: pendiente · Líneas de código y tests: 255 (límite: 400).
 
 ## Qué se hizo
 - En [disable.py](../../../../backend/apps/accounts/disable.py) se implementó `purge_expired_accounts` y `DisabledAccountPurgeAnomaly`: elimina físicamente en transacciones individuales por cuenta las deshabilitadas cuyo `disabled_at` alcanza o supera los 12 meses calendario en UTC (conservando `HistoricalUser` y `SecurityEvent`, liberando el correo para nuevos registros y respetando cuentas sin `disabled_at`), omitiendo sin abortar el resto del lote aquellas que por anomalía conserven alguna empresa y dejando error en logs (`RF-011` purga periódica tras 12 meses, `RF-012` reserva de correo mientras esté deshabilitada).

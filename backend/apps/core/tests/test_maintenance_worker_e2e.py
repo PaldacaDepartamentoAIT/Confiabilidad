@@ -10,7 +10,7 @@ from django.core import mail
 from django.core.management import call_command
 from django.utils import timezone
 
-from apps.accounts.models import PendingRegistration, UserSession
+from apps.accounts.models import PendingRegistration, User, UserSession
 from apps.accounts.tests.factories import make_pending, make_user
 from apps.audit.models import EventType, SecurityEvent
 from apps.core.management.commands.maintenance_tasks import TASK_PATHS
@@ -48,6 +48,13 @@ def _seed(name: MaintenanceTaskName) -> Callable[[], bool]:
             last_seen_at=timezone.now() - timedelta(days=15),
         )
         return UserSession.objects.filter(pk=row.pk).exists
+    if name == MaintenanceTaskName.PURGE_DISABLED_ACCOUNTS:
+        user = make_user(
+            email="e2e-disabled@ejemplo.com",
+            is_active=False,
+            disabled_at=timezone.now() - timedelta(days=400),
+        )
+        return User.objects.filter(pk=user.pk).exists
     event = SecurityEvent.objects.create(
         event_type=EventType.LOGIN, success=True, created_at=timezone.now() - timedelta(days=400)
     )
