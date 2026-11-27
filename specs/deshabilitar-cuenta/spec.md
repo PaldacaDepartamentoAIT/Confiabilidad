@@ -119,3 +119,4 @@ Si el usuario autenticado es el único superusuario activo restante del sistema 
 ## Historial de cambios
 - 2026-11-27 — Creación inicial de la spec tras entrevista — RF: RF-001…RF-015 — Estado: pendiente de clarificar
 - 2026-11-27 — Clarificación (C-01 a C-07): ajuste a login de cuentas deshabilitadas con impacto en `inicio-cierre-sesion`, bloqueo por términos vigentes, fecha obligatoria al desactivar en admin y 12 meses calendario configurables (29 feb → 28 feb), contador de fallos independiente, cuarta tarea en `tareas-purga-y-alertas` con purga parcial, modelo preliminar nombre+propietario con protección del último superusuario, y confirmación en dos pasos desde el menú de `/profile` con cuenta atrás persistente — RF: RF-001, RF-002, RF-005, RF-008…RF-011, RF-013, RF-014, RF-016 — Estado: clarificado
+- 2026-11-27 — Validación: CUMPLIDA (RF-001…RF-016 y CF-1…CF-6 verificados sobre `feat/deshabilitar-cuenta`)
