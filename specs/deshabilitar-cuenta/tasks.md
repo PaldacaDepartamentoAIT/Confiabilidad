@@ -62,9 +62,10 @@ Estado: aprobado
   Excepción: los tres archivos de idioma (`es.ts`, `pt-BR.ts`, `en.ts`) deben actualizarse juntos por `i18n/keys.test.ts`, junto con `api/profile.ts`, `serverErrors.ts` y `serverErrors.test.ts`.
   Decisiones: definir `can_disable`, `disable_block_reason` y `disable_retry_after` como opcionales en `ProfileData` hasta completar T-013, y añadir `markAccountDisabledNotice` / `consumeAccountDisabledNotice` usando `sessionStorage` en `api/profile.ts` (`locales.test.ts` 4/4 y Prettier en verde; `keys.test.ts`, `serverErrors.test.ts`, ESLint y `tsc` pendientes de entorno con `node_modules` completos). — Motivo: mantiene compilando los mocks actuales de `ProfilePage.test.tsx` durante E-06a y comunica el aviso post-baja a `/login` sin ensuciar la URL. — Confianza: [Probable]. — Cómo revertirla: revertir el commit de T-011.
 
-- [ ] T-012 Mensajes específicos de cuenta deshabilitada y confirmación post-baja en `LoginPage`
+- [x] T-012 Mensajes específicos de cuenta deshabilitada y confirmación post-baja en `LoginPage`
   RF: RF-008, RF-014 | Depende de: T-011 | Archivos: 2
   Hecho cuando: `pnpm --filter frontend test src/auth/LoginPage.test.tsx` pasa verificando la visualización de `account_disabled` (soporte/12 meses) y `account_disabled_expired` en el formulario de acceso y el aviso informativo de confirmación cuando se llega redirigido tras deshabilitar la cuenta, en `es`, `pt-BR` y `en`.
+  Decisiones: leer `consumeAccountDisabledNotice()` al montar `LoginPage` para mostrar `FormMessage` informativo (`auth.accountDisabledNotice`) y limpiarlo al iniciar un nuevo intento de login, reutilizando `translateCode` para `account_disabled` y `account_disabled_expired` (Prettier en verde; Vitest de `LoginPage`, ESLint y `tsc` pendientes de entorno con `node_modules` completos). — Motivo: evita mostrar avisos obsoletos cuando la persona intenta volver a iniciar sesión y conserva el patrón existente de mensajes. — Confianza: [Probable]. — Cómo revertirla: revertir el commit de T-012.
 
 - [ ] T-013 Interfaz de deshabilitación en dos pasos desde el menú de `/profile` con bloqueos preventivos y cuenta atrás persistente
   RF: RF-001, RF-003, RF-004, RF-005, RF-013, RF-014, RF-015, RF-016 | Depende de: T-011, T-012 | Archivos: 3

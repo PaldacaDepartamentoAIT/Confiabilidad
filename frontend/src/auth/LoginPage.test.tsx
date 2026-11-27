@@ -4,6 +4,7 @@ import { I18nextProvider } from "react-i18next";
 
 import type { SessionInfo } from "../api/auth";
 import { createClient } from "../api/client";
+import { markAccountDisabledNotice } from "../api/profile";
 import { LiveAnnouncer } from "../components/LiveAnnouncer";
 import { createI18n } from "../i18n";
 import { LoginPage } from "./LoginPage";
@@ -162,4 +163,55 @@ test("navega a /register con el enlace y redirige a / o /terms al autenticar", a
   termsStatus = "not_accepted";
   await userEvent.click(screen.getByRole("button", { name: "Iniciar sesión" }));
   expect(window.location.pathname).toBe("/terms");
+});
+
+test("muestra confirmación al llegar tras deshabilitar la cuenta y traduce account_disabled y account_disabled_expired", async () => {
+  markAccountDisabledNotice();
+  let code = "account_disabled";
+  renderLogin(() => Promise.resolve(json(400, { code, message: "x" })));
+
+  expect(
+    screen.getByText(
+      /Tu cuenta ha sido deshabilitada y se han cerrado tus sesiones\. Puedes reactivarla contactando a soporte en un plazo máximo de 12 meses\./,
+    ),
+  ).toBeInTheDocument();
+  expect(window.sessionStorage.getItem("confiabilidad.accountDisabled")).toBeNull();
+
+  await userEvent.type(
+    screen.getByRole("textbox", { name: "Correo electrónico" }),
+    "ana@empresa.com",
+  );
+  await userEvent.type(screen.getByLabelText(/^Contraseña/), "secreto123");
+  await userEvent.click(screen.getByRole("button", { name: "Iniciar sesión" }));
+
+  expect(
+    await screen.findByText(
+      /Tu cuenta está deshabilitada\. Puedes solicitar su reactivación contactando a soporte dentro de los 12 meses posteriores a la baja\./,
+    ),
+  ).toBeInTheDocument();
+
+  code = "account_disabled_expired";
+  await userEvent.click(screen.getByRole("button", { name: "Iniciar sesión" }));
+
+  expect(
+    await screen.findByText(
+      /Tu cuenta está deshabilitada y el plazo de 12 meses para reactivarla ya ha vencido\./,
+    ),
+  ).toBeInTheDocument();
+});
+
+test.each([
+  ["en", /Your account is disabled\. You can request reactivation by contacting support/],
+  ["pt-BR", /Sua conta está desativada\. Você pode solicitar a reativação/],
+])("muestra aviso de cuenta deshabilitada en %s", async (lang, pattern) => {
+  renderLogin(
+    () => Promise.resolve(json(400, { code: "account_disabled", message: "x" })),
+    undefined,
+    lang,
+  );
+  await userEvent.type(screen.getByRole("textbox", { name: /Email|E-mail/ }), "ana@empresa.com");
+  await userEvent.type(screen.getByLabelText(/Password|Senha/), "secreto123");
+  await userEvent.click(screen.getByRole("button", { name: /Sign in|Iniciar sessão/ }));
+
+  expect(await screen.findByText(pattern)).toBeInTheDocument();
 });
