@@ -85,7 +85,7 @@ Rama de integración: `feat/deshabilitar-cuenta` (los PR de las entregas van con
   Excepción: `T-005` (servicio y CLI) y `T-006` (panel de administración `UserAdmin` y pruebas conjuntas en `test_reactivation_and_purge.py`) cubren las dos vías de reactivación de `RF-009` y `RF-010` en un único corte por debajo del límite excepcional de 500 líneas (`425`).
 
 - E-04 Purga periódica a los 12 meses integrada en `tareas-purga-y-alertas`
-  Tareas: T-007, T-008 | Líneas estimadas: 290 | Rama: `feat/deshabilitar-cuenta-purga`
+  Tareas: T-007, T-008 | Líneas reales: 247 | Rama: `feat/deshabilitar-cuenta-purga`
   Cómo probarlo: ejecutar `pytest apps/accounts/tests/test_reactivation_and_purge.py` y correr `python manage.py maintenance_tasks run purge_disabled_accounts`, `python manage.py maintenance_tasks status` y `python manage.py maintenance_tasks simulate-failure purge_disabled_accounts`.
 
 - E-05 Endpoints HTTP de perfil ampliado, baja de cuenta y login de cuentas deshabilitadas
