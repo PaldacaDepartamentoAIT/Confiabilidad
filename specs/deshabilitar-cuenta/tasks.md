@@ -78,8 +78,9 @@ Rama de integración: `feat/deshabilitar-cuenta` (los PR de las entregas van con
   Excepción: `T-003` (limitador y configuración) y `T-004` (servicio atómico `disable_account` y CLI) conforman un único corte vertical indivisible por debajo del tope excepcional de 500 líneas (`498`); separar `T-003` dejaría un limitador sin consumidor ni comportamiento funcional observable en la entrega.
 
 - E-03 Reactivación por soporte técnico en administración y consola con regla de 12 meses
-  Tareas: T-005, T-006 | Líneas estimadas: 300 | Rama: `feat/deshabilitar-cuenta-reactivacion`
+  Tareas: T-005, T-006 | Líneas reales: 425 | Rama: `feat/deshabilitar-cuenta-reactivacion`
   Cómo probarlo: ejecutar `pytest apps/accounts/tests/test_reactivation_and_purge.py -k "reactivate or admin"` y verificar `python manage.py account reactivate --email <EMAIL>` y la reactivación desde Django Admin como miembro de «Soporte técnico» (< 12 meses permitido, ≥ 12 meses rechazado).
+  Excepción: `T-005` (servicio y CLI) y `T-006` (panel de administración `UserAdmin` y pruebas conjuntas en `test_reactivation_and_purge.py`) cubren las dos vías de reactivación de `RF-009` y `RF-010` en un único corte por debajo del límite excepcional de 500 líneas (`425`).
 
 - E-04 Purga periódica a los 12 meses integrada en `tareas-purga-y-alertas`
   Tareas: T-007, T-008 | Líneas estimadas: 290 | Rama: `feat/deshabilitar-cuenta-purga`
