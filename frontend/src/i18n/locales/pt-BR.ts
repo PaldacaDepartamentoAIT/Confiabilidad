@@ -88,6 +88,13 @@ export const ptBR: Messages = {
     unknownField: "Este campo não é permitido.",
     noProfileFields: "Informe pelo menos um dado do perfil para atualizar.",
     currentPasswordIncorrect: "A senha atual não está correta.",
+    ownsCompany:
+      "Você é proprietário de pelo menos uma empresa. Transfira-a ou exclua-a primeiro antes de desativar sua conta.",
+    lastSuperuser: "Você não pode desativar o último superusuário ativo do sistema.",
+    accountDisabled:
+      "Sua conta está desativada. Você pode solicitar a reativação entrando em contato com o suporte dentro de 12 meses após a desativação.",
+    accountDisabledExpired:
+      "Sua conta está desativada e o prazo de 12 meses para reativá-la já expirou.",
     retryIn: "Muitas tentativas. Tente novamente em {{seconds}} s.",
     networkError: "Não foi possível conectar. Verifique sua conexão e tente novamente.",
     unknownError: "Algo não funcionou. Revise os dados e tente novamente.",
@@ -181,5 +188,14 @@ export const ptBR: Messages = {
     newPasswordLabel: "Nova senha",
     passwordChangeSubmit: "Alterar senha",
     passwordChanged: "Sua senha foi atualizada e suas outras sessões foram encerradas.",
+    accountDisabledNotice:
+      "Sua conta foi desativada e suas sessões foram encerradas. Você pode reativá-la entrando em contato com o suporte no prazo máximo de 12 meses.",
+    disableAccountTitle: "Desativar conta",
+    disableAccountIntro:
+      "Ao desativar sua conta, todos os seus acessos serão revogados imediatamente e você não poderá iniciar sessão. Você poderá reativá-la entrando em contato com o suporte por até 12 meses.",
+    disableAccountContinue: "Continuar para confirmar",
+    disableAccountConfirmPrompt:
+      "Digite sua senha atual para confirmar a desativação da sua conta.",
+    disableAccountSubmit: "Desativar minha conta",
   },
 };

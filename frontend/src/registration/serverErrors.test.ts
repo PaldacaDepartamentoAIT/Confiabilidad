@@ -43,6 +43,10 @@ const SERVER_CODES: [string, string][] = [
   ["unknown_field", "unknownField"],
   ["no_profile_fields", "noProfileFields"],
   ["current_password_incorrect", "currentPasswordIncorrect"],
+  ["owns_company", "ownsCompany"],
+  ["last_superuser", "lastSuperuser"],
+  ["account_disabled", "accountDisabled"],
+  ["account_disabled_expired", "accountDisabledExpired"],
 ];
 
 test.each(SERVER_CODES)("the server code %s is shown with the key %s", (code, key) => {
