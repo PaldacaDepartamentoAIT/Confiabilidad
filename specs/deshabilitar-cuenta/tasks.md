@@ -98,8 +98,9 @@ Rama de integración: `feat/deshabilitar-cuenta` (los PR de las entregas van con
   Excepción: `T-009` (extensión de perfil, serializador y catálogo de mensajes) y `T-010` (endpoint de baja, ajuste en login y pruebas integradas en `test_disable_api.py`) conforman un único corte vertical HTTP de 448 líneas reales dentro del tope excepcional de 500 líneas; separar `T-009` dejaría el serializador y los códigos de baja sin endpoint que los ejercite.
 
 - E-06a Cliente API, traducciones y avisos de cuenta deshabilitada en `/login`
-  Tareas: T-011, T-012 | Líneas reales: 396 | Rama: `feat/deshabilitar-cuenta-ui-login`
+  Tareas: T-011, T-012 | Líneas reales: 422 | Rama: `feat/deshabilitar-cuenta-ui-login`
   Cómo probarlo: ejecutar `pnpm --filter frontend test src/auth/LoginPage.test.tsx src/registration/serverErrors.test.ts src/i18n/keys.test.ts src/i18n/locales/locales.test.ts` y comprobar en `/login` los avisos de confirmación y error en `es`, `pt-BR` y `en`.
+  Excepción: el cambio pedido por el usuario para mover todos los errores generales de formularios a *toast* roja en lugar de sobre el formulario requirió adaptar la infraestructura común (`ToastProvider`, `useFormValidation`, `VerifyPage`) y las aserciones/proveedores de sus suites existentes dentro del mismo corte de `E-06a`, quedando en `422` líneas por debajo del límite excepcional de `500`.
 
 - E-06b Confirmación en dos pasos desde el menú de `/profile` (web y escritorio)
   Tareas: T-013 | Líneas estimadas: 350 | Rama: `feat/deshabilitar-cuenta-ui-perfil`
