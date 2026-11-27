@@ -404,22 +404,12 @@ test.each([
   ],
 ] as const)(
   "shows proactive disable block notice in %s for %s without allowing confirmation",
-  async (
-    lang,
-    reason,
-    pattern,
-    menuLabel,
-    optionLabel,
-    titleLabel,
-    continueLabel,
-    cancelLabel,
-    infoTitle,
-  ) => {
+  async (lang, reason, pattern, menu, option, title, cont, cancel, info) => {
     const user = userEvent.setup();
     const disableCalls: unknown[] = [];
     renderProfile(
-      disableFetcher({ can_disable: false, disable_block_reason: reason }, (body) => {
-        disableCalls.push(body);
+      disableFetcher({ can_disable: false, disable_block_reason: reason }, (b) => {
+        disableCalls.push(b);
         return Promise.resolve(json(400, { code: reason, message: "x" }));
       }),
       {},
@@ -427,20 +417,20 @@ test.each([
     );
 
     await screen.findByDisplayValue("ana@empresa.com");
-    await user.click(screen.getByRole("combobox", { name: menuLabel }));
-    await user.click(screen.getByRole("option", { name: optionLabel }));
+    await user.click(screen.getByRole("combobox", { name: menu }));
+    await user.click(screen.getByRole("option", { name: option }));
 
-    expect(screen.getByRole("heading", { level: 2, name: titleLabel })).toBeVisible();
+    expect(screen.getByRole("heading", { level: 2, name: title })).toBeVisible();
     expect(screen.getByText(pattern)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: continueLabel })).toBeDisabled();
+    expect(screen.getByRole("button", { name: cont })).toBeDisabled();
     expect(disableCalls).toEqual([]);
     expect(
       (await axe.run(document.body, { rules: { "color-contrast": { enabled: false } } }))
         .violations,
     ).toEqual([]);
 
-    await user.click(screen.getByRole("button", { name: cancelLabel }));
-    expect(screen.getByRole("heading", { level: 2, name: infoTitle })).toBeVisible();
+    await user.click(screen.getByRole("button", { name: cancel }));
+    expect(screen.getByRole("heading", { level: 2, name: info })).toBeVisible();
   },
 );
 
@@ -468,6 +458,7 @@ test("completes two-step account disable, validates password, clears local sessi
   await user.click(screen.getByRole("option", { name: "Deshabilitar" }));
 
   expect(screen.getByText(/se revocarán de inmediato todos tus accesos/)).toBeInTheDocument();
+  expect(document.querySelector(".block .skel-mask")).toBeNull();
   await user.click(screen.getByRole("button", { name: "Continuar para confirmar" }));
   expect(
     (await axe.run(document.body, { rules: { "color-contrast": { enabled: false } } })).violations,

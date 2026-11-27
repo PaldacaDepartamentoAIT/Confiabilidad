@@ -71,6 +71,10 @@
   gap: 14px;
 }
 
+.profile-disable .profile-actions {
+  margin-top: 0;
+}
+
 .profile-intro {
   margin: 0;
   font-size: 14px;

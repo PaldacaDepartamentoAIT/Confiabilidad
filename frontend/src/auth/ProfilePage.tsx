@@ -241,7 +241,7 @@ export function ProfilePage({
                   : t("auth.profileInfoTitle")
             }
             loading={profile === null}
-            loadingContent={<ProfileSkeleton />}
+            loadingContent={mode === "view" ? <ProfileSkeleton /> : undefined}
             actions={
               profile && (
                 <div className="profile-menu">
