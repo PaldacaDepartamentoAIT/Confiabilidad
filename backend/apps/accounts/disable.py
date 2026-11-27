@@ -1,4 +1,5 @@
 import calendar
+import logging
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import StrEnum
@@ -10,6 +11,8 @@ from apps.accounts import conf, signals, throttling
 from apps.accounts.models import PasswordResetRequest, PhantomProcess, User
 from apps.companies.models import owns_company
 from apps.emails import outbox
+
+logger = logging.getLogger(__name__)
 
 
 class DisableBlockReason(StrEnum):
@@ -173,3 +176,51 @@ def reactivate_account(user: User, *, now: datetime | None = None) -> Reactivati
     user.is_active = locked.is_active
     user.disabled_at = locked.disabled_at
     return AccountReactivated(user=locked)
+
+
+class DisabledAccountPurgeAnomaly(RuntimeError):
+    """Raised after partial purge when expired disabled accounts still own companies."""
+
+
+def purge_expired_accounts(*, now: datetime | None = None) -> int:
+    current = timezone.now() if now is None else now
+    candidates = list(
+        User.objects.filter(is_active=False, disabled_at__isnull=False).order_by("pk")
+    )
+    deleted_count = 0
+    skipped_ids: list[int] = []
+    for candidate in candidates:
+        if not is_retention_expired(candidate, now=current):
+            continue
+        if owns_company(candidate):
+            logger.error(
+                "Cannot purge expired disabled account %s because it still owns at least one "
+                "company.",
+                candidate.pk,
+            )
+            skipped_ids.append(candidate.pk)
+            continue
+        with transaction.atomic():
+            locked = (
+                User.objects.select_for_update()
+                .filter(pk=candidate.pk, is_active=False, disabled_at__isnull=False)
+                .first()
+            )
+            if locked is None or not is_retention_expired(locked, now=current):
+                continue
+            if owns_company(locked):
+                logger.error(
+                    "Cannot purge expired disabled account %s because it still owns at least one "
+                    "company.",
+                    locked.pk,
+                )
+                skipped_ids.append(locked.pk)
+                continue
+            locked.delete()
+            deleted_count += 1
+    if skipped_ids:
+        raise DisabledAccountPurgeAnomaly(
+            f"Skipped {len(skipped_ids)} expired disabled account(s) still owning a company "
+            f"(ids={skipped_ids})."
+        )
+    return deleted_count
