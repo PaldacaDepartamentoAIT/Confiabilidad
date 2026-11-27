@@ -71,8 +71,9 @@ Rama de integración: `feat/deshabilitar-cuenta` (los PR de las entregas van con
   Cómo probarlo: ejecutar `pytest apps/companies/tests/test_companies.py apps/accounts/tests/test_disable_account.py -k disabled_at` y probar `python manage.py company create --email <EMAIL> --name "Planta Norte"` y `python manage.py company list --email <EMAIL>`.
 
 - E-02 Servicio de deshabilitación con reautenticación, límites, revocación inmediata y CLI
-  Tareas: T-003, T-004 | Líneas estimadas: 340 | Rama: `feat/deshabilitar-cuenta-servicio`
+  Tareas: T-003, T-004 | Líneas reales: 498 | Rama: `feat/deshabilitar-cuenta-servicio`
   Cómo probarlo: ejecutar `pytest apps/accounts/tests/test_disable_account.py` y verificar con `python manage.py account disable --email <EMAIL>` que rechaza si posee empresa, bloquea tras 5 fallos, revoca sesiones al completarse y registra auditoría y correo en bandeja de salida.
+  Excepción: `T-003` (limitador y configuración) y `T-004` (servicio atómico `disable_account` y CLI) conforman un único corte vertical indivisible por debajo del tope excepcional de 500 líneas (`498`); separar `T-003` dejaría un limitador sin consumidor ni comportamiento funcional observable en la entrega.
 
 - E-03 Reactivación por soporte técnico en administración y consola con regla de 12 meses
   Tareas: T-005, T-006 | Líneas estimadas: 300 | Rama: `feat/deshabilitar-cuenta-reactivacion`
