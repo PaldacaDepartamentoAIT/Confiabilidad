@@ -1,6 +1,6 @@
 # Entrega E-06a · Cliente API, traducciones y avisos de cuenta deshabilitada en `/login`
 
-Rama: `feat/deshabilitar-cuenta-ui-login` · PR: pendiente · Líneas de código y tests: 422 (límite: 400; excepción hasta 500 por adaptar en bloque los wrappers y aserciones de *toast* roja en los tests de formularios existentes tras el cambio global pedido por el usuario).
+Rama: `feat/deshabilitar-cuenta-ui-login` · PR: pendiente · Líneas de código y tests: 430 (límite: 400; excepción hasta 500 por adaptar en bloque los wrappers y aserciones de *toast* roja en los tests de formularios existentes tras el cambio global pedido por el usuario).
 
 ## Qué se hizo
 - En [profile.ts](../../../../frontend/src/api/profile.ts) se añadió `disableAccount(client, { current_password })`, se amplió `ProfileData` con los campos opcionales de elegibilidad (`can_disable`, `disable_block_reason`, `disable_retry_after`) y se añadieron `markAccountDisabledNotice` y `consumeAccountDisabledNotice` sobre `sessionStorage` (`RF-001`, `RF-014`, `RF-015`).
@@ -15,7 +15,7 @@ El detalle de cada tarea, con su «Hecho cuando», está en [tasks.md](../../tas
 | Tarea | Título | Commit |
 |---|---|---|
 | T-011 | Cliente `disableAccount`, `ProfileData` ampliado y traducciones en `es`, `pt-BR` y `en` | `8ad81d5` |
-| T-012 | Mensajes de cuenta deshabilitada en `LoginPage` y errores generales de formularios en *toast* roja | `c37271b`, `fa22601`, `569311d` |
+| T-012 | Mensajes de cuenta deshabilitada en `LoginPage` y errores generales de formularios en *toast* roja | `c37271b`, `fa22601`, `569311d`, `7f75223` |
 
 ## Cómo ejecutarlo y probarlo
 En tu máquina virtual o VPS con las dependencias de frontend instaladas:
