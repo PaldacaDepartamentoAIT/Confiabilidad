@@ -337,6 +337,58 @@ def test_password_change_rejections_lockout_and_external_save() -> None:
     assert not UserSession.objects.filter(user=user).exists()
 
 
+@pytest.mark.django_db(transaction=True)
+@override_settings(PASSWORD_CHANGE_MAX_FAILED_ATTEMPTS=2)
+def test_password_change_resets_failures_on_success_and_shares_across_sessions() -> None:
+    cache.clear()
+    user = make_user(email="resetlock@example.com", password="ValidPass1234!")
+    key_a = _create_app_session(user, "agent-a")
+    key_b = _create_app_session(user, "agent-b")
+
+    first_fail = profile.change_password(
+        user,
+        current_password="Wrong1!",
+        new_password="NewValidPass1!",
+        current_session_key=key_a,
+    )
+    assert isinstance(first_fail, profile.PasswordChangeInvalid)
+
+    changed = profile.change_password(
+        user,
+        current_password="ValidPass1234!",
+        new_password="NewValidPass1!",
+        current_session_key=key_a,
+    )
+    assert isinstance(changed, profile.PasswordChanged)
+    assert not sessions.is_session_active(key_b, user.pk)
+
+    # Tras cambiar con éxito, el contador se reinicia (vuelve a admitir 2 fallos antes del bloqueo).
+    key_c = _create_app_session(user, "agent-c")
+    post_ok_fail_a = profile.change_password(
+        user,
+        current_password="Wrong2!",
+        new_password="NewValidPass2!",
+        current_session_key=key_a,
+    )
+    assert isinstance(post_ok_fail_a, profile.PasswordChangeInvalid)
+
+    post_ok_fail_c = profile.change_password(
+        user,
+        current_password="Wrong3!",
+        new_password="NewValidPass2!",
+        current_session_key=key_c,
+    )
+    assert isinstance(post_ok_fail_c, profile.PasswordChangeInvalid)
+
+    locked_a = profile.change_password(
+        user,
+        current_password="NewValidPass1!",
+        new_password="NewValidPass2!",
+        current_session_key=key_a,
+    )
+    assert isinstance(locked_a, profile.PasswordChangeLocked) and locked_a.retry_after > 0
+
+
 def test_cli_password_change_keeps_selected_session_and_reports_errors(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

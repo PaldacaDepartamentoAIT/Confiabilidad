@@ -268,6 +268,7 @@ export function ProfilePage({
                 />
               ) : (
                 <PersonalInfoBlock
+                  key={mode === "edit" ? "edit" : "view"}
                   client={client}
                   profile={profile}
                   countries={countries}
@@ -344,7 +345,6 @@ function PersonalInfoBlock({
         <FormMessage ref={messageRef} type={message.type} messageKey={message.messageKey} />
       )}
       <form
-        key={editing ? "edit" : "view"}
         ref={formRef}
         className="profile-form"
         noValidate

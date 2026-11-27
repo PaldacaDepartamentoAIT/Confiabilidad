@@ -100,17 +100,19 @@ Estado: aprobado
   Hecho cuando: `pnpm --filter frontend test src/auth/ProfilePage.test.tsx` pasa verificando que «Cambiar contraseña» está habilitada en el menú de tres puntos y conmuta la tarjeta al formulario (con «Cancelar», contraseña actual y nueva contraseña única con mostrar/ocultar y lista de requisitos en vivo), validación local, vaciado selectivo tras éxito (vuelta a solo lectura + notificación flotante *toast*) o error de actual/política/red, cuenta atrás con botón deshabilitado ante `429`, redirección ante términos pendientes o `401`, idiomas y accesibilidad.
   Decisiones: sustituir el booleano `editing` por `mode: "view" | "edit" | "password"` en `ProfilePage.tsx`, activar la opción «Cambiar contraseña» en el menú vertical y extraer `fieldResult`, `handleFailure` y `useErrorText` compartidos entre `PersonalInfoBlock` y `PasswordChangeBlock`; reutilizar `PasswordField` (`kind="current"` y `kind="new"`), `newPasswordRules` y `useCountdown` (elevado a `ProfilePage` para conservar la cuenta atrás al cancelar/reabrir) dentro de `.profile-password-grid` (2 columnas en escritorio, 1 en móvil), añadir en `Button.css` / `IconButton.css` / `docs/identidad-visual.md` el aspecto visual deshabilitado tanto para `:disabled` como para `[aria-disabled="true"]` sin efecto hover, vaciar solo `current_password` en DOM cuando el servidor devuelva error en ese campo y limpiar todo al guardar o cancelar regresando a `"view"` con la notificación *toast* (pendiente de ejecutar Vitest y `tsc` completo en entorno con dependencias instaladas). — Motivo: evita duplicar lógica de manejo de errores HTTP y controles de contraseña, asegura que todo botón bloqueado se vea deshabilitado y respeta `RF-012`. — Confianza: [Cierto]. — Cómo revertirla: revertir `dab7391`, `3b2fa16` y `c20a16e`.
 
-- [ ] T-016 Corrección: descartar errores locales al cancelar en `PersonalInfoBlock` y cubrir `onBlur` y cancelación en `ProfilePage.test.tsx`
+- [x] T-016 Corrección: descartar errores locales al cancelar en `PersonalInfoBlock` y cubrir `onBlur` y cancelación en `ProfilePage.test.tsx`
   Tipo: corrección | Origen: validación de RF-012
   RF: RF-012 | Depende de: — | Archivos: 2
   Causa: `PersonalInfoBlock` (`frontend/src/auth/ProfilePage.tsx`) permanece montado al pasar de `edit` a `view` y `showResult({})` no limpia `localErrors` de `useFormValidation`, haciendo reaparecer errores locales antiguos al reabrir «Editar»; además `ProfilePage.test.tsx` no cubre `onBlur` ni esa secuencia de cancelación.
   Hecho cuando: al cancelar tras un error local y reabrir «Editar» no aparece ningún error previo, el test que reproduce el fallo y valida `onBlur` pasa en `pnpm --filter frontend test` y la suite completa sigue en verde.
+  Decisiones: mover `key={mode === "edit" ? "edit" : "view"}` del `<form>` interno al componente `<PersonalInfoBlock>` en `ProfilePage.tsx` para desmontarlo y reiniciar el estado completo de `useFormValidation` (incluidos `localErrors`) al salir o volver a edición, evitando modificar `useFormValidation.ts`; en `ProfilePage.test.tsx`, tabular dos veces (`user.tab()`) para probar `onBlur` en `PasswordField` porque este ignora el paso de foco del input a su botón de visibilidad (`toggleRef`). — Motivo: solución mínima contenida en los 2 archivos de la tarea y coherente con el diseño de `PasswordField`. — Confianza: [Cierto]. — Cómo revertirla: revertir `007ed9e`.
 
-- [ ] T-017 Corrección: verificar en tests el contador compartido entre sesiones y el reinicio tras cambio de contraseña exitoso
+- [x] T-017 Corrección: verificar en tests el contador compartido entre sesiones y el reinicio tras cambio de contraseña exitoso
   Tipo: corrección | Origen: validación de RF-008
   RF: RF-008 | Depende de: — | Archivos: 2
   Causa: `test_profile_service.py` y `test_profile_api.py` no prueban que el contador de intentos fallidos se comparta entre distintas sesiones de una misma cuenta ni que `change_password` lo reinicie al completarse con éxito.
   Hecho cuando: `pytest apps/accounts/tests/test_profile_service.py apps/accounts/tests/test_profile_api.py` verifica ambos comportamientos y la suite completa sigue en verde.
+  Decisiones: marcar ambos tests nuevos con `@pytest.mark.django_db(transaction=True)` para que `transaction.on_commit` en `profile.change_password` ejecute realmente `throttling.clear_password_change_failures` al confirmar la transacción, como ocurre en ejecución real. — Motivo: con `@pytest.mark.django_db` simple la transacción de prueba no se confirma y el callback de limpieza en `on_commit` no se dispararía. — Confianza: [Cierto]. — Cómo revertirla: revertir `b02a563`.
 
 ## Entregas
 Rama de integración: `feat/perfil-y-cambio-contrasena` (los PR de las entregas van contra ella; ver `AGENTS.md`).
@@ -145,6 +147,10 @@ Rama de integración: `feat/perfil-y-cambio-contrasena` (los PR de las entregas 
   Tareas: T-014, T-015 | Líneas reales: 504 (PR #159) | Rama: `feat/perfil-y-cambio-contrasena-ui-password`
   Excepción: supera en 92 líneas el límite base de 400 (`sdd.max_lineas_pr_excepcion`: 500) al incluir en un único corte vertical el cliente HTTP (`T-014`: `changePassword`, traducciones en 3 idiomas y `current_password_incorrect`), su consumo completo en `ProfilePage` con cobertura exhaustiva en `ProfilePage.test.tsx` (`T-015`: vaciado selectivo, cuenta atrás `429` conservada al cancelar, errores de red, i18n y `axe-core`) y el estilo/test de botón deshabilitado en `Button.css`/`IconButton.css`/`Button.test.tsx`; dividir `T-014` dejaría código sin consumidor UI.
   Cómo probarlo: ejecutar `pnpm --filter frontend test`, abrir `/profile` con sesión iniciada, pulsar el botón de tres puntos -> «Cambiar contraseña», cambiar la contraseña introduciendo la contraseña actual y la nueva, y comprobar la notificación flotante (*toast*), el regreso a solo lectura y que otra sesión abierta pasa a `/login` al hacer una acción.
+
+- E-05 Correcciones de validación (limpieza de errores locales y cobertura de bloqueo entre sesiones)
+  Tareas: T-016, T-017 | Líneas reales: 181 | Rama: `feat/perfil-y-cambio-contrasena-correcciones`
+  Cómo probarlo: ejecutar `pnpm --filter frontend test src/auth/ProfilePage.test.tsx` y `pytest apps/accounts/tests/test_profile_service.py apps/accounts/tests/test_profile_api.py`; en `/profile`, provocar un error local en «Editar», pulsar «Cancelar» y reabrir «Editar» comprobando que el error previo desaparece.
 
 ## RF sin tarea
 ninguno
