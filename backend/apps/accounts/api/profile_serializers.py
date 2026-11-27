@@ -92,3 +92,7 @@ class PasswordChangeSerializer(serializers.Serializer[dict[str, Any]]):
         allow_null=True,
         validators=[_reject_surrogates],
     )
+
+
+class AccountDisableSerializer(serializers.Serializer[dict[str, Any]]):
+    current_password = serializers.CharField(trim_whitespace=False, validators=[_reject_surrogates])

@@ -9,21 +9,27 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts import profile, throttling
+from apps.accounts import disable, profile, throttling
 from apps.accounts.api import messages
 from apps.accounts.api.auth_views import _body_language, _BrowserCsrfMixin, _require_auth
 from apps.accounts.api.flow_views import _password_params
 from apps.accounts.api.language import request_language
 from apps.accounts.api.profile_serializers import PasswordChangeSerializer, ProfileUpdateSerializer
 from apps.accounts.api.views import _known, _limited, _read_body, _render, _unreadable
+from apps.accounts.models import User
 
 
-def _profile_payload(data: profile.ProfileData) -> dict[str, str]:
+def _profile_payload(data: profile.ProfileData, user: User) -> dict[str, Any]:
+    block_reason = disable.disable_block_reason(user)
+    verdict = throttling.check_account_disable(user.pk)
     return {
         "email": data.email,
         "name": data.name,
         "birthdate": data.birthdate.isoformat(),
         "country": data.country,
+        "can_disable": block_reason is None,
+        "disable_block_reason": block_reason.value if block_reason is not None else None,
+        "disable_retry_after": 0 if verdict.allowed else verdict.retry_after,
     }
 
 
@@ -41,7 +47,9 @@ class AppProfileView(APIView):
         if isinstance(auth, Response):
             return auth
         user, _ = auth
-        return Response(_profile_payload(profile.get_profile(user)), status=status.HTTP_200_OK)
+        return Response(
+            _profile_payload(profile.get_profile(user), user), status=status.HTTP_200_OK
+        )
 
     def patch(self, request: Request) -> Response:
         body, readable = _read_body(request)
@@ -65,7 +73,7 @@ class AppProfileView(APIView):
             birthdate=data["birthdate"] if "birthdate" in data else profile.UNSET,
             country=data["country"] if "country" in data else profile.UNSET,
         )
-        return Response(_profile_payload(updated), status=status.HTTP_200_OK)
+        return Response(_profile_payload(updated, user), status=status.HTTP_200_OK)
 
 
 @method_decorator(ensure_csrf_cookie, name="get")

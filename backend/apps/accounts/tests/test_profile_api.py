@@ -106,6 +106,9 @@ def test_profile_get_and_patch_flow_in_both_clients(kind: str) -> None:
         "name": "Ana Pérez",
         "birthdate": "1992-03-04",
         "country": "ES",
+        "can_disable": True,
+        "disable_block_reason": None,
+        "disable_retry_after": 0,
     }
 
     patched = client.patch(
@@ -120,6 +123,9 @@ def test_profile_get_and_patch_flow_in_both_clients(kind: str) -> None:
         "name": "Ana Maria",
         "birthdate": "1992-03-04",
         "country": "PT",
+        "can_disable": True,
+        "disable_block_reason": None,
+        "disable_retry_after": 0,
     }
     assert (
         SecurityEvent.objects.filter(event_type=EventType.PROFILE_EDIT, success=True).count()
