@@ -1,10 +1,12 @@
+import calendar
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from enum import StrEnum
 
 from django.db import transaction
 from django.utils import timezone
 
-from apps.accounts import signals, throttling
+from apps.accounts import conf, signals, throttling
 from apps.accounts.models import PasswordResetRequest, PhantomProcess, User
 from apps.companies.models import owns_company
 from apps.emails import outbox
@@ -115,3 +117,59 @@ def disable_account(
     user.is_active = locked.is_active
     user.disabled_at = locked.disabled_at
     return AccountDisabled(user=locked)
+
+
+@dataclass(frozen=True)
+class AccountReactivated:
+    user: User
+
+
+@dataclass(frozen=True)
+class ReactivationExpired:
+    deadline: datetime
+
+
+@dataclass(frozen=True)
+class ReactivationAlreadyActive:
+    pass
+
+
+ReactivationResult = AccountReactivated | ReactivationExpired | ReactivationAlreadyActive
+
+
+def retention_deadline(disabled_at: datetime, *, months: int | None = None) -> datetime:
+    total_months = conf.account_disable_retention_months() if months is None else months
+    start = disabled_at.astimezone(UTC) if disabled_at.tzinfo else disabled_at.replace(tzinfo=UTC)
+    zero_based_month = (start.month - 1) + total_months
+    year = start.year + (zero_based_month // 12)
+    month = (zero_based_month % 12) + 1
+    day = min(start.day, calendar.monthrange(year, month)[1])
+    return start.replace(year=year, month=month, day=day)
+
+
+def is_retention_expired(user: User, *, now: datetime | None = None) -> bool:
+    disabled_at = user.disabled_at
+    if user.is_active or disabled_at is None:
+        return False
+    current = timezone.now() if now is None else now
+    return current >= retention_deadline(disabled_at)
+
+
+def reactivate_account(user: User, *, now: datetime | None = None) -> ReactivationResult:
+    with transaction.atomic():
+        locked = User.objects.select_for_update().get(pk=user.pk)
+        if locked.is_active:
+            return ReactivationAlreadyActive()
+        disabled_at = locked.disabled_at
+        if disabled_at is not None:
+            deadline = retention_deadline(disabled_at)
+            current = timezone.now() if now is None else now
+            if current >= deadline:
+                return ReactivationExpired(deadline=deadline)
+        locked.is_active = True
+        locked.disabled_at = None
+        locked.save(update_fields=["is_active", "disabled_at"])
+
+    user.is_active = locked.is_active
+    user.disabled_at = locked.disabled_at
+    return AccountReactivated(user=locked)
