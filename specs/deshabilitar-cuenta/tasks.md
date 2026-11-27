@@ -1,9 +1,10 @@
 # Tareas: deshabilitar-cuenta
 Estado: aprobado
 
-- [ ] T-001 Campo `disabled_at` en `User` con sincronización en guardado
+- [x] T-001 Campo `disabled_at` en `User` con sincronización en guardado
   RF: RF-009, RF-010 | Depende de: — | Archivos: 3
   Hecho cuando: `pytest apps/accounts/tests/test_disable_account.py -k disabled_at` pasa verificando que pasar `is_active` de `True` a `False` (también en `User.save()` directo o administración) registra `disabled_at` en UTC, que reactivar limpia `disabled_at` a `None` y que `HistoricalRecords` guarda ambos cambios.
+  Decisiones: sincronizar `disabled_at` dentro de `User._sync_disabled_at` en `User.save()` antes de `full_clean` y añadir `"disabled_at"` a `update_fields` cuando se guarde solo `is_active` (pendiente de ejecutar `pytest` y `mypy` en entorno con PostgreSQL/venv completo; `ruff` y `black` limpios). — Motivo: asegura que cualquier desactivación o reactivación desde modelo o administración registre o limpie la fecha UTC incluso con guardado parcial. — Confianza: [Probable]. — Cómo revertirla: revertir el commit de T-001.
 
 - [ ] T-002 Modelo preliminar `Company`, panel de administración y comando CLI
   RF: RF-002, RF-015 | Depende de: — | Archivos: 8

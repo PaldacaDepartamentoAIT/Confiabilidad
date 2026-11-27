@@ -87,6 +87,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     country = models.CharField(max_length=2)
     language = models.CharField(max_length=5, choices=LANGUAGE_CHOICES, default=DEFAULT_LANGUAGE)
     is_active = models.BooleanField(default=True)
+    disabled_at = models.DateTimeField(null=True, blank=True, db_index=True)
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)
 
@@ -118,8 +119,13 @@ class User(AbstractBaseUser, PermissionsMixin):
         self.name = normalize_name(self.name)
         self.country = normalize_country(self.country)
         # La contraseña la gestiona allauth; la unicidad del correo, la base de datos.
-        exclude = {"password"}
         update_fields = kwargs.get("update_fields")
+        previous = self._lifecycle_snapshot(update_fields)
+        synced_fields = self._sync_disabled_at(previous, update_fields)
+        if synced_fields is not None:
+            kwargs["update_fields"] = synced_fields
+            update_fields = synced_fields
+        exclude = {"password"}
         if update_fields is not None:
             exclude |= {
                 field.name
@@ -134,13 +140,37 @@ class User(AbstractBaseUser, PermissionsMixin):
         )
         if skip_history:
             self.skip_history_when_saving = True
-        previous = self._lifecycle_snapshot(update_fields)
         try:
             super().save(*args, **kwargs)
         finally:
             if skip_history:
                 del self.skip_history_when_saving
         self._revoke_sessions_on_change(previous)
+
+    def _sync_disabled_at(
+        self, previous: tuple[bool, str] | None, update_fields: Any
+    ) -> list[str] | None:
+        changed_disabled_at = False
+        if self._state.adding:
+            if not self.is_active and self.disabled_at is None:
+                self.disabled_at = timezone.now()
+            elif self.is_active and self.disabled_at is not None:
+                self.disabled_at = None
+        elif previous is not None:
+            was_active, _ = previous
+            if was_active and not self.is_active:
+                if self.disabled_at is None:
+                    self.disabled_at = timezone.now()
+                changed_disabled_at = True
+            elif not was_active and self.is_active and self.disabled_at is not None:
+                self.disabled_at = None
+                changed_disabled_at = True
+        if update_fields is None:
+            return None
+        fields = list(update_fields)
+        if changed_disabled_at and "disabled_at" not in fields:
+            fields.append("disabled_at")
+        return fields
 
     def _lifecycle_snapshot(self, update_fields: Any) -> tuple[bool, str] | None:
         if self._state.adding:
