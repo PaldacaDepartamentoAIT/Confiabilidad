@@ -6,6 +6,7 @@ import { I18nextProvider } from "react-i18next";
 import { FormMessage } from "../components/FormMessage";
 import { CustomSelect } from "../components/fields/CustomSelect";
 import { AnnouncerContext } from "../components/announcer";
+import { ToastProvider } from "../components/toast/ToastProvider";
 import { createI18n } from "../i18n";
 import {
   useFormValidation,
@@ -22,7 +23,9 @@ const longEnough: Validator = (value) =>
 function renderInSpanish(element: ReactElement, announce = vi.fn()) {
   render(
     <I18nextProvider i18n={createI18n("es")}>
-      <AnnouncerContext.Provider value={announce}>{element}</AnnouncerContext.Provider>
+      <AnnouncerContext.Provider value={announce}>
+        <ToastProvider>{element}</ToastProvider>
+      </AnnouncerContext.Provider>
     </I18nextProvider>,
   );
   return { announce };
@@ -259,21 +262,22 @@ test("server errors focus the first field with error in declaration order", asyn
   expect(screen.getByRole("textbox", { name: "Name" })).toHaveFocus();
 });
 
-test("a general message without field errors receives the focus and is not announced", async () => {
+test("a general error shows in an error toast without stealing focus", async () => {
   const user = userEvent.setup();
   const { announce } = renderResultForm(vi.fn().mockReturnValueOnce({ message: tooManyAttempts }));
 
   await submitValid(user);
 
-  const message = screen.getByText("Demasiados intentos", { exact: false }).closest("div");
-  expect(message).toHaveTextContent(
-    "Error: Demasiados intentos. Espera unos minutos y vuelve a intentarlo.",
+  const toast = screen.getByRole("alert");
+  expect(toast).toHaveClass("toast", "toast-error");
+  expect(toast).toHaveTextContent(
+    "Demasiados intentos. Espera unos minutos y vuelve a intentarlo.",
   );
-  expect(message).toHaveFocus();
+  expect(toast).not.toHaveFocus();
   expect(announce).not.toHaveBeenCalled();
 });
 
-test("with field errors, the focus goes to the field and an error message is announced urgently", async () => {
+test("with field errors, focus goes to the field and a general error appears in an error toast", async () => {
   const user = userEvent.setup();
   const { announce } = renderResultForm(
     vi.fn().mockReturnValueOnce({
@@ -285,11 +289,10 @@ test("with field errors, the focus goes to the field and an error message is ann
   await submitValid(user);
 
   expect(screen.getByRole("textbox", { name: "Code" })).toHaveFocus();
-  expect(screen.getByText("Demasiados intentos", { exact: false })).toBeInTheDocument();
-  expect(announce).toHaveBeenCalledWith(
-    "Error: Demasiados intentos. Espera unos minutos y vuelve a intentarlo.",
-    "assertive",
+  expect(screen.getByRole("alert")).toHaveTextContent(
+    "Demasiados intentos. Espera unos minutos y vuelve a intentarlo.",
   );
+  expect(announce).not.toHaveBeenCalled();
 });
 
 test("with field errors, a message that is not an error is announced politely", async () => {

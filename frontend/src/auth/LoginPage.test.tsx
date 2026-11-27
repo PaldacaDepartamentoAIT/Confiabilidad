@@ -6,6 +6,7 @@ import type { SessionInfo } from "../api/auth";
 import { createClient } from "../api/client";
 import { markAccountDisabledNotice } from "../api/profile";
 import { LiveAnnouncer } from "../components/LiveAnnouncer";
+import { ToastProvider } from "../components/toast/ToastProvider";
 import { createI18n } from "../i18n";
 import { LoginPage } from "./LoginPage";
 
@@ -31,7 +32,9 @@ function renderLogin(
   render(
     <I18nextProvider i18n={i18n}>
       <LiveAnnouncer>
-        <LoginPage client={client} onAuthenticated={onAuthenticated} />
+        <ToastProvider>
+          <LoginPage client={client} onAuthenticated={onAuthenticated} />
+        </ToastProvider>
       </LiveAnnouncer>
     </I18nextProvider>,
   );
@@ -84,9 +87,11 @@ test("vacía la contraseña y conserva el correo ante invalid_credentials, pero 
   await userEvent.type(passwordInput, "secreto123");
   await userEvent.click(screen.getByRole("button", { name: "Iniciar sesión" }));
 
-  expect(
-    await screen.findByText(/El correo o la contraseña no son correctos\./),
-  ).toBeInTheDocument();
+  const invalidToast = (
+    await screen.findByText(/El correo o la contraseña no son correctos\./)
+  ).closest('[data-ui="toast"]');
+  expect(invalidToast).toHaveClass("toast", "toast-error");
+  expect(invalidToast).toHaveAttribute("role", "alert");
   expect(emailInput.value).toBe("ana@empresa.com");
   expect(passwordInput.value).toBe("");
 
@@ -184,20 +189,24 @@ test("muestra confirmación al llegar tras deshabilitar la cuenta y traduce acco
   await userEvent.type(screen.getByLabelText(/^Contraseña/), "secreto123");
   await userEvent.click(screen.getByRole("button", { name: "Iniciar sesión" }));
 
-  expect(
+  const disabledToast = (
     await screen.findByText(
       /Tu cuenta está deshabilitada\. Puedes solicitar su reactivación contactando a soporte dentro de los 12 meses posteriores a la baja\./,
-    ),
-  ).toBeInTheDocument();
+    )
+  ).closest('[data-ui="toast"]');
+  expect(disabledToast).toHaveClass("toast", "toast-error");
+  expect(disabledToast).toHaveAttribute("role", "alert");
 
   code = "account_disabled_expired";
   await userEvent.click(screen.getByRole("button", { name: "Iniciar sesión" }));
 
   expect(
-    await screen.findByText(
-      /Tu cuenta está deshabilitada y el plazo de 12 meses para reactivarla ya ha vencido\./,
-    ),
-  ).toBeInTheDocument();
+    (
+      await screen.findByText(
+        /Tu cuenta está deshabilitada y el plazo de 12 meses para reactivarla ya ha vencido\./,
+      )
+    ).closest('[data-ui="toast"]'),
+  ).toHaveClass("toast", "toast-error");
 });
 
 test.each([

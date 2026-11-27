@@ -1,10 +1,11 @@
 import type { ParseKeys } from "i18next";
-import { useEffect, useRef, useState, type FocusEvent, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FocusEvent, type FormEvent } from "react";
 import { flushSync } from "react-dom";
 import { useTranslation } from "react-i18next";
 
 import type { MessageType } from "../components/FormMessage";
 import { useAnnouncer } from "../components/announcer";
+import { useToast } from "../components/toast/toastContext";
 import type { Messages } from "../i18n/locales/en";
 
 export type ValidationKey = keyof Messages["validation"];
@@ -90,14 +91,23 @@ export function useFormValidation<Field extends string>(
 ) {
   const { t } = useTranslation();
   const announce = useAnnouncer();
+  const { notify, dismiss } = useToast();
   const [localErrors, setLocalErrors] = useState<Errors<Field>>({});
   const [serverErrors, setServerErrors] = useState<ErrorLists<Field>>({});
   const [message, setMessage] = useState<GeneralMessage | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const messageRef = useRef<HTMLDivElement>(null);
+  const errorToastId = useRef<string | null>(null);
   const names = Object.keys(fields) as Field[];
 
+  const clearErrorToast = useCallback(() => {
+    if (!errorToastId.current) return;
+    dismiss(errorToastId.current, true);
+    errorToastId.current = null;
+  }, [dismiss]);
+
   useEffect(trackPointer, []);
+  useEffect(() => clearErrorToast, [clearErrorToast]);
 
   // El error local describe el valor actual y el de servidor, el ya enviado: prevalece el local (D-14).
   const allErrors: ErrorLists<Field> = { ...serverErrors };
@@ -153,6 +163,7 @@ export function useFormValidation<Field extends string>(
       }
       // El error se pinta antes de mover el foco, para que el lector lea el campo con su error.
       // Los errores de servidor y el mensaje general se retiran en cada envío (RF-017, RF-025).
+      clearErrorToast();
       flushSync(() => {
         setLocalErrors(next);
         setServerErrors({});
@@ -167,9 +178,11 @@ export function useFormValidation<Field extends string>(
     };
   }
 
-  // Lo llama la pantalla con la respuesta del envío. Con errores de campo, el foco va al primero y
-  // el mensaje general se anuncia sin mover el foco; sin ellos, el foco va al mensaje (RF-017).
+  // Lo llama la pantalla con la respuesta del envío. Los errores generales van a toast roja
+  // (`role="alert"`) para no mover el formulario ni robar el foco.
   function showResult({ fieldErrors = {}, message: next }: SubmitResult<Field>) {
+    clearErrorToast();
+    const inlineMessage = next?.type === "error" ? null : (next ?? null);
     const lists: ErrorLists<Field> = {};
     for (const name of names) {
       const error = fieldErrors[name];
@@ -177,20 +190,20 @@ export function useFormValidation<Field extends string>(
     }
     flushSync(() => {
       setServerErrors(lists);
-      setMessage(next ?? null);
+      setMessage(inlineMessage);
     });
+    if (next?.type === "error") {
+      errorToastId.current = notify({ kind: "error", messageKey: next.messageKey });
+    }
     const firstInvalid = names.find((name) => fieldErrors[name]);
     if (firstInvalid) {
       focusField(formRef.current, firstInvalid);
-      if (next) {
-        announce(
-          `${t(`message.${next.type}`)} ${t(next.messageKey)}`,
-          next.type === "error" ? "assertive" : "polite",
-        );
+      if (inlineMessage) {
+        announce(`${t(`message.${inlineMessage.type}`)} ${t(inlineMessage.messageKey)}`, "polite");
       }
       return;
     }
-    messageRef.current?.focus();
+    if (inlineMessage) messageRef.current?.focus();
   }
 
   return { errors, allErrors, onBlur, handleSubmit, showResult, message, formRef, messageRef };

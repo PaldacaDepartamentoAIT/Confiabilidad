@@ -5,6 +5,7 @@ import { I18nextProvider } from "react-i18next";
 import { createClient } from "../api/client";
 import type { RegistrationOptions } from "../api/registration";
 import { LiveAnnouncer } from "../components/LiveAnnouncer";
+import { ToastProvider } from "../components/toast/ToastProvider";
 import { createI18n } from "../i18n";
 import { RegisterPage } from "./RegisterPage";
 
@@ -38,7 +39,9 @@ function renderPage(fetcher: typeof fetch, language = "es") {
   render(
     <I18nextProvider i18n={i18n}>
       <LiveAnnouncer>
-        <RegisterPage client={client} />
+        <ToastProvider>
+          <RegisterPage client={client} />
+        </ToastProvider>
       </LiveAnnouncer>
     </I18nextProvider>,
   );
