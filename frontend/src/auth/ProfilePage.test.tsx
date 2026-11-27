@@ -144,16 +144,30 @@ test("validates fields in edit mode, focuses first error, shows server error and
 
   const nameInput = screen.getByRole("textbox", { name: "Nombre completo" });
   await user.clear(nameInput);
+  await user.tab();
+  expect(screen.getByText("Completa este campo.")).toBeInTheDocument();
+
+  await user.click(screen.getByRole("button", { name: "Cancelar" }));
+  expect(screen.queryByRole("button", { name: "Guardar cambios" })).not.toBeInTheDocument();
+  expect(screen.getByLabelText("Nombre completo")).toHaveValue("Eva");
+
+  await user.click(screen.getByRole("combobox", { name: "Acciones del perfil" }));
+  await user.click(screen.getByRole("option", { name: "Editar" }));
+  const reopenedName = screen.getByRole("textbox", { name: "Nombre completo" });
+  expect(reopenedName).toHaveValue("Eva");
+  expect(screen.queryByText("Completa este campo.")).not.toBeInTheDocument();
+
+  await user.clear(reopenedName);
   await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
   expect(screen.getByText("Completa este campo.")).toBeInTheDocument();
-  expect(nameInput).toHaveFocus();
+  expect(reopenedName).toHaveFocus();
 
-  await user.type(nameInput, "Eva  Ruiz");
+  await user.type(reopenedName, "Eva  Ruiz");
   await user.click(screen.getByRole("button", { name: "Guardar cambios" }));
   expect(
     await screen.findByText("El nombre no puede tener espacios seguidos."),
   ).toBeInTheDocument();
-  expect(nameInput).toHaveFocus();
+  expect(reopenedName).toHaveFocus();
 
   await user.click(screen.getByRole("button", { name: "Cancelar" }));
   expect(screen.queryByRole("button", { name: "Guardar cambios" })).not.toBeInTheDocument();
@@ -230,6 +244,11 @@ test("switches to password change from menu, validates, clears selectively, show
 
   await user.type(curInput, "clave-actual-1");
   await user.type(newInput, "corta");
+  await user.tab();
+  await user.tab();
+  expect(newInput).toHaveAccessibleDescription(
+    expect.stringContaining("Usa al menos 12 caracteres.") as string,
+  );
   await user.click(screen.getByRole("button", { name: "Cambiar contraseña" }));
   expect(newInput).toHaveAccessibleDescription(
     expect.stringContaining("Usa al menos 12 caracteres.") as string,
