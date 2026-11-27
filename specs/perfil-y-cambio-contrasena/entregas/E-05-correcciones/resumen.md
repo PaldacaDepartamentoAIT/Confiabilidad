@@ -1,6 +1,6 @@
 # Entrega E-05 · Correcciones de validación (limpieza de errores locales y cobertura de bloqueo entre sesiones)
 
-Rama: `feat/perfil-y-cambio-contrasena-correcciones` · Líneas de código y tests: 181.
+Rama: `feat/perfil-y-cambio-contrasena-correcciones` · PR: `#160` · Líneas de código y tests: 181 (aprobado y fusionado en `#160`).
 
 ## Qué se hizo
 - En `frontend/src/auth/ProfilePage.tsx` y `frontend/src/auth/ProfilePage.test.tsx` (`T-016`, `RF-012`):

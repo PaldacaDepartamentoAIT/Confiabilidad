@@ -109,3 +109,4 @@ El sistema deberá permitir ejercitar y verificar la consulta y modificación de
 - 2026-11-25 — Clarificación (C-01…C-04) — RF: RF-002, RF-004, RF-007, RF-008, RF-012, RF-014 ajustados; S-04, S-08, CF-2, CF-3 y CF-6 ajustados — Estado: clarificado
 - 2026-11-25 — Aprobación por el usuario — Estado: aprobada
 - 2026-11-26 — Cambio en `RF-012`, `Secuencia` y `CF-6`: tarjeta única con menú contextual de tres puntos y confirmaciones por notificación flotante (*toast*) — Estado: aprobada
+- 2026-11-27 — Validación: CUMPLIDA (RF-001…RF-015 y CF-1…CF-7 verificados sobre `feat/perfil-y-cambio-contrasena` tras `E-05`)
