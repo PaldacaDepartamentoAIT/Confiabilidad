@@ -2,11 +2,14 @@ from datetime import UTC, datetime
 from io import StringIO
 
 import pytest
+from django.contrib.auth.models import Group, Permission
 from django.core.management import call_command
 from django.core.management.base import CommandError
-from django.test import override_settings
+from django.test import Client, override_settings
+from django.urls import reverse
 
 from apps.accounts import disable
+from apps.accounts.models import User
 from apps.accounts.tests.factories import DEFAULT_PASSWORD, make_user
 from apps.consents.models import Terms
 from apps.consents.services import TermsState, accept_terms, consent_status
@@ -83,3 +86,97 @@ def test_reactivate_cli_command() -> None:
 
     with pytest.raises(CommandError, match="already active"):
         call_command("account", "reactivate", "--email", recent.email)
+
+
+def _admin_payload(user: User, *, is_active: bool) -> dict[str, str]:
+    data = {
+        "email": user.email,
+        "name": user.name,
+        "birthdate": user.birthdate.isoformat(),
+        "country": user.country,
+        "language": user.language,
+    }
+    if is_active:
+        data["is_active"] = "on"
+    if user.is_staff:
+        data["is_staff"] = "on"
+    if user.is_superuser:
+        data["is_superuser"] = "on"
+    return data
+
+
+@pytest.mark.django_db
+def test_admin_support_can_reactivate_within_12_months_and_is_blocked_after() -> None:
+    support_group, _ = Group.objects.get_or_create(name="Soporte técnico")
+    support_user = make_user(email="support@example.com", is_staff=True)
+    support_user.groups.add(support_group)
+
+    target = make_user(email="target@example.com")
+    target.is_active = False
+    target.save(update_fields=["is_active"])
+
+    client = Client()
+    client.force_login(support_user)
+    change_url = reverse("admin:accounts_user_change", args=[target.pk])
+
+    response = client.post(change_url, _admin_payload(target, is_active=True))
+    assert response.status_code == 302
+    target.refresh_from_db()
+    assert target.is_active is True
+    assert target.disabled_at is None
+    latest = target.history.latest("history_id")
+    assert latest.history_user_id == support_user.pk
+
+    # Desactivar manualmente desde admin registra disabled_at en UTC.
+    deactivate_res = client.post(change_url, _admin_payload(target, is_active=False))
+    assert deactivate_res.status_code == 302
+    target.refresh_from_db()
+    assert target.is_active is False
+    assert target.disabled_at is not None
+
+    # Si han pasado 12 meses, el panel rechaza reactivarla.
+    User.objects.filter(pk=target.pk).update(disabled_at=datetime(2020, 1, 1, tzinfo=UTC))
+    expired_res = client.post(change_url, _admin_payload(target, is_active=True))
+    assert expired_res.status_code == 200
+    target.refresh_from_db()
+    assert target.is_active is False
+
+    # La acción masiva también respeta los 12 meses.
+    changelist_url = reverse("admin:accounts_user_changelist")
+    action_res = client.post(
+        changelist_url,
+        {
+            "action": "reactivate_selected",
+            "select_across": "0",
+            "index": "0",
+            "_selected_action": [str(target.pk)],
+        },
+    )
+    assert action_res.status_code == 302
+    target.refresh_from_db()
+    assert target.is_active is False
+
+    # El historial no puede revertirse mediante POST desde el panel.
+    history_url = reverse("admin:accounts_user_history", args=[target.pk])
+    assert client.get(history_url).status_code == 200
+
+
+@pytest.mark.django_db
+def test_admin_non_support_staff_cannot_reactivate_inactive_user() -> None:
+    other_staff = make_user(email="otherstaff@example.com", is_staff=True)
+    change_perm = Permission.objects.get(codename="change_user")
+    view_perm = Permission.objects.get(codename="view_user")
+    other_staff.user_permissions.add(change_perm, view_perm)
+
+    inactive = make_user(email="locked@example.com")
+    inactive.is_active = False
+    inactive.save(update_fields=["is_active"])
+
+    client = Client()
+    client.force_login(other_staff)
+    change_url = reverse("admin:accounts_user_change", args=[inactive.pk])
+
+    response = client.post(change_url, _admin_payload(inactive, is_active=True))
+    assert response.status_code == 403
+    inactive.refresh_from_db()
+    assert inactive.is_active is False
