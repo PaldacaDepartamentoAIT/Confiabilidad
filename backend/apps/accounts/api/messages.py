@@ -200,6 +200,27 @@ ERRORS: dict[str, dict[str, str]] = {
         "pt-BR": "Você não pode encerrar a sessão atual por esta ação.",
         "en": "You cannot revoke your current session with this action.",
     },
+    # Perfil y cambio de contraseña autenticado (perfil-y-cambio-contrasena).
+    "email_immutable": {
+        "es": "El correo electrónico no se puede modificar.",
+        "pt-BR": "O e-mail não pode ser alterado.",
+        "en": "The email address cannot be changed.",
+    },
+    "unknown_field": {
+        "es": "Este campo no está permitido.",
+        "pt-BR": "Este campo não é permitido.",
+        "en": "This field is not allowed.",
+    },
+    "no_profile_fields": {
+        "es": "Indica al menos un dato del perfil para actualizar.",
+        "pt-BR": "Informe pelo menos um dado do perfil para atualizar.",
+        "en": "Provide at least one profile field to update.",
+    },
+    "current_password_incorrect": {
+        "es": "La contraseña actual no es correcta.",
+        "pt-BR": "A senha atual não está correta.",
+        "en": "The current password is incorrect.",
+    },
 }
 
 FIELD_ERRORS: dict[str, dict[str, str]] = {

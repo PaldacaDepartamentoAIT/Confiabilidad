@@ -1,5 +1,7 @@
 import "@testing-library/jest-dom";
 
+afterEach(() => window.sessionStorage.removeItem("confiabilidad.user"));
+
 // jsdom no implementa `<dialog>.showModal()` ni `close()` (el navegador real sí, y atrapa el foco y deja
 // inerte la página). Este doble solo abre y cierra el diálogo y emite `close`; lo demás se prueba en
 // Chromium (`frontend/visual`).

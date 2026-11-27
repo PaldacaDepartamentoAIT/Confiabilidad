@@ -21,6 +21,7 @@ const NAMES = [
   "IconLogOut",
   "IconMenu",
   "IconMoon",
+  "IconMoreVertical",
   "IconPackage",
   "IconPanelClose",
   "IconPanelOpen",
@@ -28,7 +29,9 @@ const NAMES = [
   "IconSettings",
   "IconSun",
   "IconTrash",
+  "IconUser",
   "IconWrench",
+  "IconX",
 ] as const;
 
 test("exports exactly the icons used by the design guide", () => {

@@ -1,4 +1,11 @@
-import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type MouseEvent as ReactMouseEvent,
+  type ReactNode,
+} from "react";
 import { useTranslation } from "react-i18next";
 
 import { Counter } from "../components/Block";
@@ -18,6 +25,7 @@ export type SidebarItem = {
   icon: ReactNode;
   counter?: number;
   counterLabel?: string;
+  onSelect?: (event: ReactMouseEvent<HTMLAnchorElement>) => void;
 };
 
 export type SidebarUserOption = {
@@ -41,6 +49,8 @@ type SidebarProps = {
   user?: SidebarUser;
   storage?: LanguageStorage;
   defaultCollapsed?: boolean;
+  collapsed?: boolean;
+  onCollapsedChange?: (collapsed: boolean) => void;
   // En pantallas de menos de 768 px el menú es un panel superpuesto que abre y cierra quien lo usa.
   mobileOpen?: boolean;
   onMobileClose?: (restoreFocus: boolean) => void;
@@ -53,13 +63,20 @@ export function Sidebar({
   user,
   storage,
   defaultCollapsed = false,
+  collapsed: collapsedProp,
+  onCollapsedChange,
   mobileOpen = false,
   onMobileClose,
 }: SidebarProps) {
   const { t } = useTranslation();
   const generatedId = useId();
   const id = idProp ?? generatedId;
-  const [collapsedState, setCollapsed] = useState(defaultCollapsed);
+  const [uncontrolledCollapsed, setUncontrolledCollapsed] = useState(defaultCollapsed);
+  const collapsedState = collapsedProp ?? uncontrolledCollapsed;
+  const setCollapsed = (next: boolean) => {
+    onCollapsedChange?.(next);
+    if (collapsedProp === undefined) setUncontrolledCollapsed(next);
+  };
   const narrow = useMediaQuery("(max-width: 767px)");
   const asideRef = useRef<HTMLElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
@@ -145,7 +162,10 @@ export function Sidebar({
               data-ui={current ? "nav-item-active" : "nav-item"}
               aria-current={current ? "page" : undefined}
               title={collapsed ? item.label : undefined}
-              onClick={() => narrow && onMobileClose?.(false)}
+              onClick={(event) => {
+                item.onSelect?.(event);
+                if (narrow) onMobileClose?.(false);
+              }}
             >
               {item.icon}
               <span className="label">{item.label}</span>

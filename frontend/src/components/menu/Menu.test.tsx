@@ -431,3 +431,29 @@ test("placement up marks the menu to open upward and selectable false renders ac
   await user.keyboard("{ArrowDown}");
   expect(screen.getByRole("option", { name: "Sign out" })).toHaveClass("highlight");
 });
+
+test("clamps maxHeight to available space below and flips upward when space below is tight", async () => {
+  const user = userEvent.setup();
+  const prevHeight = window.innerHeight;
+  Object.defineProperty(window, "innerHeight", { value: 600, configurable: true });
+  const { container, trigger } = renderMenu();
+  const wrapper = container.querySelector(".select")!;
+  let rect = { top: 400, bottom: 436, height: 36, width: 240 } as DOMRect;
+  vi.spyOn(wrapper, "getBoundingClientRect").mockImplementation(() => rect);
+
+  try {
+    await user.click(trigger);
+    let listbox = screen.getByRole("listbox");
+    expect(listbox).not.toHaveClass("menu-up");
+    expect(listbox.style.maxHeight).toBe("152px");
+
+    await user.keyboard("{Escape}");
+    rect = { top: 480, bottom: 516, height: 36, width: 240 } as DOMRect;
+    await user.click(trigger);
+    listbox = screen.getByRole("listbox");
+    expect(listbox).toHaveClass("menu-up");
+    expect(listbox.style.maxHeight).toBe("200px");
+  } finally {
+    Object.defineProperty(window, "innerHeight", { value: prevHeight, configurable: true });
+  }
+});

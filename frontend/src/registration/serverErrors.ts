@@ -38,6 +38,10 @@ const KEYS: Record<string, ValidationKey> = {
   too_many_login_attempts: "tooManyLoginAttempts",
   already_authenticated: "alreadyAuthenticated",
   cannot_revoke_current_session: "cannotRevokeCurrentSession",
+  email_immutable: "emailImmutable",
+  unknown_field: "unknownField",
+  no_profile_fields: "noProfileFields",
+  current_password_incorrect: "currentPasswordIncorrect",
 };
 
 // Los mismos códigos tienen un texto más preciso en estos campos, como en el servidor.

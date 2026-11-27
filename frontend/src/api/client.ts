@@ -26,6 +26,7 @@ export type ApiResult<Data = unknown> =
 export type ApiClient = {
   get: <Data = unknown>(path: string) => Promise<ApiResult<Data>>;
   post: <Data = unknown>(path: string, body: Record<string, unknown>) => Promise<ApiResult<Data>>;
+  patch: <Data = unknown>(path: string, body: Record<string, unknown>) => Promise<ApiResult<Data>>;
 };
 
 const CSRF_COOKIE = "csrftoken";
@@ -109,6 +110,7 @@ async function interpret<Data>(response: Response): Promise<ApiResult<Data>> {
 
 export function createClient(config: ClientConfig): ApiClient {
   const base = config.kind === "app" ? `${config.appBaseUrl}/api/app/v1` : "/api/browser/v1";
+  const inflight = new Map<string, Promise<ApiResult<unknown>>>();
 
   async function send<Data>(path: string, init: RequestInit): Promise<ApiResult<Data>> {
     const headers = new Headers(init.headers);
@@ -132,14 +134,27 @@ export function createClient(config: ClientConfig): ApiClient {
     return interpret<Data>(response);
   }
 
+  function jsonSend<Data>(method: "POST" | "PATCH", path: string, body: Record<string, unknown>) {
+    return send<Data>(path, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...body, language: config.language() }),
+    });
+  }
+
   return {
-    get: (path) =>
-      send(`${path}?language=${encodeURIComponent(config.language())}`, { method: "GET" }),
-    post: (path, body) =>
-      send(path, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...body, language: config.language() }),
-      }),
+    get: <Data>(path: string) => {
+      const target = `${path}?language=${encodeURIComponent(config.language())}`;
+      const token =
+        config.kind === "app" ? ((config.tokenStorage ?? tokenStorage).get() ?? "") : "";
+      const key = `${target}\0${token}`;
+      const pending = inflight.get(key) as Promise<ApiResult<Data>> | undefined;
+      if (pending) return pending;
+      const request = send<Data>(target, { method: "GET" }).finally(() => inflight.delete(key));
+      inflight.set(key, request);
+      return request;
+    },
+    post: (path, body) => jsonSend("POST", path, body),
+    patch: (path, body) => jsonSend("PATCH", path, body),
   };
 }

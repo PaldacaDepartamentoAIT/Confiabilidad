@@ -28,6 +28,12 @@ from apps.accounts.api.flow_views import (
     BrowserStatusView,
     BrowserVerifyView,
 )
+from apps.accounts.api.profile_views import (
+    AppPasswordChangeView,
+    AppProfileView,
+    BrowserPasswordChangeView,
+    BrowserProfileView,
+)
 from apps.accounts.api.views import AppRegistrationView, BrowserRegistrationView
 
 urlpatterns = [
@@ -108,5 +114,17 @@ urlpatterns = [
         "app/v1/auth/sessions/revoke-others",
         AppRevokeOthersView.as_view(),
         name="auth-sessions-revoke-others-app",
+    ),
+    path("browser/v1/auth/profile", BrowserProfileView.as_view(), name="auth-profile-browser"),
+    path("app/v1/auth/profile", AppProfileView.as_view(), name="auth-profile-app"),
+    path(
+        "browser/v1/auth/password/change",
+        BrowserPasswordChangeView.as_view(),
+        name="auth-password-change-browser",
+    ),
+    path(
+        "app/v1/auth/password/change",
+        AppPasswordChangeView.as_view(),
+        name="auth-password-change-app",
     ),
 ]

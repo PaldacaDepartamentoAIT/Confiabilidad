@@ -17,6 +17,7 @@ import {
   LogOut,
   Menu,
   Moon,
+  MoreVertical,
   Package,
   PanelLeftClose,
   PanelLeftOpen,
@@ -24,7 +25,9 @@ import {
   Settings,
   Sun,
   Trash2,
+  User,
   Wrench,
+  X,
   type LucideIcon,
   type LucideProps,
 } from "lucide-react";
@@ -56,6 +59,7 @@ export const IconInfo = sized(Info, "IconInfo");
 export const IconLogOut = sized(LogOut, "IconLogOut");
 export const IconMenu = sized(Menu, "IconMenu");
 export const IconMoon = sized(Moon, "IconMoon");
+export const IconMoreVertical = sized(MoreVertical, "IconMoreVertical");
 export const IconPackage = sized(Package, "IconPackage");
 export const IconPanelClose = sized(PanelLeftClose, "IconPanelClose");
 export const IconPanelOpen = sized(PanelLeftOpen, "IconPanelOpen");
@@ -63,4 +67,6 @@ export const IconSearch = sized(Search, "IconSearch");
 export const IconSettings = sized(Settings, "IconSettings");
 export const IconSun = sized(Sun, "IconSun");
 export const IconTrash = sized(Trash2, "IconTrash");
+export const IconUser = sized(User, "IconUser");
 export const IconWrench = sized(Wrench, "IconWrench");
+export const IconX = sized(X, "IconX");

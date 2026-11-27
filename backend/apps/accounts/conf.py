@@ -77,6 +77,18 @@ def session_lifetime() -> timedelta:
     return timedelta(days=_at_least_one("SESSION_LIFETIME_DAYS"))
 
 
+def password_change_max_failed_attempts() -> int:
+    return _at_least_one("PASSWORD_CHANGE_MAX_FAILED_ATTEMPTS")
+
+
+def password_change_attempt_window() -> timedelta:
+    return timedelta(minutes=_at_least_one("PASSWORD_CHANGE_ATTEMPT_WINDOW_MINUTES"))
+
+
+def password_change_lockout_duration() -> timedelta:
+    return timedelta(minutes=_at_least_one("PASSWORD_CHANGE_LOCKOUT_MINUTES"))
+
+
 def _at_least_one(name: str) -> int:
     # Un límite de 0 no tiene significado definido: es un error de configuración, no un cierre.
     value = int(getattr(settings, name))

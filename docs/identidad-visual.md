@@ -181,6 +181,17 @@ Un solo color por prioridad en toda la aplicación.
   desvanecen. Al perder el foco, aunque haya texto escrito, o con Escape, el campo se pliega y vuelve
   a verse el botón.
 - **Estado del menú lateral.** No se recuerda: cada sesión empieza con el menú abierto.
+- **Estado de carga (placeholders *skeleton*).** La estructura fija de la pantalla (título de página,
+  cabeceras, bloques y etiquetas) se muestra siempre desde el primer instante; mientras llegan los
+  datos de la API, el contenido pendiente (campos, subtítulos dependientes de sesión o filas de
+  tabla en carga) se sustituye por marcadores en gris claro con degradado animado (*shimmer*)
+  calculado con `color-mix(in srgb, var(--grid) 55%, var(--bg))` y un reflejo más claro en `22%`
+  de `--grid` sobre `--bg`, con las mismas medidas que el contenido definitivo (por ejemplo, `36 px`
+  de alto y radio `6 px` en campos de formulario) para evitar saltos de diseño. Al llegar los datos,
+  el skeleton hace un *fade out* (`0,16 s`) seguido de un *fade in* del contenido real (`0,2 s` con
+  `0,1 s` de retardo) para que nunca aparezca de golpe. Los placeholders llevan `aria-hidden="true"`
+  y la región en carga marca `aria-busy="true"`. El botón de usuario del menú lateral conserva su
+  identidad en contexto durante la sesión para no desaparecer al navegar o recargar.
 
 ## Movimiento
 
@@ -198,6 +209,7 @@ Un solo color por prioridad en toda la aplicación.
 | Aparición de un menú desplegable | 0,18 s (fundido y 6 px de desplazamiento hacia abajo, o hacia arriba si se despliega por encima); se cierra sin animación |
 | Panel lateral en móvil | 0,25 s de deslizamiento |
 | Cambio de tema | 0,4 s en todos los colores, solo durante el cambio |
+| Placeholder de carga (*skeleton*) | barrido continuo de 1,4 s; *fade out* de 0,16 s y *fade in* del contenido en 0,2 s |
 
 Si el sistema pide reducir el movimiento, no se anima nada, incluidos el hover y el cambio de tema.
 
@@ -294,6 +306,7 @@ sección manda sobre las descripciones generales de arriba.
 | Ayuda | 12 px, texto secundario |
 | Contador de caracteres | JetBrains Mono 12 px, texto secundario, a la derecha de la ayuda |
 | Error | borde en P1; debajo, el icono `circle-alert` en P1 y el mensaje en tinta, 12,5 px, con 6 px de separación; `aria-invalid` activo |
+| Deshabilitado | fondo con el 28 % de gris mezclado con el lienzo, borde y texto en gris/texto secundario (`not-allowed`), sin cambio de borde al pasar el cursor ni enfocar |
 
 ### Menú de selección
 
@@ -301,9 +314,10 @@ sección manda sobre las descripciones generales de arriba.
 |---|---|
 | Disparador | igual que un campo; texto a la izquierda y chevron hacia abajo a la derecha; sin valor, «Selecciona una opción» en texto secundario |
 | Ancho del disparador | todo el ancho disponible de su contenedor (100 %), sea un campo de formulario, un botón del menú lateral o un selector de la barra; el menú desplegado nunca es más estrecho que él |
-| Menú | aparece a 4 px bajo el disparador (o a 4 px por encima en los botones del pie del menú lateral), ancho mínimo igual al del disparador, alto máximo de 260 px con desplazamiento, relleno de 4 px, fondo del lienzo, borde de 1 px en borde de control, radio 4 px |
+| Menú | aparece a 4 px bajo el disparador (o a 4 px por encima en los botones del pie del menú lateral o cuando falta espacio abajo), ancho mínimo igual al del disparador, alto máximo de 200 px con desplazamiento (limitado al espacio disponible hasta el borde de la ventana para no alargar la página), relleno de 4 px, fondo del lienzo, borde de 1 px en borde de control, radio 4 px |
 | Opción | 34 px de alto, relleno de 0 10 px 0 6 px, separación de 6 px, radio 6 px; la seleccionada en peso 700 y con un chevron «>» a la izquierda (el resto reserva el mismo hueco); en menús de acción como el de usuario, el icono de la acción va en su lugar |
 | Opción resaltada u opción bajo el cursor | fondo con el 9 % de la tinta mezclado con el lienzo |
+| Opción deshabilitada | texto secundario al 55 % de opacidad, cursor `not-allowed` y `aria-disabled="true"`; no se resalta ni activa al pulsar |
 
 ### Casilla
 
@@ -339,12 +353,23 @@ Ventana modal que muestra un documento (términos, consentimientos) y se abre de
 | Secundario | sin relleno, borde de 1 px y texto en el principal; hover con el 9 % de la tinta |
 | Botón de icono | 36 × 36 px (28 × 28 px en variante compacta, como en filas de tabla), radio 6 px, sin relleno, borde de 1 px e icono de 16 px en el principal; hover con el 9 % de la tinta |
 | Tooltip (botón de icono) | aparece hacia arriba a 6 px del botón al pasar el cursor o enfocar con el teclado; fondo en relleno negro del sistema, texto blanco `#ffffff`, borde de 1 px en gris, radio 4 px, 12 px |
+| Deshabilitado | si un botón no puede accionarse por el estado actual (procesando, envío bloqueado u otro impedimento), debe mostrarse deshabilitado (`disabled` o `aria-disabled="true"`): fondo con el 28 % de gris mezclado con el lienzo en el principal (transparente en secundario y de icono), borde en gris, texto o icono en texto secundario, cursor `not-allowed` y sin efecto hover |
 
 ### Aviso
 
 Borde de 1 px en gris y de 4 px a la izquierda, radio 4 px, relleno de 12 px arriba y abajo y 14 px a
 los lados, separación de 10 px entre icono y texto, texto en tinta. El borde izquierdo y el icono
 usan el color de la prioridad; en un aviso informativo, el texto secundario.
+
+### Notificación flotante (toast)
+
+| Parte | Valor |
+|---|---|
+| Posición | fija en la esquina inferior derecha a 22 px de los bordes (16 px en móvil), ancho máximo de 380 px (sin pasar del ancho visible menos 32 px), apiladas en vertical con 10 px de separación |
+| Caja | igual que «Aviso»: fondo del lienzo, borde de 1 px en gris y de 4 px a la izquierda, radio 4 px, sin sombra, relleno de 12 px arriba/abajo, 14 px a la izquierda y 10 px a la derecha |
+| Contenido | icono de 16 px (`check` en confirmación, `info` en información, `circle-alert` en advertencia o error) con el color de la prioridad o texto secundario; título opcional en peso 600 y mensaje en tinta |
+| Botón de cierre | botón «×» (`X`, 16 px) de 28 × 28 px a la derecha, radio 4 px, texto secundario (tinta y fondo al 9 % en hover) |
+| Movimiento y plazo | entra deslizándose de derecha a izquierda en 0,22 s y sale de izquierda a derecha en 0,2 s; se cierra tras 5 s por defecto y reinicia el plazo al situar el cursor encima o tomar el foco |
 
 ### Datos
 

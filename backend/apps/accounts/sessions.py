@@ -6,6 +6,7 @@ from importlib import import_module
 from typing import Any
 
 from django.conf import settings
+from django.contrib.auth import HASH_SESSION_KEY
 from django.contrib.auth.signals import user_logged_out
 from django.contrib.sessions.backends.base import SessionBase
 from django.core.cache import caches
@@ -181,6 +182,30 @@ def close_current_session(user: User, session_key: str) -> None:
     UserSession.objects.filter(user=user, session_key=key_hash).delete()
     _session_cache().delete(_reverse_key(key_hash))
     _delete_from_store(session_key)
+
+
+def refresh_current_session(
+    user: User, raw_key: str, *, request: HttpRequest | None = None, rotate: bool = True
+) -> str:
+    session = getattr(request, "session", None) if rotate and request is not None else None
+    if session is not None and getattr(session, "session_key", None) == raw_key:
+        old_hash = audit_session_fingerprint(raw_key)
+        session[HASH_SESSION_KEY] = user.get_session_auth_hash()
+        session.cycle_key()
+        session.save()
+        new_key = str(session.session_key or raw_key)
+        if new_key != raw_key:
+            new_hash = audit_session_fingerprint(new_key)
+            UserSession.objects.filter(user=user, session_key=old_hash).update(session_key=new_hash)
+            _session_cache().delete(_reverse_key(old_hash))
+            _store_reverse_key(new_hash, new_key)
+        return new_key
+
+    store = _session_store(raw_key)
+    if store.exists(raw_key):
+        store[HASH_SESSION_KEY] = user.get_session_auth_hash()
+        store.save()
+    return raw_key
 
 
 def revoke_other_session(

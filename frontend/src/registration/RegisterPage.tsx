@@ -14,6 +14,7 @@ import { DocumentCheckbox } from "../components/fields/DocumentCheckbox";
 import { RequiredLegend } from "../components/fields/RequiredLegend";
 import { SelectField } from "../components/fields/SelectField";
 import { TextField } from "../components/fields/TextField";
+import { countryOptions } from "../forms/countries";
 import {
   useFormValidation,
   type FieldError,
@@ -141,12 +142,10 @@ function RegisterForm({ client, options, terms, language, titleId }: RegisterFor
     else showResult({ message: FAILURE });
   }
 
-  const countries = useMemo(() => {
-    const names = new Intl.DisplayNames([language], { type: "region" });
-    return options.countries
-      .map((code) => ({ value: code, label: names.of(code) ?? code }))
-      .sort((first, second) => first.label.localeCompare(second.label, language));
-  }, [options.countries, language]);
+  const countries = useMemo(
+    () => countryOptions(options.countries, language),
+    [options.countries, language],
+  );
 
   const errorText = (list: readonly FieldError[] | undefined) =>
     list?.map((error) => t(`validation.${error.key}`, error.params)).join(" ") || undefined;

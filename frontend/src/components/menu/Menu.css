@@ -15,7 +15,7 @@
   top: calc(100% + 4px);
   z-index: 60;
   min-width: 100%;
-  max-height: 260px;
+  max-height: 200px;
   overflow-y: auto;
   margin: 0;
   padding: 4px;
@@ -72,8 +72,14 @@
   visibility: visible;
 }
 
-.option:hover,
-.option.highlight {
+.option[aria-disabled="true"] {
+  color: var(--text2);
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.option:not([aria-disabled="true"]):hover,
+.option:not([aria-disabled="true"]).highlight {
   background: color-mix(in srgb, var(--ink) 9%, var(--bg));
   transition-duration: 0.08s;
 }

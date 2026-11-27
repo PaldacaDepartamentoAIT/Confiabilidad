@@ -73,6 +73,22 @@
   border-color: var(--primary);
 }
 
+.field:disabled {
+  background: color-mix(in srgb, var(--gray) 28%, var(--bg));
+  border-color: var(--gray);
+  color: var(--text2);
+  -webkit-text-fill-color: var(--text2);
+  opacity: 1;
+  cursor: not-allowed;
+}
+
+.field:disabled:hover,
+.field:disabled:focus {
+  border-width: 1px;
+  padding: 0 11px;
+  border-color: var(--gray);
+}
+
 .field[aria-invalid="true"],
 .field[aria-invalid="true"]:hover,
 .field[aria-invalid="true"]:focus {
