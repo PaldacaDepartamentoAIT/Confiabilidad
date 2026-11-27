@@ -54,7 +54,7 @@ class Command(BaseCommand):
 
     def _delete(self, options: dict[str, Any]) -> None:
         company_id = int(options["id"])
-        deleted, _ = Company.objects.filter(pk=company_id).delete()
+        deleted, _details = Company.objects.filter(pk=company_id).delete()
         if not deleted:
             raise CommandError(_("Unknown company id: %(id)s") % {"id": company_id})
         self.stdout.write(f"deleted={company_id}")
